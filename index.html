@@ -21,6 +21,44 @@
     <meta name="theme-color" content="#d62828" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    
+    <!-- CSS for Modal -->
+    <style>
+      #installModal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+      }
+
+      #installModalContent {
+        background-color: white;
+        padding: 20px;
+        border-radius: 10px;
+        max-width: 400px;
+        text-align: center;
+      }
+
+      #installModal button {
+        background-color: #d62828;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-top: 10px;
+      }
+
+      #installModal button:hover {
+        background-color: #a71d1d;
+      }
+    </style>
   </head>
 
   <body>
@@ -41,6 +79,28 @@
           .catch((error) => {
             console.error("Service Worker feilet:", error);
           });
+      }
+
+      // Detect iOS device
+      function isIOS() {
+        return /iphone|ipod|ipad/i.test(navigator.userAgent);
+      }
+
+      // Show modal if on iOS
+      if (isIOS()) {
+        const installModal = document.createElement("div");
+        installModal.id = "installModal";
+        installModal.innerHTML = `
+          <div id="installModalContent">
+            <h2>Installer SnakkaZ</h2>
+            <p>For å installere appen, åpne Safari, trykk på delingsikonet, og velg "Legg til på Hjem-skjerm".</p>
+            <button onclick="document.getElementById('installModal').style.display = 'none';">Lukk</button>
+          </div>
+        `;
+        document.body.appendChild(installModal);
+
+        // Show the modal
+        document.getElementById('installModal').style.display = 'flex';
       }
     </script>
   </body>
