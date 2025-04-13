@@ -1,12 +1,18 @@
 import { supabase } from "@/integrations/supabase/client";
 import { DecryptedMessage } from "@/types/message";
+import { 
+  AIAction,
+  WORKFLOWS,
+  HELP_TOPICS,
+  COMMANDS,
+  Workflow,
+  HelpTopic,
+  Command
+} from "@/components/chat/ai/types";
 
 export interface AIAgentResponse {
   content: string;
-  action?: {
-    type: 'workflow' | 'help' | 'command';
-    payload: any;
-  };
+  action?: AIAction;
 }
 
 class AIAgent {
@@ -25,247 +31,177 @@ class AIAgent {
   public async processMessage(message: DecryptedMessage): Promise<AIAgentResponse> {
     const content = message.content.toLowerCase();
     
-    // Hovedkommandoer
-    if (content.includes('hjelp')) {
-      return this.handleHelpRequest(content);
+    // Workflow kommandoer
+    if (content.includes('workflow')) {
+      const workflowType = this.extractWorkflowType(content);
+      return this.handleWorkflowRequest(workflowType);
     }
     
-    if (content.includes('workflow')) {
-      return this.handleWorkflowRequest(content);
+    // Hjelpekommandoer
+    if (content.includes('hjelp')) {
+      const topic = this.extractHelpTopic(content);
+      return this.handleHelpRequest(topic);
     }
 
+    // Generelle kommandoer
     if (content.includes('kommando')) {
-      return this.handleCommandRequest(content);
+      const commandId = this.extractCommand(content);
+      return this.handleCommandRequest(commandId);
     }
 
-    // Kontekstbaserte svar
-    if (this.isProfileQuery(content)) {
-      return this.handleProfileRequest(content);
-    }
-
-    if (this.isChatQuery(content)) {
-      return this.handleChatRequest(content);
-    }
-
-    if (this.isSecurityQuery(content)) {
-      return this.handleSecurityRequest(content);
+    // Kontekstbaserte spørsmål
+    if (this.isContextualQuestion(content)) {
+      return this.handleContextualQuestion(content);
     }
 
     // Standard svar
     return {
-      content: "Hei! Jeg er SnakkaZ AI Assistant. Jeg kan hjelpe deg med følgende:\n\n" +
-        "1. 'workflow' - Guide deg gjennom ulike prosesser\n" +
-        "2. 'hjelp' - Få hjelp med spesifikke temaer\n" +
-        "3. 'kommando' - Utføre ulike handlinger\n\n" +
-        "Du kan også spørre meg om profil, chat, sikkerhet eller andre SnakkaZ-relaterte temaer!"
+      content: `Hei! Jeg er SnakkaZ Assistant. Jeg kan hjelpe deg med følgende:
+
+1. Workflows - Tilgjengelige workflows: ${Object.keys(WORKFLOWS).join(', ')}
+2. Hjelp - Tilgjengelige emner: ${Object.keys(HELP_TOPICS).join(', ')}
+3. Kommandoer - Tilgjengelige kommandoer: ${Object.keys(COMMANDS).join(', ')}
+
+Spør meg om noe spesifikt eller skriv 'hjelp <emne>' for mer informasjon!`
     };
   }
 
-  private isProfileQuery(content: string): boolean {
-    const profileKeywords = ['profil', 'avatar', 'brukernavn', 'innstilling'];
-    return profileKeywords.some(keyword => content.includes(keyword));
+  private extractWorkflowType(content: string): string {
+    const words = content.split(' ');
+    const index = words.indexOf('workflow');
+    return index >= 0 && index < words.length - 1 ? words[index + 1] : '';
   }
 
-  private isChatQuery(content: string): boolean {
-    const chatKeywords = ['chat', 'melding', 'samtale', 'venn', 'gruppe'];
-    return chatKeywords.some(keyword => content.includes(keyword));
+  private extractHelpTopic(content: string): string {
+    const words = content.split(' ');
+    const index = words.indexOf('hjelp');
+    return index >= 0 && index < words.length - 1 ? words[index + 1] : '';
   }
 
-  private isSecurityQuery(content: string): boolean {
-    const securityKeywords = ['sikkerhet', 'kryptert', 'privat', 'ende-til-ende'];
-    return securityKeywords.some(keyword => content.includes(keyword));
+  private extractCommand(content: string): string {
+    const words = content.split(' ');
+    const index = words.indexOf('kommando');
+    return index >= 0 && index < words.length - 1 ? words[index + 1] : '';
   }
 
-  private async handleHelpRequest(content: string): Promise<AIAgentResponse> {
-    const helpTopics = {
-      profil: 'Profilhjelp: Endre avatar, brukernavn eller andre innstillinger',
-      chat: 'Chathjelp: Start chat, send meldinger, gruppechat',
-      sikkerhet: 'Sikkerhetshjelp: Ende-til-ende kryptering, privat modus',
-      venner: 'Vennehjelp: Finn venner, send forespørsler',
-      innstillinger: 'Innstillingshjelp: Endre varslinger, status, synlighet'
-    };
-
-    const topic = Object.keys(helpTopics).find(key => content.includes(key));
+  private async handleWorkflowRequest(workflowType: string): Promise<AIAgentResponse> {
+    const workflow = WORKFLOWS[workflowType];
     
-    if (topic) {
+    if (!workflow) {
       return {
-        content: helpTopics[topic as keyof typeof helpTopics],
-        action: {
-          type: 'help',
-          payload: {
-            topic,
-            details: this.getHelpDetails(topic)
-          }
-        }
+        content: `Beklager, jeg fant ikke workflow for "${workflowType}". Tilgjengelige workflows: ${Object.keys(WORKFLOWS).join(', ')}`
       };
     }
 
     return {
-      content: `Her er hva jeg kan hjelpe deg med:\n\n${Object.values(helpTopics).join('\n')}`,
+      content: `La meg hjelpe deg med: ${workflow.title}\n${workflow.description}`,
+      action: {
+        type: 'workflow',
+        payload: {
+          workflowType: workflow.id,
+          steps: workflow.steps.map(step => step.description)
+        }
+      }
+    };
+  }
+
+  private async handleHelpRequest(topic: string): Promise<AIAgentResponse> {
+    const helpTopic = HELP_TOPICS[topic];
+    
+    if (!topic) {
+      return {
+        content: `Her er alle tilgjengelige hjelpeemner:\n\n${
+          Object.values(HELP_TOPICS)
+            .map(t => `${t.title}: ${t.description}`)
+            .join('\n')
+        }`
+      };
+    }
+
+    if (!helpTopic) {
+      return {
+        content: `Beklager, jeg fant ikke hjelp for "${topic}". Tilgjengelige emner: ${Object.keys(HELP_TOPICS).join(', ')}`
+      };
+    }
+
+    return {
+      content: `${helpTopic.title}\n${helpTopic.description}`,
       action: {
         type: 'help',
         payload: {
-          requestType: 'general',
-          topics: Object.keys(helpTopics)
+          topic: helpTopic.id,
+          details: helpTopic.details
         }
       }
     };
   }
 
-  private getHelpDetails(topic: string): string[] {
-    const helpDetails: Record<string, string[]> = {
-      profil: [
-        'Gå til profilsiden ved å klikke på profilbildet',
-        'Last opp nytt profilbilde',
-        'Endre brukernavn og andre detaljer',
-        'Lagre endringer'
-      ],
-      chat: [
-        'Velg en venn fra vennelisten',
-        'Start en ny chat',
-        'Send tekst, bilder eller filer',
-        'Bruk ende-til-ende kryptering for sikker chat'
-      ],
-      sikkerhet: [
-        'Alle meldinger er ende-til-ende kryptert',
-        'Bruk privat modus for å være usynlig',
-        'Sett selvdestruerende meldinger',
-        'Aktiver to-faktor autentisering'
-      ],
-      venner: [
-        'Søk etter brukere',
-        'Send venneforespørsel',
-        'Godta eller avslå forespørsler',
-        'Organiser vennelisten'
-      ],
-      innstillinger: [
-        'Endre varslings-innstillinger',
-        'Juster personvern',
-        'Sett status (online, borte, etc.)',
-        'Administrer blokkerte brukere'
-      ]
-    };
-
-    return helpDetails[topic] || ['Ingen detaljer tilgjengelig for dette temaet'];
-  }
-
-  private async handleWorkflowRequest(content: string): Promise<AIAgentResponse> {
-    const workflowType = content.replace('workflow', '').trim();
+  private async handleCommandRequest(commandId: string): Promise<AIAgentResponse> {
+    const command = COMMANDS[commandId];
     
+    if (!commandId) {
+      return {
+        content: `Her er alle tilgjengelige kommandoer:\n\n${
+          Object.values(COMMANDS)
+            .map(c => `${c.title}: ${c.description}`)
+            .join('\n')
+        }`
+      };
+    }
+
+    if (!command) {
+      return {
+        content: `Beklager, jeg fant ikke kommandoen "${commandId}". Tilgjengelige kommandoer: ${Object.keys(COMMANDS).join(', ')}`
+      };
+    }
+
     return {
-      content: `Jeg hjelper deg med workflow for: ${workflowType}. La meg guide deg gjennom prosessen.`,
+      content: `Utfører kommando: ${command.title}\n${command.description}`,
       action: {
-        type: 'workflow',
+        type: 'command',
         payload: {
-          workflowType,
-          steps: this.getWorkflowSteps(workflowType)
+          action: command.action,
+          requiresConfirmation: command.requiresConfirmation
         }
       }
     };
   }
 
-  private getWorkflowSteps(workflowType: string): string[] {
-    const workflows: Record<string, string[]> = {
-      'chat': [
-        'Start en ny chat',
-        'Velg mottaker',
-        'Skriv melding',
-        'Vent på svar'
-      ],
-      'venner': [
-        'Søk etter bruker',
-        'Send venneforespørsel',
-        'Vent på godkjenning',
-        'Start chat når godkjent'
-      ],
-      'profil': [
-        'Gå til profilsiden',
-        'Velg rediger profil',
-        'Oppdater informasjon',
-        'Last opp nytt bilde hvis ønsket',
-        'Lagre endringer'
-      ],
-      'sikkerhet': [
-        'Gå til sikkerhetsinnstillinger',
-        'Aktiver to-faktor autentisering',
-        'Generer sikkerhetsnøkler',
-        'Bekreft innstillinger'
-      ],
-      'gruppe': [
-        'Opprett ny gruppe',
-        'Legg til medlemmer',
-        'Sett gruppebeskrivelse',
-        'Start gruppechat'
-      ]
-    };
+  private isContextualQuestion(content: string): boolean {
+    // Sjekk om spørsmålet matcher noen predefinerte mønstre
+    const patterns = [
+      ...Object.keys(WORKFLOWS).map(w => WORKFLOWS[w].title.toLowerCase()),
+      ...Object.keys(HELP_TOPICS).map(h => HELP_TOPICS[h].title.toLowerCase()),
+      ...Object.keys(COMMANDS).map(c => COMMANDS[c].title.toLowerCase())
+    ];
 
-    return workflows[workflowType] || ['Beklager, fant ikke workflow for: ' + workflowType];
+    return patterns.some(pattern => content.includes(pattern.toLowerCase()));
   }
 
-  private async handleCommandRequest(content: string): Promise<AIAgentResponse> {
-    const command = content.replace('kommando', '').trim();
-    
-    const commands: Record<string, () => AIAgentResponse> = {
-      'status': () => ({
-        content: 'Endrer din online status. Velg mellom: online, borte, opptatt, usynlig',
-        action: { type: 'command', payload: { action: 'changeStatus' } }
-      }),
-      'varsling': () => ({
-        content: 'Administrerer varslingsinnstillinger',
-        action: { type: 'command', payload: { action: 'notifications' } }
-      }),
-      'tema': () => ({
-        content: 'Endre app-tema (lyst/mørkt)',
-        action: { type: 'command', payload: { action: 'theme' } }
-      }),
-      'loggut': () => ({
-        content: 'Logger deg ut av appen',
-        action: { type: 'command', payload: { action: 'logout' } }
-      })
-    };
-
-    return commands[command]?.() || {
-      content: 'Tilgjengelige kommandoer: ' + Object.keys(commands).join(', '),
-      action: { type: 'command', payload: { action: 'help' } }
-    };
-  }
-
-  private async handleProfileRequest(content: string): Promise<AIAgentResponse> {
-    return {
-      content: 'Her er hjelp med profilrelaterte spørsmål. Du kan endre profil ved å:',
-      action: {
-        type: 'workflow',
-        payload: {
-          workflowType: 'profil',
-          steps: this.getWorkflowSteps('profil')
-        }
+  private handleContextualQuestion(content: string): AIAgentResponse {
+    // Finn beste match basert på innhold
+    for (const [id, workflow] of Object.entries(WORKFLOWS)) {
+      if (content.includes(workflow.title.toLowerCase())) {
+        return this.handleWorkflowRequest(id);
       }
-    };
-  }
+    }
 
-  private async handleChatRequest(content: string): Promise<AIAgentResponse> {
-    return {
-      content: 'Her er hjelp med chat-relaterte spørsmål. Du kan:',
-      action: {
-        type: 'workflow',
-        payload: {
-          workflowType: 'chat',
-          steps: this.getWorkflowSteps('chat')
-        }
+    for (const [id, topic] of Object.entries(HELP_TOPICS)) {
+      if (content.includes(topic.title.toLowerCase())) {
+        return this.handleHelpRequest(id);
       }
-    };
-  }
+    }
 
-  private async handleSecurityRequest(content: string): Promise<AIAgentResponse> {
-    return {
-      content: 'Her er informasjon om sikkerhet i SnakkaZ:',
-      action: {
-        type: 'workflow',
-        payload: {
-          workflowType: 'sikkerhet',
-          steps: this.getWorkflowSteps('sikkerhet')
-        }
+    for (const [id, command] of Object.entries(COMMANDS)) {
+      if (content.includes(command.title.toLowerCase())) {
+        return this.handleCommandRequest(id);
       }
+    }
+
+    // Fallback hvis ingen direkte match
+    return {
+      content: "Jeg forstår at du har et spørsmål, men jeg er ikke helt sikker på hva du spør om. " +
+        "Prøv å bruke nøkkelordene 'workflow', 'hjelp' eller 'kommando' for mer spesifikk assistanse."
     };
   }
 }
