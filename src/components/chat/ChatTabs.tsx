@@ -1,7 +1,7 @@
-
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChatGlobal } from '@/components/chat/ChatGlobal';
 import { DirectMessage } from '@/components/chat/friends/DirectMessage';
+import { AIAgentChat } from '@/components/chat/AIAgentChat';
 import { Friend } from '@/components/chat/friends/types';
 import { DecryptedMessage } from '@/types/message';
 import { WebRTCManager } from '@/utils/webrtc';
@@ -60,6 +60,9 @@ export const ChatTabs = ({
           <TabsTrigger value="global" className="text-cybergold-300 data-[state=active]:text-cybergold-100 data-[state=active]:border-b-2 data-[state=active]:border-cybergold-400 rounded-none">
             Global Chat
           </TabsTrigger>
+          <TabsTrigger value="assistant" className="text-cybergold-300 data-[state=active]:text-cybergold-100 data-[state=active]:border-b-2 data-[state=active]:border-cybergold-400 rounded-none">
+            AI Assistant
+          </TabsTrigger>
           {selectedFriend && (
             <TabsTrigger value="direct" className="text-cybergold-300 data-[state=active]:text-cybergold-100 data-[state=active]:border-b-2 data-[state=active]:border-cybergold-400 rounded-none">
               {selectedFriend.profile?.username || 'Direktemelding'}
@@ -90,6 +93,10 @@ export const ChatTabs = ({
           onCancelEdit={onCancelEdit}
           onDeleteMessage={onDeleteMessage}
         />
+      </TabsContent>
+
+      <TabsContent value="assistant" className="h-full flex flex-col mt-0 pt-0">
+        <AIAgentChat currentUserId={currentUserId || ''} />
       </TabsContent>
       
       {selectedFriend && (
