@@ -7,6 +7,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Bot, HelpCircle, Workflow, Command } from "lucide-react";
 import { CommandHandler } from './CommandHandler';
+import { CommandConfirmationDialog } from './ai/CommandConfirmationDialog';
+import { COMMANDS } from './ai/types';
 
 interface AIAgentChatProps {
   currentUserId: string;
@@ -18,6 +20,11 @@ interface WorkflowDisplay {
   currentStep: number;
 }
 
+interface PendingCommand {
+  action: string;
+  payload: any;
+}
+
 export const AIAgentChat = ({ currentUserId }: AIAgentChatProps) => {
   const [messages, setMessages] = useState<DecryptedMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
@@ -25,8 +32,8 @@ export const AIAgentChat = ({ currentUserId }: AIAgentChatProps) => {
   const [activeWorkflow, setActiveWorkflow] = useState<WorkflowDisplay | null>(null);
   const [helpDetails, setHelpDetails] = useState<string[] | null>(null);
   const [activeCommand, setActiveCommand] = useState<{ action: string; payload: any } | null>(null);
+  const [pendingCommand, setPendingCommand] = useState<PendingCommand | null>(null);
 
-  // Vis velkomstmelding når komponenten lastes
   useEffect(() => {
     const welcomeMessage: DecryptedMessage = {
       id: 'welcome',
@@ -54,7 +61,6 @@ export const AIAgentChat = ({ currentUserId }: AIAgentChatProps) => {
 
     setIsLoading(true);
     try {
-      // Lag brukerens melding
       const userMessage: DecryptedMessage = {
         id: Date.now().toString(),
         content: newMessage,
@@ -69,14 +75,11 @@ export const AIAgentChat = ({ currentUserId }: AIAgentChatProps) => {
         is_encrypted: false
       };
 
-      // Legg til brukerens melding
       setMessages(prev => [...prev, userMessage]);
       setNewMessage('');
 
-      // Få svar fra AI agenten
       const response = await aiAgent.processMessage(userMessage);
 
-      // Lag AI agentens svarmelding
       const agentMessage: DecryptedMessage = {
         id: `ai-${Date.now()}`,
         content: response.content,
@@ -91,10 +94,8 @@ export const AIAgentChat = ({ currentUserId }: AIAgentChatProps) => {
         is_encrypted: false
       };
 
-      // Legg til AI agentens svar
       setMessages(prev => [...prev, agentMessage]);
 
-      // Håndter eventuelle actions fra agenten
       if (response.action) {
         handleAgentAction(response.action);
       }
@@ -124,10 +125,17 @@ export const AIAgentChat = ({ currentUserId }: AIAgentChatProps) => {
         }
         break;
       case 'command':
-        setActiveCommand({
-          action: action.payload.action,
-          payload: action.payload
-        });
+        if (action.payload.requiresConfirmation) {
+          setPendingCommand({
+            action: action.payload.action,
+            payload: action.payload
+          });
+        } else {
+          setActiveCommand({
+            action: action.payload.action,
+            payload: action.payload
+          });
+        }
         setActiveWorkflow(null);
         setHelpDetails(null);
         break;
@@ -150,6 +158,17 @@ export const AIAgentChat = ({ currentUserId }: AIAgentChatProps) => {
         currentStep: activeWorkflow.currentStep - 1
       });
     }
+  };
+
+  const handleConfirmCommand = () => {
+    if (pendingCommand) {
+      setActiveCommand(pendingCommand);
+      setPendingCommand(null);
+    }
+  };
+
+  const handleCancelCommand = () => {
+    setPendingCommand(null);
   };
 
   return (
@@ -229,6 +248,17 @@ export const AIAgentChat = ({ currentUserId }: AIAgentChatProps) => {
             action={activeCommand.action}
             payload={activeCommand.payload}
             onComplete={() => setActiveCommand(null)}
+          />
+        )}
+
+        {/* Command Confirmation Dialog */}
+        {pendingCommand && (
+          <CommandConfirmationDialog
+            isOpen={true}
+            title="Bekreft kommando"
+            description={`Er du sikker på at du vil ${COMMANDS[pendingCommand.action]?.description.toLowerCase() || 'utføre denne kommandoen'}?`}
+            onConfirm={handleConfirmCommand}
+            onCancel={handleCancelCommand}
           />
         )}
       </div>
