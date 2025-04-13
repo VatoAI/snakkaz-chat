@@ -1,118 +1,55 @@
 
 import { ProjectProps } from "../ProjectCard";
 
-// Project data
 export const projects: (ProjectProps & { isFeatured?: boolean })[] = [
-  // AI Dash Hub as featured project
-  {
-    title: "AI Dash Hub",
-    description: "AI-powered analytics dashboard with predictive capabilities - The main hub for SnakkaZ.com",
-    previewUrl: "https://ai-dash-hub.lovable.app/",
-    githubUrl: "https://github.com/VatoAI/ai-dash-hub.git",
-    category: "analytics",
-    hasSupabase: true,
-    isFeatured: true
-  },
-  
-  // SnakkaZ Guardian Chat - no longer featured
-  {
-    title: "SnakkaZ Guardian Chat",
-    description: "Secure chat application with advanced encryption and privacy features",
-    previewUrl: "https://snakkaz-guardian-chat.lovable.app/",
-    githubUrl: "https://github.com/VatoAI/snakkaz-guardian-chat.git",
-    category: "chat",
-    hasSupabase: true
-  },
-  
-  // Other Chat Projects
   {
     title: "ChatCipher Assistant",
-    description: "Encrypted messaging platform with AI-powered assistant capabilities",
-    previewUrl: "https://chatcipher-assistant.lovable.app/",
-    githubUrl: "https://github.com/VatoAI/chatcipher-assistant.git",
+    description: "Sikker samtalekryptering med avansert AI-assistent. Chat med ende-til-ende-kryptering og intelligente svar.",
+    previewUrl: "https://chatcipher-assistant.lovable.app",
     category: "chat",
-    hasSupabase: true
+    isFeatured: true,
+    hasSupabase: true,
+    progress: 98
   },
   {
-    title: "Stealthy Convo",
-    description: "Private conversation platform with ephemeral messaging",
-    previewUrl: "https://stealthy-convo.lovable.app/",
+    title: "AI Dash Hub",
+    description: "Interaktivt dashboard for AI-basert datavisualisering og analyse. Integrer flere datakilder og få innsikt i sanntid.",
+    previewUrl: "https://ai-dash-hub.lovable.app",
+    githubUrl: "https://github.com/snakkaz/ai-dash-hub",
+    category: "analytics",
+    hasSupabase: true,
+    progress: 92
+  },
+  {
+    title: "SnakkaZ Guardian Chat",
+    description: "En sikker chat-plattform med ende-til-ende-kryptering. Del meldinger, bilder og filer med full sikkerhet.",
+    previewUrl: "https://snakkaz-chat.lovable.app",
     category: "chat",
-    hasSupabase: false
+    hasSupabase: true,
+    progress: 95
   },
-  
-  // Business Tools
   {
-    title: "MatTilbud",
-    description: "Food deal finder and grocery shopping assistant",
-    previewUrl: "https://mattilbud.lovable.app/",
-    githubUrl: "https://github.com/VatoAI/mattilbud.git",
+    title: "SnakkaZ Business Analyser",
+    description: "Visualiser forretningsdata med kraftige analytiske verktøy og dashboards. Tilgjengelig for team på tvers av organisasjoner.",
+    previewUrl: "https://business-analyzer.lovable.app",
+    githubUrl: "https://github.com/snakkaz/business-analyzer",
     category: "business",
-    hasSupabase: true
+    progress: 78
   },
   {
-    title: "MatTilbudBetter",
-    description: "Enhanced version of the food deal platform with additional features",
-    previewUrl: "https://mattilbudbetter.lovable.app/",
-    githubUrl: "https://github.com/VatoAI/mattilbudbetter.git",
+    title: "SnakkaZ Secure Docs",
+    description: "Dokumentsamarbeid med kryptering og avanserte delingsmuligheter. Perfekt for sensitive forretningsdokumenter.",
+    previewUrl: "https://secure-docs.lovable.app",
     category: "business",
-    hasSupabase: true
+    hasSupabase: true,
+    progress: 65
   },
   {
-    title: "Budget Basket Helper",
-    description: "Budget planning and shopping optimization tool",
-    previewUrl: "https://budget-basket-helper.lovable.app/",
-    githubUrl: "https://github.com/VatoAI/budget-basket-helper.git",
-    category: "business",
-    hasSupabase: false
-  },
-  {
-    title: "Norwegian Business Insights",
-    description: "Business intelligence platform for Norwegian market",
-    previewUrl: "https://norwegian-business-insights.lovable.app/",
-    category: "business",
-    hasSupabase: true
-  },
-  
-  // Analytics Projects
-  {
-    title: "Norsk Crypto Insight",
-    description: "Cryptocurrency analytics platform with Norwegian market focus",
-    previewUrl: "https://norsk-crypto-insight.lovable.app/",
-    githubUrl: "https://github.com/VatoAI/norsk-crypto-insight.git",
+    title: "SnakkaZ Analytics Hub",
+    description: "Samle alle dine datakilder på ett sted for helhetlig analyse og innsikt. Støtter integrering med mange tredjepartstjenester.",
+    previewUrl: "https://analytics-hub.lovable.app",
+    githubUrl: "https://github.com/snakkaz/analytics-hub",
     category: "analytics",
-    hasSupabase: true
-  },
-  {
-    title: "Crypto Perplexity Analytica",
-    description: "Advanced crypto market analysis and prediction tools",
-    previewUrl: "https://crypto-perplexity-analytica.lovable.app/",
-    githubUrl: "https://github.com/VatoAI/crypto-perplexity-analytica.git",
-    category: "analytics",
-    hasSupabase: true
-  },
-  {
-    title: "Info Summit Dash",
-    description: "Information dashboard with visualization and analysis tools",
-    previewUrl: "https://info-summit-dash.lovable.app/",
-    githubUrl: "https://github.com/VatoAI/info-summit-dash.git",
-    category: "analytics",
-    hasSupabase: false
-  },
-  
-  // Infrastructure
-  {
-    title: "Query Gateway Symphony",
-    description: "Advanced query processing and data orchestration service",
-    previewUrl: "https://query-gateway-symphony.lovable.app/",
-    category: "infrastructure",
-    hasSupabase: true
-  },
-  {
-    title: "SecurePeer CryptoService",
-    description: "Secure peer-to-peer cryptographic service platform",
-    previewUrl: "https://securepeer-cryptoservice.lovable.app/",
-    category: "infrastructure",
-    hasSupabase: true
+    progress: 82
   }
 ];

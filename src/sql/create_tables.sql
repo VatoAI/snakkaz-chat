@@ -51,5 +51,42 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- Ensure signaling table has proper indexing
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_indexes
+        WHERE tablename = 'signaling'
+        AND indexname = 'idx_signaling_created_at'
+    ) THEN
+        CREATE INDEX idx_signaling_created_at ON public.signaling (created_at);
+    END IF;
+    
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_indexes
+        WHERE tablename = 'signaling'
+        AND indexname = 'idx_signaling_receiver_id'
+    ) THEN
+        CREATE INDEX idx_signaling_receiver_id ON public.signaling (receiver_id);
+    END IF;
+END
+$$;
+
+-- Ensure user_presence table has proper indexing
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_indexes
+        WHERE tablename = 'user_presence'
+        AND indexname = 'idx_user_presence_last_seen'
+    ) THEN
+        CREATE INDEX idx_user_presence_last_seen ON public.user_presence (last_seen);
+    END IF;
+END
+$$;
+
 -- Kjør check_and_add_columns for å sikre at vi har alle nødvendige kolonner
-SELECT check_and_add_columns('messages', ARRAY['is_edited', 'edited_at', 'is_deleted', 'deleted_at', 'group_id', 'read_at', 'is_delivered']);
+SELECT check_and_add_columns('messages', ARRAY['is_edited', 'edited_at', 'is_deleted', 'deleted_at', 'group_id', 'read_at', 'is_delivered', 'encryption_key', 'iv']);

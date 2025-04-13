@@ -19,7 +19,19 @@ export const CategorySection = ({ title, category, projects }: CategorySectionPr
   
   return (
     <div className="mb-12">
-      <h2 className="text-cyberblue-400 text-2xl font-bold mb-4 border-b border-cyberblue-500/30 pb-2">{title}</h2>
+      <h2 
+        className="text-2xl font-bold mb-4 pb-2"
+        style={{
+          borderImage: 'linear-gradient(90deg, #1a9dff, #d62828) 1',
+          borderBottom: '2px solid',
+          background: 'linear-gradient(90deg, #1a9dff, #ffffff)',
+          WebkitBackgroundClip: 'text',
+          backgroundClip: 'text',
+          color: 'transparent',
+        }}
+      >
+        {title}
+      </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {categoryProjects.map((project) => (
           <ProjectCard key={project.previewUrl} {...project} />

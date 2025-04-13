@@ -12,7 +12,18 @@ export const ProjectGrid = () => {
     <div className="w-full max-w-7xl mx-auto px-4">
       <FeaturedProject project={featuredProject} />
       
-      <h1 className="text-3xl font-bold text-center text-cyberblue-500 mb-8">Lovable Prosjekter</h1>
+      <h1 
+        className="text-3xl font-bold text-center mb-8"
+        style={{
+          background: 'linear-gradient(90deg, #1a9dff 0%, #ffffff 50%, #d62828 100%)',
+          WebkitBackgroundClip: 'text',
+          backgroundClip: 'text',
+          color: 'transparent',
+          textShadow: '-5px 0 15px rgba(26,157,255,0.4), 5px 0 15px rgba(214,40,40,0.4)',
+        }}
+      >
+        Lovable Prosjekter
+      </h1>
       
       <CategorySection title="Kommunikasjon" category="chat" projects={projects} />
       <CategorySection title="Forretningsverktøy" category="business" projects={projects} />
@@ -22,9 +33,14 @@ export const ProjectGrid = () => {
       <div className="mt-10 text-center">
         <a 
           href="/chat"
-          className="inline-block bg-cyberblue-500 hover:bg-cyberblue-600 text-cyberdark-950 px-6 py-3 text-lg font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
+          className="inline-block px-6 py-3 text-lg font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
+          style={{
+            background: 'linear-gradient(90deg, #1a9dff 0%, #3b82f6 50%, #d62828 100%)',
+            color: 'white',
+            boxShadow: '0 0 15px rgba(26,157,255,0.4), 0 0 15px rgba(214,40,40,0.4)'
+          }}
         >
-          Lokal chat versjon
+          Start SnakkaZ
         </a>
       </div>
     </div>

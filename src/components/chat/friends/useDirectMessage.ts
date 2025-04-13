@@ -20,12 +20,14 @@ export const useDirectMessage = (
   const [usingServerFallback, setUsingServerFallback] = useState(false);
   const [connectionAttempts, setConnectionAttempts] = useState(0);
   const [sendError, setSendError] = useState<string | null>(null);
+  const [isManualServerMode, setIsManualServerMode] = useState(false);
   const { toast } = useToast();
   
   const friendId = friend.user_id === currentUserId ? friend.friend_id : friend.user_id;
   const statusCheckInterval = useRef<NodeJS.Timeout | null>(null);
   const connectionTimeout = useRef<NodeJS.Timeout | null>(null);
   const errorResetTimeout = useRef<NodeJS.Timeout | null>(null);
+  const maxReconnectAttempts = 3;
 
   useEffect(() => {
     if (!webRTCManager || !friendId) return;
@@ -51,6 +53,17 @@ export const useDirectMessage = (
       }
     }, 10000);
 
+    // Check connection health and attempt to reconnect if needed
+    const healthCheck = setInterval(() => {
+      if (webRTCManager && friendId && !isManualServerMode) {
+        const connState = webRTCManager.getConnectionState(friendId);
+        if (connState !== 'connected' && connectionAttempts < maxReconnectAttempts) {
+          console.log('Connection health check: attempting reconnect');
+          handleReconnect();
+        }
+      }
+    }, 30000); // Check every 30 seconds
+
     return () => {
       if (statusCheckInterval.current) {
         clearInterval(statusCheckInterval.current);
@@ -61,8 +74,9 @@ export const useDirectMessage = (
       if (errorResetTimeout.current) {
         clearTimeout(errorResetTimeout.current);
       }
+      clearInterval(healthCheck);
     };
-  }, [webRTCManager, friendId, toast]);
+  }, [webRTCManager, friendId, toast, connectionAttempts]);
 
   const updateConnectionStatus = () => {
     if (!webRTCManager || !friendId) return;
@@ -108,24 +122,28 @@ export const useDirectMessage = (
         is_encrypted: true
       };
       
-      if (webRTCManager && !usingServerFallback) {
+      // Try WebRTC first if not in manual server mode
+      if (webRTCManager && !isManualServerMode && !usingServerFallback) {
         try {
           const connState = webRTCManager.getConnectionState(friendId);
           const dataState = webRTCManager.getDataChannelState(friendId);
           
           if (connState === 'connected' && dataState === 'open') {
             await webRTCManager.sendDirectMessage(friendId, newMessage);
+            console.log('Message sent via WebRTC');
             messageDelivered = true;
           } else {
             console.log(`Connection not ready (${connState}/${dataState}), trying to reconnect`);
             await webRTCManager.attemptReconnect(friendId);
             await new Promise(resolve => setTimeout(resolve, 1000));
+            
             const newConnState = webRTCManager.getConnectionState(friendId);
             const newDataState = webRTCManager.getDataChannelState(friendId);
             
             if (newConnState === 'connected' && newDataState === 'open') {
               await webRTCManager.sendDirectMessage(friendId, newMessage);
               messageDelivered = true;
+              console.log('Message sent via WebRTC after reconnection');
             } else {
               console.log(`Reconnect failed (${newConnState}/${newDataState}), falling back to server`);
               setUsingServerFallback(true);
@@ -137,6 +155,7 @@ export const useDirectMessage = (
         }
       }
       
+      // Server fallback if WebRTC fails or is disabled
       if (!messageDelivered) {
         try {
           // Encrypt message for server transmission
@@ -225,6 +244,17 @@ export const useDirectMessage = (
     }
   };
 
+  const toggleServerMode = () => {
+    setIsManualServerMode(prev => !prev);
+    setUsingServerFallback(prev => !prev);
+    toast({
+      title: isManualServerMode ? "Direkte modus aktivert" : "Server modus aktivert",
+      description: isManualServerMode 
+        ? "Forsøker å bruke direkte tilkobling når mulig." 
+        : "Meldinger sendes via server med ende-til-ende-kryptering.",
+    });
+  };
+
   return {
     newMessage,
     setNewMessage,
@@ -234,7 +264,9 @@ export const useDirectMessage = (
     usingServerFallback,
     connectionAttempts,
     sendError,
+    isManualServerMode,
     handleSendMessage,
-    handleReconnect
+    handleReconnect,
+    toggleServerMode
   };
 };

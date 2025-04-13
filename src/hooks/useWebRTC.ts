@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { WebRTCManager } from "@/utils/webrtc";
 import { supabase } from "@/integrations/supabase/client";
 import { REALTIME_SUBSCRIBE_STATES } from '@supabase/supabase-js';
+import { useToast } from "@/components/ui/use-toast";
 
 const handleChannelSubscription = (
   status: string,
@@ -20,8 +21,6 @@ const handleChannelSubscription = (
       user_id: userId,
       online_at: new Date().toISOString(),
     });
-    
-    // No need to call sendPendingIceCandidates as it's not part of our WebRTCManager interface
   }
   
   if (
@@ -38,11 +37,31 @@ export const useWebRTC = () => {
   const [manager, setManager] = useState<WebRTCManager | null>(null);
   const [status, setStatus] = useState<'initializing' | 'ready' | 'error'>('initializing');
   const signalChannel = useRef<any>(null);
+  const { toast } = useToast();
   
   const setupWebRTC = useCallback(async (userId: string, onReady?: () => void) => {
     try {
       console.log("Setting up WebRTC for user:", userId);
       setStatus('initializing');
+      
+      // Verify Supabase connection first
+      try {
+        const { data, error } = await supabase
+          .from('health')
+          .select('status')
+          .limit(1);
+          
+        if (error) {
+          console.error("Supabase connection error:", error);
+          toast({
+            title: "Connection error",
+            description: "Could not establish connection to the server. WebRTC features may be limited.",
+            variant: "destructive",
+          });
+        }
+      } catch (connectionError) {
+        console.error("Failed to check Supabase connection:", connectionError);
+      }
       
       // Create WebRTC manager
       const webRTCManager = new WebRTCManager(userId);
@@ -99,17 +118,19 @@ export const useWebRTC = () => {
       
       signalChannel.current = channel;
       
-      // Set up signal sending function - using available methods
-      // Since setSignalSender doesn't exist, we'll handle signals differently
-      
       setStatus('ready');
       if (onReady) onReady();
       
     } catch (error) {
       console.error("Error setting up WebRTC:", error);
       setStatus('error');
+      toast({
+        title: "WebRTC Setup Error",
+        description: "Failed to set up WebRTC connections. Please try refreshing the page.",
+        variant: "destructive",
+      });
     }
-  }, []);
+  }, [toast]);
   
   // Clean up on unmount
   useEffect(() => {
@@ -123,6 +144,23 @@ export const useWebRTC = () => {
       }
     };
   }, [manager]);
+  
+  // Periodic health check for WebRTC
+  useEffect(() => {
+    if (manager && status === 'ready') {
+      const checkInterval = setInterval(() => {
+        try {
+          // Get the manager status and log it
+          const isReady = manager !== null;
+          console.log(`WebRTC manager health check: ${isReady ? 'OK' : 'Not Ready'}`);
+        } catch (err) {
+          console.error('WebRTC health check error:', err);
+        }
+      }, 30000); // Check every 30 seconds
+      
+      return () => clearInterval(checkInterval);
+    }
+  }, [manager, status]);
   
   return {
     manager,

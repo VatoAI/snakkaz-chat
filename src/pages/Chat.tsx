@@ -6,6 +6,7 @@ import { ChatTabs } from "@/components/chat/ChatTabs";
 import { useAuthState } from "@/hooks/useAuthState";
 import { useWebRTC } from "@/hooks/useWebRTC";
 import { useToast } from "@/components/ui/use-toast";
+import { UserStatus } from "@/types/presence";
 
 const Chat = () => {
   const { userId, checkAuth } = useAuthState();
@@ -23,7 +24,7 @@ const Chat = () => {
   const [editingMessage, setEditingMessage] = useState(null);
   const [userProfiles, setUserProfiles] = useState({});
   const [userPresence, setUserPresence] = useState({});
-  const [currentStatus, setCurrentStatus] = useState('online');
+  const [currentStatus, setCurrentStatus] = useState<UserStatus>('online');
 
   // Check authentication when component mounts
   useEffect(() => {

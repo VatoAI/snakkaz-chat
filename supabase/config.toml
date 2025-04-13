@@ -1,15 +1,2 @@
 
 project_id = "wqpoozpbceucynsojmbk"
-
-[api]
-enabled = true
-port = 54321
-schemas = ["public", "storage", "graphql_public"]
-
-[db]
-port = 54322
-# migrations_dir = "supabase/migrations"
-
-[studio]
-enabled = true
-port = 54323

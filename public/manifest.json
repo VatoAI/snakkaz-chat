@@ -1,21 +1,75 @@
+
 {
-    "name": "SnakkaZ",
-    "short_name": "SnakkaZ",
-    "start_url": "/",
-    "display": "standalone",
-    "background_color": "#ffffff",
-    "theme_color": "#d62828",
-    "icons": [
-      {
-        "src": "/icons/snakkaz-icon-192.png",
-        "sizes": "192x192",
-        "type": "image/png"
-      },
-      {
-        "src": "/icons/snakkaz-icon-512.png",
-        "sizes": "512x512",
-        "type": "image/png"
-      }
-    ]
-  }
-  
+  "name": "SnakkaZ Hub",
+  "short_name": "SnakkaZ",
+  "description": "SnakkaZ - Den Sikreste Chatten i Verden",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#d62828",
+  "orientation": "portrait-primary",
+  "dir": "ltr",
+  "lang": "nb-NO",
+  "scope": "/",
+  "id": "app.snakkaz.hub",
+  "categories": ["social", "communication", "security"],
+  "screenshots": [
+    {
+      "src": "/screenshots/chat-screen.png",
+      "sizes": "1280x720",
+      "type": "image/png"
+    }
+  ],
+  "icons": [
+    {
+      "src": "/icons/snakkaz-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/snakkaz-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Start Chat",
+      "short_name": "Chat",
+      "url": "/chat",
+      "icons": [
+        {
+          "src": "/icons/snakkaz-icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Profile",
+      "short_name": "Profile",
+      "url": "/profil",
+      "icons": [
+        {
+          "src": "/icons/snakkaz-icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "related_applications": [
+    {
+      "platform": "webapp",
+      "url": "https://snakkaz.app"
+    },
+    {
+      "platform": "windows",
+      "url": "https://snakkaz.app/download/windows"
+    },
+    {
+      "platform": "itunes",
+      "url": "https://snakkaz.app/download/ios"
+    }
+  ],
+  "prefer_related_applications": false
+}

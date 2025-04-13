@@ -1,10 +1,5 @@
 
-import { ProjectGrid } from "./ProjectGrid";
-
+// This component is empty as we're showing ProjectGrid directly in Index.tsx
 export const Links = () => {
-  return (
-    <div className="w-full animate-fadeIn">
-      <ProjectGrid />
-    </div>
-  );
+  return null;
 };
