@@ -20,8 +20,8 @@ const Progress = React.forwardRef<
       className="h-full transition-all duration-300 ease-out"
       style={{ 
         width: `${value || 0}%`,
-        background: 'linear-gradient(90deg, #1a9dff 0%, #3b82f6 50%, #d62828 100%)',
-        boxShadow: '0 0 15px rgba(26,157,255,0.4), 0 0 15px rgba(214,40,40,0.4)'
+        background: 'linear-gradient(90deg, #1a9dff 0%, #3b82f6 50%, #e60000 100%)',
+        boxShadow: '0 0 15px rgba(26,157,255,0.4), 0 0 15px rgba(230,0,0,0.4)'
       }}
     />
   </ProgressPrimitive.Root>
