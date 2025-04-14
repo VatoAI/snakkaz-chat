@@ -1,3 +1,4 @@
+
 /**
  * Media encryption utilities for handling images and audio
  */
@@ -51,17 +52,18 @@ export const encryptMedia = async (
     // Eksporter nøkkelen
     const exportedKey = await window.crypto.subtle.exportKey("jwk", key);
 
+    // Initialize metadata with size
+    const metadata: EncryptedMedia['metadata'] = { size: file.size };
+    
     // Hent metadata hvis det er et bilde
-    let metadata = { size: file.size };
     if (file.type.startsWith('image/')) {
       const img = new Image();
       await new Promise((resolve, reject) => {
         img.onload = () => {
-          metadata = {
-            ...metadata,
-            width: img.width,
-            height: img.height
-          };
+          if (metadata) {
+            metadata.width = img.width;
+            metadata.height = img.height;
+          }
           resolve(null);
         };
         img.onerror = reject;
@@ -73,10 +75,9 @@ export const encryptMedia = async (
       const audio = new Audio();
       await new Promise((resolve, reject) => {
         audio.onloadedmetadata = () => {
-          metadata = {
-            ...metadata,
-            duration: audio.duration
-          };
+          if (metadata) {
+            metadata.duration = audio.duration;
+          }
           resolve(null);
         };
         audio.onerror = reject;

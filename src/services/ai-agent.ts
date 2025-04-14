@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { DecryptedMessage } from "@/types/message";
 import { 
@@ -84,7 +85,7 @@ Spør meg om noe spesifikt eller skriv 'hjelp <emne>' for mer informasjon!`
     return index >= 0 && index < words.length - 1 ? words[index + 1] : '';
   }
 
-  private async handleWorkflowRequest(workflowType: string): Promise<AIAgentResponse> {
+  private handleWorkflowRequest(workflowType: string): AIAgentResponse {
     const workflow = WORKFLOWS[workflowType];
     
     if (!workflow) {
@@ -105,7 +106,7 @@ Spør meg om noe spesifikt eller skriv 'hjelp <emne>' for mer informasjon!`
     };
   }
 
-  private async handleHelpRequest(topic: string): Promise<AIAgentResponse> {
+  private handleHelpRequest(topic: string): AIAgentResponse {
     const helpTopic = HELP_TOPICS[topic];
     
     if (!topic) {
@@ -136,7 +137,7 @@ Spør meg om noe spesifikt eller skriv 'hjelp <emne>' for mer informasjon!`
     };
   }
 
-  private async handleCommandRequest(commandId: string): Promise<AIAgentResponse> {
+  private handleCommandRequest(commandId: string): AIAgentResponse {
     const command = COMMANDS[commandId];
     
     if (!commandId) {
