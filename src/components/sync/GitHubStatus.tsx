@@ -1,7 +1,6 @@
 
 import { useState, useEffect } from "react";
 import { Github, GitCommit, GitBranch, GitPullRequest, Clock, User } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 
 interface CommitInfo {
   id: string;
@@ -60,47 +59,14 @@ export const GitHubStatus = () => {
     
     simulateCommits();
     
-    // Set up a webhook listener on Supabase for GitHub events
-    const setupGitHubWebhookListener = async () => {
-      try {
-        // Check if the github_events table exists
-        const { error } = await supabase
-          .from('github_events')
-          .select('count')
-          .limit(1)
-          .single();
-        
-        // If the table exists, subscribe to changes
-        if (!error) {
-          const channel = supabase.channel('github-events')
-            .on('postgres_changes', 
-              { event: 'INSERT', schema: 'public', table: 'github_events' }, 
-              (payload) => {
-                const gitEvent = payload.new as any;
-                
-                // Handle new commit events
-                if (gitEvent && gitEvent.type === 'push') {
-                  const newCommit: CommitInfo = {
-                    id: gitEvent.commit_id || "unknown",
-                    message: gitEvent.commit_message || "No message",
-                    author: gitEvent.author || "unknown",
-                    date: gitEvent.created_at || new Date().toISOString(),
-                    branch: gitEvent.branch || "main"
-                  };
-                  
-                  setCommits(prev => [newCommit, ...prev.slice(0, 3)]);
-                }
-              }
-            )
-            .subscribe();
-            
-          return () => {
-            supabase.removeChannel(channel);
-          };
-        }
-      } catch (err) {
-        console.error("Error setting up GitHub webhook listener:", err);
-      }
+    // Set up a webhook listener simulation
+    const setupGitHubWebhookListener = () => {
+      console.log("Setting up GitHub webhook listener simulation");
+      
+      // We're just simulating webhook events with setInterval
+      return () => {
+        console.log("Cleaning up GitHub webhook listener simulation");
+      };
     };
     
     setupGitHubWebhookListener();

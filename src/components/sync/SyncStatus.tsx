@@ -2,14 +2,11 @@
 import { useState, useEffect } from "react";
 import { CheckCircle, AlertCircle, RefreshCw, Clock, Github, Database, Globe } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
-import { supabase } from "@/integrations/supabase/client";
-
-type SyncType = 'github' | 'supabase' | 'domain';
-type SyncStatus = 'idle' | 'syncing' | 'success' | 'error';
+import { useSyncStatus, SyncType, SyncStatus as SyncStatusType } from "@/hooks/useSyncStatus";
 
 interface SyncItemProps {
   type: SyncType;
-  status: SyncStatus;
+  status: SyncStatusType;
   lastSynced: string | null;
   progress?: number;
   errorMessage?: string;
@@ -97,6 +94,36 @@ export const SyncStatus = () => {
     { type: 'domain', status: 'idle', lastSynced: null }
   ]);
 
+  // Get sync events from our hook
+  const { events } = useSyncStatus();
+
+  // Update sync items based on events
+  useEffect(() => {
+    if (events.length > 0) {
+      // Create a map of the latest event for each type
+      const latestEvents = events.reduce((acc, event) => {
+        if (!acc[event.sync_type] || new Date(event.started_at) > new Date(acc[event.sync_type].started_at)) {
+          acc[event.sync_type] = event;
+        }
+        return acc;
+      }, {} as Record<SyncType, any>);
+      
+      // Update sync items with latest status
+      setSyncItems(prev => prev.map(item => {
+        const latestEvent = latestEvents[item.type];
+        if (latestEvent) {
+          return {
+            ...item,
+            status: latestEvent.status,
+            lastSynced: latestEvent.completed_at,
+            errorMessage: latestEvent.error_message
+          };
+        }
+        return item;
+      }));
+    }
+  }, [events]);
+
   // Simulate a sync process for demonstration
   const simulateSync = (type: SyncType) => {
     // Set status to syncing with 0 progress
@@ -140,55 +167,6 @@ export const SyncStatus = () => {
 
     return () => clearInterval(interval);
   };
-
-  // Set up realtime monitoring with Supabase
-  useEffect(() => {
-    // Check for webhook events via Supabase
-    const setupRealtimeMonitoring = async () => {
-      try {
-        // Check if the sync_events table exists
-        const { error } = await supabase
-          .from('sync_events')
-          .select('count')
-          .limit(1)
-          .single();
-        
-        // If the table exists, subscribe to changes
-        if (!error) {
-          const channel = supabase.channel('sync-events')
-            .on('postgres_changes', 
-              { event: 'INSERT', schema: 'public', table: 'sync_events' }, 
-              (payload) => {
-                const syncEvent = payload.new as any;
-                
-                // Update sync status based on event
-                if (syncEvent && syncEvent.sync_type) {
-                  setSyncItems(prev => prev.map(item => 
-                    item.type === syncEvent.sync_type 
-                      ? { 
-                          ...item, 
-                          status: syncEvent.status,
-                          lastSynced: syncEvent.completed_at,
-                          errorMessage: syncEvent.error_message
-                        } 
-                      : item
-                  ));
-                }
-              }
-            )
-            .subscribe();
-            
-          return () => {
-            supabase.removeChannel(channel);
-          };
-        }
-      } catch (err) {
-        console.error("Error setting up realtime monitoring:", err);
-      }
-    };
-    
-    setupRealtimeMonitoring();
-  }, []);
 
   // For demonstration purposes, simulate syncs at different intervals
   useEffect(() => {

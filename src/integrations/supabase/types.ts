@@ -9,6 +9,33 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      domain_health: {
+        Row: {
+          checked_at: string
+          domain: string
+          id: string
+          response_time: number | null
+          status: string
+          uptime_percentage: number | null
+        }
+        Insert: {
+          checked_at?: string
+          domain: string
+          id?: string
+          response_time?: number | null
+          status: string
+          uptime_percentage?: number | null
+        }
+        Update: {
+          checked_at?: string
+          domain?: string
+          id?: string
+          response_time?: number | null
+          status?: string
+          uptime_percentage?: number | null
+        }
+        Relationships: []
+      }
       friendships: {
         Row: {
           created_at: string
@@ -33,6 +60,42 @@ export type Database = {
           status?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      github_events: {
+        Row: {
+          author: string | null
+          branch: string | null
+          commit_id: string | null
+          commit_message: string | null
+          created_at: string
+          id: string
+          payload: Json | null
+          repository: string | null
+          type: string
+        }
+        Insert: {
+          author?: string | null
+          branch?: string | null
+          commit_id?: string | null
+          commit_message?: string | null
+          created_at?: string
+          id?: string
+          payload?: Json | null
+          repository?: string | null
+          type: string
+        }
+        Update: {
+          author?: string | null
+          branch?: string | null
+          commit_id?: string | null
+          commit_message?: string | null
+          created_at?: string
+          id?: string
+          payload?: Json | null
+          repository?: string | null
+          type?: string
         }
         Relationships: []
       }
@@ -173,6 +236,36 @@ export type Database = {
           receiver_id?: string
           sender_id?: string
           signal_data?: Json
+        }
+        Relationships: []
+      }
+      sync_events: {
+        Row: {
+          completed_at: string | null
+          error_message: string | null
+          id: string
+          metadata: Json | null
+          started_at: string
+          status: string
+          sync_type: string
+        }
+        Insert: {
+          completed_at?: string | null
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          started_at?: string
+          status: string
+          sync_type: string
+        }
+        Update: {
+          completed_at?: string | null
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          started_at?: string
+          status?: string
+          sync_type?: string
         }
         Relationships: []
       }
