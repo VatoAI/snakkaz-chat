@@ -71,7 +71,7 @@ export const ProjectCard = ({ title, description, previewUrl, githubUrl, categor
   };
   
   const handleCardClick = () => {
-    if (title === "SnakkaZ Guardian Chat" || title === "ChatCipher Assistant") {
+    if (title === "SnakkaZ Guardian Chat" || title === "ChatCipher Assistant" || title === "SnakkaZ") {
       navigate('/chat');
     } else if (previewUrl) {
       window.open(previewUrl, '_blank', 'noopener,noreferrer');

@@ -6,6 +6,10 @@ export const Header = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   
+  const handleChatRedirect = () => {
+    navigate('/chat');
+  };
+  
   return (
     <div className="text-center mb-8 md:mb-12">
       <div className="relative">
@@ -50,7 +54,7 @@ export const Header = () => {
       {/* Updated button with red/blue styling */}
       <div className="flex flex-col items-center">
         <button 
-          onClick={() => navigate('/chat')}
+          onClick={handleChatRedirect}
           className="px-8 py-4 text-white rounded-lg font-medium text-lg transition-all duration-300 transform hover:scale-105"
           style={{
             background: 'linear-gradient(90deg, #1a9dff 0%, #3b82f6 50%, #d62828 100%)',

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -134,13 +133,10 @@ export const FeaturedProject = ({ project }: FeaturedProjectProps) => {
             <Button 
               variant="outline" 
               className="border-cyberblue-500/70 text-cyberblue-400 hover:bg-cyberblue-900/50 h-auto py-2"
-              onClick={(e) => {
-                e.preventDefault();
-                window.open(project.previewUrl, '_blank', 'noopener,noreferrer');
-              }}
+              onClick={handleChatRedirect}
             >
               <ExternalLink size={16} className="mr-2" />
-              Se Live Preview
+              Åpne Chat
             </Button>
           </div>
           
