@@ -1,9 +1,9 @@
-
 import { Header } from "@/components/index/Header";
 import { Footer } from "@/components/index/Footer";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ProjectGrid } from "@/components/index/ProjectGrid";
 import { ProgressSection } from "@/components/index/ProgressSection";
+import { SyncDashboard } from "@/components/sync/SyncDashboard";
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -18,19 +18,15 @@ const Index = () => {
   const [showInstallTip, setShowInstallTip] = useState(false);
   const { toast } = useToast();
 
-  // Handle PWA install events
   useEffect(() => {
-    // Check if running as installed PWA
     if (window.matchMedia('(display-mode: standalone)').matches) {
       setIsPWAInstalled(true);
     }
     
-    // Save the install prompt event
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setInstallPrompt(e);
       
-      // Show install tip after 5 seconds if not already installed
       setTimeout(() => {
         if (!isPWAInstalled) {
           setShowInstallTip(true);
@@ -40,20 +36,15 @@ const Index = () => {
     
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     
-    // Clean up
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
   }, [isPWAInstalled]);
   
-  // Handle install for browser/desktop
   const handleInstallClick = async () => {
     if (installPrompt) {
       try {
-        // Show the install prompt
         await installPrompt.prompt();
-        
-        // Wait for the user to respond to the prompt
         const choiceResult = await installPrompt.userChoice;
         
         if (choiceResult.outcome === 'accepted') {
@@ -64,7 +55,6 @@ const Index = () => {
           setIsPWAInstalled(true);
         }
         
-        // Reset the installPrompt - it can only be used once
         setInstallPrompt(null);
       } catch (err) {
         console.error('Installation error:', err);
@@ -79,30 +69,25 @@ const Index = () => {
     setShowDownloadDialog(false);
   };
   
-  // iOS Safari-specific instructions
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
 
   return (
     <div className="min-h-screen bg-cyberdark-950 overflow-x-hidden">
       <div className="relative min-h-screen flex flex-col p-2 md:p-4">
         <div className="absolute inset-0 overflow-hidden">
-          {/* Enhanced background effects with red/blue gradient */}
           <div className="absolute top-0 left-1/4 w-72 md:w-96 h-72 md:h-96 bg-gradient-to-r from-cyberblue-500/30 to-transparent rounded-full filter blur-3xl animate-pulse-slow"></div>
           <div className="absolute bottom-0 right-1/4 w-72 md:w-96 h-72 md:h-96 bg-gradient-to-l from-red-500/30 to-transparent rounded-full filter blur-3xl animate-pulse-slow delay-200"></div>
-          {/* Additional subtle light effects */}
           <div className="absolute top-1/3 right-1/4 w-48 h-48 bg-cyberblue-400/10 rounded-full filter blur-2xl animate-pulse-slow delay-300"></div>
           <div className="absolute bottom-1/4 left-1/3 w-40 h-40 bg-red-300/10 rounded-full filter blur-xl animate-pulse-slow delay-500"></div>
-          
-          {/* Gradient background overlay for white areas */}
           <div className="absolute inset-0 bg-gradient-to-br from-cyberblue-900/5 via-transparent to-red-900/5 pointer-events-none"></div>
         </div>
 
         <div className="container mx-auto px-2 md:px-4 relative z-10 flex-grow">
           <Header />
           <ProjectGrid />
+          <SyncDashboard />
           <ProgressSection />
 
-          {/* Download app button - only show if not already installed */}
           {!isPWAInstalled && (
             <div className="fixed bottom-6 right-6 z-50">
               <Button
@@ -118,7 +103,6 @@ const Index = () => {
             </div>
           )}
           
-          {/* Installation tip toast */}
           {showInstallTip && (
             <div className="fixed bottom-24 right-6 z-50 max-w-xs bg-cyberdark-800 p-4 rounded-lg shadow-lg border border-cyberblue-500/30 animate-fade-in">
               <button 
@@ -152,7 +136,6 @@ const Index = () => {
 
       <Footer />
 
-      {/* Download App Dialog */}
       <Dialog open={showDownloadDialog} onOpenChange={setShowDownloadDialog}>
         <DialogContent className="bg-cyberdark-900 border-2 sm:max-w-md"
           style={{ borderImage: "linear-gradient(90deg, #1a9dff, #d62828) 1" }}
