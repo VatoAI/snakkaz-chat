@@ -1,5 +1,6 @@
+
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -18,12 +19,19 @@
     <link rel="apple-touch-icon" href="/icons/snakkaz-icon-192.png" />
 
     <!-- Tema for nettleser + installasjon -->
-    <meta name="theme-color" content="#d62828" />
+    <meta name="theme-color" content="#0a0a0a" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     
     <!-- CSS for Modal -->
     <style>
+      html, body {
+        background-color: #0a0a0a;
+        color: white;
+        margin: 0;
+        padding: 0;
+      }
+      
       #installModal {
         display: none;
         position: fixed;
@@ -31,18 +39,20 @@
         left: 0;
         width: 100%;
         height: 100%;
-        background-color: rgba(0, 0, 0, 0.5);
+        background-color: rgba(0, 0, 0, 0.7);
         z-index: 1000;
         align-items: center;
         justify-content: center;
       }
 
       #installModalContent {
-        background-color: white;
+        background-color: #1a1a1a;
+        color: white;
         padding: 20px;
         border-radius: 10px;
         max-width: 400px;
         text-align: center;
+        border: 1px solid rgba(26,157,255,0.3);
       }
 
       #installModal button {

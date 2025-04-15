@@ -79,7 +79,7 @@ export const GitHubStatus = () => {
   
   if (loading) {
     return (
-      <div className="cyber-bg p-4 rounded-lg border border-gray-800 animate-pulse">
+      <div className="cyber-bg p-4 rounded-lg border border-gray-800 animate-pulse bg-cyberdark-900/90">
         <div className="flex items-center mb-4">
           <div className="bg-cyberdark-800 p-2 rounded-md">
             <Github size={20} className="text-cyberblue-400" />
@@ -97,7 +97,7 @@ export const GitHubStatus = () => {
   }
   
   return (
-    <div className="cyber-bg p-4 rounded-lg border border-gray-800">
+    <div className="cyber-bg p-4 rounded-lg border border-gray-800 bg-cyberdark-900/90">
       <h2 className="text-lg font-semibold mb-4 flex items-center">
         <Github size={20} className="mr-2 text-white" />
         <span className="cyber-text">Recent GitHub Activity</span>

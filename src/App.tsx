@@ -12,18 +12,20 @@ import "./App.css";
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/chat" element={<Chat />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/profil" element={<Profile />} />
-        <Route path="/info" element={<Info />} />
-        <Route path="/admin" element={<Admin />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-      <Toaster />
-    </Router>
+    <div className="bg-cyberdark-950 min-h-screen text-white">
+      <Router>
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/chat" element={<Chat />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/profil" element={<Profile />} />
+          <Route path="/info" element={<Info />} />
+          <Route path="/admin" element={<Admin />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+        <Toaster />
+      </Router>
+    </div>
   );
 }
 
