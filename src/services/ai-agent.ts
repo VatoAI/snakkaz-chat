@@ -4,6 +4,7 @@ import { AIAgentResponse } from "./ai/types";
 import { extractWorkflowType, extractHelpTopic, extractCommand } from "./ai/content-extractors";
 import { handleWorkflowRequest, handleHelpRequest, handleCommandRequest } from "./ai/request-handlers";
 import { handleContextualQuestion, isContextualQuestion } from "./ai/contextual-handler";
+import { WORKFLOWS, HELP_TOPICS, COMMANDS } from "@/components/chat/ai/types";
 
 class AIAgent {
   private static instance: AIAgent;

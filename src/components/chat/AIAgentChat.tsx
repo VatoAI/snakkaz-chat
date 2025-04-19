@@ -26,7 +26,7 @@ export const AIAgentChat = ({ currentUserId }: AIAgentChatProps) => {
     handleNextStep,
     handlePrevStep,
     handleConfirmCommand,
-    handleCancelCommand
+    handleCancelCommand,
   } = useAIChat(currentUserId);
 
   return (
@@ -55,7 +55,7 @@ export const AIAgentChat = ({ currentUserId }: AIAgentChatProps) => {
           <CommandHandler
             action={activeCommand.action}
             payload={activeCommand.payload}
-            onComplete={() => setActiveCommand(null)}
+            onComplete={() => {}}
           />
         )}
 

@@ -3,7 +3,7 @@ import { WORKFLOWS, HELP_TOPICS, COMMANDS } from "@/components/chat/ai/types";
 import { AIAgentResponse } from "./types";
 import { handleWorkflowRequest, handleHelpRequest, handleCommandRequest } from "./request-handlers";
 
-const isContextualQuestion = (content: string): boolean => {
+export const isContextualQuestion = (content: string): boolean => {
   const patterns = [
     ...Object.keys(WORKFLOWS).map(w => WORKFLOWS[w].title.toLowerCase()),
     ...Object.keys(HELP_TOPICS).map(h => HELP_TOPICS[h].title.toLowerCase()),
@@ -38,5 +38,3 @@ export const handleContextualQuestion = (content: string): AIAgentResponse => {
       "Prøv å bruke nøkkelordene 'workflow', 'hjelp' eller 'kommando' for mer spesifikk assistanse."
   };
 };
-
-export { isContextualQuestion };
