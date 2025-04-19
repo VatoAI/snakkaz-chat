@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -84,7 +83,6 @@ export default {
           800: "#4d3a00",
           900: "#1a1300",
         },
-        // Add dedicated cyberred color palette
         cyberred: {
           50: "#ffe6e6",
           100: "#ffb3b3",
@@ -101,7 +99,6 @@ export default {
       boxShadow: {
         'neon-blue': '0 0 5px theme(colors.cyberblue.400), 0 0 20px theme(colors.cyberblue.500)',
         'neon-gold': '0 0 5px theme(colors.cybergold.400), 0 0 20px theme(colors.cybergold.500)',
-        // Enhanced dual-color glow effects
         'neon-red': '0 0 5px theme(colors.cyberred.400), 0 0 20px theme(colors.cyberred.500)',
         'neon-dual': '0 0 10px theme(colors.cyberblue.400), 0 0 20px theme(colors.cyberred.500)',
         'neon-intense': '0 0 15px theme(colors.cyberblue.400), 0 0 25px theme(colors.cyberred.400), 0 0 35px rgba(255,255,255,0.2)',
@@ -123,7 +120,6 @@ export default {
           '0%, 100%': { boxShadow: '0 0 5px theme(colors.cyberblue.400), 0 0 20px theme(colors.cyberblue.500)' },
           '50%': { boxShadow: '0 0 10px theme(colors.cyberblue.400), 0 0 30px theme(colors.cyberblue.500)' },
         },
-        // Enhanced dual-color glow animation
         'dual-glow': {
           '0%': { boxShadow: '0 0 5px theme(colors.cyberblue.400), 0 0 15px theme(colors.cyberblue.500)' },
           '50%': { boxShadow: '0 0 5px theme(colors.cyberred.400), 0 0 15px theme(colors.cyberred.500)' },
@@ -143,7 +139,6 @@ export default {
         "accordion-up": "accordion-up 0.2s ease-out",
         'pulse-slow': 'pulse 3s infinite',
         'glow': 'glow 2s infinite',
-        // New dual-color animation
         'dual-glow': 'dual-glow 4s infinite',
         'spin-slow': 'spin-slow 10s linear infinite',
         'gradient': 'gradient 8s ease infinite',
