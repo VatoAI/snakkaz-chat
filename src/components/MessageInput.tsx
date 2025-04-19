@@ -80,7 +80,7 @@ export const MessageInput = ({
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder={receiverId ? "Skriv en privat melding..." : "Skriv din melding..."}
-            className="flex-1 text-white placeholder:text-cybergold-300/50"
+            className="flex-1 text-white"
             disabled={isLoading || isRecording}
           />
           
