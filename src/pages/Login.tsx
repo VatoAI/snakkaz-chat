@@ -2,21 +2,18 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { LoginLayout } from '@/components/auth/LoginLayout';
+import { LoginForm } from '@/components/auth/LoginForm';
 
 const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const validateForm = () => {
+  const validateForm = (email: string, password: string) => {
     let isValid = true;
     setEmailError('');
     setPasswordError('');
@@ -40,10 +37,8 @@ const Login = () => {
     return isValid;
   };
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!validateForm()) {
+  const handleLogin = async (email: string, password: string) => {
+    if (!validateForm(email, password)) {
       return;
     }
 
@@ -99,26 +94,14 @@ const Login = () => {
     }
   };
 
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!validateForm()) {
+  const handleSignup = async (email: string, password: string) => {
+    if (!validateForm(email, password)) {
       return;
     }
 
     setIsLoading(true);
 
     try {
-      if (password.length < 6) {
-        toast({
-          title: "Ugyldig passord",
-          description: "Passordet må være minst 6 tegn langt.",
-          variant: "destructive",
-        });
-        setIsLoading(false);
-        return;
-      }
-
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -165,100 +148,15 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-cyberdark-950 flex items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-8">
-        <div className="text-center space-y-2">
-          <h1 className="text-4xl font-bold text-cybergold-400">
-            SnakkaZ
-          </h1>
-          <p className="text-lg text-cybergold-300">
-            Logg inn eller registrer deg
-          </p>
-        </div>
-
-        <div className="bg-cyberdark-900/80 backdrop-blur-lg rounded-lg border border-cybergold-500/30 shadow-lg p-8">
-          <form onSubmit={handleLogin} className="space-y-6">
-            <div className="space-y-2">
-              <label htmlFor="email" className="block text-sm font-medium text-cybergold-300">
-                E-post
-              </label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  setEmailError('');
-                }}
-                className="bg-cyberdark-800 border-cybergold-500/30 text-cybergold-200 placeholder:text-cyberdark-400 focus:border-cybergold-400 focus:ring-2 focus:ring-cybergold-400/50"
-                placeholder="din@epost.no"
-                autoComplete="email"
-              />
-              {emailError && (
-                <p className="text-sm text-red-400">{emailError}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor="password" className="block text-sm font-medium text-cybergold-300">
-                Passord
-              </label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => {
-                  setPassword(e.target.value);
-                  setPasswordError('');
-                }}
-                className="bg-cyberdark-800 border-cybergold-500/30 text-cybergold-200 placeholder:text-cyberdark-400 focus:border-cybergold-400 focus:ring-2 focus:ring-cybergold-400/50"
-                placeholder="••••••••"
-                autoComplete="current-password"
-              />
-              {passwordError && (
-                <p className="text-sm text-red-400">{passwordError}</p>
-              )}
-              <p className="text-sm text-cybergold-300/70">
-                Minimum 6 tegn
-              </p>
-            </div>
-
-            <div className="space-y-4">
-              <Button
-                type="submit"
-                className="w-full bg-cybergold-500 hover:bg-cybergold-600 text-cyberdark-950 font-medium text-lg h-11 transition-all duration-200"
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <div className="flex items-center justify-center gap-2">
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                    Logger inn...
-                  </div>
-                ) : (
-                  'Logg inn'
-                )}
-              </Button>
-
-              <Button
-                type="button"
-                onClick={handleSignup}
-                className="w-full bg-cyberdark-800 border border-cybergold-500/30 text-cybergold-400 hover:bg-cyberdark-700 font-medium text-lg h-11 transition-all duration-200"
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <div className="flex items-center justify-center gap-2">
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                    Registrerer...
-                  </div>
-                ) : (
-                  'Registrer ny bruker'
-                )}
-              </Button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
+    <LoginLayout>
+      <LoginForm
+        onLogin={handleLogin}
+        onSignup={handleSignup}
+        isLoading={isLoading}
+        emailError={emailError}
+        passwordError={passwordError}
+      />
+    </LoginLayout>
   );
 };
 
