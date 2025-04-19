@@ -1,4 +1,3 @@
-
 import { useRef, FormEvent } from "react";
 import { Input } from "@/components/ui/input";
 import { useMessageInputState } from "./message-input/useMessageInputState";
@@ -44,9 +43,7 @@ export const MessageInput = ({
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const documentInputRef = useRef<HTMLInputElement>(null);
 
-  // Fixed TTL of 24 hours (86400 seconds)
   const defaultTtl = 86400;
-  // Force 24-hour TTL for all messages
   if (ttl !== defaultTtl) {
     setTtl(defaultTtl);
   }
@@ -58,7 +55,6 @@ export const MessageInput = ({
     onSubmit(e, selectedFile || undefined);
     setSelectedFile(null);
     
-    // Clear all file inputs
     const resetInput = clearFileInputs();
     resetInput(fileInputRef.current);
     resetInput(videoInputRef.current);
