@@ -31,11 +31,19 @@ export const MessageList = ({
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const [autoScroll, setAutoScroll] = useState(true);
 
+  console.log('MessageList render:', {
+    initialMessageCount: initialMessages.length,
+    currentMessageCount: messages.length,
+    currentUserId
+  });
+
   useEffect(() => {
+    console.log('Messages updated:', initialMessages.length);
     setMessages(initialMessages);
     
     // Auto-scroll to bottom when new messages come
     if (autoScroll && messagesEndRef.current) {
+      console.log('Auto-scrolling to bottom');
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [initialMessages, autoScroll]);
@@ -47,10 +55,14 @@ export const MessageList = ({
     const { scrollTop, scrollHeight, clientHeight } = scrollAreaRef.current;
     const isAtBottom = scrollHeight - scrollTop - clientHeight < 50; // 50px margin
     
-    setAutoScroll(isAtBottom);
+    if (isAtBottom !== autoScroll) {
+      console.log('Auto-scroll changed:', isAtBottom);
+      setAutoScroll(isAtBottom);
+    }
   };
 
   const handleMessageExpired = (messageId: string) => {
+    console.log('Message expired:', messageId);
     setMessages(prev => prev.filter(msg => msg.id !== messageId));
     if (onMessageExpired) {
       onMessageExpired(messageId);
@@ -59,7 +71,7 @@ export const MessageList = ({
 
   const handleEdit = (message: DecryptedMessage) => {
     if (onEditMessage) {
-      console.log("Editing message in MessageList:", message.id);
+      console.log("Editing message:", message.id);
       onEditMessage(message);
     }
   };
@@ -70,7 +82,6 @@ export const MessageList = ({
       try {
         await onDeleteMessage(confirmDelete);
         
-        // After successful deletion, update local state to reflect the change immediately
         setMessages(prev => 
           prev.map(msg => 
             msg.id === confirmDelete 
@@ -96,7 +107,11 @@ export const MessageList = ({
   };
 
   const isUserMessage = (message: DecryptedMessage) => {
-    // Add null check to prevent "Cannot read properties of undefined (reading 'id')" error
+    console.log('Checking if user message:', {
+      messageId: message?.id,
+      senderId: message?.sender?.id,
+      currentUserId
+    });
     return message?.sender && currentUserId ? message.sender.id === currentUserId : false;
   };
 
@@ -106,8 +121,16 @@ export const MessageList = ({
   };
 
   // Filter out any messages with undefined/null properties before grouping
-  const validMessages = messages.filter(msg => msg && msg.sender);
+  const validMessages = messages.filter(msg => {
+    if (!msg || !msg.sender) {
+      console.warn('Invalid message found:', msg);
+      return false;
+    }
+    return true;
+  });
+  
   const messageGroups = groupMessages(validMessages);
+  console.log('Grouped messages:', messageGroups.length);
 
   return (
     <ScrollArea 

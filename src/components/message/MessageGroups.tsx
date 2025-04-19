@@ -1,7 +1,6 @@
 
 import { DecryptedMessage } from "@/types/message";
 import { MessageGroup } from "./MessageGroup";
-import { useRef } from "react";
 
 interface MessageGroupsProps {
   messageGroups: DecryptedMessage[][];
@@ -20,11 +19,13 @@ export const MessageGroups = ({
   onDelete, 
   messagesEndRef 
 }: MessageGroupsProps) => {
+  console.log('Rendering MessageGroups with:', messageGroups.length, 'groups');
+  
   return (
     <div className="space-y-2 sm:space-y-4">
-      {messageGroups.map((group, groupIndex) => (
-        // Only render message groups that have valid messages
-        group.length > 0 && (
+      {messageGroups.map((group, groupIndex) => {
+        console.log(`Group ${groupIndex}:`, group);
+        return group.length > 0 && (
           <MessageGroup
             key={`group-${groupIndex}-${group[0]?.id || groupIndex}`}
             messages={group}
@@ -33,8 +34,8 @@ export const MessageGroups = ({
             onEdit={onEdit}
             onDelete={onDelete}
           />
-        )
-      ))}
+        );
+      })}
       <div ref={messagesEndRef} />
     </div>
   );

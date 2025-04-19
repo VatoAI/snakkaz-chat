@@ -20,7 +20,17 @@ export const MessageGroup = ({
   onEdit,
   onDelete
 }: MessageGroupProps) => {
+  console.log('Rendering MessageGroup:', { 
+    messageCount: messages.length, 
+    isCurrentUser, 
+    firstMessageId: messages[0]?.id 
+  });
+  
   const firstMessage = messages[0];
+  if (!firstMessage) {
+    console.warn('MessageGroup received empty messages array');
+    return null;
+  }
   
   return (
     <div className="animate-fadeIn">
