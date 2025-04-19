@@ -1,7 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { Circle, MessageSquare, UserPlus } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Circle, MessageSquare, UserPlus, Loader2 } from "lucide-react";
 import { StatusIcon } from "./StatusIcons";
 import { UserStatus } from "@/types/presence";
 
@@ -11,6 +10,7 @@ interface UserItemProps {
   isOnline: boolean;
   status: UserStatus | null;
   isFriend: boolean;
+  isPending: boolean;
   onSendFriendRequest: (userId: string) => void;
   onStartChat: (userId: string) => void;
 }
@@ -21,6 +21,7 @@ export const UserItem = ({
   isOnline, 
   status, 
   isFriend,
+  isPending,
   onSendFriendRequest,
   onStartChat
 }: UserItemProps) => {
@@ -40,7 +41,7 @@ export const UserItem = ({
       </div>
       
       <div className="flex gap-1">
-        {!isFriend && (
+        {!isFriend && !isPending && (
           <Button
             variant="ghost"
             size="icon"
@@ -49,6 +50,18 @@ export const UserItem = ({
             title="Legg til venn"
           >
             <UserPlus className="h-4 w-4" />
+          </Button>
+        )}
+
+        {isPending && (
+          <Button
+            variant="ghost"
+            size="icon"
+            disabled
+            className="h-7 w-7 text-cybergold-400"
+            title="Venneforespørsel sendt"
+          >
+            <Loader2 className="h-4 w-4 animate-spin" />
           </Button>
         )}
         
