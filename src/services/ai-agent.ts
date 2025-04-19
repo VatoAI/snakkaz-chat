@@ -1,20 +1,9 @@
 
-import { supabase } from "@/integrations/supabase/client";
 import { DecryptedMessage } from "@/types/message";
-import { 
-  AIAction,
-  WORKFLOWS,
-  HELP_TOPICS,
-  COMMANDS,
-  Workflow,
-  HelpTopic,
-  Command
-} from "@/components/chat/ai/types";
-
-export interface AIAgentResponse {
-  content: string;
-  action?: AIAction;
-}
+import { AIAgentResponse } from "./ai/types";
+import { extractWorkflowType, extractHelpTopic, extractCommand } from "./ai/content-extractors";
+import { handleWorkflowRequest, handleHelpRequest, handleCommandRequest } from "./ai/request-handlers";
+import { handleContextualQuestion, isContextualQuestion } from "./ai/contextual-handler";
 
 class AIAgent {
   private static instance: AIAgent;
@@ -32,30 +21,30 @@ class AIAgent {
   public async processMessage(message: DecryptedMessage): Promise<AIAgentResponse> {
     const content = message.content.toLowerCase();
     
-    // Workflow kommandoer
+    // Workflow commands
     if (content.includes('workflow')) {
-      const workflowType = this.extractWorkflowType(content);
-      return this.handleWorkflowRequest(workflowType);
+      const workflowType = extractWorkflowType(content);
+      return handleWorkflowRequest(workflowType);
     }
     
-    // Hjelpekommandoer
+    // Help commands
     if (content.includes('hjelp')) {
-      const topic = this.extractHelpTopic(content);
-      return this.handleHelpRequest(topic);
+      const topic = extractHelpTopic(content);
+      return handleHelpRequest(topic);
     }
 
-    // Generelle kommandoer
+    // General commands
     if (content.includes('kommando')) {
-      const commandId = this.extractCommand(content);
-      return this.handleCommandRequest(commandId);
+      const commandId = extractCommand(content);
+      return handleCommandRequest(commandId);
     }
 
-    // Kontekstbaserte spørsmål
-    if (this.isContextualQuestion(content)) {
-      return this.handleContextualQuestion(content);
+    // Contextual questions
+    if (isContextualQuestion(content)) {
+      return handleContextualQuestion(content);
     }
 
-    // Standard svar
+    // Standard response
     return {
       content: `Hei! Jeg er SnakkaZ Assistant. Jeg kan hjelpe deg med følgende:
 
@@ -64,145 +53,6 @@ class AIAgent {
 3. Kommandoer - Tilgjengelige kommandoer: ${Object.keys(COMMANDS).join(', ')}
 
 Spør meg om noe spesifikt eller skriv 'hjelp <emne>' for mer informasjon!`
-    };
-  }
-
-  private extractWorkflowType(content: string): string {
-    const words = content.split(' ');
-    const index = words.indexOf('workflow');
-    return index >= 0 && index < words.length - 1 ? words[index + 1] : '';
-  }
-
-  private extractHelpTopic(content: string): string {
-    const words = content.split(' ');
-    const index = words.indexOf('hjelp');
-    return index >= 0 && index < words.length - 1 ? words[index + 1] : '';
-  }
-
-  private extractCommand(content: string): string {
-    const words = content.split(' ');
-    const index = words.indexOf('kommando');
-    return index >= 0 && index < words.length - 1 ? words[index + 1] : '';
-  }
-
-  private handleWorkflowRequest(workflowType: string): AIAgentResponse {
-    const workflow = WORKFLOWS[workflowType];
-    
-    if (!workflow) {
-      return {
-        content: `Beklager, jeg fant ikke workflow for "${workflowType}". Tilgjengelige workflows: ${Object.keys(WORKFLOWS).join(', ')}`
-      };
-    }
-
-    return {
-      content: `La meg hjelpe deg med: ${workflow.title}\n${workflow.description}`,
-      action: {
-        type: 'workflow',
-        payload: {
-          workflowType: workflow.id,
-          steps: workflow.steps.map(step => step.description)
-        }
-      }
-    };
-  }
-
-  private handleHelpRequest(topic: string): AIAgentResponse {
-    const helpTopic = HELP_TOPICS[topic];
-    
-    if (!topic) {
-      return {
-        content: `Her er alle tilgjengelige hjelpeemner:\n\n${
-          Object.values(HELP_TOPICS)
-            .map(t => `${t.title}: ${t.description}`)
-            .join('\n')
-        }`
-      };
-    }
-
-    if (!helpTopic) {
-      return {
-        content: `Beklager, jeg fant ikke hjelp for "${topic}". Tilgjengelige emner: ${Object.keys(HELP_TOPICS).join(', ')}`
-      };
-    }
-
-    return {
-      content: `${helpTopic.title}\n${helpTopic.description}`,
-      action: {
-        type: 'help',
-        payload: {
-          topic: helpTopic.id,
-          details: helpTopic.details
-        }
-      }
-    };
-  }
-
-  private handleCommandRequest(commandId: string): AIAgentResponse {
-    const command = COMMANDS[commandId];
-    
-    if (!commandId) {
-      return {
-        content: `Her er alle tilgjengelige kommandoer:\n\n${
-          Object.values(COMMANDS)
-            .map(c => `${c.title}: ${c.description}`)
-            .join('\n')
-        }`
-      };
-    }
-
-    if (!command) {
-      return {
-        content: `Beklager, jeg fant ikke kommandoen "${commandId}". Tilgjengelige kommandoer: ${Object.keys(COMMANDS).join(', ')}`
-      };
-    }
-
-    return {
-      content: `Utfører kommando: ${command.title}\n${command.description}`,
-      action: {
-        type: 'command',
-        payload: {
-          action: command.action,
-          requiresConfirmation: command.requiresConfirmation
-        }
-      }
-    };
-  }
-
-  private isContextualQuestion(content: string): boolean {
-    // Sjekk om spørsmålet matcher noen predefinerte mønstre
-    const patterns = [
-      ...Object.keys(WORKFLOWS).map(w => WORKFLOWS[w].title.toLowerCase()),
-      ...Object.keys(HELP_TOPICS).map(h => HELP_TOPICS[h].title.toLowerCase()),
-      ...Object.keys(COMMANDS).map(c => COMMANDS[c].title.toLowerCase())
-    ];
-
-    return patterns.some(pattern => content.includes(pattern.toLowerCase()));
-  }
-
-  private handleContextualQuestion(content: string): AIAgentResponse {
-    // Finn beste match basert på innhold
-    for (const [id, workflow] of Object.entries(WORKFLOWS)) {
-      if (content.includes(workflow.title.toLowerCase())) {
-        return this.handleWorkflowRequest(id);
-      }
-    }
-
-    for (const [id, topic] of Object.entries(HELP_TOPICS)) {
-      if (content.includes(topic.title.toLowerCase())) {
-        return this.handleHelpRequest(id);
-      }
-    }
-
-    for (const [id, command] of Object.entries(COMMANDS)) {
-      if (content.includes(command.title.toLowerCase())) {
-        return this.handleCommandRequest(id);
-      }
-    }
-
-    // Fallback hvis ingen direkte match
-    return {
-      content: "Jeg forstår at du har et spørsmål, men jeg er ikke helt sikker på hva du spør om. " +
-        "Prøv å bruke nøkkelordene 'workflow', 'hjelp' eller 'kommando' for mer spesifikk assistanse."
     };
   }
 }
