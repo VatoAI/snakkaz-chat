@@ -27,10 +27,10 @@ export const MessageGroup = ({
       <div className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
         <div className={`flex items-start gap-x-2 sm:gap-x-3 max-w-[85%] ${isCurrentUser ? 'flex-row-reverse' : 'flex-row'}`}>
           <Avatar className="w-8 h-8 sm:w-10 sm:h-10 mt-1">
-            {firstMessage.sender.avatar_url ? (
+            {firstMessage.sender && firstMessage.sender.avatar_url ? (
               <AvatarImage 
                 src={supabase.storage.from('avatars').getPublicUrl(firstMessage.sender.avatar_url).data.publicUrl} 
-                alt={firstMessage.sender.username || 'Avatar'} 
+                alt={firstMessage.sender?.username || 'Avatar'} 
               />
             ) : (
               <AvatarFallback>
@@ -40,7 +40,7 @@ export const MessageGroup = ({
           </Avatar>
           <div className="space-y-1 min-w-0">
             <p className="text-xs sm:text-sm font-medium text-cybergold-300 mb-1">
-              {firstMessage.sender.full_name || firstMessage.sender.username || 'Anonym'}
+              {firstMessage.sender?.full_name || firstMessage.sender?.username || 'Anonym'}
             </p>
             
             {messages.map((message, messageIndex) => (
