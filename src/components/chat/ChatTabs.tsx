@@ -7,6 +7,7 @@ import { TabsHeader } from './tabs/TabsHeader';
 import { Friend } from '@/components/chat/friends/types';
 import { DecryptedMessage } from '@/types/message';
 import { WebRTCManager } from '@/utils/webrtc';
+import { TooltipProvider } from '@/components/ui/tooltip';
 
 interface ChatTabsProps {
   activeTab: string;
@@ -56,49 +57,51 @@ export const ChatTabs = ({
   handleCloseDirectChat
 }: ChatTabsProps) => {
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full h-full">
-      <TabsHeader 
-        selectedFriend={selectedFriend}
-        handleCloseDirectChat={handleCloseDirectChat}
-      />
-      
-      <TabsContent value="global" className="h-full flex flex-col mt-0 pt-0">
-        <ChatGlobal 
-          messages={messages}
-          newMessage={newMessage}
-          setNewMessage={setNewMessage}
-          isLoading={isLoading}
-          ttl={ttl}
-          setTtl={setTtl}
-          onMessageExpired={onMessageExpired}
-          onSubmit={onSubmit}
-          currentUserId={currentUserId}
-          editingMessage={editingMessage}
-          onEditMessage={onEditMessage}
-          onCancelEdit={onCancelEdit}
-          onDeleteMessage={onDeleteMessage}
+    <TooltipProvider>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full h-full">
+        <TabsHeader 
+          selectedFriend={selectedFriend}
+          handleCloseDirectChat={handleCloseDirectChat}
         />
-      </TabsContent>
-
-      <TabsContent value="assistant" className="h-full flex flex-col mt-0 pt-0">
-        <AIAgentChat currentUserId={currentUserId || ''} />
-      </TabsContent>
-      
-      {selectedFriend && (
-        <TabsContent value="direct" className="h-full mt-0 pt-0">
-          <div className="h-full">
-            <DirectMessage 
-              friend={selectedFriend}
-              currentUserId={currentUserId || ''}
-              webRTCManager={webRTCManager}
-              onBack={handleCloseDirectChat}
-              messages={directMessages}
-              onNewMessage={onNewMessage}
-              userProfiles={userProfiles}
-            />
-          </div>
+        
+        <TabsContent value="global" className="h-full flex flex-col mt-0 pt-0">
+          <ChatGlobal 
+            messages={messages}
+            newMessage={newMessage}
+            setNewMessage={setNewMessage}
+            isLoading={isLoading}
+            ttl={ttl}
+            setTtl={setTtl}
+            onMessageExpired={onMessageExpired}
+            onSubmit={onSubmit}
+            currentUserId={currentUserId}
+            editingMessage={editingMessage}
+            onEditMessage={onEditMessage}
+            onCancelEdit={onCancelEdit}
+            onDeleteMessage={onDeleteMessage}
+          />
         </TabsContent>
-      )}
-    </Tabs>
+
+        <TabsContent value="assistant" className="h-full flex flex-col mt-0 pt-0">
+          <AIAgentChat currentUserId={currentUserId || ''} />
+        </TabsContent>
+        
+        {selectedFriend && (
+          <TabsContent value="direct" className="h-full mt-0 pt-0">
+            <div className="h-full">
+              <DirectMessage 
+                friend={selectedFriend}
+                currentUserId={currentUserId || ''}
+                webRTCManager={webRTCManager}
+                onBack={handleCloseDirectChat}
+                messages={directMessages}
+                onNewMessage={onNewMessage}
+                userProfiles={userProfiles}
+              />
+            </div>
+          </TabsContent>
+        )}
+      </Tabs>
+    </TooltipProvider>
   );
 };

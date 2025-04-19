@@ -7,6 +7,7 @@ import { useAuthState } from "@/hooks/useAuthState";
 import { useWebRTC } from "@/hooks/useWebRTC";
 import { useToast } from "@/components/ui/use-toast";
 import { UserStatus } from "@/types/presence";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 const Chat = () => {
   const { userId, checkAuth } = useAuthState();
@@ -121,44 +122,46 @@ const Chat = () => {
   }
   
   return (
-    <div className="h-screen bg-cyberdark-950 text-white flex flex-col">
-      <ChatHeader 
-        userPresence={userPresence}
-        currentUserId={userId}
-        currentStatus={currentStatus}
-        onStatusChange={setCurrentStatus}
-        webRTCManager={webRTCManager}
-        directMessages={directMessages}
-        onNewMessage={handleNewMessage}
-        onStartChat={onStartChat}
-        userProfiles={userProfiles}
-      />
-      <div className="flex-1 overflow-hidden">
-        <ChatTabs 
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          selectedFriend={selectedFriend}
-          messages={messages}
-          newMessage={newMessage}
-          setNewMessage={setNewMessage}
-          isLoading={isLoading}
-          ttl={ttl}
-          setTtl={setTtl}
-          onMessageExpired={handleMessageExpired}
-          onSubmit={handleSubmit}
+    <TooltipProvider>
+      <div className="h-screen bg-cyberdark-950 text-white flex flex-col">
+        <ChatHeader 
+          userPresence={userPresence}
           currentUserId={userId}
-          editingMessage={editingMessage}
-          onEditMessage={handleMessageEdit}
-          onCancelEdit={handleCancelEdit}
-          onDeleteMessage={handleDeleteMessage}
+          currentStatus={currentStatus}
+          onStatusChange={setCurrentStatus}
+          webRTCManager={webRTCManager}
           directMessages={directMessages}
           onNewMessage={handleNewMessage}
-          webRTCManager={webRTCManager}
+          onStartChat={onStartChat}
           userProfiles={userProfiles}
-          handleCloseDirectChat={handleCloseDirectChat}
         />
+        <div className="flex-1 overflow-hidden">
+          <ChatTabs 
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            selectedFriend={selectedFriend}
+            messages={messages}
+            newMessage={newMessage}
+            setNewMessage={setNewMessage}
+            isLoading={isLoading}
+            ttl={ttl}
+            setTtl={setTtl}
+            onMessageExpired={handleMessageExpired}
+            onSubmit={handleSubmit}
+            currentUserId={userId}
+            editingMessage={editingMessage}
+            onEditMessage={handleMessageEdit}
+            onCancelEdit={handleCancelEdit}
+            onDeleteMessage={handleDeleteMessage}
+            directMessages={directMessages}
+            onNewMessage={handleNewMessage}
+            webRTCManager={webRTCManager}
+            userProfiles={userProfiles}
+            handleCloseDirectChat={handleCloseDirectChat}
+          />
+        </div>
       </div>
-    </div>
+    </TooltipProvider>
   );
 };
 
