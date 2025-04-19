@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChatHeader } from "@/components/chat/ChatHeader";
@@ -8,6 +7,7 @@ import { useWebRTC } from "@/hooks/useWebRTC";
 import { useToast } from "@/components/ui/use-toast";
 import { UserStatus } from "@/types/presence";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { useMessageSubmission } from "@/hooks/useMessageSubmission";
 
 const Chat = () => {
   const { userId, checkAuth } = useAuthState();
@@ -26,8 +26,8 @@ const Chat = () => {
   const [userProfiles, setUserProfiles] = useState({});
   const [userPresence, setUserPresence] = useState({});
   const [currentStatus, setCurrentStatus] = useState<UserStatus>('online');
+  const { isSubmitting, handleSubmit: submitMessage } = useMessageSubmission(userId);
 
-  // Check authentication when component mounts
   useEffect(() => {
     const verifyAuth = async () => {
       const currentUserId = await checkAuth();
@@ -41,7 +41,6 @@ const Chat = () => {
         return;
       }
 
-      // Continue with WebRTC setup if authenticated
       if (currentUserId && !isReady) {
         setupWebRTC(currentUserId, () => {
           console.log("WebRTC setup complete");
@@ -83,20 +82,12 @@ const Chat = () => {
     setMessages(prev => prev.filter(m => m.id !== messageId));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim()) return;
     
-    setIsLoading(true);
     try {
-      const newMsg = {
-        id: Date.now().toString(),
-        content: newMessage,
-        sender_id: userId,
-        created_at: new Date().toISOString(),
-      };
-      
-      setMessages(prev => [...prev, newMsg]);
+      await submitMessage(newMessage, ttl);
       setNewMessage('');
     } catch (error) {
       toast({
@@ -104,12 +95,9 @@ const Chat = () => {
         description: "Could not send message",
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 
-  // Show loading until authentication and WebRTC are ready
   if (!userId || !isReady) {
     return (
       <div className="min-h-screen bg-cyberdark-950 text-white flex items-center justify-center">
