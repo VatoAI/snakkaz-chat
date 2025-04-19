@@ -7,7 +7,7 @@ import { useWebRTC } from "@/hooks/useWebRTC";
 import { useToast } from "@/components/ui/use-toast";
 import { UserStatus } from "@/types/presence";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { useMessageSubmission } from "@/hooks/useMessageSubmission";
+import { useMessageSubmission } from "@/hooks/message/useMessageSubmission";
 
 const Chat = () => {
   const { userId, checkAuth } = useAuthState();
