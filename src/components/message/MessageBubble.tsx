@@ -22,7 +22,6 @@ export const MessageBubble = ({
   onEdit,
   onDelete
 }: MessageBubbleProps) => {
-  // All messages still have 24-hour auto-delete
   const ttlIsFixed = true;
   const isAutoDelete = message.ephemeral_ttl ? true : false;
 
@@ -32,11 +31,12 @@ export const MessageBubble = ({
     >
       <div 
         className={`
-          py-2 px-3 rounded-md max-w-full break-words 
+          relative py-2 px-3 rounded-md max-w-full break-words 
           ${isCurrentUser 
-            ? 'bg-cyberblue-900 text-white' 
-            : 'bg-cyberdark-800 text-cyberblue-100'
+            ? 'bg-gradient-to-r from-cyberblue-900/90 to-cyberblue-800/80 text-white border border-cyberblue-500/20 shadow-neon-blue' 
+            : 'bg-gradient-to-r from-cyberdark-800/90 to-cyberdark-700/80 text-cyberblue-100 border border-cyberred-500/20 shadow-neon-red'
           }
+          backdrop-blur-sm transition-all duration-300 hover:shadow-neon-dual
         `}
       >
         <MessageContent message={message} onMessageExpired={onMessageExpired} />
@@ -50,7 +50,7 @@ export const MessageBubble = ({
                   24t
                 </span>
               </TooltipTrigger>
-              <TooltipContent side="top" align="center" className="text-xs">
+              <TooltipContent side="top" align="center" className="text-xs bg-cyberdark-900 border-cybergold-500/30">
                 Slettes automatisk etter 24 timer
               </TooltipContent>
             </Tooltip>
@@ -58,7 +58,6 @@ export const MessageBubble = ({
         )}
       </div>
       
-      {/* Show actions on hover if it's the current user's message */}
       {isCurrentUser && (
         <div className="self-start ml-1">
           <MessageActions 
