@@ -2,9 +2,10 @@
 import { UserListHeader } from "./UserListHeader";
 import { UserListContent } from "./UserListContent";
 import { useUserList } from "./hooks/useUserList";
+import { UserStatus } from "@/types/presence";
 
 interface UserListProps {
-  userPresence: Record<string, UserPresence>;
+  userPresence: Record<string, { status: UserStatus }>;
   currentUserId: string | null;
   friends: string[];
   onSendFriendRequest: (userId: string) => void;

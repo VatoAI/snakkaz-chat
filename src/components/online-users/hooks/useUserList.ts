@@ -1,23 +1,14 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { UserPresence } from "@/types/presence";
+import { UserStatus } from "@/types/presence";
+import { filterUsers } from "../UserListFilters";
 
 interface UseUserListProps {
-  userPresence: Record<string, UserPresence>;
+  userPresence: Record<string, { status: UserStatus }>;
   currentUserId: string | null;
   friends: string[];
   userProfiles?: Record<string, {username: string | null, avatar_url: string | null}>;
-}
-
-interface UserListItem {
-  id: string;
-  username: string;
-  status: any;
-  isOnline: boolean;
-  isFriend: boolean;
-  isPending: boolean;
 }
 
 export const useUserList = ({ 
@@ -32,7 +23,6 @@ export const useUserList = ({
   const [pendingRequests, setPendingRequests] = useState<string[]>([]);
   const { toast } = useToast();
 
-  // Fetch all users and pending friendship requests
   useEffect(() => {
     const fetchAllUsers = async () => {
       if (!showAllUsers) return;
@@ -76,46 +66,15 @@ export const useUserList = ({
     fetchAllUsers();
   }, [showAllUsers, currentUserId, toast]);
 
-  // Transform data for display
-  const getUsersToDisplay = (): UserListItem[] => {
-    if (showAllUsers) {
-      return allUsers.map(user => {
-        const isOnline = Boolean(userPresence[user.id]);
-        const status = isOnline ? userPresence[user.id].status : null;
-        const isFriend = friends.includes(user.id);
-        const isPending = pendingRequests.includes(user.id);
-        const displayName = userProfiles[user.id]?.username || user.username || user.id.substring(0, 8);
-        
-        return {
-          id: user.id,
-          username: displayName,
-          status,
-          isOnline,
-          isFriend,
-          isPending
-        };
-      });
-    } else {
-      return Object.entries(userPresence)
-        .filter(([userId]) => userId !== currentUserId)
-        .map(([userId, presence]) => {
-          const isFriend = friends.includes(userId);
-          const isPending = pendingRequests.includes(userId);
-          const displayName = userProfiles[userId]?.username || 
-                            allUsers.find(u => u.id === userId)?.username || 
-                            userId.substring(0, 8);
-          
-          return {
-            id: userId,
-            username: displayName,
-            status: presence.status,
-            isOnline: true,
-            isFriend,
-            isPending
-          };
-        });
-    }
-  };
+  const usersToDisplay = filterUsers({
+    users: allUsers,
+    userPresence,
+    currentUserId,
+    friends,
+    pendingRequests,
+    showAllUsers,
+    userProfiles
+  });
 
   const onlineCount = Object.keys(userPresence).length - (userPresence[currentUserId || ''] ? 1 : 0);
 
@@ -123,7 +82,7 @@ export const useUserList = ({
     showAllUsers,
     setShowAllUsers,
     isLoading,
-    usersToDisplay: getUsersToDisplay(),
+    usersToDisplay,
     onlineCount
   };
 };
