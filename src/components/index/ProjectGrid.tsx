@@ -1,4 +1,3 @@
-
 import { useNavigate } from 'react-router-dom';
 import { ProjectProps } from "./ProjectCard";
 import { CategorySection } from "./projects/CategorySection";
@@ -6,14 +5,14 @@ import { FeaturedProject } from "./projects/FeaturedProject";
 import { projects } from "./projects/projectData";
 
 export const ProjectGrid = () => {
-  // Find the featured project
-  const featuredProject = projects.find(p => p.isFeatured);
   const navigate = useNavigate();
   
   const handleChatRedirect = (e: React.MouseEvent) => {
     e.preventDefault();
     navigate('/chat');
   };
+  
+  const featuredProject = projects.find(p => p.isFeatured);
   
   return (
     <div className="w-full max-w-7xl mx-auto px-4">

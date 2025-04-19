@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChatHeader } from "@/components/chat/ChatHeader";
@@ -31,22 +30,26 @@ const Chat = () => {
     const verifyAuth = async () => {
       const currentUserId = await checkAuth();
       if (!currentUserId) {
-        navigate('/login');
+        toast({
+          title: "Ikke innlogget",
+          description: "Du må logge inn for å bruke chatten",
+          variant: "destructive",
+        });
+        navigate('/login', { replace: true });
+        return;
+      }
+
+      // Continue with WebRTC setup if authenticated
+      if (currentUserId && !isReady) {
+        setupWebRTC(currentUserId, () => {
+          console.log("WebRTC setup complete");
+          setIsReady(true);
+        });
       }
     };
     
     verifyAuth();
-  }, [checkAuth, navigate]);
-
-  // Set up WebRTC when component mounts and user is authenticated
-  useEffect(() => {
-    if (userId && !isReady) {
-      setupWebRTC(userId, () => {
-        console.log("WebRTC setup complete");
-        setIsReady(true);
-      });
-    }
-  }, [userId, setupWebRTC, isReady]);
+  }, [checkAuth, navigate, setupWebRTC, isReady, toast]);
 
   const handleCloseDirectChat = () => {
     setSelectedFriend(null);
