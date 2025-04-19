@@ -57,7 +57,6 @@ const Chat = () => {
   };
 
   const onStartChat = (friendId) => {
-    // This would actually find and set the friend object
     setSelectedFriend({ user_id: friendId });
     setActiveTab("direct");
   };
@@ -88,7 +87,6 @@ const Chat = () => {
     
     setIsLoading(true);
     try {
-      // Placeholder for actual message sending logic
       const newMsg = {
         id: Date.now().toString(),
         content: newMessage,
