@@ -23,14 +23,17 @@ export const MessageGroups = ({
   return (
     <div className="space-y-2 sm:space-y-4">
       {messageGroups.map((group, groupIndex) => (
-        <MessageGroup
-          key={`group-${groupIndex}-${group[0].id}`}
-          messages={group}
-          isCurrentUser={isUserMessage(group[0])}
-          onMessageExpired={onMessageExpired}
-          onEdit={onEdit}
-          onDelete={onDelete}
-        />
+        // Only render message groups that have valid messages
+        group.length > 0 && (
+          <MessageGroup
+            key={`group-${groupIndex}-${group[0]?.id || groupIndex}`}
+            messages={group}
+            isCurrentUser={isUserMessage(group[0])}
+            onMessageExpired={onMessageExpired}
+            onEdit={onEdit}
+            onDelete={onDelete}
+          />
+        )
       ))}
       <div ref={messagesEndRef} />
     </div>

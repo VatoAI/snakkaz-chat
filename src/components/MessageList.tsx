@@ -97,7 +97,7 @@ export const MessageList = ({
 
   const isUserMessage = (message: DecryptedMessage) => {
     // Add null check to prevent "Cannot read properties of undefined (reading 'id')" error
-    return message.sender && currentUserId ? message.sender.id === currentUserId : false;
+    return message?.sender && currentUserId ? message.sender.id === currentUserId : false;
   };
 
   const handleScrollToBottom = () => {
@@ -105,7 +105,9 @@ export const MessageList = ({
     setAutoScroll(true);
   };
 
-  const messageGroups = groupMessages(messages);
+  // Filter out any messages with undefined/null properties before grouping
+  const validMessages = messages.filter(msg => msg && msg.sender);
+  const messageGroups = groupMessages(validMessages);
 
   return (
     <ScrollArea 
