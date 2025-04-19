@@ -68,11 +68,11 @@ export const ChatHeader = ({
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-4">
         <div className="flex items-center gap-2">
           <div className="flex gap-2 items-center">
-            <div className="hidden sm:flex w-10 h-10 rounded-full mr-2 border border-cyberblue-400/50 shadow-neon-blue overflow-hidden">
+            <div className="hidden sm:flex w-12 h-12 rounded-full mr-2 border-2 border-cybergold-500/40 shadow-neon-gold overflow-hidden">
               <img 
                 src="/snakkaz-logo.png" 
                 alt="SnakkaZ" 
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover p-0.5"
                 onError={(e) => {
                   (e.target as HTMLImageElement).src = "/placeholder.svg";
                 }}
