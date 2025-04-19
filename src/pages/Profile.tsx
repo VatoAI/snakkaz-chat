@@ -1,12 +1,12 @@
-
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
-import { Camera, Loader2, ArrowLeft, Home, MessageSquare } from "lucide-react";
+import { Loader2, ArrowLeft, Home, MessageSquare } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 
 const Profile = () => {
   const [loading, setLoading] = useState(false);
@@ -247,50 +247,16 @@ const Profile = () => {
       </div>
       
       <div className="flex items-center justify-center p-4">
-        <Card className="w-full max-w-md bg-cyberdark-800/90 border-2 border-cybergold-400/50">
+        <Card className="w-full max-w-md bg-cyberdark-800/90 border-2 border-cybergold-400/50 animate-fadeIn">
           <CardHeader>
             <CardTitle className="text-cybergold-400">Min Profil</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="flex flex-col items-center space-y-4">
-              <div className="relative w-32 h-32 rounded-full overflow-hidden bg-cyberdark-700 border-2 border-cybergold-400/50">
-                {avatarUrl ? (
-                  <img
-                    src={`${supabase.storage.from('avatars').getPublicUrl(avatarUrl).data.publicUrl}`}
-                    alt="Avatar"
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <Camera className="w-12 h-12 text-cybergold-400/50" />
-                  </div>
-                )}
-              </div>
-              <div>
-                <Input
-                  type="file"
-                  accept="image/*"
-                  onChange={uploadAvatar}
-                  disabled={uploading}
-                  className="hidden"
-                  id="avatar-upload"
-                />
-                <Button
-                  onClick={() => document.getElementById('avatar-upload')?.click()}
-                  disabled={uploading}
-                  className="bg-cybergold-400 hover:bg-cybergold-500 text-black"
-                >
-                  {uploading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Laster opp...
-                    </>
-                  ) : (
-                    'Last opp nytt profilbilde'
-                  )}
-                </Button>
-              </div>
-            </div>
+            <ProfileAvatar 
+              avatarUrl={avatarUrl}
+              uploading={uploading}
+              onUpload={uploadAvatar}
+            />
 
             <div className="space-y-4">
               <div>
