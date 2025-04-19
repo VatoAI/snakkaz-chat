@@ -5,6 +5,12 @@ import { AIAgentChat } from '@/components/chat/AIAgentChat';
 import { Friend } from '@/components/chat/friends/types';
 import { DecryptedMessage } from '@/types/message';
 import { WebRTCManager } from '@/utils/webrtc';
+import { Globe, MessageSquare, Bot } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface ChatTabsProps {
   activeTab: string;
@@ -57,22 +63,57 @@ export const ChatTabs = ({
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full h-full">
       <div className="border-b border-cybergold-500/30 px-4">
         <TabsList className="bg-transparent border-b-0">
-          <TabsTrigger value="global" className="text-cybergold-300 data-[state=active]:text-cybergold-100 data-[state=active]:border-b-2 data-[state=active]:border-cybergold-400 rounded-none">
-            Global Chat
-          </TabsTrigger>
-          <TabsTrigger value="assistant" className="text-cybergold-300 data-[state=active]:text-cybergold-100 data-[state=active]:border-b-2 data-[state=active]:border-cybergold-400 rounded-none">
-            AI Assistant
-          </TabsTrigger>
-          {selectedFriend && (
-            <TabsTrigger value="direct" className="text-cybergold-300 data-[state=active]:text-cybergold-100 data-[state=active]:border-b-2 data-[state=active]:border-cybergold-400 rounded-none">
-              {selectedFriend.profile?.username || 'Direktemelding'}
-              <button 
-                onClick={handleCloseDirectChat}
-                className="ml-2 text-xs text-cybergold-400 hover:text-cybergold-300"
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <TabsTrigger 
+                value="global" 
+                className="text-cybergold-300 data-[state=active]:text-cybergold-100 data-[state=active]:border-b-2 data-[state=active]:border-cyberblue-400 rounded-none flex items-center gap-2"
               >
-                ✕
-              </button>
-            </TabsTrigger>
+                <Globe className="h-4 w-4" />
+                <span>Global Room</span>
+              </TabsTrigger>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Public chat room with message history and editing</p>
+            </TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <TabsTrigger 
+                value="assistant" 
+                className="text-cybergold-300 data-[state=active]:text-cybergold-100 data-[state=active]:border-b-2 data-[state=active]:border-cyberred-400 rounded-none flex items-center gap-2"
+              >
+                <Bot className="h-4 w-4" />
+                <span>AI Assistant</span>
+              </TabsTrigger>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Get help and guidance from our AI assistant</p>
+            </TooltipContent>
+          </Tooltip>
+
+          {selectedFriend && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <TabsTrigger 
+                  value="direct" 
+                  className="text-cybergold-300 data-[state=active]:text-cybergold-100 data-[state=active]:border-b-2 data-[state=active]:border-cybergold-400 rounded-none flex items-center gap-2"
+                >
+                  <MessageSquare className="h-4 w-4" />
+                  <span>{selectedFriend.profile?.username || 'Direktemelding'}</span>
+                  <button 
+                    onClick={handleCloseDirectChat}
+                    className="ml-2 text-xs text-cybergold-400 hover:text-cybergold-300"
+                  >
+                    ✕
+                  </button>
+                </TabsTrigger>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>End-to-end encrypted private chat</p>
+              </TooltipContent>
+            </Tooltip>
           )}
         </TabsList>
       </div>
