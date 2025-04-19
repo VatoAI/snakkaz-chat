@@ -96,7 +96,8 @@ export const MessageList = ({
   };
 
   const isUserMessage = (message: DecryptedMessage) => {
-    return message.sender.id === currentUserId;
+    // Add null check to prevent "Cannot read properties of undefined (reading 'id')" error
+    return message.sender && currentUserId ? message.sender.id === currentUserId : false;
   };
 
   const handleScrollToBottom = () => {
