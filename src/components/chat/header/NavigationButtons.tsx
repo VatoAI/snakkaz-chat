@@ -1,9 +1,8 @@
 
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Home, MessageSquare, User, Users } from 'lucide-react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { FriendsContainer } from '../friends/FriendsContainer';
+import { Home, MessageSquare, User } from 'lucide-react';
+import { NavButton } from './buttons/NavButton';
+import { FriendsSheet } from './buttons/FriendsSheet';
 import { DecryptedMessage } from '@/types/message';
 
 interface NavigationButtonsProps {
@@ -31,65 +30,31 @@ export const NavigationButtons = ({
 
   return (
     <div className="flex gap-2 items-center">
-      <Button
-        variant="outline"
-        size="icon"
+      <NavButton
+        icon={Home}
         onClick={() => navigate('/')}
-        className="bg-cyberdark-800/90 border-cyberblue-400/50 text-cyberblue-400 hover:bg-cyberdark-700 hover:border-cyberblue-400 hover:text-cyberblue-300 shadow-neon-blue transition-all duration-300"
-      >
-        <Home className="h-4 w-4" />
-      </Button>
-      <Button
-        variant="outline"
-        size="icon"
+        variant="blue"
+      />
+      <NavButton
+        icon={MessageSquare}
         onClick={() => navigate('/chat')}
-        className="bg-cyberdark-800/90 border-cyberred-400/50 text-cyberred-400 hover:bg-cyberdark-700 hover:border-cyberred-400 hover:text-cyberred-300 shadow-neon-red transition-all duration-300"
-      >
-        <MessageSquare className="h-4 w-4" />
-      </Button>
-      <Button
-        variant="outline"
-        size="icon"
+        variant="red"
+      />
+      <NavButton
+        icon={User}
         onClick={() => navigate('/profil')}
-        className="bg-cyberdark-800/90 border-cybergold-400/50 text-cybergold-400 hover:bg-cyberdark-700 hover:border-cybergold-400 hover:text-cybergold-300 shadow-neon-gold transition-all duration-300"
-      >
-        <User className="h-4 w-4" />
-      </Button>
-      <Sheet open={isFriendsOpen} onOpenChange={setIsFriendsOpen}>
-        <SheetTrigger asChild>
-          <Button
-            variant="outline"
-            size="icon"
-            className="bg-cyberdark-800/90 border-cyberblue-400/50 text-cyberblue-400 hover:bg-cyberdark-700 hover:border-cyberblue-400 hover:text-cyberblue-300 shadow-neon-blue transition-all duration-300"
-          >
-            <Users className="h-4 w-4" />
-          </Button>
-        </SheetTrigger>
-        <SheetContent className="w-[400px] bg-cyberdark-950/95 border-cyberblue-500/30 backdrop-blur-xl">
-          <SheetHeader>
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full overflow-hidden border border-cyberblue-400/50">
-                <img 
-                  src="/snakkaz-logo.png" 
-                  alt="SnakkaZ" 
-                  className="w-full h-full object-cover" 
-                />
-              </div>
-              <SheetTitle className="cyber-text text-xl">Venner</SheetTitle>
-            </div>
-          </SheetHeader>
-          {currentUserId && 
-            <FriendsContainer 
-              currentUserId={currentUserId} 
-              webRTCManager={webRTCManager}
-              directMessages={directMessages}
-              onNewMessage={onNewMessage}
-              onStartChat={onStartChat}
-              userProfiles={userProfiles}
-            />
-          }
-        </SheetContent>
-      </Sheet>
+        variant="gold"
+      />
+      <FriendsSheet
+        currentUserId={currentUserId}
+        webRTCManager={webRTCManager}
+        directMessages={directMessages}
+        onNewMessage={onNewMessage}
+        onStartChat={onStartChat}
+        isFriendsOpen={isFriendsOpen}
+        setIsFriendsOpen={setIsFriendsOpen}
+        userProfiles={userProfiles}
+      />
     </div>
   );
 };
