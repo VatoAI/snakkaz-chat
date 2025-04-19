@@ -29,11 +29,15 @@ export const MessageItem = ({
     >
       <div className="group relative">
         <div 
-          className={`max-w-[80%] p-3 rounded-lg ${
-            isCurrentUser 
-              ? 'bg-cyberblue-900 text-cyberblue-100' 
-              : 'bg-cyberdark-800 text-cybergold-200'
-          } ${isDeleted ? 'opacity-50 italic' : ''}`}
+          className={`
+            max-w-[80%] p-3 rounded-lg border transition-all duration-300
+            ${isCurrentUser 
+              ? 'bg-gradient-to-r from-cyberblue-900/90 via-cyberblue-800/80 to-cyberblue-900/90 border-cyberblue-500/20 text-cyberblue-100 shadow-neon-blue hover:shadow-neon-dual' 
+              : 'bg-gradient-to-r from-cyberdark-800/90 via-cyberdark-700/80 to-cyberdark-800/90 border-cyberred-500/20 text-cybergold-200 shadow-neon-red hover:shadow-neon-dual'
+            } 
+            ${isDeleted ? 'opacity-50 italic' : ''}
+            backdrop-blur-sm
+          `}
         >
           <p>{isDeleted ? "Denne meldingen er slettet" : message.content}</p>
           <div className="flex items-center gap-1 mt-1">
@@ -52,7 +56,7 @@ export const MessageItem = ({
                     {message.is_encrypted || usingServerFallback ? <Lock className="h-3 w-3 text-green-500" /> : null}
                   </span>
                 </TooltipTrigger>
-                <TooltipContent side="top" align="center" className="text-xs">
+                <TooltipContent side="top" align="center" className="text-xs bg-cyberdark-900 border-cybergold-500/30">
                   Ende-til-ende kryptert
                 </TooltipContent>
               </Tooltip>
@@ -77,7 +81,7 @@ export const MessageItem = ({
                       )}
                     </span>
                   </TooltipTrigger>
-                  <TooltipContent side="top" align="center" className="text-xs">
+                  <TooltipContent side="top" align="center" className="text-xs bg-cyberdark-900 border-cybergold-500/30">
                     {isMessageRead && isMessageRead(message.id) ? 'Lest' : 
                      message.is_delivered ? 'Levert' : 'Sendt'}
                   </TooltipContent>
@@ -103,7 +107,7 @@ export const MessageItem = ({
                       <Pencil className="h-3 w-3" />
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent side="top" className="text-xs">
+                  <TooltipContent side="top" className="text-xs bg-cyberdark-900 border-cybergold-500/30">
                     Rediger melding
                   </TooltipContent>
                 </Tooltip>
@@ -123,7 +127,7 @@ export const MessageItem = ({
                       <Trash className="h-3 w-3" />
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent side="top" className="text-xs">
+                  <TooltipContent side="top" className="text-xs bg-cyberdark-900 border-cybergold-500/30">
                     Slett melding
                   </TooltipContent>
                 </Tooltip>

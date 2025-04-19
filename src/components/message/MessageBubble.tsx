@@ -31,12 +31,12 @@ export const MessageBubble = ({
     >
       <div 
         className={`
-          relative py-2 px-3 rounded-md max-w-full break-words 
+          relative py-2 px-3 rounded-md max-w-full break-words border transition-all duration-300
           ${isCurrentUser 
-            ? 'bg-gradient-to-r from-cyberblue-900/90 to-cyberblue-800/80 text-white border border-cyberblue-500/20 shadow-neon-blue' 
-            : 'bg-gradient-to-r from-cyberdark-800/90 to-cyberdark-700/80 text-cyberblue-100 border border-cyberred-500/20 shadow-neon-red'
+            ? 'bg-gradient-to-r from-cyberblue-900/90 via-cyberblue-800/80 to-cyberblue-900/90 text-white border-cyberblue-500/20 shadow-neon-blue hover:shadow-neon-dual' 
+            : 'bg-gradient-to-r from-cyberdark-800/90 via-cyberdark-700/80 to-cyberdark-800/90 text-cyberblue-100 border-cyberred-500/20 shadow-neon-red hover:shadow-neon-dual'
           }
-          backdrop-blur-sm transition-all duration-300 hover:shadow-neon-dual
+          backdrop-blur-sm
         `}
       >
         <MessageContent message={message} onMessageExpired={onMessageExpired} />
