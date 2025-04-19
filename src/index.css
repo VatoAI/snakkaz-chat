@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -72,12 +71,12 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-cyberdark-950 text-white;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
   
   input, textarea {
-    @apply text-white;
+    @apply text-white bg-cyberdark-800 border-cybergold-500/30;
   }
   
   ::placeholder {
@@ -134,4 +133,22 @@
 .cyber-button:hover {
   box-shadow: 0 0 20px rgba(26,157,255,0.6), 0 0 20px rgba(230,0,0,0.6);
   transform: translateY(-2px);
+}
+
+@layer components {
+  .cyber-gradient {
+    @apply bg-gradient-to-r from-cyberblue-500 via-white to-cyberred-500 bg-clip-text text-transparent;
+  }
+  
+  .cyber-panel {
+    @apply bg-cyberdark-900/80 backdrop-blur-sm border border-cybergold-500/30 rounded-lg shadow-neon-blue/20;
+  }
+  
+  .cyber-input {
+    @apply bg-cyberdark-800 border-cybergold-500/30 text-white placeholder:text-cybergold-300/50;
+  }
+  
+  .cyber-button {
+    @apply bg-gradient-to-r from-cyberblue-500 to-cyberblue-700 hover:from-cyberblue-600 hover:to-cyberblue-800 text-white shadow-neon-blue transition-all duration-300;
+  }
 }

@@ -1,43 +1,8 @@
+
 #root {
   max-width: 1280px;
   margin: 0 auto;
   padding: 2rem;
-}
-
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
-}
-
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
 }
 
 body {
@@ -74,6 +39,15 @@ html {
 .cyber-bg {
   background: linear-gradient(135deg, rgba(10,10,10,0.95) 0%, rgba(30,30,30,0.8) 100%);
   backdrop-filter: blur(10px);
+}
+
+.cyber-panel {
+  @apply bg-cyberdark-900/80 backdrop-blur-sm border border-cybergold-500/30 rounded-lg;
+  box-shadow: 0 0 20px rgba(26,157,255,0.1);
+}
+
+.cyber-input {
+  @apply bg-cyberdark-800 border-cybergold-500/30 text-white;
 }
 
 .cyber-button {
