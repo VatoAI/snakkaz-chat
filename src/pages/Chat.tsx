@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChatHeader } from "@/components/chat/ChatHeader";
@@ -18,7 +19,7 @@ const Chat = () => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [ttl, setTtl] = useState(null);
+  const [ttl, setTtl] = useState(86400); // Set default TTL to 24 hours
   const [directMessages, setDirectMessages] = useState([]);
   const [editingMessage, setEditingMessage] = useState(null);
   const [userProfiles, setUserProfiles] = useState({});

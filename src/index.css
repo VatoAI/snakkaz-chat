@@ -75,6 +75,14 @@
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
+  
+  input, textarea {
+    @apply text-white;
+  }
+  
+  ::placeholder {
+    @apply text-cybergold-300/50;
+  }
 }
 
 .animate-fadeIn {

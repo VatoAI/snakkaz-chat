@@ -94,7 +94,7 @@ export const DirectMessageForm = ({
                 ? "Rediger melding..."
                 : "Skriv en melding..."
           }
-          className="min-h-[70px] resize-none pr-10 bg-cyberdark-800 border-cybergold-500/40 placeholder:text-cybergold-500/50"
+          className="min-h-[70px] resize-none pr-10 bg-cyberdark-800 border-cybergold-500/40 text-white placeholder:text-cybergold-300/50"
         />
         
         <div className="absolute right-2 bottom-2 flex items-center">

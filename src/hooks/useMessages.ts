@@ -21,6 +21,13 @@ export const useMessages = (userId: string | null, receiverId?: string, groupId?
     toast
   } = useMessageState();
 
+  // Set default TTL to 24 hours (86400 seconds)
+  useEffect(() => {
+    if (ttl === null) {
+      setTtl(86400);
+    }
+  }, [ttl, setTtl]);
+
   // Fetch messages from the server
   const { fetchMessages } = useMessageFetch(userId, setMessages, toast, receiverId, groupId);
   
@@ -74,7 +81,6 @@ export const useMessages = (userId: string | null, receiverId?: string, groupId?
     
     // Editing and deletion
     editingMessage,
-    // Fix here - pass the entire message object or a simplified version with id and content
     handleStartEditMessage: (message: DecryptedMessage | { id: string; content: string }) => {
       setNewMessage(handleStartEditMessage(message));
     },
@@ -82,3 +88,6 @@ export const useMessages = (userId: string | null, receiverId?: string, groupId?
     handleDeleteMessage: handleDeleteMessageById
   };
 };
+
+// Need to import useEffect
+import { useEffect } from 'react';

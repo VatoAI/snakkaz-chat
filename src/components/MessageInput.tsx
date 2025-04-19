@@ -1,3 +1,4 @@
+
 import { useRef, FormEvent } from "react";
 import { Input } from "@/components/ui/input";
 import { useMessageInputState } from "./message-input/useMessageInputState";
@@ -43,11 +44,6 @@ export const MessageInput = ({
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const documentInputRef = useRef<HTMLInputElement>(null);
 
-  const defaultTtl = 86400;
-  if (ttl !== defaultTtl) {
-    setTtl(defaultTtl);
-  }
-
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim() && !selectedFile) return;
@@ -84,7 +80,7 @@ export const MessageInput = ({
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder={receiverId ? "Skriv en privat melding..." : "Skriv din melding..."}
-            className="flex-1 text-cyberblue-100 placeholder:text-cyberdark-600"
+            className="flex-1 text-white placeholder:text-cybergold-300/50"
             disabled={isLoading || isRecording}
           />
           
