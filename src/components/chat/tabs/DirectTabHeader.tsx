@@ -16,9 +16,12 @@ export const DirectTabHeader = ({ friend, onClose }: DirectTabHeaderProps) => {
       <TooltipTrigger asChild>
         <TabsTrigger 
           value="direct" 
-          className="flex-1 flex items-center justify-center gap-2 px-4 py-2 data-[state=active]:bg-cyberred-500/10 
-                     data-[state=active]:text-cyberred-400 data-[state=active]:shadow-[inset_0_0_12px_rgba(230,0,0,0.2)]
-                     transition-all duration-200 hover:bg-cyberred-500/5 relative group"
+          className="flex-1 flex items-center justify-center gap-2 px-4 py-2 
+                     data-[state=active]:bg-cyberred-500/10 
+                     data-[state=active]:text-cyberred-400 
+                     data-[state=active]:shadow-[inset_0_0_12px_rgba(230,0,0,0.2)]
+                     transition-all duration-300 hover:bg-cyberred-500/5 
+                     relative group rounded-md hover:scale-105"
         >
           <MessageSquare className="h-4 w-4" />
           <span>{friend.profile?.username || 'Direct Message'}</span>

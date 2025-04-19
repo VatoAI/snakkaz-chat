@@ -7,7 +7,7 @@ export function StyledTabsList({ className, ...props }: React.ComponentPropsWith
     <TabsList 
       className={cn(
         "w-full h-14 bg-cyberdark-900/80 backdrop-blur-sm border-b border-cybergold-500/30",
-        "grid grid-cols-2 p-1 gap-2",
+        "grid grid-cols-2 p-1 gap-2 mt-8", // Added margin-top for the logo space
         "[&[data-orientation=horizontal]]:flex [&[data-orientation=vertical]]:flex-col",
         className
       )} 

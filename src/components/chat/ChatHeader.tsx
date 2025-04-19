@@ -48,13 +48,11 @@ export const ChatHeader = ({
   const navigate = useNavigate();
   const [isFriendsOpen, setIsFriendsOpen] = useState(false);
 
-  // Lytter etter tilpassede hendelser for å åpne chat med venn
   useEffect(() => {
     const handleStartChatEvent = (e: Event) => {
       const event = e as CustomEvent;
       if (event.detail && event.detail.friendId) {
         setIsFriendsOpen(true);
-        // Her ville vi ideelt sett sette valgt venn
       }
     };
     
@@ -69,7 +67,17 @@ export const ChatHeader = ({
     <div className="p-2 sm:p-4 border-b border-cybergold-500/30 bg-cyberdark-950/80 backdrop-blur-md">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-4">
         <div className="flex items-center gap-2">
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
+            <div className="hidden sm:flex w-10 h-10 rounded-full mr-2 border border-cyberblue-400/50 shadow-neon-blue overflow-hidden">
+              <img 
+                src="/snakkaz-logo.png" 
+                alt="SnakkaZ" 
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = "/placeholder.svg";
+                }}
+              />
+            </div>
             <Button
               variant="outline"
               size="icon"
@@ -106,7 +114,16 @@ export const ChatHeader = ({
               </SheetTrigger>
               <SheetContent className="w-[400px] bg-cyberdark-950/95 border-cyberblue-500/30 backdrop-blur-xl">
                 <SheetHeader>
-                  <SheetTitle className="cyber-text text-xl">Venner</SheetTitle>
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full overflow-hidden border border-cyberblue-400/50">
+                      <img 
+                        src="/snakkaz-logo.png" 
+                        alt="SnakkaZ" 
+                        className="w-full h-full object-cover" 
+                      />
+                    </div>
+                    <SheetTitle className="cyber-text text-xl">Venner</SheetTitle>
+                  </div>
                 </SheetHeader>
                 {currentUserId && 
                   <FriendsContainer 

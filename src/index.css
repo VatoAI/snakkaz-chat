@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -100,6 +101,35 @@
   }
 }
 
+/* Logo-specific animations */
+.logo-pulse {
+  animation: logoPulse 3s infinite alternate;
+}
+
+@keyframes logoPulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 10px rgba(26,157,255,0.4), 0 0 10px rgba(230,0,0,0.4);
+  }
+  100% {
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(26,157,255,0.6), 0 0 20px rgba(230,0,0,0.6);
+  }
+}
+
+.logo-rotate {
+  animation: logoRotate 10s linear infinite;
+}
+
+@keyframes logoRotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
 /* Enhanced cyberpunk-themed utility classes */
 .cyber-border {
   border-image: linear-gradient(90deg, #0088ff, #e60000) 1;
@@ -150,5 +180,18 @@
   
   .cyber-button {
     @apply bg-gradient-to-r from-cyberblue-500 to-cyberblue-700 hover:from-cyberblue-600 hover:to-cyberblue-800 text-white shadow-neon-blue transition-all duration-300;
+  }
+
+  /* Logo specific styles */
+  .logo-container {
+    @apply relative flex items-center justify-center;
+  }
+  
+  .logo-primary {
+    @apply w-16 h-16 rounded-full overflow-hidden border-2 border-l-cyberblue-400 border-t-cyberblue-400 border-r-red-400 border-b-red-400 shadow-neon-dual;
+  }
+  
+  .logo-secondary {
+    @apply w-10 h-10 rounded-full overflow-hidden border border-cyberblue-400/50 shadow-neon-blue;
   }
 }
