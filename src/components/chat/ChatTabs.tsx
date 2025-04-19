@@ -1,4 +1,3 @@
-
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { ChatGlobal } from '@/components/chat/ChatGlobal';
 import { DirectMessage } from '@/components/chat/friends/DirectMessage';
@@ -36,7 +35,7 @@ interface ChatTabsProps {
 export const ChatTabs = ({ 
   activeTab, 
   setActiveTab, 
-  selectedFriend, 
+  selectedFriend,
   messages,
   newMessage,
   setNewMessage,
@@ -58,37 +57,50 @@ export const ChatTabs = ({
 }: ChatTabsProps) => {
   return (
     <TooltipProvider>
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full h-full">
+      <Tabs 
+        value={activeTab} 
+        onValueChange={setActiveTab} 
+        className="w-full h-full flex flex-col"
+      >
         <TabsHeader 
           selectedFriend={selectedFriend}
           handleCloseDirectChat={handleCloseDirectChat}
         />
         
-        <TabsContent value="global" className="h-full flex flex-col mt-0 pt-0">
-          <ChatGlobal 
-            messages={messages}
-            newMessage={newMessage}
-            setNewMessage={setNewMessage}
-            isLoading={isLoading}
-            ttl={ttl}
-            setTtl={setTtl}
-            onMessageExpired={onMessageExpired}
-            onSubmit={onSubmit}
-            currentUserId={currentUserId}
-            editingMessage={editingMessage}
-            onEditMessage={onEditMessage}
-            onCancelEdit={onCancelEdit}
-            onDeleteMessage={onDeleteMessage}
-          />
-        </TabsContent>
+        <div className="flex-1 overflow-hidden">
+          <TabsContent 
+            value="global" 
+            className="h-full m-0 p-0 data-[state=active]:animate-fadeIn"
+          >
+            <ChatGlobal 
+              messages={messages}
+              newMessage={newMessage}
+              setNewMessage={setNewMessage}
+              isLoading={isLoading}
+              ttl={ttl}
+              setTtl={setTtl}
+              onMessageExpired={onMessageExpired}
+              onSubmit={onSubmit}
+              currentUserId={currentUserId}
+              editingMessage={editingMessage}
+              onEditMessage={onEditMessage}
+              onCancelEdit={onCancelEdit}
+              onDeleteMessage={onDeleteMessage}
+            />
+          </TabsContent>
 
-        <TabsContent value="assistant" className="h-full flex flex-col mt-0 pt-0">
-          <AIAgentChat currentUserId={currentUserId || ''} />
-        </TabsContent>
-        
-        {selectedFriend && (
-          <TabsContent value="direct" className="h-full mt-0 pt-0">
-            <div className="h-full">
+          <TabsContent 
+            value="assistant" 
+            className="h-full m-0 p-0 data-[state=active]:animate-fadeIn"
+          >
+            <AIAgentChat currentUserId={currentUserId || ''} />
+          </TabsContent>
+          
+          {selectedFriend && (
+            <TabsContent 
+              value="direct" 
+              className="h-full m-0 p-0 data-[state=active]:animate-fadeIn"
+            >
               <DirectMessage 
                 friend={selectedFriend}
                 currentUserId={currentUserId || ''}
@@ -98,9 +110,9 @@ export const ChatTabs = ({
                 onNewMessage={onNewMessage}
                 userProfiles={userProfiles}
               />
-            </div>
-          </TabsContent>
-        )}
+            </TabsContent>
+          )}
+        </div>
       </Tabs>
     </TooltipProvider>
   );

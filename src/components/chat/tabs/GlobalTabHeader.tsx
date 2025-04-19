@@ -9,14 +9,16 @@ export const GlobalTabHeader = () => {
       <TooltipTrigger asChild>
         <TabsTrigger 
           value="global" 
-          className="text-cybergold-300 data-[state=active]:text-cybergold-100 data-[state=active]:border-b-2 data-[state=active]:border-cyberblue-400 rounded-none flex items-center gap-2"
+          className="flex-1 flex items-center justify-center gap-2 px-4 py-2 data-[state=active]:bg-cyberblue-500/10 
+                     data-[state=active]:text-cyberblue-400 data-[state=active]:shadow-[inset_0_0_12px_rgba(0,136,255,0.2)]
+                     transition-all duration-200 hover:bg-cyberblue-500/5"
         >
           <Globe className="h-4 w-4" />
           <span>Global Room</span>
         </TabsTrigger>
       </TooltipTrigger>
       <TooltipContent>
-        <p>Public chat room with message history and editing</p>
+        <p>Public chat room with message history</p>
       </TooltipContent>
     </Tooltip>
   );
