@@ -5,7 +5,16 @@ import { base64ToArrayBuffer } from "@/utils/encryption/data-conversion";
 // Function to ensure the messages table has all necessary columns for editing/deleting and media encryption
 export const ensureMessageColumnsExist = async () => {
   try {
-    // Call the Supabase function to check and add columns
+    // Try using the new secure function first
+    try {
+      await supabase.rpc('add_media_encryption_columns');
+      console.log('Used secure function to ensure media columns exist');
+      return true;
+    } catch (functionError) {
+      console.error('Error calling secure function:', functionError);
+    }
+    
+    // Fallback to check_and_add_columns
     await supabase.rpc('check_and_add_columns', {
       p_table_name: 'messages',
       column_names: [

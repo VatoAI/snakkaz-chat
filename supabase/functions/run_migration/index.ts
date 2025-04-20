@@ -19,26 +19,32 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Run migration to add media encryption columns
-    const migration = `
-    -- Add media encryption columns to messages table if they don't exist
-    ALTER TABLE IF EXISTS public.messages 
-    ADD COLUMN IF NOT EXISTS media_encryption_key TEXT,
-    ADD COLUMN IF NOT EXISTS media_iv TEXT,
-    ADD COLUMN IF NOT EXISTS media_metadata JSONB;
-    `;
+    // Call the secure migration function we created
+    const { error: functionError } = await supabase.rpc('add_media_encryption_columns');
+    
+    if (functionError) {
+      console.error('Error calling add_media_encryption_columns:', functionError);
+      
+      // Fallback to direct SQL as a last resort (with proper service role permissions)
+      const migration = `
+      ALTER TABLE IF EXISTS public.messages 
+      ADD COLUMN IF NOT EXISTS media_encryption_key TEXT,
+      ADD COLUMN IF NOT EXISTS media_iv TEXT,
+      ADD COLUMN IF NOT EXISTS media_metadata JSONB;
+      `;
 
-    const { error } = await supabase.rpc('pgSQL', { query: migration });
-
-    if (error) {
-      console.error('Error running migration:', error);
-      return new Response(
-        JSON.stringify({ error: error.message }),
-        { 
-          status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
+      const { error: sqlError } = await supabase.rpc('pgSQL', { query: migration });
+      
+      if (sqlError) {
+        console.error('Fallback migration failed:', sqlError);
+        return new Response(
+          JSON.stringify({ error: "Migration failed. Both secure function and direct SQL approaches failed." }),
+          { 
+            status: 500, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      }
     }
 
     return new Response(
@@ -59,4 +65,3 @@ serve(async (req) => {
     );
   }
 });
-

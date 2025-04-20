@@ -295,6 +295,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_media_encryption_columns: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       check_and_add_columns: {
         Args: { p_table_name: string; column_names: string[] }
         Returns: undefined

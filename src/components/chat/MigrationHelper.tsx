@@ -4,15 +4,19 @@ import { Button } from "@/components/ui/button";
 import { Loader } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { useNotifications } from "@/contexts/NotificationContext";
 
 export const MigrationHelper = () => {
   const [running, setRunning] = useState(false);
   const [success, setSuccess] = useState<boolean | null>(null);
+  const [attempts, setAttempts] = useState(0);
   const { toast } = useToast();
+  const { notify } = useNotifications();
   
   const runMigration = async () => {
     setRunning(true);
     setSuccess(null);
+    setAttempts(prev => prev + 1);
     
     try {
       // First attempt: call the edge function
@@ -26,6 +30,10 @@ export const MigrationHelper = () => {
           title: "Migration successful",
           description: "Media encryption columns have been added to the database.",
         });
+        
+        notify("Database Updated", {
+          body: "Media encryption is now available for your messages",
+        });
         return;
       } catch (edgeFunctionError) {
         console.error("Edge function error:", edgeFunctionError);
@@ -34,10 +42,7 @@ export const MigrationHelper = () => {
       
       // Fallback: try using RPC if available
       try {
-        const { error } = await supabase.rpc('check_and_add_columns', {
-          p_table_name: 'messages',
-          column_names: ['media_encryption_key', 'media_iv', 'media_metadata']
-        });
+        const { error } = await supabase.rpc('add_media_encryption_columns');
         
         if (error) throw error;
         
@@ -45,6 +50,10 @@ export const MigrationHelper = () => {
         toast({
           title: "Migration successful",
           description: "Media encryption columns have been added to the database.",
+        });
+        
+        notify("Database Updated", {
+          body: "Media encryption is now available for your messages",
         });
         return;
       } catch (rpcError) {
@@ -64,13 +73,15 @@ export const MigrationHelper = () => {
     }
   };
   
-  // Try to run migration automatically on component mount
+  // Try to run migration automatically on component mount, but only once
   useEffect(() => {
     const autoMigrate = async () => {
       await runMigration();
     };
     
     autoMigrate();
+    // We intentionally don't include runMigration in deps to prevent infinite loops
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   
   if (success === true) {
@@ -96,7 +107,7 @@ export const MigrationHelper = () => {
               Running...
             </>
           ) : (
-            "Run Migration"
+            attempts > 0 ? "Retry Migration" : "Run Migration"
           )}
         </Button>
         {success === false && (
@@ -108,4 +119,3 @@ export const MigrationHelper = () => {
     </div>
   );
 };
-

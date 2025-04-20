@@ -13,7 +13,11 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
   const { toast } = useToast();
 
   const notify = async (title: string, options?: NotificationOptions) => {
-    if (isInQuietHours(settings)) return;
+    // Skip notifications during quiet hours if enabled
+    if (isInQuietHours(settings)) {
+      console.log("In quiet hours, skipping notification");
+      return;
+    }
 
     // Show toast notification
     toast({
@@ -21,20 +25,6 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
       description: options?.body,
       duration: 5000,
     });
-
-    // Play sound if enabled
-    if (settings.soundEnabled) {
-      const audioContext = new AudioContext();
-      const gainNode = audioContext.createGain();
-      gainNode.gain.value = settings.soundVolume;
-      gainNode.connect(audioContext.destination);
-      await playNotificationSound();
-    }
-
-    // Trigger vibration on mobile if enabled
-    if (settings.vibrationEnabled && navigator.vibrate) {
-      navigator.vibrate(200);
-    }
 
     // Show system notification
     await showNotification(title, options);
@@ -54,4 +44,3 @@ export const useNotifications = () => {
   }
   return context;
 };
-
