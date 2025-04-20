@@ -1,17 +1,16 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChatHeader } from "@/components/chat/ChatHeader";
 import { ChatTabs } from "@/components/chat/ChatTabs";
-import { useAuthState } from "@/hooks/useAuthState";
-import { useWebRTC } from "@/hooks/useWebRTC";
 import { useToast } from "@/components/ui/use-toast";
 import { UserStatus } from "@/types/presence";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useMessages } from "@/hooks/useMessages";
+import { useAuth } from "@/contexts/AuthContext";
+import { useWebRTC } from "@/hooks/useWebRTC";
 
 const Chat = () => {
-  const { userId, checkAuth } = useAuthState();
+  const { user, loading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { manager: webRTCManager, setupWebRTC, status } = useWebRTC();
@@ -42,30 +41,21 @@ const Chat = () => {
     setDirectMessages
   } = useMessages(userId);
 
-  // Authentication and setup effect
   useEffect(() => {
-    const verifyAuth = async () => {
-      const currentUserId = await checkAuth();
-      if (!currentUserId) {
-        toast({
-          title: "Ikke innlogget",
-          description: "Du må logge inn for å bruke chatten",
-          variant: "destructive",
-        });
-        navigate('/login', { replace: true });
-        return;
-      }
-
-      if (currentUserId && !isReady) {
-        setupWebRTC(currentUserId, () => {
-          console.log("WebRTC setup complete");
-          setIsReady(true);
-        });
-      }
-    };
+    if (loading) return;
     
-    verifyAuth();
-  }, [checkAuth, navigate, setupWebRTC, isReady, toast]);
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+
+    if (!isReady) {
+      setupWebRTC(user.id, () => {
+        console.log("WebRTC setup complete");
+        setIsReady(true);
+      });
+    }
+  }, [user, loading, navigate, setupWebRTC, isReady]);
 
   // Fetch messages and setup realtime subscription when component mounts
   useEffect(() => {
@@ -111,7 +101,7 @@ const Chat = () => {
     }
   };
 
-  if (!userId || !isReady) {
+  if (loading || !user || !isReady) {
     return (
       <div className="min-h-screen bg-cyberdark-950 text-white flex items-center justify-center">
         <div className="text-center">
@@ -127,7 +117,7 @@ const Chat = () => {
       <div className="h-screen bg-cyberdark-950 text-white flex flex-col">
         <ChatHeader 
           userPresence={userPresence}
-          currentUserId={userId}
+          currentUserId={user.id}
           currentStatus={currentStatus}
           onStatusChange={setCurrentStatus}
           webRTCManager={webRTCManager}
@@ -149,7 +139,7 @@ const Chat = () => {
             setTtl={setTtl}
             onMessageExpired={handleMessageExpired}
             onSubmit={handleSubmit}
-            currentUserId={userId}
+            currentUserId={user.id}
             editingMessage={editingMessage}
             onEditMessage={handleStartEditMessage}
             onCancelEdit={handleCancelEditMessage}
