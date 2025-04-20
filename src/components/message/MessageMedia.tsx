@@ -67,7 +67,7 @@ export const MessageMedia = ({ message }: MessageMediaProps) => {
   }
   
   if (message.media_type?.startsWith('image/')) {
-    return <ImageMedia url={decryptedUrl || storageUrl} />;
+    return <ImageMedia url={decryptedUrl || storageUrl} ttl={message.ephemeral_ttl} />;
   }
   
   if (message.media_type?.startsWith('video/')) {

@@ -131,6 +131,9 @@ export type Database = {
           is_delivered: boolean | null
           is_edited: boolean | null
           iv: string | null
+          media_encryption_key: string | null
+          media_iv: string | null
+          media_metadata: Json | null
           media_type: string | null
           media_url: string | null
           read_at: string | null
@@ -151,6 +154,9 @@ export type Database = {
           is_delivered?: boolean | null
           is_edited?: boolean | null
           iv?: string | null
+          media_encryption_key?: string | null
+          media_iv?: string | null
+          media_metadata?: Json | null
           media_type?: string | null
           media_url?: string | null
           read_at?: string | null
@@ -171,6 +177,9 @@ export type Database = {
           is_delivered?: boolean | null
           is_edited?: boolean | null
           iv?: string | null
+          media_encryption_key?: string | null
+          media_iv?: string | null
+          media_metadata?: Json | null
           media_type?: string | null
           media_url?: string | null
           read_at?: string | null
