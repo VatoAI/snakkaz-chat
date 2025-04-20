@@ -5,22 +5,21 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { Friend } from "@/components/chat/friends/types";
 import { Button } from "@/components/ui/button";
 import { TabBadge } from "./TabBadge";
+import { TabIndicator } from "./TabIndicator";
 
 interface DirectTabHeaderProps {
   friend: Friend;
   onClose: () => void;
+  isActive: boolean;
 }
 
-export const DirectTabHeader = ({ friend, onClose }: DirectTabHeaderProps) => {
+export const DirectTabHeader = ({ friend, onClose, isActive }: DirectTabHeaderProps) => {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         <TabsTrigger 
           value="direct" 
           className="flex-1 flex items-center justify-center gap-2 px-4 py-3
-                     data-[state=active]:bg-cyberred-500/10 
-                     data-[state=active]:text-cyberred-400 
-                     data-[state=active]:shadow-[inset_0_0_12px_rgba(230,0,0,0.2)]
                      transition-all duration-300 hover:bg-cyberred-500/5 
                      relative group rounded-md hover:scale-105"
         >
@@ -30,8 +29,8 @@ export const DirectTabHeader = ({ friend, onClose }: DirectTabHeaderProps) => {
               <span>{friend.profile?.username || 'Direct Message'}</span>
               <TabBadge variant="direct">Encrypted</TabBadge>
             </div>
-            <span className="text-xs text-cyberred-400/60 font-normal">
-              End-to-end encrypted private chat
+            <span className="hidden sm:block text-xs text-cyberred-400/60 font-normal">
+              Ctrl+3
             </span>
           </div>
           <Button
@@ -45,6 +44,7 @@ export const DirectTabHeader = ({ friend, onClose }: DirectTabHeaderProps) => {
           >
             <X className="h-3 w-3" />
           </Button>
+          <TabIndicator isActive={isActive} />
         </TabsTrigger>
       </TooltipTrigger>
       <TooltipContent className="max-w-xs">
