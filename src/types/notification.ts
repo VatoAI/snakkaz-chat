@@ -13,3 +13,4 @@ export interface NotificationContextType {
   updateSettings: (newSettings: Partial<NotificationSettings>) => void;
   notify: (title: string, options?: NotificationOptions) => void;
 }
+

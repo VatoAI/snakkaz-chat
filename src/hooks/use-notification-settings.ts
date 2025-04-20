@@ -36,3 +36,4 @@ export const useNotificationSettings = () => {
 
   return { settings, updateSettings };
 };
+

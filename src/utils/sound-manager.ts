@@ -51,3 +51,4 @@ export const showNotification = async (title: string, options?: NotificationOpti
     console.error('Error showing notification:', error);
   }
 };
+

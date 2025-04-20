@@ -1,4 +1,3 @@
-
 -- Funksjon for å sjekke og legge til kolonner hvis de ikke finnes
 CREATE OR REPLACE FUNCTION check_and_add_columns(p_table_name text, column_names text[])
 RETURNS void AS $$

@@ -106,3 +106,4 @@ export const NotificationSettings = () => {
     </Dialog>
   );
 };
+
