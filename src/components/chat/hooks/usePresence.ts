@@ -20,11 +20,14 @@ export const usePresence = (
     if (!userId || hidden) return;
 
     try {
+      // Only allow using statuses that are valid in the database
+      const validStatus = (newStatus === 'offline') ? 'online' : newStatus;
+      
       const { error } = await supabase
         .from('user_presence')
         .upsert({
           user_id: userId,
-          status: newStatus,
+          status: validStatus,
           last_seen: new Date().toISOString()
         }, { onConflict: 'user_id' });
 
@@ -57,12 +60,15 @@ export const usePresence = (
           console.error("Error removing presence when hiding:", error);
         }
       } else {
+        // Only allow using statuses that are valid in the database
+        const validStatus = (currentStatus === 'offline') ? 'online' : currentStatus;
+        
         // Update presence when visible
         const { error } = await supabase
           .from('user_presence')
           .upsert({
             user_id: userId,
-            status: currentStatus,
+            status: validStatus,
             last_seen: new Date().toISOString()
           }, { onConflict: 'user_id' });
 

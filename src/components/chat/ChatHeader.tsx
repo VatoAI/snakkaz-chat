@@ -1,3 +1,4 @@
+
 import { UserStatus } from "@/types/presence";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -47,13 +48,13 @@ export const ChatHeader = ({
   const { toast } = useToast();
   const navigate = useNavigate();
   const [isOnline, setIsOnline] = useState(true);
-  const [isIdle, setIsIdle] = useState(false);
+  const [isBusy, setIsBusy] = useState(false);
   const [isBrb, setIsBrb] = useState(false);
   const [isOffline, setIsOffline] = useState(false);
 
   useEffect(() => {
     setIsOnline(currentStatus === 'online');
-    setIsIdle(currentStatus === 'idle');
+    setIsBusy(currentStatus === 'busy');
     setIsBrb(currentStatus === 'brb');
     setIsOffline(currentStatus === 'offline');
   }, [currentStatus]);
@@ -133,9 +134,9 @@ export const ChatHeader = ({
               <Check className={`mr-2 h-4 w-4 ${isOnline ? '' : 'hidden'}`} />
               <span>Online</span>
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleStatusChange('idle')}>
-              <Check className={`mr-2 h-4 w-4 ${isIdle ? '' : 'hidden'}`} />
-              <span>Idle</span>
+            <DropdownMenuItem onClick={() => handleStatusChange('busy')}>
+              <Check className={`mr-2 h-4 w-4 ${isBusy ? '' : 'hidden'}`} />
+              <span>Busy</span>
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => handleStatusChange('brb')}>
               <Check className={`mr-2 h-4 w-4 ${isBrb ? '' : 'hidden'}`} />

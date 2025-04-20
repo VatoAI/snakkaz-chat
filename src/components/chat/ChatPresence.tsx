@@ -23,13 +23,16 @@ export const ChatPresence = ({
     if (!userId) return;
 
     const setupPresence = async () => {
-      // Hvis brukeren er skjult, ikke oppdater presence
+      // Skip updating presence if user is hidden
       if (!hidden) {
+        // Only allow using statuses that are valid in the database
+        const validStatus = (currentStatus === 'offline') ? 'online' : currentStatus;
+        
         const { error: upsertError } = await supabase
           .from('user_presence')
           .upsert({
             user_id: userId,
-            status: currentStatus,
+            status: validStatus,
             last_seen: new Date().toISOString()
           });
 
@@ -37,7 +40,7 @@ export const ChatPresence = ({
           console.error("Error setting initial presence:", upsertError);
         }
       } else {
-        // Slett brukerens presence hvis de vil være skjult
+        // Delete user's presence if they want to be hidden
         const { error: deleteError } = await supabase
           .from('user_presence')
           .delete()
@@ -48,7 +51,7 @@ export const ChatPresence = ({
         }
       }
 
-      // Sett opp lytting på presence-endringer
+      // Set up listening for presence changes
       const channel = supabase
         .channel('presence-changes')
         .on('postgres_changes', 
@@ -58,7 +61,7 @@ export const ChatPresence = ({
             table: 'user_presence'
           }, 
           async () => {
-            // Når vi oppdager endringer, hent alle presence-data på nytt
+            // When we detect changes, fetch all presence data again
             const { data: presenceData, error } = await supabase
               .from('user_presence')
               .select('*');
@@ -79,7 +82,7 @@ export const ChatPresence = ({
         )
         .subscribe();
 
-      // Hent presence-data umiddelbart ved oppstart
+      // Fetch presence data immediately at startup
       const { data: initialPresenceData, error: initialError } = await supabase
         .from('user_presence')
         .select('*');

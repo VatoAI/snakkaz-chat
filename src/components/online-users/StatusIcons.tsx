@@ -6,19 +6,22 @@ import { cn } from "@/lib/utils";
 export const statusIcons = {
   online: Circle,
   busy: Clock,
-  brb: Loader2
+  brb: Loader2,
+  offline: Circle
 };
 
 export const statusLabels = {
   online: "Online",
   busy: "Opptatt",
-  brb: "BRB"
+  brb: "BRB",
+  offline: "Offline"
 };
 
 export const statusColors = {
   online: "text-green-500",
   busy: "text-yellow-500",
-  brb: "text-blue-500"
+  brb: "text-blue-500",
+  offline: "text-gray-500"
 };
 
 interface StatusIconProps {
