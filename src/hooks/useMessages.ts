@@ -7,6 +7,7 @@ import { useMessageP2P } from "./message/useMessageP2P";
 import { useMessageExpiry } from "./message/useMessageExpiry";
 import { useMessageActions } from "./message/useMessageActions";
 import { DecryptedMessage } from "@/types/message";
+import { useEffect, useState } from 'react';
 
 export const useMessages = (userId: string | null, receiverId?: string, groupId?: string) => {
   const {
@@ -20,6 +21,9 @@ export const useMessages = (userId: string | null, receiverId?: string, groupId?
     setTtl,
     toast
   } = useMessageState();
+  
+  // Add directMessages state
+  const [directMessages, setDirectMessages] = useState<DecryptedMessage[]>([]);
 
   // Set default TTL to 24 hours (86400 seconds)
   useEffect(() => {
@@ -55,11 +59,15 @@ export const useMessages = (userId: string | null, receiverId?: string, groupId?
   } = useMessageActions(userId, handleEditMessage, handleDeleteMessage);
 
   // Handle message submission (new or edit)
-  const handleSubmitMessage = async (webRTCManager: any, onlineUsers: Set<string>, mediaFile?: File) => {
+  const handleSubmitMessage = async (webRTCManager: any, onlineUsers: Set<string>, content: string, options?: { ttl?: number, mediaFile?: File }) => {
     if (editingMessage) {
-      await handleSubmitEditMessage(newMessage);
+      await handleSubmitEditMessage(content);
     } else {
-      await handleSendMessage(webRTCManager, onlineUsers, mediaFile, receiverId, groupId);
+      // Extract ttl and mediaFile from options if provided
+      const messageTtl = options?.ttl !== undefined ? options.ttl : ttl;
+      const mediaFile = options?.mediaFile;
+      
+      await handleSendMessage(content, messageTtl, mediaFile);
     }
   };
 
@@ -85,9 +93,10 @@ export const useMessages = (userId: string | null, receiverId?: string, groupId?
       setNewMessage(handleStartEditMessage(message));
     },
     handleCancelEditMessage,
-    handleDeleteMessage: handleDeleteMessageById
+    handleDeleteMessage: handleDeleteMessageById,
+    
+    // Direct messages
+    directMessages,
+    setDirectMessages
   };
 };
-
-// Need to import useEffect
-import { useEffect } from 'react';

@@ -38,7 +38,8 @@ const Chat = () => {
     handleStartEditMessage,
     handleCancelEditMessage,
     handleDeleteMessage,
-    directMessages
+    directMessages,
+    setDirectMessages
   } = useMessages(userId);
 
   // Authentication and setup effect
@@ -95,7 +96,8 @@ const Chat = () => {
     if (!newMessage.trim()) return;
     
     try {
-      await handleSendMessage(webRTCManager, new Set(), newMessage, ttl);
+      // Update to use the new parameter format
+      await handleSendMessage(webRTCManager, new Set(), newMessage, { ttl });
     } catch (error) {
       toast({
         title: "Error",
