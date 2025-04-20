@@ -1,7 +1,7 @@
 
 import { DecryptedMessage } from "@/types/message";
 import { useEffect } from "react";
-import { showNotification, playNotificationSound } from "@/utils/sound-manager";
+import { useNotifications } from "@/contexts/NotificationContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface MessageContentDisplayProps {
@@ -11,6 +11,7 @@ interface MessageContentDisplayProps {
 export const MessageContentDisplay = ({ message }: MessageContentDisplayProps) => {
   const isDeleted = message.is_deleted;
   const isMobile = useIsMobile();
+  const { notify } = useNotifications();
 
   useEffect(() => {
     if (!isDeleted && message.created_at) {
@@ -19,16 +20,13 @@ export const MessageContentDisplay = ({ message }: MessageContentDisplayProps) =
       const isNewMessage = now.getTime() - messageDate.getTime() < 1000;
 
       if (isNewMessage) {
-        if (isMobile) {
-          playNotificationSound();
-        }
-        showNotification("New Message", {
+        notify("Ny melding", {
           body: isDeleted ? "Denne meldingen er slettet" : message.content,
           icon: "/snakkaz-logo.png"
         });
       }
     }
-  }, [message.created_at, message.content, isDeleted, isMobile]);
+  }, [message.created_at, message.content, isDeleted, notify]);
 
   return (
     <p className={`
