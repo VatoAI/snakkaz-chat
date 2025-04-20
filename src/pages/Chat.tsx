@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChatHeader } from "@/components/chat/ChatHeader";
@@ -7,7 +8,7 @@ import { useWebRTC } from "@/hooks/useWebRTC";
 import { useToast } from "@/components/ui/use-toast";
 import { UserStatus } from "@/types/presence";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { useMessageSubmission } from "@/hooks/message/useMessageSubmission";
+import { useMessages } from "@/hooks/useMessages";
 
 const Chat = () => {
   const { userId, checkAuth } = useAuthState();
@@ -17,17 +18,30 @@ const Chat = () => {
   const [isReady, setIsReady] = useState(false);
   const [activeTab, setActiveTab] = useState("global");
   const [selectedFriend, setSelectedFriend] = useState(null);
-  const [messages, setMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [ttl, setTtl] = useState(86400); // Set default TTL to 24 hours
-  const [directMessages, setDirectMessages] = useState([]);
-  const [editingMessage, setEditingMessage] = useState(null);
   const [userProfiles, setUserProfiles] = useState({});
   const [userPresence, setUserPresence] = useState({});
   const [currentStatus, setCurrentStatus] = useState<UserStatus>('online');
-  const { isSubmitting, handleSubmit: submitMessage } = useMessageSubmission(userId);
 
+  // Use the useMessages hook to handle all message-related state and operations
+  const {
+    messages,
+    newMessage,
+    setNewMessage,
+    isLoading,
+    ttl,
+    setTtl,
+    fetchMessages,
+    setupRealtimeSubscription,
+    handleSendMessage,
+    handleMessageExpired,
+    editingMessage,
+    handleStartEditMessage,
+    handleCancelEditMessage,
+    handleDeleteMessage,
+    directMessages
+  } = useMessages(userId);
+
+  // Authentication and setup effect
   useEffect(() => {
     const verifyAuth = async () => {
       const currentUserId = await checkAuth();
@@ -52,6 +66,20 @@ const Chat = () => {
     verifyAuth();
   }, [checkAuth, navigate, setupWebRTC, isReady, toast]);
 
+  // Fetch messages and setup realtime subscription when component mounts
+  useEffect(() => {
+    if (userId) {
+      console.log("Fetching initial messages");
+      fetchMessages();
+      
+      // Setup realtime subscription
+      const cleanup = setupRealtimeSubscription();
+      return () => {
+        cleanup();
+      };
+    }
+  }, [userId, fetchMessages, setupRealtimeSubscription]);
+
   const handleCloseDirectChat = () => {
     setSelectedFriend(null);
     setActiveTab("global");
@@ -62,33 +90,12 @@ const Chat = () => {
     setActiveTab("direct");
   };
 
-  const handleMessageExpired = (messageId) => {
-    setMessages(prev => prev.filter(m => m.id !== messageId));
-  };
-
-  const handleNewMessage = (message) => {
-    setDirectMessages(prev => [...prev, message]);
-  };
-
-  const handleMessageEdit = (message) => {
-    setEditingMessage(message);
-  };
-
-  const handleCancelEdit = () => {
-    setEditingMessage(null);
-  };
-
-  const handleDeleteMessage = (messageId) => {
-    setMessages(prev => prev.filter(m => m.id !== messageId));
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim()) return;
     
     try {
-      await submitMessage(newMessage, ttl);
-      setNewMessage('');
+      await handleSendMessage(webRTCManager, new Set(), newMessage, ttl);
     } catch (error) {
       toast({
         title: "Error",
@@ -119,7 +126,7 @@ const Chat = () => {
           onStatusChange={setCurrentStatus}
           webRTCManager={webRTCManager}
           directMessages={directMessages}
-          onNewMessage={handleNewMessage}
+          onNewMessage={handleStartEditMessage}
           onStartChat={onStartChat}
           userProfiles={userProfiles}
         />
@@ -138,11 +145,11 @@ const Chat = () => {
             onSubmit={handleSubmit}
             currentUserId={userId}
             editingMessage={editingMessage}
-            onEditMessage={handleMessageEdit}
-            onCancelEdit={handleCancelEdit}
+            onEditMessage={handleStartEditMessage}
+            onCancelEdit={handleCancelEditMessage}
             onDeleteMessage={handleDeleteMessage}
             directMessages={directMessages}
-            onNewMessage={handleNewMessage}
+            onNewMessage={handleStartEditMessage}
             webRTCManager={webRTCManager}
             userProfiles={userProfiles}
             handleCloseDirectChat={handleCloseDirectChat}
