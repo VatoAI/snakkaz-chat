@@ -3,6 +3,7 @@ import { useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { encryptMessage } from "@/utils/encryption";
 import { encryptMedia } from "@/utils/encryption/media-encryption";
+import { base64ToArrayBuffer } from "@/utils/encryption/data-conversion";
 import { ensureMessageColumnsExist, showUploadToast, uploadMediaFile } from "./utils/message-db-utils";
 
 export const useMessageSender = (
@@ -192,3 +193,4 @@ export const useMessageSender = (
 
   return { handleSendMessage };
 };
+
