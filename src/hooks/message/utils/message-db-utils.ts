@@ -1,82 +1,90 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { base64ToArrayBuffer } from "@/utils/encryption/data-conversion";
 
-// Function to ensure the messages table has all necessary columns for editing/deleting and media encryption
+/**
+ * Ensures that all required columns exist in the messages table
+ * for storing media encryption details
+ */
 export const ensureMessageColumnsExist = async () => {
   try {
-    // Try using the new secure function first
-    try {
-      await supabase.rpc('add_media_encryption_columns');
-      console.log('Used secure function to ensure media columns exist');
-      return true;
-    } catch (functionError) {
-      console.error('Error calling secure function:', functionError);
-    }
-    
-    // Fallback to check_and_add_columns
-    await supabase.rpc('check_and_add_columns', {
-      p_table_name: 'messages',
-      column_names: [
-        'is_edited', 
-        'edited_at', 
-        'is_deleted', 
-        'deleted_at', 
-        'group_id',
-        'media_encryption_key',
-        'media_iv',
-        'media_metadata'
-      ]
-    });
-    
-    console.log('Ensured all columns exist');
-    return true;
-  } catch (error) {
-    console.error('Error ensuring columns exist:', error);
-    return false;
+    const { error } = await supabase.rpc('add_media_encryption_columns');
+    if (error) console.error('Error ensuring media columns exist:', error);
+  } catch (err) {
+    console.error('Error calling add_media_encryption_columns:', err);
   }
 };
 
 /**
- * Shows a toast notification for media upload progress
+ * Handles showing upload toasts with different states
  */
-export const showUploadToast = (toast: any, status: 'uploading' | 'success' | 'error', message?: string) => {
-  if (status === 'uploading') {
+export const showUploadToast = (toast: any, state: 'uploading' | 'success' | 'error', message?: string) => {
+  if (state === 'uploading') {
     return toast({
-      title: "Laster opp fil...",
+      title: "Laster opp vedlegg...",
       description: "Vennligst vent mens filen krypteres og lastes opp",
-    }).id;
-  } else if (status === 'success') {
+    });
+  } else if (state === 'success') {
     return toast({
-      title: "Fil lastet opp",
-      description: message || "Sender melding med kryptert vedlegg...",
+      title: "Opplasting fullført",
+      description: message || "Filen ble lastet opp",
     });
   } else {
     return toast({
-      title: "Feil",
-      description: message || "Kunne ikke laste opp fil",
+      title: "Feil ved opplasting",
+      description: message || "Kunne ikke laste opp filen",
       variant: "destructive",
     });
   }
 };
 
 /**
- * Uploads media file to Supabase storage
+ * Uploads a media file to Supabase storage
  */
-export const uploadMediaFile = async (mediaFile: File) => {
-  const fileExt = mediaFile.name.split('.').pop();
-  const filePath = `${crypto.randomUUID()}.${fileExt || 'bin'}`;
+export const uploadMediaFile = async (file: File) => {
+  console.log("Starting file upload to Supabase storage");
+  
+  try {
+    // Create a unique file path
+    const filePath = `${Date.now()}_${Math.random().toString(36).substring(2)}.bin`;
+    
+    // Check if we have the chat-media bucket, if not create it
+    const { data: buckets } = await supabase.storage.listBuckets();
+    const chatMediaBucket = buckets?.find(bucket => bucket.name === 'chat-media');
+    
+    if (!chatMediaBucket) {
+      console.log("Creating chat-media bucket");
+      const { error: createBucketError } = await supabase.storage.createBucket('chat-media', {
+        public: false
+      });
+      
+      if (createBucketError) {
+        console.error("Error creating bucket:", createBucketError);
+        throw createBucketError;
+      }
+    }
+    
+    // Upload the file
+    console.log("Uploading file to path:", filePath);
+    const { error: uploadError, data } = await supabase.storage
+      .from('chat-media')
+      .upload(filePath, file, {
+        contentType: 'application/octet-stream',
+        cacheControl: '3600'
+      });
 
-  const { error } = await supabase.storage
-    .from('chat-media')
-    .upload(filePath, mediaFile);
-
-  if (error) {
+    if (uploadError) {
+      console.error("Error uploading file:", uploadError);
+      throw uploadError;
+    }
+    
+    console.log("File uploaded successfully:", data?.path);
+    
+    return {
+      mediaUrl: filePath,
+      mediaPath: data?.path
+    };
+  } catch (error) {
+    console.error("Error in uploadMediaFile:", error);
     throw error;
   }
-
-  return {
-    mediaUrl: filePath,
-    mediaType: mediaFile.type
-  };
 };

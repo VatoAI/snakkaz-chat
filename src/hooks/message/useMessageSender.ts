@@ -1,3 +1,4 @@
+
 import { useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { encryptMessage } from "@/utils/encryption";
@@ -34,17 +35,20 @@ export const useMessageSender = (
 
       // Handle media file upload if present
       if (mediaFile) {
+        console.log("Starting media file upload process:", mediaFile.name, mediaFile.type, mediaFile.size);
         toastId = showUploadToast(toast, 'uploading');
         
         try {
           // First encrypt the media file
           const encryptedMedia = await encryptMedia(mediaFile);
+          console.log("Media encrypted successfully");
           
           // Create a Blob from the encrypted data for upload
+          const encryptedData = encryptedMedia.encryptedData;
           const encryptedBlob = new Blob(
-            [encryptedMedia.encryptedData instanceof ArrayBuffer 
-              ? encryptedMedia.encryptedData 
-              : base64ToArrayBuffer(encryptedMedia.encryptedData)
+            [encryptedData instanceof ArrayBuffer 
+              ? encryptedData 
+              : base64ToArrayBuffer(encryptedData as string)
             ], 
             { type: 'application/octet-stream' }
           );
@@ -56,6 +60,7 @@ export const useMessageSender = (
             { type: 'application/octet-stream' }
           );
           
+          console.log("Uploading encrypted file to Supabase storage");
           // Upload the encrypted file
           const mediaData = await uploadMediaFile(encryptedFile);
           
@@ -65,9 +70,11 @@ export const useMessageSender = (
           iv = encryptedMedia.iv;
           mediaMetadata = encryptedMedia.metadata;
           
+          console.log("Media upload successful:", mediaUrl);
           // Update toast on success
           showUploadToast(toast, 'success', "Sender melding med kryptert vedlegg...");
         } catch (uploadError) {
+          console.error("Error during media upload:", uploadError);
           throw uploadError;
         }
       }

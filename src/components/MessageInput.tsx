@@ -46,9 +46,14 @@ export const MessageInput = ({
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() && !selectedFile) return;
     
+    // Allow submission if there's a message OR a selected file
+    if ((!newMessage.trim() && !selectedFile) || isLoading) return;
+    
+    console.log("Submitting message form with file:", selectedFile?.name);
     onSubmit(e, selectedFile || undefined);
+    
+    // Clear file input after submission
     setSelectedFile(null);
     
     const resetInput = clearFileInputs();

@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Lock, EyeOff } from "lucide-react";
+import { EyeOff } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { SecureImageViewer } from "./SecureImageViewer";
 import { SecureMediaIcon } from "./SecureMediaIcon";
@@ -13,9 +13,11 @@ interface ImageMediaProps {
 export const ImageMedia = ({ url, ttl }: ImageMediaProps) => {
   const [isViewerOpen, setIsViewerOpen] = useState(false);
 
+  console.log("Rendering ImageMedia with URL:", url);
+
   return (
     <div className="relative group mt-2">
-      <div className="relative hover:opacity-90 transition-opacity">
+      <div className="relative hover:opacity-90 transition-opacity overflow-hidden rounded-lg shadow-lg shadow-cyberdark-900/30">
         <img 
           src={url} 
           alt="Sikret bilde" 
@@ -23,6 +25,7 @@ export const ImageMedia = ({ url, ttl }: ImageMediaProps) => {
           onContextMenu={(e) => e.preventDefault()}
           draggable="false"
           onClick={() => setIsViewerOpen(true)}
+          loading="lazy"
         />
         
         <SecureMediaIcon position="top-right" size="sm" />

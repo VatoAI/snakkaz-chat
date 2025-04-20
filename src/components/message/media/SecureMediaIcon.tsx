@@ -27,7 +27,7 @@ export const SecureMediaIcon = ({
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div className={`absolute ${positionClass} bg-cyberblue-900/90 p-1.5 rounded-full border border-cyberblue-500/30 shadow-neon-blue`}>
+        <div className={`absolute ${positionClass} bg-cyberblue-900/80 p-1.5 rounded-full border border-cyberblue-500/30 shadow-neon-blue transition-all duration-300 hover:bg-cyberblue-800`}>
           <Lock className={`${sizeClass} text-cyberblue-400`} />
         </div>
       </TooltipTrigger>

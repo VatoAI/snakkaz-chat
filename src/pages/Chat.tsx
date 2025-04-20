@@ -79,13 +79,15 @@ const Chat = () => {
     setActiveTab("direct");
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent, mediaFile?: File) => {
     e.preventDefault();
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() && !mediaFile) return;
     
     try {
+      console.log("Handling message submission with media file:", mediaFile?.name);
       await handleSendMessage(newMessage, { 
         ttl, 
+        mediaFile: mediaFile, 
         webRTCManager: webRTCManager, 
         onlineUsers: new Set()
       });
