@@ -8,6 +8,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useMessages } from "@/hooks/useMessages";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWebRTC } from "@/hooks/useWebRTC";
+import { MigrationHelper } from "@/components/chat/MigrationHelper";
 
 const Chat = () => {
   const { user, loading } = useAuth();
@@ -21,7 +22,6 @@ const Chat = () => {
   const [userPresence, setUserPresence] = useState({});
   const [currentStatus, setCurrentStatus] = useState<UserStatus>('online');
 
-  // Use the useMessages hook to handle all message-related state and operations
   const {
     messages,
     newMessage,
@@ -39,7 +39,7 @@ const Chat = () => {
     handleDeleteMessage,
     directMessages,
     setDirectMessages
-  } = useMessages(userId);
+  } = useMessages(user?.id);
 
   useEffect(() => {
     if (loading) return;
@@ -57,19 +57,17 @@ const Chat = () => {
     }
   }, [user, loading, navigate, setupWebRTC, isReady]);
 
-  // Fetch messages and setup realtime subscription when component mounts
   useEffect(() => {
-    if (userId) {
+    if (user?.id) {
       console.log("Fetching initial messages");
       fetchMessages();
       
-      // Setup realtime subscription
       const cleanup = setupRealtimeSubscription();
       return () => {
         cleanup();
       };
     }
-  }, [userId, fetchMessages, setupRealtimeSubscription]);
+  }, [user?.id, fetchMessages, setupRealtimeSubscription]);
 
   const handleCloseDirectChat = () => {
     setSelectedFriend(null);
@@ -86,7 +84,6 @@ const Chat = () => {
     if (!newMessage.trim()) return;
     
     try {
-      // Update to use the new parameter format
       await handleSendMessage(newMessage, { 
         ttl, 
         webRTCManager: webRTCManager, 
@@ -151,6 +148,7 @@ const Chat = () => {
             handleCloseDirectChat={handleCloseDirectChat}
           />
         </div>
+        <MigrationHelper />
       </div>
     </TooltipProvider>
   );

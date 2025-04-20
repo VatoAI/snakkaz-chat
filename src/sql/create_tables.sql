@@ -13,9 +13,13 @@ BEGIN
             WHERE table_name = p_table_name 
             AND column_name = col
         ) THEN
-            -- Legg til boolean eller timestamp kolonner basert på navn
+            -- Legg til riktig kolonnetyper basert på navn
             IF col LIKE '%\_at' THEN
                 EXECUTE format('ALTER TABLE %I ADD COLUMN %I timestamp with time zone', p_table_name, col);
+            ELSIF col LIKE '%\_key' OR col LIKE '%\_iv' THEN
+                EXECUTE format('ALTER TABLE %I ADD COLUMN %I text', p_table_name, col);
+            ELSIF col LIKE '%\_metadata' THEN
+                EXECUTE format('ALTER TABLE %I ADD COLUMN %I jsonb', p_table_name, col);
             ELSE
                 EXECUTE format('ALTER TABLE %I ADD COLUMN %I boolean DEFAULT false', p_table_name, col);
             END IF;
@@ -89,4 +93,17 @@ END
 $$;
 
 -- Kjør check_and_add_columns for å sikre at vi har alle nødvendige kolonner
-SELECT check_and_add_columns('messages', ARRAY['is_edited', 'edited_at', 'is_deleted', 'deleted_at', 'group_id', 'read_at', 'is_delivered', 'encryption_key', 'iv']);
+SELECT check_and_add_columns('messages', ARRAY[
+    'is_edited', 
+    'edited_at', 
+    'is_deleted', 
+    'deleted_at', 
+    'group_id', 
+    'read_at', 
+    'is_delivered', 
+    'encryption_key', 
+    'iv', 
+    'media_encryption_key', 
+    'media_iv', 
+    'media_metadata'
+]);
