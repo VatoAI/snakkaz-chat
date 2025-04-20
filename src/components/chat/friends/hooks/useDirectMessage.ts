@@ -1,13 +1,9 @@
 
-import { useState, useRef, useEffect, useCallback } from "react";
 import { Friend } from "../types";
-import { WebRTCManager } from "@/utils/webrtc";
 import { DecryptedMessage } from "@/types/message";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
-import { encryptMessage } from "@/utils/encryption";
-import { useDirectMessageConnection } from "./useDirectMessageConnection";
+import { WebRTCManager } from "@/utils/webrtc";
 import { useDirectMessageState } from "./useDirectMessageState";
+import { useDirectMessageConnection } from "./useDirectMessageConnection";
 import { useTypingIndicator } from "@/hooks/message/useTypingIndicator";
 import { useReadReceipts } from "@/hooks/message/useReadReceipts";
 import { useDirectMessageSubmit } from "./useDirectMessageSubmit";
@@ -20,7 +16,6 @@ export const useDirectMessage = (
   onNewMessage: (message: DecryptedMessage) => void,
   messages: DecryptedMessage[] = []
 ) => {
-  const { toast } = useToast();
   const friendId = friend.user_id === currentUserId ? friend.friend_id : friend.user_id;
 
   const {
@@ -60,11 +55,6 @@ export const useDirectMessage = (
   
   // Add read receipts
   const { isMessageRead, markMessagesAsRead } = useReadReceipts(currentUserId, friendId, messages);
-
-  // Mark messages as read when component mounts or messages change
-  useEffect(() => {
-    markMessagesAsRead();
-  }, [markMessagesAsRead, messages]);
 
   // Message sending functionality
   const { 
