@@ -1,4 +1,3 @@
-
 import { useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { encryptMessage } from "@/utils/encryption";
@@ -17,6 +16,11 @@ export const useMessageSender = (
   const handleSendMessage = useCallback(async (webRTCManager: any, onlineUsers: Set<string>, mediaFile?: File, receiverId?: string, groupId?: string) => {
     if ((!newMessage.trim() && !mediaFile) || !userId) {
       console.log("Ingen melding eller fil å sende, eller bruker ikke pålogget");
+      toast({
+        title: "Feil",
+        description: "Du må skrive en melding eller legge ved en fil før du kan sende.",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -24,7 +28,6 @@ export const useMessageSender = (
     let toastId = null;
     
     try {
-      // Ensure necessary columns exist
       await ensureMessageColumnsExist();
 
       let mediaUrl = null;
@@ -33,17 +36,14 @@ export const useMessageSender = (
       let iv = null;
       let mediaMetadata = null;
 
-      // Handle media file upload if present
       if (mediaFile) {
         console.log("Starting media file upload process:", mediaFile.name, mediaFile.type, mediaFile.size);
         toastId = showUploadToast(toast, 'uploading');
-        
+
         try {
-          // First encrypt the media file
           const encryptedMedia = await encryptMedia(mediaFile);
-          console.log("Media encrypted successfully");
-          
-          // Create a Blob from the encrypted data for upload
+          console.log("Media encrypted successfully", encryptedMedia);
+
           const encryptedData = encryptedMedia.encryptedData;
           const encryptedBlob = new Blob(
             [encryptedData instanceof ArrayBuffer 
@@ -52,42 +52,42 @@ export const useMessageSender = (
             ], 
             { type: 'application/octet-stream' }
           );
-          
-          // Create a File object from the Blob for upload
           const encryptedFile = new File(
             [encryptedBlob], 
             `${Date.now()}_encrypted.bin`, 
             { type: 'application/octet-stream' }
           );
-          
           console.log("Uploading encrypted file to Supabase storage");
-          // Upload the encrypted file
           const mediaData = await uploadMediaFile(encryptedFile);
-          
+
           mediaUrl = mediaData.mediaUrl;
-          mediaType = encryptedMedia.mediaType; // Store the original media type
+          mediaType = encryptedMedia.mediaType;
           encryptionKey = encryptedMedia.encryptionKey;
           iv = encryptedMedia.iv;
           mediaMetadata = encryptedMedia.metadata;
-          
+
           console.log("Media upload successful:", mediaUrl);
-          // Update toast on success
           showUploadToast(toast, 'success', "Sender melding med kryptert vedlegg...");
-        } catch (uploadError) {
+        } catch (uploadError: any) {
           console.error("Error during media upload:", uploadError);
-          throw uploadError;
+
+          toast({
+            title: "Feil ved opplasting",
+            description: (uploadError instanceof Error ? uploadError.message : "Kunne ikke laste opp filen"),
+            variant: "destructive",
+          });
+
+          setIsLoading(false);
+          return;
         }
       }
 
-      // Count of successfully delivered P2P messages
       let p2pDeliveryCount = 0;
       
-      // Try to send message via P2P if no specific receiver and webRTCManager is available
       if (webRTCManager && !receiverId && !groupId) {
         const peerPromises: Promise<boolean>[] = [];
         const peerErrors: Record<string, string> = {};
         
-        // Try to send message to each online user with a 10 second timeout
         for (const peerId of onlineUsers) {
           if (peerId !== userId) {
             const timeoutPromise = new Promise<boolean>((resolve) => {
@@ -96,7 +96,6 @@ export const useMessageSender = (
             
             const sendPromise = new Promise<boolean>(async (resolve) => {
               try {
-                // Check if peer is ready
                 const isReady = await webRTCManager.ensurePeerReady(peerId);
                 
                 if (isReady) {
@@ -117,7 +116,6 @@ export const useMessageSender = (
           }
         }
         
-        // Wait for all peer send attempts to complete
         const results = await Promise.all(peerPromises);
         p2pDeliveryCount = results.filter(result => result).length;
         
@@ -126,13 +124,11 @@ export const useMessageSender = (
         }
       }
 
-      // Always store in database for history and offline users
       const { encryptedContent, key, iv: messageIv } = await encryptMessage(newMessage.trim());
-      
-      // Set default 24-hour TTL for normal messages
-      const defaultTtl = 86400; // 24 hours in seconds
+
+      const defaultTtl = 86400;
       const messageTtl = ttl || defaultTtl;
-      
+
       const { error } = await supabase
         .from('messages')
         .insert({
@@ -147,7 +143,6 @@ export const useMessageSender = (
           group_id: groupId ? true : null,
           is_edited: false,
           is_deleted: false,
-          // Store media encryption details
           media_encryption_key: encryptionKey,
           media_iv: iv,
           media_metadata: mediaMetadata ? JSON.stringify(mediaMetadata) : null
@@ -162,8 +157,7 @@ export const useMessageSender = (
         });
       } else {
         console.log("Melding sendt vellykket");
-        
-        // If we were showing a toast for file upload, update it
+
         if (toastId) {
           toast({
             id: toastId,
@@ -171,27 +165,17 @@ export const useMessageSender = (
             description: mediaFile ? "Melding med kryptert vedlegg ble sendt" : "Melding ble sendt",
           });
         }
-        
+
         setNewMessage("");
       }
-    } catch (error) {
-      console.error('Error sending message:', error);
-      
-      // Update existing toast or create new one
-      if (toastId) {
-        toast({
-          id: toastId,
-          title: "Feil",
-          description: "Kunne ikke sende melding: " + (error instanceof Error ? error.message : 'Ukjent feil'),
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Feil",
-          description: "Kunne ikke sende melding",
-          variant: "destructive",
-        });
-      }
+    } catch (error: any) {
+      console.error('Error sending message (outer catch):', error);
+
+      toast({
+        title: "Feil",
+        description: "Kunne ikke sende melding: " + (error instanceof Error ? error.message : 'Ukjent feil'),
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
