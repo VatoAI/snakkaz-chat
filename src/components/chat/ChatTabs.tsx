@@ -3,6 +3,8 @@ import { ChatGlobal } from '@/components/chat/ChatGlobal';
 import { DirectMessage } from '@/components/chat/friends/DirectMessage';
 import { AIAgentChat } from '@/components/chat/AIAgentChat';
 import { TabsHeader } from './tabs/TabsHeader';
+import { useTabShortcuts } from '@/hooks/useTabShortcuts';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Friend } from '@/components/chat/friends/types';
 import { DecryptedMessage } from '@/types/message';
 import { WebRTCManager } from '@/utils/webrtc';
@@ -55,6 +57,8 @@ export const ChatTabs = ({
   userProfiles,
   handleCloseDirectChat
 }: ChatTabsProps) => {
+  useTabShortcuts(setActiveTab, activeTab, !!selectedFriend);
+
   return (
     <TooltipProvider>
       <Tabs 
@@ -65,54 +69,63 @@ export const ChatTabs = ({
         <TabsHeader 
           selectedFriend={selectedFriend}
           handleCloseDirectChat={handleCloseDirectChat}
+          activeTab={activeTab}
         />
         
-        <div className="flex-1 overflow-hidden">
-          <TabsContent 
-            value="global" 
-            className="h-full m-0 p-0 data-[state=active]:animate-fadeIn"
+        <AnimatePresence mode="wait">
+          <motion.div 
+            className="flex-1 overflow-hidden"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
           >
-            <ChatGlobal 
-              messages={messages}
-              newMessage={newMessage}
-              setNewMessage={setNewMessage}
-              isLoading={isLoading}
-              ttl={ttl}
-              setTtl={setTtl}
-              onMessageExpired={onMessageExpired}
-              onSubmit={onSubmit}
-              currentUserId={currentUserId}
-              editingMessage={editingMessage}
-              onEditMessage={onEditMessage}
-              onCancelEdit={onCancelEdit}
-              onDeleteMessage={onDeleteMessage}
-            />
-          </TabsContent>
-
-          <TabsContent 
-            value="assistant" 
-            className="h-full m-0 p-0 data-[state=active]:animate-fadeIn"
-          >
-            <AIAgentChat currentUserId={currentUserId || ''} />
-          </TabsContent>
-          
-          {selectedFriend && (
             <TabsContent 
-              value="direct" 
+              value="global" 
               className="h-full m-0 p-0 data-[state=active]:animate-fadeIn"
             >
-              <DirectMessage 
-                friend={selectedFriend}
-                currentUserId={currentUserId || ''}
-                webRTCManager={webRTCManager}
-                onBack={handleCloseDirectChat}
-                messages={directMessages}
-                onNewMessage={onNewMessage}
-                userProfiles={userProfiles}
+              <ChatGlobal 
+                messages={messages}
+                newMessage={newMessage}
+                setNewMessage={setNewMessage}
+                isLoading={isLoading}
+                ttl={ttl}
+                setTtl={setTtl}
+                onMessageExpired={onMessageExpired}
+                onSubmit={onSubmit}
+                currentUserId={currentUserId}
+                editingMessage={editingMessage}
+                onEditMessage={onEditMessage}
+                onCancelEdit={onCancelEdit}
+                onDeleteMessage={onDeleteMessage}
               />
             </TabsContent>
-          )}
-        </div>
+
+            <TabsContent 
+              value="assistant" 
+              className="h-full m-0 p-0 data-[state=active]:animate-fadeIn"
+            >
+              <AIAgentChat currentUserId={currentUserId || ''} />
+            </TabsContent>
+            
+            {selectedFriend && (
+              <TabsContent 
+                value="direct" 
+                className="h-full m-0 p-0 data-[state=active]:animate-fadeIn"
+              >
+                <DirectMessage 
+                  friend={selectedFriend}
+                  currentUserId={currentUserId || ''}
+                  webRTCManager={webRTCManager}
+                  onBack={handleCloseDirectChat}
+                  messages={directMessages}
+                  onNewMessage={onNewMessage}
+                  userProfiles={userProfiles}
+                />
+              </TabsContent>
+            )}
+          </motion.div>
+        </AnimatePresence>
       </Tabs>
     </TooltipProvider>
   );
