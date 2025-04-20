@@ -1,12 +1,12 @@
 
 /**
- * Media encryption utilities for handling images and audio
+ * Media encryption utilities for handling images, video, audio and documents
  */
 
 import { arrayBufferToBase64, base64ToArrayBuffer } from './data-conversion';
 
 export interface EncryptedMedia {
-  encryptedData: string;
+  encryptedData: string | ArrayBuffer;
   encryptionKey: string;
   iv: string;
   mediaType: string;
@@ -15,15 +15,20 @@ export interface EncryptedMedia {
     height?: number;
     duration?: number;
     size: number;
+    originalName?: string;
+    expires?: number; // Timestamp for when media should expire
+    isEncrypted: boolean;
   };
 }
 
-// Krypter mediefil (bilde eller lyd)
+// Encrypt a media file (image, video, audio, document)
 export const encryptMedia = async (
   file: File
 ): Promise<EncryptedMedia> => {
   try {
-    // Generer krypteringsnøkkel
+    console.log('Starting media encryption process for:', file.name);
+    
+    // Generate encryption key
     const key = await window.crypto.subtle.generateKey(
       {
         name: "AES-GCM",
@@ -33,13 +38,15 @@ export const encryptMedia = async (
       ["encrypt", "decrypt"]
     );
 
-    // Generer IV
+    // Generate IV
     const iv = window.crypto.getRandomValues(new Uint8Array(12));
 
-    // Les filen som ArrayBuffer
+    // Read file as ArrayBuffer
     const fileBuffer = await file.arrayBuffer();
     
-    // Krypter data
+    console.log(`File read to buffer, size: ${fileBuffer.byteLength} bytes`);
+    
+    // Encrypt data
     const encryptedBuffer = await window.crypto.subtle.encrypt(
       {
         name: "AES-GCM",
@@ -49,13 +56,17 @@ export const encryptMedia = async (
       fileBuffer
     );
 
-    // Eksporter nøkkelen
+    // Export key for storage
     const exportedKey = await window.crypto.subtle.exportKey("jwk", key);
 
-    // Initialize metadata with size
-    const metadata: EncryptedMedia['metadata'] = { size: file.size };
+    // Initialize metadata with size and original filename
+    const metadata: EncryptedMedia['metadata'] = { 
+      size: file.size, 
+      originalName: file.name,
+      isEncrypted: true
+    };
     
-    // Hent metadata hvis det er et bilde
+    // Collect metadata based on file type
     if (file.type.startsWith('image/')) {
       const img = new Image();
       await new Promise((resolve, reject) => {
@@ -69,8 +80,28 @@ export const encryptMedia = async (
         img.onerror = reject;
         img.src = URL.createObjectURL(file);
       });
+      
+      // Revoke object URL to prevent memory leaks
+      URL.revokeObjectURL(img.src);
     }
-    // For lyd, hent varighet
+    else if (file.type.startsWith('video/')) {
+      const video = document.createElement('video');
+      await new Promise((resolve, reject) => {
+        video.onloadedmetadata = () => {
+          if (metadata) {
+            metadata.width = video.videoWidth;
+            metadata.height = video.videoHeight;
+            metadata.duration = video.duration;
+          }
+          resolve(null);
+        };
+        video.onerror = reject;
+        video.src = URL.createObjectURL(file);
+      });
+      
+      // Revoke object URL to prevent memory leaks
+      URL.revokeObjectURL(video.src);
+    }
     else if (file.type.startsWith('audio/')) {
       const audio = new Audio();
       await new Promise((resolve, reject) => {
@@ -83,10 +114,15 @@ export const encryptMedia = async (
         audio.onerror = reject;
         audio.src = URL.createObjectURL(file);
       });
+      
+      // Revoke object URL to prevent memory leaks
+      URL.revokeObjectURL(audio.src);
     }
+    
+    console.log('Media encryption completed successfully');
 
     return {
-      encryptedData: arrayBufferToBase64(encryptedBuffer),
+      encryptedData: encryptedBuffer,
       encryptionKey: JSON.stringify(exportedKey),
       iv: arrayBufferToBase64(iv),
       mediaType: file.type,
@@ -98,12 +134,24 @@ export const encryptMedia = async (
   }
 };
 
-// Dekrypter mediefil
+// Decrypt a media file
 export const decryptMedia = async (
-  encryptedMedia: EncryptedMedia
+  encryptedMedia: {
+    encryptedData: ArrayBuffer | string;
+    encryptionKey: string;
+    iv: string;
+    mediaType: string;
+  }
 ): Promise<Blob> => {
   try {
-    // Importer krypteringsnøkkel
+    console.log('Starting media decryption process');
+    
+    // If encryptedData is a string, convert it to ArrayBuffer
+    const encryptedBuffer = typeof encryptedMedia.encryptedData === 'string' 
+      ? base64ToArrayBuffer(encryptedMedia.encryptedData)
+      : encryptedMedia.encryptedData;
+    
+    // Import encryption key
     const key = await window.crypto.subtle.importKey(
       "jwk",
       JSON.parse(encryptedMedia.encryptionKey),
@@ -115,20 +163,41 @@ export const decryptMedia = async (
       ["decrypt"]
     );
 
-    // Dekrypter data
+    // Get IV as ArrayBuffer
+    const iv = typeof encryptedMedia.iv === 'string'
+      ? base64ToArrayBuffer(encryptedMedia.iv)
+      : encryptedMedia.iv;
+
+    // Decrypt data
     const decryptedBuffer = await window.crypto.subtle.decrypt(
       {
         name: "AES-GCM",
-        iv: base64ToArrayBuffer(encryptedMedia.iv),
+        iv: iv instanceof ArrayBuffer ? new Uint8Array(iv) : iv,
       },
       key,
-      base64ToArrayBuffer(encryptedMedia.encryptedData)
+      encryptedBuffer
     );
+    
+    console.log('Media decryption completed successfully');
 
-    // Returner som Blob med original mediatype
+    // Return as Blob with original media type
     return new Blob([decryptedBuffer], { type: encryptedMedia.mediaType });
   } catch (error) {
     console.error("Media decryption failed:", error);
     throw new Error("Failed to decrypt media file");
   }
+};
+
+// Helper function to check if media is expired based on TTL
+export const isMediaExpired = (
+  createdAt: string,
+  ttl: number | null
+): boolean => {
+  if (!ttl) return false;
+  
+  const creationTime = new Date(createdAt).getTime();
+  const expirationTime = creationTime + (ttl * 1000); // Convert TTL to milliseconds
+  const currentTime = new Date().getTime();
+  
+  return currentTime > expirationTime;
 };

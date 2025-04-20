@@ -2,6 +2,7 @@
 import { useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { encryptMessage } from "@/utils/encryption";
+import { encryptMedia } from "@/utils/encryption/media-encryption";
 import { ensureMessageColumnsExist, showUploadToast, uploadMediaFile } from "./utils/message-db-utils";
 
 export const useMessageSender = (
@@ -27,18 +28,45 @@ export const useMessageSender = (
 
       let mediaUrl = null;
       let mediaType = null;
+      let encryptionKey = null;
+      let iv = null;
+      let mediaMetadata = null;
 
       // Handle media file upload if present
       if (mediaFile) {
         toastId = showUploadToast(toast, 'uploading');
         
         try {
-          const mediaData = await uploadMediaFile(mediaFile);
+          // First encrypt the media file
+          const encryptedMedia = await encryptMedia(mediaFile);
+          
+          // Create a Blob from the encrypted data for upload
+          const encryptedBlob = new Blob(
+            [encryptedMedia.encryptedData instanceof ArrayBuffer 
+              ? encryptedMedia.encryptedData 
+              : base64ToArrayBuffer(encryptedMedia.encryptedData)
+            ], 
+            { type: 'application/octet-stream' }
+          );
+          
+          // Create a File object from the Blob for upload
+          const encryptedFile = new File(
+            [encryptedBlob], 
+            `${Date.now()}_encrypted.bin`, 
+            { type: 'application/octet-stream' }
+          );
+          
+          // Upload the encrypted file
+          const mediaData = await uploadMediaFile(encryptedFile);
+          
           mediaUrl = mediaData.mediaUrl;
-          mediaType = mediaData.mediaType;
+          mediaType = encryptedMedia.mediaType; // Store the original media type
+          encryptionKey = encryptedMedia.encryptionKey;
+          iv = encryptedMedia.iv;
+          mediaMetadata = encryptedMedia.metadata;
           
           // Update toast on success
-          showUploadToast(toast, 'success', "Sender melding med vedlegg...");
+          showUploadToast(toast, 'success', "Sender melding med kryptert vedlegg...");
         } catch (uploadError) {
           throw uploadError;
         }
@@ -92,7 +120,7 @@ export const useMessageSender = (
       }
 
       // Always store in database for history and offline users
-      const { encryptedContent, key, iv } = await encryptMessage(newMessage.trim());
+      const { encryptedContent, key, iv: messageIv } = await encryptMessage(newMessage.trim());
       
       // Set default 24-hour TTL for normal messages
       const defaultTtl = 86400; // 24 hours in seconds
@@ -104,14 +132,18 @@ export const useMessageSender = (
           sender_id: userId,
           encrypted_content: encryptedContent,
           encryption_key: key,
-          iv: iv,
+          iv: messageIv,
           ephemeral_ttl: messageTtl,
           media_url: mediaUrl,
           media_type: mediaType,
           receiver_id: receiverId,
           group_id: groupId ? true : null,
           is_edited: false,
-          is_deleted: false
+          is_deleted: false,
+          // Store media encryption details
+          media_encryption_key: encryptionKey,
+          media_iv: iv,
+          media_metadata: mediaMetadata ? JSON.stringify(mediaMetadata) : null
         });
 
       if (error) {
@@ -129,7 +161,7 @@ export const useMessageSender = (
           toast({
             id: toastId,
             title: "Melding sendt",
-            description: mediaFile ? "Melding med vedlegg ble sendt" : "Melding ble sendt",
+            description: mediaFile ? "Melding med kryptert vedlegg ble sendt" : "Melding ble sendt",
           });
         }
         

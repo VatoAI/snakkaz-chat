@@ -1,13 +1,23 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { base64ToArrayBuffer } from "@/utils/encryption/data-conversion";
 
-// Function to ensure the messages table has all necessary columns for editing/deleting
+// Function to ensure the messages table has all necessary columns for editing/deleting and media encryption
 export const ensureMessageColumnsExist = async () => {
   try {
     // Call the Supabase function to check and add columns
     await supabase.rpc('check_and_add_columns', {
       p_table_name: 'messages',
-      column_names: ['is_edited', 'edited_at', 'is_deleted', 'deleted_at', 'group_id']
+      column_names: [
+        'is_edited', 
+        'edited_at', 
+        'is_deleted', 
+        'deleted_at', 
+        'group_id',
+        'media_encryption_key',
+        'media_iv',
+        'media_metadata'
+      ]
     });
     
     console.log('Ensured all columns exist');
@@ -25,12 +35,12 @@ export const showUploadToast = (toast: any, status: 'uploading' | 'success' | 'e
   if (status === 'uploading') {
     return toast({
       title: "Laster opp fil...",
-      description: "Vennligst vent mens filen lastes opp",
+      description: "Vennligst vent mens filen krypteres og lastes opp",
     }).id;
   } else if (status === 'success') {
     return toast({
       title: "Fil lastet opp",
-      description: message || "Sender melding med vedlegg...",
+      description: message || "Sender melding med kryptert vedlegg...",
     });
   } else {
     return toast({
@@ -46,7 +56,7 @@ export const showUploadToast = (toast: any, status: 'uploading' | 'success' | 'e
  */
 export const uploadMediaFile = async (mediaFile: File) => {
   const fileExt = mediaFile.name.split('.').pop();
-  const filePath = `${crypto.randomUUID()}.${fileExt}`;
+  const filePath = `${crypto.randomUUID()}.${fileExt || 'bin'}`;
 
   const { error } = await supabase.storage
     .from('chat-media')
