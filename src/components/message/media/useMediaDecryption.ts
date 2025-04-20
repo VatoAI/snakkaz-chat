@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { DecryptedMessage } from "@/types/message";
-import { decryptMedia } from "@/utils/encryption/media-encryption";
+import { decryptMedia } from "@/utils/encryption/media";
 
 export const useMediaDecryption = (message: DecryptedMessage) => {
   const [decryptedUrl, setDecryptedUrl] = useState<string | null>(null);
