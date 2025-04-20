@@ -97,7 +97,11 @@ const Chat = () => {
     
     try {
       // Update to use the new parameter format
-      await handleSendMessage(webRTCManager, new Set(), newMessage, { ttl });
+      await handleSendMessage(newMessage, { 
+        ttl, 
+        webRTCManager: webRTCManager, 
+        onlineUsers: new Set()
+      });
     } catch (error) {
       toast({
         title: "Error",

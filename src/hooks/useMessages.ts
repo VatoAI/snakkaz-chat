@@ -59,7 +59,7 @@ export const useMessages = (userId: string | null, receiverId?: string, groupId?
   } = useMessageActions(userId, handleEditMessage, handleDeleteMessage);
 
   // Handle message submission (new or edit)
-  const handleSubmitMessage = async (webRTCManager: any, onlineUsers: Set<string>, content: string, options?: { ttl?: number, mediaFile?: File }) => {
+  const handleSubmitMessage = async (content: string, options?: { ttl?: number, mediaFile?: File, webRTCManager?: any, onlineUsers?: Set<string> }) => {
     if (editingMessage) {
       await handleSubmitEditMessage(content);
     } else {
