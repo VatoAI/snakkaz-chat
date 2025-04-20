@@ -1,4 +1,3 @@
-
 import { StyledTabsList } from "./StyledTabsList";
 import { GlobalTabHeader } from "./GlobalTabHeader";
 import { AssistantTabHeader } from "./AssistantTabHeader";
@@ -8,9 +7,14 @@ import { Friend } from "@/components/chat/friends/types";
 interface TabsHeaderProps {
   selectedFriend: Friend | null;
   handleCloseDirectChat: () => void;
+  activeTab: string;
 }
 
-export const TabsHeader = ({ selectedFriend, handleCloseDirectChat }: TabsHeaderProps) => {
+export const TabsHeader = ({ 
+  selectedFriend, 
+  handleCloseDirectChat,
+  activeTab
+}: TabsHeaderProps) => {
   return (
     <div className="relative">
       {/* Logo element above tabs with increased size and improved visibility */}
@@ -33,14 +37,15 @@ export const TabsHeader = ({ selectedFriend, handleCloseDirectChat }: TabsHeader
         </div>
       </div>
       
-      {/* Original tabs list */}
+      {/* Tabs list */}
       <StyledTabsList>
-        <GlobalTabHeader />
-        <AssistantTabHeader />
+        <GlobalTabHeader isActive={activeTab === 'global'} />
+        <AssistantTabHeader isActive={activeTab === 'assistant'} />
         {selectedFriend && (
           <DirectTabHeader 
             friend={selectedFriend} 
             onClose={handleCloseDirectChat}
+            isActive={activeTab === 'direct'}
           />
         )}
       </StyledTabsList>
