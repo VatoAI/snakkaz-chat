@@ -1,2 +1,2 @@
 
-export { FriendsContainer as FriendsList } from './friends/FriendsContainer';
+export { FriendsList } from './friends/list/FriendsList';
