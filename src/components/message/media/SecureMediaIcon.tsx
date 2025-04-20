@@ -27,13 +27,12 @@ export const SecureMediaIcon = ({
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div className={`absolute ${positionClass} bg-cyberdark-900/80 p-1 rounded-full`}>
-          <Lock className={`${sizeClass} text-green-400`} />
+        <div className={`absolute ${positionClass} bg-cyberblue-900/90 p-1.5 rounded-full border border-cyberblue-500/30 shadow-neon-blue`}>
+          <Lock className={`${sizeClass} text-cyberblue-400`} />
         </div>
       </TooltipTrigger>
       <TooltipContent side="left">
-        <p className="text-xs">Ende-til-ende kryptert media</p>
-        <p className="text-xs text-cyberblue-300">Automatisk sletting aktivert</p>
+        <p className="text-xs">Ende-til-ende kryptert</p>
       </TooltipContent>
     </Tooltip>
   );

@@ -3,7 +3,7 @@ import { useRef, useEffect } from "react";
 import { DecryptedMessage } from "@/types/message";
 import { MessageMedia } from "./MessageMedia";
 import { MessageTimer } from "./MessageTimer";
-import { applyAntiCopyProtection } from "@/utils/security/screenshot-prevention";
+import { useScreenshotPrevention } from "@/utils/security/screenshot-prevention";
 
 interface MessageContentProps {
   message: DecryptedMessage;
@@ -13,12 +13,12 @@ interface MessageContentProps {
 export const MessageContent = ({ message, onMessageExpired }: MessageContentProps) => {
   const contentRef = useRef<HTMLParagraphElement>(null);
   
-  // Apply anti-copy protection to sensitive content
-  useEffect(() => {
-    if (message.media_url && contentRef.current) {
-      applyAntiCopyProtection(contentRef.current);
-    }
-  }, [message.media_url]);
+  // Apply screenshot prevention
+  useScreenshotPrevention({
+    showToast: true,
+    toastTitle: "Skjermdump deaktivert",
+    toastMessage: "Av sikkerhetsgrunner er skjermdump deaktivert"
+  });
 
   if (message.is_deleted) {
     return (
