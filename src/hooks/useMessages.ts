@@ -39,7 +39,7 @@ export const useMessages = (userId: string | null, receiverId?: string, groupId?
   const { setupRealtimeSubscription } = useMessageRealtime(userId, setMessages, receiverId, groupId);
   
   // Message sending, editing, and deleting
-  const { handleSendMessage, handleEditMessage, handleDeleteMessage } = useMessageSend(
+  const { handleSendMessage: internalSendMessage, handleEditMessage, handleDeleteMessage } = useMessageSend(
     userId, newMessage, setNewMessage, ttl, setIsLoading, toast
   );
   
@@ -63,11 +63,13 @@ export const useMessages = (userId: string | null, receiverId?: string, groupId?
     if (editingMessage) {
       await handleSubmitEditMessage(content);
     } else {
-      // Extract ttl and mediaFile from options if provided
+      // Extract options
       const messageTtl = options?.ttl !== undefined ? options.ttl : ttl;
       const mediaFile = options?.mediaFile;
+      const webRTCManager = options?.webRTCManager;
+      const onlineUsers = options?.onlineUsers || new Set<string>();
       
-      await handleSendMessage(content, messageTtl, mediaFile);
+      await internalSendMessage(webRTCManager, onlineUsers, mediaFile, receiverId);
     }
   };
 

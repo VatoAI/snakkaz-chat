@@ -46,22 +46,36 @@ export const FriendsContainer = ({
             user_id,
             friend_id,
             status,
-            created_at,
-            profiles!friendships_friend_id_fkey(id, username, full_name, avatar_url)
+            created_at
           `)
           .or(`user_id.eq.${currentUserId},friend_id.eq.${currentUserId}`)
           .eq('status', 'accepted');
           
         if (friendshipsError) throw friendshipsError;
         
-        const formattedFriends: Friend[] = (friendships || []).map(friendship => ({
-          id: friendship.id,
-          user_id: friendship.user_id,
-          friend_id: friendship.friend_id,
-          status: friendship.status,
-          created_at: friendship.created_at,
-          profile: friendship.profiles
-        }));
+        // Fetch profiles separately instead of using the join that doesn't work
+        const formattedFriends: Friend[] = [];
+        
+        for (const friendship of friendships || []) {
+          const profileId = friendship.user_id === currentUserId ? friendship.friend_id : friendship.user_id;
+          
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('id, username, full_name, avatar_url')
+            .eq('id', profileId)
+            .single();
+            
+          if (!profileError && profileData) {
+            formattedFriends.push({
+              id: friendship.id,
+              user_id: friendship.user_id,
+              friend_id: friendship.friend_id,
+              status: friendship.status,
+              created_at: friendship.created_at,
+              profile: profileData
+            });
+          }
+        }
         
         setFriends(formattedFriends);
         
@@ -73,22 +87,34 @@ export const FriendsContainer = ({
             user_id,
             friend_id,
             status,
-            created_at,
-            profiles!friendships_user_id_fkey(id, username, full_name, avatar_url)
+            created_at
           `)
           .eq('friend_id', currentUserId)
           .eq('status', 'pending');
           
         if (pendingError) throw pendingError;
         
-        const formattedRequests: Friend[] = (pendingData || []).map(request => ({
-          id: request.id,
-          user_id: request.user_id,
-          friend_id: request.friend_id,
-          status: request.status,
-          created_at: request.created_at,
-          profile: request.profiles
-        }));
+        // Fetch profiles for pending requests
+        const formattedRequests: Friend[] = [];
+        
+        for (const request of pendingData || []) {
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('id, username, full_name, avatar_url')
+            .eq('id', request.user_id)
+            .single();
+            
+          if (!profileError && profileData) {
+            formattedRequests.push({
+              id: request.id,
+              user_id: request.user_id,
+              friend_id: request.friend_id,
+              status: request.status,
+              created_at: request.created_at,
+              profile: profileData
+            });
+          }
+        }
         
         setPendingRequests(formattedRequests);
       } catch (error) {
@@ -231,7 +257,7 @@ export const FriendsContainer = ({
             )
           ) : (
             <FriendRequests 
-              requests={pendingRequests}
+              friendRequests={pendingRequests}
               onAccept={handleAcceptFriendRequest}
               onReject={handleRejectFriendRequest}
             />
