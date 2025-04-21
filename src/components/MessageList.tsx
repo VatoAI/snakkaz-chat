@@ -1,4 +1,3 @@
-
 import { DecryptedMessage } from "@/types/message";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -10,6 +9,8 @@ import { ScrollToBottomButton } from "./message/ScrollToBottomButton";
 import { groupMessages } from "@/utils/message-grouping";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { playNotificationSound } from "@/utils/sound-manager";
+import { MessageScrollArea } from "./message/MessageScrollArea";
+import { MessageListContent } from "./message/MessageListContent";
 
 interface MessageListProps {
   messages: DecryptedMessage[];
@@ -181,42 +182,35 @@ export const MessageList = ({
   
   const messageGroups = groupMessages(validMessages);
 
+  // Refactored: onScrollBottom closure that resets unread counter when at bottom
+  const handleScrollBottom = () => {
+    setNewMessageCount(0);
+  };
+
   return (
-    <ScrollArea 
-      className="h-full px-2 sm:px-4 py-2 sm:py-4 overscroll-contain"
-      onScrollCapture={handleScroll}
-      ref={scrollAreaRef}
+    <MessageScrollArea
+      onScrollBottom={handleScrollBottom}
+      setAutoScroll={setAutoScroll}
+      setWasScrolledToBottom={setWasScrolledToBottom}
+      wasScrolledToBottom={wasScrolledToBottom}
+      autoScroll={autoScroll}
+      scrollAreaRef={scrollAreaRef}
     >
-      <div 
-        className="touch-pan-y"
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-      >
-        <MessageListHeader />
-        
-        <MessageGroups 
-          messageGroups={messageGroups}
-          isUserMessage={isUserMessage}
-          onMessageExpired={handleMessageExpired}
-          onEdit={handleEdit}
-          onDelete={setConfirmDelete}
-          messagesEndRef={messagesEndRef}
-          isMobile={isMobile}
-        />
-      </div>
-      
-      <ScrollToBottomButton 
-        show={!autoScroll}
-        onClick={handleScrollToBottom}
-        unreadCount={newMessageCount}
+      <MessageListContent
+        messageGroups={messageGroups}
+        isUserMessage={isUserMessage}
+        onMessageExpired={handleMessageExpired}
+        onEdit={handleEdit}
+        onDelete={setConfirmDelete}
+        messagesEndRef={messagesEndRef}
+        isMobile={isMobile}
+        autoScroll={autoScroll}
+        handleScrollToBottom={handleScrollToBottom}
+        newMessageCount={newMessageCount}
+        confirmDelete={confirmDelete}
+        setConfirmDelete={setConfirmDelete}
+        handleDelete={handleDelete}
       />
-      
-      <DeleteMessageDialog
-        isOpen={!!confirmDelete}
-        onClose={() => setConfirmDelete(null)}
-        onConfirm={handleDelete}
-      />
-    </ScrollArea>
+    </MessageScrollArea>
   );
 };
