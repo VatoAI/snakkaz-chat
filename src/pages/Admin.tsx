@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -18,6 +17,8 @@ import { AdminSystemHealth } from "@/components/admin/AdminSystemHealth";
 import { AdminErrorLogs } from "@/components/admin/AdminErrorLogs";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { useAuth } from "@/contexts/AuthContext";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 
 const Admin = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -26,6 +27,8 @@ const Admin = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { progressValue, updateProgress, isLoading } = useProgressState();
+  const { user } = useAuth();
+  const { isAdmin, loading: adminLoading } = useIsAdmin(user?.id);
 
   useEffect(() => {
     const authStatus = localStorage.getItem("adminAuthenticated");
@@ -108,6 +111,23 @@ const Admin = () => {
       });
     }
   };
+
+  if (!user) {
+    return <div className="p-8 text-center text-red-400 text-lg">Du må være logget inn for å se denne siden.</div>;
+  }
+
+  if (adminLoading) {
+    return <div className="p-8 text-center text-cyberblue-300 text-lg">Sjekker admin-tilgang...</div>;
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="p-8 text-center text-red-400 text-lg">
+        Du har ikke administratorrettigheter.<br />
+        Ta kontakt med en administrator for å få tilgang.
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return <AdminAuth onAuthenticated={handleAuthenticated} />;
