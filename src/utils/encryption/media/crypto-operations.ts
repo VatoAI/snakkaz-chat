@@ -2,9 +2,12 @@
 import { arrayBufferToBase64, base64ToArrayBuffer } from '../data-conversion';
 
 export const encryptMediaBuffer = async (
-  fileBuffer: ArrayBuffer
+  fileBuffer: ArrayBuffer,
+  customKey?: CryptoKey,
+  customIv?: Uint8Array
 ): Promise<{ encryptedBuffer: ArrayBuffer; key: CryptoKey; iv: Uint8Array }> => {
-  const key = await window.crypto.subtle.generateKey(
+  // Use provided key and IV if available, otherwise generate new ones
+  const key = customKey || await window.crypto.subtle.generateKey(
     {
       name: "AES-GCM",
       length: 256,
@@ -13,7 +16,7 @@ export const encryptMediaBuffer = async (
     ["encrypt", "decrypt"]
   );
 
-  const iv = window.crypto.getRandomValues(new Uint8Array(12));
+  const iv = customIv || window.crypto.getRandomValues(new Uint8Array(12));
   
   const encryptedBuffer = await window.crypto.subtle.encrypt(
     {
@@ -56,6 +59,6 @@ export const importEncryptionKey = async (keyString: string): Promise<CryptoKey>
       length: 256,
     },
     false,
-    ["decrypt"]
+    ["decrypt", "encrypt"] // Add encrypt permission to support global encryption
   );
 };

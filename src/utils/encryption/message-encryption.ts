@@ -83,16 +83,7 @@ const innerDecrypt = async (
   const ivBuffer = base64ToArrayBuffer(iv);
   
   // Importer krypteringsnøkkel
-  const key = await window.crypto.subtle.importKey(
-    "jwk",
-    JSON.parse(encryptionKey),
-    {
-      name: "AES-GCM",
-      length: 256,
-    },
-    false,
-    ["decrypt"]
-  );
+  const key = await importEncryptionKey(encryptionKey);
   
   // Dekrypter meldingen
   const decryptedBuffer = await window.crypto.subtle.decrypt(
@@ -105,4 +96,18 @@ const innerDecrypt = async (
   );
   
   return ab2str(decryptedBuffer);
+};
+
+// Export the importEncryptionKey function so it can be used elsewhere
+export const importEncryptionKey = async (keyString: string): Promise<CryptoKey> => {
+  return window.crypto.subtle.importKey(
+    "jwk",
+    JSON.parse(keyString),
+    {
+      name: "AES-GCM",
+      length: 256,
+    },
+    false,
+    ["decrypt", "encrypt"] // Add encrypt permission to be safe
+  );
 };

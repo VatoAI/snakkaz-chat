@@ -32,31 +32,35 @@ export const encryptMedia = async (
     const fileBuffer = await file.arrayBuffer();
     console.log(`File read to buffer, size: ${fileBuffer.byteLength} bytes`);
     
-    let key: CryptoKey, iv: Uint8Array;
+    let encryptResult;
+    
     if (globalOverride?.encryptionKey && globalOverride.iv) {
-      key = await importEncryptionKey(globalOverride.encryptionKey);
-      iv = new Uint8Array(atob(globalOverride.iv).split("").map(c => c.charCodeAt(0)));
-      // Encrypt with custom key/iv
-      const encryptedBuffer = await encryptMediaBuffer(fileBuffer, key, iv);
-      const exportedKey = globalOverride.encryptionKey;
-      const exportedIv = globalOverride.iv;
+      // Import the global key for encryption
+      const key = await importEncryptionKey(globalOverride.encryptionKey);
+      const iv = new Uint8Array(atob(globalOverride.iv).split("").map(c => c.charCodeAt(0)));
+      
+      // Encrypt with global key/iv
+      encryptResult = await encryptMediaBuffer(fileBuffer, key, iv);
+      
       const metadata = await extractMediaMetadata(file);
       return {
-        encryptedData: encryptedBuffer,
-        encryptionKey: exportedKey,
-        iv: exportedIv,
+        encryptedData: encryptResult.encryptedBuffer,
+        encryptionKey: globalOverride.encryptionKey,
+        iv: globalOverride.iv,
         mediaType: file.type,
         metadata
       };
     }
-    // Default behavior (old)
-    const { encryptedBuffer, key: defaultKey, iv: defaultIv } = await encryptMediaBuffer(fileBuffer);
-    const exportedKey = await exportEncryptionKey(defaultKey);
+    
+    // Default behavior (generate new key/iv)
+    encryptResult = await encryptMediaBuffer(fileBuffer);
+    const exportedKey = await exportEncryptionKey(encryptResult.key);
     const metadata = await extractMediaMetadata(file);
+    
     return {
-      encryptedData: encryptedBuffer,
+      encryptedData: encryptResult.encryptedBuffer,
       encryptionKey: exportedKey,
-      iv: arrayBufferToBase64(defaultIv),
+      iv: arrayBufferToBase64(encryptResult.iv),
       mediaType: file.type,
       metadata
     };

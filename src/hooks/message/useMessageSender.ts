@@ -1,6 +1,7 @@
+
 import { useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { encryptMessage } from "@/utils/encryption";
+import { encryptMessage, importEncryptionKey } from "@/utils/encryption";
 import { encryptMedia } from "@/utils/encryption/media";
 import { base64ToArrayBuffer } from "@/utils/encryption/data-conversion";
 import { ensureMessageColumnsExist, showUploadToast, uploadMediaFile } from "./utils/message-db-utils";
@@ -146,8 +147,7 @@ export const useMessageSender = (
       let encryptedContent, key, messageIv;
       if (isGlobalRoom && globalE2eeKey && globalE2eeIv) {
         // Use our static key/iv
-        const encMod = await import("@/utils/encryption/message-encryption");
-        const importedKey = await encMod.importEncryptionKey(globalE2eeKey);
+        const importedKey = await importEncryptionKey(globalE2eeKey);
         const enc = await window.crypto.subtle.encrypt(
           {
             name: "AES-GCM",
