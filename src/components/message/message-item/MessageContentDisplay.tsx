@@ -9,7 +9,6 @@ interface MessageContentDisplayProps {
   message: DecryptedMessage;
 }
 
-// Use memo to prevent unnecessary re-renders
 export const MessageContentDisplay = memo(({ message }: MessageContentDisplayProps) => {
   const isDeleted = message.is_deleted;
   const isMobile = useIsMobile();
@@ -32,13 +31,12 @@ export const MessageContentDisplay = memo(({ message }: MessageContentDisplayPro
       }
     } catch (error) {
       console.error("Error in notification effect:", error);
-      // Don't set render error for notification issues
     }
   }, [message.created_at, message.content, isDeleted, notify]);
 
-  // Error boundary pattern in functional component
+  // Reset error state on message change
   useEffect(() => {
-    setRenderError(null); // Reset error state on message change
+    setRenderError(null);
   }, [message.id]);
 
   if (renderError) {

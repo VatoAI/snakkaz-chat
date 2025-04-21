@@ -2,16 +2,23 @@
 import { useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ensureMessageColumnsExist } from "./utils/message-db-utils";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
+import { DecryptedMessage } from "@/types/message";
 
 export const useMessageDeleter = (
   userId: string | null,
   setIsLoading: (loading: boolean) => void,
   toast: ReturnType<typeof useToast>["toast"]
 ) => {
+  // Function to verify message ownership
+  const canDeleteMessage = useCallback((message: DecryptedMessage): boolean => {
+    if (!userId || !message.sender) return false;
+    return message.sender.id === userId;
+  }, [userId]);
+
   const handleDeleteMessage = useCallback(async (messageId: string): Promise<void> => {
     if (!userId) {
-      console.log("Bruker ikke pålogget");
+      console.log("User not authenticated");
       return Promise.reject(new Error("User not authenticated"));
     }
 
@@ -25,8 +32,6 @@ export const useMessageDeleter = (
       await ensureMessageColumnsExist();
       
       console.log(`Attempting to delete message ${messageId} for user ${userId}`);
-      
-      // Optimistically update local state first (handled in the message list component)
       
       // Call Supabase RPC function to mark message as deleted
       const { error } = await supabase
@@ -61,5 +66,5 @@ export const useMessageDeleter = (
     }
   }, [userId, setIsLoading, toast]);
 
-  return { handleDeleteMessage };
+  return { handleDeleteMessage, canDeleteMessage };
 };
