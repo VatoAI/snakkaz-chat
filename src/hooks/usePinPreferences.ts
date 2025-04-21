@@ -34,7 +34,14 @@ export const usePinPreferences = (userId: string | null) => {
       
       if (error) throw error;
       if (data && data.pin_preferences) {
-        setPreferences(data.pin_preferences);
+        // Ensure we have a properly typed object by merging with default values
+        const pinPrefs = data.pin_preferences as Record<string, boolean>;
+        setPreferences(prev => ({
+          ...prev,
+          requirePinForDelete: !!pinPrefs.requirePinForDelete,
+          requirePinForEdit: !!pinPrefs.requirePinForEdit,
+          requirePinForSensitive: !!pinPrefs.requirePinForSensitive,
+        }));
       }
     } catch (error) {
       console.error('Error fetching PIN preferences:', error);
