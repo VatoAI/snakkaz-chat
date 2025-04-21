@@ -21,19 +21,23 @@ export function useIsAdmin(userId?: string | null) {
 
     let cancelled = false;
     setLoading(true);
-    supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId)
-      .eq("role", "admin")
-      .single() // There's max 1 per user/role
-      .then(({ data }) => {
-        if (!cancelled) setIsAdmin(!!data);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => { cancelled = true; };
+
+    (async () => {
+      const { data, error } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId)
+        .eq("role", "admin")
+        .maybeSingle(); // safer to use maybeSingle to avoid errors if no data
+      if (!cancelled) {
+        setIsAdmin(!!data);
+        setLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [userId]);
 
   return { isAdmin, loading };
