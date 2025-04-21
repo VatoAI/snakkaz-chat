@@ -176,6 +176,7 @@ const ChatPage = () => {
             webRTCManager={webRTCManager}
             userProfiles={userProfiles}
             handleCloseDirectChat={() => setSelectedFriend(null)}
+            setSelectedFriend={setSelectedFriend}
           />
         </div>
         <MigrationHelper />
