@@ -1,12 +1,12 @@
 
-import { ProfileNavigation } from "@/components/profile/ProfileNavigation";
-import { ProfileCard } from "@/components/profile/ProfileCard";
+import React from "react";
 
-export const ProfileContainer = () => (
-  <div className="min-h-screen bg-cyberdark-950">
-    <ProfileNavigation />
-    <div className="flex items-center justify-center p-4">
-      <ProfileCard />
-    </div>
+interface ProfileContainerProps {
+  children: React.ReactNode;
+}
+
+export const ProfileContainer = ({ children }: ProfileContainerProps) => (
+  <div className="max-w-4xl mx-auto">
+    {children}
   </div>
 );
