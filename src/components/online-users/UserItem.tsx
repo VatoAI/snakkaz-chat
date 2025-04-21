@@ -1,8 +1,11 @@
 
 import { Button } from "@/components/ui/button";
-import { Circle, MessageSquare, UserPlus, Loader2 } from "lucide-react";
+import { MessageSquare, UserPlus, UserCheck, Clock, Loader2 } from "lucide-react";
 import { StatusIcon } from "./StatusIcons";
 import { UserStatus } from "@/types/presence";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
+import { AdminBadge } from "@/components/chat/header/AdminBadge";
 
 interface UserItemProps {
   id: string;
@@ -11,8 +14,10 @@ interface UserItemProps {
   status: UserStatus | null;
   isFriend: boolean;
   isPending: boolean;
+  isAdmin?: boolean;
   onSendFriendRequest: (userId: string) => void;
   onStartChat: (userId: string) => void;
+  currentUserIsAdmin?: boolean;
 }
 
 export const UserItem = ({ 
@@ -22,8 +27,10 @@ export const UserItem = ({
   status, 
   isFriend,
   isPending,
+  isAdmin,
   onSendFriendRequest,
-  onStartChat
+  onStartChat,
+  currentUserIsAdmin
 }: UserItemProps) => {
   return (
     <div 
@@ -31,50 +38,75 @@ export const UserItem = ({
     >
       <div className="flex items-center gap-2">
         {isOnline && status ? (
-          <StatusIcon status={status} size={3} />
+          <div className="relative">
+            <StatusIcon status={status} size={3} />
+            <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-green-500 animate-ping" />
+          </div>
         ) : (
-          <Circle className="w-3 h-3 text-gray-500" />
+          <StatusIcon status="offline" size={3} />
         )}
-        <span className="text-cybergold-200 truncate">
+        <span className="text-cybergold-200 truncate flex items-center gap-2">
           {username}
+          {isAdmin && <AdminBadge />}
         </span>
       </div>
       
       <div className="flex gap-1">
-        {!isFriend && !isPending && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => onSendFriendRequest(id)}
-            className="h-7 w-7 text-cybergold-400 hover:text-cybergold-300 hover:bg-cyberdark-700"
-            title="Legg til venn"
-          >
-            <UserPlus className="h-4 w-4" />
-          </Button>
+        {(!isFriend && !isPending && !currentUserIsAdmin) && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => onSendFriendRequest(id)}
+                className="h-7 w-7 text-cybergold-400 hover:text-cybergold-300 hover:bg-cyberdark-700"
+              >
+                <UserPlus className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Send venneforespørsel</p>
+            </TooltipContent>
+          </Tooltip>
         )}
 
         {isPending && (
-          <Button
-            variant="ghost"
-            size="icon"
-            disabled
-            className="h-7 w-7 text-cybergold-400"
-            title="Venneforespørsel sendt"
-          >
-            <Loader2 className="h-4 w-4 animate-spin" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                disabled
+                className="h-7 w-7 text-cybergold-400"
+              >
+                <Clock className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Venneforespørsel sendt</p>
+            </TooltipContent>
+          </Tooltip>
         )}
         
-        {isFriend && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => onStartChat(id)}
-            className="h-7 w-7 text-cybergold-400 hover:text-cybergold-300 hover:bg-cyberdark-700"
-            title="Send melding"
-          >
-            <MessageSquare className="h-4 w-4" />
-          </Button>
+        {(isFriend || currentUserIsAdmin) && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => onStartChat(id)}
+                className={cn(
+                  "h-7 w-7 hover:bg-cyberdark-700",
+                  currentUserIsAdmin ? "text-cyberblue-400 hover:text-cyberblue-300" : "text-cybergold-400 hover:text-cybergold-300"
+                )}
+              >
+                <MessageSquare className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Send melding</p>
+            </TooltipContent>
+          </Tooltip>
         )}
       </div>
     </div>

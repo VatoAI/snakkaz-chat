@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChatHeader } from "@/components/chat/ChatHeader";
 import { ChatTabs } from "@/components/chat/ChatTabs";
@@ -17,6 +17,7 @@ import { Friend } from "@/components/chat/friends/types";
 
 const ChatPage = () => {
   const { user, loading } = useAuth();
+  const { isAdmin } = useUserRole(user?.id);
   const navigate = useNavigate();
   const { toast } = useToast();
   const {
@@ -83,21 +84,29 @@ const ChatPage = () => {
     setActiveTab("global");
   };
 
-  const onStartChat = (friendId: string) => {
-    setSelectedFriend({ 
-      id: '', 
-      user_id: friendId, 
-      friend_id: user?.id || '', 
-      status: 'accepted',
-      created_at: '',
-      profile: userProfiles[friendId] ? {
-        id: friendId,
-        username: userProfiles[friendId].username || null,
-        avatar_url: userProfiles[friendId].avatar_url || null
-      } : undefined
-    });
-    setActiveTab("direct");
-  };
+  const onStartChat = useCallback((userId: string) => {
+    if (isAdmin || friends.includes(userId)) {
+      setSelectedFriend({ 
+        id: '', 
+        user_id: userId, 
+        friend_id: user?.id || '', 
+        status: 'accepted',
+        created_at: '',
+        profile: userProfiles[userId] ? {
+          id: userId,
+          username: userProfiles[userId].username || null,
+          avatar_url: userProfiles[userId].avatar_url || null
+        } : undefined
+      });
+      setActiveTab("direct");
+    } else {
+      toast({
+        title: "Ikke venn",
+        description: "Du må være venn med denne brukeren for å sende meldinger",
+        variant: "destructive",
+      });
+    }
+  }, [isAdmin, friends, userProfiles, user?.id, toast]);
 
   const handleSubmit = async (e: React.FormEvent, mediaFile?: File) => {
     e.preventDefault();

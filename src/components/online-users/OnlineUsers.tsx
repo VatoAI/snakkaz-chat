@@ -1,10 +1,12 @@
-
 import React from "react";
 import { Users } from "lucide-react";
 import { UserPresence, UserStatus } from "@/types/presence";
 import { StatusDropdown } from "./StatusDropdown";
 import { VisibilityToggle } from "./VisibilityToggle";
 import { UserList } from "./UserList";
+import { useUserRole } from "@/hooks/useUserRole";
+import { useState } from "react";
+import { useToast } from "@/components/ui/use-toast";
 
 interface OnlineUsersProps {
   userPresence: Record<string, UserPresence>;
@@ -31,8 +33,27 @@ export const OnlineUsers = ({
   onToggleHidden,
   userProfiles = {}
 }: OnlineUsersProps) => {
+  const { isAdmin } = useUserRole(currentUserId);
+  const [showAllUsers, setShowAllUsers] = useState(false);
+  const { toast } = useToast();
+  
   const onlineCount = Object.keys(userPresence).length;
   
+  const usersToDisplay = Object.entries(userPresence)
+    .filter(([userId]) => userId !== currentUserId)
+    .map(([userId, presence]) => {
+      const isFriend = friends.includes(userId);
+      const displayName = userProfiles[userId]?.username || userId.substring(0, 8);
+      
+      return {
+        id: userId,
+        username: displayName,
+        status: presence.status,
+        isOnline: true,
+        isFriend
+      };
+    });
+
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center gap-4 justify-between">

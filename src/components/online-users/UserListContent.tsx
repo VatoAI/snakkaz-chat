@@ -1,49 +1,57 @@
 
 import { UserItem } from "./UserItem";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface UserListContentProps {
   isLoading: boolean;
   usersToDisplay: Array<{
     id: string;
     username: string;
-    status: any;
+    status: string | null;
     isOnline: boolean;
     isFriend: boolean;
-    isPending: boolean;
+    isPending?: boolean;
+    isAdmin?: boolean;
   }>;
   onSendFriendRequest: (userId: string) => void;
   onStartChat: (userId: string) => void;
+  currentUserIsAdmin?: boolean;
 }
 
 export const UserListContent = ({
   isLoading,
   usersToDisplay,
   onSendFriendRequest,
-  onStartChat
+  onStartChat,
+  currentUserIsAdmin = false
 }: UserListContentProps) => {
+  if (isLoading) {
+    return (
+      <div className="space-y-2">
+        {[1, 2, 3].map((n) => (
+          <Skeleton key={n} className="h-12 w-full bg-cyberdark-800" />
+        ))}
+      </div>
+    );
+  }
+
   if (usersToDisplay.length === 0) {
     return (
-      <div className="text-center text-cybergold-500 py-2 text-sm">
-        {isLoading ? 
-          "Laster brukere..." : 
-          "Ingen brukere funnet"}
+      <div className="text-center text-cybergold-500 py-4">
+        <p>Ingen brukere funnet</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-1">
-      {usersToDisplay.map(user => (
+    <div className="space-y-2">
+      {usersToDisplay.map((user) => (
         <UserItem
           key={user.id}
-          id={user.id}
-          username={user.username}
-          isOnline={user.isOnline}
-          status={user.status}
-          isFriend={user.isFriend}
-          isPending={user.isPending}
+          {...user}
           onSendFriendRequest={onSendFriendRequest}
           onStartChat={onStartChat}
+          currentUserIsAdmin={currentUserIsAdmin}
         />
       ))}
     </div>

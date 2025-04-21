@@ -332,6 +332,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      can_send_message_to: {
+        Args: { sender_id: string; receiver_id: string }
+        Returns: boolean
+      }
       check_and_add_columns: {
         Args: { p_table_name: string; column_names: string[] }
         Returns: undefined
