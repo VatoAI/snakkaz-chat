@@ -1,7 +1,6 @@
 
 import { DecryptedMessage } from "@/types/message";
 import { MessageContent } from "./MessageContent";
-import { MessageActions } from "./MessageActions";
 import { Clock } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -57,16 +56,6 @@ export const MessageBubble = ({
           </TooltipProvider>
         )}
       </div>
-      
-      {isCurrentUser && (
-        <div className="self-start ml-1">
-          <MessageActions 
-            message={message} 
-            onEdit={onEdit} 
-            onDelete={onDelete} 
-          />
-        </div>
-      )}
     </div>
   );
 };

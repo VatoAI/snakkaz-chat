@@ -1,7 +1,6 @@
 
 import { memo } from "react";
 import { DecryptedMessage } from "@/types/message";
-import { MessageContent } from "./MessageContent";
 import { MessageBubble } from "./MessageBubble";
 import { MessageActions } from "./MessageActions";
 
