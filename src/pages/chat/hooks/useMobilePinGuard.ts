@@ -1,7 +1,6 @@
 
 import { useEffect, useState } from "react";
 import { useChatCode } from "@/hooks/useChatCode";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { ChatCodeModal } from "@/components/mobile/ChatCodeModal";
 
 export function useMobilePinGuard({ isMobile }: { isMobile: boolean }) {
