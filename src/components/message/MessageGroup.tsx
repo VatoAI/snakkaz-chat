@@ -67,25 +67,11 @@ export const MessageGroup = memo(({
             <MessageBubble 
               message={message}
               isCurrentUser={isCurrentUser}
-            >
-              {message.media_url && (
-                <MessageMedia 
-                  message={message}
-                  isCurrentUser={isCurrentUser}
-                />
-              )}
-              
-              <MessageContent message={message} isCurrentUser={isCurrentUser} />
-              
-              {message.ephemeral_ttl && !message.is_deleted && (
-                <MessageTimer
-                  messageId={message.id}
-                  createdAt={message.created_at}
-                  ttl={message.ephemeral_ttl}
-                  onExpired={onMessageExpired}
-                />
-              )}
-            </MessageBubble>
+              messageIndex={0} // Providing a default index
+              onMessageExpired={onMessageExpired}
+              onEdit={onEdit}
+              onDelete={onDelete}
+            />
 
             {isCurrentUser && !message.is_deleted && (
               <div className="absolute right-0 top-0 opacity-0 group-hover:opacity-100 transition-opacity">

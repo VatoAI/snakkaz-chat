@@ -40,7 +40,7 @@ export const useMessages = (userId: string | null, receiverId?: string, groupId?
   const { setupRealtimeSubscription } = useMessageRealtime(userId, setMessages, receiverId, groupId);
   
   // Message sending, editing, and deleting
-  const { handleSendMessage: internalSendMessage, handleEditMessage, handleDeleteMessage } = useMessageSend(
+  const { handleSendMessage: internalSendMessage, handleEditMessage, handleDeleteMessage: messageServiceDelete } = useMessageSend(
     userId, newMessage, setNewMessage, ttl, setIsLoading, toast
   );
   
@@ -57,7 +57,7 @@ export const useMessages = (userId: string | null, receiverId?: string, groupId?
     handleCancelEditMessage,
     handleSubmitEditMessage,
     handleDeleteMessageById
-  } = useMessageActions(userId, handleEditMessage, handleDeleteMessage);
+  } = useMessageActions(userId, handleEditMessage, messageServiceDelete);
 
   // Handle message submission (new or edit)
   const handleSubmitMessage = async (content: string, options?: { ttl?: number, mediaFile?: File, webRTCManager?: any, onlineUsers?: Set<string> }) => {

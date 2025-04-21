@@ -41,7 +41,9 @@ export const MessageContent = ({ message, onMessageExpired }: MessageContentProp
           <span className="text-[10px] text-cyberdark-400 ml-1">(redigert)</span>
         )}
       </p>
-      <MessageMedia message={message} onMediaExpired={handleMediaExpired} />
+      {message.media_url && (
+        <MessageMedia message={message} onMediaExpired={handleMediaExpired} />
+      )}
       <div className="flex items-center gap-2 mt-1">
         <p className="text-[10px] sm:text-xs text-cyberdark-400 group-hover:text-cyberdark-300">
           {new Date(message.created_at).toLocaleString()}
