@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChatHeader } from "@/components/chat/ChatHeader";
@@ -52,11 +51,9 @@ const ChatPage = () => {
     setDirectMessages
   } = useMessages(user?.id);
 
-  // PIN code and PIN setup modal logic
   const pinGuard = useMobilePinGuard({ isMobile });
   const { showSetCodeModal, setShowSetCodeModal, pinUnlocked, chatCodeHook } = pinGuard;
 
-  // Navigation and redirect
   useEffect(() => {
     if (loading) return;
     if (!user) {
@@ -70,7 +67,6 @@ const ChatPage = () => {
     }
   }, [user, loading, navigate, setupWebRTC, isReady]);
 
-  // Fetch messages & realtime subscription
   useEffect(() => {
     if (user?.id) {
       fetchMessages();
@@ -110,7 +106,6 @@ const ChatPage = () => {
     }
   };
 
-  // Loading and lock screens
   if (loading || !user || !isReady) {
     return <LoadingScreen />;
   }
@@ -169,4 +164,3 @@ const ChatPage = () => {
 };
 
 export default ChatPage;
-
