@@ -1,0 +1,132 @@
+
+import { useEffect, useCallback } from "react";
+import { DecryptedMessage } from "@/types/message";
+import { groupMessages } from "@/utils/message-grouping";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { playNotificationSound } from "@/utils/sound-manager";
+import { MessageScrollArea } from "@/components/message/MessageScrollArea";
+import { MessageListContent } from "@/components/message/MessageListContent";
+import { useScrollHandler } from "./useScrollHandler";
+import { useMobilePullToRefresh } from "./useMobilePullToRefresh";
+import { useDeleteMessageHandler } from "./DeleteMessageHandler";
+
+interface MessageListProps {
+  messages: DecryptedMessage[];
+  onMessageExpired?: (messageId: string) => void;
+  currentUserId?: string | null;
+  onEditMessage?: (message: DecryptedMessage) => void;
+  onDeleteMessage?: (messageId: string) => void;
+}
+
+export const MessageList = ({
+  messages: initialMessages,
+  onMessageExpired,
+  currentUserId,
+  onEditMessage,
+  onDeleteMessage,
+}: MessageListProps) => {
+  const isMobile = useIsMobile();
+
+  // Scroll and unread logic
+  const {
+    messagesEndRef,
+    scrollAreaRef,
+    autoScroll,
+    setAutoScroll,
+    wasScrolledToBottom,
+    setWasScrolledToBottom,
+    newMessageCount,
+    setNewMessageCount,
+    lastMessageCountRef,
+    handleScroll,
+    handleScrollToBottom,
+  } = useScrollHandler({ isMobile, initialMessagesCount: initialMessages.length });
+
+  // Delete confirmation dialog state
+  const { confirmDelete, setConfirmDelete, DialogUI } = useDeleteMessageHandler({ onDeleteMessage: onDeleteMessage || (() => {}) });
+
+  // Mobile pull-to-refresh
+  const { handleTouchStart, handleTouchMove, handleTouchEnd } = useMobilePullToRefresh({
+    scrollAreaRef,
+    onRefresh: () => {
+      if (onMessageExpired) onMessageExpired('refresh');
+    },
+  });
+
+  // New messages and scroll
+  useEffect(() => {
+    const messagesChanged = initialMessages.length !== lastMessageCountRef.current;
+    const newMessages = initialMessages.length > lastMessageCountRef.current;
+    if (messagesChanged) {
+      lastMessageCountRef.current = initialMessages.length;
+      if (newMessages) {
+        if (autoScroll) {
+          setTimeout(() => {
+            messagesEndRef.current?.scrollIntoView({ behavior: isMobile ? 'auto' : 'smooth' });
+          }, 100);
+        } else {
+          setNewMessageCount(
+            (prev) => prev + (initialMessages.length - lastMessageCountRef.current)
+          );
+          if (!wasScrolledToBottom) {
+            playNotificationSound();
+          }
+        }
+      }
+    }
+  }, [initialMessages, autoScroll, wasScrolledToBottom, isMobile, lastMessageCountRef, messagesEndRef, setNewMessageCount]);
+
+  // Filtering messages and grouping
+  const validMessages = initialMessages.filter(
+    (msg) => msg && msg.sender
+  );
+  const messageGroups = groupMessages(validMessages);
+
+  const isUserMessage = useCallback(
+    (message: DecryptedMessage) =>
+      message?.sender && currentUserId ? message.sender.id === currentUserId : false,
+    [currentUserId]
+  );
+
+  const handleMessageExpired = (messageId: string) => {
+    if (onMessageExpired) onMessageExpired(messageId);
+  };
+  const handleEdit = (message: DecryptedMessage) => {
+    if (onEditMessage) onEditMessage(message);
+  };
+
+  return (
+    <MessageScrollArea
+      onScrollBottom={() => setNewMessageCount(0)}
+      setAutoScroll={setAutoScroll}
+      setWasScrolledToBottom={setWasScrolledToBottom}
+      wasScrolledToBottom={wasScrolledToBottom}
+      autoScroll={autoScroll}
+      scrollAreaRef={scrollAreaRef}
+    >
+      <div
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        style={{ height: "100%", width: "100%" }}
+      >
+        <MessageListContent
+          messageGroups={messageGroups}
+          isUserMessage={isUserMessage}
+          onMessageExpired={handleMessageExpired}
+          onEdit={handleEdit}
+          onDelete={setConfirmDelete}
+          messagesEndRef={messagesEndRef}
+          isMobile={isMobile}
+          autoScroll={autoScroll}
+          handleScrollToBottom={handleScrollToBottom}
+          newMessageCount={newMessageCount}
+          confirmDelete={confirmDelete}
+          setConfirmDelete={setConfirmDelete}
+          handleDelete={DialogUI.props.onConfirm}
+        />
+        {DialogUI}
+      </div>
+    </MessageScrollArea>
+  );
+};

@@ -1,6 +1,6 @@
 
-import { MessageList } from '@/components/MessageList';
-import { MessageInput } from '@/components/MessageInput';
+import { MessageList } from "@/components/message-list/MessageList";
+import { MessageInput } from "@/components/MessageInput";
 import { DecryptedMessage } from "@/types/message";
 
 interface ChatGlobalProps {
