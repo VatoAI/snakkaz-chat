@@ -47,22 +47,6 @@ export const uploadMediaFile = async (file: File) => {
     // Create a unique file path
     const filePath = `${Date.now()}_${Math.random().toString(36).substring(2)}.bin`;
     
-    // Check if we have the chat-media bucket, if not create it
-    const { data: buckets } = await supabase.storage.listBuckets();
-    const chatMediaBucket = buckets?.find(bucket => bucket.name === 'chat-media');
-    
-    if (!chatMediaBucket) {
-      console.log("Creating chat-media bucket");
-      const { error: createBucketError } = await supabase.storage.createBucket('chat-media', {
-        public: false
-      });
-      
-      if (createBucketError) {
-        console.error("Error creating bucket:", createBucketError);
-        throw createBucketError;
-      }
-    }
-    
     // Upload the file
     console.log("Uploading file to path:", filePath);
     const { error: uploadError, data } = await supabase.storage
