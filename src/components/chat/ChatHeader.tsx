@@ -82,22 +82,19 @@ export const ChatHeader = ({
       <div className="max-w-full flex flex-row items-center justify-between h-[62px] px-2 sm:px-6 py-2 gap-2">
         <div className="flex items-center gap-2">
           <HeaderLogo />
-          <UserAvatar avatarUrl={avatarUrl} username={username ?? ""} size={44} />
-          {!isMobile && (
-            <div className="flex flex-col justify-center ml-2">
-              <span className="font-semibold text-base text-cybergold-200 tracking-wider leading-tight cyber-text flex items-center">
-                SnakkaZ Chat
-              </span>
-              <span className="text-xs text-white font-mono select-all truncate max-w-[155px]">
-                {username 
-                  ? `Brukernavn: ${username}` 
-                  : currentUserId 
-                    ? `Bruker-ID: ${currentUserId.slice(0,8)}...` 
-                    : ""
-                }
-              </span>
-            </div>
-          )}
+          <div className="flex flex-col justify-center ml-2">
+            <span className="font-semibold text-base text-cybergold-200 tracking-wider leading-tight cyber-text flex items-center">
+              SnakkaZ Chat
+            </span>
+            <span className="text-xs text-white font-mono select-all truncate max-w-[155px]">
+              {username 
+                ? `Brukernavn: ${username}` 
+                : currentUserId 
+                  ? `Bruker-ID: ${currentUserId.slice(0,8)}...` 
+                  : ""
+              }
+            </span>
+          </div>
         </div>
         {!isMobile ? (
           <div className="flex flex-row items-center gap-2 bg-cyberdark-950/60 border border-cybergold-400/20 rounded-xl px-2 py-1 shadow-neon-gold/30 glass-morphism">

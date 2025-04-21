@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
@@ -6,6 +5,8 @@ import { ProfileNavigation } from "@/components/profile/ProfileNavigation";
 import { ProfileUsernameForm } from "@/components/profile/ProfileUsernameForm";
 import { useProfileState } from "@/components/profile/hooks/useProfileState";
 import { useProfileValidation } from "@/components/profile/hooks/useProfileValidation";
+import { UserQrCodeDisplay } from "@/components/chat/friends/UserQrCode";
+import { Airplay } from "lucide-react";
 
 const Profile = () => {
   const {
@@ -138,16 +139,59 @@ const Profile = () => {
     }
   }
 
+  const handleShareQrCode = async () => {
+    try {
+      const QRCode = await import('qrcode');
+      if (!username) throw new Error("Du må ha brukernavn for å dele QR-kode");
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Ingen brukersesjon");
+      const payload = JSON.stringify({
+        type: 'friend-request',
+        userId: session.user.id,
+        username: username
+      });
+      const svg = await QRCode.toString(payload, {
+        type: 'svg',
+        color: {
+          dark: '#000',
+          light: '#fff'
+        },
+        width: 256,
+        margin: 1
+      });
+      const svgBlob = new Blob([svg], { type: 'image/svg+xml' });
+      const file = new File([svgBlob], `${username}-snakkaz-qr.svg`, { type: 'image/svg+xml' });
+      if ((navigator as any).share && (navigator as any).canShare && (navigator as any).canShare({ files: [file] })) {
+        await (navigator as any).share({
+          title: `Del min QR`,
+          text: `Skann QR for å legge til ${username} som venn på SnakkaZ`,
+          files: [file]
+        });
+      } else {
+        toast({
+          title: "Deling ikke støttet",
+          description: "Denne funksjonen er kun tilgjengelig på enheter som støtter deling av filer (AirDrop, Android Nearby osv).",
+          variant: "destructive"
+        });
+      }
+    } catch (err) {
+      toast({
+        title: "Feil ved deling",
+        description: (err as Error)?.message ?? "Ukjent feil ved deling av QR",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-cyberdark-950">
       <ProfileNavigation />
-      
       <div className="flex items-center justify-center p-4">
         <Card className="w-full max-w-md bg-cyberdark-800/90 border-2 border-cybergold-400/50 animate-fadeIn">
           <CardHeader>
             <CardTitle className="text-cybergold-400">Min Profil</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-8">
             <ProfileAvatar 
               avatarUrl={avatarUrl}
               uploading={uploading}
@@ -161,6 +205,18 @@ const Profile = () => {
               onUsernameChange={handleUsernameChange}
               onSubmit={updateProfile}
             />
+
+            <div className="flex flex-col gap-3">
+              <UserQrCodeDisplay />
+              <button
+                className="flex items-center justify-center gap-2 bg-cyberblue-700 hover:bg-cyberblue-500 text-white rounded-lg px-4 py-2 font-semibold shadow-neon-blue transition-all"
+                onClick={handleShareQrCode}
+                type="button"
+              >
+                <Airplay className="w-5 h-5" />
+                Del QR-kode (AirDrop/Nearby)
+              </button>
+            </div>
           </CardContent>
         </Card>
       </div>

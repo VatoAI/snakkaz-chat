@@ -3,7 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuItem } from "@/components/ui/dropdown-menu";
-import { Copy, Link, Check, LogOut, User } from "lucide-react";
+import { Copy, Link, Check, LogOut, User, Airplay } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
 import { useMemo } from "react";
@@ -79,7 +79,7 @@ export function ProfileDropdown({
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent side="bottom" align="end"
-        className="z-50 w-64 bg-cyberdark-950/95 backdrop-blur-xl border border-cybergold-400/30 p-3 rounded-lg shadow-neon-gold"
+        className="z-[100] w-64 bg-gradient-to-br from-cyberdark-950 via-cyberdark-900 to-cyberblue-950/95 backdrop-blur-xl border border-cybergold-400/30 p-4 rounded-lg shadow-neon-gold"
         style={{minWidth: 240, color: "#ffd54d"}}
       >
         <div className="flex flex-col items-center gap-2 py-1">
@@ -92,15 +92,24 @@ export function ProfileDropdown({
           </Avatar>
           <div className="flex flex-col items-center gap-0">
             {username ? (
-              <span className="font-extrabold text-cybergold-100 text-lg leading-tight">{username}</span>
+              <span className="font-extrabold text-cybergold-100 text-lg leading-tight drop-shadow-glow-cyber">{username}</span>
             ) : (
               <span className="font-mono text-sm text-cyberblue-300">Bruker-ID: {currentUserId.slice(0, 10)}...</span>
             )}
-            {isAdmin && <AdminBadge />}
+            {isAdmin ? (
+              <span className="flex items-center gap-1 mt-2 px-2 py-0.5 bg-cyberblue-900 border border-cyberblue-400 rounded-full font-bold text-xs text-cyberblue-300 animate-glow">
+                <AdminBadge />
+                Administrator
+              </span>
+            ) : (
+              <span className="flex items-center gap-1 mt-2 px-2 py-0.5 bg-cybergold-900 border border-cybergold-400/60 rounded-full text-xs text-cybergold-200">
+                Bruker
+              </span>
+            )}
           </div>
         </div>
         <DropdownMenuSeparator />
-        <DropdownMenuLabel className="font-medium text-cybergold-100">Konto</DropdownMenuLabel>
+        <DropdownMenuLabel className="font-semibold text-cybergold-100 tracking-wide">Konto</DropdownMenuLabel>
         <DropdownMenuItem onSelect={() => navigate('/profil')}>
           <User className="mr-2 h-4 w-4" />
           Profil
@@ -114,7 +123,7 @@ export function ProfileDropdown({
           Inviter venn
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuLabel>Status</DropdownMenuLabel>
+        <DropdownMenuLabel className="text-cybergold-100">Status</DropdownMenuLabel>
         {statusOptions.map(opt => (
           <DropdownMenuItem
             key={opt.key}
