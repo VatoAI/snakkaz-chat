@@ -32,7 +32,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       async (event, currentSession) => {
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
-        
+        console.log("[AuthContext] Auth state event:", event, "session:", currentSession);
         if (event === 'SIGNED_OUT') {
           navigate('/login');
         }
@@ -44,6 +44,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
       setLoading(false);
+      console.log("[AuthContext] Checked session on mount:", currentSession);
     });
 
     return () => {

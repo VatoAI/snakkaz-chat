@@ -35,7 +35,9 @@ const Admin = () => {
     if (authStatus === "true") {
       setIsAuthenticated(true);
     }
-    
+
+    console.log("[AdminPage] Current user:", user, "isAdmin:", isAdmin);
+
     const fetchHealthStatus = async () => {
       try {
         const { data, error } = await supabase

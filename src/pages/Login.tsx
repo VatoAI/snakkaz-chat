@@ -2,6 +2,8 @@
 import { LoginLayout } from '@/components/auth/LoginLayout';
 import { LoginForm } from '@/components/auth/LoginForm';
 import { useAuth } from '@/hooks/useAuth';
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 const Login = () => {
   const {
@@ -11,6 +13,21 @@ const Login = () => {
     handleLogin,
     handleSignup
   } = useAuth();
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Redirect authenticated users out of login page if already logged in
+    const checked = async () => {
+      try {
+        const { data } = await import("@/integrations/supabase/client").then(m => m.supabase.auth.getSession());
+        if (data.session) {
+          navigate('/chat');
+        }
+      } catch (e) { /* Ignore */ }
+    };
+    checked();
+  }, [navigate]);
 
   return (
     <div className="min-h-screen bg-cyberdark-950 flex items-center justify-center p-4 relative overflow-hidden">
@@ -22,13 +39,13 @@ const Login = () => {
       
       <div className="relative z-10 w-full max-w-md">
         <LoginLayout>
-          <LoginForm
-            onLogin={handleLogin}
-            onSignup={handleSignup}
-            isLoading={isLoading}
-            emailError={emailError}
-            passwordError={passwordError}
-          />
+            <LoginForm
+              onLogin={handleLogin}
+              onSignup={handleSignup}
+              isLoading={isLoading}
+              emailError={emailError}
+              passwordError={passwordError}
+            />
         </LoginLayout>
       </div>
     </div>

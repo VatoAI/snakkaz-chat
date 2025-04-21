@@ -1,4 +1,3 @@
-
 import * as React from "react"
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu"
 import { Check, ChevronRight, Circle } from "lucide-react"
@@ -46,7 +45,7 @@ const DropdownMenuSubContent = React.forwardRef<
   <DropdownMenuPrimitive.SubContent
     ref={ref}
     className={cn(
-      "z-[120] min-w-[8rem] overflow-hidden rounded-md border shadow-lg", // high z for dropdown, remove default border bg
+      "z-[120] min-w-[8rem] overflow-hidden rounded-md border shadow-lg",
       "bg-[linear-gradient(135deg,#00121a_0%,#1a9dff_40%,#e60000_100%)]",
       "backdrop-blur-lg border-cybergold-500/30",
       className
@@ -66,11 +65,15 @@ const DropdownMenuContent = React.forwardRef<
       ref={ref}
       sideOffset={sideOffset}
       className={cn(
-        "z-[120] min-w-[8rem] overflow-hidden rounded-md border shadow-lg", // high z, strong shadow for floating effect
-        "bg-[linear-gradient(135deg,#00121a_0%,#1a9dff_40%,#e60000_100%)]",
-        "backdrop-blur-lg border-cybergold-500/30",
+        "z-[120] min-w-[8rem] overflow-hidden rounded-md border shadow-lg",
+        "bg-cyberdark-950",
+        "before:absolute before:inset-0 before:bg-[linear-gradient(135deg,#00121a_0%,#1a9dff_40%,#e60000_100%)] before:opacity-90 before:rounded-md before:pointer-events-none before:z-0",
+        "backdrop-blur-lg border-cybergold-500/30 relative",
         className
       )}
+      style={{
+        backgroundColor: "#00121a",
+      }}
       {...props}
     />
   </DropdownMenuPrimitive.Portal>

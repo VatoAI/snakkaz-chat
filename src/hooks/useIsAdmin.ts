@@ -28,7 +28,8 @@ export function useIsAdmin(userId?: string | null) {
         .select("role")
         .eq("user_id", userId)
         .eq("role", "admin")
-        .maybeSingle(); // safer to use maybeSingle to avoid errors if no data
+        .maybeSingle();
+      console.log("[useIsAdmin] userId:", userId, "data:", data, "error:", error);
       if (!cancelled) {
         setIsAdmin(!!data);
         setLoading(false);

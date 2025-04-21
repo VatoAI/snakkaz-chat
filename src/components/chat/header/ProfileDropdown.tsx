@@ -42,6 +42,8 @@ export function ProfileDropdown({
   const avatarUrl = userProfiles[currentUserId]?.avatar_url || null;
   const username = userProfiles[currentUserId]?.username || null;
   const initials = username?.slice(0,2).toUpperCase() ?? "SZ";
+  // Log isAdmin for debug
+  console.log("[ProfileDropdown] isAdmin:", isAdmin, "user id:", user?.id);
 
   const statusOptions = useMemo(() => [
     { key: 'online', label: 'Online', isActive: isOnline },
