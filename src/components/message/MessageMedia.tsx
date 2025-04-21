@@ -3,7 +3,7 @@ import { ShieldAlert } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { DecryptedMessage } from "@/types/message";
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import { useMediaDecryption } from "./media/useMediaDecryption";
 import { DeletedMedia } from "./media/DeletedMedia";
 import { ImageMedia } from "./media/ImageMedia";
@@ -14,9 +14,10 @@ import { DecryptingMedia } from "./media/DecryptingMedia";
 
 interface MessageMediaProps {
   message: DecryptedMessage;
+  onMediaExpired?: () => void; // signals media expired, triggers deletion above
 }
 
-export const MessageMedia = ({ message }: MessageMediaProps) => {
+export const MessageMedia = ({ message, onMediaExpired }: MessageMediaProps) => {
   const {
     decryptedUrl,
     isDecrypting,
@@ -65,9 +66,16 @@ export const MessageMedia = ({ message }: MessageMediaProps) => {
       </div>
     );
   }
-  
+
+  // When the image is expired (timer run out in SecureImageViewer), callback triggers onMediaExpired (delete).
   if (message.media_type?.startsWith('image/')) {
-    return <ImageMedia url={decryptedUrl || storageUrl} ttl={message.ephemeral_ttl} />;
+    return (
+      <ImageMedia
+        url={decryptedUrl || storageUrl}
+        ttl={message.ephemeral_ttl || 30}
+        onExpired={onMediaExpired}
+      />
+    );
   }
   
   if (message.media_type?.startsWith('video/')) {

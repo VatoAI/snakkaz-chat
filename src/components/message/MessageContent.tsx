@@ -1,5 +1,5 @@
 
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useCallback } from "react";
 import { DecryptedMessage } from "@/types/message";
 import { MessageMedia } from "./MessageMedia";
 import { MessageTimer } from "./MessageTimer";
@@ -12,7 +12,12 @@ interface MessageContentProps {
 
 export const MessageContent = ({ message, onMessageExpired }: MessageContentProps) => {
   const contentRef = useRef<HTMLParagraphElement>(null);
-  
+
+  // Callbacks bridge for media expiry to expire the message
+  const handleMediaExpired = useCallback(() => {
+    onMessageExpired(message.id);
+  }, [onMessageExpired, message.id]);
+
   // Apply screenshot prevention
   useScreenshotPrevention({
     showToast: true,
@@ -36,7 +41,7 @@ export const MessageContent = ({ message, onMessageExpired }: MessageContentProp
           <span className="text-[10px] text-cyberdark-400 ml-1">(redigert)</span>
         )}
       </p>
-      <MessageMedia message={message} />
+      <MessageMedia message={message} onMediaExpired={handleMediaExpired} />
       <div className="flex items-center gap-2 mt-1">
         <p className="text-[10px] sm:text-xs text-cyberdark-400 group-hover:text-cyberdark-300">
           {new Date(message.created_at).toLocaleString()}

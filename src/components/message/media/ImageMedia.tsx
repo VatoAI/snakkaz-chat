@@ -8,12 +8,11 @@ import { SecureMediaIcon } from "./SecureMediaIcon";
 interface ImageMediaProps {
   url: string;
   ttl?: number | null;
+  onExpired?: () => void; // Optional callback to signal expiry
 }
 
-export const ImageMedia = ({ url, ttl }: ImageMediaProps) => {
+export const ImageMedia = ({ url, ttl, onExpired }: ImageMediaProps) => {
   const [isViewerOpen, setIsViewerOpen] = useState(false);
-
-  console.log("Rendering ImageMedia with URL:", url);
 
   return (
     <div className="relative group mt-2">
@@ -21,15 +20,13 @@ export const ImageMedia = ({ url, ttl }: ImageMediaProps) => {
         <img 
           src={url} 
           alt="Sikret bilde" 
-          className="max-w-full h-auto rounded-lg max-h-[300px] object-contain cursor-zoom-in"
-          onContextMenu={(e) => e.preventDefault()}
+          className="w-full max-w-xs sm:max-w-sm md:max-w-md h-auto rounded-lg max-h-[300px] object-contain cursor-zoom-in"
+          onContextMenu={e => e.preventDefault()}
           draggable="false"
           onClick={() => setIsViewerOpen(true)}
           loading="lazy"
         />
-        
         <SecureMediaIcon position="top-right" size="sm" />
-        
         <div className="absolute bottom-2 right-2">
           <Tooltip>
             <TooltipTrigger asChild>
@@ -47,12 +44,12 @@ export const ImageMedia = ({ url, ttl }: ImageMediaProps) => {
           </Tooltip>
         </div>
       </div>
-
       <SecureImageViewer 
-        url={url} 
+        url={url}
         isOpen={isViewerOpen}
         onClose={() => setIsViewerOpen(false)}
         expiresIn={ttl}
+        onExpired={onExpired} // Called if viewing TTL expires
       />
     </div>
   );
