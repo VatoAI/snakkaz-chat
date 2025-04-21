@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -34,7 +33,6 @@ export const AdminSystemHealth = ({ healthStatus, triggerCleanup }: AdminSystemH
   const [systemLoad, setSystemLoad] = useState(Math.floor(Math.random() * 60) + 20); // Simulate system load
 
   useEffect(() => {
-    // Simulate changing system load
     const interval = setInterval(() => {
       setSystemLoad(prev => {
         const change = Math.floor(Math.random() * 20) - 10;
