@@ -1,4 +1,3 @@
-
 import { UserStatus } from "@/types/presence";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from "react";
@@ -10,6 +9,8 @@ import { NotificationSettings } from "./notification/NotificationSettings";
 import { HeaderNavLinks } from "./header/HeaderNavLinks";
 import { ProfileDropdown } from "./header/ProfileDropdown";
 import { UserAvatar } from "./header/UserAvatar";
+import { HeaderLogo } from "./header/HeaderLogo";
+import { AdminBadge } from "./header/AdminBadge";
 
 interface ChatHeaderProps {
   userPresence: Record<string, any>;
@@ -71,31 +72,33 @@ export const ChatHeader = ({
     });
   };
 
-  // Responsive: If mobile, collapse center controls to hamburger or hide
   const isMobile = typeof window !== "undefined" && window.innerWidth < 640;
 
-  // Avatar, username utility
   const avatarUrl = currentUserId ? userProfiles[currentUserId]?.avatar_url : null;
   const username = currentUserId ? userProfiles[currentUserId]?.username : null;
 
   return (
     <header className="w-full backdrop-blur-sm bg-cyberdark-900/85 border-b border-cybergold-400/40 shadow-neon-blue sticky top-0 z-40 animate-fadeIn">
       <div className="max-w-full flex flex-row items-center justify-between h-[62px] px-2 sm:px-6 py-2 gap-2">
-        {/* Left: Avatar and SnakkaZ */}
         <div className="flex items-center gap-2">
+          <HeaderLogo />
           <UserAvatar avatarUrl={avatarUrl} username={username ?? ""} size={44} />
           {!isMobile && (
             <div className="flex flex-col justify-center ml-2">
-              <span className="font-semibold text-base text-cybergold-200 tracking-wider leading-tight cyber-text">
+              <span className="font-semibold text-base text-cybergold-200 tracking-wider leading-tight cyber-text flex items-center">
                 SnakkaZ Chat
               </span>
-              <span className="text-xs text-white font-mono select-all truncate max-w-[100px]">
-                {username || <span className="text-cyberblue-300">{currentUserId}</span>}
+              <span className="text-xs text-white font-mono select-all truncate max-w-[155px]">
+                {username 
+                  ? `Brukernavn: ${username}` 
+                  : currentUserId 
+                    ? `Bruker-ID: ${currentUserId.slice(0,8)}...` 
+                    : ""
+                }
               </span>
             </div>
           )}
         </div>
-        {/* Center: Status Selector or App Title */}
         {!isMobile ? (
           <div className="flex flex-row items-center gap-2 bg-cyberdark-950/60 border border-cybergold-400/20 rounded-xl px-2 py-1 shadow-neon-gold/30 glass-morphism">
             <StatusButton
@@ -124,9 +127,11 @@ export const ChatHeader = ({
             />
           </div>
         ) : (
-          <span className="text-base font-semibold text-cybergold-100">SnakkaZ</span>
+          <span className="text-base font-semibold text-cybergold-100 flex items-center gap-1">
+            <HeaderLogo />
+            SnakkaZ
+          </span>
         )}
-        {/* Right: Actions */}
         <div className="flex flex-row items-center gap-2">
           <HeaderNavLinks />
           {!isMobile && <NotificationSettings />}

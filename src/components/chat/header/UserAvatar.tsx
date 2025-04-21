@@ -10,7 +10,7 @@ interface UserAvatarProps {
 export function UserAvatar({ avatarUrl, username = "", size = 48 }: UserAvatarProps) {
   const initials = username ? username.slice(0,2).toUpperCase() : "SZ";
   return (
-    <Avatar className={`h-[${size}px] w-[${size}px] border-2 border-cybergold-500/30 shadow-neon-gold`}>
+    <Avatar className={`border-2 border-cybergold-500/50 shadow-neon-gold`} style={{ width: size, height: size }}>
       {avatarUrl ? (
         <AvatarImage src={avatarUrl} alt={username || "SnakkaZ"} />
       ) : (

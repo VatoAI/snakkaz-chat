@@ -3,10 +3,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuItem } from "@/components/ui/dropdown-menu";
-import { Copy, Link, Check, LogOut, User, Shield } from "lucide-react";
+import { Copy, Link, Check, LogOut, User } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
 import { useMemo } from "react";
+import { AdminBadge } from "./AdminBadge";
 
 interface ProfileDropdownProps {
   currentUserId: string;
@@ -63,56 +64,55 @@ export function ProfileDropdown({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button
-          className="rounded-full focus:outline-none transition-all border-2 border-cybergold-400/20 hover:scale-105 bg-cyberdark-900/70 p-0.5"
+          className="rounded-full focus:outline-none transition-all border-2 border-cybergold-400/40 hover:scale-105 bg-cyberdark-900/70 p-0.5"
           title="Åpne brukerprofil"
         >
           <Avatar className="h-8 w-8">
             {avatarUrl ? (
               <AvatarImage src={avatarUrl} alt={username || "SZ"} />
             ) : (
-              <AvatarFallback className="bg-cyberdark-700 text-cybergold-300">
+              <AvatarFallback className="bg-cyberdark-700 text-cybergold-200">
                 {initials}
               </AvatarFallback>
             )}
           </Avatar>
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent side="bottom" align="end" className="z-50 w-56 bg-cyberdark-900/95 backdrop-blur-lg border border-cybergold-400/25 p-2">
-        <div className="flex flex-col items-center gap-2 py-2">
-          <Avatar className="h-14 w-14 mb-1 border-2 border-cybergold-400/60 shadow-neon-gold">
+      <DropdownMenuContent side="bottom" align="end"
+        className="z-50 w-64 bg-cyberdark-950/95 backdrop-blur-xl border border-cybergold-400/30 p-3 rounded-lg shadow-neon-gold"
+        style={{minWidth: 240, color: "#ffd54d"}}
+      >
+        <div className="flex flex-col items-center gap-2 py-1">
+          <Avatar className="h-16 w-16 border-2 border-cybergold-400/75 shadow-neon-gold">
             {avatarUrl ? (
               <AvatarImage src={avatarUrl} alt={username || "SZ"} />
             ) : (
-              <AvatarFallback className="bg-cyberdark-700 text-cybergold-200 text-xl">{initials}</AvatarFallback>
+              <AvatarFallback className="bg-cyberdark-700 text-cybergold-200 text-2xl">{initials}</AvatarFallback>
             )}
           </Avatar>
-          <span className="font-bold text-cybergold-200 text-lg truncate">{username || <span className="text-cyberblue-300">{currentUserId}</span>}</span>
-          {isAdmin && (
-            <span className="flex items-center text-xs text-cyberblue-400 p-1 px-2 rounded bg-cyberblue-950/60 border border-cyberblue-400/30 font-mono gap-1">
-              <Shield className="w-4 h-4" /> Admin
-            </span>
-          )}
+          <div className="flex flex-col items-center gap-0">
+            {username ? (
+              <span className="font-extrabold text-cybergold-100 text-lg leading-tight">{username}</span>
+            ) : (
+              <span className="font-mono text-sm text-cyberblue-300">Bruker-ID: {currentUserId.slice(0, 10)}...</span>
+            )}
+            {isAdmin && <AdminBadge />}
+          </div>
         </div>
         <DropdownMenuSeparator />
-        <DropdownMenuLabel className="font-medium text-cybergold-100">Konto handlinger</DropdownMenuLabel>
+        <DropdownMenuLabel className="font-medium text-cybergold-100">Konto</DropdownMenuLabel>
         <DropdownMenuItem onSelect={() => navigate('/profil')}>
           <User className="mr-2 h-4 w-4" />
           Profil
         </DropdownMenuItem>
         <DropdownMenuItem onClick={handleCopyUserId}>
           <Copy className="mr-2 h-4 w-4" />
-          Kopier Bruker ID
+          Kopier Bruker-ID
         </DropdownMenuItem>
         <DropdownMenuItem onClick={handleCopyInviteLink}>
           <Link className="mr-2 h-4 w-4" />
           Inviter venn
         </DropdownMenuItem>
-        {isAdmin && (
-          <DropdownMenuItem onSelect={() => navigate('/admin')}>
-            <Shield className="mr-2 h-4 w-4" />
-            Admin Panel
-          </DropdownMenuItem>
-        )}
         <DropdownMenuSeparator />
         <DropdownMenuLabel>Status</DropdownMenuLabel>
         {statusOptions.map(opt => (
