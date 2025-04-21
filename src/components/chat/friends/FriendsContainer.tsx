@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { FriendsList } from "./FriendsList";
 import { FriendRequests } from "./FriendRequests";
@@ -9,6 +8,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useFriendManagement } from "./hooks/useFriendManagement";
 import { DecryptedMessage } from "@/types/message";
 import { WebRTCManager } from "@/utils/webrtc";
+import { QrCodeSection } from "./QrCodeSection";
 
 interface FriendsContainerProps {
   currentUserId: string;
@@ -38,7 +38,6 @@ export const FriendsContainer = ({
 
     const fetchFriends = async () => {
       try {
-        // Fetch accepted friendships
         const { data: friendships, error: friendshipsError } = await supabase
           .from('friendships')
           .select(`
@@ -53,7 +52,6 @@ export const FriendsContainer = ({
           
         if (friendshipsError) throw friendshipsError;
         
-        // Fetch profiles separately instead of using the join that doesn't work
         const formattedFriends: Friend[] = [];
         
         for (const friendship of friendships || []) {
@@ -79,7 +77,6 @@ export const FriendsContainer = ({
         
         setFriends(formattedFriends);
         
-        // Fetch pending requests
         const { data: pendingData, error: pendingError } = await supabase
           .from('friendships')
           .select(`
@@ -94,7 +91,6 @@ export const FriendsContainer = ({
           
         if (pendingError) throw pendingError;
         
-        // Fetch profiles for pending requests
         const formattedRequests: Friend[] = [];
         
         for (const request of pendingData || []) {
@@ -124,7 +120,6 @@ export const FriendsContainer = ({
     
     fetchFriends();
     
-    // Set up subscriptions
     const friendsChannel = supabase
       .channel('friends-changes')
       .on('postgres_changes', 
@@ -158,7 +153,6 @@ export const FriendsContainer = ({
 
   const handleSendFriendRequest = async (friendId: string) => {
     try {
-      // Check if friendship already exists
       const { data: existingFriendship, error: checkError } = await supabase
         .from('friendships')
         .select('id, status')
@@ -182,7 +176,6 @@ export const FriendsContainer = ({
         return;
       }
 
-      // Create friendship
       const { error: insertError } = await supabase
         .from('friendships')
         .insert({
@@ -263,6 +256,10 @@ export const FriendsContainer = ({
             />
           )}
         </div>
+      </div>
+
+      <div className="mt-6">
+        <QrCodeSection />
       </div>
 
       <div className="mt-6">
