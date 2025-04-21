@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChatHeader } from "@/components/chat/ChatHeader";
@@ -9,6 +10,9 @@ import { useMessages } from "@/hooks/useMessages";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWebRTC } from "@/hooks/useWebRTC";
 import { MigrationHelper } from "@/components/chat/MigrationHelper";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useChatCode } from "@/hooks/useChatCode";
+import { ChatCodeModal } from "@/components/mobile/ChatCodeModal";
 
 const Chat = () => {
   const { user, loading } = useAuth();
@@ -21,6 +25,7 @@ const Chat = () => {
   const [userProfiles, setUserProfiles] = useState({});
   const [userPresence, setUserPresence] = useState({});
   const [currentStatus, setCurrentStatus] = useState<UserStatus>('online');
+  const isMobile = useIsMobile();
 
   const {
     messages,
@@ -40,6 +45,32 @@ const Chat = () => {
     directMessages,
     setDirectMessages
   } = useMessages(user?.id);
+
+  // PIN handling
+  const chatCodeHook = useChatCode();
+  const [showSetCodeModal, setShowSetCodeModal] = useState(false);
+
+  // When user opens chat on mobile and has a PIN set, prompt for PIN
+  useEffect(() => {
+    if (!loading && user && isMobile) {
+      if (!chatCodeHook.chatCode) {
+        // User doesn't have a PIN set, prompt set PIN
+        setShowSetCodeModal(true);
+      } else {
+        // User has PIN set, prompt for entry
+        chatCodeHook.promptCodeIfNeeded();
+      }
+    }
+  }, [user, loading, isMobile]);
+
+  // Prevent access to chat if PIN required and not entered
+  const [pinUnlocked, setPinUnlocked] = useState(!isMobile);
+  
+  useEffect(() => {
+    if (!isMobile) setPinUnlocked(true);
+    else if (chatCodeHook.promptForCode) setPinUnlocked(false);
+    else setPinUnlocked(true);
+  }, [chatCodeHook.promptForCode, isMobile]);
 
   useEffect(() => {
     if (loading) return;
@@ -108,6 +139,38 @@ const Chat = () => {
           <p className="text-cyberblue-400">Laster inn SnakkaZ Chat...</p>
         </div>
       </div>
+    );
+  }
+
+  // Mobile PIN lock screen (block chat UI until PIN correct)
+  if (isMobile && !pinUnlocked) {
+    return (
+      <ChatCodeModal
+        open={chatCodeHook.promptForCode}
+        onClose={() => {}}
+        onPinSuccess={() => setPinUnlocked(true)}
+        verifyPin={chatCodeHook.verifyChatCode}
+      />
+    );
+  }
+
+  // Force PIN setup if no PIN set
+  if (isMobile && showSetCodeModal && !chatCodeHook.chatCode) {
+    return (
+      <ChatCodeModal
+        open={showSetCodeModal}
+        onClose={() => {}}
+        isSetMode
+        onSetPin={(code) => {
+          chatCodeHook.setChatCode(code);
+          setShowSetCodeModal(false);
+          setPinUnlocked(true);
+        }}
+        onPinSuccess={() => {
+          setShowSetCodeModal(false);
+          setPinUnlocked(true);
+        }}
+      />
     );
   }
   

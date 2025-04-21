@@ -20,39 +20,49 @@ const getNotificationSettings = () => {
 export const playNotificationSound = async () => {
   try {
     const settings = getNotificationSettings();
-    
+
     // Check if sound is enabled in settings
     if (!settings.soundEnabled) {
       console.log('Notification sound disabled in settings');
       return;
     }
-    
+
     // Check quiet hours if enabled
     if (settings.quietHoursEnabled) {
       const now = new Date();
-      const currentTime = now.getHours().toString().padStart(2, '0') + ":" + 
-                         now.getMinutes().toString().padStart(2, '0');
-      
+      const currentTime = now.getHours().toString().padStart(2, '0') + ":" +
+        now.getMinutes().toString().padStart(2, '0');
       if (settings.quietHoursStart <= currentTime && currentTime <= settings.quietHoursEnd) {
         console.log('Currently in quiet hours, no sound will be played');
         return;
       }
     }
-    
-    // Play sound with volume from settings
+
+    // Special mobile workaround: unlock context if needed
+    const unlock = () => {
+      if (audioContext.state !== "running" && audioContext.resume) {
+        audioContext.resume();
+      }
+    };
+
+    if (typeof window !== 'undefined' && 'ontouchstart' in window) {
+      // On mobile, call unlock on first user interaction
+      window.addEventListener("touchend", unlock, { once: true });
+    }
+
     const oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
-    
+
     oscillator.connect(gainNode);
     gainNode.connect(audioContext.destination);
-    
-    oscillator.type = 'sine';
+
+    oscillator.type = 'sine'; // Mobile-friendly, simple beep sound
     oscillator.frequency.value = 1000;
     gainNode.gain.value = settings.soundVolume || 0.1;
-    
+
     oscillator.start();
     oscillator.stop(audioContext.currentTime + 0.1);
-    
+
     // Vibrate on mobile devices if enabled in settings
     if (settings.vibrationEnabled && navigator.vibrate) {
       navigator.vibrate(200);
