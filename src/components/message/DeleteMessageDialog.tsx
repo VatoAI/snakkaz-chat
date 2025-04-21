@@ -43,6 +43,10 @@ export const DeleteMessageDialog = ({ isOpen, onClose, onConfirm }: DeleteMessag
     }
   }, [isOpen]);
 
+  const handlePinComplete = (value: string) => {
+    setPin(value);
+  };
+
   const handleConfirm = () => {
     if (requirePin && !showPin) {
       setShowPin(true);

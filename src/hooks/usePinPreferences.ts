@@ -33,7 +33,7 @@ export const usePinPreferences = (userId: string | null) => {
         .single();
       
       if (error) throw error;
-      if (data?.pin_preferences) {
+      if (data && data.pin_preferences) {
         setPreferences(data.pin_preferences);
       }
     } catch (error) {
