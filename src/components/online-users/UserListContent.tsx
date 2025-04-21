@@ -1,13 +1,14 @@
 
 import { UserItem } from "./UserItem";
 import { Skeleton } from "@/components/ui/skeleton";
+import { UserStatus } from "@/types/presence";
 
 interface UserListContentProps {
   isLoading: boolean;
   usersToDisplay: Array<{
     id: string;
     username: string;
-    status: string | null;
+    status: UserStatus | null;
     isOnline: boolean;
     isFriend: boolean;
     isPending?: boolean;

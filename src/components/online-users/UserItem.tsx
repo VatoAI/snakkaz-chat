@@ -13,7 +13,7 @@ interface UserItemProps {
   isOnline: boolean;
   status: UserStatus | null;
   isFriend: boolean;
-  isPending: boolean;
+  isPending?: boolean;
   isAdmin?: boolean;
   onSendFriendRequest: (userId: string) => void;
   onStartChat: (userId: string) => void;

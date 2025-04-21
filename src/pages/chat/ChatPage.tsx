@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChatHeader } from "@/components/chat/ChatHeader";
@@ -14,6 +15,8 @@ import { LoadingScreen } from "./LoadingScreen";
 import { useMobilePinGuard } from "./hooks/useMobilePinGuard";
 import { useWebRTCSetup } from "./hooks/useWebRTCSetup";
 import { Friend } from "@/components/chat/friends/types";
+import { useUserRole } from "@/hooks/useUserRole";
+import { useFriends } from "@/components/chat/hooks/useFriends";
 
 const ChatPage = () => {
   const { user, loading } = useAuth();
@@ -53,6 +56,13 @@ const ChatPage = () => {
     setDirectMessages
   } = useMessages(user?.id);
 
+  const { friends, friendsList, handleSendFriendRequest, handleStartChat } = useFriends(
+    user?.id,
+    selectedFriend?.user_id || null,
+    (id) => setSelectedFriend(null),
+    setSelectedFriend
+  );
+
   const pinGuard = useMobilePinGuard({ isMobile });
   const { showSetCodeModal, setShowSetCodeModal, pinUnlocked, chatCodeHook } = pinGuard;
 
@@ -85,7 +95,7 @@ const ChatPage = () => {
   };
 
   const onStartChat = useCallback((userId: string) => {
-    if (isAdmin || friends.includes(userId)) {
+    if (isAdmin || friendsList.includes(userId)) {
       setSelectedFriend({ 
         id: '', 
         user_id: userId, 
@@ -106,7 +116,7 @@ const ChatPage = () => {
         variant: "destructive",
       });
     }
-  }, [isAdmin, friends, userProfiles, user?.id, toast]);
+  }, [isAdmin, friendsList, userProfiles, user?.id, toast]);
 
   const handleSubmit = async (e: React.FormEvent, mediaFile?: File) => {
     e.preventDefault();
