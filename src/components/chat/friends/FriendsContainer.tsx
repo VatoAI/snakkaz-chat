@@ -30,6 +30,12 @@ export const FriendsContainer = ({
   const { friends, pendingRequests } = useFriendRequests(currentUserId);
   const { handleSendFriendRequest } = useFriendRequestHandler(currentUserId);
 
+  const handleStartChat = (userId: string) => {
+    if (onStartChat) {
+      onStartChat(userId);
+    }
+  };
+
   return (
     <div className="space-y-6 mt-4">
       <div className="bg-cyberdark-900 border border-cybergold-500/30 rounded-md overflow-hidden">
@@ -69,7 +75,7 @@ export const FriendsContainer = ({
                 webRTCManager={webRTCManager}
                 directMessages={directMessages}
                 onNewMessage={onNewMessage}
-                onStartChat={onStartChat}
+                onStartChat={handleStartChat}
                 userProfiles={userProfiles}
               />
             ) : (
