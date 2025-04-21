@@ -9,6 +9,8 @@ import { useState } from "react";
 import { PinManagement } from "@/components/pin/PinManagement";
 import { useProfileState } from "@/components/profile/hooks/useProfileState";
 import { useProfileValidation } from "@/components/profile/hooks/useProfileValidation";
+import { ProfileUsernameForm } from "@/components/profile/ProfileUsernameForm";
+import { ProfileShareSection } from "@/components/profile/ProfileShareSection";
 
 const Profile = () => {
   const navigate = useNavigate();
