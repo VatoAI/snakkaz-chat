@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { 
@@ -42,7 +41,8 @@ import {
   Mail, 
   Shield, 
   User,
-  Loader2
+  Loader2,
+  Users as UsersIcon
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -77,25 +77,21 @@ export const AdminUsersManager = () => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      // Fetch auth users
       const { data: authData, error: authError } = await supabase.auth.admin.listUsers();
       
       if (authError) throw authError;
       
-      // Fetch profile data
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('id, username, full_name, avatar_url');
       
       if (profilesError) throw profilesError;
       
-      // Map profiles to a dictionary for easier lookup
       const profilesMap = new Map();
       profilesData?.forEach(profile => {
         profilesMap.set(profile.id, profile);
       });
       
-      // Combine auth and profile data
       const combinedUsers = authData.users.map(user => {
         const profile = profilesMap.get(user.id);
         return {
@@ -145,7 +141,6 @@ export const AdminUsersManager = () => {
     setProcessing(true);
     
     try {
-      // Sign up new user
       const { data, error } = await supabase.auth.signUp({
         email: newUserEmail,
         password: newUserPassword,
@@ -159,7 +154,6 @@ export const AdminUsersManager = () => {
       if (error) throw error;
       
       if (data.user) {
-        // Create profile record
         const { error: profileError } = await supabase
           .from('profiles')
           .insert([
@@ -181,7 +175,7 @@ export const AdminUsersManager = () => {
         setNewUserEmail("");
         setNewUserPassword("");
         setNewUserName("");
-        fetchUsers(); // Refresh user list
+        fetchUsers();
       }
     } catch (error) {
       console.error("Error adding user:", error);
@@ -201,12 +195,9 @@ export const AdminUsersManager = () => {
     setProcessing(true);
     
     try {
-      // Delete user from auth system
       const { error } = await supabase.auth.admin.deleteUser(selectedUser.id);
       
       if (error) throw error;
-      
-      // The profile should be automatically deleted by RLS policies
       
       toast({
         title: "Bruker slettet",
@@ -215,7 +206,7 @@ export const AdminUsersManager = () => {
       
       setShowDeleteUserDialog(false);
       setSelectedUser(null);
-      fetchUsers(); // Refresh user list
+      fetchUsers();
     } catch (error) {
       console.error("Error deleting user:", error);
       toast({
@@ -235,7 +226,7 @@ export const AdminUsersManager = () => {
           <div className="flex justify-between items-center">
             <div>
               <CardTitle className="text-cyberblue-300 flex items-center">
-                <Users className="mr-2" size={20} />
+                <UsersIcon className="mr-2" size={20} />
                 Brukeradministrasjon
               </CardTitle>
               <CardDescription>Administrer brukere i systemet</CardDescription>
@@ -362,7 +353,6 @@ export const AdminUsersManager = () => {
         </CardContent>
       </Card>
       
-      {/* Add User Dialog */}
       <Dialog open={showAddUserDialog} onOpenChange={setShowAddUserDialog}>
         <DialogContent className="bg-cyberdark-900 border-gray-700">
           <DialogHeader>
@@ -430,7 +420,6 @@ export const AdminUsersManager = () => {
         </DialogContent>
       </Dialog>
       
-      {/* Delete User Confirmation Dialog */}
       <AlertDialog open={showDeleteUserDialog} onOpenChange={setShowDeleteUserDialog}>
         <AlertDialogContent className="bg-cyberdark-900 border-gray-700">
           <AlertDialogHeader>
