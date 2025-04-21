@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { 
@@ -31,7 +32,8 @@ import {
 import { 
   Tooltip,
   TooltipContent,
-  TooltipTrigger
+  TooltipTrigger,
+  TooltipProvider
 } from "@/components/ui/tooltip";
 import { 
   Search, 
@@ -220,238 +222,240 @@ export const AdminUsersManager = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <Card className="bg-cyberdark-900 border-gray-700">
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <div>
-              <CardTitle className="text-cyberblue-300 flex items-center">
-                <UsersIcon className="mr-2" size={20} />
-                Brukeradministrasjon
-              </CardTitle>
-              <CardDescription>Administrer brukere i systemet</CardDescription>
+    <TooltipProvider>
+      <div className="space-y-6">
+        <Card className="bg-cyberdark-900 border-gray-700">
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <div>
+                <CardTitle className="text-cyberblue-300 flex items-center">
+                  <UsersIcon className="mr-2" size={20} />
+                  Brukeradministrasjon
+                </CardTitle>
+                <CardDescription>Administrer brukere i systemet</CardDescription>
+              </div>
+              <Button 
+                onClick={() => setShowAddUserDialog(true)}
+                className="bg-cyberblue-600 hover:bg-cyberblue-700"
+              >
+                <Plus size={16} className="mr-2" />
+                Ny Bruker
+              </Button>
             </div>
-            <Button 
-              onClick={() => setShowAddUserDialog(true)}
-              className="bg-cyberblue-600 hover:bg-cyberblue-700"
-            >
-              <Plus size={16} className="mr-2" />
-              Ny Bruker
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="relative mb-6">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" size={18} />
-            <Input
-              placeholder="Søk etter brukere..."
-              className="pl-10 bg-cyberdark-800 border-gray-700"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-          
-          {loading ? (
-            <div className="py-8 flex justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-cyberblue-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="relative mb-6">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" size={18} />
+              <Input
+                placeholder="Søk etter brukere..."
+                className="pl-10 bg-cyberdark-800 border-gray-700"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
             </div>
-          ) : (
-            <div className="rounded-md border border-gray-700 overflow-hidden">
-              <Table>
-                <TableHeader className="bg-cyberdark-800">
-                  <TableRow>
-                    <TableHead className="text-gray-300">Bruker</TableHead>
-                    <TableHead className="text-gray-300">E-post</TableHead>
-                    <TableHead className="text-gray-300">Registrert</TableHead>
-                    <TableHead className="text-gray-300 text-right">Handlinger</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredUsers.length > 0 ? (
-                    filteredUsers.map((user) => (
-                      <TableRow key={user.id} className="hover:bg-cyberdark-800/50 border-t border-gray-700">
-                        <TableCell className="font-medium">
-                          <div className="flex items-center">
-                            <div className="h-8 w-8 rounded-full bg-cyberdark-700 flex items-center justify-center text-cyberblue-400 mr-3">
-                              {user.username ? user.username.charAt(0).toUpperCase() : <User size={14} />}
+            
+            {loading ? (
+              <div className="py-8 flex justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-cyberblue-400" />
+              </div>
+            ) : (
+              <div className="rounded-md border border-gray-700 overflow-hidden">
+                <Table>
+                  <TableHeader className="bg-cyberdark-800">
+                    <TableRow>
+                      <TableHead className="text-gray-300">Bruker</TableHead>
+                      <TableHead className="text-gray-300">E-post</TableHead>
+                      <TableHead className="text-gray-300">Registrert</TableHead>
+                      <TableHead className="text-gray-300 text-right">Handlinger</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredUsers.length > 0 ? (
+                      filteredUsers.map((user) => (
+                        <TableRow key={user.id} className="hover:bg-cyberdark-800/50 border-t border-gray-700">
+                          <TableCell className="font-medium">
+                            <div className="flex items-center">
+                              <div className="h-8 w-8 rounded-full bg-cyberdark-700 flex items-center justify-center text-cyberblue-400 mr-3">
+                                {user.username ? user.username.charAt(0).toUpperCase() : <User size={14} />}
+                              </div>
+                              <div>
+                                <div className="text-sm font-medium text-gray-200">{user.full_name}</div>
+                                <div className="text-xs text-gray-400">@{user.username}</div>
+                              </div>
                             </div>
-                            <div>
-                              <div className="text-sm font-medium text-gray-200">{user.full_name}</div>
-                              <div className="text-xs text-gray-400">@{user.username}</div>
+                          </TableCell>
+                          <TableCell className="text-sm text-gray-300">{user.email}</TableCell>
+                          <TableCell className="text-xs text-gray-400">
+                            {new Date(user.created_at).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-2">
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    className="h-8 w-8 text-gray-400 hover:text-gray-300"
+                                  >
+                                    <Mail size={15} />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent side="left">
+                                  <p className="text-xs">Send e-post til bruker</p>
+                                </TooltipContent>
+                              </Tooltip>
+                              
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="icon"
+                                    className="h-8 w-8 text-gray-400 hover:text-gray-300"
+                                  >
+                                    <Lock size={15} />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent side="left">
+                                  <p className="text-xs">Tilbakestill passord</p>
+                                </TooltipContent>
+                              </Tooltip>
+                              
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="icon"
+                                    className="h-8 w-8 text-red-400 hover:text-red-300"
+                                    onClick={() => {
+                                      setSelectedUser(user);
+                                      setShowDeleteUserDialog(true);
+                                    }}
+                                  >
+                                    <Trash size={15} />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent side="left">
+                                  <p className="text-xs">Slett bruker</p>
+                                </TooltipContent>
+                              </Tooltip>
                             </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-sm text-gray-300">{user.email}</TableCell>
-                        <TableCell className="text-xs text-gray-400">
-                          {new Date(user.created_at).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon" 
-                                  className="h-8 w-8 text-gray-400 hover:text-gray-300"
-                                >
-                                  <Mail size={15} />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent side="left">
-                                <p className="text-xs">Send e-post til bruker</p>
-                              </TooltipContent>
-                            </Tooltip>
-                            
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon"
-                                  className="h-8 w-8 text-gray-400 hover:text-gray-300"
-                                >
-                                  <Lock size={15} />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent side="left">
-                                <p className="text-xs">Tilbakestill passord</p>
-                              </TooltipContent>
-                            </Tooltip>
-                            
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon"
-                                  className="h-8 w-8 text-red-400 hover:text-red-300"
-                                  onClick={() => {
-                                    setSelectedUser(user);
-                                    setShowDeleteUserDialog(true);
-                                  }}
-                                >
-                                  <Trash size={15} />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent side="left">
-                                <p className="text-xs">Slett bruker</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center py-8 text-gray-400">
+                          {searchQuery ? 'Ingen brukere samsvarer med søket' : 'Ingen brukere funnet'}
                         </TableCell>
                       </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={4} className="text-center py-8 text-gray-400">
-                        {searchQuery ? 'Ingen brukere samsvarer med søket' : 'Ingen brukere funnet'}
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-      
-      <Dialog open={showAddUserDialog} onOpenChange={setShowAddUserDialog}>
-        <DialogContent className="bg-cyberdark-900 border-gray-700">
-          <DialogHeader>
-            <DialogTitle className="text-cyberblue-300">Legg til ny bruker</DialogTitle>
-            <DialogDescription>
-              Opprett en ny brukerkonto. En bekreftelsesmail vil bli sendt til brukeren.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <label className="text-sm text-gray-300">Fullt navn</label>
-              <Input
-                value={newUserName}
-                onChange={(e) => setNewUserName(e.target.value)}
-                placeholder="John Doe"
-                className="bg-cyberdark-800 border-gray-700"
-              />
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+        
+        <Dialog open={showAddUserDialog} onOpenChange={setShowAddUserDialog}>
+          <DialogContent className="bg-cyberdark-900 border-gray-700">
+            <DialogHeader>
+              <DialogTitle className="text-cyberblue-300">Legg til ny bruker</DialogTitle>
+              <DialogDescription>
+                Opprett en ny brukerkonto. En bekreftelsesmail vil bli sendt til brukeren.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <label className="text-sm text-gray-300">Fullt navn</label>
+                <Input
+                  value={newUserName}
+                  onChange={(e) => setNewUserName(e.target.value)}
+                  placeholder="John Doe"
+                  className="bg-cyberdark-800 border-gray-700"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm text-gray-300">E-post</label>
+                <Input
+                  value={newUserEmail}
+                  onChange={(e) => setNewUserEmail(e.target.value)}
+                  placeholder="bruker@example.com"
+                  className="bg-cyberdark-800 border-gray-700"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm text-gray-300">Passord</label>
+                <Input
+                  value={newUserPassword}
+                  onChange={(e) => setNewUserPassword(e.target.value)}
+                  type="password"
+                  placeholder="••••••••"
+                  className="bg-cyberdark-800 border-gray-700"
+                />
+              </div>
             </div>
             
-            <div className="space-y-2">
-              <label className="text-sm text-gray-300">E-post</label>
-              <Input
-                value={newUserEmail}
-                onChange={(e) => setNewUserEmail(e.target.value)}
-                placeholder="bruker@example.com"
-                className="bg-cyberdark-800 border-gray-700"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <label className="text-sm text-gray-300">Passord</label>
-              <Input
-                value={newUserPassword}
-                onChange={(e) => setNewUserPassword(e.target.value)}
-                type="password"
-                placeholder="••••••••"
-                className="bg-cyberdark-800 border-gray-700"
-              />
-            </div>
-          </div>
-          
-          <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={() => setShowAddUserDialog(false)}
-              disabled={processing}
-            >
-              Avbryt
-            </Button>
-            <Button 
-              onClick={handleAddUser}
-              disabled={processing}
-            >
-              {processing ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Oppretter...
-                </>
-              ) : (
-                'Opprett bruker'
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      
-      <AlertDialog open={showDeleteUserDialog} onOpenChange={setShowDeleteUserDialog}>
-        <AlertDialogContent className="bg-cyberdark-900 border-gray-700">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-cyberred-300">Bekreft sletting</AlertDialogTitle>
-            <AlertDialogDescription>
-              Er du sikker på at du vil slette brukeren {selectedUser?.email}? Denne handlingen kan ikke angres.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel 
-              className="bg-cyberdark-800 border-gray-700 hover:bg-cyberdark-700"
-              disabled={processing}
-            >
-              Avbryt
-            </AlertDialogCancel>
-            <AlertDialogAction 
-              className="bg-red-600 hover:bg-red-700"
-              onClick={handleDeleteUser}
-              disabled={processing}
-            >
-              {processing ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Sletter...
-                </>
-              ) : (
-                'Slett bruker'
-              )}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
+            <DialogFooter>
+              <Button 
+                variant="outline" 
+                onClick={() => setShowAddUserDialog(false)}
+                disabled={processing}
+              >
+                Avbryt
+              </Button>
+              <Button 
+                onClick={handleAddUser}
+                disabled={processing}
+              >
+                {processing ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Oppretter...
+                  </>
+                ) : (
+                  'Opprett bruker'
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        
+        <AlertDialog open={showDeleteUserDialog} onOpenChange={setShowDeleteUserDialog}>
+          <AlertDialogContent className="bg-cyberdark-900 border-gray-700">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-cyberred-300">Bekreft sletting</AlertDialogTitle>
+              <AlertDialogDescription>
+                Er du sikker på at du vil slette brukeren {selectedUser?.email}? Denne handlingen kan ikke angres.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel 
+                className="bg-cyberdark-800 border-gray-700 hover:bg-cyberdark-700"
+                disabled={processing}
+              >
+                Avbryt
+              </AlertDialogCancel>
+              <AlertDialogAction 
+                className="bg-red-600 hover:bg-red-700"
+                onClick={handleDeleteUser}
+                disabled={processing}
+              >
+                {processing ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Sletter...
+                  </>
+                ) : (
+                  'Slett bruker'
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+    </TooltipProvider>
   );
 };
