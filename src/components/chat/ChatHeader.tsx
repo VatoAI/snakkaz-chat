@@ -1,4 +1,3 @@
-
 import { UserStatus } from "@/types/presence";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from "react";
@@ -10,8 +9,8 @@ import { NotificationSettings } from "./notification/NotificationSettings";
 import { HeaderNavLinks } from "./header/HeaderNavLinks";
 import { ProfileDropdown } from "./header/ProfileDropdown";
 import { UserAvatar } from "./header/UserAvatar";
-import { HeaderLogo } from "./header/HeaderLogo";
-import { AdminBadge } from "./header/AdminBadge";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { AIAssistantButton } from "./header/AIAssistantButton";
 
 interface ChatHeaderProps {
   userPresence: Record<string, any>;
@@ -38,6 +37,7 @@ export const ChatHeader = ({
 }: ChatHeaderProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [isOnline, setIsOnline] = useState(true);
   const [isBusy, setIsBusy] = useState(false);
   const [isBrb, setIsBrb] = useState(false);
@@ -73,80 +73,51 @@ export const ChatHeader = ({
     });
   };
 
-  const isMobile = typeof window !== "undefined" && window.innerWidth < 640;
-
   const avatarUrl = currentUserId ? userProfiles[currentUserId]?.avatar_url : null;
   const username = currentUserId ? userProfiles[currentUserId]?.username : null;
 
   return (
     <header className="w-full backdrop-blur-sm bg-cyberdark-900/85 border-b border-cybergold-400/40 shadow-neon-blue sticky top-0 z-40 animate-fadeIn">
-      <div className="max-w-full flex flex-row items-center justify-between h-[62px] px-2 sm:px-6 py-2 gap-2">
-        <div className="flex items-center gap-2">
-          <HeaderLogo />
-          <div className="flex flex-col justify-center ml-2">
-            <span className="font-semibold text-base text-cybergold-200 tracking-wider leading-tight cyber-text flex items-center">
-              SnakkaZ Chat
-            </span>
-            <span className="text-xs text-white font-mono select-all truncate max-w-[155px]">
-              {username 
-                ? `Brukernavn: ${username}` 
-                : currentUserId 
-                  ? `Bruker-ID: ${currentUserId.slice(0,8)}...` 
-                  : ""
-              }
-            </span>
-          </div>
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none">
+          <img
+            src="/snakkaz-logo.png"
+            alt="Background Logo"
+            className="w-16 h-16 object-contain"
+          />
         </div>
-        {!isMobile ? (
-          <div className="flex flex-row items-center gap-2 bg-cyberdark-950/60 border border-cybergold-400/20 rounded-xl px-2 py-1 shadow-neon-gold/30 glass-morphism">
-            <StatusButton
-              label="Online"
-              isActive={isOnline}
-              color="text-green-400"
-              onClick={() => handleStatusChange('online')}
-            />
-            <StatusButton
-              label="Busy"
-              isActive={isBusy}
-              color="text-cyberred-400"
-              onClick={() => handleStatusChange('busy')}
-            />
-            <StatusButton
-              label="BRB"
-              isActive={isBrb}
-              color="text-cybergold-400"
-              onClick={() => handleStatusChange('brb')}
-            />
-            <StatusButton
-              label="Offline"
-              isActive={isOffline}
-              color="text-gray-400"
-              onClick={() => handleStatusChange('offline')}
-            />
+
+        <div className="max-w-full flex flex-row items-center justify-between h-[50px] px-2 sm:px-6 py-1 gap-2 relative z-10">
+          <div className="flex items-center gap-2">
+            {!isMobile && (
+              <div className="text-base font-semibold text-cybergold-100">
+                SnakkaZ
+              </div>
+            )}
           </div>
-        ) : (
-          <span className="text-base font-semibold text-cybergold-100 flex items-center gap-1">
-            <HeaderLogo />
-            SnakkaZ
-          </span>
-        )}
-        <div className="flex flex-row items-center gap-2">
-          <HeaderNavLinks />
-          {!isMobile && <NotificationSettings />}
-          {currentUserId && (
-            <ProfileDropdown
-              currentUserId={currentUserId}
-              userProfiles={userProfiles}
-              currentStatus={currentStatus}
-              onStatusChange={handleStatusChange}
-              isOnline={isOnline}
-              isBusy={isBusy}
-              isBrb={isBrb}
-              isOffline={isOffline}
-              handleCopyUserId={handleCopyUserId}
-              handleCopyInviteLink={handleCopyInviteLink}
-            />
-          )}
+
+          <div className="flex-1 flex justify-center">
+            <HeaderNavLinks />
+          </div>
+
+          <div className="flex flex-row items-center gap-2">
+            {!isMobile && <NotificationSettings />}
+            <AIAssistantButton currentUserId={currentUserId || ''} />
+            {currentUserId && (
+              <ProfileDropdown
+                currentUserId={currentUserId}
+                userProfiles={userProfiles}
+                currentStatus={currentStatus}
+                onStatusChange={onStatusChange}
+                isOnline={isOnline}
+                isBusy={isBusy}
+                isBrb={isBrb}
+                isOffline={isOffline}
+                handleCopyUserId={handleCopyUserId}
+                handleCopyInviteLink={handleCopyInviteLink}
+              />
+            )}
+          </div>
         </div>
       </div>
     </header>
