@@ -1,4 +1,3 @@
-
 // Create AudioContext for sound handling
 let audioContext: AudioContext | null = null;
 
@@ -162,7 +161,15 @@ export const showNotification = async (title: string, options?: NotificationOpti
       ...options
     };
     
-    new Notification(title, finalOptions);
+    // Show notifications if supported
+    if (window.Notification && Notification.permission === "granted") {
+      new Notification("Ny melding", {
+        body: "Du har fått en ny melding",
+        // timestamp: Date.now(), // Removed: Not a valid property in NotificationOptions
+        // vibrate: [100, 50, 100], // Removed: Not a valid property
+        // Add more valid NotificationOptions properties if needed
+      });
+    }
   } catch (error) {
     console.error('Error showing notification:', error);
   }
