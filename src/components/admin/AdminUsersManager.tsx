@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { 
@@ -92,19 +91,18 @@ export const AdminUsersManager = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      // Check if user has admin role
       const { data: adminData, error: adminError } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', session.user.id)
-        .eq('role', 'admin')
+        .from("user_roles" as any)
+        .select("role")
+        .eq("user_id", session.user.id)
+        .eq("role", "admin")
         .maybeSingle();
-      
+
       if (adminError) throw adminError;
-      
+
       const isAdmin = !!adminData;
       setCurrentUserIsAdmin(isAdmin);
-      
+
       if (isAdmin) {
         fetchUsers();
       } else {
@@ -132,33 +130,29 @@ export const AdminUsersManager = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      // First, try to use the admin API if available
       try {
         const { data: authData, error: authError } = await supabase.auth.admin.listUsers();
-        
         if (authError) throw authError;
-        
+
         const { data: profilesData, error: profilesError } = await supabase
-          .from('profiles')
-          .select('id, username, full_name, avatar_url');
-        
+          .from("profiles")
+          .select("id, username, full_name, avatar_url");
+
         if (profilesError) throw profilesError;
-        
-        // Fetch admin roles
+
         const { data: rolesData, error: rolesError } = await supabase
-          .from('user_roles')
-          .select('user_id, role')
-          .eq('role', 'admin');
-        
+          .from("user_roles" as any)
+          .select("user_id, role")
+          .eq("role", "admin");
+
         if (rolesError) throw rolesError;
-        
-        const adminRoles = new Set(rolesData.map(role => role.user_id));
+
+        const adminRoles = new Set((rolesData || []).map((role: any) => role.user_id));
         const profilesMap = new Map();
-        
         profilesData?.forEach(profile => {
           profilesMap.set(profile.id, profile);
         });
-        
+
         const combinedUsers = authData.users.map(user => {
           const profile = profilesMap.get(user.id);
           return {
@@ -172,28 +166,26 @@ export const AdminUsersManager = () => {
             is_admin: adminRoles.has(user.id)
           };
         });
-        
+
         setUsers(combinedUsers);
       } catch (adminApiError) {
         console.error("Admin API error, falling back to regular query:", adminApiError);
-        
-        // Fallback to regular queries if admin API fails
+
         const { data: profilesData, error: profilesError } = await supabase
-          .from('profiles')
-          .select('id, username, full_name, avatar_url');
-        
+          .from("profiles")
+          .select("id, username, full_name, avatar_url");
+
         if (profilesError) throw profilesError;
-        
-        // Fetch admin roles
+
         const { data: rolesData, error: rolesError } = await supabase
-          .from('user_roles')
-          .select('user_id, role')
-          .eq('role', 'admin');
-        
+          .from("user_roles" as any)
+          .select("user_id, role")
+          .eq("role", "admin");
+
         if (rolesError) throw rolesError;
-        
-        const adminRoles = new Set(rolesData.map(role => role.user_id));
-        
+
+        const adminRoles = new Set((rolesData || []).map((role: any) => role.user_id));
+
         const usersWithProfiles = profilesData.map(profile => ({
           id: profile.id,
           email: 'Fetching...',
@@ -203,7 +195,7 @@ export const AdminUsersManager = () => {
           created_at: new Date().toISOString(),
           is_admin: adminRoles.has(profile.id)
         }));
-        
+
         setUsers(usersWithProfiles);
       }
     } catch (error) {
@@ -266,7 +258,6 @@ export const AdminUsersManager = () => {
         
         if (profileError) throw profileError;
 
-        // Add admin role if selected
         if (adminRole) {
           const { error: roleError } = await supabase
             .from('user_roles')
@@ -310,7 +301,6 @@ export const AdminUsersManager = () => {
     setProcessing(true);
     
     try {
-      // Update username and full name if changed
       if (editUsername !== selectedUser.username || editFullName !== selectedUser.full_name) {
         const { error: profileError } = await supabase
           .from('profiles')
@@ -323,9 +313,7 @@ export const AdminUsersManager = () => {
         if (profileError) throw profileError;
       }
       
-      // Reset password if requested
       if (resetPassword && newPassword) {
-        // Use admin resetPassword function if available
         try {
           const { error: resetError } = await supabase.auth.admin.updateUserById(
             selectedUser.id,
@@ -335,7 +323,6 @@ export const AdminUsersManager = () => {
           if (resetError) throw resetError;
         } catch (resetError) {
           console.error("Admin password reset failed:", resetError);
-          // Fallback to sending a password reset email
           const { error: emailResetError } = await supabase.auth.resetPasswordForEmail(
             selectedUser.email,
             { redirectTo: `${window.location.origin}/reset-password` }
@@ -350,12 +337,10 @@ export const AdminUsersManager = () => {
         }
       }
       
-      // Update admin role status
       const isCurrentlyAdmin = selectedUser.is_admin;
       
       if (adminRole !== isCurrentlyAdmin) {
         if (adminRole) {
-          // Add admin role
           const { error: roleError } = await supabase
             .from('user_roles')
             .insert([
@@ -367,7 +352,6 @@ export const AdminUsersManager = () => {
           
           if (roleError) throw roleError;
         } else {
-          // Remove admin role
           const { error: roleError } = await supabase
             .from('user_roles')
             .delete()
@@ -409,13 +393,11 @@ export const AdminUsersManager = () => {
     setProcessing(true);
     
     try {
-      // Try admin deleteUser if available
       try {
         const { error } = await supabase.auth.admin.deleteUser(selectedUser.id);
         if (error) throw error;
       } catch (adminError) {
         console.error("Admin delete failed, falling back:", adminError);
-        // Fallback to just deleting the profile
         const { error: profileError } = await supabase
           .from('profiles')
           .delete()
@@ -874,7 +856,6 @@ export const AdminUsersManager = () => {
   );
 };
 
-// QR Code component for users
 interface UserQrCodeProps {
   userId: string;
   username: string;
@@ -888,17 +869,14 @@ const UserQrCode = ({ userId, username }: UserQrCodeProps) => {
       if (!userId) return;
       
       try {
-        // Import QRCode library dynamically
         const QRCode = await import('qrcode');
         
-        // Create payload with user information
         const payload = JSON.stringify({
           type: 'friend-request',
           userId,
           username
         });
         
-        // Generate QR code as SVG
         QRCode.toString(payload, {
           type: 'svg',
           color: {
