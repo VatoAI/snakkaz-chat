@@ -1,5 +1,5 @@
 
-import { MessageList } from '@/components/MessageList';
+import { MessageList } from '@/components/message-list/MessageList';
 import { DecryptedMessage } from "@/types/message";
 
 interface AIMessageListProps {
