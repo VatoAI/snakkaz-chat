@@ -1,7 +1,8 @@
+
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { ChatGlobal } from '@/components/chat/ChatGlobal';
 import { DirectMessage } from '@/components/chat/friends/DirectMessage';
-import { AIAgentChat } from '@/components/chat/AIAgentChat';
+import { PrivateChats } from '@/components/chat/PrivateChats';
 import { TabsHeader } from './tabs/TabsHeader';
 import { useTabShortcuts } from '@/hooks/useTabShortcuts';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -102,10 +103,36 @@ export const ChatTabs = ({
             </TabsContent>
 
             <TabsContent 
-              value="assistant" 
+              value="private" 
               className="h-full m-0 p-0 data-[state=active]:animate-fadeIn"
             >
-              <AIAgentChat currentUserId={currentUserId || ''} />
+              <PrivateChats 
+                currentUserId={currentUserId || ''}
+                webRTCManager={webRTCManager}
+                directMessages={directMessages}
+                onNewMessage={onNewMessage}
+                onStartChat={(userId) => {
+                  const friend = {
+                    id: '',
+                    user_id: userId,
+                    friend_id: currentUserId || '',
+                    status: 'accepted',
+                    created_at: '',
+                    profile: userProfiles[userId] ? {
+                      id: userId,
+                      username: userProfiles[userId].username || null,
+                      avatar_url: userProfiles[userId].avatar_url || null
+                    } : undefined
+                  };
+                  
+                  // Set selected friend and switch to direct tab
+                  handleCloseDirectChat(); // Close any existing direct chat
+                  setTimeout(() => {
+                    setActiveTab('direct');
+                  }, 0);
+                }}
+                userProfiles={userProfiles}
+              />
             </TabsContent>
             
             {selectedFriend && (

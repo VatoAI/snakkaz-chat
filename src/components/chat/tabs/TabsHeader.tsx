@@ -1,6 +1,7 @@
+
 import { StyledTabsList } from "./StyledTabsList";
 import { GlobalTabHeader } from "./GlobalTabHeader";
-import { AssistantTabHeader } from "./AssistantTabHeader";
+import { PrivateChatsTabHeader } from "./PrivateChatsTabHeader";
 import { DirectTabHeader } from "./DirectTabHeader";
 import { Friend } from "@/components/chat/friends/types";
 
@@ -40,7 +41,7 @@ export const TabsHeader = ({
       {/* Tabs list */}
       <StyledTabsList>
         <GlobalTabHeader isActive={activeTab === 'global'} />
-        <AssistantTabHeader isActive={activeTab === 'assistant'} />
+        <PrivateChatsTabHeader isActive={activeTab === 'private'} />
         {selectedFriend && (
           <DirectTabHeader 
             friend={selectedFriend} 

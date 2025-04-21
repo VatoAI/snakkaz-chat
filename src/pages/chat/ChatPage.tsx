@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChatHeader } from "@/components/chat/ChatHeader";
@@ -13,6 +14,7 @@ import { useChatCode } from "@/hooks/useChatCode";
 import { LoadingScreen } from "./LoadingScreen";
 import { useMobilePinGuard } from "./hooks/useMobilePinGuard";
 import { useWebRTCSetup } from "./hooks/useWebRTCSetup";
+import { Friend } from "@/components/chat/friends/types";
 
 const ChatPage = () => {
   const { user, loading } = useAuth();
@@ -26,7 +28,7 @@ const ChatPage = () => {
   } = useWebRTCSetup();
 
   const [activeTab, setActiveTab] = useState("global");
-  const [selectedFriend, setSelectedFriend] = useState(null);
+  const [selectedFriend, setSelectedFriend] = useState<Friend | null>(null);
   const [userProfiles, setUserProfiles] = useState({});
   const [userPresence, setUserPresence] = useState({});
   const [currentStatus, setCurrentStatus] = useState<UserStatus>('online');
@@ -83,7 +85,18 @@ const ChatPage = () => {
   };
 
   const onStartChat = (friendId: string) => {
-    setSelectedFriend({ user_id: friendId });
+    setSelectedFriend({ 
+      id: '', 
+      user_id: friendId, 
+      friend_id: user?.id || '', 
+      status: 'accepted',
+      created_at: '',
+      profile: userProfiles[friendId] ? {
+        id: friendId,
+        username: userProfiles[friendId].username || null,
+        avatar_url: userProfiles[friendId].avatar_url || null
+      } : undefined
+    });
     setActiveTab("direct");
   };
 

@@ -4,6 +4,7 @@ import { Home, MessageSquare, User } from 'lucide-react';
 import { NavButton } from './buttons/NavButton';
 import { FriendsSheet } from './buttons/FriendsSheet';
 import { DecryptedMessage } from '@/types/message';
+import { AIAssistantButton } from './AIAssistantButton';
 
 interface NavigationButtonsProps {
   currentUserId: string | null;
@@ -55,6 +56,9 @@ export const NavigationButtons = ({
         setIsFriendsOpen={setIsFriendsOpen}
         userProfiles={userProfiles}
       />
+      {currentUserId && (
+        <AIAssistantButton currentUserId={currentUserId} />
+      )}
     </div>
   );
 };

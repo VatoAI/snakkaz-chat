@@ -15,7 +15,7 @@ export const useTabShortcuts = (
             setActiveTab('global');
             break;
           case '2':
-            setActiveTab('assistant');
+            setActiveTab('private');
             break;
           case '3':
             if (hasDirectChat) {
