@@ -44,7 +44,9 @@ import {
   Shield, 
   User,
   Loader2,
-  Users as UsersIcon
+  Users as UsersIcon,
+  Pencil,
+  QrCode
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -57,6 +59,7 @@ interface UserType {
   avatar_url?: string;
   created_at: string;
   last_sign_in?: string;
+  is_admin?: boolean;
 }
 
 export const AdminUsersManager = () => {
@@ -65,49 +68,144 @@ export const AdminUsersManager = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [showAddUserDialog, setShowAddUserDialog] = useState(false);
   const [showDeleteUserDialog, setShowDeleteUserDialog] = useState(false);
+  const [showEditUserDialog, setShowEditUserDialog] = useState(false);
+  const [showQrCodeDialog, setShowQrCodeDialog] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
   const [newUserEmail, setNewUserEmail] = useState("");
   const [newUserPassword, setNewUserPassword] = useState("");
   const [newUserName, setNewUserName] = useState("");
+  const [editUsername, setEditUsername] = useState("");
+  const [editFullName, setEditFullName] = useState("");
+  const [resetPassword, setResetPassword] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
   const [processing, setProcessing] = useState(false);
+  const [adminRole, setAdminRole] = useState(false);
+  const [currentUserIsAdmin, setCurrentUserIsAdmin] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchUsers();
+    checkAdminStatus();
   }, []);
+
+  const checkAdminStatus = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      // Check if user has admin role
+      const { data: adminData, error: adminError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', session.user.id)
+        .eq('role', 'admin')
+        .maybeSingle();
+      
+      if (adminError) throw adminError;
+      
+      const isAdmin = !!adminData;
+      setCurrentUserIsAdmin(isAdmin);
+      
+      if (isAdmin) {
+        fetchUsers();
+      } else {
+        setLoading(false);
+        toast({
+          title: "Tilgangsfeil",
+          description: "Du har ikke administratortilgang.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error checking admin status:", error);
+      setLoading(false);
+      toast({
+        title: "Feil ved sjekking av admin-status",
+        description: "Kunne ikke verifisere administratortilgang.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const { data: authData, error: authError } = await supabase.auth.admin.listUsers();
-      
-      if (authError) throw authError;
-      
-      const { data: profilesData, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, username, full_name, avatar_url');
-      
-      if (profilesError) throw profilesError;
-      
-      const profilesMap = new Map();
-      profilesData?.forEach(profile => {
-        profilesMap.set(profile.id, profile);
-      });
-      
-      const combinedUsers = authData.users.map(user => {
-        const profile = profilesMap.get(user.id);
-        return {
-          id: user.id,
-          email: user.email || 'Ukjent e-post',
-          username: profile?.username || 'Ikke angitt',
-          full_name: profile?.full_name || 'Ikke angitt',
-          avatar_url: profile?.avatar_url,
-          created_at: user.created_at,
-          last_sign_in: user.last_sign_in_at
-        };
-      });
-      
-      setUsers(combinedUsers);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      // First, try to use the admin API if available
+      try {
+        const { data: authData, error: authError } = await supabase.auth.admin.listUsers();
+        
+        if (authError) throw authError;
+        
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, username, full_name, avatar_url');
+        
+        if (profilesError) throw profilesError;
+        
+        // Fetch admin roles
+        const { data: rolesData, error: rolesError } = await supabase
+          .from('user_roles')
+          .select('user_id, role')
+          .eq('role', 'admin');
+        
+        if (rolesError) throw rolesError;
+        
+        const adminRoles = new Set(rolesData.map(role => role.user_id));
+        const profilesMap = new Map();
+        
+        profilesData?.forEach(profile => {
+          profilesMap.set(profile.id, profile);
+        });
+        
+        const combinedUsers = authData.users.map(user => {
+          const profile = profilesMap.get(user.id);
+          return {
+            id: user.id,
+            email: user.email || 'Ukjent e-post',
+            username: profile?.username || 'Ikke angitt',
+            full_name: profile?.full_name || 'Ikke angitt',
+            avatar_url: profile?.avatar_url,
+            created_at: user.created_at,
+            last_sign_in: user.last_sign_in_at,
+            is_admin: adminRoles.has(user.id)
+          };
+        });
+        
+        setUsers(combinedUsers);
+      } catch (adminApiError) {
+        console.error("Admin API error, falling back to regular query:", adminApiError);
+        
+        // Fallback to regular queries if admin API fails
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, username, full_name, avatar_url');
+        
+        if (profilesError) throw profilesError;
+        
+        // Fetch admin roles
+        const { data: rolesData, error: rolesError } = await supabase
+          .from('user_roles')
+          .select('user_id, role')
+          .eq('role', 'admin');
+        
+        if (rolesError) throw rolesError;
+        
+        const adminRoles = new Set(rolesData.map(role => role.user_id));
+        
+        const usersWithProfiles = profilesData.map(profile => ({
+          id: profile.id,
+          email: 'Fetching...',
+          username: profile.username || 'Ikke angitt',
+          full_name: profile.full_name || 'Ikke angitt',
+          avatar_url: profile.avatar_url,
+          created_at: new Date().toISOString(),
+          is_admin: adminRoles.has(profile.id)
+        }));
+        
+        setUsers(usersWithProfiles);
+      }
     } catch (error) {
       console.error("Error fetching users:", error);
       toast({
@@ -167,6 +265,20 @@ export const AdminUsersManager = () => {
           ]);
         
         if (profileError) throw profileError;
+
+        // Add admin role if selected
+        if (adminRole) {
+          const { error: roleError } = await supabase
+            .from('user_roles')
+            .insert([
+              {
+                user_id: data.user.id,
+                role: 'admin'
+              }
+            ]);
+          
+          if (roleError) throw roleError;
+        }
         
         toast({
           title: "Bruker opprettet",
@@ -177,6 +289,7 @@ export const AdminUsersManager = () => {
         setNewUserEmail("");
         setNewUserPassword("");
         setNewUserName("");
+        setAdminRole(false);
         fetchUsers();
       }
     } catch (error) {
@@ -191,15 +304,125 @@ export const AdminUsersManager = () => {
     }
   };
 
+  const handleEditUser = async () => {
+    if (!selectedUser) return;
+    
+    setProcessing(true);
+    
+    try {
+      // Update username and full name if changed
+      if (editUsername !== selectedUser.username || editFullName !== selectedUser.full_name) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({ 
+            username: editUsername,
+            full_name: editFullName
+          })
+          .eq('id', selectedUser.id);
+        
+        if (profileError) throw profileError;
+      }
+      
+      // Reset password if requested
+      if (resetPassword && newPassword) {
+        // Use admin resetPassword function if available
+        try {
+          const { error: resetError } = await supabase.auth.admin.updateUserById(
+            selectedUser.id,
+            { password: newPassword }
+          );
+          
+          if (resetError) throw resetError;
+        } catch (resetError) {
+          console.error("Admin password reset failed:", resetError);
+          // Fallback to sending a password reset email
+          const { error: emailResetError } = await supabase.auth.resetPasswordForEmail(
+            selectedUser.email,
+            { redirectTo: `${window.location.origin}/reset-password` }
+          );
+          
+          if (emailResetError) throw emailResetError;
+          
+          toast({
+            title: "Passord tilbakestilling",
+            description: "En e-post med lenke for tilbakestilling av passord er sendt til brukeren.",
+          });
+        }
+      }
+      
+      // Update admin role status
+      const isCurrentlyAdmin = selectedUser.is_admin;
+      
+      if (adminRole !== isCurrentlyAdmin) {
+        if (adminRole) {
+          // Add admin role
+          const { error: roleError } = await supabase
+            .from('user_roles')
+            .insert([
+              {
+                user_id: selectedUser.id,
+                role: 'admin'
+              }
+            ]);
+          
+          if (roleError) throw roleError;
+        } else {
+          // Remove admin role
+          const { error: roleError } = await supabase
+            .from('user_roles')
+            .delete()
+            .eq('user_id', selectedUser.id)
+            .eq('role', 'admin');
+          
+          if (roleError) throw roleError;
+        }
+      }
+      
+      toast({
+        title: "Bruker oppdatert",
+        description: `Brukeren ${selectedUser.email} ble oppdatert.`,
+      });
+      
+      setShowEditUserDialog(false);
+      setSelectedUser(null);
+      setEditUsername("");
+      setEditFullName("");
+      setResetPassword(false);
+      setNewPassword("");
+      setAdminRole(false);
+      fetchUsers();
+    } catch (error) {
+      console.error("Error updating user:", error);
+      toast({
+        title: "Feil ved oppdatering av bruker",
+        description: (error as Error).message,
+        variant: "destructive",
+      });
+    } finally {
+      setProcessing(false);
+    }
+  };
+
   const handleDeleteUser = async () => {
     if (!selectedUser) return;
     
     setProcessing(true);
     
     try {
-      const { error } = await supabase.auth.admin.deleteUser(selectedUser.id);
-      
-      if (error) throw error;
+      // Try admin deleteUser if available
+      try {
+        const { error } = await supabase.auth.admin.deleteUser(selectedUser.id);
+        if (error) throw error;
+      } catch (adminError) {
+        console.error("Admin delete failed, falling back:", adminError);
+        // Fallback to just deleting the profile
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .delete()
+          .eq('id', selectedUser.id);
+        
+        if (profileError) throw profileError;
+      }
       
       toast({
         title: "Bruker slettet",
@@ -221,6 +444,11 @@ export const AdminUsersManager = () => {
     }
   };
 
+  const showUserQrCode = (user: UserType) => {
+    setSelectedUser(user);
+    setShowQrCodeDialog(true);
+  };
+
   return (
     <TooltipProvider>
       <div className="space-y-6">
@@ -234,13 +462,15 @@ export const AdminUsersManager = () => {
                 </CardTitle>
                 <CardDescription>Administrer brukere i systemet</CardDescription>
               </div>
-              <Button 
-                onClick={() => setShowAddUserDialog(true)}
-                className="bg-cyberblue-600 hover:bg-cyberblue-700"
-              >
-                <Plus size={16} className="mr-2" />
-                Ny Bruker
-              </Button>
+              {currentUserIsAdmin && (
+                <Button 
+                  onClick={() => setShowAddUserDialog(true)}
+                  className="bg-cyberblue-600 hover:bg-cyberblue-700"
+                >
+                  <Plus size={16} className="mr-2" />
+                  Ny Bruker
+                </Button>
+              )}
             </div>
           </CardHeader>
           <CardContent>
@@ -258,6 +488,12 @@ export const AdminUsersManager = () => {
               <div className="py-8 flex justify-center">
                 <Loader2 className="h-8 w-8 animate-spin text-cyberblue-400" />
               </div>
+            ) : !currentUserIsAdmin ? (
+              <div className="rounded-md border border-gray-700 p-8 text-center">
+                <Shield className="mx-auto h-12 w-12 text-cyberred-400 mb-4" />
+                <h3 className="text-lg font-medium text-gray-300 mb-2">Tilgang nektet</h3>
+                <p className="text-gray-400">Du har ikke administratortilgang til å administrere brukere.</p>
+              </div>
             ) : (
               <div className="rounded-md border border-gray-700 overflow-hidden">
                 <Table>
@@ -266,6 +502,7 @@ export const AdminUsersManager = () => {
                       <TableHead className="text-gray-300">Bruker</TableHead>
                       <TableHead className="text-gray-300">E-post</TableHead>
                       <TableHead className="text-gray-300">Registrert</TableHead>
+                      <TableHead className="text-gray-300">Rolle</TableHead>
                       <TableHead className="text-gray-300 text-right">Handlinger</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -288,6 +525,16 @@ export const AdminUsersManager = () => {
                           <TableCell className="text-xs text-gray-400">
                             {new Date(user.created_at).toLocaleDateString()}
                           </TableCell>
+                          <TableCell className="text-xs text-gray-300">
+                            {user.is_admin ? (
+                              <div className="flex items-center text-cyberblue-400">
+                                <Shield size={14} className="mr-1" />
+                                <span>Admin</span>
+                              </div>
+                            ) : (
+                              <span>Bruker</span>
+                            )}
+                          </TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-2">
                               <Tooltip>
@@ -296,12 +543,13 @@ export const AdminUsersManager = () => {
                                     variant="ghost" 
                                     size="icon" 
                                     className="h-8 w-8 text-gray-400 hover:text-gray-300"
+                                    onClick={() => showUserQrCode(user)}
                                   >
-                                    <Mail size={15} />
+                                    <QrCode size={15} />
                                   </Button>
                                 </TooltipTrigger>
                                 <TooltipContent side="left">
-                                  <p className="text-xs">Send e-post til bruker</p>
+                                  <p className="text-xs">Vis QR-kode</p>
                                 </TooltipContent>
                               </Tooltip>
                               
@@ -311,6 +559,33 @@ export const AdminUsersManager = () => {
                                     variant="ghost" 
                                     size="icon"
                                     className="h-8 w-8 text-gray-400 hover:text-gray-300"
+                                    onClick={() => {
+                                      setSelectedUser(user);
+                                      setEditUsername(user.username || '');
+                                      setEditFullName(user.full_name || '');
+                                      setAdminRole(user.is_admin || false);
+                                      setShowEditUserDialog(true);
+                                    }}
+                                  >
+                                    <Pencil size={15} />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent side="left">
+                                  <p className="text-xs">Rediger bruker</p>
+                                </TooltipContent>
+                              </Tooltip>
+                              
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="icon"
+                                    className="h-8 w-8 text-gray-400 hover:text-gray-300"
+                                    onClick={() => {
+                                      setSelectedUser(user);
+                                      setResetPassword(true);
+                                      setShowEditUserDialog(true);
+                                    }}
                                   >
                                     <Lock size={15} />
                                   </Button>
@@ -344,7 +619,7 @@ export const AdminUsersManager = () => {
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={4} className="text-center py-8 text-gray-400">
+                        <TableCell colSpan={5} className="text-center py-8 text-gray-400">
                           {searchQuery ? 'Ingen brukere samsvarer med søket' : 'Ingen brukere funnet'}
                         </TableCell>
                       </TableRow>
@@ -396,6 +671,22 @@ export const AdminUsersManager = () => {
                   className="bg-cyberdark-800 border-gray-700"
                 />
               </div>
+              
+              <div className="flex items-center space-x-2 pt-2">
+                <input
+                  type="checkbox"
+                  id="adminRole"
+                  checked={adminRole}
+                  onChange={(e) => setAdminRole(e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300 text-cyberblue-600 focus:ring-cyberblue-500"
+                />
+                <label htmlFor="adminRole" className="text-sm text-gray-300">
+                  <span className="flex items-center">
+                    <Shield size={14} className="mr-1 text-cyberblue-400" />
+                    Gi administratortilgang
+                  </span>
+                </label>
+              </div>
             </div>
             
             <DialogFooter>
@@ -417,6 +708,103 @@ export const AdminUsersManager = () => {
                   </>
                 ) : (
                   'Opprett bruker'
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        
+        <Dialog open={showEditUserDialog} onOpenChange={setShowEditUserDialog}>
+          <DialogContent className="bg-cyberdark-900 border-gray-700">
+            <DialogHeader>
+              <DialogTitle className="text-cyberblue-300">Rediger bruker</DialogTitle>
+              <DialogDescription>
+                Endre brukerinformasjon for {selectedUser?.email}.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <label className="text-sm text-gray-300">Brukernavn</label>
+                <Input
+                  value={editUsername}
+                  onChange={(e) => setEditUsername(e.target.value)}
+                  placeholder="brukernavn"
+                  className="bg-cyberdark-800 border-gray-700"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm text-gray-300">Fullt navn</label>
+                <Input
+                  value={editFullName}
+                  onChange={(e) => setEditFullName(e.target.value)}
+                  placeholder="Fullt navn"
+                  className="bg-cyberdark-800 border-gray-700"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2 mb-2">
+                  <input
+                    type="checkbox"
+                    id="resetPassword"
+                    checked={resetPassword}
+                    onChange={(e) => setResetPassword(e.target.checked)}
+                    className="h-4 w-4 rounded border-gray-300 text-cyberblue-600 focus:ring-cyberblue-500"
+                  />
+                  <label htmlFor="resetPassword" className="text-sm text-gray-300">
+                    Tilbakestill passord
+                  </label>
+                </div>
+                
+                {resetPassword && (
+                  <Input
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    type="password"
+                    placeholder="Nytt passord"
+                    className="bg-cyberdark-800 border-gray-700"
+                  />
+                )}
+              </div>
+              
+              <div className="flex items-center space-x-2 pt-2">
+                <input
+                  type="checkbox"
+                  id="editAdminRole"
+                  checked={adminRole}
+                  onChange={(e) => setAdminRole(e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300 text-cyberblue-600 focus:ring-cyberblue-500"
+                />
+                <label htmlFor="editAdminRole" className="text-sm text-gray-300">
+                  <span className="flex items-center">
+                    <Shield size={14} className="mr-1 text-cyberblue-400" />
+                    Administratortilgang
+                  </span>
+                </label>
+              </div>
+            </div>
+            
+            <DialogFooter>
+              <Button 
+                variant="outline" 
+                onClick={() => setShowEditUserDialog(false)}
+                disabled={processing}
+              >
+                Avbryt
+              </Button>
+              <Button 
+                onClick={handleEditUser}
+                disabled={processing}
+              >
+                {processing ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Lagrer...
+                  </>
+                ) : (
+                  'Lagre endringer'
                 )}
               </Button>
             </DialogFooter>
@@ -455,7 +843,91 @@ export const AdminUsersManager = () => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+        
+        <Dialog open={showQrCodeDialog} onOpenChange={setShowQrCodeDialog}>
+          <DialogContent className="bg-cyberdark-900 border-gray-700">
+            <DialogHeader>
+              <DialogTitle className="text-cyberblue-300">Bruker QR-kode</DialogTitle>
+              <DialogDescription>
+                Del denne QR-koden for å la andre legge til {selectedUser?.username} som venn.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="flex flex-col items-center justify-center py-6">
+              <div className="bg-white p-3 rounded-lg shadow-lg mb-4">
+                <UserQrCode userId={selectedUser?.id || ""} username={selectedUser?.username || ""} />
+              </div>
+              <p className="text-sm text-gray-400 text-center mt-2">
+                Brukere kan skanne denne koden for å sende venneforespørsel.
+              </p>
+            </div>
+            
+            <DialogFooter>
+              <Button onClick={() => setShowQrCodeDialog(false)}>
+                Lukk
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </TooltipProvider>
+  );
+};
+
+// QR Code component for users
+interface UserQrCodeProps {
+  userId: string;
+  username: string;
+}
+
+const UserQrCode = ({ userId, username }: UserQrCodeProps) => {
+  const [qrCodeSvg, setQrCodeSvg] = useState<string>("");
+  
+  useEffect(() => {
+    const generateQrCode = async () => {
+      if (!userId) return;
+      
+      try {
+        // Import QRCode library dynamically
+        const QRCode = await import('qrcode');
+        
+        // Create payload with user information
+        const payload = JSON.stringify({
+          type: 'friend-request',
+          userId,
+          username
+        });
+        
+        // Generate QR code as SVG
+        QRCode.toString(payload, {
+          type: 'svg',
+          color: {
+            dark: '#000',
+            light: '#fff'
+          },
+          width: 200,
+          margin: 1
+        }, (err, svg) => {
+          if (err) throw err;
+          setQrCodeSvg(svg);
+        });
+      } catch (error) {
+        console.error("Error generating QR code:", error);
+      }
+    };
+    
+    generateQrCode();
+  }, [userId, username]);
+  
+  if (!qrCodeSvg) {
+    return (
+      <div className="h-48 w-48 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+      </div>
+    );
+  }
+  
+  return (
+    <div className="h-48 w-48" dangerouslySetInnerHTML={{ __html: qrCodeSvg }} />
   );
 };
