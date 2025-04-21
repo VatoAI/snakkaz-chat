@@ -1,4 +1,3 @@
-
 import { UserStatus } from "@/types/presence";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { copyToClipboard } from "@/utils/clipboard";
 import { useNavigate } from "react-router-dom";
 import { NotificationSettings } from "./notification/NotificationSettings";
+import { HeaderNavLinks } from "./header/HeaderNavLinks";
 
 interface ChatHeaderProps {
   userPresence: Record<string, any>;
@@ -110,8 +110,10 @@ export const ChatHeader = ({
             <span className="font-semibold text-lg text-cybergold-200 tracking-wider leading-tight cyber-text">
               SnakkaZ Chat
             </span>
-            <span className="text-xs text-cyberblue-300 font-mono select-all">
-              @{userProfiles[currentUserId!]?.username || currentUserId}
+            <span className="text-sm text-white font-mono select-all truncate max-w-[140px]">
+              {userProfiles[currentUserId!]?.username || (
+                <span className="text-cyberblue-300 text-xs">{currentUserId}</span>
+              )}
             </span>
           </div>
         </div>
@@ -144,8 +146,9 @@ export const ChatHeader = ({
           />
         </div>
 
-        {/* Right: Actions */}
-        <div className="flex flex-row items-center gap-2">
+        {/* Right: Actions + Navigation */}
+        <div className="flex flex-row items-center gap-4">
+          <HeaderNavLinks />
           <NotificationSettings />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -205,7 +208,6 @@ export const ChatHeader = ({
   );
 };
 
-// StatusButton: Small custom buttons for profile status in header
 function StatusButton({ label, isActive, color, onClick }: { label: string; isActive: boolean; color: string; onClick: () => void }) {
   return (
     <button
