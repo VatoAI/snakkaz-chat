@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Clock } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface TTLSelectorProps {
   ttl: number | null;
@@ -15,25 +15,23 @@ export const TTLSelector = ({ ttl, setTtl, isLoading, isRecording }: TTLSelector
   const defaultTtl = 86400;
   
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div>
-            <Button 
-              type="button"
-              variant="outline" 
-              size="icon"
-              className="bg-cyberdark-800 border-cybergold-500/30 text-cybergold-400 hover:text-cybergold-300 hover:bg-cyberdark-700"
-              disabled={isLoading || isRecording}
-            >
-              <Clock className="w-4 h-4" />
-            </Button>
-          </div>
-        </TooltipTrigger>
-        <TooltipContent className="bg-cyberdark-800 border-cybergold-500/30">
-          <p className="text-xs">Alle meldinger slettes automatisk etter 24 timer</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div>
+          <Button 
+            type="button"
+            variant="outline" 
+            size="icon"
+            className="bg-cyberdark-800 border-cybergold-500/30 text-cybergold-400 hover:text-cybergold-300 hover:bg-cyberdark-700"
+            disabled={isLoading || isRecording}
+          >
+            <Clock className="w-4 h-4" />
+          </Button>
+        </div>
+      </TooltipTrigger>
+      <TooltipContent className="bg-cyberdark-800 border-cybergold-500/30">
+        <p className="text-xs">Alle meldinger slettes automatisk etter 24 timer</p>
+      </TooltipContent>
+    </Tooltip>
   );
 };

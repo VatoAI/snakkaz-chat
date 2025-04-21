@@ -4,6 +4,7 @@ import { GlobalTabHeader } from "./GlobalTabHeader";
 import { PrivateChatsTabHeader } from "./PrivateChatsTabHeader";
 import { DirectTabHeader } from "./DirectTabHeader";
 import { Friend } from "@/components/chat/friends/types";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 interface TabsHeaderProps {
   selectedFriend: Friend | null;
@@ -39,17 +40,19 @@ export const TabsHeader = ({
       </div>
       
       {/* Tabs list */}
-      <StyledTabsList>
-        <GlobalTabHeader isActive={activeTab === 'global'} />
-        <PrivateChatsTabHeader isActive={activeTab === 'private'} />
-        {selectedFriend && (
-          <DirectTabHeader 
-            friend={selectedFriend} 
-            onClose={handleCloseDirectChat}
-            isActive={activeTab === 'direct'}
-          />
-        )}
-      </StyledTabsList>
+      <TooltipProvider>
+        <StyledTabsList>
+          <GlobalTabHeader isActive={activeTab === 'global'} />
+          <PrivateChatsTabHeader isActive={activeTab === 'private'} />
+          {selectedFriend && (
+            <DirectTabHeader 
+              friend={selectedFriend} 
+              onClose={handleCloseDirectChat}
+              isActive={activeTab === 'direct'}
+            />
+          )}
+        </StyledTabsList>
+      </TooltipProvider>
     </div>
   );
 };

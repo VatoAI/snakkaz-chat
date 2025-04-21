@@ -1,10 +1,11 @@
+
 import { Bot } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
 import { AIAgentChat } from "@/components/chat/AIAgentChat";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 
 interface AIAssistantButtonProps {
   currentUserId: string;
@@ -16,20 +17,27 @@ export const AIAssistantButton = ({ currentUserId }: AIAssistantButtonProps) => 
   
   return (
     <Sheet open={isAIOpen} onOpenChange={setIsAIOpen}>
-      <TooltipTrigger asChild>
-        <SheetTrigger asChild>
-          <Button
-            variant="ghost"
-            size={isMobile ? "sm" : "icon"}
-            className={`bg-cyberdark-800/90 border-cyberred-400/50 text-cyberred-400 
-                       hover:bg-cyberdark-700 hover:border-cyberred-400 
-                       hover:text-cyberred-300 shadow-neon-red transition-all duration-300
-                       ${isMobile ? 'w-10 h-10 p-0' : ''}`}
-          >
-            <Bot className={isMobile ? "h-5 w-5" : "h-4 w-4"} />
-          </Button>
-        </SheetTrigger>
-      </TooltipTrigger>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <SheetTrigger asChild>
+              <Button
+                variant="ghost"
+                size={isMobile ? "sm" : "icon"}
+                className={`bg-cyberdark-800/90 border-cyberred-400/50 text-cyberred-400 
+                          hover:bg-cyberdark-700 hover:border-cyberred-400 
+                          hover:text-cyberred-300 shadow-neon-red transition-all duration-300
+                          ${isMobile ? 'w-10 h-10 p-0' : ''}`}
+              >
+                <Bot className={isMobile ? "h-5 w-5" : "h-4 w-4"} />
+              </Button>
+            </SheetTrigger>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            <p>AI Assistant</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
       <SheetContent 
         className="w-full sm:w-[500px] bg-cyberdark-950/95 border-cyberred-500/30 backdrop-blur-xl"
         side={isMobile ? "bottom" : "right"}

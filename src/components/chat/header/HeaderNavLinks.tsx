@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Globe, Users, MessageSquare } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 
 export const HeaderNavLinks = () => {
   const navigate = useNavigate();
@@ -27,25 +27,27 @@ export const HeaderNavLinks = () => {
   ];
 
   return (
-    <nav className="flex gap-1 items-center">
-      {links.map((link, index) => (
-        <Tooltip key={index}>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size={isMobile ? "sm" : "icon"}
-              className={`${link.color} ${link.hoverColor} transition-all duration-300
-                         ${isMobile ? 'w-10 h-10 p-0' : ''}`}
-              onClick={link.onClick}
-            >
-              <link.icon className={isMobile ? "h-5 w-5" : "h-4 w-4"} />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">
-            <p>{link.label}</p>
-          </TooltipContent>
-        </Tooltip>
-      ))}
-    </nav>
+    <TooltipProvider>
+      <nav className="flex gap-1 items-center">
+        {links.map((link, index) => (
+          <Tooltip key={index}>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size={isMobile ? "sm" : "icon"}
+                className={`${link.color} ${link.hoverColor} transition-all duration-300
+                          ${isMobile ? 'w-10 h-10 p-0' : ''}`}
+                onClick={link.onClick}
+              >
+                <link.icon className={isMobile ? "h-5 w-5" : "h-4 w-4"} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              <p>{link.label}</p>
+            </TooltipContent>
+          </Tooltip>
+        ))}
+      </nav>
+    </TooltipProvider>
   );
 };
