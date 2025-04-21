@@ -1,10 +1,11 @@
+
 import { ProfileContainer } from "@/components/profile/ProfileContainer";
 import { ProfileNavigation } from "@/components/profile/ProfileNavigation";
 import { ProfileCard } from "@/components/profile/ProfileCard";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PinManagement } from "@/components/pin/PinManagement";
 import { useProfileState } from "@/components/profile/hooks/useProfileState";
 import { useProfileValidation } from "@/components/profile/hooks/useProfileValidation";
@@ -12,10 +13,15 @@ import { ProfileUsernameForm } from "@/components/profile/ProfileUsernameForm";
 import { ProfileShareSection } from "@/components/profile/ProfileShareSection";
 import { PinPreferences } from "@/components/profile/PinPreferences";
 import { useAuth } from "@/contexts/AuthContext";
+import { StatusDropdown } from "@/components/online-users/StatusDropdown";
+import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
+import { UserStatus } from "@/types/presence";
+import { supabase } from "@/integrations/supabase/client";
 
 const Profile = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("profile");
+  const [currentStatus, setCurrentStatus] = useState<UserStatus>("online");
   
   const {
     loading,
@@ -25,15 +31,136 @@ const Profile = () => {
     uploading,
     handleUsernameChange,
     setUsernameError,
+    setAvatarUrl,
+    setUploading,
     toast
   } = useProfileState();
   
   const { validateUsername } = useProfileValidation();
+  const { user } = useAuth();
+
+  // Load current status
+  useEffect(() => {
+    if (user?.id) {
+      const fetchCurrentStatus = async () => {
+        const { data, error } = await supabase
+          .from('user_presence')
+          .select('status')
+          .eq('user_id', user.id)
+          .maybeSingle();
+          
+        if (!error && data?.status) {
+          setCurrentStatus(data.status as UserStatus);
+        }
+      };
+      
+      fetchCurrentStatus();
+      
+      // Subscribe to status changes
+      const presenceChannel = supabase
+        .channel('profile-presence')
+        .on('postgres_changes', 
+          { 
+            event: 'UPDATE', 
+            schema: 'public', 
+            table: 'user_presence',
+            filter: `user_id=eq.${user.id}`
+          }, 
+          (payload) => {
+            if (payload.new && (payload.new as any).status) {
+              setCurrentStatus((payload.new as any).status as UserStatus);
+            }
+          }
+        )
+        .subscribe();
+        
+      return () => {
+        supabase.removeChannel(presenceChannel);
+      };
+    }
+  }, [user]);
+  
+  // Update status
+  const handleStatusChange = async (status: UserStatus) => {
+    if (!user?.id) return;
+    
+    try {
+      const { error } = await supabase
+        .from('user_presence')
+        .upsert({
+          user_id: user.id,
+          status,
+          last_seen: new Date().toISOString()
+        }, { onConflict: 'user_id' });
+        
+      if (error) throw error;
+      
+      setCurrentStatus(status);
+    } catch (error) {
+      console.error('Error updating status:', error);
+      toast({
+        title: "Feil",
+        description: "Kunne ikke oppdatere status",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Upload avatar
+  const uploadAvatar = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      setUploading(true);
+
+      if (!event.target.files || event.target.files.length === 0) {
+        throw new Error('Du må velge en fil');
+      }
+
+      const file = event.target.files[0];
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user?.id}.${fileExt}`;
+      const filePath = fileName;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // Update profile with new avatar url
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: filePath })
+        .eq('id', user?.id);
+
+      if (updateError) throw updateError;
+
+      setAvatarUrl(filePath);
+      
+      // Broadcast avatar update
+      document.dispatchEvent(new CustomEvent('avatar-updated', {
+        detail: { userId: user?.id, avatarUrl: filePath }
+      }));
+      
+      toast({
+        title: "Suksess",
+        description: "Profilbilde oppdatert",
+      });
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      toast({
+        title: "Feil",
+        description: "Kunne ikke laste opp bilde",
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
   
   // Update profile logic
   async function updateProfile() {
     try {
-      const { data: { session } } = await import("@/integrations/supabase/client").then(m => m.supabase.auth.getSession());
+      const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         toast({
           title: "Feil",
@@ -51,14 +178,14 @@ const Profile = () => {
         });
         return;
       }
-      const { error } = await import("@/integrations/supabase/client").then(m => m.supabase
+      const { error } = await supabase
         .from('profiles')
         .update({
           username,
           updated_at: new Date().toISOString(),
         })
-        .eq('id', session.user.id)
-      );
+        .eq('id', session.user.id);
+        
       if (error) throw error;
       toast({
         title: "Suksess",
@@ -78,8 +205,6 @@ const Profile = () => {
     }
   }
 
-  const { user } = useAuth();
-
   return (
     <div className="min-h-screen bg-cyberdark-950 text-white pt-4 pb-8 px-4">
       <Button
@@ -93,18 +218,47 @@ const Profile = () => {
       </Button>
 
       <ProfileContainer>
+        <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+          <div className="flex flex-col gap-2">
+            <h1 className="text-2xl font-bold text-cybergold-300">Min Profil</h1>
+            <p className="text-sm text-cyberdark-400">
+              Administrer din profil, preferanser og sikkerhetsinnstillinger
+            </p>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-cyberdark-400">Status:</span>
+            <StatusDropdown 
+              currentStatus={currentStatus} 
+              onStatusChange={handleStatusChange} 
+            />
+          </div>
+        </div>
+        
         <ProfileNavigation activeTab={activeTab} onTabChange={setActiveTab} />
 
         {activeTab === "profile" && (
           <ProfileCard>
-            <ProfileUsernameForm
-              username={username}
-              usernameError={usernameError}
-              loading={loading}
-              onUsernameChange={handleUsernameChange}
-              onSubmit={updateProfile}
-            />
-            <ProfileShareSection username={username} />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div>
+                <ProfileAvatar 
+                  avatarUrl={avatarUrl} 
+                  uploading={uploading} 
+                  onUpload={uploadAvatar} 
+                />
+              </div>
+              
+              <div>
+                <ProfileUsernameForm
+                  username={username}
+                  usernameError={usernameError}
+                  loading={loading}
+                  onUsernameChange={handleUsernameChange}
+                  onSubmit={updateProfile}
+                />
+                <ProfileShareSection username={username} />
+              </div>
+            </div>
           </ProfileCard>
         )}
         
