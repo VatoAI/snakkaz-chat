@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -17,6 +16,7 @@ import { AdminUsersManager } from "@/components/admin/AdminUsersManager";
 import { AdminSystemHealth } from "@/components/admin/AdminSystemHealth";
 import { AdminErrorLogs } from "@/components/admin/AdminErrorLogs";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 const Admin = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -27,13 +27,11 @@ const Admin = () => {
   const { progressValue, updateProgress, isLoading } = useProgressState();
 
   useEffect(() => {
-    // Check if already authenticated
     const authStatus = localStorage.getItem("adminAuthenticated");
     if (authStatus === "true") {
       setIsAuthenticated(true);
     }
     
-    // Check system health status
     const fetchHealthStatus = async () => {
       try {
         const { data, error } = await supabase
@@ -56,8 +54,7 @@ const Admin = () => {
     if (isAuthenticated) {
       fetchHealthStatus();
       
-      // Set up polling for health status
-      const interval = setInterval(fetchHealthStatus, 30000); // Check every 30 seconds
+      const interval = setInterval(fetchHealthStatus, 30000);
       return () => clearInterval(interval);
     }
   }, [isAuthenticated]);
@@ -80,7 +77,6 @@ const Admin = () => {
   const triggerCleanup = async () => {
     try {
       const baseUrl = "https://wqpoozpbceucynsojmbk.supabase.co";
-      // Get the current session
       const { data: sessionData } = await supabase.auth.getSession();
       const accessToken = sessionData?.session?.access_token || '';
       
@@ -117,141 +113,143 @@ const Admin = () => {
   }
 
   return (
-    <div className="min-h-screen bg-cyberdark-950 text-white">
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center">
-            <Button 
-              variant="ghost" 
-              className="mr-4" 
-              onClick={() => navigate("/")}
-            >
-              <ChevronLeft className="mr-2" size={20} /> Tilbake
-            </Button>
-            <h1 
-              className="text-3xl font-bold"
-              style={{
-                background: 'linear-gradient(90deg, #1a9dff 0%, #ffffff 50%, #d62828 100%)',
-                WebkitBackgroundClip: 'text',
-                backgroundClip: 'text',
-                color: 'transparent',
-                textShadow: '-3px 0 10px rgba(26,157,255,0.5), 3px 0 10px rgba(214,40,40,0.5)',
-              }}
-            >
-              Admin Panel
-            </h1>
-          </div>
-          <Button variant="outline" onClick={handleLogout}>
-            Logg ut
-          </Button>
-        </div>
-        
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
-          <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 bg-cyberdark-900">
-            <TabsTrigger value="dashboard">
-              <BarChart className="h-4 w-4 mr-2" />
-              Dashboard
-            </TabsTrigger>
-            <TabsTrigger value="users">
-              <Users className="h-4 w-4 mr-2" />
-              Brukere
-            </TabsTrigger>
-            <TabsTrigger value="general">
-              <Settings className="h-4 w-4 mr-2" />
-              Generelt
-            </TabsTrigger>
-            <TabsTrigger value="security">
-              <Shield className="h-4 w-4 mr-2" />
-              Sikkerhet
-            </TabsTrigger>
-            <TabsTrigger value="logs">
-              <AlertCircle className="h-4 w-4 mr-2" />
-              Logger
-            </TabsTrigger>
-            <TabsTrigger value="appearance">
-              <Settings className="h-4 w-4 mr-2" />
-              Utseende
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="dashboard" className="space-y-6">
-            <AdminDashboard healthStatus={healthStatus} triggerCleanup={triggerCleanup} />
-          </TabsContent>
-          
-          <TabsContent value="users" className="space-y-6">
-            <AdminUsersManager />
-          </TabsContent>
-          
-          <TabsContent value="general" className="space-y-6">
-            <div className="grid gap-6 md:grid-cols-2">
-              <AdminApiKeySection />
-              <AdminSystemHealth healthStatus={healthStatus} triggerCleanup={triggerCleanup} />
+    <TooltipProvider>
+      <div className="min-h-screen bg-cyberdark-950 text-white">
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center">
+              <Button 
+                variant="ghost" 
+                className="mr-4" 
+                onClick={() => navigate("/")}
+              >
+                <ChevronLeft className="mr-2" size={20} /> Tilbake
+              </Button>
+              <h1 
+                className="text-3xl font-bold"
+                style={{
+                  background: 'linear-gradient(90deg, #1a9dff 0%, #ffffff 50%, #d62828 100%)',
+                  WebkitBackgroundClip: 'text',
+                  backgroundClip: 'text',
+                  color: 'transparent',
+                  textShadow: '-3px 0 10px rgba(26,157,255,0.5), 3px 0 10px rgba(214,40,40,0.5)',
+                }}
+              >
+                Admin Panel
+              </h1>
             </div>
-          </TabsContent>
+            <Button variant="outline" onClick={handleLogout}>
+              Logg ut
+            </Button>
+          </div>
           
-          <TabsContent value="security" className="space-y-6">
-            <Card className="bg-cyberdark-900 border-gray-700">
-              <CardHeader>
-                <CardTitle className="text-cyberblue-300">Sikkerhetsinnstillinger</CardTitle>
-                <CardDescription>Administrer sikkerhet og tilgang</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8 text-gray-400">
-                  <Shield className="mx-auto h-12 w-12 mb-4 text-cyberblue-400 opacity-50" />
-                  <p>Sikkerhetsinnstillinger kommer snart</p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="logs" className="space-y-6">
-            <AdminErrorLogs />
-          </TabsContent>
-          
-          <TabsContent value="progress" className="space-y-6">
-            <Card className="bg-cyberdark-900 border-gray-700">
-              <CardHeader>
-                <CardTitle className="text-cyberblue-300">Fremdrift</CardTitle>
-                <CardDescription>Juster prosjektets synlige fremdriftsstatus</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="mb-6">
-                  <div className="flex justify-between mb-2">
-                    <span className="text-cyberblue-400">Progresjon</span>
-                    <span className="text-white font-semibold">{progressValue}%</span>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
+            <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 bg-cyberdark-900">
+              <TabsTrigger value="dashboard">
+                <BarChart className="h-4 w-4 mr-2" />
+                Dashboard
+              </TabsTrigger>
+              <TabsTrigger value="users">
+                <Users className="h-4 w-4 mr-2" />
+                Brukere
+              </TabsTrigger>
+              <TabsTrigger value="general">
+                <Settings className="h-4 w-4 mr-2" />
+                Generelt
+              </TabsTrigger>
+              <TabsTrigger value="security">
+                <Shield className="h-4 w-4 mr-2" />
+                Sikkerhet
+              </TabsTrigger>
+              <TabsTrigger value="logs">
+                <AlertCircle className="h-4 w-4 mr-2" />
+                Logger
+              </TabsTrigger>
+              <TabsTrigger value="appearance">
+                <Settings className="h-4 w-4 mr-2" />
+                Utseende
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="dashboard" className="space-y-6">
+              <AdminDashboard healthStatus={healthStatus} triggerCleanup={triggerCleanup} />
+            </TabsContent>
+            
+            <TabsContent value="users" className="space-y-6">
+              <AdminUsersManager />
+            </TabsContent>
+            
+            <TabsContent value="general" className="space-y-6">
+              <div className="grid gap-6 md:grid-cols-2">
+                <AdminApiKeySection />
+                <AdminSystemHealth healthStatus={healthStatus} triggerCleanup={triggerCleanup} />
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="security" className="space-y-6">
+              <Card className="bg-cyberdark-900 border-gray-700">
+                <CardHeader>
+                  <CardTitle className="text-cyberblue-300">Sikkerhetsinnstillinger</CardTitle>
+                  <CardDescription>Administrer sikkerhet og tilgang</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center py-8 text-gray-400">
+                    <Shield className="mx-auto h-12 w-12 mb-4 text-cyberblue-400 opacity-50" />
+                    <p>Sikkerhetsinnstillinger kommer snart</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="logs" className="space-y-6">
+              <AdminErrorLogs />
+            </TabsContent>
+            
+            <TabsContent value="progress" className="space-y-6">
+              <Card className="bg-cyberdark-900 border-gray-700">
+                <CardHeader>
+                  <CardTitle className="text-cyberblue-300">Fremdrift</CardTitle>
+                  <CardDescription>Juster prosjektets synlige fremdriftsstatus</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="mb-6">
+                    <div className="flex justify-between mb-2">
+                      <span className="text-cyberblue-400">Progresjon</span>
+                      <span className="text-white font-semibold">{progressValue}%</span>
+                    </div>
+                    
+                    <Progress value={progressValue} />
                   </div>
                   
-                  <Progress value={progressValue} />
-                </div>
-                
-                <div className="space-y-4">
-                  <div className="mb-4">
-                    <p className="text-gray-400 mb-3">Juster prosent (1-99%):</p>
-                    <Slider 
-                      value={[progressValue]} 
-                      min={1} 
-                      max={99} 
-                      step={1} 
-                      onValueChange={handleProgressChange}
-                      className="py-4"
-                      disabled={isLoading}
-                    />
-                    <div className="flex justify-between text-xs text-gray-500 mt-1">
-                      <span>1%</span>
-                      <span>99%</span>
+                  <div className="space-y-4">
+                    <div className="mb-4">
+                      <p className="text-gray-400 mb-3">Juster prosent (1-99%):</p>
+                      <Slider 
+                        value={[progressValue]} 
+                        min={1} 
+                        max={99} 
+                        step={1} 
+                        onValueChange={handleProgressChange}
+                        className="py-4"
+                        disabled={isLoading}
+                      />
+                      <div className="flex justify-between text-xs text-gray-500 mt-1">
+                        <span>1%</span>
+                        <span>99%</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="appearance" className="space-y-6">
-            <AdminLogoSection />
-          </TabsContent>
-        </Tabs>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="appearance" className="space-y-6">
+              <AdminLogoSection />
+            </TabsContent>
+          </Tabs>
+        </div>
       </div>
-    </div>
+    </TooltipProvider>
   );
 };
 
