@@ -1,4 +1,3 @@
-
 import { ProfileContainer } from "@/components/profile/ProfileContainer";
 import { ProfileNavigation } from "@/components/profile/ProfileNavigation";
 import { ProfileCard } from "@/components/profile/ProfileCard";
@@ -11,6 +10,8 @@ import { useProfileState } from "@/components/profile/hooks/useProfileState";
 import { useProfileValidation } from "@/components/profile/hooks/useProfileValidation";
 import { ProfileUsernameForm } from "@/components/profile/ProfileUsernameForm";
 import { ProfileShareSection } from "@/components/profile/ProfileShareSection";
+import { PinPreferences } from "@/components/profile/PinPreferences";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -77,6 +78,8 @@ const Profile = () => {
     }
   }
 
+  const { user } = useAuth();
+
   return (
     <div className="min-h-screen bg-cyberdark-950 text-white pt-4 pb-8 px-4">
       <Button
@@ -113,8 +116,12 @@ const Profile = () => {
         
         {activeTab === "notifications" && (
           <ProfileCard>
-            <h2 className="text-lg font-semibold text-cybergold-300 mb-4">Varslingsinnstillinger</h2>
-            <p className="text-cyberdark-300">Varslingsinnstillinger kommer snart.</p>
+            <h2 className="text-lg font-semibold text-cybergold-300 mb-6">Varslingsinnstillinger</h2>
+            <div className="space-y-8">
+              <PinPreferences userId={user?.id || null} />
+              <h2 className="text-lg font-semibold text-cybergold-300 mb-4">Varslingsinnstillinger</h2>
+              <p className="text-cyberdark-300">Varslingsinnstillinger kommer snart.</p>
+            </div>
           </ProfileCard>
         )}
       </ProfileContainer>

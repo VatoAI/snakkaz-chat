@@ -8,11 +8,13 @@ import {
   DialogDescription,
   DialogFooter
 } from "@/components/ui/dialog";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useChatCode } from "@/hooks/useChatCode";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { PinInput } from "@/components/pin/PinInput";
 import { AlertCircle } from "lucide-react";
+import { usePinPreferences } from "@/hooks/usePinPreferences";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface DeleteMessageDialogProps {
   isOpen: boolean;
@@ -25,11 +27,22 @@ export const DeleteMessageDialog = ({ isOpen, onClose, onConfirm }: DeleteMessag
   const [showPin, setShowPin] = useState(false);
   const [pin, setPin] = useState("");
   const [error, setError] = useState("");
+  const { user } = useAuth();
+  const { preferences } = usePinPreferences(user?.id || null);
   const isMobile = useIsMobile();
   
-  // Only require PIN verification on mobile or if PIN is set
-  const requirePin = chatCode && (isMobile || true); // Force PIN for sensitive actions
+  // Only require PIN verification if enabled in preferences
+  const requirePin = chatCode && ((isMobile && preferences.requirePinForSensitive) || preferences.requirePinForDelete);
   
+  useEffect(() => {
+    if (!isOpen) {
+      // Reset state when dialog closes
+      setShowPin(false);
+      setPin("");
+      setError("");
+    }
+  }, [isOpen]);
+
   const handleConfirm = () => {
     if (requirePin && !showPin) {
       setShowPin(true);
@@ -38,8 +51,11 @@ export const DeleteMessageDialog = ({ isOpen, onClose, onConfirm }: DeleteMessag
     
     if (requirePin && showPin) {
       if (verifyChatCode(pin)) {
-        resetState();
+        setShowPin(false);
+        setPin("");
+        setError("");
         onConfirm();
+        onClose();
       } else {
         setError("Feil PIN-kode. Prøv igjen.");
         setPin("");
@@ -48,27 +64,15 @@ export const DeleteMessageDialog = ({ isOpen, onClose, onConfirm }: DeleteMessag
     }
     
     // No PIN required
-    resetState();
     onConfirm();
-  };
-  
-  const resetState = () => {
-    setShowPin(false);
-    setPin("");
-    setError("");
-  };
-  
-  const handleClose = () => {
-    resetState();
     onClose();
-  };
-  
-  const handlePinComplete = (value: string) => {
-    setPin(value);
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+    <Dialog 
+      open={isOpen} 
+      onOpenChange={(open) => !open && onClose()}
+    >
       <DialogContent className="bg-cyberdark-900 border-cybergold-500/30">
         <DialogHeader>
           <DialogTitle className="text-cybergold-300">
@@ -92,7 +96,7 @@ export const DeleteMessageDialog = ({ isOpen, onClose, onConfirm }: DeleteMessag
             
             <div className="flex items-center justify-center">
               <PinInput 
-                onComplete={handlePinComplete} 
+                onComplete={handlePinComplete}
                 length={4}
                 placeholder="●"
               />
@@ -103,7 +107,7 @@ export const DeleteMessageDialog = ({ isOpen, onClose, onConfirm }: DeleteMessag
         <DialogFooter>
           <Button
             variant="outline"
-            onClick={handleClose}
+            onClick={onClose}
             className="border-cybergold-500/30 text-cybergold-300"
           >
             Avbryt
@@ -121,3 +125,4 @@ export const DeleteMessageDialog = ({ isOpen, onClose, onConfirm }: DeleteMessag
     </Dialog>
   );
 };
+
