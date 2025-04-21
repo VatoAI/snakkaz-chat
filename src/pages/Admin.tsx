@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, Settings } from "lucide-react";
+import { ChevronLeft, Settings, Users, AlertCircle, BarChart, Shield } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { AdminApiKeySection } from "@/components/AdminApiKeySection";
 import { AdminLogoSection } from "@/components/AdminLogoSection";
@@ -13,16 +13,26 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Slider } from "@/components/ui/slider";
 import { useProgressState } from "@/hooks/useProgressState";
+import { AdminUsersManager } from "@/components/admin/AdminUsersManager";
+import { AdminSystemHealth } from "@/components/admin/AdminSystemHealth";
+import { AdminErrorLogs } from "@/components/admin/AdminErrorLogs";
+import { AdminDashboard } from "@/components/admin/AdminDashboard";
 
 const Admin = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [healthStatus, setHealthStatus] = useState<Record<string, string>>({});
-  const [activeTab, setActiveTab] = useState("general");
+  const [activeTab, setActiveTab] = useState("dashboard");
   const navigate = useNavigate();
   const { toast } = useToast();
   const { progressValue, updateProgress, isLoading } = useProgressState();
 
   useEffect(() => {
+    // Check if already authenticated
+    const authStatus = localStorage.getItem("adminAuthenticated");
+    if (authStatus === "true") {
+      setIsAuthenticated(true);
+    }
+    
     // Check system health status
     const fetchHealthStatus = async () => {
       try {
@@ -58,6 +68,7 @@ const Admin = () => {
 
   const handleLogout = () => {
     localStorage.removeItem("adminAuthenticated");
+    localStorage.removeItem("adminSessionExpiry");
     setIsAuthenticated(false);
     navigate("/");
   };
@@ -136,47 +147,65 @@ const Admin = () => {
         </div>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
-          <TabsList className="grid w-full md:w-auto grid-cols-2 md:grid-cols-4 bg-cyberdark-900">
-            <TabsTrigger value="general">Generelt</TabsTrigger>
-            <TabsTrigger value="progress">Fremdrift</TabsTrigger>
-            <TabsTrigger value="system">System</TabsTrigger>
-            <TabsTrigger value="appearance">Utseende</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 bg-cyberdark-900">
+            <TabsTrigger value="dashboard">
+              <BarChart className="h-4 w-4 mr-2" />
+              Dashboard
+            </TabsTrigger>
+            <TabsTrigger value="users">
+              <Users className="h-4 w-4 mr-2" />
+              Brukere
+            </TabsTrigger>
+            <TabsTrigger value="general">
+              <Settings className="h-4 w-4 mr-2" />
+              Generelt
+            </TabsTrigger>
+            <TabsTrigger value="security">
+              <Shield className="h-4 w-4 mr-2" />
+              Sikkerhet
+            </TabsTrigger>
+            <TabsTrigger value="logs">
+              <AlertCircle className="h-4 w-4 mr-2" />
+              Logger
+            </TabsTrigger>
+            <TabsTrigger value="appearance">
+              <Settings className="h-4 w-4 mr-2" />
+              Utseende
+            </TabsTrigger>
           </TabsList>
+          
+          <TabsContent value="dashboard" className="space-y-6">
+            <AdminDashboard healthStatus={healthStatus} triggerCleanup={triggerCleanup} />
+          </TabsContent>
+          
+          <TabsContent value="users" className="space-y-6">
+            <AdminUsersManager />
+          </TabsContent>
           
           <TabsContent value="general" className="space-y-6">
             <div className="grid gap-6 md:grid-cols-2">
               <AdminApiKeySection />
-              <Card className="bg-cyberdark-900 border-gray-700">
-                <CardHeader>
-                  <CardTitle className="text-cyberblue-300">System Status</CardTitle>
-                  <CardDescription>Oversikt over systemstatus og helse</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-400">Signaling Service</span>
-                      <span className={`text-sm ${healthStatus['38d75fee-16f2-4b42-a084-93567e21e3a7']?.includes('error') ? 'text-red-400' : 'text-green-400'}`}>
-                        {healthStatus['38d75fee-16f2-4b42-a084-93567e21e3a7'] || 'Ukjent'}
-                      </span>
-                    </div>
-                    <Progress 
-                      value={healthStatus['38d75fee-16f2-4b42-a084-93567e21e3a7']?.includes('error') ? 30 : 100} 
-                      className="h-1"
-                    />
-                  </div>
-                  
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="w-full mt-4"
-                    onClick={triggerCleanup}
-                  >
-                    <Settings className="mr-2" size={16} />
-                    Kjør Opprydning Manuelt
-                  </Button>
-                </CardContent>
-              </Card>
+              <AdminSystemHealth healthStatus={healthStatus} triggerCleanup={triggerCleanup} />
             </div>
+          </TabsContent>
+          
+          <TabsContent value="security" className="space-y-6">
+            <Card className="bg-cyberdark-900 border-gray-700">
+              <CardHeader>
+                <CardTitle className="text-cyberblue-300">Sikkerhetsinnstillinger</CardTitle>
+                <CardDescription>Administrer sikkerhet og tilgang</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8 text-gray-400">
+                  <Shield className="mx-auto h-12 w-12 mb-4 text-cyberblue-400 opacity-50" />
+                  <p>Sikkerhetsinnstillinger kommer snart</p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="logs" className="space-y-6">
+            <AdminErrorLogs />
           </TabsContent>
           
           <TabsContent value="progress" className="space-y-6">
@@ -212,33 +241,6 @@ const Admin = () => {
                       <span>99%</span>
                     </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="system" className="space-y-6">
-            <Card className="bg-cyberdark-900 border-gray-700">
-              <CardHeader>
-                <CardTitle className="text-cyberblue-300">System Informasjon</CardTitle>
-                <CardDescription>Detaljer om systemets helse og opprydningsstatusar</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {Object.entries(healthStatus).map(([id, status]) => (
-                    <div key={id} className="flex justify-between items-center py-2 border-b border-gray-700">
-                      <span className="text-sm text-gray-400">{id.substring(0, 8)}...</span>
-                      <span className={`text-sm ${status.includes('error') ? 'text-red-400' : 'text-green-400'}`}>
-                        {status}
-                      </span>
-                    </div>
-                  ))}
-                  
-                  {Object.keys(healthStatus).length === 0 && (
-                    <div className="text-center py-4 text-gray-500">
-                      Ingen helsedata tilgjengelig
-                    </div>
-                  )}
                 </div>
               </CardContent>
             </Card>
