@@ -3,9 +3,7 @@ import { memo } from "react";
 import { DecryptedMessage } from "@/types/message";
 import { MessageContent } from "./MessageContent";
 import { MessageBubble } from "./MessageBubble";
-import { MessageTimer } from "./MessageTimer";
 import { MessageActions } from "./MessageActions";
-import { MessageMedia } from "./MessageMedia";
 
 interface MessageGroupProps {
   messages: DecryptedMessage[];
@@ -59,7 +57,7 @@ export const MessageGroup = memo(({
 
       {/* Messages */}
       <div className={`flex flex-col gap-1 ${isCurrentUser ? "items-end" : "items-start"}`}>
-        {messages.map((message) => (
+        {messages.map((message, messageIndex) => (
           <div
             key={message.id}
             className={`group relative max-w-[85%] ${isMobile ? "max-w-[90%]" : ""}`}
@@ -67,7 +65,7 @@ export const MessageGroup = memo(({
             <MessageBubble 
               message={message}
               isCurrentUser={isCurrentUser}
-              messageIndex={0} // Providing a default index
+              messageIndex={messageIndex}
               onMessageExpired={onMessageExpired}
               onEdit={onEdit}
               onDelete={onDelete}

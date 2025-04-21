@@ -74,7 +74,7 @@ export const useMessages = (userId: string | null, receiverId?: string, groupId?
     }
   };
 
-  // Enhanced delete message handler with optimistic updates
+  // Enhanced delete message handler with optimistic updates (renamed to avoid conflict)
   const handleDeleteMessage = useCallback(async (messageId: string) => {
     try {
       // Apply optimistic update first
