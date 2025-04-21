@@ -1,5 +1,5 @@
 
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useMemo } from "react";
 import { DecryptedMessage } from "@/types/message";
 import { groupMessages } from "@/utils/message-grouping";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -27,6 +27,17 @@ export const MessageList = ({
 }: MessageListProps) => {
   const isMobile = useIsMobile();
 
+  // Use memoized version of grouped messages to prevent unnecessary re-renders
+  const validMessages = useMemo(() => 
+    initialMessages.filter(msg => msg && msg.sender), 
+    [initialMessages]
+  );
+  
+  const messageGroups = useMemo(() => 
+    groupMessages(validMessages),
+    [validMessages]
+  );
+
   // Scroll and unread logic
   const {
     messagesEndRef,
@@ -42,8 +53,15 @@ export const MessageList = ({
     handleScrollToBottom,
   } = useScrollHandler({ isMobile, initialMessagesCount: initialMessages.length });
 
-  // Delete confirmation dialog state
-  const { confirmDelete, setConfirmDelete, DialogUI } = useDeleteMessageHandler({ onDeleteMessage: onDeleteMessage || (() => {}) });
+  // Delete confirmation dialog state with optimistic updates
+  const { confirmDelete, setConfirmDelete, DialogUI, isDeleting } = useDeleteMessageHandler({ 
+    onDeleteMessage: async (messageId) => {
+      if (onDeleteMessage) {
+        // Return the promise to allow for proper error handling
+        return onDeleteMessage(messageId);
+      }
+    }
+  });
 
   // Mobile pull-to-refresh
   const { handleTouchStart, handleTouchMove, handleTouchEnd } = useMobilePullToRefresh({
@@ -74,13 +92,7 @@ export const MessageList = ({
         }
       }
     }
-  }, [initialMessages, autoScroll, wasScrolledToBottom, isMobile, lastMessageCountRef, messagesEndRef, setNewMessageCount]);
-
-  // Filtering messages and grouping
-  const validMessages = initialMessages.filter(
-    (msg) => msg && msg.sender
-  );
-  const messageGroups = groupMessages(validMessages);
+  }, [initialMessages.length, autoScroll, wasScrolledToBottom, isMobile, lastMessageCountRef, messagesEndRef, setNewMessageCount]);
 
   const isUserMessage = useCallback(
     (message: DecryptedMessage) =>
@@ -88,12 +100,13 @@ export const MessageList = ({
     [currentUserId]
   );
 
-  const handleMessageExpired = (messageId: string) => {
+  const handleMessageExpired = useCallback((messageId: string) => {
     if (onMessageExpired) onMessageExpired(messageId);
-  };
-  const handleEdit = (message: DecryptedMessage) => {
+  }, [onMessageExpired]);
+  
+  const handleEdit = useCallback((message: DecryptedMessage) => {
     if (onEditMessage) onEditMessage(message);
-  };
+  }, [onEditMessage]);
 
   return (
     <MessageScrollArea
@@ -124,6 +137,7 @@ export const MessageList = ({
           confirmDelete={confirmDelete}
           setConfirmDelete={setConfirmDelete}
           handleDelete={DialogUI.props.onConfirm}
+          isDeleting={isDeleting}
         />
         {DialogUI}
       </div>

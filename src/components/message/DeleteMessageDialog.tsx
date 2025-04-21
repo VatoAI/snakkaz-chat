@@ -12,7 +12,7 @@ import { useState, useEffect } from "react";
 import { useChatCode } from "@/hooks/useChatCode";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { PinInput } from "@/components/pin/PinInput";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Loader2 } from "lucide-react";
 import { usePinPreferences } from "@/hooks/usePinPreferences";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -20,9 +20,10 @@ interface DeleteMessageDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => void;
+  isDeleting?: boolean;
 }
 
-export const DeleteMessageDialog = ({ isOpen, onClose, onConfirm }: DeleteMessageDialogProps) => {
+export const DeleteMessageDialog = ({ isOpen, onClose, onConfirm, isDeleting = false }: DeleteMessageDialogProps) => {
   const { chatCode, verifyChatCode } = useChatCode();
   const [showPin, setShowPin] = useState(false);
   const [pin, setPin] = useState("");
@@ -48,6 +49,8 @@ export const DeleteMessageDialog = ({ isOpen, onClose, onConfirm }: DeleteMessag
   };
 
   const handleConfirm = () => {
+    if (isDeleting) return; // Prevent multiple clicks
+    
     if (requirePin && !showPin) {
       setShowPin(true);
       return;
@@ -59,7 +62,6 @@ export const DeleteMessageDialog = ({ isOpen, onClose, onConfirm }: DeleteMessag
         setPin("");
         setError("");
         onConfirm();
-        onClose();
       } else {
         setError("Feil PIN-kode. Prøv igjen.");
         setPin("");
@@ -69,13 +71,12 @@ export const DeleteMessageDialog = ({ isOpen, onClose, onConfirm }: DeleteMessag
     
     // No PIN required
     onConfirm();
-    onClose();
   };
 
   return (
     <Dialog 
       open={isOpen} 
-      onOpenChange={(open) => !open && onClose()}
+      onOpenChange={(open) => !open && !isDeleting && onClose()}
     >
       <DialogContent className="bg-cyberdark-900 border-cybergold-500/30">
         <DialogHeader>
@@ -113,6 +114,7 @@ export const DeleteMessageDialog = ({ isOpen, onClose, onConfirm }: DeleteMessag
             variant="outline"
             onClick={onClose}
             className="border-cybergold-500/30 text-cybergold-300"
+            disabled={isDeleting}
           >
             Avbryt
           </Button>
@@ -120,13 +122,19 @@ export const DeleteMessageDialog = ({ isOpen, onClose, onConfirm }: DeleteMessag
             variant="destructive"
             onClick={handleConfirm}
             className="bg-red-900 hover:bg-red-800 text-white border-none"
-            disabled={showPin && !pin}
+            disabled={(showPin && !pin) || isDeleting}
           >
-            {showPin ? "Bekreft" : "Slett"}
+            {isDeleting ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Sletter...
+              </>
+            ) : (
+              showPin ? "Bekreft" : "Slett"
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 };
-

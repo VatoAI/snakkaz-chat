@@ -1,6 +1,7 @@
 
 import { DecryptedMessage } from "@/types/message";
 import { MessageGroup } from "./MessageGroup";
+import { memo } from 'react';
 
 interface MessageGroupsProps {
   messageGroups: DecryptedMessage[][];
@@ -12,7 +13,8 @@ interface MessageGroupsProps {
   isMobile?: boolean;
 }
 
-export const MessageGroups = ({ 
+// Use React.memo to prevent unnecessary re-renders
+export const MessageGroups = memo(({ 
   messageGroups, 
   isUserMessage, 
   onMessageExpired, 
@@ -23,8 +25,8 @@ export const MessageGroups = ({
 }: MessageGroupsProps) => {
   return (
     <div className={`space-y-2 ${isMobile ? 'pb-16' : 'sm:space-y-4'}`}>
-      {messageGroups.map((group, groupIndex) => {
-        return group.length > 0 && (
+      {messageGroups.map((group, groupIndex) => (
+        group.length > 0 && (
           <MessageGroup
             key={`group-${groupIndex}-${group[0]?.id || groupIndex}`}
             messages={group}
@@ -34,9 +36,11 @@ export const MessageGroups = ({
             onDelete={onDelete}
             isMobile={isMobile}
           />
-        );
-      })}
+        )
+      ))}
       <div ref={messagesEndRef} className="h-1" />
     </div>
   );
-};
+});
+
+MessageGroups.displayName = 'MessageGroups';

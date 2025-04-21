@@ -7,12 +7,13 @@ import { useMessageP2P } from "./message/useMessageP2P";
 import { useMessageExpiry } from "./message/useMessageExpiry";
 import { useMessageActions } from "./message/useMessageActions";
 import { DecryptedMessage } from "@/types/message";
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 
 export const useMessages = (userId: string | null, receiverId?: string, groupId?: string) => {
   const {
     messages,
     setMessages,
+    optimisticallyDeleteMessage,
     newMessage,
     setNewMessage,
     isLoading,
@@ -73,6 +74,23 @@ export const useMessages = (userId: string | null, receiverId?: string, groupId?
     }
   };
 
+  // Enhanced delete message handler with optimistic updates
+  const handleDeleteMessage = useCallback(async (messageId: string) => {
+    try {
+      // Apply optimistic update first
+      optimisticallyDeleteMessage(messageId);
+      
+      // Then perform actual deletion
+      await handleDeleteMessageById(messageId);
+      return Promise.resolve();
+    } catch (error) {
+      // If deletion fails, we should refresh the messages
+      console.error("Error deleting message, refreshing data:", error);
+      await fetchMessages();
+      return Promise.reject(error);
+    }
+  }, [handleDeleteMessageById, optimisticallyDeleteMessage, fetchMessages]);
+
   return {
     // Message state
     messages,
@@ -95,7 +113,7 @@ export const useMessages = (userId: string | null, receiverId?: string, groupId?
       setNewMessage(handleStartEditMessage(message));
     },
     handleCancelEditMessage,
-    handleDeleteMessage: handleDeleteMessageById,
+    handleDeleteMessage,
     
     // Direct messages
     directMessages,

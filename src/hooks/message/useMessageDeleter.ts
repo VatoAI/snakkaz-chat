@@ -12,15 +12,21 @@ export const useMessageDeleter = (
   const handleDeleteMessage = useCallback(async (messageId: string): Promise<void> => {
     if (!userId) {
       console.log("Bruker ikke pålogget");
-      return;
+      return Promise.reject(new Error("User not authenticated"));
     }
 
-    setIsLoading(true);
+    // We don't set loading state immediately to prevent UI flickering for quick operations
+    const timeoutId = setTimeout(() => {
+      setIsLoading(true);
+    }, 300); // Only show loading if operation takes longer than 300ms
+
     try {
       // Ensure necessary columns exist
       await ensureMessageColumnsExist();
       
       console.log(`Attempting to delete message ${messageId} for user ${userId}`);
+      
+      // Optimistically update local state first (handled in the message list component)
       
       // Call Supabase RPC function to mark message as deleted
       const { error } = await supabase
@@ -40,6 +46,7 @@ export const useMessageDeleter = (
       }
       
       console.log('Message successfully marked as deleted');
+      return Promise.resolve();
     } catch (error) {
       console.error('Error deleting message:', error);
       toast({
@@ -47,7 +54,9 @@ export const useMessageDeleter = (
         description: "Kunne ikke slette meldingen",
         variant: "destructive",
       });
+      return Promise.reject(error);
     } finally {
+      clearTimeout(timeoutId);
       setIsLoading(false);
     }
   }, [userId, setIsLoading, toast]);

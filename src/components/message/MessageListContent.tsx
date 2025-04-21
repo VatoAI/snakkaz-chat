@@ -1,10 +1,10 @@
 
-import { useRef } from "react";
 import { DecryptedMessage } from "@/types/message";
 import { MessageListHeader } from "./MessageListHeader";
 import { MessageGroups } from "./MessageGroups";
 import { ScrollToBottomButton } from "./ScrollToBottomButton";
 import { DeleteMessageDialog } from "./DeleteMessageDialog";
+import { memo } from 'react';
 
 interface MessageListContentProps {
   messageGroups: DecryptedMessage[][];
@@ -20,9 +20,11 @@ interface MessageListContentProps {
   confirmDelete: string | null;
   setConfirmDelete: (id: string | null) => void;
   handleDelete: () => Promise<void>;
+  isDeleting?: boolean;
 }
 
-export const MessageListContent = ({
+// Use React.memo to prevent unnecessary re-renders
+export const MessageListContent = memo(({
   messageGroups,
   isUserMessage,
   onMessageExpired,
@@ -35,7 +37,8 @@ export const MessageListContent = ({
   newMessageCount,
   confirmDelete,
   setConfirmDelete,
-  handleDelete
+  handleDelete,
+  isDeleting = false
 }: MessageListContentProps) => {
   return (
     <>
@@ -46,7 +49,7 @@ export const MessageListContent = ({
         isUserMessage={isUserMessage}
         onMessageExpired={onMessageExpired}
         onEdit={onEdit}
-        onDelete={setConfirmDelete}
+        onDelete={onDelete}
         messagesEndRef={messagesEndRef}
         isMobile={isMobile}
       />
@@ -61,7 +64,10 @@ export const MessageListContent = ({
         isOpen={!!confirmDelete}
         onClose={() => setConfirmDelete(null)}
         onConfirm={handleDelete}
+        isDeleting={isDeleting}
       />
     </>
   );
-};
+});
+
+MessageListContent.displayName = 'MessageListContent';

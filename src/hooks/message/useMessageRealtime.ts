@@ -108,64 +108,62 @@ export const useMessageRealtime = (
           console.log("Realtime UPDATE event received:", payload);
           const updatedMessage = payload.new as any;
           
-          // Handle updates to messages (editing, deletion)
+          // Use a more efficient update approach to avoid full re-renders
           setMessages(prevMessages => 
             prevMessages.map(msg => {
               if (msg.id === updatedMessage.id) {
-                console.log(`Updating message ${msg.id} in state`);
+                // Create a shallow copy for the update
+                const updatedMsg = { ...msg };
                 
-                // If the message is marked as deleted
+                // Handle deletion status
                 if (updatedMessage.is_deleted) {
-                  console.log(`Message ${msg.id} is marked as deleted`);
-                  return {
-                    ...msg,
-                    is_deleted: true,
-                    deleted_at: updatedMessage.deleted_at || new Date().toISOString()
-                  };
+                  updatedMsg.is_deleted = true;
+                  updatedMsg.deleted_at = updatedMessage.deleted_at || new Date().toISOString();
+                  return updatedMsg;
                 }
                 
-                // If the content was updated, decrypt it
-                if (updatedMessage.encrypted_content && updatedMessage.encryption_key && updatedMessage.iv) {
-                  // Use a promise to update the message content
-                  decryptMessage(
-                    updatedMessage.encrypted_content,
-                    updatedMessage.encryption_key,
-                    updatedMessage.iv
-                  ).then(content => {
-                    console.log(`Decrypted updated content for ${msg.id}:`, content);
-                    setMessages(prev => 
-                      prev.map(m => 
-                        m.id === updatedMessage.id 
-                          ? { 
-                              ...m, 
-                              content, 
-                              is_edited: updatedMessage.is_edited || false,
-                              edited_at: updatedMessage.edited_at || null,
-                              is_deleted: updatedMessage.is_deleted || false,
-                              deleted_at: updatedMessage.deleted_at || null,
-                              read_at: updatedMessage.read_at,
-                              is_delivered: updatedMessage.is_delivered || false
-                            } 
-                          : m
-                      )
-                    );
-                  }).catch(error => {
-                    console.error("Error decrypting updated message:", error);
-                  });
-                  // Return as is for now, will be updated in the next render
-                  return msg;
-                } else {
-                  // If only metadata was updated (e.g., is_deleted flag, read status)
-                  return { 
-                    ...msg, 
-                    is_edited: updatedMessage.is_edited || msg.is_edited,
-                    edited_at: updatedMessage.edited_at || msg.edited_at,
-                    is_deleted: updatedMessage.is_deleted || msg.is_deleted,
-                    deleted_at: updatedMessage.deleted_at || msg.deleted_at,
-                    read_at: updatedMessage.read_at || msg.read_at,
-                    is_delivered: updatedMessage.is_delivered || msg.is_delivered
-                  };
+                // Handle metadata updates without content changes
+                if (!updatedMessage.encrypted_content || !updatedMessage.encryption_key || !updatedMessage.iv) {
+                  // Only update the metadata properties
+                  updatedMsg.is_edited = updatedMessage.is_edited || msg.is_edited;
+                  updatedMsg.edited_at = updatedMessage.edited_at || msg.edited_at;
+                  updatedMsg.read_at = updatedMessage.read_at || msg.read_at;
+                  updatedMsg.is_delivered = updatedMessage.is_delivered || msg.is_delivered;
+                  return updatedMsg;
                 }
+                
+                // For content updates, avoid triggering a state update until the content is decrypted
+                const originalMsg = msg;
+                
+                // Decrypt content in the background
+                decryptMessage(
+                  updatedMessage.encrypted_content,
+                  updatedMessage.encryption_key,
+                  updatedMessage.iv
+                ).then(content => {
+                  // Update the message with decrypted content in a separate state update
+                  setMessages(prevMsgs => 
+                    prevMsgs.map(m => 
+                      m.id === updatedMessage.id 
+                        ? {
+                            ...m,
+                            content,
+                            is_edited: updatedMessage.is_edited || false,
+                            edited_at: updatedMessage.edited_at || null,
+                            is_deleted: updatedMessage.is_deleted || false,
+                            deleted_at: updatedMessage.deleted_at || null,
+                            read_at: updatedMessage.read_at,
+                            is_delivered: updatedMessage.is_delivered || false
+                          }
+                        : m
+                    )
+                  );
+                }).catch(error => {
+                  console.error("Error decrypting updated message:", error);
+                });
+                
+                // Return original message for now; it will be updated after decryption
+                return originalMsg;
               }
               return msg;
             })
@@ -178,6 +176,7 @@ export const useMessageRealtime = (
 
     // Return cleanup function
     return () => {
+      console.log("Cleaning up realtime subscription");
       supabase.removeChannel(channel);
     };
   }, [userId, setMessages, receiverId, groupId]);
