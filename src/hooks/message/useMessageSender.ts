@@ -4,6 +4,7 @@ import { encryptMessage } from "@/utils/encryption";
 import { encryptMedia } from "@/utils/encryption/media";
 import { base64ToArrayBuffer } from "@/utils/encryption/data-conversion";
 import { ensureMessageColumnsExist, showUploadToast, uploadMediaFile } from "./utils/message-db-utils";
+import { GLOBAL_E2EE_KEY, GLOBAL_E2EE_IV } from "@/utils/encryption/global-e2ee";
 
 export const useMessageSender = (
   userId: string | null,
@@ -30,6 +31,18 @@ export const useMessageSender = (
     try {
       await ensureMessageColumnsExist();
 
+      // --- GLOBAL ROOM E2EE PATCH ---
+      // Use shared global key for all crypto in "global" room
+      const isGlobalRoom = !receiverId && !groupId;
+
+      let globalE2eeKey: string | undefined;
+      let globalE2eeIv: string | undefined;
+      if (isGlobalRoom) {
+        globalE2eeKey = GLOBAL_E2EE_KEY;
+        globalE2eeIv = btoa(GLOBAL_E2EE_IV); // encode string as base64
+      }
+      // --- END PATCH ---
+
       let mediaUrl = null;
       let mediaType = null;
       let encryptionKey = null;
@@ -41,7 +54,12 @@ export const useMessageSender = (
         toastId = showUploadToast(toast, 'uploading');
 
         try {
-          const encryptedMedia = await encryptMedia(mediaFile);
+          // --- encryptMedia: allow override key/iv for global room
+          const encryptedMedia = await encryptMedia(mediaFile, globalE2eeKey && globalE2eeIv ? {
+            encryptionKey: globalE2eeKey,
+            iv: globalE2eeIv
+          } : undefined);
+
           console.log("Media encrypted successfully", encryptedMedia);
 
           const encryptedData = encryptedMedia.encryptedData;
@@ -124,7 +142,30 @@ export const useMessageSender = (
         }
       }
 
-      const { encryptedContent, key, iv: messageIv } = await encryptMessage(newMessage.trim());
+      // --- ENCRYPT MESSAGE TEXT (override key/iv for global) ---
+      let encryptedContent, key, messageIv;
+      if (isGlobalRoom && globalE2eeKey && globalE2eeIv) {
+        // Use our static key/iv
+        const encMod = await import("@/utils/encryption/message-encryption");
+        const importedKey = await encMod.importEncryptionKey(globalE2eeKey);
+        const enc = await window.crypto.subtle.encrypt(
+          {
+            name: "AES-GCM",
+            iv: new Uint8Array(atob(globalE2eeIv).split("").map(c => c.charCodeAt(0)))
+          },
+          importedKey,
+          new TextEncoder().encode(newMessage.trim())
+        );
+        encryptedContent = btoa(String.fromCharCode(...new Uint8Array(enc)));
+        key = globalE2eeKey;
+        messageIv = globalE2eeIv;
+      } else {
+        // normal
+        const encRes = await encryptMessage(newMessage.trim());
+        encryptedContent = encRes.encryptedContent;
+        key = encRes.key;
+        messageIv = encRes.iv;
+      }
 
       const defaultTtl = 86400;
       const messageTtl = ttl || defaultTtl;
