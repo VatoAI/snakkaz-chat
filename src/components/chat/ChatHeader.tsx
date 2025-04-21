@@ -1,3 +1,4 @@
+
 import { UserStatus } from "@/types/presence";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from "react";
@@ -44,44 +45,6 @@ export const ChatHeader = ({
   const navigate = useNavigate();
   const isMobile = useIsMobile();
 
-  const [isOnline, setIsOnline] = useState(true);
-  const [isBusy, setIsBusy] = useState(false);
-  const [isBrb, setIsBrb] = useState(false);
-  const [isOffline, setIsOffline] = useState(false);
-
-  useEffect(() => {
-    setIsOnline(currentStatus === "online");
-    setIsBusy(currentStatus === "busy");
-    setIsBrb(currentStatus === "brb");
-    setIsOffline(currentStatus === "offline");
-  }, [currentStatus]);
-
-  const handleStatusChange = (status: UserStatus) => {
-    onStatusChange(status);
-  };
-
-  const handleCopyUserId = () => {
-    if (currentUserId) {
-      copyToClipboard(currentUserId);
-      toast({
-        title: "Bruker ID kopiert",
-        description: "Bruker ID er kopiert til utklippstavlen",
-      });
-    }
-  };
-
-  const handleCopyInviteLink = () => {
-    const inviteLink = `${window.location.origin}/register`;
-    copyToClipboard(inviteLink);
-    toast({
-      title: "Invitasjonslenke kopiert",
-      description: "Invitasjonslenken er kopiert til utklippstavlen",
-    });
-  };
-
-  const avatarUrl = currentUserId ? userProfiles[currentUserId]?.avatar_url : null;
-  const username = currentUserId ? userProfiles[currentUserId]?.username : null;
-
   return (
     <TooltipProvider>
       <header className="w-full backdrop-blur-sm bg-cyberdark-900/85 border-b border-cybergold-400/40 shadow-neon-blue sticky top-0 z-40 animate-fadeIn">
@@ -104,7 +67,11 @@ export const ChatHeader = ({
             </div>
 
             <div className="flex-1 flex justify-center">
-              <HeaderNavLinks activeTab={activeTab} onTabChange={onTabChange} />
+              <HeaderNavLinks 
+                activeTab={activeTab} 
+                onTabChange={onTabChange}
+                currentStatus={currentStatus}
+              />
             </div>
 
             <div className="flex flex-row items-center gap-2">
@@ -146,20 +113,3 @@ export const ChatHeader = ({
     </TooltipProvider>
   );
 };
-
-function StatusButton({ label, isActive, color, onClick }: { label: string; isActive: boolean; color: string; onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`text-xs px-2 py-1 rounded-lg font-mono border transition-all duration-150
-        ${isActive
-          ? `${color} bg-cyberdark-700 border-cybergold-400 shadow-neon-gold font-bold scale-105`
-          : "text-cybergold-300 hover:text-white border-transparent hover:bg-cybergold-400/10 hover:scale-105"
-        }
-      `}
-      style={{ minWidth: 50 }}
-    >
-      {label}
-    </button>
-  );
-}

@@ -1,12 +1,14 @@
 
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Circle, Clock, Loader2 } from "lucide-react";
+import { UserStatus } from "@/types/presence";
 import { cn } from "@/lib/utils";
 
 interface UserAvatarProps {
   avatarUrl?: string | null;
   username?: string | null;
   size?: number;
-  status?: "online" | "busy" | "brb" | "offline";
+  status?: UserStatus;
   className?: string;
 }
 
@@ -26,6 +28,15 @@ export function UserAvatar({
     offline: "bg-gray-500"
   };
 
+  const statusIcons = {
+    online: Circle,
+    busy: Clock,
+    brb: Loader2,
+    offline: Circle
+  };
+
+  const StatusIcon = statusIcons[status];
+
   return (
     <div className="relative">
       <Avatar 
@@ -43,12 +54,12 @@ export function UserAvatar({
           </AvatarFallback>
         )}
       </Avatar>
-      <span 
-        className={cn(
-          "absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-cyberdark-900",
-          statusColors[status]
-        )}
-      />
+      <div className={cn(
+        "absolute -bottom-1 -right-1 rounded-full p-0.5 bg-cyberdark-900",
+        statusColors[status]
+      )}>
+        <StatusIcon className="w-2.5 h-2.5 text-white" />
+      </div>
     </div>
   );
 }

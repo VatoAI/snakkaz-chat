@@ -1,18 +1,35 @@
 
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Home, Globe, MessageSquare, Users, Volume, Info } from "lucide-react";
+import { Home, Globe, MessageSquare, Users, Volume, VolumeX, Info } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useState, useEffect } from "react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { UserStatus } from "@/types/presence";
 
 interface HeaderNavLinksProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
+  currentStatus?: UserStatus;
 }
 
-export const HeaderNavLinks = ({ activeTab, onTabChange }: HeaderNavLinksProps) => {
+export const HeaderNavLinks = ({ activeTab, onTabChange, currentStatus = 'online' }: HeaderNavLinksProps) => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const [isSoundEnabled, setIsSoundEnabled] = useState(true);
+
+  useEffect(() => {
+    const savedSound = localStorage.getItem('soundEnabled');
+    if (savedSound !== null) {
+      setIsSoundEnabled(savedSound === 'true');
+    }
+  }, []);
+
+  const toggleSound = () => {
+    const newState = !isSoundEnabled;
+    setIsSoundEnabled(newState);
+    localStorage.setItem('soundEnabled', String(newState));
+  };
 
   const links = [
     {
@@ -48,10 +65,10 @@ export const HeaderNavLinks = ({ activeTab, onTabChange }: HeaderNavLinksProps) 
       value: "friends"
     },
     {
-      icon: Volume,
-      label: "Lyd",
-      onClick: () => navigate("/sound"),
-      color: "text-cybergold-300",
+      icon: isSoundEnabled ? Volume : VolumeX,
+      label: isSoundEnabled ? "Lyd På" : "Lyd Av",
+      onClick: toggleSound,
+      color: isSoundEnabled ? "text-cybergold-300" : "text-gray-400",
       hoverColor: "hover:bg-cybergold-900/20",
       value: "sound"
     },
