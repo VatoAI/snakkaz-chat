@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { 
   Table, 
@@ -61,6 +61,13 @@ interface UserType {
   is_admin?: boolean;
 }
 
+interface UserRole {
+  id: string;
+  user_id: string;
+  role: string;
+  created_at: string;
+}
+
 export const AdminUsersManager = () => {
   const [users, setUsers] = useState<UserType[]>([]);
   const [loading, setLoading] = useState(true);
@@ -92,7 +99,7 @@ export const AdminUsersManager = () => {
       if (!session) return;
 
       const { data: adminData, error: adminError } = await supabase
-        .from("user_roles" as any)
+        .from('user_roles' as any)
         .select("role")
         .eq("user_id", session.user.id)
         .eq("role", "admin")
@@ -141,13 +148,13 @@ export const AdminUsersManager = () => {
         if (profilesError) throw profilesError;
 
         const { data: rolesData, error: rolesError } = await supabase
-          .from("user_roles" as any)
+          .from('user_roles' as any)
           .select("user_id, role")
           .eq("role", "admin");
 
         if (rolesError) throw rolesError;
 
-        const adminRoles = new Set((rolesData || []).map((role: any) => role.user_id));
+        const adminRoles = new Set((rolesData as any[] || []).map(role => role.user_id));
         const profilesMap = new Map();
         profilesData?.forEach(profile => {
           profilesMap.set(profile.id, profile);
@@ -178,13 +185,13 @@ export const AdminUsersManager = () => {
         if (profilesError) throw profilesError;
 
         const { data: rolesData, error: rolesError } = await supabase
-          .from("user_roles" as any)
+          .from('user_roles' as any)
           .select("user_id, role")
           .eq("role", "admin");
 
         if (rolesError) throw rolesError;
 
-        const adminRoles = new Set((rolesData || []).map((role: any) => role.user_id));
+        const adminRoles = new Set((rolesData as any[] || []).map(role => role.user_id));
 
         const usersWithProfiles = profilesData.map(profile => ({
           id: profile.id,
@@ -260,7 +267,7 @@ export const AdminUsersManager = () => {
 
         if (adminRole) {
           const { error: roleError } = await supabase
-            .from('user_roles')
+            .from('user_roles' as any)
             .insert([
               {
                 user_id: data.user.id,
@@ -342,7 +349,7 @@ export const AdminUsersManager = () => {
       if (adminRole !== isCurrentlyAdmin) {
         if (adminRole) {
           const { error: roleError } = await supabase
-            .from('user_roles')
+            .from('user_roles' as any)
             .insert([
               {
                 user_id: selectedUser.id,
@@ -353,7 +360,7 @@ export const AdminUsersManager = () => {
           if (roleError) throw roleError;
         } else {
           const { error: roleError } = await supabase
-            .from('user_roles')
+            .from('user_roles' as any)
             .delete()
             .eq('user_id', selectedUser.id)
             .eq('role', 'admin');

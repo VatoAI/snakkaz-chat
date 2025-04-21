@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
@@ -123,7 +122,7 @@ export const UserQrCodeDisplay = ({ fullScreen = false }: UserQrCodeDisplayProps
       });
     }
   };
-
+  
   return (
     <>
       <Button
