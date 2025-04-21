@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { 
   Table, 
@@ -34,6 +34,13 @@ import {
   TooltipTrigger,
   TooltipProvider
 } from "@/components/ui/tooltip";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { 
   Search, 
   Plus, 
@@ -45,7 +52,10 @@ import {
   Loader2,
   Users as UsersIcon,
   Pencil,
-  QrCode
+  QrCode,
+  ArrowUpDown,
+  FilterX,
+  Download
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -87,7 +97,26 @@ export const AdminUsersManager = () => {
   const [processing, setProcessing] = useState(false);
   const [adminRole, setAdminRole] = useState(false);
   const [currentUserIsAdmin, setCurrentUserIsAdmin] = useState(false);
+  const [sortOption, setSortOption] = useState<string>("newest");
+  const [userCount, setUserCount] = useState(0);
   const { toast } = useToast();
+
+  const sortUsers = useCallback((users: UserType[], option: string) => {
+    return [...users].sort((a, b) => {
+      switch(option) {
+        case "newest":
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        case "oldest":
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        case "name":
+          return (a.full_name || a.username || a.email).localeCompare(b.full_name || b.username || b.email);
+        case "admins":
+          return (b.is_admin ? 1 : 0) - (a.is_admin ? 1 : 0);
+        default:
+          return 0;
+      }
+    });
+  }, []);
 
   useEffect(() => {
     checkAdminStatus();
@@ -98,19 +127,16 @@ export const AdminUsersManager = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      const { data: adminData, error: adminError } = await supabase
-        .from('user_roles' as any)
-        .select("role")
-        .eq("user_id", session.user.id)
-        .eq("role", "admin")
-        .maybeSingle();
+      const { data: hasAdminRole, error: adminCheckError } = await supabase.rpc('has_role', {
+        user_id: session.user.id,
+        role: 'admin'
+      });
 
-      if (adminError) throw adminError;
+      if (adminCheckError) throw adminCheckError;
 
-      const isAdmin = !!adminData;
-      setCurrentUserIsAdmin(isAdmin);
+      setCurrentUserIsAdmin(!!hasAdminRole);
 
-      if (isAdmin) {
+      if (hasAdminRole) {
         fetchUsers();
       } else {
         setLoading(false);
@@ -138,6 +164,13 @@ export const AdminUsersManager = () => {
       if (!session) return;
 
       try {
+        const { count, error: countError } = await supabase
+          .from("profiles")
+          .select("*", { count: 'exact', head: true });
+        
+        if (countError) throw countError;
+        setUserCount(count || 0);
+        
         const { data: authData, error: authError } = await supabase.auth.admin.listUsers();
         if (authError) throw authError;
 
@@ -148,7 +181,7 @@ export const AdminUsersManager = () => {
         if (profilesError) throw profilesError;
 
         const { data: rolesData, error: rolesError } = await supabase
-          .from('user_roles' as any)
+          .from('user_roles')
           .select("user_id, role")
           .eq("role", "admin");
 
@@ -174,7 +207,7 @@ export const AdminUsersManager = () => {
           };
         });
 
-        setUsers(combinedUsers);
+        setUsers(sortUsers(combinedUsers, sortOption));
       } catch (adminApiError) {
         console.error("Admin API error, falling back to regular query:", adminApiError);
 
@@ -185,7 +218,7 @@ export const AdminUsersManager = () => {
         if (profilesError) throw profilesError;
 
         const { data: rolesData, error: rolesError } = await supabase
-          .from('user_roles' as any)
+          .from('user_roles')
           .select("user_id, role")
           .eq("role", "admin");
 
@@ -203,7 +236,7 @@ export const AdminUsersManager = () => {
           is_admin: adminRoles.has(profile.id)
         }));
 
-        setUsers(usersWithProfiles);
+        setUsers(sortUsers(usersWithProfiles, sortOption));
       }
     } catch (error) {
       console.error("Error fetching users:", error);
@@ -216,6 +249,12 @@ export const AdminUsersManager = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (users.length > 0) {
+      setUsers(sortUsers(users, sortOption));
+    }
+  }, [sortOption, sortUsers]);
 
   const filteredUsers = users.filter(user => {
     if (!searchQuery) return true;
@@ -267,7 +306,7 @@ export const AdminUsersManager = () => {
 
         if (adminRole) {
           const { error: roleError } = await supabase
-            .from('user_roles' as any)
+            .from('user_roles')
             .insert([
               {
                 user_id: data.user.id,
@@ -349,7 +388,7 @@ export const AdminUsersManager = () => {
       if (adminRole !== isCurrentlyAdmin) {
         if (adminRole) {
           const { error: roleError } = await supabase
-            .from('user_roles' as any)
+            .from('user_roles')
             .insert([
               {
                 user_id: selectedUser.id,
@@ -360,7 +399,7 @@ export const AdminUsersManager = () => {
           if (roleError) throw roleError;
         } else {
           const { error: roleError } = await supabase
-            .from('user_roles' as any)
+            .from('user_roles')
             .delete()
             .eq('user_id', selectedUser.id)
             .eq('role', 'admin');
@@ -438,39 +477,124 @@ export const AdminUsersManager = () => {
     setShowQrCodeDialog(true);
   };
 
+  const exportUserData = () => {
+    try {
+      const exportData = users.map(user => ({
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        full_name: user.full_name,
+        created_at: user.created_at,
+        last_sign_in: user.last_sign_in,
+        is_admin: user.is_admin ? 'Ja' : 'Nei'
+      }));
+      
+      const jsonString = JSON.stringify(exportData, null, 2);
+      const blob = new Blob([jsonString], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `bruker-data-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 100);
+      
+      toast({
+        title: "Data eksportert",
+        description: "Brukerdata er lastet ned som JSON-fil.",
+      });
+    } catch (error) {
+      console.error("Error exporting data:", error);
+      toast({
+        title: "Eksportfeil",
+        description: "Kunne ikke eksportere brukerdata.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <TooltipProvider>
       <div className="space-y-6">
         <Card className="bg-cyberdark-900 border-gray-700">
           <CardHeader>
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div>
                 <CardTitle className="text-cyberblue-300 flex items-center">
                   <UsersIcon className="mr-2" size={20} />
                   Brukeradministrasjon
                 </CardTitle>
-                <CardDescription>Administrer brukere i systemet</CardDescription>
+                <CardDescription className="flex items-center mt-1">
+                  <span>Totalt {userCount} brukere</span>
+                  {filteredUsers.length !== users.length && (
+                    <span className="ml-2 text-xs bg-cyberdark-700 text-gray-300 px-2 py-0.5 rounded-full">
+                      Viser {filteredUsers.length} resultat{filteredUsers.length !== 1 ? 'er' : ''}
+                    </span>
+                  )}
+                </CardDescription>
               </div>
-              {currentUserIsAdmin && (
+              <div className="flex flex-wrap gap-2">
                 <Button 
-                  onClick={() => setShowAddUserDialog(true)}
-                  className="bg-cyberblue-600 hover:bg-cyberblue-700"
+                  variant="outline" 
+                  size="sm"
+                  onClick={exportUserData}
+                  className="bg-transparent border-gray-600 text-gray-300"
                 >
-                  <Plus size={16} className="mr-2" />
-                  Ny Bruker
+                  <Download size={16} className="mr-2" />
+                  Eksporter
                 </Button>
-              )}
+                {currentUserIsAdmin && (
+                  <Button 
+                    onClick={() => setShowAddUserDialog(true)}
+                    className="bg-cyberblue-600 hover:bg-cyberblue-700"
+                    size="sm"
+                  >
+                    <Plus size={16} className="mr-2" />
+                    Ny Bruker
+                  </Button>
+                )}
+              </div>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="relative mb-6">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" size={18} />
-              <Input
-                placeholder="Søk etter brukere..."
-                className="pl-10 bg-cyberdark-800 border-gray-700"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
+            <div className="flex flex-col md:flex-row gap-4 mb-6">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" size={18} />
+                <Input
+                  placeholder="Søk etter brukere..."
+                  className="pl-10 bg-cyberdark-800 border-gray-700"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                {searchQuery && (
+                  <button
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-300"
+                    onClick={() => setSearchQuery("")}
+                    title="Nullstill søk"
+                  >
+                    <FilterX size={16} />
+                  </button>
+                )}
+              </div>
+              
+              <div className="flex-shrink-0 w-full md:w-48">
+                <Select value={sortOption} onValueChange={setSortOption}>
+                  <SelectTrigger className="bg-cyberdark-800 border-gray-700">
+                    <SelectValue placeholder="Sorter etter..." />
+                  </SelectTrigger>
+                  <SelectContent className="bg-cyberdark-800 border-gray-700">
+                    <SelectItem value="newest">Nyeste først</SelectItem>
+                    <SelectItem value="oldest">Eldste først</SelectItem>
+                    <SelectItem value="name">Etter navn</SelectItem>
+                    <SelectItem value="admins">Administratorer</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             
             {loading ? (
@@ -488,10 +612,34 @@ export const AdminUsersManager = () => {
                 <Table>
                   <TableHeader className="bg-cyberdark-800">
                     <TableRow>
-                      <TableHead className="text-gray-300">Bruker</TableHead>
+                      <TableHead className="text-gray-300 w-1/3">
+                        <div className="flex items-center">
+                          Bruker
+                          <ArrowUpDown 
+                            className="ml-2 h-4 w-4 cursor-pointer text-gray-500 hover:text-gray-300"
+                            onClick={() => setSortOption(sortOption === "name" ? "newest" : "name")}
+                          />
+                        </div>
+                      </TableHead>
                       <TableHead className="text-gray-300">E-post</TableHead>
-                      <TableHead className="text-gray-300">Registrert</TableHead>
-                      <TableHead className="text-gray-300">Rolle</TableHead>
+                      <TableHead className="text-gray-300">
+                        <div className="flex items-center">
+                          Registrert
+                          <ArrowUpDown 
+                            className="ml-2 h-4 w-4 cursor-pointer text-gray-500 hover:text-gray-300"
+                            onClick={() => setSortOption(sortOption === "newest" ? "oldest" : "newest")}
+                          />
+                        </div>
+                      </TableHead>
+                      <TableHead className="text-gray-300">
+                        <div className="flex items-center">
+                          Rolle
+                          <ArrowUpDown 
+                            className="ml-2 h-4 w-4 cursor-pointer text-gray-500 hover:text-gray-300"
+                            onClick={() => setSortOption(sortOption === "admins" ? "newest" : "admins")}
+                          />
+                        </div>
+                      </TableHead>
                       <TableHead className="text-gray-300 text-right">Handlinger</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -502,17 +650,29 @@ export const AdminUsersManager = () => {
                           <TableCell className="font-medium">
                             <div className="flex items-center">
                               <div className="h-8 w-8 rounded-full bg-cyberdark-700 flex items-center justify-center text-cyberblue-400 mr-3">
-                                {user.username ? user.username.charAt(0).toUpperCase() : <User size={14} />}
+                                {user.avatar_url ? (
+                                  <img 
+                                    src={user.avatar_url} 
+                                    alt={user.username || 'User'} 
+                                    className="h-8 w-8 rounded-full object-cover"
+                                  />
+                                ) : (
+                                  user.username ? user.username.charAt(0).toUpperCase() : <User size={14} />
+                                )}
                               </div>
                               <div>
-                                <div className="text-sm font-medium text-gray-200">{user.full_name}</div>
-                                <div className="text-xs text-gray-400">@{user.username}</div>
+                                <div className="text-sm font-medium text-gray-200">{user.full_name || 'Ikke angitt'}</div>
+                                <div className="text-xs text-gray-400">@{user.username || 'Ikke angitt'}</div>
                               </div>
                             </div>
                           </TableCell>
                           <TableCell className="text-sm text-gray-300">{user.email}</TableCell>
                           <TableCell className="text-xs text-gray-400">
-                            {new Date(user.created_at).toLocaleDateString()}
+                            {new Date(user.created_at).toLocaleDateString('no-NO', { 
+                              year: 'numeric', 
+                              month: 'short', 
+                              day: 'numeric' 
+                            })}
                           </TableCell>
                           <TableCell className="text-xs text-gray-300">
                             {user.is_admin ? (
