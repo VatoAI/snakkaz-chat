@@ -1,4 +1,3 @@
-
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { ChatGlobal } from '@/components/chat/ChatGlobal';
 import { DirectMessage } from '@/components/chat/friends/DirectMessage';
@@ -9,6 +8,7 @@ import { Friend } from '@/components/chat/friends/types';
 import { DecryptedMessage } from '@/types/message';
 import { WebRTCManager } from '@/utils/webrtc';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { FriendsContainer } from './friends/FriendsContainer';
 
 interface ChatTabsProps {
   activeTab: string;
@@ -76,7 +76,7 @@ export const ChatTabs = ({
           >
             <TabsContent 
               value="global" 
-              className="h-full m-0 p-0 data-[state=active]:animate-fadeIn"
+              className="h-full m-0 p-0 data-[state=active]:animate-fadeIn bg-cyberdark-950/95"
             >
               <ChatGlobal 
                 messages={messages}
@@ -97,7 +97,7 @@ export const ChatTabs = ({
 
             <TabsContent 
               value="private" 
-              className="h-full m-0 p-0 data-[state=active]:animate-fadeIn"
+              className="h-full m-0 p-0 data-[state=active]:animate-fadeIn bg-cyberdark-950/95"
             >
               <PrivateChats 
                 currentUserId={currentUserId || ''}
@@ -105,18 +105,6 @@ export const ChatTabs = ({
                 directMessages={directMessages}
                 onNewMessage={onNewMessage}
                 onStartChat={(userId) => {
-                  const friend = {
-                    id: '',
-                    user_id: userId,
-                    friend_id: currentUserId || '',
-                    status: 'accepted',
-                    created_at: '',
-                    profile: userProfiles[userId] ? {
-                      id: userId,
-                      username: userProfiles[userId].username || null,
-                      avatar_url: userProfiles[userId].avatar_url || null
-                    } : undefined
-                  };
                   handleCloseDirectChat();
                   setTimeout(() => {
                     setActiveTab('direct');
@@ -125,11 +113,32 @@ export const ChatTabs = ({
                 userProfiles={userProfiles}
               />
             </TabsContent>
+
+            <TabsContent 
+              value="friends" 
+              className="h-full m-0 p-0 data-[state=active]:animate-fadeIn bg-cyberdark-950/95"
+            >
+              <div className="h-full p-4 overflow-y-auto">
+                <FriendsContainer
+                  currentUserId={currentUserId || ''}
+                  webRTCManager={webRTCManager}
+                  directMessages={directMessages}
+                  onNewMessage={onNewMessage}
+                  onStartChat={(userId) => {
+                    handleCloseDirectChat();
+                    setTimeout(() => {
+                      setActiveTab('direct');
+                    }, 0);
+                  }}
+                  userProfiles={userProfiles}
+                />
+              </div>
+            </TabsContent>
             
             {selectedFriend && (
               <TabsContent 
                 value="direct" 
-                className="h-full m-0 p-0 data-[state=active]:animate-fadeIn"
+                className="h-full m-0 p-0 data-[state=active]:animate-fadeIn bg-cyberdark-950/95"
               >
                 <DirectMessage 
                   friend={selectedFriend}
