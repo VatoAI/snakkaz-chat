@@ -17,11 +17,13 @@ import { StatusDropdown } from "@/components/online-users/StatusDropdown";
 import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 import { UserStatus } from "@/types/presence";
 import { supabase } from "@/integrations/supabase/client";
+import { useStatusRefresh } from "@/hooks/useStatusRefresh";
 
 const Profile = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("profile");
   const [currentStatus, setCurrentStatus] = useState<UserStatus>("online");
+  const { isRefreshing, lastUpdated, refresh } = useStatusRefresh();
   
   const {
     loading,
@@ -85,15 +87,27 @@ const Profile = () => {
     if (!user?.id) return;
     
     try {
-      const { error } = await supabase
-        .from('user_presence')
-        .upsert({
-          user_id: user.id,
-          status,
-          last_seen: new Date().toISOString()
-        }, { onConflict: 'user_id' });
-        
-      if (error) throw error;
+      if (status === 'offline') {
+        // Instead of trying to store 'offline' in the database,
+        // we'll delete the presence record when the user goes offline
+        const { error } = await supabase
+          .from('user_presence')
+          .delete()
+          .eq('user_id', user.id);
+          
+        if (error) throw error;
+      } else {
+        // For other statuses (online, busy, brb), we'll update as normal
+        const { error } = await supabase
+          .from('user_presence')
+          .upsert({
+            user_id: user.id,
+            status,
+            last_seen: new Date().toISOString()
+          }, { onConflict: 'user_id' });
+          
+        if (error) throw error;
+      }
       
       setCurrentStatus(status);
     } catch (error) {
@@ -226,12 +240,24 @@ const Profile = () => {
             </p>
           </div>
           
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-cyberdark-400">Status:</span>
-            <StatusDropdown 
-              currentStatus={currentStatus} 
-              onStatusChange={handleStatusChange} 
-            />
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-cyberdark-400">Status:</span>
+              <StatusDropdown 
+                currentStatus={currentStatus} 
+                onStatusChange={handleStatusChange} 
+              />
+            </div>
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-cyberdark-400 hover:text-cybergold-300"
+              onClick={refresh}
+              disabled={isRefreshing}
+            >
+              {isRefreshing ? "Oppdaterer..." : `Oppdatert: ${lastUpdated.toLocaleTimeString()}`}
+            </Button>
           </div>
         </div>
         
