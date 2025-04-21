@@ -20,10 +20,11 @@ export const useRegister = ({
   confirmPassword,
 }: UseRegisterProps) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [registrationComplete, setRegistrationComplete] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleRegister = async (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent, autoNavigate = true) => {
     e.preventDefault();
     if (password !== confirmPassword) {
       toast({
@@ -31,7 +32,7 @@ export const useRegister = ({
         description: "Passordene matcher ikke",
         variant: "destructive",
       });
-      return;
+      return false;
     }
 
     setIsLoading(true);
@@ -49,7 +50,7 @@ export const useRegister = ({
             variant: "destructive",
           });
           navigate("/"); // Redirect to login page
-          return;
+          return false;
         }
         throw authError;
       }
@@ -73,19 +74,25 @@ export const useRegister = ({
             description: "Kontoen din er opprettet. Sjekk e-posten din for verifisering.",
           });
           
-          navigate("/");
+          setRegistrationComplete(true);
+          if (autoNavigate) {
+            navigate("/");
+          }
+          return true;
         }
       }
+      return false;
     } catch (error: any) {
       toast({
         title: "Feil",
         description: error.message || "En feil oppstod under registrering",
         variant: "destructive",
       });
+      return false;
     } finally {
       setIsLoading(false);
     }
   };
 
-  return { handleRegister, isLoading };
+  return { handleRegister, isLoading, registrationComplete };
 };
