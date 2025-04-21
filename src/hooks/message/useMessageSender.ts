@@ -2,10 +2,11 @@
 import { useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { encryptMessage, importEncryptionKey } from "@/utils/encryption";
-import { encryptMedia } from "@/utils/encryption/media";
-import { base64ToArrayBuffer } from "@/utils/encryption/data-conversion";
-import { ensureMessageColumnsExist, showUploadToast, uploadMediaFile } from "./utils/message-db-utils";
 import { GLOBAL_E2EE_KEY, GLOBAL_E2EE_IV } from "@/utils/encryption/global-e2ee";
+import { ensureMessageColumnsExist } from "./utils/message-db-utils";
+import { useMediaHandler } from "./useMessageSender/useMediaHandler";
+import { useP2PDelivery } from "./useMessageSender/useP2PDelivery";
+import { globalEncryptMessage } from "./useMessageSender/globalEncryption";
 
 export const useMessageSender = (
   userId: string | null,
@@ -15,9 +16,17 @@ export const useMessageSender = (
   setIsLoading: (loading: boolean) => void,
   toast: any
 ) => {
-  const handleSendMessage = useCallback(async (webRTCManager: any, onlineUsers: Set<string>, mediaFile?: File, receiverId?: string, groupId?: string) => {
+  const { handleMediaUpload } = useMediaHandler();
+  const { handleP2PDelivery } = useP2PDelivery();
+
+  const handleSendMessage = useCallback(async (
+    webRTCManager: any,
+    onlineUsers: Set<string>,
+    mediaFile?: File,
+    receiverId?: string,
+    groupId?: string
+  ) => {
     if ((!newMessage.trim() && !mediaFile) || !userId) {
-      console.log("Ingen melding eller fil å sende, eller bruker ikke pålogget");
       toast({
         title: "Feil",
         description: "Du må skrive en melding eller legge ved en fil før du kan sende.",
@@ -28,139 +37,46 @@ export const useMessageSender = (
 
     setIsLoading(true);
     let toastId = null;
-    
     try {
       await ensureMessageColumnsExist();
-
-      // --- GLOBAL ROOM E2EE PATCH ---
-      // Use shared global key for all crypto in "global" room
       const isGlobalRoom = !receiverId && !groupId;
-
       let globalE2eeKey: string | undefined;
       let globalE2eeIv: string | undefined;
       if (isGlobalRoom) {
         globalE2eeKey = GLOBAL_E2EE_KEY;
-        globalE2eeIv = btoa(GLOBAL_E2EE_IV); // encode string as base64
+        globalE2eeIv = btoa(GLOBAL_E2EE_IV);
       }
-      // --- END PATCH ---
 
-      let mediaUrl = null;
-      let mediaType = null;
-      let encryptionKey = null;
-      let iv = null;
-      let mediaMetadata = null;
-
+      // Handle media file upload/encryption if provided
+      let mediaUrl = null, mediaType = null, encryptionKey = null, iv = null, mediaMetadata = null;
       if (mediaFile) {
-        console.log("Starting media file upload process:", mediaFile.name, mediaFile.type, mediaFile.size);
-        toastId = showUploadToast(toast, 'uploading');
-
-        try {
-          // --- encryptMedia: allow override key/iv for global room
-          const encryptedMedia = await encryptMedia(mediaFile, globalE2eeKey && globalE2eeIv ? {
-            encryptionKey: globalE2eeKey,
-            iv: globalE2eeIv
-          } : undefined);
-
-          console.log("Media encrypted successfully", encryptedMedia);
-
-          const encryptedData = encryptedMedia.encryptedData;
-          const encryptedBlob = new Blob(
-            [encryptedData instanceof ArrayBuffer 
-              ? encryptedData 
-              : base64ToArrayBuffer(encryptedData as string)
-            ], 
-            { type: 'application/octet-stream' }
-          );
-          const encryptedFile = new File(
-            [encryptedBlob], 
-            `${Date.now()}_encrypted.bin`, 
-            { type: 'application/octet-stream' }
-          );
-          console.log("Uploading encrypted file to Supabase storage");
-          const mediaData = await uploadMediaFile(encryptedFile);
-
-          mediaUrl = mediaData.mediaUrl;
-          mediaType = encryptedMedia.mediaType;
-          encryptionKey = encryptedMedia.encryptionKey;
-          iv = encryptedMedia.iv;
-          mediaMetadata = encryptedMedia.metadata;
-
-          console.log("Media upload successful:", mediaUrl);
-          showUploadToast(toast, 'success', "Sender melding med kryptert vedlegg...");
-        } catch (uploadError: any) {
-          console.error("Error during media upload:", uploadError);
-
-          toast({
-            title: "Feil ved opplasting",
-            description: (uploadError instanceof Error ? uploadError.message : "Kunne ikke laste opp filen"),
-            variant: "destructive",
-          });
-
-          setIsLoading(false);
-          return;
-        }
+        const result = await handleMediaUpload(
+          mediaFile,
+          toast,
+          globalE2eeKey && globalE2eeIv ? { encryptionKey: globalE2eeKey, iv: globalE2eeIv } : undefined
+        );
+        mediaUrl = result.mediaUrl;
+        mediaType = result.mediaType;
+        encryptionKey = result.encryptionKey;
+        iv = result.iv;
+        mediaMetadata = result.mediaMetadata;
+        toastId = result.toastId;
       }
 
+      // P2P delivery (if global room)
       let p2pDeliveryCount = 0;
-      
-      if (webRTCManager && !receiverId && !groupId) {
-        const peerPromises: Promise<boolean>[] = [];
-        const peerErrors: Record<string, string> = {};
-        
-        for (const peerId of onlineUsers) {
-          if (peerId !== userId) {
-            const timeoutPromise = new Promise<boolean>((resolve) => {
-              setTimeout(() => resolve(false), 10000);
-            });
-            
-            const sendPromise = new Promise<boolean>(async (resolve) => {
-              try {
-                const isReady = await webRTCManager.ensurePeerReady(peerId);
-                
-                if (isReady) {
-                  await webRTCManager.sendMessage(peerId, newMessage.trim());
-                  resolve(true);
-                } else {
-                  peerErrors[peerId] = 'Peer not ready';
-                  resolve(false);
-                }
-              } catch (error) {
-                console.error(`Error sending message to peer ${peerId}:`, error);
-                peerErrors[peerId] = error instanceof Error ? error.message : 'Unknown error';
-                resolve(false);
-              }
-            });
-            
-            peerPromises.push(Promise.race([sendPromise, timeoutPromise]));
-          }
-        }
-        
-        const results = await Promise.all(peerPromises);
-        p2pDeliveryCount = results.filter(result => result).length;
-        
-        if (p2pDeliveryCount === 0 && onlineUsers.size > 1) {
-          console.warn('Failed to deliver message to any peers:', peerErrors);
-        }
+      if (webRTCManager && isGlobalRoom) {
+        p2pDeliveryCount = await handleP2PDelivery(webRTCManager, onlineUsers, userId, newMessage);
       }
 
-      // --- ENCRYPT MESSAGE TEXT (override key/iv for global) ---
+      // Encrypt message text (override key/iv for global)
       let encryptedContent, key, messageIv;
       if (isGlobalRoom && globalE2eeKey && globalE2eeIv) {
-        // Use our static key/iv
-        const importedKey = await importEncryptionKey(globalE2eeKey);
-        const enc = await window.crypto.subtle.encrypt(
-          {
-            name: "AES-GCM",
-            iv: new Uint8Array(atob(globalE2eeIv).split("").map(c => c.charCodeAt(0)))
-          },
-          importedKey,
-          new TextEncoder().encode(newMessage.trim())
-        );
-        encryptedContent = btoa(String.fromCharCode(...new Uint8Array(enc)));
-        key = globalE2eeKey;
-        messageIv = globalE2eeIv;
+        const encryptionResult = await globalEncryptMessage(globalE2eeKey, globalE2eeIv, newMessage.trim());
+        encryptedContent = encryptionResult.encryptedContent;
+        key = encryptionResult.key;
+        messageIv = encryptionResult.messageIv;
       } else {
-        // normal
         const encRes = await encryptMessage(newMessage.trim());
         encryptedContent = encRes.encryptedContent;
         key = encRes.key;
@@ -190,15 +106,12 @@ export const useMessageSender = (
         });
 
       if (error) {
-        console.error('Send message error:', error);
         toast({
           title: "Feil",
           description: "Kunne ikke sende melding: " + error.message,
           variant: "destructive",
         });
       } else {
-        console.log("Melding sendt vellykket");
-
         if (toastId) {
           toast({
             id: toastId,
@@ -206,12 +119,9 @@ export const useMessageSender = (
             description: mediaFile ? "Melding med kryptert vedlegg ble sendt" : "Melding ble sendt",
           });
         }
-
         setNewMessage("");
       }
     } catch (error: any) {
-      console.error('Error sending message (outer catch):', error);
-
       toast({
         title: "Feil",
         description: "Kunne ikke sende melding: " + (error instanceof Error ? error.message : 'Ukjent feil'),
@@ -220,7 +130,7 @@ export const useMessageSender = (
     } finally {
       setIsLoading(false);
     }
-  }, [newMessage, userId, ttl, setNewMessage, setIsLoading, toast]);
+  }, [newMessage, userId, ttl, setNewMessage, setIsLoading, toast, handleMediaUpload, handleP2PDelivery]);
 
   return { handleSendMessage };
 };
