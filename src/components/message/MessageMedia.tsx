@@ -13,11 +13,12 @@ import { FileMedia } from "./media/FileMedia";
 import { DecryptingMedia } from "./media/DecryptingMedia";
 
 interface MessageMediaProps {
-  message: DecryptedMessage;
-  onMediaExpired?: () => void; // signals media expired, triggers deletion above
+  message: import("@/types/message").DecryptedMessage;
+  onMediaExpired?: () => void;
 }
 
 export const MessageMedia = ({ message, onMediaExpired }: MessageMediaProps) => {
+  // No changes needed here because useMediaDecryption now handles all cases
   const {
     decryptedUrl,
     isDecrypting,

@@ -13,6 +13,19 @@ export const useMediaDecryption = (message: DecryptedMessage) => {
     
     setIsDecrypting(true);
     setDecryptError(null);
+
+    // Prefer media_encryption_key and media_iv if present, else fall back
+    const encryptionKey: string | undefined =
+      ((message as any).media_encryption_key as string) || message.encryption_key;
+    const iv: string | undefined =
+      ((message as any).media_iv as string) || message.iv;
+    const mediaType: string = message.media_type || 'application/octet-stream';
+
+    if (!encryptionKey || !iv) {
+      setDecryptError("Mangler krypteringsdata for mediet");
+      setIsDecrypting(false);
+      return;
+    }
     
     try {
       const response = await fetch(storageUrl);
@@ -20,15 +33,11 @@ export const useMediaDecryption = (message: DecryptedMessage) => {
       
       const encryptedData = await response.arrayBuffer();
       
-      if (!message.encryption_key || !message.iv) {
-        throw new Error('Missing encryption metadata');
-      }
-      
       const decryptedBlob = await decryptMedia({
         encryptedData: encryptedData,
-        encryptionKey: message.encryption_key,
-        iv: message.iv,
-        mediaType: message.media_type || 'application/octet-stream'
+        encryptionKey: encryptionKey,
+        iv: iv,
+        mediaType: mediaType,
       });
       
       const localUrl = URL.createObjectURL(decryptedBlob);
