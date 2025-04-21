@@ -49,7 +49,8 @@ const Chat = () => {
   // PIN handling
   const chatCodeHook = useChatCode();
   const [showSetCodeModal, setShowSetCodeModal] = useState(false);
-
+  const [pinUnlocked, setPinUnlocked] = useState(!isMobile);
+  
   // When user opens chat on mobile and has a PIN set, prompt for PIN
   useEffect(() => {
     if (!loading && user && isMobile) {
@@ -64,8 +65,6 @@ const Chat = () => {
   }, [user, loading, isMobile]);
 
   // Prevent access to chat if PIN required and not entered
-  const [pinUnlocked, setPinUnlocked] = useState(!isMobile);
-  
   useEffect(() => {
     if (!isMobile) setPinUnlocked(true);
     else if (chatCodeHook.promptForCode) setPinUnlocked(false);
@@ -133,8 +132,8 @@ const Chat = () => {
 
   if (loading || !user || !isReady) {
     return (
-      <div className="min-h-screen bg-cyberdark-950 text-white flex items-center justify-center">
-        <div className="text-center">
+      <div className="fixed inset-0 bg-cyberdark-950 text-white flex items-center justify-center z-50">
+        <div className="text-center p-4 max-w-md">
           <div className="w-16 h-16 border-4 border-t-cyberblue-500 border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-cyberblue-400">Laster inn SnakkaZ Chat...</p>
         </div>
@@ -176,7 +175,7 @@ const Chat = () => {
   
   return (
     <TooltipProvider>
-      <div className="h-screen bg-cyberdark-950 text-white flex flex-col">
+      <div className="h-[100dvh] w-full bg-cyberdark-950 text-white flex flex-col overflow-hidden">
         <ChatHeader 
           userPresence={userPresence}
           currentUserId={user.id}
@@ -188,7 +187,7 @@ const Chat = () => {
           onStartChat={onStartChat}
           userProfiles={userProfiles}
         />
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 overflow-hidden relative">
           <ChatTabs 
             activeTab={activeTab}
             setActiveTab={setActiveTab}

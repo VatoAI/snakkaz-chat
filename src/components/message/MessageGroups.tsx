@@ -9,6 +9,7 @@ interface MessageGroupsProps {
   onEdit: (message: DecryptedMessage) => void;
   onDelete: (messageId: string) => void;
   messagesEndRef: React.RefObject<HTMLDivElement>;
+  isMobile?: boolean;
 }
 
 export const MessageGroups = ({ 
@@ -17,14 +18,12 @@ export const MessageGroups = ({
   onMessageExpired, 
   onEdit, 
   onDelete, 
-  messagesEndRef 
+  messagesEndRef,
+  isMobile = false
 }: MessageGroupsProps) => {
-  console.log('Rendering MessageGroups with:', messageGroups.length, 'groups');
-  
   return (
-    <div className="space-y-2 sm:space-y-4">
+    <div className={`space-y-2 ${isMobile ? 'pb-16' : 'sm:space-y-4'}`}>
       {messageGroups.map((group, groupIndex) => {
-        console.log(`Group ${groupIndex}:`, group);
         return group.length > 0 && (
           <MessageGroup
             key={`group-${groupIndex}-${group[0]?.id || groupIndex}`}
@@ -33,10 +32,11 @@ export const MessageGroups = ({
             onMessageExpired={onMessageExpired}
             onEdit={onEdit}
             onDelete={onDelete}
+            isMobile={isMobile}
           />
         );
       })}
-      <div ref={messagesEndRef} />
+      <div ref={messagesEndRef} className="h-1" />
     </div>
   );
 };

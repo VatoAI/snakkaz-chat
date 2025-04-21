@@ -1,8 +1,11 @@
-
 #root {
-  max-width: 1280px;
   margin: 0 auto;
-  padding: 2rem;
+  background-color: #0a0a0a !important;
+  color: white;
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 body {
@@ -11,10 +14,12 @@ body {
   background-color: #0a0a0a !important;
   color: white;
   min-height: 100vh;
+  overflow-x: hidden;
 }
 
 html {
   background-color: #0a0a0a !important;
+  overflow-x: hidden;
 }
 
 /* Enhanced cyberpunk-themed utility classes */

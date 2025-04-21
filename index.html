@@ -1,117 +1,19 @@
 
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SnakkaZ Hub</title>
-
-    <!-- SEO -->
-    <meta name="description" content="SnakkaZ - Den Sikreste Chatten i Verden" />
-    <meta name="author" content="SnakkaZ" />
-    <meta property="og:image" content="/og-image.png" />
-
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="/manifest.json" />
-
-    <!-- Ikoner -->
-    <link rel="icon" href="/icons/snakkaz-icon-192.png" />
-    <link rel="apple-touch-icon" href="/icons/snakkaz-icon-192.png" />
-
-    <!-- Tema for nettleser + installasjon -->
+    <link rel="icon" type="image/svg+xml" href="/snakkaz-logo.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <meta name="theme-color" content="#0a0a0a" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    
-    <!-- CSS for Modal -->
-    <style>
-      html, body {
-        background-color: #0a0a0a;
-        color: white;
-        margin: 0;
-        padding: 0;
-      }
-      
-      #installModal {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.7);
-        z-index: 1000;
-        align-items: center;
-        justify-content: center;
-      }
-
-      #installModalContent {
-        background-color: #1a1a1a;
-        color: white;
-        padding: 20px;
-        border-radius: 10px;
-        max-width: 400px;
-        text-align: center;
-        border: 1px solid rgba(26,157,255,0.3);
-      }
-
-      #installModal button {
-        background-color: #d62828;
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 5px;
-        cursor: pointer;
-        margin-top: 10px;
-      }
-
-      #installModal button:hover {
-        background-color: #a71d1d;
-      }
-    </style>
+    <link rel="apple-touch-icon" href="/icons/snakkaz-icon-192.png" />
+    <link rel="manifest" href="/manifest.json" />
+    <title>SnakkaZ Hub</title>
   </head>
-
   <body>
     <div id="root"></div>
-
-    <!-- App-scripts -->
-    <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
     <script type="module" src="/src/main.tsx"></script>
-
-    <!-- Service Worker -->
-    <script>
-      if ("serviceWorker" in navigator) {
-        navigator.serviceWorker
-          .register("/service-worker.js")
-          .then((registration) => {
-            console.log("Service Worker registrert:", registration.scope);
-          })
-          .catch((error) => {
-            console.error("Service Worker feilet:", error);
-          });
-      }
-
-      // Detect iOS device
-      function isIOS() {
-        return /iphone|ipod|ipad/i.test(navigator.userAgent);
-      }
-
-      // Show modal if on iOS
-      if (isIOS()) {
-        const installModal = document.createElement("div");
-        installModal.id = "installModal";
-        installModal.innerHTML = `
-          <div id="installModalContent">
-            <h2>Installer SnakkaZ</h2>
-            <p>For å installere appen, åpne Safari, trykk på delingsikonet, og velg "Legg til på Hjem-skjerm".</p>
-            <button onclick="document.getElementById('installModal').style.display = 'none';">Lukk</button>
-          </div>
-        `;
-        document.body.appendChild(installModal);
-
-        // Show the modal
-        document.getElementById('installModal').style.display = 'flex';
-      }
-    </script>
   </body>
 </html>
