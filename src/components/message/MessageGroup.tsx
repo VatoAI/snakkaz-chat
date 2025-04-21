@@ -11,6 +11,7 @@ interface MessageGroupProps {
   onMessageExpired: (messageId: string) => void;
   onEdit: (message: DecryptedMessage) => void;
   onDelete: (messageId: string) => void;
+  isMobile?: boolean;
 }
 
 export const MessageGroup = ({ 
@@ -18,7 +19,8 @@ export const MessageGroup = ({
   isCurrentUser,
   onMessageExpired,
   onEdit,
-  onDelete
+  onDelete,
+  isMobile = false
 }: MessageGroupProps) => {
   console.log('Rendering MessageGroup:', { 
     messageCount: messages.length, 

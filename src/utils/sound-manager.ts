@@ -158,7 +158,6 @@ export const showNotification = async (title: string, options?: NotificationOpti
     const finalOptions: NotificationOptions = {
       icon: '/snakkaz-logo.png',
       badge: '/icons/snakkaz-icon-192.png',
-      timestamp: Date.now(),
       vibrate: settings.vibrationEnabled ? [200, 100, 200] : undefined,
       ...options
     };

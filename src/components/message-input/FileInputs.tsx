@@ -8,13 +8,15 @@ interface FileInputsProps {
   setSelectedFile: (file: File | null) => void;
   isLoading: boolean;
   isRecording: boolean;
+  isMobile?: boolean;
 }
 
 export const FileInputs = ({ 
   selectedFile, 
   setSelectedFile, 
   isLoading, 
-  isRecording 
+  isRecording,
+  isMobile = false
 }: FileInputsProps) => {
   const {
     fileInputRef,
