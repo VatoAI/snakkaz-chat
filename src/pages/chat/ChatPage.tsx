@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChatHeader } from "@/components/chat/ChatHeader";
@@ -119,6 +118,13 @@ const ChatPage = () => {
     }
   };
 
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    if (tab !== 'direct') {
+      setSelectedFriend(null);
+    }
+  };
+
   if (loading || !user || !isReady) {
     return <LoadingScreen />;
   }
@@ -144,11 +150,13 @@ const ChatPage = () => {
           onNewMessage={handleStartEditMessage}
           onStartChat={onStartChat}
           userProfiles={userProfiles}
+          activeTab={activeTab}
+          onTabChange={handleTabChange}
         />
         <div className="flex-1 overflow-hidden relative">
           <ChatTabs
             activeTab={activeTab}
-            setActiveTab={setActiveTab}
+            setActiveTab={handleTabChange}
             selectedFriend={selectedFriend}
             messages={messages}
             newMessage={newMessage}
@@ -167,7 +175,7 @@ const ChatPage = () => {
             onNewMessage={handleStartEditMessage}
             webRTCManager={webRTCManager}
             userProfiles={userProfiles}
-            handleCloseDirectChat={handleCloseDirectChat}
+            handleCloseDirectChat={() => setSelectedFriend(null)}
           />
         </div>
         <MigrationHelper />

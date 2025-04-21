@@ -3,7 +3,6 @@ import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { ChatGlobal } from '@/components/chat/ChatGlobal';
 import { DirectMessage } from '@/components/chat/friends/DirectMessage';
 import { PrivateChats } from '@/components/chat/PrivateChats';
-import { TabsHeader } from './tabs/TabsHeader';
 import { useTabShortcuts } from '@/hooks/useTabShortcuts';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Friend } from '@/components/chat/friends/types';
@@ -37,7 +36,7 @@ interface ChatTabsProps {
 
 export const ChatTabs = ({ 
   activeTab, 
-  setActiveTab, 
+  setActiveTab,
   selectedFriend,
   messages,
   newMessage,
@@ -67,12 +66,6 @@ export const ChatTabs = ({
         onValueChange={setActiveTab} 
         className="w-full h-full flex flex-col"
       >
-        <TabsHeader 
-          selectedFriend={selectedFriend}
-          handleCloseDirectChat={handleCloseDirectChat}
-          activeTab={activeTab}
-        />
-        
         <AnimatePresence mode="wait">
           <motion.div 
             className="flex-1 overflow-hidden"
@@ -124,9 +117,7 @@ export const ChatTabs = ({
                       avatar_url: userProfiles[userId].avatar_url || null
                     } : undefined
                   };
-                  
-                  // Set selected friend and switch to direct tab
-                  handleCloseDirectChat(); // Close any existing direct chat
+                  handleCloseDirectChat();
                   setTimeout(() => {
                     setActiveTab('direct');
                   }, 0);

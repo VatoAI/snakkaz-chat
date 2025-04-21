@@ -1,4 +1,3 @@
-
 import { UserStatus } from "@/types/presence";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from "react";
@@ -24,6 +23,8 @@ interface ChatHeaderProps {
   onNewMessage: (message: { id: string; content: string }) => void;
   onStartChat: (friendId: string) => void;
   userProfiles: Record<string, { username: string | null; avatar_url: string | null }>;
+  activeTab: string;
+  onTabChange: (tab: string) => void;
 }
 
 export const ChatHeader = ({
@@ -35,11 +36,14 @@ export const ChatHeader = ({
   directMessages,
   onNewMessage,
   onStartChat,
-  userProfiles
+  userProfiles,
+  activeTab,
+  onTabChange
 }: ChatHeaderProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+
   const [isOnline, setIsOnline] = useState(true);
   const [isBusy, setIsBusy] = useState(false);
   const [isBrb, setIsBrb] = useState(false);
@@ -100,7 +104,7 @@ export const ChatHeader = ({
             </div>
 
             <div className="flex-1 flex justify-center">
-              <HeaderNavLinks />
+              <HeaderNavLinks activeTab={activeTab} onTabChange={onTabChange} />
             </div>
 
             <div className="flex flex-row items-center gap-2">
@@ -112,12 +116,27 @@ export const ChatHeader = ({
                   userProfiles={userProfiles}
                   currentStatus={currentStatus}
                   onStatusChange={onStatusChange}
-                  isOnline={isOnline}
-                  isBusy={isBusy}
-                  isBrb={isBrb}
-                  isOffline={isOffline}
-                  handleCopyUserId={handleCopyUserId}
-                  handleCopyInviteLink={handleCopyInviteLink}
+                  isOnline={currentStatus === 'online'}
+                  isBusy={currentStatus === 'busy'}
+                  isBrb={currentStatus === 'brb'}
+                  isOffline={currentStatus === 'offline'}
+                  handleCopyUserId={() => {
+                    if (currentUserId) {
+                      copyToClipboard(currentUserId);
+                      toast({
+                        title: "Bruker ID kopiert",
+                        description: "Bruker ID er kopiert til utklippstavlen",
+                      });
+                    }
+                  }}
+                  handleCopyInviteLink={() => {
+                    const inviteLink = `${window.location.origin}/register`;
+                    copyToClipboard(inviteLink);
+                    toast({
+                      title: "Invitasjonslenke kopiert",
+                      description: "Invitasjonslenken er kopiert til utklippstavlen",
+                    });
+                  }}
                 />
               )}
             </div>
