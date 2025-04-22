@@ -6,11 +6,13 @@ import { useToast } from "@/components/ui/use-toast";
 
 export const usePresence = (
   userId: string | null, 
-  currentStatus: UserStatus,
-  setUserPresence: (presence: Record<string, any>) => void,
-  hidden: boolean
+  initialStatus: UserStatus = 'online',
+  onPresenceChange?: (presence: Record<string, any>) => void,
+  hidden: boolean = false
 ) => {
   const { toast } = useToast();
+  const [currentStatus, setCurrentStatus] = useState<UserStatus>(initialStatus);
+  const [userPresence, setUserPresence] = useState<Record<string, any>>({});
   const [presenceChannel, setPresenceChannel] = useState<any>(null);
   const heartbeatInterval = useRef<NodeJS.Timeout | null>(null);
   const initialLoad = useRef(true);
@@ -18,6 +20,8 @@ export const usePresence = (
   // Handle status changes
   const handleStatusChange = useCallback(async (newStatus: UserStatus) => {
     if (!userId || hidden) return;
+    
+    setCurrentStatus(newStatus);
 
     try {
       // Only allow using statuses that are valid in the database
@@ -100,11 +104,12 @@ export const usePresence = (
         }), {});
         
         setUserPresence(presenceMap);
+        if (onPresenceChange) onPresenceChange(presenceMap);
       }
     } catch (error) {
       console.error("Error fetching presence data:", error);
     }
-  }, [setUserPresence]);
+  }, [onPresenceChange]);
 
   // Set up heartbeat and visibility handling
   useEffect(() => {
@@ -173,7 +178,7 @@ export const usePresence = (
     };
   }, [userId, fetchAllPresence, hidden]);
 
-  // Status change effect
+  // Status change effect when initialStatus changes
   useEffect(() => {
     if (!userId || hidden) return;
     
@@ -183,8 +188,11 @@ export const usePresence = (
       return;
     }
     
-    handleStatusChange(currentStatus);
-  }, [userId, currentStatus, hidden, handleStatusChange]);
+    if (initialStatus !== currentStatus) {
+      setCurrentStatus(initialStatus);
+      handleStatusChange(initialStatus);
+    }
+  }, [userId, initialStatus, hidden, handleStatusChange, currentStatus]);
 
   // Handle page visibility changes for better presence accuracy
   useEffect(() => {
@@ -232,5 +240,37 @@ export const usePresence = (
     };
   }, [userId, hidden]);
 
-  return { handleStatusChange };
+  // Fetch current status from database on load
+  useEffect(() => {
+    if (!userId) return;
+    
+    const fetchCurrentStatus = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('user_presence')
+          .select('status')
+          .eq('user_id', userId)
+          .maybeSingle();
+          
+        if (error) {
+          console.error("Error fetching current status:", error);
+          return;
+        }
+        
+        if (data?.status && data.status !== currentStatus) {
+          setCurrentStatus(data.status as UserStatus);
+        }
+      } catch (error) {
+        console.error("Error fetching current status:", error);
+      }
+    };
+    
+    fetchCurrentStatus();
+  }, [userId, currentStatus]);
+
+  return { 
+    currentStatus, 
+    handleStatusChange, 
+    userPresence
+  };
 };

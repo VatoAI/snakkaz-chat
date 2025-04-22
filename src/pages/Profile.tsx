@@ -1,4 +1,3 @@
-
 import { ProfileContainer } from "@/components/profile/ProfileContainer";
 import { ProfileNavigation } from "@/components/profile/ProfileNavigation";
 import { ProfileCard } from "@/components/profile/ProfileCard";
@@ -16,13 +15,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { StatusDropdown } from "@/components/online-users/StatusDropdown";
 import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 import { UserStatus } from "@/types/presence";
-import { supabase } from "@/integrations/supabase/client";
+import { usePresence } from "@/components/chat/hooks/usePresence";
 import { useStatusRefresh } from "@/hooks/useStatusRefresh";
 
 const Profile = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("profile");
-  const [currentStatus, setCurrentStatus] = useState<UserStatus>("online");
   const { isRefreshing, lastUpdated, refresh } = useStatusRefresh();
   
   const {
@@ -41,84 +39,13 @@ const Profile = () => {
   const { validateUsername } = useProfileValidation();
   const { user } = useAuth();
 
-  // Load current status
-  useEffect(() => {
-    if (user?.id) {
-      const fetchCurrentStatus = async () => {
-        const { data, error } = await supabase
-          .from('user_presence')
-          .select('status')
-          .eq('user_id', user.id)
-          .maybeSingle();
-          
-        if (!error && data?.status) {
-          setCurrentStatus(data.status as UserStatus);
-        }
-      };
-      
-      fetchCurrentStatus();
-      
-      // Subscribe to status changes
-      const presenceChannel = supabase
-        .channel('profile-presence')
-        .on('postgres_changes', 
-          { 
-            event: 'UPDATE', 
-            schema: 'public', 
-            table: 'user_presence',
-            filter: `user_id=eq.${user.id}`
-          }, 
-          (payload) => {
-            if (payload.new && (payload.new as any).status) {
-              setCurrentStatus((payload.new as any).status as UserStatus);
-            }
-          }
-        )
-        .subscribe();
-        
-      return () => {
-        supabase.removeChannel(presenceChannel);
-      };
-    }
-  }, [user]);
-  
-  // Update status
-  const handleStatusChange = async (status: UserStatus) => {
-    if (!user?.id) return;
-    
-    try {
-      if (status === 'offline') {
-        // Instead of trying to store 'offline' in the database,
-        // we'll delete the presence record when the user goes offline
-        const { error } = await supabase
-          .from('user_presence')
-          .delete()
-          .eq('user_id', user.id);
-          
-        if (error) throw error;
-      } else {
-        // For other statuses (online, busy, brb), we'll update as normal
-        const { error } = await supabase
-          .from('user_presence')
-          .upsert({
-            user_id: user.id,
-            status,
-            last_seen: new Date().toISOString()
-          }, { onConflict: 'user_id' });
-          
-        if (error) throw error;
-      }
-      
-      setCurrentStatus(status);
-    } catch (error) {
-      console.error('Error updating status:', error);
-      toast({
-        title: "Feil",
-        description: "Kunne ikke oppdatere status",
-        variant: "destructive",
-      });
-    }
-  };
+  // Use the centralized usePresence hook
+  const { currentStatus, handleStatusChange, userPresence } = usePresence(
+    user?.id,
+    'online',
+    undefined,
+    false
+  );
 
   // Upload avatar
   const uploadAvatar = async (event: React.ChangeEvent<HTMLInputElement>) => {

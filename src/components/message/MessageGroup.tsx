@@ -9,7 +9,7 @@ interface MessageGroupProps {
   onMessageExpired: (messageId: string) => void;
   onEditMessage?: (message: DecryptedMessage) => void;
   onDeleteMessage?: (messageId: string) => void;
-  userPresence?: Record<string, UserPresence>; // Add userPresence prop
+  userPresence?: Record<string, UserPresence>; 
 }
 
 export const MessageGroup = ({

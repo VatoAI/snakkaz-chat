@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChatHeader } from "@/components/chat/ChatHeader";
@@ -33,15 +34,14 @@ const ChatPage = () => {
   const [activeTab, setActiveTab] = useState("global");
   const [selectedFriend, setSelectedFriend] = useState<Friend | null>(null);
   const [userProfiles, setUserProfiles] = useState({});
-  const [userPresence, setUserPresence] = useState<Record<string, UserPresence>>({});
-  const [currentStatus, setCurrentStatus] = useState<UserStatus>('online');
   const [hidden, setHidden] = useState(false);
   const isMobile = useIsMobile();
 
-  const { handleStatusChange } = usePresence(
+  // Use the centralized usePresence hook
+  const { currentStatus, handleStatusChange, userPresence } = usePresence(
     user?.id,
-    currentStatus,
-    setUserPresence,
+    'online',
+    undefined,
     hidden
   );
 
@@ -175,7 +175,7 @@ const ChatPage = () => {
           userPresence={userPresence}
           currentUserId={user.id}
           currentStatus={currentStatus}
-          onStatusChange={setCurrentStatus}
+          onStatusChange={handleStatusChange}
           webRTCManager={webRTCManager}
           directMessages={directMessages}
           onNewMessage={handleStartEditMessage}
