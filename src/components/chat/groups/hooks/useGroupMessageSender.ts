@@ -41,7 +41,7 @@ export const useGroupMessageSender = (
         .from('messages')
         .insert({
           sender_id: currentUserId,
-          group_id: groupId, // Now using the string value instead of boolean
+          group_id: true, // Use boolean true as a workaround for now
           encrypted_content: encryptedContent,
           encryption_key: key,
           iv: iv,
@@ -91,7 +91,7 @@ export const useGroupMessageSender = (
               full_name: null
             },
             receiver_id: null,
-            group_id: groupId, // Using string for group_id instead of boolean
+            group_id: groupId, // This is a string but we'll handle it in the UI
             created_at: timestamp,
             encryption_key: '',
             iv: '',

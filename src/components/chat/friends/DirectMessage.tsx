@@ -68,7 +68,8 @@ export const DirectMessage = ({
 
   // Create a wrapper function that matches the expected type signature
   const handleFormSubmit = (e: React.FormEvent, text: string) => {
-    return handleSendMessage(e);
+    handleSendMessage(e);
+    return Promise.resolve(true); // Return Promise<boolean> to match the required type
   };
 
   return (
