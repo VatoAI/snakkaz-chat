@@ -17,6 +17,7 @@ import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 import { UserStatus } from "@/types/presence";
 import { usePresence } from "@/components/chat/hooks/usePresence";
 import { useStatusRefresh } from "@/hooks/useStatusRefresh";
+import { supabase } from "@/integrations/supabase/client";
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -39,7 +40,6 @@ const Profile = () => {
   const { validateUsername } = useProfileValidation();
   const { user } = useAuth();
 
-  // Use the centralized usePresence hook
   const { currentStatus, handleStatusChange, userPresence } = usePresence(
     user?.id,
     'online',
@@ -47,7 +47,6 @@ const Profile = () => {
     false
   );
 
-  // Upload avatar
   const uploadAvatar = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
       setUploading(true);
@@ -67,7 +66,6 @@ const Profile = () => {
 
       if (uploadError) throw uploadError;
 
-      // Update profile with new avatar url
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ avatar_url: filePath })
@@ -77,7 +75,6 @@ const Profile = () => {
 
       setAvatarUrl(filePath);
       
-      // Broadcast avatar update
       document.dispatchEvent(new CustomEvent('avatar-updated', {
         detail: { userId: user?.id, avatarUrl: filePath }
       }));
@@ -98,7 +95,6 @@ const Profile = () => {
     }
   };
   
-  // Update profile logic
   async function updateProfile() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
