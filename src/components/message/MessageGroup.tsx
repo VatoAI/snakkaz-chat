@@ -1,7 +1,8 @@
 
 import { DecryptedMessage } from "@/types/message";
-import { MessageBubble } from "./MessageBubble";
-import { UserPresence, UserStatus } from "@/types/presence";
+import { UserPresence } from "@/types/presence";
+import { useMessageGrouping } from "@/hooks/useMessageGrouping";
+import { MessageGroupContent } from "./MessageGroupContent";
 
 interface MessageGroupProps {
   messages: DecryptedMessage[];
@@ -20,25 +21,21 @@ export const MessageGroup = ({
   onDeleteMessage,
   userPresence = {}
 }: MessageGroupProps) => {
-  if (!messages || messages.length === 0) return null;
+  const { messageGroups, getUserStatus } = useMessageGrouping({ 
+    messages, 
+    userPresence 
+  });
 
-  const getUserStatus = (userId: string): UserStatus | undefined => {
-    return userPresence[userId]?.status;
-  };
+  if (!messageGroups || messageGroups.length === 0) return null;
 
   return (
-    <div className="relative group space-y-1">
-      {messages.map((message) => (
-        <MessageBubble
-          key={message.id}
-          message={message}
-          isCurrentUser={isUserMessage(message)}
-          onMessageExpired={onMessageExpired}
-          onEditMessage={onEditMessage}
-          onDeleteMessage={onDeleteMessage}
-          userStatus={getUserStatus(message.sender.id)}
-        />
-      ))}
-    </div>
+    <MessageGroupContent
+      messages={messageGroups}
+      isUserMessage={isUserMessage}
+      onMessageExpired={onMessageExpired}
+      onEditMessage={onEditMessage}
+      onDeleteMessage={onDeleteMessage}
+      getUserStatus={getUserStatus}
+    />
   );
 };
