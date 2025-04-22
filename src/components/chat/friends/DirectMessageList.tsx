@@ -33,10 +33,12 @@ export const DirectMessageList = ({
   const isSecureConnection = (connectionState === 'connected' && dataChannelState === 'open') || usingServerFallback;
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
+  // Always call useEffect regardless of messages validity
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, peerIsTyping]);
 
+  // Always define handlers
   const handleConfirmDelete = () => {
     if (confirmDelete && onDeleteMessage) {
       onDeleteMessage(confirmDelete);
@@ -44,24 +46,34 @@ export const DirectMessageList = ({
     }
   };
 
+  // Safe check for messages - render placeholder if invalid
+  const safeMessages = Array.isArray(messages) ? messages : [];
+
   return (
     <div className="flex-1 overflow-y-auto p-4 space-y-4">
       <MessageSecurityBanner 
         isSecureConnection={isSecureConnection} 
-        messagesExist={messages.length > 0} 
+        messagesExist={safeMessages.length > 0} 
       />
 
-      {messages.map((message) => (
-        <MessageItem
-          key={message.id}
-          message={message}
-          isCurrentUser={message.sender.id === currentUserId}
-          isMessageRead={isMessageRead}
-          usingServerFallback={usingServerFallback}
-          onEditMessage={onEditMessage}
-          onDeleteMessage={setConfirmDelete}
-        />
-      ))}
+      {safeMessages.map((message) => {
+        // Skip invalid messages
+        if (!message || !message.sender) {
+          return null;
+        }
+        
+        return (
+          <MessageItem
+            key={message.id}
+            message={message}
+            isCurrentUser={message.sender.id === currentUserId}
+            isMessageRead={isMessageRead}
+            usingServerFallback={usingServerFallback}
+            onEditMessage={onEditMessage}
+            onDeleteMessage={setConfirmDelete}
+          />
+        );
+      })}
       
       <TypingIndicator isTyping={peerIsTyping} />
       

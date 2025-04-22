@@ -20,24 +20,28 @@ export const MessageGroupContent = ({
   onDeleteMessage,
   getUserStatus
 }: MessageGroupContentProps) => {
-  // No early returns here - render conditionally instead
+  // Always render a container, even if messages is empty
   return (
     <div className="relative group space-y-1">
-      {messages && messages.length > 0 ? (
-        messages.map((message) => (
-          message && message.sender && (
+      {Array.isArray(messages) && messages.length > 0 ? (
+        messages.map((message, index) => (
+          message && message.sender ? (
             <MessageBubble
-              key={message.id}
+              key={message.id || `message-${index}`}
               message={message}
               isCurrentUser={isUserMessage(message)}
               onMessageExpired={onMessageExpired}
               onEditMessage={onEditMessage}
               onDeleteMessage={onDeleteMessage}
-              userStatus={getUserStatus(message.sender.id)}
+              userStatus={message.sender ? getUserStatus(message.sender.id) : undefined}
             />
+          ) : (
+            <div key={`empty-message-${index}`} className="hidden"></div>
           )
         ))
-      ) : null}
+      ) : (
+        <div className="hidden"></div>
+      )}
     </div>
   );
 };

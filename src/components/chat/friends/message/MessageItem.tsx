@@ -26,6 +26,11 @@ export const MessageItem = ({
   userStatus,
   onMessageExpired
 }: MessageItemProps) => {
+  // Handle invalid message with a placeholder
+  if (!message || !message.id || !message.sender) {
+    return <div className="hidden"></div>;
+  }
+
   return (
     <MessageContainer 
       isCurrentUser={isCurrentUser}
@@ -39,6 +44,7 @@ export const MessageItem = ({
         isMessageRead={isMessageRead}
         usingServerFallback={usingServerFallback}
         userStatus={userStatus}
+        onMessageExpired={onMessageExpired}
       />
       
       {isCurrentUser && !message.is_deleted && (

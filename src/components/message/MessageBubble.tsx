@@ -25,11 +25,7 @@ export const MessageBubble = memo(({
   onDeleteMessage,
   userStatus
 }: MessageBubbleProps) => {
-  // Ensure the component is safe even if message is invalid
-  if (!message || !message.id) {
-    return null;
-  }
-
+  // Always define handler functions regardless of if message is valid
   const handleDeleteMessageWithConfirmation = (messageId: string) => {
     if (onDeleteMessage) {
       onDeleteMessage(messageId);
@@ -37,6 +33,11 @@ export const MessageBubble = memo(({
   };
 
   const usingServerFallback = false;
+
+  // Do not return null even if message is invalid - render a placeholder instead
+  if (!message || !message.id) {
+    return <div className="hidden"></div>;
+  }
 
   return (
     <div className="relative group">
