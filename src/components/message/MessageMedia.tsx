@@ -13,12 +13,11 @@ import { FileMedia } from "./media/FileMedia";
 import { DecryptingMedia } from "./media/DecryptingMedia";
 
 interface MessageMediaProps {
-  message: import("@/types/message").DecryptedMessage;
+  message: DecryptedMessage;
   onMediaExpired?: () => void;
 }
 
 export const MessageMedia = ({ message, onMediaExpired }: MessageMediaProps) => {
-  // No changes needed here because useMediaDecryption now handles all cases
   const {
     decryptedUrl,
     isDecrypting,
@@ -68,7 +67,6 @@ export const MessageMedia = ({ message, onMediaExpired }: MessageMediaProps) => 
     );
   }
 
-  // When the image is expired (timer run out in SecureImageViewer), callback triggers onMediaExpired (delete).
   if (message.media_type?.startsWith('image/')) {
     return (
       <ImageMedia

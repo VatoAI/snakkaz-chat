@@ -25,12 +25,10 @@ export const MessageContainer = ({ children, isCurrentUser, isDeleted, message, 
         `}>
           {children}
           {message?.ephemeral_ttl && onMessageExpired && (
-            <div className="absolute bottom-1 right-2">
-              <MessageTimer 
-                message={message} 
-                onExpired={() => onMessageExpired(message.id)}
-              />
-            </div>
+            <MessageTimer 
+              message={message} 
+              onExpired={() => onMessageExpired(message.id)}
+            />
           )}
         </div>
       </div>

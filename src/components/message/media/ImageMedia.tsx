@@ -8,7 +8,7 @@ import { SecureMediaIcon } from "./SecureMediaIcon";
 interface ImageMediaProps {
   url: string;
   ttl?: number | null;
-  onExpired?: () => void; // Optional callback to signal expiry
+  onExpired?: () => void;
 }
 
 export const ImageMedia = ({ url, ttl, onExpired }: ImageMediaProps) => {
@@ -49,7 +49,7 @@ export const ImageMedia = ({ url, ttl, onExpired }: ImageMediaProps) => {
         isOpen={isViewerOpen}
         onClose={() => setIsViewerOpen(false)}
         expiresIn={ttl}
-        onExpired={onExpired} // Called if viewing TTL expires
+        onExpired={onExpired}
       />
     </div>
   );
