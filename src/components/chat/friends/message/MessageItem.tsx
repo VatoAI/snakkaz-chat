@@ -41,6 +41,9 @@ export const MessageItem = ({
       message={message}
       onMessageExpired={onMessageExpired}
       securityLevel={securityLevel}
+      userStatus={userStatus}
+      showMeta={true}
+      showTimer={true}
     >
       <MessageBodyContent
         message={message}
@@ -51,7 +54,6 @@ export const MessageItem = ({
         onMessageExpired={onMessageExpired}
         securityLevel={securityLevel}
       />
-      
       {isCurrentUser && !message.is_deleted && (
         <MessageActionsMenu 
           message={message}
