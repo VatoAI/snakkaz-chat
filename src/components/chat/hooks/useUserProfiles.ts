@@ -1,25 +1,26 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
+import { useProfileLoader } from '@/hooks/useProfileLoader';
 
 export const useUserProfiles = () => {
   const [userProfiles, setUserProfiles] = useState<Record<string, {username: string | null, avatar_url: string | null}>>({});
+  const { getProfile, loadProfile } = useProfileLoader();
 
   useEffect(() => {
     const loadUserProfiles = async () => {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('id, username, avatar_url');
+          .select('id');
           
         if (error) throw error;
         
         const profileMap: Record<string, {username: string | null, avatar_url: string | null}> = {};
         data?.forEach(profile => {
-          profileMap[profile.id] = {
-            username: profile.username,
-            avatar_url: profile.avatar_url
-          };
+          const userProfile = getProfile(profile.id);
+          profileMap[profile.id] = userProfile;
+          loadProfile(profile.id);
         });
         
         setUserProfiles(profileMap);
@@ -92,7 +93,7 @@ export const useUserProfiles = () => {
       document.removeEventListener('avatar-updated', handleAvatarUpdate);
       supabase.removeChannel(profilesChannel);
     };
-  }, []);
+  }, [getProfile, loadProfile]);
 
   return { userProfiles, setUserProfiles };
 };
