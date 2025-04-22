@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Users } from "lucide-react";
 import { UserPresence, UserStatus } from "@/types/presence";
@@ -38,21 +39,6 @@ export const OnlineUsers = ({
   const { toast } = useToast();
   
   const onlineCount = Object.keys(userPresence).length;
-  
-  const usersToDisplay = Object.entries(userPresence)
-    .filter(([userId]) => userId !== currentUserId)
-    .map(([userId, presence]) => {
-      const isFriend = friends.includes(userId);
-      const displayName = userProfiles[userId]?.username || userId.substring(0, 8);
-      
-      return {
-        id: userId,
-        username: displayName,
-        status: presence.status,
-        isOnline: true,
-        isFriend
-      };
-    });
 
   return (
     <div className="flex flex-col gap-2">
@@ -85,3 +71,4 @@ export const OnlineUsers = ({
     </div>
   );
 };
+
