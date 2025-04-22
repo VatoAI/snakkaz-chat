@@ -22,6 +22,11 @@ export const MessageBodyContent = ({
   userStatus,
   onMessageExpired
 }: MessageBodyContentProps) => {
+  if (!message || !message.sender) {
+    // Return a minimal empty component instead of null to maintain component structure
+    return <div className="hidden"></div>;
+  }
+
   return (
     <div className="space-y-2">
       <MessageMetadata 

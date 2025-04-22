@@ -22,7 +22,7 @@ export const MessageGroup = ({
   userPresence = {}
 }: MessageGroupProps) => {
   // Always call hooks unconditionally - don't return early before calling hooks
-  const { getUserStatus } = useMessageGrouping({ 
+  const { messages: safeMessages, getUserStatus } = useMessageGrouping({ 
     messages, 
     userPresence 
   });
@@ -30,9 +30,9 @@ export const MessageGroup = ({
   // No early returns - render conditionally instead
   return (
     <>
-      {messages && messages.length > 0 ? (
+      {safeMessages && safeMessages.length > 0 ? (
         <MessageGroupContent
-          messages={messages}
+          messages={safeMessages}
           isUserMessage={isUserMessage}
           onMessageExpired={onMessageExpired}
           onEditMessage={onEditMessage}

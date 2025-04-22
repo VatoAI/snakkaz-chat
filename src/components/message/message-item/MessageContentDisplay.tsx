@@ -10,6 +10,11 @@ interface MessageContentDisplayProps {
 }
 
 export const MessageContentDisplay = memo(({ message }: MessageContentDisplayProps) => {
+  // Handle missing or invalid message gracefully to prevent hooks issues
+  if (!message) {
+    return <div className="h-4"></div>;
+  }
+
   const isDeleted = message.is_deleted;
   const isMobile = useIsMobile();
   const { notify } = useNotifications();
@@ -24,7 +29,7 @@ export const MessageContentDisplay = memo(({ message }: MessageContentDisplayPro
 
         if (isNewMessage) {
           notify("Ny melding", {
-            body: isDeleted ? "Denne meldingen er slettet" : message.content,
+            body: isDeleted ? "Denne meldingen ble slettet" : message.content,
             icon: "/snakkaz-logo.png"
           });
         }

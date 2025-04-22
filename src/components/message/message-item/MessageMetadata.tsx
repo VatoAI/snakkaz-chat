@@ -21,6 +21,11 @@ export const MessageMetadata = ({
   usingServerFallback,
   userStatus
 }: MessageMetadataProps) => {
+  if (!message || !message.sender) {
+    // Return empty metadata instead of null to maintain component structure
+    return <div className="h-5"></div>;
+  }
+
   return (
     <div className="flex items-center gap-2 text-xs">
       <div className="flex items-center gap-1.5">
