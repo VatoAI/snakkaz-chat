@@ -4,7 +4,7 @@ import { MessageContentDisplay } from "@/components/message/message-item/Message
 import { MessageMetadata } from "@/components/message/message-item/MessageMetadata";
 import { MessageActionsMenu } from "@/components/message/message-item/MessageActionsMenu";
 import { UserStatus } from "@/types/presence";
-import { StatusIcon } from "@/components/online-users/StatusIcons";
+import { MessageTimer } from "@/components/message/MessageTimer";
 
 interface MessageItemProps {
   message: DecryptedMessage;
@@ -14,6 +14,7 @@ interface MessageItemProps {
   onEditMessage?: (message: DecryptedMessage) => void;
   onDeleteMessage?: (messageId: string) => void;
   userStatus?: UserStatus;
+  onMessageExpired?: (messageId: string) => void;
 }
 
 export const MessageItem = ({
@@ -23,7 +24,8 @@ export const MessageItem = ({
   usingServerFallback,
   onEditMessage,
   onDeleteMessage,
-  userStatus
+  userStatus,
+  onMessageExpired
 }: MessageItemProps) => {
   return (
     <div className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'} my-2`}>
@@ -37,23 +39,26 @@ export const MessageItem = ({
           ${message.is_deleted ? 'opacity-50 italic' : ''}
           backdrop-blur-sm hover:shadow-neon-blue/10
         `}>
-          <div className="flex items-center gap-2 mb-2">
-            {userStatus && (
-              <StatusIcon status={userStatus} size={3} className="mt-0.5" />
-            )}
-            <span className="text-sm font-medium">
-              {message.sender.username || message.sender.id.substring(0, 8)}
-            </span>
+          <div className="flex flex-col gap-2">
+            <MessageContentDisplay message={message} />
+            
+            <div className="flex items-center gap-2 mt-1">
+              <MessageMetadata 
+                message={message}
+                isMessageRead={isMessageRead}
+                isCurrentUser={isCurrentUser}
+                usingServerFallback={usingServerFallback}
+                userStatus={userStatus}
+              />
+              
+              {message.ephemeral_ttl && onMessageExpired && (
+                <MessageTimer 
+                  message={message} 
+                  onExpired={onMessageExpired}
+                />
+              )}
+            </div>
           </div>
-          
-          <MessageContentDisplay message={message} />
-          
-          <MessageMetadata 
-            message={message}
-            isMessageRead={isMessageRead}
-            isCurrentUser={isCurrentUser}
-            usingServerFallback={usingServerFallback}
-          />
         </div>
         
         {isCurrentUser && !message.is_deleted && (

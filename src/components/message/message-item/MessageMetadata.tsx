@@ -1,32 +1,53 @@
+
 import { DecryptedMessage } from "@/types/message";
 import { Check, CheckCheck, Lock } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { UserStatus } from "@/types/presence";
+import { StatusIcon } from "@/components/online-users/StatusIcons";
 
 interface MessageMetadataProps {
   message: DecryptedMessage;
   isMessageRead?: (messageId: string) => boolean;
   isCurrentUser: boolean;
   usingServerFallback: boolean;
+  userStatus?: UserStatus;
 }
 
 export const MessageMetadata = ({ 
   message, 
   isMessageRead, 
   isCurrentUser,
-  usingServerFallback 
+  usingServerFallback,
+  userStatus
 }: MessageMetadataProps) => {
   return (
-    <div className="flex items-center gap-2 mt-2">
-      <p className="text-xs opacity-80">
-        {new Date(message.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-      </p>
-      
+    <div className="flex items-center gap-2 text-xs">
+      <div className="flex items-center gap-1.5">
+        {userStatus && (
+          <StatusIcon status={userStatus} size={3} />
+        )}
+        <span className="font-medium opacity-90">
+          {message.sender.username || message.sender.id.substring(0, 8)}
+        </span>
+      </div>
+
+      <span className="opacity-80">•</span>
+      <span className="opacity-80">
+        {new Date(message.created_at).toLocaleTimeString([], {
+          hour: '2-digit',
+          minute: '2-digit'
+        })}
+      </span>
+
       {message.is_edited && !message.is_deleted && (
-        <span className="text-xs opacity-70">(redigert)</span>
+        <>
+          <span className="opacity-80">•</span>
+          <span className="opacity-70">(redigert)</span>
+        </>
       )}
-      
-      <div className="flex items-center gap-1">
-        {message.is_encrypted || usingServerFallback ? (
+
+      <div className="flex items-center gap-1 ml-auto">
+        {(message.is_encrypted || usingServerFallback) && (
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -37,7 +58,7 @@ export const MessageMetadata = ({
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
-        ) : null}
+        )}
         
         {isCurrentUser && (
           <TooltipProvider>
