@@ -24,6 +24,7 @@ export const MessageList = ({
   currentUserId,
   onEditMessage,
   onDeleteMessage,
+  userPresence = {} // Add this new prop
 }: MessageListProps) => {
   const isMobile = useIsMobile();
 
@@ -138,6 +139,7 @@ export const MessageList = ({
           setConfirmDelete={setConfirmDelete}
           handleDelete={DialogUI.props.onConfirm}
           isDeleting={isDeleting}
+          userPresence={userPresence}  // Pass the user presence data
         />
         {DialogUI}
       </div>

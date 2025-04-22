@@ -2,6 +2,7 @@
 import { MessageList } from "@/components/message-list/MessageList";
 import { MessageInput } from "@/components/MessageInput";
 import { DecryptedMessage } from "@/types/message";
+import { UserPresence } from "@/types/presence";
 
 interface ChatGlobalProps {
   messages: DecryptedMessage[];
@@ -17,6 +18,7 @@ interface ChatGlobalProps {
   onEditMessage: (message: { id: string; content: string }) => void;
   onCancelEdit: () => void;
   onDeleteMessage: (messageId: string) => void;
+  userPresence: Record<string, UserPresence>;  // Add this new prop
 }
 
 export const ChatGlobal = ({
@@ -32,7 +34,8 @@ export const ChatGlobal = ({
   editingMessage,
   onEditMessage,
   onCancelEdit,
-  onDeleteMessage
+  onDeleteMessage,
+  userPresence
 }: ChatGlobalProps) => {
   return (
     <div className="h-full flex flex-col">
@@ -43,6 +46,7 @@ export const ChatGlobal = ({
           currentUserId={currentUserId}
           onEditMessage={onEditMessage}
           onDeleteMessage={onDeleteMessage}
+          userPresence={userPresence}  // Pass user presence data
         />
       </div>
 
