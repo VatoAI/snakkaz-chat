@@ -20,6 +20,8 @@ export const MessageGroupContent = ({
   onDeleteMessage,
   getUserStatus
 }: MessageGroupContentProps) => {
+  if (!messages || messages.length === 0) return null;
+  
   return (
     <div className="relative group space-y-1">
       {messages.map((message) => (

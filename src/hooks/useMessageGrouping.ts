@@ -13,6 +13,7 @@ export const useMessageGrouping = ({ messages, userPresence = {} }: UseMessageGr
     return userPresence[userId]?.status;
   };
 
+  // Since we're no longer grouping, just return the messages directly
   const messageGroups = useMemo(() => {
     if (!messages || messages.length === 0) return [];
     return messages;

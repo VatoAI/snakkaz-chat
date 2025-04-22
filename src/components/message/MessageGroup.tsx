@@ -26,11 +26,11 @@ export const MessageGroup = ({
     userPresence 
   });
 
-  if (!messageGroups || messageGroups.length === 0) return null;
+  if (!messages || messages.length === 0) return null;
 
   return (
     <MessageGroupContent
-      messages={messageGroups}
+      messages={messages}
       isUserMessage={isUserMessage}
       onMessageExpired={onMessageExpired}
       onEditMessage={onEditMessage}
