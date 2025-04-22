@@ -21,14 +21,22 @@ export const SubmitButton = ({
     <Button 
       type="submit" 
       disabled={isLoading || (!newMessage.trim() && !selectedFile) || isRecording}
-      className="w-full sm:w-auto bg-cybergold-500 hover:bg-cybergold-600 text-cyberdark-900 shadow-neon-gold transition-all duration-300 flex items-center justify-center gap-2"
+      className="w-full sm:w-auto bg-cybergold-500 hover:bg-cybergold-600 text-cyberdark-900 shadow-neon-gold transition-all duration-300 flex items-center justify-center gap-2 font-semibold"
     >
-      <Send className="w-4 h-4" />
+      <Send className="w-4 h-4 text-cyberdark-900" />
       <span className="sm:hidden">
-        {editingMessage ? "Oppdater" : "Send"}
+        {editingMessage ? (
+          <span className="text-cyberdark-900">Oppdater</span>
+        ) : (
+          <span className="text-cyberdark-900">Send</span>
+        )}
       </span>
       <span className="hidden sm:inline">
-        {editingMessage ? "Oppdater" : "Send"}
+        {editingMessage ? (
+          <span className="text-cyberdark-900">Oppdater</span>
+        ) : (
+          <span className="text-cyberdark-900">Send</span>
+        )}
       </span>
     </Button>
   );

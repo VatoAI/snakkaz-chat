@@ -22,8 +22,9 @@ export function UserAvatar({
   status = "online",
   className
 }: UserAvatarProps) {
-  const initials = username ? username.slice(0,2).toUpperCase() : "SZ";
-  
+  // Only compute initials if NO avatarUrl. Never render initials if avatar is present!
+  const initials = !avatarUrl && username ? username.slice(0,2).toUpperCase() : "";
+
   const statusColors = {
     online: "bg-cyberblue-400",
     busy: "bg-cyberred-500",
@@ -50,32 +51,14 @@ export function UserAvatar({
         style={{ width: size, height: size }}
       >
         {avatarUrl ? (
-          // Render image 100% in back and initials on top with glass effect
-          <>
-            <AvatarImage
-              src={avatarUrl}
-              alt={username || "SnakkaZ"}
-              className="absolute inset-0 w-full h-full object-cover opacity-60 blur-[1px] scale-105"
-            />
-            <div className={cn(
-              "relative flex items-center justify-center h-full w-full z-10 pointer-events-none"
-            )}>
-              <span
-                className={cn(
-                  "text-cybergold-100 text-lg font-bold",
-                  "drop-shadow-[0_0_10px_rgba(26,157,255,0.3)]",
-                  glassEffect
-                )}
-                style={{
-                  fontSize: Math.round(size * 0.48)
-                }}
-              >
-                {initials}
-              </span>
-            </div>
-          </>
+          // Show only image, status ring overlays, NO initials on top of avatar!
+          <AvatarImage
+            src={avatarUrl}
+            alt={username || "Avatar"}
+            className="absolute inset-0 w-full h-full object-cover"
+          />
         ) : (
-          <AvatarFallback className="bg-cyberdark-800 text-cybergold-300">
+          <AvatarFallback className="bg-cyberdark-800 text-cybergold-300 text-lg font-bold">
             {initials}
           </AvatarFallback>
         )}
