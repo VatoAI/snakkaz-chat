@@ -22,10 +22,9 @@ interface MessageListContentProps {
   setConfirmDelete: (id: string | null) => void;
   handleDelete: () => Promise<void>;
   isDeleting?: boolean;
-  userPresence?: Record<string, UserPresence>; // Add userPresence as optional prop
+  userPresence?: Record<string, UserPresence>;
 }
 
-// Use React.memo to prevent unnecessary re-renders
 export const MessageListContent = memo(({
   messageGroups,
   isUserMessage,
@@ -41,7 +40,7 @@ export const MessageListContent = memo(({
   setConfirmDelete,
   handleDelete,
   isDeleting = false,
-  userPresence = {} // Add default value
+  userPresence = {}
 }: MessageListContentProps) => {
   return (
     <>
@@ -55,7 +54,7 @@ export const MessageListContent = memo(({
         onDelete={onDelete}
         messagesEndRef={messagesEndRef}
         isMobile={isMobile}
-        userPresence={userPresence} // Pass userPresence to MessageGroups
+        userPresence={userPresence}
       />
 
       <ScrollToBottomButton

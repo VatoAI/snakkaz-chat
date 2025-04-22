@@ -1,8 +1,6 @@
 
 import { memo } from "react";
 import { DecryptedMessage } from "@/types/message";
-import { MessageTimer } from "./MessageTimer";
-import { MessageActions } from "@/components/message/MessageActions";
 import { UserStatus } from "@/types/presence";
 import { SecurityLevel } from "@/types/security";
 import { MessageItem } from "@/components/chat/friends/message/MessageItem";

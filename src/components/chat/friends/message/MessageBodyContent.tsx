@@ -2,6 +2,7 @@
 import { DecryptedMessage } from "@/types/message";
 import { UserStatus } from "@/types/presence";
 import { SecurityLevel } from "@/types/security";
+import { MessageMedia } from "@/components/message/MessageMedia";
 
 export interface MessageBodyContentProps {
   message: DecryptedMessage;
@@ -10,7 +11,7 @@ export interface MessageBodyContentProps {
   usingServerFallback: boolean;
   userStatus?: UserStatus;
   onMessageExpired?: (messageId: string) => void;
-  securityLevel?: SecurityLevel; // Added securityLevel prop
+  securityLevel?: SecurityLevel;
 }
 
 export const MessageBodyContent = ({
@@ -34,7 +35,18 @@ export const MessageBodyContent = ({
     <div>
       <div className="break-words">
         {message.content}
+        {message.is_edited && (
+          <span className="text-[10px] text-cyberdark-400 ml-1">(redigert)</span>
+        )}
       </div>
+      
+      {message.media_url && (
+        <MessageMedia 
+          message={message} 
+          onMediaExpired={() => onMessageExpired && onMessageExpired(message.id)} 
+        />
+      )}
+      
       <div className="flex justify-end items-center mt-1 gap-1 text-xs text-gray-400">
         <span>
           {new Date(message.created_at).toLocaleTimeString([], {

@@ -1,3 +1,4 @@
+
 import { useEffect, useCallback, useMemo } from "react";
 import { DecryptedMessage } from "@/types/message";
 import { groupMessages } from "@/utils/message-grouping";
@@ -16,7 +17,7 @@ interface MessageListProps {
   currentUserId?: string | null;
   onEditMessage?: (message: DecryptedMessage) => void;
   onDeleteMessage?: (messageId: string) => void;
-  userPresence?: Record<string, UserPresence>; // Add userPresence prop
+  userPresence?: Record<string, UserPresence>;
 }
 
 export const MessageList = ({
@@ -25,7 +26,7 @@ export const MessageList = ({
   currentUserId,
   onEditMessage,
   onDeleteMessage,
-  userPresence = {} // Add default value
+  userPresence = {}
 }: MessageListProps) => {
   const isMobile = useIsMobile();
 
@@ -140,7 +141,7 @@ export const MessageList = ({
           setConfirmDelete={setConfirmDelete}
           handleDelete={DialogUI.props.onConfirm}
           isDeleting={isDeleting}
-          userPresence={userPresence}  // Pass userPresence to MessageListContent
+          userPresence={userPresence}
         />
         {DialogUI}
       </div>

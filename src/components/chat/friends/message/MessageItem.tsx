@@ -37,7 +37,7 @@ export const MessageItem = ({
   return (
     <MessageContainer 
       isCurrentUser={isCurrentUser}
-      isDeleted={message.is_deleted}
+      isDeleted={message.is_deleted || false}
       message={message}
       onMessageExpired={onMessageExpired}
       securityLevel={securityLevel}
