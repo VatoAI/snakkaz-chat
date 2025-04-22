@@ -125,7 +125,7 @@ export type Database = {
           encrypted_content: string
           encryption_key: string | null
           ephemeral_ttl: number | null
-          group_id: boolean | null
+          group_id: string | null
           id: string
           is_deleted: boolean | null
           is_delivered: boolean | null
@@ -148,7 +148,7 @@ export type Database = {
           encrypted_content: string
           encryption_key?: string | null
           ephemeral_ttl?: number | null
-          group_id?: boolean | null
+          group_id?: string | null
           id?: string
           is_deleted?: boolean | null
           is_delivered?: boolean | null
@@ -171,7 +171,7 @@ export type Database = {
           encrypted_content?: string
           encryption_key?: string | null
           ephemeral_ttl?: number | null
-          group_id?: boolean | null
+          group_id?: string | null
           id?: string
           is_deleted?: boolean | null
           is_delivered?: boolean | null

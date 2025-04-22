@@ -97,7 +97,7 @@ export const useMessageSender = (
           media_url: mediaUrl,
           media_type: mediaType,
           receiver_id: receiverId,
-          group_id: groupId ? true : null,
+          group_id: groupId || null, // Now handling as string
           is_edited: false,
           is_deleted: false,
           media_encryption_key: encryptionKey,

@@ -1,4 +1,3 @@
-
 import { useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { DecryptedMessage } from "@/types/message";
@@ -18,7 +17,7 @@ export const useMessageFetch = (
     }
 
     try {
-      // Først, kontroller at nødvendige kolonner eksisterer
+      // First, check if necessary columns exist
       try {
         await supabase.rpc('check_and_add_columns', { 
           p_table_name: 'messages', 
@@ -28,7 +27,7 @@ export const useMessageFetch = (
         console.log('Error checking columns, continuing anyway:', error);
       }
 
-      // Nå kan vi hente meldingene
+      // Now we can fetch the messages
       let query = supabase
         .from('messages')
         .select(`
@@ -57,16 +56,16 @@ export const useMessageFetch = (
         `)
         .order('created_at', { ascending: true });
 
-      // Hvis receiverId er angitt, hent bare meldinger mellom bruker og mottaker
+      // If receiverId is specified, only fetch messages between user and receiver
       if (receiverId) {
         query = query.or(`and(sender_id.eq.${userId},receiver_id.eq.${receiverId}),and(sender_id.eq.${receiverId},receiver_id.eq.${userId})`);
       } 
-      // Hvis groupId er angitt, hent bare meldinger for den gruppen
+      // If groupId is specified, only fetch messages for that group
       else if (groupId) {
-        // Konverter groupId til true siden kolonnen er boolsk
-        query = query.eq('group_id', true);
+        // Now using string for group_id
+        query = query.eq('group_id', groupId);
       } 
-      // Ellers, hent globale meldinger (null receiver og null group)
+      // Otherwise, fetch global messages (null receiver and null group)
       else {
         query = query.is('receiver_id', null).is('group_id', null);
       }
@@ -81,7 +80,7 @@ export const useMessageFetch = (
       const decryptedMessages: (DecryptedMessage | null)[] = await Promise.all(
         (data || []).map(async (message: any) => {
           try {
-            // Sjekk om meldingen har gått ut på dato
+            // Check if message has expired
             if (message.ephemeral_ttl) {
               const createdAt = new Date(message.created_at).getTime();
               const expiresAt = createdAt + (message.ephemeral_ttl * 1000);
