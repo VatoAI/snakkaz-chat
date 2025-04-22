@@ -24,6 +24,14 @@ export const MessageBodyContent = ({
 }: MessageBodyContentProps) => {
   return (
     <div className="space-y-2">
+      <MessageMetadata 
+        message={message}
+        isMessageRead={isMessageRead}
+        isCurrentUser={isCurrentUser}
+        usingServerFallback={usingServerFallback}
+        userStatus={userStatus}
+      />
+      
       <MessageContentDisplay message={message} />
       
       {message.media_url && (
@@ -32,16 +40,6 @@ export const MessageBodyContent = ({
           onMediaExpired={() => onMessageExpired?.(message.id)} 
         />
       )}
-      
-      <div className="flex items-center gap-2 mt-1">
-        <MessageMetadata 
-          message={message}
-          isMessageRead={isMessageRead}
-          isCurrentUser={isCurrentUser}
-          usingServerFallback={usingServerFallback}
-          userStatus={userStatus}
-        />
-      </div>
     </div>
   );
 };

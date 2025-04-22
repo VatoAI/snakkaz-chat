@@ -4,6 +4,7 @@ import { Check, CheckCheck, Lock } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { UserStatus } from "@/types/presence";
 import { StatusIcon } from "@/components/online-users/StatusIcons";
+import { cn } from "@/lib/utils";
 
 interface MessageMetadataProps {
   message: DecryptedMessage;
