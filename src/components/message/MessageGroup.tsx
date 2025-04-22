@@ -1,89 +1,58 @@
 
-import { memo } from "react";
 import { DecryptedMessage } from "@/types/message";
 import { MessageBubble } from "./MessageBubble";
-import { MessageActions } from "./MessageActions";
+import { UserPresence, UserStatus } from "@/types/presence";
 
 interface MessageGroupProps {
   messages: DecryptedMessage[];
-  isCurrentUser: boolean;
+  isUserMessage: (message: DecryptedMessage) => boolean;
   onMessageExpired: (messageId: string) => void;
-  onEdit: (message: DecryptedMessage) => void;
-  onDelete: (messageId: string) => void;
-  isMobile?: boolean;
+  onEditMessage?: (message: DecryptedMessage) => void;
+  onDeleteMessage?: (messageId: string) => void;
+  userPresence?: Record<string, UserPresence>; // Add userPresence prop
 }
 
-// Use memo to prevent unnecessary rerenders
-export const MessageGroup = memo(({
+export const MessageGroup = ({
   messages,
-  isCurrentUser,
+  isUserMessage,
   onMessageExpired,
-  onEdit,
-  onDelete,
-  isMobile = false,
+  onEditMessage,
+  onDeleteMessage,
+  userPresence = {} // Add default value
 }: MessageGroupProps) => {
   if (!messages || messages.length === 0) return null;
 
-  // First message in group
+  // Get the sender for the time display (header)
   const firstMessage = messages[0];
+  const senderName = firstMessage.sender?.username || firstMessage.sender?.id?.substring(0, 8) || 'Unknown';
+  const date = new Date(firstMessage.created_at);
+  const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-  // Get username for this group
-  const username = firstMessage.sender?.username || firstMessage.sender?.full_name || "Unknown";
-
-  // Avatar URL for this message group
-  const avatarUrl = firstMessage.sender?.avatar_url || "/placeholder.svg";
+  // Get user status from presence data
+  const getUserStatus = (userId: string): UserStatus | undefined => {
+    return userPresence[userId]?.status;
+  };
 
   return (
-    <div className="message-group flex flex-col transition-opacity">
-      {/* Sender info */}
-      <div className={`flex items-center gap-2 mb-1 px-2 ${isCurrentUser ? "justify-end" : "justify-start"}`}>
-        {!isCurrentUser && (
-          <div className="flex-shrink-0 w-6 h-6 overflow-hidden rounded-full bg-cyberdark-700">
-            <img
-              src={avatarUrl}
-              alt={username}
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                e.currentTarget.src = "/placeholder.svg";
-              }}
-            />
-          </div>
-        )}
-        <span className={`text-xs ${isCurrentUser ? "text-cyberblue-300" : "text-cyberred-300"}`}>
-          {username}
+    <div className="relative group">
+      <div className="text-xs text-center mb-2 text-cyberdark-400">
+        <span className="px-2 py-0.5 rounded-full bg-cyberdark-800/50 backdrop-blur-sm">
+          {senderName} • {timeString}
         </span>
       </div>
-
-      {/* Messages */}
-      <div className={`flex flex-col gap-1 ${isCurrentUser ? "items-end" : "items-start"}`}>
-        {messages.map((message, messageIndex) => (
-          <div
+      <div className="space-y-2">
+        {messages.map((message) => (
+          <MessageBubble
             key={message.id}
-            className={`group relative max-w-[85%] ${isMobile ? "max-w-[90%]" : ""}`}
-          >
-            <MessageBubble 
-              message={message}
-              isCurrentUser={isCurrentUser}
-              messageIndex={messageIndex}
-              onMessageExpired={onMessageExpired}
-              onEdit={onEdit}
-              onDelete={onDelete}
-            />
-
-            {isCurrentUser && !message.is_deleted && (
-              <div className="absolute right-0 top-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                <MessageActions 
-                  message={message} 
-                  onEdit={onEdit} 
-                  onDelete={onDelete}
-                />
-              </div>
-            )}
-          </div>
+            message={message}
+            isCurrentUser={isUserMessage(message)}
+            onMessageExpired={onMessageExpired}
+            onEditMessage={onEditMessage}
+            onDeleteMessage={onDeleteMessage}
+            userStatus={getUserStatus(message.sender.id)} // Pass user status
+          />
         ))}
       </div>
     </div>
   );
-});
-
-MessageGroup.displayName = 'MessageGroup';
+};

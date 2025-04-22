@@ -1,61 +1,72 @@
 
+import { memo } from "react";
 import { DecryptedMessage } from "@/types/message";
 import { MessageContent } from "./MessageContent";
-import { Clock } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { MessageTimer } from "./MessageTimer";
+import { MessageActions } from "@/components/message/MessageActions";
+import { UserStatus } from "@/types/presence";
+import { MessageItem } from "@/components/chat/friends/message/MessageItem";
 
 interface MessageBubbleProps {
   message: DecryptedMessage;
   isCurrentUser: boolean;
-  messageIndex: number;
-  onMessageExpired: (messageId: string) => void;
-  onEdit: (message: DecryptedMessage) => void;
-  onDelete: (messageId: string) => void;
+  onMessageExpired?: (messageId: string) => void;
+  isMessageRead?: (messageId: string) => boolean;
+  onEditMessage?: (message: DecryptedMessage) => void;
+  onDeleteMessage?: (messageId: string) => void;
+  userStatus?: UserStatus; // Add userStatus prop
 }
 
-export const MessageBubble = ({ 
-  message, 
-  isCurrentUser, 
-  messageIndex,
+export const MessageBubble = memo(({
+  message,
+  isCurrentUser,
   onMessageExpired,
-  onEdit,
-  onDelete
+  isMessageRead,
+  onEditMessage,
+  onDeleteMessage,
+  userStatus // Add userStatus prop
 }: MessageBubbleProps) => {
-  const ttlIsFixed = true;
-  const isAutoDelete = message.ephemeral_ttl ? true : false;
+  const handleDeleteMessageWithConfirmation = (messageId: string) => {
+    if (onDeleteMessage) {
+      onDeleteMessage(messageId);
+    }
+  };
+
+  const usingServerFallback = false; // This could be derived from the message or passed as a prop
+
+  if (message.ephemeral_ttl) {
+    return (
+      <div className="relative group">
+        <MessageItem
+          message={message}
+          isCurrentUser={isCurrentUser}
+          isMessageRead={isMessageRead}
+          usingServerFallback={usingServerFallback}
+          onEditMessage={onEditMessage}
+          onDeleteMessage={handleDeleteMessageWithConfirmation}
+          userStatus={userStatus} // Pass userStatus to MessageItem
+        />
+        <MessageTimer 
+          message={message} 
+          onExpired={onMessageExpired} 
+        />
+      </div>
+    );
+  }
 
   return (
-    <div 
-      className={`group relative flex mb-1 ${messageIndex === 0 ? '' : 'mt-1'}`}
-    >
-      <div 
-        className={`
-          relative py-2 px-3 rounded-md max-w-full break-words border transition-all duration-300
-          ${isCurrentUser 
-            ? 'bg-gradient-to-r from-cyberblue-900/90 via-cyberblue-800/80 to-cyberblue-900/90 text-white border-cyberblue-500/20 shadow-neon-blue hover:shadow-neon-dual' 
-            : 'bg-gradient-to-r from-cyberdark-800/90 via-cyberdark-700/80 to-cyberdark-800/90 text-cyberblue-100 border-cyberred-500/20 shadow-neon-red hover:shadow-neon-dual'
-          }
-          backdrop-blur-sm
-        `}
-      >
-        <MessageContent message={message} onMessageExpired={onMessageExpired} />
-        
-        {ttlIsFixed && (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span className="inline-flex items-center text-[10px] text-cyberdark-400 mt-1 ml-2">
-                  <Clock className="h-3 w-3 mr-1" />
-                  24t
-                </span>
-              </TooltipTrigger>
-              <TooltipContent side="top" align="center" className="text-xs bg-cyberdark-900 border-cybergold-500/30">
-                Slettes automatisk etter 24 timer
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        )}
-      </div>
+    <div className="relative group">
+      <MessageItem
+        message={message}
+        isCurrentUser={isCurrentUser}
+        isMessageRead={isMessageRead}
+        usingServerFallback={usingServerFallback}
+        onEditMessage={onEditMessage}
+        onDeleteMessage={handleDeleteMessageWithConfirmation}
+        userStatus={userStatus} // Pass userStatus to MessageItem
+      />
     </div>
   );
-};
+});
+
+MessageBubble.displayName = "MessageBubble";

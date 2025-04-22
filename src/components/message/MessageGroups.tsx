@@ -1,7 +1,7 @@
 
 import { DecryptedMessage } from "@/types/message";
 import { MessageGroup } from "./MessageGroup";
-import { memo } from 'react';
+import { UserPresence } from "@/types/presence";
 
 interface MessageGroupsProps {
   messageGroups: DecryptedMessage[][];
@@ -10,37 +10,34 @@ interface MessageGroupsProps {
   onEdit: (message: DecryptedMessage) => void;
   onDelete: (messageId: string) => void;
   messagesEndRef: React.RefObject<HTMLDivElement>;
-  isMobile?: boolean;
+  isMobile: boolean;
+  userPresence?: Record<string, UserPresence>; // Add userPresence prop
 }
 
-// Use React.memo to prevent unnecessary re-renders
-export const MessageGroups = memo(({ 
-  messageGroups, 
-  isUserMessage, 
-  onMessageExpired, 
-  onEdit, 
-  onDelete, 
+export const MessageGroups = ({
+  messageGroups,
+  isUserMessage,
+  onMessageExpired,
+  onEdit,
+  onDelete,
   messagesEndRef,
-  isMobile = false
+  isMobile,
+  userPresence = {} // Add default value
 }: MessageGroupsProps) => {
   return (
-    <div className={`space-y-2 ${isMobile ? 'pb-16' : 'sm:space-y-4'}`}>
-      {messageGroups.map((group, groupIndex) => (
-        group.length > 0 && (
-          <MessageGroup
-            key={`group-${groupIndex}-${group[0]?.id || groupIndex}`}
-            messages={group}
-            isCurrentUser={isUserMessage(group[0])}
-            onMessageExpired={onMessageExpired}
-            onEdit={onEdit}
-            onDelete={onDelete}
-            isMobile={isMobile}
-          />
-        )
+    <div className="p-2 sm:p-4 space-y-6">
+      {messageGroups.map((messages, groupIndex) => (
+        <MessageGroup
+          key={groupIndex}
+          messages={messages}
+          isUserMessage={isUserMessage}
+          onMessageExpired={onMessageExpired}
+          onEditMessage={onEdit}
+          onDeleteMessage={onDelete}
+          userPresence={userPresence} // Pass userPresence to MessageGroup
+        />
       ))}
-      <div ref={messagesEndRef} className="h-1" />
+      <div ref={messagesEndRef} />
     </div>
   );
-});
-
-MessageGroups.displayName = 'MessageGroups';
+};

@@ -1,10 +1,9 @@
-
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChatHeader } from "@/components/chat/ChatHeader";
 import { ChatTabs } from "@/components/chat/ChatTabs";
 import { useToast } from "@/components/ui/use-toast";
-import { UserStatus } from "@/types/presence";
+import { UserStatus, UserPresence } from "@/types/presence";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useMessages } from "@/hooks/useMessages";
 import { useAuth } from "@/contexts/AuthContext";
@@ -17,6 +16,7 @@ import { useWebRTCSetup } from "./hooks/useWebRTCSetup";
 import { Friend } from "@/components/chat/friends/types";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useFriends } from "@/components/chat/hooks/useFriends";
+import { usePresence } from "@/components/chat/hooks/usePresence";
 
 const ChatPage = () => {
   const { user, loading } = useAuth();
@@ -33,9 +33,17 @@ const ChatPage = () => {
   const [activeTab, setActiveTab] = useState("global");
   const [selectedFriend, setSelectedFriend] = useState<Friend | null>(null);
   const [userProfiles, setUserProfiles] = useState({});
-  const [userPresence, setUserPresence] = useState({});
+  const [userPresence, setUserPresence] = useState<Record<string, UserPresence>>({});
   const [currentStatus, setCurrentStatus] = useState<UserStatus>('online');
+  const [hidden, setHidden] = useState(false);
   const isMobile = useIsMobile();
+
+  const { handleStatusChange } = usePresence(
+    user?.id,
+    currentStatus,
+    setUserPresence,
+    hidden
+  );
 
   const {
     messages,
@@ -144,6 +152,10 @@ const ChatPage = () => {
     }
   };
 
+  const handleToggleHidden = () => {
+    setHidden(!hidden);
+  };
+
   if (loading || !user || !isReady) {
     return <LoadingScreen />;
   }
@@ -196,6 +208,7 @@ const ChatPage = () => {
             userProfiles={userProfiles}
             handleCloseDirectChat={() => setSelectedFriend(null)}
             setSelectedFriend={setSelectedFriend}
+            userPresence={userPresence}
           />
         </div>
         <MigrationHelper />

@@ -9,6 +9,7 @@ import { DecryptedMessage } from '@/types/message';
 import { WebRTCManager } from '@/utils/webrtc';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { FriendsContainer } from './friends/FriendsContainer';
+import { UserPresence } from "@/types/presence";
 
 interface ChatTabsProps {
   activeTab: string;
@@ -33,6 +34,7 @@ interface ChatTabsProps {
   userProfiles: Record<string, {username: string | null, avatar_url: string | null}>;
   handleCloseDirectChat: () => void;
   setSelectedFriend: (friend: Friend | null) => void;
+  userPresence?: Record<string, UserPresence>;
 }
 
 export const ChatTabs = ({ 
@@ -57,14 +59,14 @@ export const ChatTabs = ({
   webRTCManager,
   userProfiles,
   handleCloseDirectChat,
-  setSelectedFriend
+  setSelectedFriend,
+  userPresence = {}
 }: ChatTabsProps) => {
   useTabShortcuts(setActiveTab, activeTab, !!selectedFriend);
 
-  // Helper function to ensure proper tab and friend state
   const handleTabChange = (newTab: string) => {
     if (newTab === 'direct' && !selectedFriend) {
-      return; // Don't switch to direct tab without a selected friend
+      return;
     }
     setActiveTab(newTab);
   };
@@ -102,6 +104,7 @@ export const ChatTabs = ({
                 onEditMessage={onEditMessage}
                 onCancelEdit={onCancelEdit}
                 onDeleteMessage={onDeleteMessage}
+                userPresence={userPresence}
               />
             </TabsContent>
 
@@ -115,7 +118,6 @@ export const ChatTabs = ({
                 directMessages={directMessages}
                 onNewMessage={onNewMessage}
                 onStartChat={(userId: string) => {
-                  // Find friend data
                   const friendProfile = userProfiles[userId];
                   if (friendProfile) {
                     const friend = {
@@ -131,8 +133,8 @@ export const ChatTabs = ({
                         full_name: null
                       }
                     };
-                    handleTabChange('direct'); // Change tab first
-                    setSelectedFriend(friend); // Then set friend
+                    handleTabChange('direct');
+                    setSelectedFriend(friend);
                   }
                 }}
                 userProfiles={userProfiles}
@@ -170,8 +172,8 @@ export const ChatTabs = ({
                   currentUserId={currentUserId || ''}
                   webRTCManager={webRTCManager}
                   onBack={() => {
-                    handleCloseDirectChat(); // Clear selected friend
-                    handleTabChange('private'); // Go back to private chats
+                    handleCloseDirectChat();
+                    handleTabChange('private');
                   }}
                   messages={directMessages}
                   onNewMessage={onNewMessage}

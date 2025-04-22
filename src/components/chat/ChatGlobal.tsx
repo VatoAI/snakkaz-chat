@@ -18,7 +18,7 @@ interface ChatGlobalProps {
   onEditMessage: (message: { id: string; content: string }) => void;
   onCancelEdit: () => void;
   onDeleteMessage: (messageId: string) => void;
-  userPresence: Record<string, UserPresence>;  // Add this new prop
+  userPresence: Record<string, UserPresence>;  // Ensure this prop is required
 }
 
 export const ChatGlobal = ({

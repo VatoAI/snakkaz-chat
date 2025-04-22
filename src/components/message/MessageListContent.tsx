@@ -5,6 +5,7 @@ import { MessageGroups } from "./MessageGroups";
 import { ScrollToBottomButton } from "./ScrollToBottomButton";
 import { DeleteMessageDialog } from "./DeleteMessageDialog";
 import { memo } from 'react';
+import { UserPresence } from "@/types/presence";
 
 interface MessageListContentProps {
   messageGroups: DecryptedMessage[][];
@@ -21,6 +22,7 @@ interface MessageListContentProps {
   setConfirmDelete: (id: string | null) => void;
   handleDelete: () => Promise<void>;
   isDeleting?: boolean;
+  userPresence?: Record<string, UserPresence>; // Add userPresence as optional prop
 }
 
 // Use React.memo to prevent unnecessary re-renders
@@ -38,7 +40,8 @@ export const MessageListContent = memo(({
   confirmDelete,
   setConfirmDelete,
   handleDelete,
-  isDeleting = false
+  isDeleting = false,
+  userPresence = {} // Add default value
 }: MessageListContentProps) => {
   return (
     <>
@@ -52,6 +55,7 @@ export const MessageListContent = memo(({
         onDelete={onDelete}
         messagesEndRef={messagesEndRef}
         isMobile={isMobile}
+        userPresence={userPresence} // Pass userPresence to MessageGroups
       />
 
       <ScrollToBottomButton

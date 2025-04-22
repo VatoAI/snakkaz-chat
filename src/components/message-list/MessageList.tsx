@@ -1,4 +1,3 @@
-
 import { useEffect, useCallback, useMemo } from "react";
 import { DecryptedMessage } from "@/types/message";
 import { groupMessages } from "@/utils/message-grouping";
@@ -9,6 +8,7 @@ import { MessageListContent } from "@/components/message/MessageListContent";
 import { useScrollHandler } from "./useScrollHandler";
 import { useMobilePullToRefresh } from "./useMobilePullToRefresh";
 import { useDeleteMessageHandler } from "./DeleteMessageHandler";
+import { UserPresence } from "@/types/presence";
 
 interface MessageListProps {
   messages: DecryptedMessage[];
@@ -16,6 +16,7 @@ interface MessageListProps {
   currentUserId?: string | null;
   onEditMessage?: (message: DecryptedMessage) => void;
   onDeleteMessage?: (messageId: string) => void;
+  userPresence?: Record<string, UserPresence>; // Add userPresence prop
 }
 
 export const MessageList = ({
@@ -24,7 +25,7 @@ export const MessageList = ({
   currentUserId,
   onEditMessage,
   onDeleteMessage,
-  userPresence = {} // Add this new prop
+  userPresence = {} // Add default value
 }: MessageListProps) => {
   const isMobile = useIsMobile();
 
@@ -139,7 +140,7 @@ export const MessageList = ({
           setConfirmDelete={setConfirmDelete}
           handleDelete={DialogUI.props.onConfirm}
           isDeleting={isDeleting}
-          userPresence={userPresence}  // Pass the user presence data
+          userPresence={userPresence}  // Pass userPresence to MessageListContent
         />
         {DialogUI}
       </div>
