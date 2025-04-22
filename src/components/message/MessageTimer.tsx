@@ -5,7 +5,7 @@ import { DecryptedMessage } from "@/types/message";
 
 interface MessageTimerProps {
   message: DecryptedMessage;
-  onExpired?: () => void;
+  onExpired?: (messageId: string) => void;
 }
 
 export const MessageTimer = ({ message, onExpired }: MessageTimerProps) => {
@@ -33,7 +33,7 @@ export const MessageTimer = ({ message, onExpired }: MessageTimerProps) => {
       if (remaining <= 0) {
         clearInterval(timer);
         if (onExpired) {
-          onExpired();
+          onExpired(message.id);
         }
       }
     }, 1000);
@@ -41,7 +41,7 @@ export const MessageTimer = ({ message, onExpired }: MessageTimerProps) => {
     return () => {
       clearInterval(timer);
     };
-  }, [message.created_at, messageTtl, onExpired]);
+  }, [message.created_at, messageTtl, onExpired, message.id]);
 
   if (timeLeft === null) return null;
   if (timeLeft <= 0) return null;
