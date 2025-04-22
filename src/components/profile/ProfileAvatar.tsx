@@ -14,8 +14,8 @@ export const ProfileAvatar = ({ avatarUrl, uploading, onUpload }: ProfileAvatarP
   return (
     <div className="flex flex-col items-center space-y-4">
       <div className="relative group">
-        <div className="absolute -inset-0.5 bg-gradient-to-r from-cyberblue-500 via-cybergold-500 to-cyberred-500 rounded-full opacity-60 group-hover:opacity-100 blur transition duration-500"></div>
-        <Avatar className="w-32 h-32 relative hover:scale-105 transition-transform duration-300 cursor-pointer group-hover:shadow-neon-dual">
+        <div className="absolute -inset-0.5 bg-gradient-to-tr from-cyberblue-500 via-cybergold-500 to-cyberred-500 rounded-full opacity-70 group-hover:opacity-100 blur transition duration-500"></div>
+        <Avatar className="w-32 h-32 relative hover:scale-105 transition-transform duration-300 cursor-pointer group-hover:shadow-neon-dual border-4 border-cybergold-400/80 bg-cyberdark-800">
           {avatarUrl ? (
             <AvatarImage
               src={`${supabase.storage.from('avatars').getPublicUrl(avatarUrl).data.publicUrl}`}
@@ -23,8 +23,8 @@ export const ProfileAvatar = ({ avatarUrl, uploading, onUpload }: ProfileAvatarP
               className="object-cover w-full h-full rounded-full"
             />
           ) : (
-            <AvatarFallback className="bg-cyberdark-800">
-              <Camera className="w-12 h-12 text-cybergold-400/50" />
+            <AvatarFallback className="bg-cyberdark-950 text-cybergold-300">
+              <Camera className="w-12 h-12 text-cyberblue-400/70" />
             </AvatarFallback>
           )}
         </Avatar>
@@ -42,7 +42,7 @@ export const ProfileAvatar = ({ avatarUrl, uploading, onUpload }: ProfileAvatarP
         <Button
           onClick={() => document.getElementById('avatar-upload')?.click()}
           disabled={uploading}
-          className="bg-gradient-to-r from-cyberblue-500 to-cybergold-500 hover:from-cyberblue-600 hover:to-cybergold-600 text-black shadow-neon-dual transition-all duration-300 hover:scale-105"
+          className="bg-gradient-to-r from-cyberblue-500 via-cybergold-500 to-cyberred-500 hover:from-cyberblue-600 hover:to-cyberred-600 text-black shadow-neon-dual transition-all duration-300 hover:scale-105"
         >
           {uploading ? (
             <>
@@ -57,3 +57,4 @@ export const ProfileAvatar = ({ avatarUrl, uploading, onUpload }: ProfileAvatarP
     </div>
   );
 };
+

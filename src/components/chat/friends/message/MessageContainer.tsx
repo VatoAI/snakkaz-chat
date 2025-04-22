@@ -28,16 +28,16 @@ export const MessageContainer = ({
   );
 
   const bubbleClasses = cn(
-    "relative group p-3 rounded-lg",
+    // Cyberpunk-theme bubble
+    "relative group p-3 rounded-lg shadow-neon-blue shadow-lg border-2 border-cyberblue-400/30 hover:border-cyberred-500/40 transition-all duration-300",
     isCurrentUser
-      ? "bg-cybergold-500/20 text-white rounded-br-none"
-      : "bg-cyberdark-800 border border-cybergold-500/20 text-white rounded-bl-none",
+      ? "bg-gradient-to-br from-cyberblue-700 via-cybergold-500/10 to-cyberred-900 text-white rounded-br-none"
+      : "bg-cyberdark-800/80 border-cybergold-500/20 text-cybergold-50 rounded-bl-none",
     isDeleted && "opacity-50"
   );
   
   const renderSecurityBadge = () => {
     if (!isCurrentUser) return null;
-    
     return (
       <div className="absolute bottom-1 right-2 opacity-30 group-hover:opacity-100 transition-opacity">
         <SecurityBadge
@@ -59,3 +59,4 @@ export const MessageContainer = ({
     </div>
   );
 };
+

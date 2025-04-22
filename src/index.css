@@ -1,39 +1,29 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
  
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
- 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
- 
+    --background: 240 17% 6%;      /* Even deeper dark black */
+    --foreground: 220 20% 98%;
+    --card: 240 14% 10%;
+    --card-foreground: 220 20% 98%;
+    --popover: 240 16% 10%;
+    --popover-foreground: 210 40% 98%;
     --primary: 222.2 47.4% 11.2%;
     --primary-foreground: 210 40% 98%;
- 
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
- 
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
- 
     --accent: 210 40% 96.1%;
     --accent-foreground: 222.2 47.4% 11.2%;
- 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
- 
-    --radius: 0.5rem;
+    --border: 222 14% 20%;
+    --input: 214.3 31.8% 17.4%;    /* Even darker input bg */
+    --ring: 222.2 84% 44.9%;
+    --radius: 0.55rem;
   }
  
   .dark {
@@ -279,4 +269,27 @@
   .h-\[100dvh\] {
     height: 100dvh;
   }
+}
+
+/* ENHANCED CYBERPUNK GRADIENT CLASSES */
+.cyber-bg-all {
+  background: linear-gradient(135deg, #0a0a0a 0%, #0088ff 35%, #e6b300 65%, #e60000 100%);
+  background-attachment: fixed;
+}
+.bg-cyber {
+  background: linear-gradient(95deg, #111 0%, #1a9dff 40%, #ffc91a 80%, #e60000 100%);
+}
+.text-cyber {
+  background: linear-gradient(90deg, #1a9dff 0%, #fff 60%, #e60000 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 2px 6px #0088ff80, 0 2px 6px #e6000080;
+}
+.shadow-cyber {
+  box-shadow: 0 0 30px #0088ff40, 0 0 30px #e6000030;
+}
+.bubble-gradient {
+  background: linear-gradient(115deg, #00121a 0%, #0088ff 65%, #e6b300 90%, #e60000 100%);
+  color: #fff;
 }

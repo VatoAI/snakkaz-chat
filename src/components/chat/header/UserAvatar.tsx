@@ -22,10 +22,10 @@ export function UserAvatar({
   const initials = username ? username.slice(0,2).toUpperCase() : "SZ";
   
   const statusColors = {
-    online: "bg-green-500",
-    busy: "bg-yellow-500",
-    brb: "bg-blue-500",
-    offline: "bg-gray-500"
+    online: "bg-cyberblue-400",
+    busy: "bg-cyberred-500",
+    brb: "bg-cyberblue-200",
+    offline: "bg-cyberdark-700"
   };
 
   const statusIcons = {
@@ -41,7 +41,8 @@ export function UserAvatar({
     <div className="relative">
       <Avatar 
         className={cn(
-          "border-2 border-cybergold-500/50 shadow-neon-gold",
+          // enhanced cyberpunk ring
+          "border-4 border-cyberblue-400/80 shadow-neon-blue hover:border-cybergold-400 hover:shadow-neon-gold transition-all duration-200 bg-gradient-to-br from-cyberdark-800 via-cyberred-900/60 to-cybergold-400/50",
           className
         )} 
         style={{ width: size, height: size }}
@@ -55,11 +56,12 @@ export function UserAvatar({
         )}
       </Avatar>
       <div className={cn(
-        "absolute -bottom-1 -right-1 rounded-full p-0.5 bg-cyberdark-900",
+        "absolute -bottom-1 -right-1 rounded-full p-0.5 border-2 border-cyberdark-950",
         statusColors[status]
       )}>
-        <StatusIcon className="w-2.5 h-2.5 text-white" />
+        <StatusIcon className="w-3 h-3 text-cybergold-200" />
       </div>
     </div>
   );
 }
+

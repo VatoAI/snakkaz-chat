@@ -1,17 +1,19 @@
+
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
+// Enhanced for cyberpunk: black, blue, red, gold
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyberblue-400 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        default: "bg-gradient-to-r from-cyberblue-500 to-cyberblue-700 text-white hover:from-cyberblue-600 hover:to-cyberblue-800 shadow-neon-blue",
-        destructive: "bg-gradient-to-r from-cyberred-500 to-cyberred-700 text-white hover:from-cyberred-600 hover:to-cyberred-800 shadow-neon-red",
-        outline: "border border-cyberblue-400/50 bg-cyberdark-800 text-cyberblue-400 hover:bg-cyberdark-700 hover:border-cyberblue-400 hover:text-cyberblue-300 shadow-neon-blue",
-        secondary: "bg-gradient-to-r from-cybergold-500 to-cybergold-700 text-black hover:from-cybergold-600 hover:to-cybergold-800 shadow-neon-gold",
+        default: "bg-gradient-to-r from-cyberblue-600 via-cyberdark-950 to-cyberred-600 text-white hover:from-cyberblue-400 hover:to-cyberred-500 shadow-neon-blue border-2 border-cybergold-400/50",
+        destructive: "bg-gradient-to-r from-cyberred-600 via-cyberred-400 to-cyberblue-900 text-white hover:from-cyberred-400 hover:to-cyberblue-700 shadow-neon-red border-2 border-cybergold-400/30",
+        outline: "border-2 border-cyberblue-400/60 bg-cyberdark-950 text-cybergold-100 hover:bg-cyberdark-900 hover:border-cybergold-400 hover:text-cybergold-200 shadow-neon-blue",
+        secondary: "bg-gradient-to-r from-cybergold-500 via-cyberblue-400 to-cyberred-700 text-black hover:from-cybergold-600 hover:to-cyberred-800 shadow-neon-gold border-2 border-cybergold-400/40",
         ghost: "hover:bg-cyberdark-800 hover:text-cyberblue-400",
         link: "text-cyberblue-400 underline-offset-4 hover:underline",
       },
