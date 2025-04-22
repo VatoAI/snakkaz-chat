@@ -21,11 +21,13 @@ export const MessageGroup = ({
   onDeleteMessage,
   userPresence = {}
 }: MessageGroupProps) => {
-  const { messageGroups, getUserStatus } = useMessageGrouping({ 
+  // Always call hooks unconditionally - don't return early before calling hooks
+  const { getUserStatus } = useMessageGrouping({ 
     messages, 
     userPresence 
   });
 
+  // Move the conditional return after all hooks have been called
   if (!messages || messages.length === 0) return null;
 
   return (
