@@ -30,6 +30,8 @@ export const MessageItem = ({
     <MessageContainer 
       isCurrentUser={isCurrentUser}
       isDeleted={message.is_deleted}
+      message={message}
+      onMessageExpired={onMessageExpired}
     >
       <MessageBodyContent
         message={message}
@@ -37,7 +39,6 @@ export const MessageItem = ({
         isMessageRead={isMessageRead}
         usingServerFallback={usingServerFallback}
         userStatus={userStatus}
-        onMessageExpired={onMessageExpired}
       />
       
       {isCurrentUser && !message.is_deleted && (
