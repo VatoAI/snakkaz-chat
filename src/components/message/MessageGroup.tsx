@@ -18,29 +18,30 @@ export const MessageGroup = ({
   onMessageExpired,
   onEditMessage,
   onDeleteMessage,
-  userPresence = {} // Add default value
+  userPresence = {}
 }: MessageGroupProps) => {
   if (!messages || messages.length === 0) return null;
 
-  // Get the sender for the time display (header)
   const firstMessage = messages[0];
   const senderName = firstMessage.sender?.username || firstMessage.sender?.id?.substring(0, 8) || 'Unknown';
   const date = new Date(firstMessage.created_at);
   const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-  // Get user status from presence data
   const getUserStatus = (userId: string): UserStatus | undefined => {
     return userPresence[userId]?.status;
   };
 
   return (
-    <div className="relative group">
-      <div className="text-xs text-center mb-2 text-cyberdark-400">
-        <span className="px-2 py-0.5 rounded-full bg-cyberdark-800/50 backdrop-blur-sm">
-          {senderName} • {timeString}
-        </span>
+    <div className="relative group py-2">
+      <div className="flex items-center justify-center mb-3">
+        <div className="px-3 py-1 rounded-full bg-cyberdark-800/80 backdrop-blur-sm border border-cybergold-500/20 shadow-neon-gold/10">
+          <span className="text-xs font-medium text-cybergold-300">
+            {senderName} • {timeString}
+          </span>
+        </div>
       </div>
-      <div className="space-y-2">
+      
+      <div className="space-y-1">
         {messages.map((message) => (
           <MessageBubble
             key={message.id}
@@ -49,7 +50,7 @@ export const MessageGroup = ({
             onMessageExpired={onMessageExpired}
             onEditMessage={onEditMessage}
             onDeleteMessage={onDeleteMessage}
-            userStatus={getUserStatus(message.sender.id)} // Pass user status
+            userStatus={getUserStatus(message.sender.id)}
           />
         ))}
       </div>

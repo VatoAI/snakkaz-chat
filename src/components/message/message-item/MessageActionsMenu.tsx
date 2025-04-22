@@ -18,7 +18,7 @@ export const MessageActionsMenu = ({
   if (message.is_deleted) return null;
 
   return (
-    <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity flex space-x-1">
+    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-all duration-200 flex space-x-1">
       {onEditMessage && (
         <TooltipProvider>
           <Tooltip>
@@ -26,13 +26,13 @@ export const MessageActionsMenu = ({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-6 w-6 bg-cyberdark-800/80 hover:bg-cyberdark-700 text-cybergold-400"
+                className="h-7 w-7 bg-cyberdark-800/90 hover:bg-cyberdark-700/90 text-cybergold-400 shadow-neon-gold/10 backdrop-blur-sm"
                 onClick={() => onEditMessage(message)}
               >
-                <Pencil className="h-3 w-3" />
+                <Pencil className="h-3.5 w-3.5" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent side="top" className="text-xs bg-cyberdark-900 border-cybergold-500/30">
+            <TooltipContent side="top" className="bg-cyberdark-900/95 border-cybergold-500/30 text-xs">
               Rediger melding
             </TooltipContent>
           </Tooltip>
@@ -46,13 +46,13 @@ export const MessageActionsMenu = ({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-6 w-6 bg-cyberdark-800/80 hover:bg-red-900/80 text-cybergold-400 hover:text-red-300"
+                className="h-7 w-7 bg-cyberdark-800/90 hover:bg-cyberred-900/90 text-cybergold-400 hover:text-cyberred-300 shadow-neon-red/10 backdrop-blur-sm"
                 onClick={() => onDeleteMessage(message.id)}
               >
-                <Trash className="h-3 w-3" />
+                <Trash className="h-3.5 w-3.5" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent side="top" className="text-xs bg-cyberdark-900 border-cybergold-500/30">
+            <TooltipContent side="top" className="bg-cyberdark-900/95 border-cybergold-500/30 text-xs">
               Slett melding
             </TooltipContent>
           </Tooltip>
