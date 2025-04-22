@@ -29,7 +29,7 @@ export const MessageBodyContent = ({
       {message.media_url && (
         <MessageMedia 
           message={message} 
-          onMediaExpired={onMessageExpired} 
+          onMediaExpired={() => onMessageExpired?.(message.id)} 
         />
       )}
       

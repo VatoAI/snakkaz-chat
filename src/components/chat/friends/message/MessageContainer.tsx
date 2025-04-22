@@ -10,7 +10,13 @@ interface MessageContainerProps {
   onMessageExpired?: (messageId: string) => void;
 }
 
-export const MessageContainer = ({ children, isCurrentUser, isDeleted, message, onMessageExpired }: MessageContainerProps) => {
+export const MessageContainer = ({ 
+  children, 
+  isCurrentUser, 
+  isDeleted, 
+  message, 
+  onMessageExpired 
+}: MessageContainerProps) => {
   return (
     <div className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'} my-2`}>
       <div className="group relative max-w-[85%] sm:max-w-[75%]">
@@ -21,14 +27,17 @@ export const MessageContainer = ({ children, isCurrentUser, isDeleted, message, 
             : 'bg-gradient-to-br from-cyberdark-800/95 to-cyberdark-900/95 text-cybergold-200 border border-cybergold-500/20'
           } 
           ${isDeleted ? 'opacity-50 italic' : ''}
-          backdrop-blur-sm hover:shadow-neon-blue/10
+          backdrop-blur-sm
         `}>
           {children}
+          
           {message?.ephemeral_ttl && onMessageExpired && (
-            <MessageTimer 
-              message={message} 
-              onExpired={() => onMessageExpired(message.id)}
-            />
+            <div className="absolute bottom-1 right-1">
+              <MessageTimer 
+                message={message} 
+                onExpired={() => onMessageExpired(message.id)}
+              />
+            </div>
           )}
         </div>
       </div>
