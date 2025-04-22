@@ -66,6 +66,11 @@ export const DirectMessage = ({
                             securityLevel === 'server_e2ee' || 
                             securityLevel === 'standard';
 
+  // Create a wrapper function that matches the expected type signature
+  const handleFormSubmit = (e: React.FormEvent, text: string) => {
+    return handleSendMessage(e);
+  };
+
   return (
     <div className="flex flex-col h-full bg-cyberdark-950">
       <DirectMessageHeader 
@@ -107,7 +112,7 @@ export const DirectMessage = ({
         usingServerFallback={usingServerFallback}
         sendError={sendError}
         isLoading={isLoading}
-        onSendMessage={handleSendMessage}
+        onSendMessage={handleFormSubmit}
         newMessage={newMessage}
         onChangeMessage={setNewMessage}
         connectionState={connectionState}

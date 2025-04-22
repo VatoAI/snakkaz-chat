@@ -1,17 +1,16 @@
 
 import { DecryptedMessage } from "@/types/message";
-import { MessageContentDisplay } from "@/components/message/message-item/MessageContentDisplay";
-import { MessageMetadata } from "@/components/message/message-item/MessageMetadata";
-import { MessageMedia } from "@/components/message/MessageMedia";
 import { UserStatus } from "@/types/presence";
+import { SecurityLevel } from "@/types/security";
 
-interface MessageBodyContentProps {
+export interface MessageBodyContentProps {
   message: DecryptedMessage;
   isCurrentUser: boolean;
   isMessageRead?: (messageId: string) => boolean;
   usingServerFallback: boolean;
   userStatus?: UserStatus;
   onMessageExpired?: (messageId: string) => void;
+  securityLevel?: SecurityLevel; // Added securityLevel prop
 }
 
 export const MessageBodyContent = ({
@@ -20,31 +19,33 @@ export const MessageBodyContent = ({
   isMessageRead,
   usingServerFallback,
   userStatus,
-  onMessageExpired
+  onMessageExpired,
+  securityLevel = 'server_e2ee'
 }: MessageBodyContentProps) => {
-  if (!message || !message.sender) {
-    // Return a minimal empty component instead of null to maintain component structure
-    return <div className="hidden"></div>;
+  if (message.is_deleted) {
+    return (
+      <div className="text-gray-400 italic">
+        Denne meldingen er slettet
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-2">
-      <MessageMetadata 
-        message={message}
-        isMessageRead={isMessageRead}
-        isCurrentUser={isCurrentUser}
-        usingServerFallback={usingServerFallback}
-        userStatus={userStatus}
-      />
-      
-      <MessageContentDisplay message={message} />
-      
-      {message.media_url && (
-        <MessageMedia 
-          message={message} 
-          onMediaExpired={() => onMessageExpired?.(message.id)} 
-        />
-      )}
+    <div>
+      <div className="break-words">
+        {message.content}
+      </div>
+      <div className="flex justify-end items-center mt-1 gap-1 text-xs text-gray-400">
+        <span>
+          {new Date(message.created_at).toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit'
+          })}
+        </span>
+        {isCurrentUser && isMessageRead && isMessageRead(message.id) && (
+          <span className="text-green-500">✓</span>
+        )}
+      </div>
     </div>
   );
 };

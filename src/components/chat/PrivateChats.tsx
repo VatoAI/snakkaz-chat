@@ -79,6 +79,9 @@ export const PrivateChats = ({
     
     const groupId = message.group_id;
     
+    // Make sure groupId is a string before using it as an index
+    if (typeof groupId !== 'string') return acc;
+    
     if (!acc[groupId]) {
       acc[groupId] = [];
     }
