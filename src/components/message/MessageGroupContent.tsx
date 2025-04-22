@@ -20,22 +20,22 @@ export const MessageGroupContent = ({
   onDeleteMessage,
   getUserStatus
 }: MessageGroupContentProps) => {
-  // Remove the early return that's causing the React hooks error
-  // Instead, handle empty messages within the render
-  
+  // No early returns here - render conditionally instead
   return (
     <div className="relative group space-y-1">
       {messages && messages.length > 0 ? (
         messages.map((message) => (
-          <MessageBubble
-            key={message.id}
-            message={message}
-            isCurrentUser={isUserMessage(message)}
-            onMessageExpired={onMessageExpired}
-            onEditMessage={onEditMessage}
-            onDeleteMessage={onDeleteMessage}
-            userStatus={getUserStatus(message.sender.id)}
-          />
+          message && message.sender && (
+            <MessageBubble
+              key={message.id}
+              message={message}
+              isCurrentUser={isUserMessage(message)}
+              onMessageExpired={onMessageExpired}
+              onEditMessage={onEditMessage}
+              onDeleteMessage={onDeleteMessage}
+              userStatus={getUserStatus(message.sender.id)}
+            />
+          )
         ))
       ) : null}
     </div>

@@ -25,6 +25,11 @@ export const MessageBubble = memo(({
   onDeleteMessage,
   userStatus
 }: MessageBubbleProps) => {
+  // Ensure the component is safe even if message is invalid
+  if (!message || !message.id) {
+    return null;
+  }
+
   const handleDeleteMessageWithConfirmation = (messageId: string) => {
     if (onDeleteMessage) {
       onDeleteMessage(messageId);

@@ -14,9 +14,13 @@ export const useMessageGrouping = ({ messages, userPresence = {} }: UseMessageGr
     return userPresence[userId]?.status;
   };
 
+  // Use a consistent hook pattern - make sure useMemo is always called
+  const safeMessages = useMemo(() => messages || [], [messages]);
+
   // No need for complex logic here since we're no longer grouping messages
   // Just make sure this hook is consistent and always returns the same structure
   return {
+    messages: safeMessages,
     getUserStatus
   };
 };

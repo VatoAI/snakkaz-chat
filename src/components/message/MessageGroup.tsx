@@ -26,18 +26,20 @@ export const MessageGroup = ({
     messages, 
     userPresence 
   });
-
-  // Move the conditional return after all hooks have been called
-  if (!messages || messages.length === 0) return null;
-
+  
+  // No early returns - render conditionally instead
   return (
-    <MessageGroupContent
-      messages={messages}
-      isUserMessage={isUserMessage}
-      onMessageExpired={onMessageExpired}
-      onEditMessage={onEditMessage}
-      onDeleteMessage={onDeleteMessage}
-      getUserStatus={getUserStatus}
-    />
+    <>
+      {messages && messages.length > 0 ? (
+        <MessageGroupContent
+          messages={messages}
+          isUserMessage={isUserMessage}
+          onMessageExpired={onMessageExpired}
+          onEditMessage={onEditMessage}
+          onDeleteMessage={onDeleteMessage}
+          getUserStatus={getUserStatus}
+        />
+      ) : null}
+    </>
   );
 };
