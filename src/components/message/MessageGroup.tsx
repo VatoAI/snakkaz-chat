@@ -1,6 +1,7 @@
 
 import { DecryptedMessage } from "@/types/message";
 import { UserPresence } from "@/types/presence";
+import { SecurityLevel } from "@/types/security";
 import { useMessageGrouping } from "@/hooks/useMessageGrouping";
 import { MessageGroupContent } from "./MessageGroupContent";
 
@@ -11,6 +12,7 @@ interface MessageGroupProps {
   onEditMessage?: (message: DecryptedMessage) => void;
   onDeleteMessage?: (messageId: string) => void;
   userPresence?: Record<string, UserPresence>;
+  securityLevel?: SecurityLevel;
 }
 
 export const MessageGroup = ({
@@ -19,7 +21,8 @@ export const MessageGroup = ({
   onMessageExpired,
   onEditMessage,
   onDeleteMessage,
-  userPresence = {}
+  userPresence = {},
+  securityLevel = 'server_e2ee'
 }: MessageGroupProps) => {
   // Always call hooks unconditionally and at the top level
   const { messages: safeMessages, getUserStatus } = useMessageGrouping({ 
@@ -36,6 +39,7 @@ export const MessageGroup = ({
       onEditMessage={onEditMessage}
       onDeleteMessage={onDeleteMessage}
       getUserStatus={getUserStatus}
+      securityLevel={securityLevel}
     />
   );
 };

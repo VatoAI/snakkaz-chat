@@ -1,89 +1,72 @@
 
+import { useRef, useEffect } from "react";
 import { DecryptedMessage } from "@/types/message";
-import { useRef, useEffect, useState } from "react";
-import { DeleteMessageDialog } from "@/components/message/DeleteMessageDialog";
-import { MessageSecurityBanner } from "./message/MessageSecurityBanner";
-import { MessageItem } from "./message/MessageItem";
-import { TypingIndicator } from "./message/TypingIndicator";
+import { MessageGroup } from "@/components/message/MessageGroup";
+import { SecurityLevel } from "@/types/security";
 
 interface DirectMessageListProps {
   messages: DecryptedMessage[];
   currentUserId: string;
   peerIsTyping?: boolean;
   isMessageRead?: (messageId: string) => boolean;
-  connectionState: string;
-  dataChannelState: string;
-  usingServerFallback: boolean;
+  connectionState?: string;
+  dataChannelState?: string;
+  usingServerFallback?: boolean;
   onEditMessage?: (message: DecryptedMessage) => void;
   onDeleteMessage?: (messageId: string) => void;
+  securityLevel?: SecurityLevel;
 }
 
-export const DirectMessageList = ({ 
-  messages, 
-  currentUserId, 
-  peerIsTyping, 
+export const DirectMessageList = ({
+  messages,
+  currentUserId,
+  peerIsTyping,
   isMessageRead,
   connectionState,
   dataChannelState,
   usingServerFallback,
   onEditMessage,
-  onDeleteMessage
+  onDeleteMessage,
+  securityLevel = 'server_e2ee'
 }: DirectMessageListProps) => {
+  const bottomRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const isSecureConnection = (connectionState === 'connected' && dataChannelState === 'open') || usingServerFallback;
-  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
-  // Always call useEffect regardless of messages validity
+  // Scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, peerIsTyping]);
-
-  // Always define handlers
-  const handleConfirmDelete = () => {
-    if (confirmDelete && onDeleteMessage) {
-      onDeleteMessage(confirmDelete);
-      setConfirmDelete(null);
-    }
-  };
-
-  // Safe check for messages - render placeholder if invalid
-  const safeMessages = Array.isArray(messages) ? messages : [];
+  }, [messages.length, peerIsTyping]);
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 space-y-4">
-      <MessageSecurityBanner 
-        isSecureConnection={isSecureConnection} 
-        messagesExist={safeMessages.length > 0} 
-      />
-
-      {safeMessages.map((message) => {
-        // Skip invalid messages
-        if (!message || !message.sender) {
-          return null;
-        }
-        
-        return (
-          <MessageItem
-            key={message.id}
-            message={message}
-            isCurrentUser={message.sender.id === currentUserId}
-            isMessageRead={isMessageRead}
-            usingServerFallback={usingServerFallback}
-            onEditMessage={onEditMessage}
-            onDeleteMessage={setConfirmDelete}
-          />
-        );
-      })}
+    <div className="flex-1 overflow-y-auto p-4 space-y-4" ref={bottomRef}>
+      {messages.map((message) => (
+        <MessageGroup
+          key={message.id}
+          messages={[message]}
+          isUserMessage={(msg) => msg.sender.id === currentUserId}
+          onMessageExpired={(messageId) => {
+            console.log('Message expired:', messageId);
+          }}
+          onEditMessage={onEditMessage}
+          onDeleteMessage={onDeleteMessage}
+          securityLevel={securityLevel}
+        />
+      ))}
       
-      <TypingIndicator isTyping={peerIsTyping} />
+      {peerIsTyping && (
+        <div className="flex items-center space-x-2 text-sm text-cybergold-400 animate-pulse">
+          <div className="w-8 h-8 rounded-full bg-cyberdark-800 border border-cybergold-500/20"></div>
+          <div className="px-4 py-2 rounded-lg bg-cyberdark-800 border border-cybergold-500/20">
+            <span className="inline-flex gap-1">
+              <span className="animate-bounce">.</span>
+              <span className="animate-bounce" style={{ animationDelay: '0.2s' }}>.</span>
+              <span className="animate-bounce" style={{ animationDelay: '0.4s' }}>.</span>
+            </span>
+          </div>
+        </div>
+      )}
       
       <div ref={messagesEndRef} />
-      
-      <DeleteMessageDialog
-        isOpen={!!confirmDelete}
-        onClose={() => setConfirmDelete(null)}
-        onConfirm={handleConfirmDelete}
-      />
     </div>
   );
 };

@@ -1,15 +1,17 @@
 
-import { Friend } from "./types";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft, RefreshCw, Wifi, WifiOff, MessageSquare, Lock, ShieldAlert, ShieldCheck } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { RefreshCw, ArrowLeft } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Button } from "@/components/ui/button";
+import { Friend } from "./types";
+import { SecurityLevelSelector } from "../security/SecurityLevelSelector";
+import { SecurityBadge } from "../security/SecurityBadge";
+import { SecurityLevel } from "@/types/security";
+import { supabase } from "@/integrations/supabase/client";
 
 interface DirectMessageHeaderProps {
   friend: Friend;
   username: string;
-  avatarUrl?: string | null;
+  avatarUrl: string | null;
   connectionState: string;
   dataChannelState: string;
   usingServerFallback: boolean;
@@ -17,6 +19,8 @@ interface DirectMessageHeaderProps {
   onBack: () => void;
   onReconnect: () => void;
   isTyping?: boolean;
+  securityLevel: SecurityLevel;
+  setSecurityLevel: (level: SecurityLevel) => void;
 }
 
 export const DirectMessageHeader = ({
@@ -29,131 +33,79 @@ export const DirectMessageHeader = ({
   connectionAttempts,
   onBack,
   onReconnect,
-  isTyping
+  isTyping,
+  securityLevel,
+  setSecurityLevel
 }: DirectMessageHeaderProps) => {
-  const isConnected = connectionState === 'connected' && dataChannelState === 'open';
-  
-  // Determine connection security status
-  const getSecurityStatus = () => {
-    if (isConnected) {
-      return {
-        icon: <ShieldCheck className="h-4 w-4 text-green-500" />,
-        label: 'Sikker tilkobling (E2EE+P2P)',
-        color: 'text-green-500',
-        secure: true
-      };
-    } else if (usingServerFallback) {
-      return {
-        icon: <Lock className="h-4 w-4 text-yellow-500" />,
-        label: 'Kryptert via server (E2EE)',
-        color: 'text-yellow-500',
-        secure: true
-      };
-    } else if (connectionState === 'connecting' || connectionState === 'new') {
-      return {
-        icon: <ShieldAlert className="h-4 w-4 text-yellow-500 animate-pulse" />,
-        label: 'Etablerer sikker tilkobling...',
-        color: 'text-yellow-500',
-        secure: false
-      };
-    } else {
-      return {
-        icon: <ShieldAlert className="h-4 w-4 text-red-500" />,
-        label: 'Ikke sikker tilkobling',
-        color: 'text-red-500',
-        secure: false
-      };
-    }
-  };
-
-  const securityStatus = getSecurityStatus();
-  
   return (
-    <div className="flex flex-col bg-cyberdark-900 border-b border-cybergold-500/30">
-      <div className="flex items-center justify-between p-3">
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onBack}
-            className="text-cybergold-500 hover:text-cybergold-400 hover:bg-cyberdark-800"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          
-          <div className="flex items-center gap-3">
-            <Avatar className="h-10 w-10 border-2 border-cybergold-500/20">
-              {avatarUrl ? (
-                <AvatarImage 
-                  src={supabase.storage.from('avatars').getPublicUrl(avatarUrl).data.publicUrl} 
-                  alt={username} 
-                />
-              ) : (
-                <AvatarFallback className="bg-cybergold-900 text-cybergold-500">
-                  {username.substring(0, 2).toUpperCase()}
-                </AvatarFallback>
-              )}
-            </Avatar>
-            
-            <div>
-              <h3 className="font-medium text-cybergold-100">{username}</h3>
-              <div className="flex items-center gap-1">
-                {isTyping ? (
-                  <span className="text-xs text-cybergold-400 flex items-center">
-                    <MessageSquare className="h-3 w-3 mr-1" />
-                    Skriver...
-                  </span>
-                ) : (
-                  <span className={`text-xs flex items-center gap-1 ${securityStatus.color}`}>
-                    {securityStatus.icon}
-                    <span>{securityStatus.label}</span>
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
+    <div className="border-b border-cybergold-500/30 p-3 flex items-center bg-cyberdark-900">
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={onBack}
+        className="mr-2 text-cybergold-400 hover:text-cybergold-300 hover:bg-cyberdark-800"
+      >
+        <ArrowLeft className="h-5 w-5" />
+      </Button>
+      
+      <div className="flex items-center space-x-3 flex-1">
+        <Avatar className="w-10 h-10 border-2 border-cybergold-500/20">
+          {avatarUrl ? (
+            <AvatarImage 
+              src={supabase.storage.from('avatars').getPublicUrl(avatarUrl).data.publicUrl} 
+              alt={username}
+            />
+          ) : (
+            <AvatarFallback className="bg-cybergold-500/20 text-cybergold-300">
+              {username[0].toUpperCase()}
+            </AvatarFallback>
+          )}
+        </Avatar>
         
-        <div className="flex items-center gap-2">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div>
-                  {isConnected ? (
-                    <Wifi className="h-4 w-4 text-green-500" />
-                  ) : usingServerFallback ? (
-                    <WifiOff className="h-4 w-4 text-yellow-500" />
-                  ) : (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={onReconnect}
-                      disabled={connectionAttempts > 5 || connectionState === 'connecting'}
-                      className="text-xs text-cybergold-400 hover:text-cybergold-300 p-1"
-                    >
-                      <RefreshCw className={`h-3 w-3 mr-1 ${connectionState === 'connecting' ? 'animate-spin' : ''}`} />
-                      {connectionState === 'connecting' ? 'Kobler til...' : 'Koble til på nytt'}
-                    </Button>
-                  )}
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                {isConnected ? "Direkte tilkobling (P2P)" : 
-                 usingServerFallback ? "Server-modus (E2EE)" : 
-                 connectionState === 'connecting' ? "Etablerer tilkobling..." :
-                 "Ikke tilkoblet"}
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+        <div className="flex flex-col">
+          <h2 className="text-cybergold-200 font-medium">{username}</h2>
+          {isTyping ? (
+            <p className="text-xs text-green-400">Skriver...</p>
+          ) : (
+            <p className="text-xs text-cybergold-400">
+              {securityLevel === 'p2p_e2ee' && !usingServerFallback 
+                ? 'Direkte tilkobling aktiv'
+                : securityLevel === 'p2p_e2ee' && usingServerFallback
+                ? 'Server tilkobling (E2EE)'
+                : securityLevel === 'server_e2ee'
+                ? 'Server tilkobling (E2EE)'
+                : 'Standard sikkerhet'}
+            </p>
+          )}
         </div>
       </div>
       
-      {/* Security status banner - only show if not secure and not server fallback */}
-      {!securityStatus.secure && !usingServerFallback && (
-        <div className="px-4 py-2 bg-red-900/30 text-red-200 text-xs text-center font-medium">
-          Venter på sikker tilkobling. Du kan ikke sende meldinger før tilkoblingen er sikker.
-        </div>
-      )}
+      <div className="flex items-center space-x-3">
+        <SecurityBadge
+          securityLevel={securityLevel}
+          connectionState={connectionState}
+          dataChannelState={dataChannelState}
+          usingServerFallback={usingServerFallback}
+          showLabel={true}
+        />
+        
+        <SecurityLevelSelector
+          value={securityLevel}
+          onChange={setSecurityLevel}
+        />
+        
+        {securityLevel === 'p2p_e2ee' && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onReconnect}
+            className="text-cybergold-400 hover:text-cybergold-300 hover:bg-cyberdark-800"
+            disabled={connectionState === 'connecting'}
+          >
+            <RefreshCw className={`h-5 w-5 ${connectionState === 'connecting' ? 'animate-spin' : ''}`} />
+          </Button>
+        )}
+      </div>
     </div>
   );
 };

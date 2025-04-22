@@ -1,45 +1,60 @@
 
 import { ReactNode } from "react";
-import { MessageTimer } from "@/components/message/MessageTimer";
+import { DecryptedMessage } from "@/types/message";
+import { cn } from "@/lib/utils";
+import { SecurityLevel } from "@/types/security";
+import { SecurityBadge } from "../../security/SecurityBadge";
 
 interface MessageContainerProps {
   children: ReactNode;
   isCurrentUser: boolean;
   isDeleted: boolean;
-  message?: any; // For timer
+  message: DecryptedMessage;
   onMessageExpired?: (messageId: string) => void;
+  securityLevel?: SecurityLevel;
 }
 
-export const MessageContainer = ({ 
-  children, 
-  isCurrentUser, 
-  isDeleted, 
-  message, 
-  onMessageExpired 
+export const MessageContainer = ({
+  children,
+  isCurrentUser,
+  isDeleted,
+  message,
+  onMessageExpired,
+  securityLevel = 'server_e2ee'
 }: MessageContainerProps) => {
+  const containerClasses = cn(
+    "relative flex w-full max-w-[85%] mb-2",
+    isCurrentUser ? "ml-auto" : "mr-auto"
+  );
+
+  const bubbleClasses = cn(
+    "relative group p-3 rounded-lg",
+    isCurrentUser
+      ? "bg-cybergold-500/20 text-white rounded-br-none"
+      : "bg-cyberdark-800 border border-cybergold-500/20 text-white rounded-bl-none",
+    isDeleted && "opacity-50"
+  );
+  
+  const renderSecurityBadge = () => {
+    if (!isCurrentUser) return null;
+    
+    return (
+      <div className="absolute bottom-1 right-2 opacity-30 group-hover:opacity-100 transition-opacity">
+        <SecurityBadge
+          securityLevel={securityLevel}
+          showLabel={false}
+          size="sm"
+          className="h-4"
+        />
+      </div>
+    );
+  };
+
   return (
-    <div className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'} my-2`}>
-      <div className="group relative max-w-[85%] sm:max-w-[75%]">
-        <div className={`
-          relative p-3 rounded-2xl shadow-lg transition-all duration-300
-          ${isCurrentUser 
-            ? 'bg-gradient-to-br from-cyberblue-600/90 to-cyberblue-800/90 text-white border border-cyberblue-400/20' 
-            : 'bg-gradient-to-br from-cyberdark-800/95 to-cyberdark-900/95 text-cybergold-200 border border-cybergold-500/20'
-          } 
-          ${isDeleted ? 'opacity-50 italic' : ''}
-          backdrop-blur-sm
-        `}>
-          {children}
-          
-          {message?.ephemeral_ttl && onMessageExpired && (
-            <div className="absolute bottom-1 right-1">
-              <MessageTimer 
-                message={message} 
-                onExpired={() => onMessageExpired(message.id)}
-              />
-            </div>
-          )}
-        </div>
+    <div className={containerClasses}>
+      <div className={bubbleClasses}>
+        {children}
+        {renderSecurityBadge()}
       </div>
     </div>
   );

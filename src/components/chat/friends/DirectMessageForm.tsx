@@ -1,126 +1,127 @@
 
-import { Loader2, SendHorizonal, ShieldAlert, ShieldCheck } from "lucide-react";
+import { useState, FormEvent } from "react";
+import { Send, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useRef, useEffect } from "react";
+import { SecurityBadge } from "../security/SecurityBadge";
+import { SecurityLevel } from "@/types/security";
 
 interface DirectMessageFormProps {
-  onSendMessage: (e: React.FormEvent) => void;
+  usingServerFallback: boolean;
+  sendError: string | null;
+  isLoading: boolean;
+  onSendMessage: (e: React.FormEvent, text: string) => Promise<boolean>;
   newMessage: string;
   onChangeMessage: (text: string) => void;
-  isLoading: boolean;
-  sendError: string | null;
-  usingServerFallback: boolean;
   connectionState: string;
   dataChannelState: string;
   editingMessage: { id: string; content: string } | null;
   onCancelEdit: () => void;
+  securityLevel: SecurityLevel;
 }
 
 export const DirectMessageForm = ({
+  usingServerFallback,
+  sendError,
+  isLoading,
   onSendMessage,
   newMessage,
   onChangeMessage,
-  isLoading,
-  sendError,
-  usingServerFallback,
   connectionState,
   dataChannelState,
   editingMessage,
-  onCancelEdit
+  onCancelEdit,
+  securityLevel
 }: DirectMessageFormProps) => {
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  // Determine if secure connection is established
-  const isSecureConnection = (connectionState === 'connected' && dataChannelState === 'open') || usingServerFallback;
+  const [isComposing, setIsComposing] = useState(false);
   
-  // Focus textarea when editing
-  useEffect(() => {
-    if (editingMessage && textareaRef.current) {
-      textareaRef.current.focus();
-    }
-  }, [editingMessage]);
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    // Send message on Enter without Shift key
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      if (newMessage.trim() && isSecureConnection) {
-        onSendMessage(e as unknown as React.FormEvent);
-      }
-    }
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (newMessage.trim() === '' || isLoading) return;
     
-    // Cancel editing on Escape
-    if (e.key === 'Escape' && editingMessage) {
-      onCancelEdit();
-    }
+    setIsComposing(false);
+    await onSendMessage(e, newMessage);
   };
-
+  
+  const isConnected = 
+    (securityLevel === 'p2p_e2ee' && (
+      (connectionState === 'connected' && dataChannelState === 'open') || 
+      usingServerFallback
+    )) || 
+    securityLevel === 'server_e2ee' || 
+    securityLevel === 'standard';
+  
   return (
-    <form onSubmit={onSendMessage} className="p-3 border-t border-cybergold-500/30 bg-cyberdark-900">
+    <div className="border-t border-cybergold-500/30 p-4 bg-cyberdark-900">
+      {!isConnected && securityLevel === 'p2p_e2ee' && (
+        <div className="mb-2 p-2 bg-amber-600/20 border border-amber-500/40 rounded-md text-sm text-amber-300">
+          Venter på tilkobling. Meldingen vil sendes når tilkoblingen er etablert,
+          eller faller tilbake til server etter en kort stund.
+        </div>
+      )}
+      
       {sendError && (
-        <Alert variant="destructive" className="mb-2 py-2">
-          <AlertDescription>{sendError}</AlertDescription>
-        </Alert>
+        <div className="mb-2 p-2 bg-red-600/20 border border-red-500/40 rounded-md text-sm text-red-300">
+          {sendError}
+        </div>
       )}
       
       {editingMessage && (
-        <div className="flex justify-between items-center mb-2 text-xs text-cybergold-300">
+        <div className="mb-2 flex items-center justify-between p-2 bg-amber-600/20 border border-amber-500/40 rounded-md text-sm text-amber-300">
           <span>Redigerer melding</span>
-          <Button 
-            type="button" 
-            variant="ghost" 
-            size="sm" 
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={onCancelEdit}
-            className="text-xs h-6 px-2"
+            className="h-6 w-6 text-amber-300 hover:text-amber-200 hover:bg-amber-900/40"
           >
-            Avbryt
+            <X className="h-4 w-4" />
           </Button>
         </div>
       )}
       
-      <div className="relative">
-        <Textarea
-          ref={textareaRef}
-          value={newMessage}
-          onChange={(e) => onChangeMessage(e.target.value)}
-          onKeyDown={handleKeyDown}
-          disabled={!isSecureConnection || isLoading}
-          placeholder={
-            !isSecureConnection
-              ? "Venter på sikker tilkobling..."
-              : editingMessage
-                ? "Rediger melding..."
-                : "Skriv en melding..."
-          }
-          className="min-h-[70px] resize-none pr-10 bg-cyberdark-800 border-cybergold-500/40 text-white placeholder:text-cybergold-300/50"
-        />
-        
-        <div className="absolute right-2 bottom-2 flex items-center">
-          {/* Connection status indicator */}
-          <div className="mr-2">
-            {isSecureConnection ? (
-              <ShieldCheck className="h-4 w-4 text-green-400" />
-            ) : (
-              <ShieldAlert className="h-4 w-4 text-red-400 animate-pulse" />
-            )}
+      <form onSubmit={handleSubmit} className="flex items-end gap-2">
+        <div className="relative flex-1">
+          <Textarea
+            value={newMessage}
+            onChange={(e) => {
+              onChangeMessage(e.target.value);
+              setIsComposing(true);
+            }}
+            placeholder="Skriv en melding..."
+            rows={1}
+            className="resize-none bg-cyberdark-800 border-cybergold-500/30 focus:border-cybergold-500/60 pr-10"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSubmit(e);
+              }
+            }}
+          />
+          <div className="absolute bottom-2 right-2">
+            <SecurityBadge
+              securityLevel={securityLevel}
+              connectionState={connectionState}
+              dataChannelState={dataChannelState}
+              usingServerFallback={usingServerFallback}
+              size="sm"
+            />
           </div>
-          
-          <Button
-            type="submit"
-            size="icon"
-            disabled={!newMessage.trim() || !isSecureConnection || isLoading}
-            className="bg-cyberblue-700 hover:bg-cyberblue-600 text-white h-8 w-8 rounded-full"
-          >
-            {isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <SendHorizonal className="h-4 w-4" />
-            )}
-          </Button>
         </div>
-      </div>
-    </form>
+        
+        <Button
+          type="submit"
+          size="icon"
+          className={`bg-cybergold-600 hover:bg-cybergold-700 text-black ${
+            isLoading || (newMessage.trim() === '') 
+              ? 'opacity-50 cursor-not-allowed' 
+              : ''
+          }`}
+          disabled={isLoading || newMessage.trim() === ''}
+        >
+          <Send className="h-4 w-4" />
+        </Button>
+      </form>
+    </div>
   );
 };

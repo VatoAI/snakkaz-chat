@@ -2,6 +2,7 @@
 import { DecryptedMessage } from "@/types/message";
 import { MessageBubble } from "./MessageBubble";
 import { UserStatus } from "@/types/presence";
+import { SecurityLevel } from "@/types/security";
 
 interface MessageGroupContentProps {
   messages: DecryptedMessage[];
@@ -10,6 +11,7 @@ interface MessageGroupContentProps {
   onEditMessage?: (message: DecryptedMessage) => void;
   onDeleteMessage?: (messageId: string) => void;
   getUserStatus: (userId: string) => UserStatus | undefined;
+  securityLevel?: SecurityLevel;
 }
 
 export const MessageGroupContent = ({
@@ -18,7 +20,8 @@ export const MessageGroupContent = ({
   onMessageExpired,
   onEditMessage,
   onDeleteMessage,
-  getUserStatus
+  getUserStatus,
+  securityLevel = 'server_e2ee'
 }: MessageGroupContentProps) => {
   // Always render a container, even if messages is empty
   return (
@@ -34,6 +37,7 @@ export const MessageGroupContent = ({
               onEditMessage={onEditMessage}
               onDeleteMessage={onDeleteMessage}
               userStatus={message.sender ? getUserStatus(message.sender.id) : undefined}
+              securityLevel={securityLevel}
             />
           ) : (
             <div key={`empty-message-${index}`} className="hidden"></div>

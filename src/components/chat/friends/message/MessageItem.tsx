@@ -1,6 +1,7 @@
 
 import { DecryptedMessage } from "@/types/message";
 import { UserStatus } from "@/types/presence";
+import { SecurityLevel } from "@/types/security";
 import { MessageContainer } from "./MessageContainer";
 import { MessageBodyContent } from "./MessageBodyContent";
 import { MessageActionsMenu } from "@/components/message/message-item/MessageActionsMenu";
@@ -14,6 +15,7 @@ interface MessageItemProps {
   onDeleteMessage?: (messageId: string) => void;
   userStatus?: UserStatus;
   onMessageExpired?: (messageId: string) => void;
+  securityLevel?: SecurityLevel;
 }
 
 export const MessageItem = ({
@@ -24,7 +26,8 @@ export const MessageItem = ({
   onEditMessage,
   onDeleteMessage,
   userStatus,
-  onMessageExpired
+  onMessageExpired,
+  securityLevel = 'server_e2ee'
 }: MessageItemProps) => {
   // Handle invalid message with a placeholder
   if (!message || !message.id || !message.sender) {
@@ -37,6 +40,7 @@ export const MessageItem = ({
       isDeleted={message.is_deleted}
       message={message}
       onMessageExpired={onMessageExpired}
+      securityLevel={securityLevel}
     >
       <MessageBodyContent
         message={message}
@@ -45,6 +49,7 @@ export const MessageItem = ({
         usingServerFallback={usingServerFallback}
         userStatus={userStatus}
         onMessageExpired={onMessageExpired}
+        securityLevel={securityLevel}
       />
       
       {isCurrentUser && !message.is_deleted && (

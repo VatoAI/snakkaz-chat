@@ -1,16 +1,15 @@
 
-import { Friend } from "./types";
+import { Group } from "@/types/group";
 import { DecryptedMessage } from "@/types/message";
 import { WebRTCManager } from "@/utils/webrtc";
-import { DirectMessageHeader } from "./DirectMessageHeader";
-import { DirectMessageEmptyState } from "./DirectMessageEmptyState";
-import { DirectMessageList } from "./DirectMessageList";
-import { DirectMessageForm } from "./DirectMessageForm";
-import { useDirectMessage } from "./hooks/useDirectMessage";
-import { SecurityLevel } from "@/types/security";
+import { GroupChatHeader } from "./GroupChatHeader";
+import { GroupChatEmptyState } from "./GroupChatEmptyState";
+import { DirectMessageList } from "../friends/DirectMessageList";
+import { DirectMessageForm } from "../friends/DirectMessageForm";
+import { useGroupChat } from "./hooks/useGroupChat";
 
-interface DirectMessageProps {
-  friend: Friend;
+interface GroupChatProps {
+  group: Group;
   currentUserId: string;
   webRTCManager: WebRTCManager | null;
   onBack: () => void;
@@ -19,37 +18,30 @@ interface DirectMessageProps {
   userProfiles?: Record<string, {username: string | null, avatar_url: string | null}>;
 }
 
-export const DirectMessage = ({ 
-  friend, 
+export const GroupChat = ({ 
+  group, 
   currentUserId,
   webRTCManager,
   onBack,
   messages,
   onNewMessage,
   userProfiles = {}
-}: DirectMessageProps) => {
-  const friendId = friend.user_id === currentUserId ? friend.friend_id : friend.user_id;
-  const friendProfile = friend.profile || userProfiles[friendId];
-  const username = friendProfile?.username || 'Ukjent bruker';
-  const avatarUrl = friendProfile?.avatar_url;
-
-  // Filter messages for this direct chat
-  const chatMessages = messages.filter(msg => 
-    (msg.sender.id === friendId && !msg.receiver_id) || 
-    (msg.sender.id === currentUserId && msg.receiver_id === friendId) || 
-    (msg.sender.id === friendId && msg.receiver_id === currentUserId)
+}: GroupChatProps) => {
+  // Filter messages for this group
+  const groupMessages = messages.filter(msg => 
+    msg.group_id === group.id
   );
 
   const {
     newMessage,
     setNewMessage,
     isLoading,
+    securityLevel,
+    setSecurityLevel,
     connectionState,
     dataChannelState,
     usingServerFallback,
     connectionAttempts,
-    securityLevel,
-    setSecurityLevel,
     sendError,
     handleSendMessage,
     handleReconnect,
@@ -60,7 +52,7 @@ export const DirectMessage = ({
     handleStartEditMessage,
     handleCancelEditMessage,
     handleDeleteMessage
-  } = useDirectMessage(friend, currentUserId, webRTCManager, onNewMessage, chatMessages);
+  } = useGroupChat(group, currentUserId, webRTCManager, onNewMessage, groupMessages);
 
   const isSecureConnection = (securityLevel === 'p2p_e2ee' && connectionState === 'connected' && dataChannelState === 'open') || 
                             securityLevel === 'server_e2ee' || 
@@ -68,29 +60,27 @@ export const DirectMessage = ({
 
   return (
     <div className="flex flex-col h-full bg-cyberdark-950">
-      <DirectMessageHeader 
-        friend={friend}
-        username={username}
-        avatarUrl={avatarUrl}
+      <GroupChatHeader 
+        group={group}
         connectionState={connectionState}
         dataChannelState={dataChannelState}
         usingServerFallback={usingServerFallback}
         connectionAttempts={connectionAttempts}
         onBack={onBack}
         onReconnect={handleReconnect}
-        isTyping={peerIsTyping}
         securityLevel={securityLevel}
         setSecurityLevel={setSecurityLevel}
+        userProfiles={userProfiles}
       />
       
-      {chatMessages.length === 0 && isSecureConnection ? (
-        <DirectMessageEmptyState 
+      {groupMessages.length === 0 && isSecureConnection ? (
+        <GroupChatEmptyState 
           usingServerFallback={usingServerFallback} 
           securityLevel={securityLevel}
         />
       ) : (
         <DirectMessageList 
-          messages={chatMessages} 
+          messages={groupMessages} 
           currentUserId={currentUserId}
           peerIsTyping={peerIsTyping}
           isMessageRead={isMessageRead}

@@ -4,6 +4,7 @@ import { DecryptedMessage } from "@/types/message";
 import { MessageTimer } from "./MessageTimer";
 import { MessageActions } from "@/components/message/MessageActions";
 import { UserStatus } from "@/types/presence";
+import { SecurityLevel } from "@/types/security";
 import { MessageItem } from "@/components/chat/friends/message/MessageItem";
 
 interface MessageBubbleProps {
@@ -14,6 +15,7 @@ interface MessageBubbleProps {
   onEditMessage?: (message: DecryptedMessage) => void;
   onDeleteMessage?: (messageId: string) => void;
   userStatus?: UserStatus;
+  securityLevel?: SecurityLevel;
 }
 
 export const MessageBubble = memo(({
@@ -23,7 +25,8 @@ export const MessageBubble = memo(({
   isMessageRead,
   onEditMessage,
   onDeleteMessage,
-  userStatus
+  userStatus,
+  securityLevel = 'server_e2ee'
 }: MessageBubbleProps) => {
   // Always define handler functions regardless of if message is valid
   const handleDeleteMessageWithConfirmation = (messageId: string) => {
@@ -50,6 +53,7 @@ export const MessageBubble = memo(({
         onDeleteMessage={handleDeleteMessageWithConfirmation}
         userStatus={userStatus}
         onMessageExpired={onMessageExpired}
+        securityLevel={securityLevel}
       />
     </div>
   );
