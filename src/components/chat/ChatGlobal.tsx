@@ -1,6 +1,7 @@
 
 import { MessageList } from "@/components/message-list/MessageList";
 import { MessageInput } from "@/components/MessageInput";
+import { OnlineUsers } from "@/components/online-users/OnlineUsers";
 import { DecryptedMessage } from "@/types/message";
 import { UserPresence } from "@/types/presence";
 
@@ -18,7 +19,7 @@ interface ChatGlobalProps {
   onEditMessage: (message: { id: string; content: string }) => void;
   onCancelEdit: () => void;
   onDeleteMessage: (messageId: string) => void;
-  userPresence: Record<string, UserPresence>;  // Ensure this prop is required
+  userPresence: Record<string, UserPresence>;
 }
 
 export const ChatGlobal = ({
@@ -38,28 +39,37 @@ export const ChatGlobal = ({
   userPresence
 }: ChatGlobalProps) => {
   return (
-    <div className="h-full flex flex-col">
-      <div className="flex-1 overflow-hidden">
-        <MessageList 
-          messages={messages} 
-          onMessageExpired={onMessageExpired}
-          currentUserId={currentUserId}
-          onEditMessage={onEditMessage}
-          onDeleteMessage={onDeleteMessage}
-          userPresence={userPresence}  // Pass user presence data
-        />
-      </div>
+    <div className="h-full flex">
+      <div className="flex-1 flex flex-col">
+        <div className="flex-1 overflow-hidden">
+          <MessageList 
+            messages={messages} 
+            onMessageExpired={onMessageExpired}
+            currentUserId={currentUserId}
+            onEditMessage={onEditMessage}
+            onDeleteMessage={onDeleteMessage}
+            userPresence={userPresence}
+          />
+        </div>
 
-      <div className="p-2 sm:p-4 border-t border-cybergold-500/30">
-        <MessageInput
-          newMessage={newMessage}
-          setNewMessage={setNewMessage}
-          onSubmit={onSubmit}
-          isLoading={isLoading}
-          ttl={ttl}
-          setTtl={setTtl}
-          editingMessage={editingMessage}
-          onCancelEdit={onCancelEdit}
+        <div className="p-2 sm:p-4 border-t border-cybergold-500/30">
+          <MessageInput
+            newMessage={newMessage}
+            setNewMessage={setNewMessage}
+            onSubmit={onSubmit}
+            isLoading={isLoading}
+            ttl={ttl}
+            setTtl={setTtl}
+            editingMessage={editingMessage}
+            onCancelEdit={onCancelEdit}
+          />
+        </div>
+      </div>
+      
+      <div className="w-64 border-l border-cybergold-500/30 p-4 hidden lg:block bg-cyberdark-900/50">
+        <OnlineUsers
+          userPresence={userPresence}
+          currentUserId={currentUserId}
         />
       </div>
     </div>

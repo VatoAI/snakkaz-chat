@@ -1,4 +1,3 @@
-
 import { useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Group, GroupMember } from "@/types/group";
@@ -46,10 +45,9 @@ export function useGroupFetching(currentUserId: string) {
           };
         });
 
-      // Fetch all members for these groups
+      // Process each group to get its members with profiles
       const groupsWithMembers: Group[] = [];
       
-      // Process each group to get its members with profiles
       for (const group of groups) {
         const { data: membersData, error: membersError } = await supabase
           .from('group_members')
@@ -77,29 +75,29 @@ export function useGroupFetching(currentUserId: string) {
         
         // Create properly typed GroupMember objects
         const membersWithProfiles: GroupMember[] = membersData.map(member => {
-          // Fixed null checking - first check if profiles exists before checking its type
           const profileExists = member.profiles !== null && member.profiles !== undefined;
           const isProfileObject = profileExists && typeof member.profiles === 'object';
           const isProfileError = isProfileObject && 'error' in member.profiles;
           
-          // Create a profile object that conforms to the GroupMember.profile interface
-          // We need to explicitly check for properties to avoid TypeScript errors
-          // when member.profiles could be a SelectQueryError
+          // Create a typed profile object
           const profile = {
             id: member.user_id,
-            username: isProfileObject && !isProfileError && 
-              'username' in member.profiles ? member.profiles.username : null,
-            avatar_url: isProfileObject && !isProfileError && 
-              'avatar_url' in member.profiles ? member.profiles.avatar_url : null,
-            full_name: isProfileObject && !isProfileError && 
-              'full_name' in member.profiles ? member.profiles.full_name : null
+            username: (isProfileObject && !isProfileError && 
+              'username' in member.profiles && member.profiles.username !== null) ? 
+              String(member.profiles.username) : "",
+            avatar_url: (isProfileObject && !isProfileError && 
+              'avatar_url' in member.profiles && member.profiles.avatar_url !== null) ? 
+              String(member.profiles.avatar_url) : "",
+            full_name: (isProfileObject && !isProfileError && 
+              'full_name' in member.profiles && member.profiles.full_name !== null) ? 
+              String(member.profiles.full_name) : ""
           };
             
           return {
             id: member.id,
             user_id: member.user_id,
             group_id: member.group_id,
-            role: member.role as 'admin' | 'member', // Explicitly cast to the allowed values
+            role: member.role as 'admin' | 'member',
             joined_at: member.joined_at,
             profile: profile
           };
