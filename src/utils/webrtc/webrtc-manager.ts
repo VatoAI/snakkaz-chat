@@ -17,6 +17,10 @@ export class WebRTCManager implements IWebRTCManager {
   private onMessageCallback: ((message: string, peerId: string) => void) | null = null;
   private secureConnections: Map<string, CryptoKey> = new Map();
   private signalingCleanup: (() => void) | null = null;
+  
+  // Event handlers
+  public onConnectionStateChange: ((peerId: string, state: RTCPeerConnectionState) => void) | null = null;
+  public onDataChannelStateChange: ((peerId: string, state: RTCDataChannelState) => void) | null = null;
 
   constructor(
     private userId: string,
@@ -51,7 +55,19 @@ export class WebRTCManager implements IWebRTCManager {
     }
     
     this.signalingCleanup = this.peerManager.signalingService.setupSignalingListener(
-      async (signal) => await this.peerManager.handleIncomingSignal(signal)
+      async (signal) => {
+        const result = await this.peerManager.handleIncomingSignal(signal);
+        
+        // Update connection state handlers
+        if (signal.sender_id && this.onConnectionStateChange) {
+          const state = this.getConnectionState(signal.sender_id);
+          if (state) {
+            this.onConnectionStateChange(signal.sender_id, state as RTCPeerConnectionState);
+          }
+        }
+        
+        return result;
+      }
     );
     
     return this.signalingCleanup;
@@ -59,7 +75,14 @@ export class WebRTCManager implements IWebRTCManager {
 
   public async connectToPeer(peerId: string, peerPublicKey: JsonWebKey) {
     try {
-      return await this.connectionManager.connectToPeer(peerId, peerPublicKey);
+      const connection = await this.connectionManager.connectToPeer(peerId, peerPublicKey);
+      
+      // Notify of connection state change if handler exists
+      if (connection && this.onConnectionStateChange) {
+        this.onConnectionStateChange(peerId, connection.connectionState as RTCPeerConnectionState);
+      }
+      
+      return connection;
     } catch (error) {
       console.error(`Error connecting to peer ${peerId}:`, error);
       throw error;

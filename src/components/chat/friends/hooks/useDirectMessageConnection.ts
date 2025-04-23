@@ -30,11 +30,9 @@ export const useDirectMessageConnection = (
       }
     };
     
-    // Safely add event listeners if methods exist
-    if (webRTCManager.addEventListener) {
-      webRTCManager.addEventListener('connectionStateChange', onConnectionStateChangeHandler);
-      webRTCManager.addEventListener('dataChannelStateChange', onDataChannelStateChangeHandler);
-    }
+    // Set up event handlers
+    webRTCManager.onConnectionStateChange = onConnectionStateChangeHandler;
+    webRTCManager.onDataChannelStateChange = onDataChannelStateChangeHandler;
     
     // Initial state
     if (webRTCManager.getConnectionState) {
@@ -50,10 +48,10 @@ export const useDirectMessageConnection = (
     }
     
     return () => {
-      // Safely remove event listeners if methods exist
-      if (webRTCManager.removeEventListener) {
-        webRTCManager.removeEventListener('connectionStateChange', onConnectionStateChangeHandler);
-        webRTCManager.removeEventListener('dataChannelStateChange', onDataChannelStateChangeHandler);
+      // Clean up event handlers
+      if (webRTCManager) {
+        webRTCManager.onConnectionStateChange = null;
+        webRTCManager.onDataChannelStateChange = null;
       }
     };
   }, [webRTCManager, friendId, setConnectionState, setDataChannelState]);
@@ -69,7 +67,7 @@ export const useDirectMessageConnection = (
   const handleReconnect = useCallback(() => {
     if (!webRTCManager || !friendId) return;
     
-    setConnectionAttempts(prev => (prev || 0) + 1);
+    setConnectionAttempts(prev => prev + 1);
     
     // Attempt to establish P2P connection
     if (webRTCManager.connectToPeer) {
