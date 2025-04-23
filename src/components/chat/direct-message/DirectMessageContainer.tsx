@@ -52,6 +52,12 @@ export const DirectMessageContainer = ({
   // Extract username and avatar from profiles for header
   const username = friend.profile?.username || userProfiles[friend.user_id]?.username || "User";
   const avatarUrl = friend.profile?.avatar_url || userProfiles[friend.user_id]?.avatar_url;
+  
+  // Wrapper function to adapt the return type to match what DirectMessageForm expects
+  const handleSendMessageWrapper = async (e: React.FormEvent, text: string): Promise<boolean> => {
+    await handleSendMessage(e, text);
+    return true; // Always return true since our original function doesn't return a value
+  };
 
   return (
     <div className="flex flex-col h-full w-full bg-cyberdark-950">
@@ -86,7 +92,7 @@ export const DirectMessageContainer = ({
         usingServerFallback={usingServerFallback}
         sendError={sendError}
         isLoading={isLoading}
-        onSendMessage={handleSendMessage}
+        onSendMessage={handleSendMessageWrapper}
         newMessage={newMessage}
         onChangeMessage={setNewMessage}
         connectionState={connectionState}
