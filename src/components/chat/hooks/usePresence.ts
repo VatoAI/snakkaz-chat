@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { UserStatus } from '@/types/presence';
@@ -18,16 +17,24 @@ export const usePresence = (
     if (!userId || hidden) return;
     
     try {
-      // Use the valid status directly
-      const validStatus: UserStatus = newStatus;
+      // Ensure the status is one of the allowed values
+      const validStatus: 'online' | 'busy' | 'brb' | 'offline' = 
+        ['online', 'busy', 'brb', 'offline'].includes(newStatus) 
+          ? newStatus 
+          : 'online';
       
       const { error } = await supabase
         .from('user_presence')
         .upsert({
+          id: undefined, // let Supabase generate
           user_id: userId,
           status: validStatus,
           last_seen: new Date().toISOString()
-        }, { onConflict: 'user_id' });
+        }, { 
+          onConflict: 'user_id',
+          // Explicitly type the upsert to match Supabase expectations
+          defaultToNull: false 
+        });
 
       if (error) throw error;
       

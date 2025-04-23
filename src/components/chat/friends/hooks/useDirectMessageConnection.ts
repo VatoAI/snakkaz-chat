@@ -30,14 +30,14 @@ export const useDirectMessageConnection = (
       }
     };
     
-    // Add event listeners
-    if ('addEventListener' in webRTCManager) {
+    // Safely add event listeners if methods exist
+    if (webRTCManager.addEventListener) {
       webRTCManager.addEventListener('connectionStateChange', onConnectionStateChangeHandler);
       webRTCManager.addEventListener('dataChannelStateChange', onDataChannelStateChangeHandler);
     }
     
     // Initial state
-    if ('getConnectionState' in webRTCManager) {
+    if (webRTCManager.getConnectionState) {
       const initialConnectionState = webRTCManager.getConnectionState(friendId);
       if (initialConnectionState) {
         setConnectionState(initialConnectionState);
@@ -50,8 +50,8 @@ export const useDirectMessageConnection = (
     }
     
     return () => {
-      // Remove event listeners
-      if ('removeEventListener' in webRTCManager) {
+      // Safely remove event listeners if methods exist
+      if (webRTCManager.removeEventListener) {
         webRTCManager.removeEventListener('connectionStateChange', onConnectionStateChangeHandler);
         webRTCManager.removeEventListener('dataChannelStateChange', onDataChannelStateChangeHandler);
       }
@@ -69,15 +69,15 @@ export const useDirectMessageConnection = (
   const handleReconnect = useCallback(() => {
     if (!webRTCManager || !friendId) return;
     
-    setConnectionAttempts(connectionAttempts + 1);
+    setConnectionAttempts(prev => (prev || 0) + 1);
     
     // Attempt to establish P2P connection
-    if ('connectToPeer' in webRTCManager) {
+    if (webRTCManager.connectToPeer) {
       webRTCManager.connectToPeer(friendId, {} as JsonWebKey);
       
       // Set a timeout for fallback to server
       setTimeout(() => {
-        if ('getConnectionState' in webRTCManager) {
+        if (webRTCManager.getConnectionState) {
           const conn = webRTCManager.getConnectionState(friendId);
           if (!conn || conn !== 'connected') {
             setUsingServerFallback(true);
@@ -85,7 +85,7 @@ export const useDirectMessageConnection = (
         }
       }, 10000); // 10 seconds timeout
     }
-  }, [webRTCManager, friendId, connectionAttempts, setConnectionAttempts, setUsingServerFallback]);
+  }, [webRTCManager, friendId, setConnectionAttempts, setUsingServerFallback]);
   
   return {
     handleReconnect

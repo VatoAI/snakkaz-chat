@@ -25,15 +25,22 @@ export const ChatPresence = ({
     const setupPresence = async () => {
       // Skip updating presence if user is hidden
       if (!hidden) {
-        // Only allow using statuses that are valid in the database
-        const validStatus: UserStatus = currentStatus;
+        // Ensure valid status
+        const validStatus: 'online' | 'busy' | 'brb' | 'offline' = 
+          ['online', 'busy', 'brb', 'offline'].includes(currentStatus) 
+            ? currentStatus 
+            : 'online';
         
         const { error: upsertError } = await supabase
           .from('user_presence')
           .upsert({
+            id: undefined, // let Supabase generate
             user_id: userId,
             status: validStatus,
             last_seen: new Date().toISOString()
+          }, { 
+            onConflict: 'user_id',
+            defaultToNull: false 
           });
 
         if (upsertError) {
