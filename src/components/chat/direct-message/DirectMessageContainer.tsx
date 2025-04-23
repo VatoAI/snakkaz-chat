@@ -55,7 +55,9 @@ export const DirectMessageContainer = ({
   
   // Wrapper function to adapt the return type to match what DirectMessageForm expects
   const handleSendMessageWrapper = async (e: React.FormEvent, text: string): Promise<boolean> => {
-    await handleSendMessage(e, text);
+    // Check the signature of handleSendMessage from the console
+    // Based on the error, it seems handleSendMessage expects only one argument
+    await handleSendMessage(e);
     return true; // Always return true since our original function doesn't return a value
   };
 
