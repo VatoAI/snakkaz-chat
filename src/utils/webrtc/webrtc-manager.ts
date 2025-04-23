@@ -79,7 +79,8 @@ export class WebRTCManager implements IWebRTCManager {
       
       // Notify of connection state change if handler exists
       if (connection && this.onConnectionStateChange) {
-        this.onConnectionStateChange(peerId, connection.connectionState as RTCPeerConnectionState);
+        // Fix: Accessing the connection state through the RTCPeerConnection object
+        this.onConnectionStateChange(peerId, connection.connection.connectionState as RTCPeerConnectionState);
       }
       
       return connection;

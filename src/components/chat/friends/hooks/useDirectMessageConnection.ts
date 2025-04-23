@@ -67,7 +67,8 @@ export const useDirectMessageConnection = (
   const handleReconnect = useCallback(() => {
     if (!webRTCManager || !friendId) return;
     
-    setConnectionAttempts(prev => prev + 1);
+    // Fixed: Changed from a function that updated previous value to just setting a new value
+    setConnectionAttempts(connectionAttempts + 1);
     
     // Attempt to establish P2P connection
     if (webRTCManager.connectToPeer) {
@@ -83,7 +84,7 @@ export const useDirectMessageConnection = (
         }
       }, 10000); // 10 seconds timeout
     }
-  }, [webRTCManager, friendId, setConnectionAttempts, setUsingServerFallback]);
+  }, [webRTCManager, friendId, connectionAttempts, setConnectionAttempts, setUsingServerFallback]);
   
   return {
     handleReconnect
