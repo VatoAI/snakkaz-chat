@@ -73,7 +73,7 @@ export const useDirectMessage = (
   const { handleSubmit, handleDeleteMessage } = useDirectMessageSubmit(
     currentUserId,
     newMessage,
-    (text: string) => setNewMessage(text, startTyping),
+    setNewMessage,
     setIsLoading,
     editingMessage,
     (msg) => {

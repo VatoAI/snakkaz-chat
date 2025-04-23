@@ -1,28 +1,30 @@
 
-import { useMemo } from "react";
 import { DecryptedMessage } from "@/types/message";
-import { UserStatus } from "@/types/presence";
+import { UserPresence, UserStatus } from "@/types/presence";
+import { useMemo } from "react";
 
 interface UseMessageGroupingProps {
   messages: DecryptedMessage[];
-  userPresence?: Record<string, { status: UserStatus }>;
+  userPresence?: Record<string, UserPresence>;
 }
 
 export const useMessageGrouping = ({ 
   messages, 
   userPresence = {} 
 }: UseMessageGroupingProps) => {
-  // Filter out invalid messages
-  const safeMessages = useMemo(() => 
-    messages.filter(msg => msg && msg.sender), 
-    [messages]
-  );
+  // Filter out any invalid messages and ensure they're safe to use
+  const safeMessages = useMemo(() => {
+    return messages.filter(msg => !!msg && !!msg.sender);
+  }, [messages]);
   
-  // Get user status from presence data
+  // Create a function to get user status from presence data
   const getUserStatus = (userId: string): UserStatus | undefined => {
-    return userPresence[userId]?.status;
+    if (!userPresence || !userPresence[userId]) {
+      return undefined;
+    }
+    return userPresence[userId].status;
   };
-  
+
   return {
     messages: safeMessages,
     getUserStatus
