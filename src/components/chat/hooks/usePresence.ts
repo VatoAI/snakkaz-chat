@@ -18,8 +18,8 @@ export const usePresence = (
     if (!userId || hidden) return;
     
     try {
-      // Only allow using statuses that are valid in the database
-      const validStatus = (newStatus === 'offline') ? 'online' : newStatus;
+      // Use the valid status directly
+      const validStatus: UserStatus = newStatus;
       
       const { error } = await supabase
         .from('user_presence')

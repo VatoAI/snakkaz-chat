@@ -18,33 +18,43 @@ export const useDirectMessageConnection = (
   useEffect(() => {
     if (!webRTCManager || !friendId) return;
     
-    const onConnectionStateChange = (peerId: string, state: RTCPeerConnectionState) => {
+    const onConnectionStateChangeHandler = (peerId: string, state: RTCPeerConnectionState) => {
       if (peerId === friendId) {
         setConnectionState(state);
       }
     };
     
-    const onDataChannelStateChange = (peerId: string, state: RTCDataChannelState) => {
+    const onDataChannelStateChangeHandler = (peerId: string, state: RTCDataChannelState) => {
       if (peerId === friendId) {
         setDataChannelState(state);
       }
     };
     
-    webRTCManager.on('connectionStateChange', onConnectionStateChange);
-    webRTCManager.on('dataChannelStateChange', onDataChannelStateChange);
+    // Add event listeners
+    if ('addEventListener' in webRTCManager) {
+      webRTCManager.addEventListener('connectionStateChange', onConnectionStateChangeHandler);
+      webRTCManager.addEventListener('dataChannelStateChange', onDataChannelStateChangeHandler);
+    }
     
     // Initial state
-    const initialConnection = webRTCManager.getPeerConnection(friendId);
-    if (initialConnection) {
-      setConnectionState(initialConnection.connection.connectionState);
-      if (initialConnection.dataChannel) {
-        setDataChannelState(initialConnection.dataChannel.readyState);
+    if ('getConnectionState' in webRTCManager) {
+      const initialConnectionState = webRTCManager.getConnectionState(friendId);
+      if (initialConnectionState) {
+        setConnectionState(initialConnectionState);
+      }
+      
+      const initialDataChannelState = webRTCManager.getDataChannelState(friendId);
+      if (initialDataChannelState) {
+        setDataChannelState(initialDataChannelState);
       }
     }
     
     return () => {
-      webRTCManager.off('connectionStateChange', onConnectionStateChange);
-      webRTCManager.off('dataChannelStateChange', onDataChannelStateChange);
+      // Remove event listeners
+      if ('removeEventListener' in webRTCManager) {
+        webRTCManager.removeEventListener('connectionStateChange', onConnectionStateChangeHandler);
+        webRTCManager.removeEventListener('dataChannelStateChange', onDataChannelStateChangeHandler);
+      }
     };
   }, [webRTCManager, friendId, setConnectionState, setDataChannelState]);
   
@@ -59,19 +69,23 @@ export const useDirectMessageConnection = (
   const handleReconnect = useCallback(() => {
     if (!webRTCManager || !friendId) return;
     
-    setConnectionAttempts(prev => prev + 1);
+    setConnectionAttempts(connectionAttempts + 1);
     
     // Attempt to establish P2P connection
-    webRTCManager.connect(friendId);
-    
-    // Set a timeout for fallback to server
-    setTimeout(() => {
-      const connection = webRTCManager.getPeerConnection(friendId);
-      if (!connection || connection.connection.connectionState !== 'connected') {
-        setUsingServerFallback(true);
-      }
-    }, 10000); // 10 seconds timeout
-  }, [webRTCManager, friendId, setConnectionAttempts, setUsingServerFallback]);
+    if ('connectToPeer' in webRTCManager) {
+      webRTCManager.connectToPeer(friendId, {} as JsonWebKey);
+      
+      // Set a timeout for fallback to server
+      setTimeout(() => {
+        if ('getConnectionState' in webRTCManager) {
+          const conn = webRTCManager.getConnectionState(friendId);
+          if (!conn || conn !== 'connected') {
+            setUsingServerFallback(true);
+          }
+        }
+      }, 10000); // 10 seconds timeout
+    }
+  }, [webRTCManager, friendId, connectionAttempts, setConnectionAttempts, setUsingServerFallback]);
   
   return {
     handleReconnect

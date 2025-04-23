@@ -1,5 +1,5 @@
 
-export type UserStatus = 'online' | 'away' | 'busy' | 'offline';
+export type UserStatus = 'online' | 'busy' | 'brb' | 'offline';
 
 export interface UserPresence {
   user_id: string;

@@ -26,7 +26,7 @@ export const ChatPresence = ({
       // Skip updating presence if user is hidden
       if (!hidden) {
         // Only allow using statuses that are valid in the database
-        const validStatus = (currentStatus === 'offline') ? 'online' : currentStatus;
+        const validStatus: UserStatus = currentStatus;
         
         const { error: upsertError } = await supabase
           .from('user_presence')

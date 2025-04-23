@@ -51,9 +51,10 @@ export const MessageContainer = ({
     <div className="ml-1">
       <SecurityBadge
         securityLevel={securityLevel}
-        showLabel={false}
+        connectionState={undefined}
+        dataChannelState={undefined}
+        usingServerFallback={undefined}
         size="sm"
-        className="h-4"
       />
     </div>
   );
