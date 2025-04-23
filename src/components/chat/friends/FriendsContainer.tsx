@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { FriendsList } from "./list/FriendsList";
 import { FriendRequests } from "./FriendRequests";
@@ -6,7 +5,7 @@ import { FriendsSearchSection } from "./FriendsSearchSection";
 import { QrCodeSection } from "./QrCodeSection";
 import { DecryptedMessage } from "@/types/message";
 import { WebRTCManager } from "@/utils/webrtc";
-import { useFriendRequests } from "./hooks/useFriendRequests";
+import { useOptimizedFriends } from "@/hooks/useOptimizedFriends";
 import { useFriendRequestHandler } from "./hooks/useFriendRequestHandler";
 
 interface FriendsContainerProps {
@@ -27,7 +26,7 @@ export const FriendsContainer = ({
   userProfiles = {}
 }: FriendsContainerProps) => {
   const [activeTab, setActiveTab] = useState<"friends" | "requests">("friends");
-  const { friends, pendingRequests } = useFriendRequests(currentUserId);
+  const { friends, loading } = useOptimizedFriends(currentUserId);
   const { handleSendFriendRequest } = useFriendRequestHandler(currentUserId);
 
   const handleStartChat = (userId: string) => {
@@ -59,11 +58,11 @@ export const FriendsContainer = ({
             onClick={() => setActiveTab("requests")}
           >
             Forespørsler
-            {pendingRequests.length > 0 && (
+            {/* {pendingRequests.length > 0 && (
               <span className="absolute top-2 right-2 bg-cybergold-500 text-cyberdark-900 text-xs rounded-full h-5 w-5 flex items-center justify-center">
                 {pendingRequests.length}
               </span>
-            )}
+            )} */}
           </button>
         </div>
         <div className="p-4">
@@ -86,7 +85,7 @@ export const FriendsContainer = ({
             )
           ) : (
             <FriendRequests 
-              friendRequests={pendingRequests}
+              friendRequests={[]}
               onAccept={handleSendFriendRequest}
               onReject={handleSendFriendRequest}
             />

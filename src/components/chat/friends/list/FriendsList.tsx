@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Friend } from "../types";
 import { DirectMessage } from "../DirectMessage";
@@ -6,9 +5,9 @@ import { WebRTCManager } from "@/utils/webrtc";
 import { DecryptedMessage } from "@/types/message";
 import { FriendListItem } from "./FriendListItem";
 import { EmptyFriendsList } from "./EmptyFriendsList";
+import { useOptimizedFriends } from "@/hooks/useOptimizedFriends";
 
 interface FriendsListProps {
-  friends: Friend[];
   currentUserId: string;
   webRTCManager: WebRTCManager | null;
   directMessages: DecryptedMessage[];
@@ -18,7 +17,6 @@ interface FriendsListProps {
 }
 
 export const FriendsList = ({ 
-  friends, 
   currentUserId,
   webRTCManager,
   directMessages,
@@ -28,6 +26,15 @@ export const FriendsList = ({
 }: FriendsListProps) => {
   const [selectedFriend, setSelectedFriend] = useState<Friend | null>(null);
   const [readMessages, setReadMessages] = useState<Set<string>>(new Set());
+  const { friends, loading } = useOptimizedFriends(currentUserId);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-4">
+        <div className="w-6 h-6 border-2 border-cybergold-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   if (friends.length === 0) {
     return <EmptyFriendsList />;
