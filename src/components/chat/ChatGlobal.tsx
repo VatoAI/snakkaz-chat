@@ -4,6 +4,7 @@ import { MessageInput } from "@/components/MessageInput";
 import { OnlineUsers } from "@/components/online-users/OnlineUsers";
 import { DecryptedMessage } from "@/types/message";
 import { UserPresence } from "@/types/presence";
+import { RecentChats } from "@/components/chat/recent/RecentChats";
 
 interface ChatGlobalProps {
   messages: DecryptedMessage[];
@@ -20,6 +21,10 @@ interface ChatGlobalProps {
   onCancelEdit: () => void;
   onDeleteMessage: (messageId: string) => void;
   userPresence: Record<string, UserPresence>;
+  directMessages?: DecryptedMessage[];
+  onStartChat?: (userId: string) => void;
+  recentGroups?: { id: string; name: string; unreadCount: number; lastActive: string }[];
+  recentConversations?: { userId: string; username: string; unreadCount: number; lastActive: string }[];
 }
 
 export const ChatGlobal = ({
@@ -36,7 +41,11 @@ export const ChatGlobal = ({
   onEditMessage,
   onCancelEdit,
   onDeleteMessage,
-  userPresence
+  userPresence,
+  directMessages = [],
+  onStartChat,
+  recentGroups = [],
+  recentConversations = []
 }: ChatGlobalProps) => {
   return (
     <div className="h-full flex">
@@ -66,7 +75,19 @@ export const ChatGlobal = ({
         </div>
       </div>
       
-      <div className="w-64 border-l border-cybergold-500/30 p-4 hidden lg:block bg-cyberdark-900/50">
+      <div className="w-64 border-l border-cybergold-500/30 p-4 hidden lg:flex flex-col">
+        {/* Recent activity section at the top */}
+        {(recentConversations.length > 0 || recentGroups.length > 0) && (
+          <div className="mb-6">
+            <RecentChats 
+              recentConversations={recentConversations}
+              recentGroups={recentGroups}
+              onStartChat={onStartChat}
+            />
+          </div>
+        )}
+        
+        {/* Online users section */}
         <OnlineUsers
           userPresence={userPresence}
           currentUserId={currentUserId}

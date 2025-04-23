@@ -1,150 +1,113 @@
 
-import { useEffect, useCallback, useMemo } from "react";
-import { DecryptedMessage } from "@/types/message";
-import { groupMessages } from "@/utils/message-grouping";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { playNotificationSound } from "@/utils/sound-manager";
-import { MessageScrollArea } from "@/components/message/MessageScrollArea";
+import { useEffect, useRef, useState } from "react";
+import { groupMessagesByTime } from "@/utils/messageUtils";
+import { useMobilePullToRefresh } from "@/components/message-list/useMobilePullToRefresh";
+import { useScrollHandler } from "@/components/message-list/useScrollHandler";
+import { DeleteMessageHandler } from "@/components/message-list/DeleteMessageHandler";
 import { MessageListContent } from "@/components/message/MessageListContent";
-import { useScrollHandler } from "./useScrollHandler";
-import { useMobilePullToRefresh } from "./useMobilePullToRefresh";
-import { useDeleteMessageHandler } from "./DeleteMessageHandler";
-import { UserPresence } from "@/types/presence";
+import { UnreadCounter } from "./UnreadCounter";
+import { DecryptedMessage } from "@/types/message";
+import { UserPresence } from "@/types/presence"; 
 
 interface MessageListProps {
   messages: DecryptedMessage[];
-  onMessageExpired?: (messageId: string) => void;
-  currentUserId?: string | null;
-  onEditMessage?: (message: DecryptedMessage) => void;
-  onDeleteMessage?: (messageId: string) => void;
+  onMessageExpired: (messageId: string) => void;
+  currentUserId: string | null;
+  onEditMessage: (message: DecryptedMessage) => void;
+  onDeleteMessage: (messageId: string) => void;
   userPresence?: Record<string, UserPresence>;
 }
 
 export const MessageList = ({
-  messages: initialMessages,
+  messages,
   onMessageExpired,
   currentUserId,
   onEditMessage,
   onDeleteMessage,
   userPresence = {}
 }: MessageListProps) => {
-  const isMobile = useIsMobile();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [newMessageCount, setNewMessageCount] = useState(0);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
-  // Use memoized version of grouped messages to prevent unnecessary re-renders
-  const validMessages = useMemo(() => 
-    initialMessages.filter(msg => msg && msg.sender), 
-    [initialMessages]
-  );
-  
-  const messageGroups = useMemo(() => 
-    groupMessages(validMessages),
-    [validMessages]
-  );
-
-  // Scroll and unread logic
   const {
-    messagesEndRef,
-    scrollAreaRef,
+    containerRef,
+    isAtBottom,
+    scrollDownIfNeeded,
+    handleScroll,
     autoScroll,
     setAutoScroll,
-    wasScrolledToBottom,
-    setWasScrolledToBottom,
-    newMessageCount,
-    setNewMessageCount,
-    lastMessageCountRef,
-    handleScroll,
-    handleScrollToBottom,
-  } = useScrollHandler({ isMobile, initialMessagesCount: initialMessages.length });
+  } = useScrollHandler(messages, messagesEndRef);
 
-  // Delete confirmation dialog state with optimistic updates
-  const { confirmDelete, setConfirmDelete, DialogUI, isDeleting } = useDeleteMessageHandler({ 
-    onDeleteMessage: async (messageId) => {
-      if (onDeleteMessage) {
-        // Return the promise to allow for proper error handling
-        return onDeleteMessage(messageId);
-      }
-    }
-  });
+  const isMobile = window.innerWidth < 768;
 
-  // Mobile pull-to-refresh
-  const { handleTouchStart, handleTouchMove, handleTouchEnd } = useMobilePullToRefresh({
-    scrollAreaRef,
-    onRefresh: () => {
-      if (onMessageExpired) onMessageExpired('refresh');
-    },
-  });
+  // Pull-to-refresh hook for mobile
+  useMobilePullToRefresh(containerRef);
 
-  // New messages and scroll
+  // Handle auto-scrolling when new messages arrive
   useEffect(() => {
-    const messagesChanged = initialMessages.length !== lastMessageCountRef.current;
-    const newMessages = initialMessages.length > lastMessageCountRef.current;
-    if (messagesChanged) {
-      lastMessageCountRef.current = initialMessages.length;
-      if (newMessages) {
-        if (autoScroll) {
-          setTimeout(() => {
-            messagesEndRef.current?.scrollIntoView({ behavior: isMobile ? 'auto' : 'smooth' });
-          }, 100);
-        } else {
-          setNewMessageCount(
-            (prev) => prev + (initialMessages.length - lastMessageCountRef.current)
-          );
-          if (!wasScrolledToBottom) {
-            playNotificationSound();
-          }
-        }
+    if (isAtBottom) {
+      scrollDownIfNeeded();
+      setNewMessageCount(0);
+    } else if (messages.length > 0) {
+      const lastMessage = messages[messages.length - 1];
+      if (
+        currentUserId &&
+        lastMessage.sender.id !== currentUserId &&
+        new Date().getTime() - new Date(lastMessage.created_at).getTime() <
+          60000
+      ) {
+        setNewMessageCount((prev) => prev + 1);
       }
     }
-  }, [initialMessages.length, autoScroll, wasScrolledToBottom, isMobile, lastMessageCountRef, messagesEndRef, setNewMessageCount]);
+  }, [messages.length, isAtBottom, scrollDownIfNeeded, messages, currentUserId]);
 
-  const isUserMessage = useCallback(
-    (message: DecryptedMessage) =>
-      message?.sender && currentUserId ? message.sender.id === currentUserId : false,
-    [currentUserId]
-  );
+  // Group messages by time blocks (e.g., messages within 5 minutes)
+  const messageGroups = groupMessagesByTime(messages);
 
-  const handleMessageExpired = useCallback((messageId: string) => {
-    if (onMessageExpired) onMessageExpired(messageId);
-  }, [onMessageExpired]);
-  
-  const handleEdit = useCallback((message: DecryptedMessage) => {
-    if (onEditMessage) onEditMessage(message);
-  }, [onEditMessage]);
+  const isUserMessage = (message: DecryptedMessage) =>
+    message.sender.id === currentUserId;
 
+  const handleScrollToBottom = () => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+      setNewMessageCount(0);
+      setAutoScroll(true);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (confirmDelete) {
+      await onDeleteMessage(confirmDelete);
+      setConfirmDelete(null);
+    }
+  };
+
+  // Render the message list UI
   return (
-    <MessageScrollArea
-      onScrollBottom={() => setNewMessageCount(0)}
-      setAutoScroll={setAutoScroll}
-      setWasScrolledToBottom={setWasScrolledToBottom}
-      wasScrolledToBottom={wasScrolledToBottom}
-      autoScroll={autoScroll}
-      scrollAreaRef={scrollAreaRef}
+    <div
+      ref={containerRef}
+      className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-cyberblue-500/40 scrollbar-track-transparent relative"
+      onScroll={handleScroll}
     >
-      <div
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-        style={{ height: "100%", width: "100%" }}
-      >
-        <MessageListContent
-          messageGroups={messageGroups}
-          isUserMessage={isUserMessage}
-          onMessageExpired={handleMessageExpired}
-          onEdit={handleEdit}
-          onDelete={setConfirmDelete}
-          messagesEndRef={messagesEndRef}
-          isMobile={isMobile}
-          autoScroll={autoScroll}
-          handleScrollToBottom={handleScrollToBottom}
-          newMessageCount={newMessageCount}
-          confirmDelete={confirmDelete}
-          setConfirmDelete={setConfirmDelete}
-          handleDelete={DialogUI.props.onConfirm}
-          isDeleting={isDeleting}
-          userPresence={userPresence}
-        />
-        {DialogUI}
-      </div>
-    </MessageScrollArea>
+      <MessageListContent
+        messageGroups={messageGroups}
+        isUserMessage={isUserMessage}
+        onMessageExpired={onMessageExpired}
+        onEdit={onEditMessage}
+        onDelete={setConfirmDelete}
+        messagesEndRef={messagesEndRef}
+        isMobile={isMobile}
+        autoScroll={autoScroll}
+        handleScrollToBottom={handleScrollToBottom}
+        newMessageCount={newMessageCount}
+        confirmDelete={confirmDelete}
+        setConfirmDelete={setConfirmDelete}
+        handleDelete={handleDelete}
+        userPresence={userPresence}
+      />
+
+      <UnreadCounter count={newMessageCount} show={!autoScroll} />
+    </div>
   );
 };

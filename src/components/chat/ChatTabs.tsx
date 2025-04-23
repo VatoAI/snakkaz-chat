@@ -1,4 +1,3 @@
-
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { ChatGlobal } from '@/components/chat/ChatGlobal';
 import { DirectMessage } from '@/components/chat/friends/DirectMessage';
@@ -11,6 +10,7 @@ import { WebRTCManager } from '@/utils/webrtc';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { FriendsContainer } from './friends/FriendsContainer';
 import { UserPresence } from "@/types/presence";
+import { useMemo } from "react";
 
 interface ChatTabsProps {
   activeTab: string;
@@ -30,7 +30,7 @@ interface ChatTabsProps {
   onCancelEdit: () => void;
   onDeleteMessage: (messageId: string) => void;
   directMessages: DecryptedMessage[];
-  onNewMessage: (message: DecryptedMessage) => void;
+  onNewMessage: (message: { id: string; content: string }) => void;
   webRTCManager: WebRTCManager | null;
   userProfiles: Record<string, {username: string | null, avatar_url: string | null}>;
   handleCloseDirectChat: () => void;
@@ -74,6 +74,48 @@ export const ChatTabs = ({
     setActiveTab(newTab);
   };
 
+  const recentConversations = useMemo(() => {
+    if (!currentUserId) return [];
+    
+    const conversations = new Map();
+    
+    directMessages.forEach((msg) => {
+      const isFromCurrentUser = msg.sender.id === currentUserId;
+      const otherUserId = isFromCurrentUser ? msg.receiver_id : msg.sender.id;
+      
+      if (!otherUserId) return;
+      
+      if (!conversations.has(otherUserId)) {
+        const username = isFromCurrentUser 
+          ? userProfiles[otherUserId]?.username || otherUserId 
+          : msg.sender.username || otherUserId;
+        
+        conversations.set(otherUserId, {
+          userId: otherUserId,
+          username,
+          unreadCount: isFromCurrentUser ? 0 : (msg.read_at ? 0 : 1),
+          lastActive: msg.created_at
+        });
+      } else {
+        const existing = conversations.get(otherUserId);
+        const newDate = new Date(msg.created_at);
+        const existingDate = new Date(existing.lastActive);
+        
+        if (newDate > existingDate) {
+          existing.lastActive = msg.created_at;
+        }
+        
+        if (!isFromCurrentUser && !msg.read_at) {
+          existing.unreadCount += 1;
+        }
+      }
+    });
+    
+    return Array.from(conversations.values());
+  }, [currentUserId, directMessages, userProfiles]);
+
+  const recentGroups = [];
+
   return (
     <TooltipProvider>
       <Tabs 
@@ -108,6 +150,29 @@ export const ChatTabs = ({
                 onCancelEdit={onCancelEdit}
                 onDeleteMessage={onDeleteMessage}
                 userPresence={userPresence}
+                directMessages={directMessages}
+                onStartChat={(userId) => {
+                  const friendProfile = userProfiles[userId];
+                  if (friendProfile) {
+                    const friend = {
+                      id: '',
+                      user_id: userId,
+                      friend_id: currentUserId || '',
+                      status: 'accepted',
+                      created_at: '',
+                      profile: {
+                        id: userId,
+                        username: friendProfile.username,
+                        avatar_url: friendProfile.avatar_url,
+                        full_name: null
+                      }
+                    };
+                    handleTabChange('direct');
+                    setSelectedFriend(friend);
+                  }
+                }}
+                recentConversations={recentConversations}
+                recentGroups={recentGroups}
               />
             </TabsContent>
 
