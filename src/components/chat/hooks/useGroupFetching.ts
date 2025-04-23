@@ -43,35 +43,63 @@ export function useGroupFetching(currentUserId: string) {
 
       // Fetch all members for these groups
       const groupIds = groups.map(g => g.id);
-      const { data: membersData, error: membersError } = await supabase
-        .from('group_members')
-        .select(`
-          id,
-          user_id,
-          role,
-          joined_at,
-          group_id,
-          profiles:user_id (
+      
+      const groupsWithMembers: Group[] = [];
+      
+      // Process each group to get its members with profiles
+      for (const group of groups) {
+        const { data: membersData, error: membersError } = await supabase
+          .from('group_members')
+          .select(`
             id,
-            username,
-            avatar_url,
-            full_name
-          )
-        `)
-        .in('group_id', groupIds);
+            user_id,
+            role,
+            joined_at,
+            group_id
+          `)
+          .eq('group_id', group.id);
 
-      if (membersError) throw membersError;
+        if (membersError) throw membersError;
+        
+        if (!membersData) continue;
+        
+        // For each member, fetch their profile information
+        const membersWithProfiles: GroupMember[] = [];
+        
+        for (const member of membersData) {
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('id, username, avatar_url, full_name')
+            .eq('id', member.user_id)
+            .single();
+            
+          if (!profileError && profileData) {
+            membersWithProfiles.push({
+              ...member,
+              profile: profileData
+            } as GroupMember);
+          } else {
+            console.error(`Error fetching profile for group member ${member.user_id}:`, profileError);
+            // Add member even without profile for data integrity
+            membersWithProfiles.push({
+              ...member,
+              profile: {
+                id: member.user_id,
+                username: 'Unknown User',
+                avatar_url: null,
+                full_name: null
+              }
+            } as GroupMember);
+          }
+        }
+        
+        groupsWithMembers.push({
+          ...group,
+          members: membersWithProfiles
+        });
+      }
 
-      // Add members to their respective groups
-      return groups.map(group => ({
-        ...group,
-        members: (membersData || [])
-          .filter(member => member.group_id === group.id)
-          .map(member => ({
-            ...member,
-            profile: member.profiles
-          })) as GroupMember[]
-      }));
+      return groupsWithMembers;
     } catch (error) {
       console.error("Error fetching groups:", error);
       toast({

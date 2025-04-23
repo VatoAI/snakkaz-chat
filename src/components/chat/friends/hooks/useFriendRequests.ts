@@ -17,4 +17,3 @@ export const useFriendRequests = (currentUserId: string) => {
 
   return { friends, pendingRequests };
 };
-
