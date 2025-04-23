@@ -24,7 +24,7 @@ export const ChatCodeModal = ({
   onSetPin,
   verifyPin,
   isSetMode = false,
-  isLocked = false,
+  isLocked: initialLockState = false,
   remainingAttempts = 5
 }: ChatCodeModalProps) => {
   const [code, setCode] = useState("");
@@ -32,9 +32,14 @@ export const ChatCodeModal = ({
   const [showNumber, setShowNumber] = useState(false);
   const [animateError, setAnimateError] = useState(false);
   const [attempts, setAttempts] = useState(0);
-  const [isLocked, setIsLocked] = useState(false);
+  const [isLocked, setIsLocked] = useState(initialLockState);
   const [lockoutTimer, setLockoutTimer] = useState(0);
   const { toast } = useToast();
+
+  // Update local lock state when prop changes
+  useEffect(() => {
+    setIsLocked(initialLockState);
+  }, [initialLockState]);
 
   useEffect(() => {
     if (open) {
