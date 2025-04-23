@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChatHeader } from "@/components/chat/ChatHeader";
@@ -37,7 +36,6 @@ const ChatPage = () => {
   const [hidden, setHidden] = useState(false);
   const isMobile = useIsMobile();
 
-  // Use the centralized usePresence hook
   const { currentStatus, handleStatusChange, userPresence } = usePresence(
     user?.id,
     'online',
@@ -209,6 +207,7 @@ const ChatPage = () => {
             handleCloseDirectChat={() => setSelectedFriend(null)}
             setSelectedFriend={setSelectedFriend}
             userPresence={userPresence}
+            friendsList={friendsList}
           />
         </div>
         <MigrationHelper />

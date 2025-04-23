@@ -1,12 +1,13 @@
 
-import { Users, ArrowLeft, RefreshCw } from "lucide-react";
+import { Group } from "@/types/group";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Group } from "@/types/group";
-import { SecurityBadge } from "../security/SecurityBadge";
-import { SecurityLevelSelector } from "../security/SecurityLevelSelector";
+import { ArrowLeft, RefreshCw, Shield, Users, UserPlus } from "lucide-react";
 import { SecurityLevel } from "@/types/security";
+import { SecurityBadge } from "../security/SecurityBadge";
+import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface GroupChatHeaderProps {
   group: Group;
@@ -19,6 +20,8 @@ interface GroupChatHeaderProps {
   securityLevel: SecurityLevel;
   setSecurityLevel: (level: SecurityLevel) => void;
   userProfiles?: Record<string, {username: string | null, avatar_url: string | null}>;
+  isAdmin?: boolean;
+  onShowInvite?: () => void;
 }
 
 export const GroupChatHeader = ({
@@ -31,120 +34,150 @@ export const GroupChatHeader = ({
   onReconnect,
   securityLevel,
   setSecurityLevel,
-  userProfiles = {}
+  userProfiles = {},
+  isAdmin = false,
+  onShowInvite
 }: GroupChatHeaderProps) => {
-  const memberCount = group.members.length;
-  const canUsePeerToPeer = memberCount <= 5; // Limit P2P for small groups
-  
-  // Get avatars for the first 3 members
-  const memberAvatars = group.members
-    .slice(0, 3)
-    .map(member => {
-      const profile = member.profile || userProfiles[member.user_id];
+  // Map the connection states to a display indicator
+  const getConnectionStatus = () => {
+    if (usingServerFallback) {
       return {
-        userId: member.user_id,
-        username: profile?.username || 'Unknown',
-        avatarUrl: profile?.avatar_url || null
+        status: "warning",
+        message: "Faller tilbake til server",
+        icon: <Shield className="h-4 w-4 text-yellow-500" />
       };
-    });
-  
-  // Handle security level change
-  const handleSecurityChange = (level: SecurityLevel) => {
-    // If trying to set P2P but group is too large, default to server_e2ee
-    if (level === 'p2p_e2ee' && !canUsePeerToPeer) {
-      setSecurityLevel('server_e2ee');
-    } else {
-      setSecurityLevel(level);
     }
-  };
+    
+    if (securityLevel === 'server_e2ee' || securityLevel === 'standard') {
+      return {
+        status: "ok",
+        message: "Server-kryptert",
+        icon: <Shield className="h-4 w-4 text-green-500" />
+      };
+    }
 
+    if (connectionState === 'connected' && dataChannelState === 'open') {
+      return {
+        status: "ok",
+        message: "Tilkoblet P2P",
+        icon: <Shield className="h-4 w-4 text-green-500" />
+      };
+    }
+    
+    if (connectionState === 'connecting' || connectionAttempts > 0) {
+      return {
+        status: "warning",
+        message: "Kobler til...",
+        icon: <RefreshCw className="h-4 w-4 text-yellow-500 animate-spin" />
+      };
+    }
+
+    return {
+      status: "error",
+      message: "Ikke tilkoblet",
+      icon: <Shield className="h-4 w-4 text-red-500" />
+    };
+  };
+  
+  const connectionStatus = getConnectionStatus();
+  
   return (
-    <div className="border-b border-cybergold-500/30 p-3 flex items-center bg-cyberdark-900">
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={onBack}
-        className="mr-2 text-cybergold-400 hover:text-cybergold-300 hover:bg-cyberdark-800"
-      >
-        <ArrowLeft className="h-5 w-5" />
-      </Button>
-      
-      <div className="flex items-center space-x-3 flex-1">
-        <div className="relative">
-          {memberAvatars.length > 0 ? (
-            <div className="flex -space-x-2">
-              {memberAvatars.map((member, index) => (
-                <Avatar
-                  key={member.userId}
-                  className={`w-8 h-8 border-2 border-cyberdark-800 ${
-                    index === 0 ? "z-30" : index === 1 ? "z-20" : "z-10"
-                  }`}
-                >
-                  {member.avatarUrl ? (
-                    <AvatarImage
-                      src={supabase.storage.from('avatars').getPublicUrl(member.avatarUrl).data.publicUrl}
-                      alt={member.username}
-                    />
-                  ) : (
-                    <AvatarFallback className="bg-cybergold-500/30 text-cybergold-200">
-                      {member.username[0].toUpperCase()}
-                    </AvatarFallback>
-                  )}
-                </Avatar>
-              ))}
-            </div>
-          ) : (
-            <Avatar className="w-10 h-10 border-2 border-cybergold-500/20">
-              <AvatarFallback className="bg-cybergold-500/20 text-cybergold-300">
-                <Users className="h-5 w-5" />
-              </AvatarFallback>
-            </Avatar>
-          )}
-          
-          {memberCount > 3 && (
-            <div className="absolute -bottom-1 -right-1 bg-cyberdark-800 text-cybergold-300 text-xs rounded-full w-5 h-5 flex items-center justify-center border border-cybergold-500/30">
-              +{memberCount - 3}
-            </div>
-          )}
-        </div>
-        
-        <div className="flex flex-col">
-          <h2 className="text-cybergold-200 font-medium truncate max-w-[150px]">
-            {group.name}
-          </h2>
-          <p className="text-xs text-cybergold-400">
-            {memberCount} {memberCount === 1 ? 'medlem' : 'medlemmer'}
-          </p>
-        </div>
-      </div>
-      
-      <div className="flex items-center space-x-3">
-        <SecurityBadge
-          securityLevel={securityLevel}
-          connectionState={connectionState}
-          dataChannelState={dataChannelState}
-          usingServerFallback={usingServerFallback}
-          showLabel={true}
-        />
-        
-        <SecurityLevelSelector
-          value={securityLevel}
-          onChange={handleSecurityChange}
-          disabled={!canUsePeerToPeer}
-        />
-        
-        {securityLevel === 'p2p_e2ee' && (
+    <header className="bg-cyberdark-900 border-b border-cybergold-500/20 p-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
           <Button
             variant="ghost"
             size="icon"
-            onClick={onReconnect}
-            className="text-cybergold-400 hover:text-cybergold-300 hover:bg-cyberdark-800"
-            disabled={connectionState === 'connecting'}
+            className="h-8 w-8 text-cybergold-500 hover:bg-cyberdark-800"
+            onClick={onBack}
           >
-            <RefreshCw className={`h-5 w-5 ${connectionState === 'connecting' ? 'animate-spin' : ''}`} />
+            <ArrowLeft className="h-5 w-5" />
           </Button>
-        )}
+          
+          <div className="flex items-center gap-2">
+            <Avatar className="h-10 w-10 border-2 border-cybergold-500/20">
+              {group.avatar_url ? (
+                <AvatarImage 
+                  src={supabase.storage.from('group_avatars').getPublicUrl(group.avatar_url).data.publicUrl} 
+                  alt={group.name} 
+                />
+              ) : (
+                <AvatarFallback className="bg-cybergold-500/20 text-cybergold-300">
+                  <Users className="h-5 w-5" />
+                </AvatarFallback>
+              )}
+            </Avatar>
+            
+            <div>
+              <h3 className="font-medium text-cybergold-200">{group.name}</h3>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-cybergold-400 flex items-center">
+                  <Users className="h-3.5 w-3.5 mr-1" />
+                  {group.members.length} {group.members.length === 1 ? 'medlem' : 'medlemmer'}
+                </span>
+                
+                <span 
+                  className={cn(
+                    "text-xs px-1.5 py-0.5 rounded-full flex items-center",
+                    connectionStatus.status === 'ok' ? "bg-green-600/20 text-green-400" : 
+                    connectionStatus.status === 'warning' ? "bg-yellow-600/20 text-yellow-400" : 
+                    "bg-red-600/20 text-red-400"
+                  )}
+                >
+                  {connectionStatus.icon}
+                  <span className="ml-1">{connectionStatus.message}</span>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <TooltipProvider>
+            <SecurityBadge 
+              securityLevel={securityLevel} 
+              setSecurityLevel={setSecurityLevel}
+              usingServerFallback={usingServerFallback}
+            />
+            
+            {isAdmin && onShowInvite && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-cybergold-400 hover:text-cybergold-300 hover:bg-cyberdark-800"
+                    onClick={onShowInvite}
+                  >
+                    <UserPlus className="h-5 w-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Inviter til gruppe</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+            
+            {connectionStatus.status === 'error' && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-cybergold-400 hover:text-cybergold-300 hover:bg-cyberdark-800"
+                    onClick={onReconnect}
+                  >
+                    <RefreshCw className="h-5 w-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Koble til på nytt</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </TooltipProvider>
+        </div>
       </div>
-    </div>
+    </header>
   );
 };

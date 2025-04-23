@@ -1,3 +1,4 @@
+
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { ChatGlobal } from '@/components/chat/ChatGlobal';
 import { DirectMessage } from '@/components/chat/friends/DirectMessage';
@@ -35,6 +36,7 @@ interface ChatTabsProps {
   handleCloseDirectChat: () => void;
   setSelectedFriend: (friend: Friend | null) => void;
   userPresence?: Record<string, UserPresence>;
+  friendsList?: string[];
 }
 
 export const ChatTabs = ({ 
@@ -60,7 +62,8 @@ export const ChatTabs = ({
   userProfiles,
   handleCloseDirectChat,
   setSelectedFriend,
-  userPresence = {}
+  userPresence = {},
+  friendsList = []
 }: ChatTabsProps) => {
   useTabShortcuts(setActiveTab, activeTab, !!selectedFriend);
 
@@ -138,6 +141,7 @@ export const ChatTabs = ({
                   }
                 }}
                 userProfiles={userProfiles}
+                friendsList={friendsList}
               />
             </TabsContent>
 

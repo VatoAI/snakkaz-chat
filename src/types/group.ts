@@ -8,6 +8,8 @@ export interface Group {
   creator_id: string;
   members: GroupMember[];
   security_level: SecurityLevel;
+  password?: string;
+  avatar_url?: string;
 }
 
 export interface GroupMember {
