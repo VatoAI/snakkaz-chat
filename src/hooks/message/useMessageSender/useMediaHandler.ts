@@ -3,6 +3,29 @@ import { encryptMedia } from "@/utils/encryption/media";
 import { base64ToArrayBuffer } from "@/utils/encryption/data-conversion";
 import { showUploadToast, uploadMediaFile } from "../utils/message-db-utils";
 
+// Function to check if storage bucket exists
+const checkStorageBucket = async (bucketName: string) => {
+  try {
+    const { data, error } = await fetch(`https://wqpoozpbceucynsojmbk.supabase.co/storage/v1/bucket/${bucketName}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndxcG9venBiY2V1Y3luc29qbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzk1NjgzMDUsImV4cCI6MjA1NTE0NDMwNX0.vu1s86gQKEPXFleOZ1U2uOjW-kj4k4RAiKTbOuXPUD8'
+      }
+    }).then(res => res.json());
+    
+    if (error) {
+      console.error(`Storage bucket ${bucketName} check failed:`, error);
+      return false;
+    }
+    
+    return !!data;
+  } catch (e) {
+    console.error(`Error checking storage bucket ${bucketName}:`, e);
+    return false;
+  }
+};
+
 export const useMediaHandler = () => {
   const handleMediaUpload = async (mediaFile: File, toast: any, encryptionOverride?: { encryptionKey: string, iv: string }) => {
     let toastId = null;
@@ -10,6 +33,11 @@ export const useMediaHandler = () => {
 
     try {
       toastId = showUploadToast(toast, 'uploading');
+      
+      // Check internet connection
+      if (!navigator.onLine) {
+        throw new Error('Du er ikke tilkoblet internett. Sjekk din internettforbindelse og prøv igjen.');
+      }
       
       // Validate the file before proceeding
       if (!mediaFile) {
@@ -20,11 +48,19 @@ export const useMediaHandler = () => {
         throw new Error('Filen er for stor. Maksimal størrelse er 10 MB.');
       }
 
-      console.log('Starting media encryption for file:', mediaFile.name, 'size:', mediaFile.size);
+      // Check if required storage bucket exists
+      const bucketExists = await checkStorageBucket('chat-media');
+      if (!bucketExists) {
+        console.error('Storage bucket "chat-media" does not exist');
+        throw new Error('Lagringsbøtte for media finnes ikke. Vennligst kontakt en administrator.');
+      }
+
+      console.log('Starting media encryption for file:', mediaFile.name, 'size:', mediaFile.size, 'type:', mediaFile.type);
       
       // Try with retries for network issues
       let retries = 0;
       const maxRetries = 3;
+      let lastError = null;
       
       while (retries < maxRetries) {
         try {
@@ -63,19 +99,26 @@ export const useMediaHandler = () => {
           break; // Exit the retry loop if successful
         } catch (uploadError: any) {
           retries++;
+          lastError = uploadError;
           console.error(`Upload attempt ${retries} failed:`, uploadError);
           
           if (retries >= maxRetries) {
-            throw new Error(`Kunne ikke laste opp filen etter ${maxRetries} forsøk: ${uploadError.message}`);
+            const errorMessage = uploadError?.message || 'Kunne ikke laste opp filen';
+            console.error('All upload attempts failed:', errorMessage);
+            throw new Error(`Kunne ikke laste opp filen etter ${maxRetries} forsøk: ${errorMessage}`);
           }
           
-          // Wait before retrying
-          await new Promise(resolve => setTimeout(resolve, 1000 * retries));
+          // Wait before retrying with exponential backoff
+          const backoffTime = 1000 * Math.pow(2, retries - 1);
+          console.log(`Waiting ${backoffTime}ms before retry ${retries}/${maxRetries}...`);
+          await new Promise(resolve => setTimeout(resolve, backoffTime));
           showUploadToast(toast, 'uploading', `Forsøker igjen (${retries}/${maxRetries})...`);
         }
       }
     } catch (error: any) {
-      showUploadToast(toast, 'error', error instanceof Error ? error.message : "Kunne ikke laste opp filen");
+      const errorMessage = error instanceof Error ? error.message : "Kunne ikke laste opp filen";
+      console.error('Media upload failed:', errorMessage, error);
+      showUploadToast(toast, 'error', errorMessage);
       throw error;
     }
 

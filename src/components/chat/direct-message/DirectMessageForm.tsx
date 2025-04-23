@@ -1,11 +1,12 @@
 
-import { useState, FormEvent, useCallback } from "react";
-import { Send, X, AlertTriangle } from "lucide-react";
+import { useState, FormEvent, useCallback, useEffect } from "react";
+import { Send, X, AlertTriangle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { SecurityBadge } from "../security/SecurityBadge";
 import { SecurityLevel } from "@/types/security";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface DirectMessageFormProps {
   usingServerFallback: boolean;
@@ -19,6 +20,7 @@ interface DirectMessageFormProps {
   editingMessage: { id: string; content: string } | null;
   onCancelEdit: () => void;
   securityLevel: SecurityLevel;
+  onReconnect?: () => void; // Optional callback to trigger reconnection
 }
 
 export const DirectMessageForm = ({
@@ -32,21 +34,45 @@ export const DirectMessageForm = ({
   dataChannelState,
   editingMessage,
   onCancelEdit,
-  securityLevel
+  securityLevel,
+  onReconnect
 }: DirectMessageFormProps) => {
   const [isComposing, setIsComposing] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+  const [networkStatus, setNetworkStatus] = useState<'online' | 'offline'>(navigator.onLine ? 'online' : 'offline');
+  
+  // Listen for network status changes
+  useEffect(() => {
+    const handleOnline = () => setNetworkStatus('online');
+    const handleOffline = () => setNetworkStatus('offline');
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
   
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (newMessage.trim() === '' || isLoading) return;
     
+    // Check network connection first
+    if (networkStatus === 'offline') {
+      setLocalError("Du er ikke tilkoblet internett. Sjekk din forbindelse og prøv igjen.");
+      return;
+    }
+    
     setIsComposing(false);
     setLocalError(null);
     
     try {
+      console.log("Attempting to send message...");
       const success = await onSendMessage(e, newMessage);
       if (!success) {
+        console.error("Message sending failed without throwing an error");
         setLocalError("Kunne ikke sende melding. Prøv igjen senere.");
       }
     } catch (error: any) {
@@ -69,10 +95,41 @@ export const DirectMessageForm = ({
   
   return (
     <div className="border-t border-cybergold-500/30 p-4 bg-cyberdark-900">
+      {networkStatus === 'offline' && (
+        <Alert variant="destructive" className="mb-2 bg-red-600/20 border-red-500/40">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription className="text-sm text-red-300">
+            Du er ikke tilkoblet internett. Venligst sjekk din nettverksforbindelse.
+          </AlertDescription>
+        </Alert>
+      )}
+      
       {!isConnected && securityLevel === 'p2p_e2ee' && (
-        <div className="mb-2 p-2 bg-amber-600/20 border border-amber-500/40 rounded-md text-sm text-amber-300">
-          Venter på tilkobling. Meldingen vil sendes når tilkoblingen er etablert,
-          eller faller tilbake til server etter en kort stund.
+        <div className="mb-2 p-2 bg-amber-600/20 border border-amber-500/40 rounded-md text-sm text-amber-300 flex justify-between items-center">
+          <span>
+            Venter på tilkobling. Meldingen vil sendes når tilkoblingen er etablert,
+            eller faller tilbake til server etter en kort stund.
+          </span>
+          {onReconnect && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-6 w-6 text-amber-300 hover:text-amber-200"
+                    onClick={onReconnect}
+                    disabled={isLoading}
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  <p className="text-xs">Prøv å koble til på nytt</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
         </div>
       )}
       
@@ -125,6 +182,7 @@ export const DirectMessageForm = ({
                 handleSubmit(e);
               }
             }}
+            disabled={networkStatus === 'offline'}
           />
           <div className="absolute bottom-2 right-2">
             <SecurityBadge
@@ -141,11 +199,11 @@ export const DirectMessageForm = ({
           type="submit"
           size="icon"
           className={`bg-cybergold-600 hover:bg-cybergold-700 text-black ${
-            isLoading || (newMessage.trim() === '') 
+            isLoading || (newMessage.trim() === '') || networkStatus === 'offline'
               ? 'opacity-50 cursor-not-allowed' 
               : ''
           }`}
-          disabled={isLoading || newMessage.trim() === ''}
+          disabled={isLoading || newMessage.trim() === '' || networkStatus === 'offline'}
         >
           <Send className="h-4 w-4" />
         </Button>

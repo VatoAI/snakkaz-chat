@@ -53,9 +53,17 @@ export const DirectMessageContainer = ({
   const username = friend.profile?.username || userProfiles[friend.user_id]?.username || "User";
   const avatarUrl = friend.profile?.avatar_url || userProfiles[friend.user_id]?.avatar_url;
   
+  // Check for network connectivity
+  const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
+  
   // Wrapper function to adapt the return type to match what DirectMessageForm expects
   const handleSendMessageWrapper = async (e: React.FormEvent, text: string): Promise<boolean> => {
     try {
+      if (!navigator.onLine) {
+        console.error("Cannot send message: Device is offline");
+        return false;
+      }
+      
       // We'll use the event but ignore the text since it's already in the state
       await handleSendMessage(e);
       return true; 
@@ -106,6 +114,7 @@ export const DirectMessageContainer = ({
         editingMessage={editingMessage}
         onCancelEdit={handleCancelEditMessage}
         securityLevel={securityLevel}
+        onReconnect={handleReconnect}
       />
     </div>
   );

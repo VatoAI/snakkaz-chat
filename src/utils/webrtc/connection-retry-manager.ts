@@ -2,6 +2,7 @@
 export class ConnectionRetryManager {
   private connectionAttempts: Map<string, number> = new Map();
   private lastRetryTime: Map<string, number> = new Map();
+  private connectionErrors: Map<string, string> = new Map();
   
   constructor(
     private maxConnectionAttempts: number = 5, 
@@ -10,10 +11,16 @@ export class ConnectionRetryManager {
     private maxBackoff: number = 30000
   ) {}
   
-  public incrementAttempts(peerId: string): number {
+  public incrementAttempts(peerId: string, errorMessage?: string): number {
     const attempts = this.getAttempts(peerId);
     this.connectionAttempts.set(peerId, attempts + 1);
     this.lastRetryTime.set(peerId, Date.now());
+    
+    if (errorMessage) {
+      this.connectionErrors.set(peerId, errorMessage);
+    }
+    
+    console.log(`Connection attempt ${attempts + 1} for peer ${peerId}${errorMessage ? ': ' + errorMessage : ''}`);
     return attempts + 1;
   }
   
@@ -21,14 +28,22 @@ export class ConnectionRetryManager {
     return this.connectionAttempts.get(peerId) || 0;
   }
   
+  public getLastError(peerId: string): string | undefined {
+    return this.connectionErrors.get(peerId);
+  }
+  
   public resetAttempts(peerId: string): void {
     this.connectionAttempts.delete(peerId);
     this.lastRetryTime.delete(peerId);
+    this.connectionErrors.delete(peerId);
+    console.log(`Reset connection attempts for peer ${peerId}`);
   }
   
   public resetAllAttempts(): void {
     this.connectionAttempts.clear();
     this.lastRetryTime.clear();
+    this.connectionErrors.clear();
+    console.log('Reset all connection attempts');
   }
   
   public hasReachedMaxAttempts(peerId: string): boolean {
@@ -40,6 +55,7 @@ export class ConnectionRetryManager {
     
     // If we've hit max attempts, don't retry
     if (attempts >= this.maxConnectionAttempts) {
+      console.log(`Max connection attempts reached for peer ${peerId}, will not retry`);
       return false;
     }
     
@@ -56,7 +72,15 @@ export class ConnectionRetryManager {
       this.maxBackoff
     );
     
-    return currentTime - lastRetry >= backoffTime;
+    const shouldRetry = currentTime - lastRetry >= backoffTime;
+    
+    if (shouldRetry) {
+      console.log(`Should retry connection to peer ${peerId} after backoff of ${backoffTime}ms`);
+    } else {
+      console.log(`Not enough time elapsed since last retry for peer ${peerId}, waiting...`);
+    }
+    
+    return shouldRetry;
   }
   
   public getBackoffTime(peerId: string): number {
@@ -73,6 +97,7 @@ export class ConnectionRetryManager {
       const currentAttempts = this.getAttempts(peerId);
       if (currentAttempts === attempts) {
         this.connectionAttempts.set(peerId, Math.max(0, currentAttempts - 1));
+        console.log(`Scheduled reset for peer ${peerId}, reducing attempts to ${Math.max(0, currentAttempts - 1)}`);
       }
     }, this.retryTimeout);
   }
