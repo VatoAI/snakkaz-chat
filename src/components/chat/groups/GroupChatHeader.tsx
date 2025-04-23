@@ -1,4 +1,3 @@
-
 import { Group } from "@/types/group";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -37,7 +36,7 @@ export const GroupChatHeader = ({
   userProfiles = {},
   isAdmin = false,
   onShowInvite
-}: GroupChatHeaderProps) => {
+}: any) => {
   // Map the connection states to a display indicator
   const getConnectionStatus = () => {
     if (usingServerFallback) {

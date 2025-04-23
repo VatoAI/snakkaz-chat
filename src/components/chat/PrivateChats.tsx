@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { MessageSquare, Search, Users, Plus, Mail, Lock, Shield } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -16,6 +15,9 @@ import { SecurityLevel } from "@/types/security";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { Badge } from "@/components/ui/badge";
+import { GroupList } from "./groups/GroupList";
+import { ConversationList } from "./friends/ConversationList";
+import { ChatDialogs } from "./ChatDialogs";
 
 interface PrivateChatsProps {
   currentUserId: string;
@@ -45,9 +47,9 @@ export const PrivateChats = ({
   const [selectedPasswordGroup, setSelectedPasswordGroup] = useState<Group | null>(null);
   const [groupInvites, setGroupInvites] = useState<GroupInvite[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
+  const [groupConversations, setGroupConversations] = useState<Record<string, DecryptedMessage[]>>({});
   const { toast } = useToast();
   
-  // Fetch groups the user is a member of
   useEffect(() => {
     const fetchGroups = async () => {
       try {
@@ -55,34 +57,38 @@ export const PrivateChats = ({
           .from('group_members')
           .select('group_id')
           .eq('user_id', currentUserId);
-          
+
         if (memberError) throw memberError;
-        
+
         if (memberData && memberData.length > 0) {
           const groupIds = memberData.map(m => m.group_id);
-          
+
           const { data: groupsData, error: groupsError } = await supabase
             .from('groups')
             .select('id, name, created_at, creator_id, security_level, password, avatar_url')
             .in('id', groupIds);
-            
+
           if (groupsError) throw groupsError;
-          
-          // Fetch members for each group
-          const groupsWithMembers = await Promise.all(groupsData.map(async (group) => {
-            const { data: members, error: membersError } = await supabase
-              .from('group_members')
-              .select('id, user_id, role, joined_at')
-              .eq('group_id', group.id);
-              
-            if (membersError) throw membersError;
-            
-            return {
-              ...group,
-              members: members || []
-            } as Group;
-          }));
-          
+
+          const groupsWithMembers = await Promise.all(
+            groupsData.map(async (group) => {
+              const { data: members, error: membersError } = await supabase
+                .from('group_members')
+                .select('id, user_id, role, joined_at, group_id')
+                .eq('group_id', group.id);
+
+              if (membersError) throw membersError;
+
+              return {
+                ...group,
+                members: (members || []).map(member => ({
+                  ...member,
+                  group_id: member.group_id ?? group.id
+                }))
+              } as Group;
+            })
+          );
+
           setGroups(groupsWithMembers);
         }
       } catch (error) {
@@ -90,17 +96,16 @@ export const PrivateChats = ({
         toast({
           title: "Kunne ikke hente grupper",
           description: "En feil oppstod. Prøv igjen senere.",
-          variant: "destructive",
+          variant: "destructive"
         });
       }
     };
-    
+
     if (currentUserId) {
       fetchGroups();
     }
   }, [currentUserId, toast]);
-  
-  // Fetch group invites
+
   useEffect(() => {
     const fetchInvites = async () => {
       try {
@@ -142,7 +147,6 @@ export const PrivateChats = ({
     if (currentUserId) {
       fetchInvites();
       
-      // Set up subscription for new invites
       const channel = supabase.channel('group-invites')
         .on('postgres_changes', { 
           event: '*', 
@@ -160,9 +164,7 @@ export const PrivateChats = ({
     }
   }, [currentUserId, userProfiles]);
 
-  // Group messages by conversation partner
   const conversations = directMessages.reduce((acc, message) => {
-    // Skip group messages
     if (message.group_id) return acc;
     
     const partnerId = message.sender.id === currentUserId ? message.receiver_id : message.sender.id;
@@ -175,14 +177,11 @@ export const PrivateChats = ({
     return acc;
   }, {} as Record<string, DecryptedMessage[]>);
 
-  // Group messages by group
   const groupConversations = directMessages.reduce((acc, message) => {
-    // Skip direct messages
     if (!message.group_id) return acc;
     
     const groupId = message.group_id;
     
-    // Make sure groupId is a string before using it as an index
     if (typeof groupId !== 'string') return acc;
     
     if (!acc[groupId]) {
@@ -192,7 +191,6 @@ export const PrivateChats = ({
     return acc;
   }, {} as Record<string, DecryptedMessage[]>);
 
-  // Sort conversations by most recent message
   const sortedConversations = Object.entries(conversations)
     .sort(([, a], [, b]) => {
       const lastA = a[a.length - 1];
@@ -200,7 +198,6 @@ export const PrivateChats = ({
       return new Date(lastB.created_at).getTime() - new Date(lastA.created_at).getTime();
     });
     
-  // Sort group conversations
   const sortedGroupConversations = Object.entries(groupConversations)
     .sort(([, a], [, b]) => {
       const lastA = a[a.length - 1];
@@ -227,7 +224,6 @@ export const PrivateChats = ({
     avatar?: File
   ) => {
     try {
-      // 1. Insert the group
       const { data: groupData, error: groupError } = await supabase
         .from('groups')
         .insert({
@@ -243,7 +239,6 @@ export const PrivateChats = ({
       
       const groupId = groupData.id;
       
-      // 2. Upload avatar if provided
       let avatarUrl = null;
       if (avatar) {
         const fileExt = avatar.name.split('.').pop();
@@ -257,7 +252,6 @@ export const PrivateChats = ({
         
         avatarUrl = filePath;
         
-        // Update group with avatar URL
         const { error: updateError } = await supabase
           .from('groups')
           .update({ avatar_url: avatarUrl })
@@ -266,7 +260,6 @@ export const PrivateChats = ({
         if (updateError) throw updateError;
       }
       
-      // 3. Add creator as admin member
       const { error: memberError } = await supabase
         .from('group_members')
         .insert({
@@ -277,7 +270,6 @@ export const PrivateChats = ({
         
       if (memberError) throw memberError;
       
-      // 4. Add other members
       if (members.length > 0) {
         const memberInserts = members.map(userId => ({
           user_id: userId,
@@ -292,22 +284,18 @@ export const PrivateChats = ({
         if (membersError) throw membersError;
       }
       
-      // 5. Create invites for members
-      if (members.length > 0) {
-        const invites = members.map(userId => ({
-          group_id: groupId,
-          invited_by: currentUserId,
-          invited_user_id: userId
-        }));
-        
-        const { error: invitesError } = await supabase
-          .from('group_invites')
-          .insert(invites);
-          
-        if (invitesError) console.warn("Failed to create invites:", invitesError);
-      }
+      const invites = members.map(userId => ({
+        group_id: groupId,
+        invited_by: currentUserId,
+        invited_user_id: userId
+      }));
       
-      // 6. Fetch the complete group with members
+      const { error: invitesError } = await supabase
+        .from('group_invites')
+        .insert(invites);
+        
+      if (invitesError) console.warn("Failed to create invites:", invitesError);
+      
       const { data: completeGroup, error: completeError } = await supabase
         .from('groups')
         .select('id, name, created_at, creator_id, security_level, password, avatar_url')
@@ -323,7 +311,6 @@ export const PrivateChats = ({
         
       if (groupMembersError) throw groupMembersError;
       
-      // 7. Add to local state and select the group
       const newGroup: Group = {
         ...completeGroup,
         members: groupMembers || []
@@ -348,7 +335,6 @@ export const PrivateChats = ({
   
   const handleJoinGroup = async (groupId: string, password?: string) => {
     try {
-      // 1. If password provided, verify it
       if (password) {
         const { data: group, error: groupError } = await supabase
           .from('groups')
@@ -359,11 +345,10 @@ export const PrivateChats = ({
         if (groupError) throw groupError;
         
         if (group.password !== password) {
-          return false; // Password doesn't match
+          return false;
         }
       }
       
-      // 2. Join the group
       const { error: joinError } = await supabase
         .from('group_members')
         .insert({
@@ -374,10 +359,8 @@ export const PrivateChats = ({
         
       if (joinError) throw joinError;
       
-      // 3. Refresh groups list
       await refreshGroups();
       
-      // 4. Select the joined group
       const joinedGroup = groups.find(g => g.id === groupId);
       if (joinedGroup) {
         setSelectedGroup(joinedGroup);
@@ -414,20 +397,24 @@ export const PrivateChats = ({
           
         if (groupsError) throw groupsError;
         
-        // Fetch members for each group
-        const groupsWithMembers = await Promise.all(groupsData.map(async (group) => {
-          const { data: members, error: membersError } = await supabase
-            .from('group_members')
-            .select('id, user_id, role, joined_at')
-            .eq('group_id', group.id);
+        const groupsWithMembers = await Promise.all(
+          groupsData.map(async (group) => {
+            const { data: members, error: membersError } = await supabase
+              .from('group_members')
+              .select('id, user_id, role, joined_at, group_id')
+              .eq('group_id', group.id);
+              
+            if (membersError) throw membersError;
             
-          if (membersError) throw membersError;
-          
-          return {
-            ...group,
-            members: members || []
-          } as Group;
-        }));
+            return {
+              ...group,
+              members: (members || []).map(member => ({
+                ...member,
+                group_id: member.group_id ?? group.id
+              }))
+            } as Group;
+          })
+        );
         
         setGroups(groupsWithMembers);
       }
@@ -438,7 +425,6 @@ export const PrivateChats = ({
   
   const handleAcceptInvite = async (invite: GroupInvite) => {
     try {
-      // 1. Add user to group members
       const { error: joinError } = await supabase
         .from('group_members')
         .insert({
@@ -449,7 +435,6 @@ export const PrivateChats = ({
         
       if (joinError) throw joinError;
       
-      // 2. Delete the invite
       const { error: deleteError } = await supabase
         .from('group_invites')
         .delete()
@@ -457,11 +442,9 @@ export const PrivateChats = ({
         
       if (deleteError) throw deleteError;
       
-      // 3. Refresh groups and invites
       await refreshGroups();
       setGroupInvites(invites => invites.filter(inv => inv.id !== invite.id));
       
-      // 4. Select the joined group
       const joinedGroup = groups.find(g => g.id === invite.group_id);
       if (joinedGroup) {
         setSelectedGroup(joinedGroup);
@@ -483,7 +466,6 @@ export const PrivateChats = ({
         
       if (error) throw error;
       
-      // Update local state
       setGroupInvites(invites => invites.filter(inv => inv.id !== invite.id));
     } catch (error) {
       console.error("Error declining invite:", error);
@@ -565,159 +547,28 @@ export const PrivateChats = ({
             placeholder="Søk i samtaler..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-cyberdark-800 border border-cybergold-500/30 rounded-md text-cybergold-200 placeholder:text-cyberdark-400"
+            className="w-full pl-10 pr-4 py-2 bg-cyberdark-800 border border-cybergold-500/30 rounded-md text-cybergold-200 placeholder:text-cybergold-400"
           />
         </div>
       </div>
 
       <div className="flex-1 overflow-auto p-4">
-        {filteredGroups.length > 0 && (
-          <div className="mb-4">
-            <h3 className="text-sm font-medium text-cybergold-400 mb-2">Grupper</h3>
-            <div className="space-y-2">
-              {filteredGroups.map(group => {
-                const groupMessages = groupConversations[group.id] || [];
-                const lastMessage = groupMessages.length > 0 ? groupMessages[groupMessages.length - 1] : null;
-                const isRecentMessage = lastMessage && (new Date().getTime() - new Date(lastMessage.created_at).getTime() < 300000); // 5 minutes
-                
-                return (
-                  <div
-                    key={group.id}
-                    className="flex items-center justify-between p-3 bg-cyberdark-800 border border-cybergold-500/30 rounded-md hover:bg-cyberdark-700 transition-colors cursor-pointer"
-                    onClick={() => setSelectedGroup(group)}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="relative">
-                        <Avatar className="w-10 h-10 border-2 border-cybergold-500/20 bg-cyberdark-700">
-                          {group.avatar_url ? (
-                            <AvatarImage 
-                              src={supabase.storage.from('group_avatars').getPublicUrl(group.avatar_url).data.publicUrl} 
-                              alt={group.name} 
-                            />
-                          ) : (
-                            <AvatarFallback className="bg-cybergold-500/20 text-cybergold-300">
-                              <Users className="h-5 w-5" />
-                            </AvatarFallback>
-                          )}
-                        </Avatar>
-                        {isRecentMessage && (
-                          <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border border-cyberdark-800"></span>
-                        )}
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-1">
-                          <p className="text-cybergold-200 font-medium">
-                            {group.name}
-                          </p>
-                          {group.password && (
-                            <Lock className="h-3.5 w-3.5 text-cybergold-400" />
-                          )}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <p className="text-xs text-cybergold-400 truncate max-w-[200px]">
-                            {lastMessage ? (
-                              <>
-                                {lastMessage.sender.id === currentUserId ? 'Du: ' : `${lastMessage.sender.username}: `}
-                                {lastMessage.content}
-                              </>
-                            ) : (
-                              'Ingen meldinger ennå'
-                            )}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center">
-                      <span className="text-xs text-cybergold-500 mr-2">
-                        {group.members.length} {group.members.length === 1 ? 'medlem' : 'medlemmer'}
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="relative text-cybergold-400 hover:text-cybergold-300 hover:bg-cyberdark-600"
-                      >
-                        <Users className="w-5 h-5" />
-                      </Button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-        
-        {filteredConversations.length > 0 && (
-          <div>
-            <h3 className="text-sm font-medium text-cybergold-400 mb-2">Direkte meldinger</h3>
-            <div className="space-y-2">
-              {filteredConversations.map(([partnerId, messages]) => {
-                const profile = userProfiles[partnerId];
-                const lastMessage = messages[messages.length - 1];
-                const isRecentMessage = new Date().getTime() - new Date(lastMessage.created_at).getTime() < 300000; // 5 minutes
-
-                return (
-                  <div
-                    key={partnerId}
-                    className="flex items-center justify-between p-3 bg-cyberdark-800 border border-cybergold-500/30 rounded-md hover:bg-cyberdark-700 transition-colors cursor-pointer"
-                    onClick={() => {
-                      setSelectedConversation({
-                        id: '',
-                        user_id: partnerId,
-                        friend_id: currentUserId,
-                        status: 'accepted',
-                        created_at: '',
-                        profile: profile ? {
-                          id: partnerId,
-                          username: profile.username,
-                          avatar_url: profile.avatar_url,
-                          full_name: null
-                        } : undefined
-                      });
-                    }}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="relative">
-                        <Avatar className="w-10 h-10 border-2 border-cybergold-500/20">
-                          {profile?.avatar_url ? (
-                            <AvatarImage 
-                              src={supabase.storage.from('avatars').getPublicUrl(profile.avatar_url).data.publicUrl} 
-                              alt={profile.username || 'User'}
-                            />
-                          ) : (
-                            <AvatarFallback className="bg-cybergold-500/20 text-cybergold-300">
-                              {(profile?.username || 'U')[0].toUpperCase()}
-                            </AvatarFallback>
-                          )}
-                        </Avatar>
-                        {isRecentMessage && (
-                          <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border border-cyberdark-800"></span>
-                        )}
-                      </div>
-                      <div>
-                        <p className="text-cybergold-200 font-medium">
-                          {profile?.username || 'Ukjent bruker'}
-                        </p>
-                        <p className="text-xs text-cybergold-400 truncate max-w-[200px]">
-                          {lastMessage.sender.id === currentUserId ? 'Du: ' : ''}
-                          {lastMessage.content}
-                        </p>
-                      </div>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="relative text-cybergold-400 hover:text-cybergold-300 hover:bg-cyberdark-600"
-                    >
-                      <MessageSquare className="w-5 h-5" />
-                    </Button>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {filteredConversations.length === 0 && filteredGroups.length === 0 && (
+        <GroupList
+          groups={groups}
+          groupConversations={groupConversations}
+          currentUserId={currentUserId}
+          userProfiles={userProfiles}
+          setSelectedGroup={setSelectedGroup}
+          searchQuery={searchQuery}
+        />
+        <ConversationList
+          conversations={sortedConversations}
+          userProfiles={userProfiles}
+          currentUserId={currentUserId}
+          setSelectedConversation={setSelectedConversation}
+          searchQuery={searchQuery}
+        />
+        {sortedConversations.length === 0 && groups.length === 0 && (
           <div className="text-center text-cybergold-500 py-8">
             <MessageSquare className="w-12 h-12 mx-auto mb-3 text-cybergold-400/50" />
             <p className="text-lg font-medium">Ingen samtaler ennå</p>
@@ -735,22 +586,19 @@ export const PrivateChats = ({
         friendsList={friendsList}
       />
       
-      <GroupPasswordDialog
-        isOpen={isPasswordDialogOpen}
-        onClose={() => {
+      <ChatDialogs
+        isPasswordDialogOpen={isPasswordDialogOpen}
+        isInviteDialogOpen={isInviteDialogOpen}
+        selectedPasswordGroup={selectedPasswordGroup}
+        groupInvites={groupInvites}
+        onClosePassword={() => {
           setIsPasswordDialogOpen(false);
           setSelectedPasswordGroup(null);
         }}
-        onSubmit={handlePasswordSubmit}
-        group={selectedPasswordGroup}
-      />
-      
-      <GroupInviteDialog
-        isOpen={isInviteDialogOpen}
-        onClose={() => setIsInviteDialogOpen(false)}
-        invites={groupInvites}
-        onAccept={handleAcceptInvite}
-        onDecline={handleDeclineInvite}
+        onCloseInvite={() => setIsInviteDialogOpen(false)}
+        onSubmitPassword={handlePasswordSubmit}
+        onAcceptInvite={handleAcceptInvite}
+        onDeclineInvite={handleDeclineInvite}
         userProfiles={userProfiles}
       />
     </div>
