@@ -82,15 +82,13 @@ export function useGroupFetching(currentUserId: string) {
           const isProfileObject = profileExists && typeof member.profiles === 'object';
           const isProfileError = isProfileObject && 'error' in member.profiles;
           
-          // Create the profile object based on the checks
-          const profile = (isProfileObject && !isProfileError)
-            ? member.profiles 
-            : { 
-                id: member.user_id,
-                username: null, 
-                avatar_url: null, 
-                full_name: null 
-              };
+          // Create a profile object that conforms to the GroupMember.profile interface
+          const profile = {
+            id: member.user_id,
+            username: (isProfileObject && !isProfileError && member.profiles?.username) || null,
+            avatar_url: (isProfileObject && !isProfileError && member.profiles?.avatar_url) || null,
+            full_name: (isProfileObject && !isProfileError && member.profiles?.full_name) || null
+          };
             
           return {
             id: member.id,
