@@ -28,22 +28,25 @@ export function useGroupFetching(currentUserId: string) {
         `)
         .eq('user_id', currentUserId);
 
-      if (memberError) throw memberError;
+      if (memberError) {
+        console.error("Error fetching group memberships:", memberError);
+        throw memberError;
+      }
 
       if (!memberData?.length) return [];
 
       // Format the groups data
-      const groups = memberData.map(membership => {
-        const group = membership.groups as any;
-        return {
-          ...group,
-          security_level: group.security_level as SecurityLevel
-        };
-      });
+      const groups = memberData
+        .filter(membership => membership.groups) // Filter out any null groups
+        .map(membership => {
+          const group = membership.groups as any;
+          return {
+            ...group,
+            security_level: group.security_level as SecurityLevel
+          };
+        });
 
       // Fetch all members for these groups
-      const groupIds = groups.map(g => g.id);
-      
       const groupsWithMembers: Group[] = [];
       
       // Process each group to get its members with profiles
@@ -55,43 +58,27 @@ export function useGroupFetching(currentUserId: string) {
             user_id,
             role,
             joined_at,
-            group_id
+            group_id,
+            profiles:user_id (
+              id,
+              username,
+              avatar_url,
+              full_name
+            )
           `)
           .eq('group_id', group.id);
 
-        if (membersError) throw membersError;
+        if (membersError) {
+          console.error("Error fetching group members:", membersError);
+          throw membersError;
+        }
         
         if (!membersData) continue;
         
-        // For each member, fetch their profile information
-        const membersWithProfiles: GroupMember[] = [];
-        
-        for (const member of membersData) {
-          const { data: profileData, error: profileError } = await supabase
-            .from('profiles')
-            .select('id, username, avatar_url, full_name')
-            .eq('id', member.user_id)
-            .single();
-            
-          if (!profileError && profileData) {
-            membersWithProfiles.push({
-              ...member,
-              profile: profileData
-            } as GroupMember);
-          } else {
-            console.error(`Error fetching profile for group member ${member.user_id}:`, profileError);
-            // Add member even without profile for data integrity
-            membersWithProfiles.push({
-              ...member,
-              profile: {
-                id: member.user_id,
-                username: 'Unknown User',
-                avatar_url: null,
-                full_name: null
-              }
-            } as GroupMember);
-          }
-        }
+        const membersWithProfiles: GroupMember[] = membersData.map(member => ({
+          ...member,
+          profile: member.profiles
+        }));
         
         groupsWithMembers.push({
           ...group,

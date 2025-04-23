@@ -4,9 +4,14 @@ import { SecurityLevel } from "@/types/security";
 import { useToast } from "@/components/ui/use-toast";
 import { Group } from "@/types/group";
 
-// Returns joinGroup function
-export function useGroupJoin(currentUserId: string, groups: Group[], setSelectedGroup: (g: Group | null) => void, refreshGroups: () => Promise<void>) {
+export function useGroupJoin(
+  currentUserId: string, 
+  groups: Group[], 
+  setSelectedGroup: (g: Group | null) => void, 
+  refreshGroups: () => Promise<void>
+) {
   const { toast } = useToast();
+  
   const handleJoinGroup = async (groupId: string, password?: string) => {
     try {
       if (password) {
