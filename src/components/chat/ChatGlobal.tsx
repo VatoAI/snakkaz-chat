@@ -1,10 +1,9 @@
 
-import { MessageList } from "@/components/message-list/MessageList";
-import { MessageInput } from "@/components/MessageInput";
-import { OnlineUsers } from "@/components/online-users/OnlineUsers";
+import { ChatMessages } from "./global/ChatMessages";
+import { ChatInput } from "./global/ChatInput";
+import { ChatSidebar } from "./global/ChatSidebar";
 import { DecryptedMessage } from "@/types/message";
 import { UserPresence } from "@/types/presence";
-import { RecentChats } from "@/components/chat/recent/RecentChats";
 
 interface ChatGlobalProps {
   messages: DecryptedMessage[];
@@ -50,49 +49,34 @@ export const ChatGlobal = ({
   return (
     <div className="h-full flex">
       <div className="flex-1 flex flex-col">
-        <div className="flex-1 overflow-hidden">
-          <MessageList 
-            messages={messages} 
-            onMessageExpired={onMessageExpired}
-            currentUserId={currentUserId}
-            onEditMessage={onEditMessage}
-            onDeleteMessage={onDeleteMessage}
-            userPresence={userPresence}
-          />
-        </div>
-
-        <div className="p-2 sm:p-4 border-t border-cybergold-500/30">
-          <MessageInput
-            newMessage={newMessage}
-            setNewMessage={setNewMessage}
-            onSubmit={onSubmit}
-            isLoading={isLoading}
-            ttl={ttl}
-            setTtl={setTtl}
-            editingMessage={editingMessage}
-            onCancelEdit={onCancelEdit}
-          />
-        </div>
-      </div>
-      
-      <div className="w-64 border-l border-cybergold-500/30 p-4 hidden lg:flex flex-col">
-        {/* Recent activity section at the top */}
-        {(recentConversations.length > 0 || recentGroups.length > 0) && (
-          <div className="mb-6">
-            <RecentChats 
-              recentConversations={recentConversations}
-              recentGroups={recentGroups}
-              onStartChat={onStartChat}
-            />
-          </div>
-        )}
-        
-        {/* Online users section */}
-        <OnlineUsers
-          userPresence={userPresence}
+        <ChatMessages 
+          messages={messages}
+          onMessageExpired={onMessageExpired}
           currentUserId={currentUserId}
+          onEditMessage={onEditMessage}
+          onDeleteMessage={onDeleteMessage}
+          userPresence={userPresence}
+        />
+
+        <ChatInput
+          newMessage={newMessage}
+          setNewMessage={setNewMessage}
+          onSubmit={onSubmit}
+          isLoading={isLoading}
+          ttl={ttl}
+          setTtl={setTtl}
+          editingMessage={editingMessage}
+          onCancelEdit={onCancelEdit}
         />
       </div>
+      
+      <ChatSidebar 
+        recentConversations={recentConversations}
+        recentGroups={recentGroups}
+        onStartChat={onStartChat}
+        userPresence={userPresence}
+        currentUserId={currentUserId}
+      />
     </div>
   );
 };

@@ -19,9 +19,9 @@ interface GlobalTabProps {
   onDeleteMessage: (messageId: string) => void;
   userPresence: Record<string, UserPresence>;
   directMessages: DecryptedMessage[];
-  onStartChat: (userId: string) => void;
-  recentConversations: { userId: string; username: string; unreadCount: number; lastActive: string }[];
-  recentGroups: { id: string; name: string; unreadCount: number; lastActive: string }[];
+  onStartChat?: (userId: string) => void;
+  recentConversations?: { userId: string; username: string; unreadCount: number; lastActive: string }[];
+  recentGroups?: { id: string; name: string; unreadCount: number; lastActive: string }[];
 }
 
 export const GlobalTab = ({
@@ -41,8 +41,8 @@ export const GlobalTab = ({
   userPresence,
   directMessages,
   onStartChat,
-  recentConversations,
-  recentGroups
+  recentConversations = [],
+  recentGroups = []
 }: GlobalTabProps) => {
   return (
     <ChatGlobal 
