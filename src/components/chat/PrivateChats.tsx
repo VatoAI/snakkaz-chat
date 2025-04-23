@@ -1,6 +1,5 @@
-import { useState } from "react";
-import { ConversationList } from "./friends/ConversationList";
-import { GroupList } from "./groups/GroupList";
+
+import { useState, lazy, Suspense } from "react";
 import { useGroups } from "./hooks/useGroups";
 import { useGroupInvites } from "./hooks/useGroupInvites";
 import { reduceConversations, reduceGroupConversations } from "./hooks/useConversationUtils";
@@ -16,6 +15,11 @@ import { DecryptedMessage } from "@/types/message";
 import { Friend } from "@/components/chat/friends/types";
 import { Group, GroupInvite } from "@/types/group";
 import { WebRTCManager } from "@/utils/webrtc";
+
+// Use lazy loading for the GroupChatCreator component
+const GroupChatCreator = lazy(() => import("./groups/GroupChatCreator").then(module => ({ 
+  default: module.GroupChatCreator 
+})));
 
 interface PrivateChatsProps {
   currentUserId: string;
@@ -189,17 +193,21 @@ export const PrivateChats = ({
           <PrivateChatsEmptyState />
         )}
       </div>
-      {/* Dialogs for create group, password, invites */}
-      <import("./groups/GroupChatCreator").then(({ GroupChatCreator }) => (
-        <GroupChatCreator
-          isOpen={isGroupCreatorOpen}
-          onClose={() => setIsGroupCreatorOpen(false)}
-          onCreateGroup={handleCreateGroup}
-          currentUserId={currentUserId}
-          userProfiles={userProfiles}
-          friendsList={friendsList}
-        />
-      ))}
+      
+      {/* Properly render the GroupChatCreator with Suspense */}
+      {isGroupCreatorOpen && (
+        <Suspense fallback={<div className="p-4 text-center text-cybergold-300">Laster...</div>}>
+          <GroupChatCreator
+            isOpen={isGroupCreatorOpen}
+            onClose={() => setIsGroupCreatorOpen(false)}
+            onCreateGroup={handleCreateGroup}
+            currentUserId={currentUserId}
+            userProfiles={userProfiles}
+            friendsList={friendsList}
+          />
+        </Suspense>
+      )}
+      
       <ChatDialogs
         isPasswordDialogOpen={isPasswordDialogOpen}
         isInviteDialogOpen={isInviteDialogOpen}
