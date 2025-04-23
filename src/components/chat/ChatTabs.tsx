@@ -1,16 +1,17 @@
+
 import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { ChatGlobal } from '@/components/chat/ChatGlobal';
-import { DirectMessage } from '@/components/chat/friends/DirectMessage';
-import { PrivateChats } from '@/components/chat/PrivateChats';
 import { useTabShortcuts } from '@/hooks/useTabShortcuts';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Friend } from '@/components/chat/friends/types';
+import { Friend } from './friends/types';
 import { DecryptedMessage } from '@/types/message';
 import { WebRTCManager } from '@/utils/webrtc';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { FriendsContainer } from './friends/FriendsContainer';
 import { UserPresence } from "@/types/presence";
 import { useMemo } from "react";
+import { GlobalTab } from './tabs/GlobalTab';
+import { PrivateTab } from './tabs/PrivateTab';
+import { FriendsTab } from './tabs/FriendsTab';
+import { DirectTab } from './tabs/DirectTab';
 
 interface ChatTabsProps {
   activeTab: string;
@@ -40,7 +41,7 @@ interface ChatTabsProps {
 }
 
 export const ChatTabs = ({ 
-  activeTab, 
+  activeTab,
   setActiveTab,
   selectedFriend,
   messages,
@@ -114,8 +115,6 @@ export const ChatTabs = ({
     return Array.from(conversations.values());
   }, [currentUserId, directMessages, userProfiles]);
 
-  const recentGroups = [];
-
   return (
     <TooltipProvider>
       <Tabs 
@@ -135,7 +134,7 @@ export const ChatTabs = ({
               value="global" 
               className="h-full m-0 p-0 data-[state=active]:animate-fadeIn bg-cyberdark-950/95"
             >
-              <ChatGlobal 
+              <GlobalTab
                 messages={messages}
                 newMessage={newMessage}
                 setNewMessage={setNewMessage}
@@ -172,7 +171,7 @@ export const ChatTabs = ({
                   }
                 }}
                 recentConversations={recentConversations}
-                recentGroups={recentGroups}
+                recentGroups={[]}
               />
             </TabsContent>
 
@@ -180,7 +179,7 @@ export const ChatTabs = ({
               value="private" 
               className="h-full m-0 p-0 data-[state=active]:animate-fadeIn bg-cyberdark-950/95"
             >
-              <PrivateChats 
+              <PrivateTab
                 currentUserId={currentUserId || ''}
                 webRTCManager={webRTCManager}
                 directMessages={directMessages}
@@ -214,21 +213,19 @@ export const ChatTabs = ({
               value="friends" 
               className="h-full m-0 p-0 data-[state=active]:animate-fadeIn bg-cyberdark-950/95"
             >
-              <div className="h-full p-4 overflow-y-auto">
-                <FriendsContainer
-                  currentUserId={currentUserId || ''}
-                  webRTCManager={webRTCManager}
-                  directMessages={directMessages}
-                  onNewMessage={onNewMessage}
-                  onStartChat={(userId: string) => {
-                    handleCloseDirectChat();
-                    setTimeout(() => {
-                      setActiveTab('direct');
-                    }, 0);
-                  }}
-                  userProfiles={userProfiles}
-                />
-              </div>
+              <FriendsTab
+                currentUserId={currentUserId || ''}
+                webRTCManager={webRTCManager}
+                directMessages={directMessages}
+                onNewMessage={onNewMessage}
+                onStartChat={(userId: string) => {
+                  handleCloseDirectChat();
+                  setTimeout(() => {
+                    setActiveTab('direct');
+                  }, 0);
+                }}
+                userProfiles={userProfiles}
+              />
             </TabsContent>
             
             {selectedFriend && (
@@ -236,7 +233,7 @@ export const ChatTabs = ({
                 value="direct" 
                 className="h-full m-0 p-0 data-[state=active]:animate-fadeIn bg-cyberdark-950/95"
               >
-                <DirectMessage 
+                <DirectTab
                   friend={selectedFriend}
                   currentUserId={currentUserId || ''}
                   webRTCManager={webRTCManager}
