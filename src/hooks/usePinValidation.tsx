@@ -7,6 +7,7 @@ interface UsePinValidationProps {
   verifyPin?: (code: string) => boolean;
   isSetMode?: boolean;
   onSetPin?: (code: string) => void;
+  initialIsLocked?: boolean;
 }
 
 export const usePinValidation = ({
@@ -14,12 +15,13 @@ export const usePinValidation = ({
   verifyPin,
   isSetMode = false,
   onSetPin,
+  initialIsLocked = false
 }: UsePinValidationProps) => {
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const [animateError, setAnimateError] = useState(false);
   const [attempts, setAttempts] = useState(0);
-  const [isLocked, setIsLocked] = useState(false);
+  const [isLocked, setIsLocked] = useState(initialIsLocked);
   const [lockoutTimer, setLockoutTimer] = useState(0);
   const { toast } = useToast();
 

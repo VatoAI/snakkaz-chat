@@ -68,7 +68,6 @@ export function useMobilePinGuard({ isMobile }: { isMobile: boolean }) {
         }
         return isValid;
       }}
-      isLocked={isLocked}
       remainingAttempts={remainingAttempts}
     />
   );

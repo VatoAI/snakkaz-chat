@@ -14,6 +14,7 @@ interface ChatCodeModalProps {
   onSetPin?: (code: string) => void;
   verifyPin?: (code: string) => boolean;
   isSetMode?: boolean;
+  isLocked?: boolean;
   remainingAttempts?: number;
 }
 
