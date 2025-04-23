@@ -75,9 +75,14 @@ export function useGroupFetching(currentUserId: string) {
         
         if (!membersData) continue;
         
+        // Ensure role is cast to the correct type and handle the profiles properly
         const membersWithProfiles: GroupMember[] = membersData.map(member => ({
-          ...member,
-          profile: member.profiles
+          id: member.id,
+          user_id: member.user_id,
+          group_id: member.group_id,
+          role: member.role as 'admin' | 'member', // Explicitly cast to the allowed values
+          joined_at: member.joined_at,
+          profile: member.profiles // Map the joined profile data
         }));
         
         groupsWithMembers.push({
