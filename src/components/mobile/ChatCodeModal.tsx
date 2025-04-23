@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,8 @@ interface ChatCodeModalProps {
   onSetPin?: (code: string) => void;
   verifyPin?: (code: string) => boolean;
   isSetMode?: boolean;
+  isLocked?: boolean;
+  remainingAttempts?: number;
 }
 
 export const ChatCodeModal = ({
@@ -20,7 +23,9 @@ export const ChatCodeModal = ({
   onPinSuccess,
   onSetPin,
   verifyPin,
-  isSetMode = false
+  isSetMode = false,
+  isLocked = false,
+  remainingAttempts = 5
 }: ChatCodeModalProps) => {
   const [code, setCode] = useState("");
   const [error, setError] = useState("");

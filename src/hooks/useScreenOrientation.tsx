@@ -6,9 +6,11 @@ export function useScreenOrientation(enabled: boolean) {
     if (enabled) {
       try {
         const lockOrientation = async () => {
-          if (screen.orientation?.lock) {
+          // Check if the API exists and has the lock method
+          if (screen.orientation && 'lock' in screen.orientation) {
             try {
-              await screen.orientation.lock('portrait');
+              // Use type assertion to handle the TypeScript error
+              await (screen.orientation as any).lock('portrait');
             } catch (error) {
               console.error('Could not lock screen orientation:', error);
             }
