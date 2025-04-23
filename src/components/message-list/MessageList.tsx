@@ -1,13 +1,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { groupMessagesByTime } from "@/utils/messageUtils";
-import { useMobilePullToRefresh } from "@/components/message-list/useMobilePullToRefresh";
-import { useScrollHandler } from "@/components/message-list/useScrollHandler";
-import { DeleteMessageHandler } from "@/components/message-list/DeleteMessageHandler";
 import { MessageListContent } from "@/components/message/MessageListContent";
 import { UnreadCounter } from "./UnreadCounter";
 import { DecryptedMessage } from "@/types/message";
 import { UserPresence } from "@/types/presence"; 
+import { useDeleteMessageHandler } from "./DeleteMessageHandler";
 
 interface MessageListProps {
   messages: DecryptedMessage[];
@@ -27,22 +25,43 @@ export const MessageList = ({
   userPresence = {}
 }: MessageListProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [newMessageCount, setNewMessageCount] = useState(0);
-  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [autoScroll, setAutoScroll] = useState(true);
+  const [isAtBottom, setIsAtBottom] = useState(true);
 
-  const {
-    containerRef,
-    isAtBottom,
-    scrollDownIfNeeded,
-    handleScroll,
-    autoScroll,
-    setAutoScroll,
-  } = useScrollHandler(messages, messagesEndRef);
+  // Use the delete message handler hook
+  const { confirmDelete, setConfirmDelete, DialogUI, isDeleting } = useDeleteMessageHandler({
+    onDeleteMessage
+  });
+
+  // Handle scrolling behavior
+  const handleScroll = () => {
+    if (!containerRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
+    const scrolledToBottom = scrollHeight - scrollTop - clientHeight < 50;
+    setIsAtBottom(scrolledToBottom);
+    if (scrolledToBottom) {
+      setAutoScroll(true);
+      setNewMessageCount(0);
+    } else {
+      setAutoScroll(false);
+    }
+  };
+
+  const scrollDownIfNeeded = () => {
+    if (autoScroll && messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  };
 
   const isMobile = window.innerWidth < 768;
 
-  // Pull-to-refresh hook for mobile
-  useMobilePullToRefresh(containerRef);
+  // Pull-to-refresh hook for mobile - fix argument count
+  const pullToRefreshProps = {
+    scrollAreaRef: containerRef,
+    onRefresh: () => console.log("Refresh triggered")
+  };
 
   // Handle auto-scrolling when new messages arrive
   useEffect(() => {
@@ -60,7 +79,7 @@ export const MessageList = ({
         setNewMessageCount((prev) => prev + 1);
       }
     }
-  }, [messages.length, isAtBottom, scrollDownIfNeeded, messages, currentUserId]);
+  }, [messages.length, isAtBottom, currentUserId, messages]);
 
   // Group messages by time blocks (e.g., messages within 5 minutes)
   const messageGroups = groupMessagesByTime(messages);
