@@ -1,4 +1,3 @@
-
 import { Group } from "@/types/group";
 import { DecryptedMessage } from "@/types/message";
 import { WebRTCManager } from "@/utils/webrtc";
@@ -7,6 +6,7 @@ import { GroupChatEmptyState } from "./GroupChatEmptyState";
 import { DirectMessageList } from "../friends/DirectMessageList";
 import { DirectMessageForm } from "../friends/DirectMessageForm";
 import { useGroupChat } from "./hooks/useGroupChat";
+import { ChatGlassPanel } from "../ChatGlassPanel";
 
 interface GroupChatProps {
   group: Group;
@@ -27,7 +27,6 @@ export const GroupChat = ({
   onNewMessage,
   userProfiles = {}
 }: GroupChatProps) => {
-  // Filter messages for this group
   const groupMessages = messages.filter(msg => 
     msg.group_id === group.id
   );
@@ -47,7 +46,6 @@ export const GroupChat = ({
     handleReconnect,
     peerIsTyping,
     isMessageRead,
-    // Add editing and deletion functionality
     editingMessage,
     handleStartEditMessage,
     handleCancelEditMessage,
@@ -58,10 +56,9 @@ export const GroupChat = ({
                             securityLevel === 'server_e2ee' || 
                             securityLevel === 'standard';
 
-  // Create a wrapper function that matches the expected type signature
   const handleFormSubmit = (e: React.FormEvent, text: string) => {
     handleSendMessage(e);
-    return Promise.resolve(true); // Return Promise<boolean> to match the required type
+    return Promise.resolve(true);
   };
 
   return (
@@ -78,40 +75,46 @@ export const GroupChat = ({
         setSecurityLevel={setSecurityLevel}
         userProfiles={userProfiles}
       />
-      
-      {groupMessages.length === 0 && isSecureConnection ? (
-        <GroupChatEmptyState 
-          usingServerFallback={usingServerFallback} 
-          securityLevel={securityLevel}
-        />
-      ) : (
-        <DirectMessageList 
-          messages={groupMessages} 
-          currentUserId={currentUserId}
-          peerIsTyping={peerIsTyping}
-          isMessageRead={isMessageRead}
-          connectionState={connectionState}
-          dataChannelState={dataChannelState}
-          usingServerFallback={usingServerFallback}
-          onEditMessage={handleStartEditMessage}
-          onDeleteMessage={handleDeleteMessage}
-          securityLevel={securityLevel}
-        />
-      )}
-      
-      <DirectMessageForm 
-        usingServerFallback={usingServerFallback}
-        sendError={sendError}
-        isLoading={isLoading}
-        onSendMessage={handleFormSubmit}
-        newMessage={newMessage}
-        onChangeMessage={setNewMessage}
-        connectionState={connectionState}
-        dataChannelState={dataChannelState}
-        editingMessage={editingMessage}
-        onCancelEdit={handleCancelEditMessage}
-        securityLevel={securityLevel}
-      />
+      <div className="flex-1 flex flex-col min-h-0">
+        <ChatGlassPanel className="flex-1 flex flex-col min-h-0">
+          {groupMessages.length === 0 && isSecureConnection ? (
+            <GroupChatEmptyState 
+              usingServerFallback={usingServerFallback} 
+              securityLevel={securityLevel}
+            />
+          ) : (
+            <DirectMessageList 
+              messages={groupMessages} 
+              currentUserId={currentUserId}
+              peerIsTyping={peerIsTyping}
+              isMessageRead={isMessageRead}
+              connectionState={connectionState}
+              dataChannelState={dataChannelState}
+              usingServerFallback={usingServerFallback}
+              onEditMessage={handleStartEditMessage}
+              onDeleteMessage={handleDeleteMessage}
+              securityLevel={securityLevel}
+            />
+          )}
+        </ChatGlassPanel>
+      </div>
+      <div className="w-full">
+        <ChatGlassPanel className="rounded-b-2xl rounded-t-none shadow-neon-gold/10" noPadding>
+          <DirectMessageForm 
+            usingServerFallback={usingServerFallback}
+            sendError={sendError}
+            isLoading={isLoading}
+            onSendMessage={handleFormSubmit}
+            newMessage={newMessage}
+            onChangeMessage={setNewMessage}
+            connectionState={connectionState}
+            dataChannelState={dataChannelState}
+            editingMessage={editingMessage}
+            onCancelEdit={handleCancelEditMessage}
+            securityLevel={securityLevel}
+          />
+        </ChatGlassPanel>
+      </div>
     </div>
   );
 };
