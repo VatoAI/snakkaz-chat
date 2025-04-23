@@ -1,10 +1,11 @@
-
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Lock, Unlock, X, AlertTriangle } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { PinKeypad } from "./pin/PinKeypad";
+import { PinInput } from "./pin/PinInput";
+import { PinLockoutWarning } from "./pin/PinLockoutWarning";
+import { PinIcon } from "./pin/PinIcon";
 
 interface ChatCodeModalProps {
   open: boolean;
@@ -36,7 +37,6 @@ export const ChatCodeModal = ({
   const [lockoutTimer, setLockoutTimer] = useState(0);
   const { toast } = useToast();
 
-  // Update local lock state when prop changes
   useEffect(() => {
     setIsLocked(initialLockState);
   }, [initialLockState]);
@@ -70,7 +70,7 @@ export const ChatCodeModal = ({
       const newAttempts = prev + 1;
       if (newAttempts >= 5) {
         setIsLocked(true);
-        setLockoutTimer(300); // 5 minutes
+        setLockoutTimer(300);
         toast({
           variant: "destructive",
           title: "For mange forsøk",
@@ -83,19 +83,13 @@ export const ChatCodeModal = ({
   };
 
   const handleCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const input = e.target.value.replace(/\D/g, ""); // only digits
+    const input = e.target.value.replace(/\D/g, "");
     setCode(input.slice(0, 4));
     setError("");
     
     if (input.length === 4) {
-      setTimeout(() => {
-        handleSubmit(e as unknown as React.FormEvent);
-      }, 300);
+      setTimeout(() => handleSubmit(e as unknown as React.FormEvent), 300);
     }
-  };
-
-  const toggleShowNumber = () => {
-    setShowNumber(!showNumber);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -140,46 +134,17 @@ export const ChatCodeModal = ({
             {isSetMode ? "Velg din 4-sifrede Chat-kode" : "Tast inn din Chat-kode"}
           </DialogTitle>
         </DialogHeader>
-        
-        <div className="mt-4 mb-2 flex justify-center">
-          <div className={`p-4 rounded-full bg-cyberdark-800 border border-cybergold-500/30 
-                        ${animateError ? 'animate-shake border-cyberred-500' : ''}`}>
-            {isSetMode ? (
-              <Lock className="h-8 w-8 text-cybergold-400" />
-            ) : (
-              <Unlock className="h-8 w-8 text-cybergold-400" />
-            )}
-          </div>
-        </div>
+
+        <PinIcon isSetMode={isSetMode} animateError={animateError} />
         
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <div className="relative">
-            <Input
-              pattern="[0-9]*"
-              type={showNumber ? "text" : "password"}
-              maxLength={4}
-              autoFocus
-              value={code}
-              onChange={handleCodeChange}
-              inputMode="numeric"
-              placeholder="0000"
-              className={`text-center text-2xl tracking-widest py-6 bg-cyberdark-800 border-cybergold-500/30
-                        ${animateError ? 'border-cyberred-500 animate-shake' : ''}`}
-            />
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={toggleShowNumber}
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-cyberblue-400"
-            >
-              {showNumber ? (
-                <X className="h-4 w-4" />
-              ) : (
-                <span className="text-xs">Vis</span>
-              )}
-            </Button>
-          </div>
+          <PinInput
+            code={code}
+            showNumber={showNumber}
+            animateError={animateError}
+            onChange={handleCodeChange}
+            onToggleVisibility={() => setShowNumber(!showNumber)}
+          />
           
           {error && (
             <div className={`text-sm text-cyberred-400 text-center ${animateError ? 'animate-pulse' : ''}`}>
@@ -187,38 +152,17 @@ export const ChatCodeModal = ({
             </div>
           )}
           
-          {isLocked && (
-            <div className="text-cyberred-400 text-center p-4 bg-cyberred-900/20 rounded-md border border-cyberred-500/20 flex items-center justify-center gap-2">
-              <AlertTriangle className="h-4 w-4" />
-              Låst i {Math.ceil(lockoutTimer / 60)} minutter
-            </div>
-          )}
+          {isLocked && <PinLockoutWarning lockoutTimer={lockoutTimer} />}
           
-          <div className="grid grid-cols-3 gap-2 mt-2">
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 0].map((num, index) => (
-              <Button
-                key={num}
-                type="button"
-                onClick={() => {
-                  if (code.length < 4) {
-                    setCode(prev => prev + num);
-                    setError("");
-                  }
-                }}
-                className={`py-4 text-xl font-medium bg-cyberdark-800 hover:bg-cyberdark-700 border border-cybergold-500/20
-                          ${index === 9 ? 'col-start-2' : ''}`}
-              >
-                {num}
-              </Button>
-            ))}
-            <Button
-              type="button"
-              onClick={() => setCode(prev => prev.slice(0, -1))}
-              className="py-4 text-xl font-medium bg-cyberdark-800 hover:bg-cyberred-900/50 text-cyberred-400 border border-cybergold-500/20"
-            >
-              ←
-            </Button>
-          </div>
+          <PinKeypad
+            onNumberPress={(num) => {
+              if (code.length < 4) {
+                setCode(prev => prev + num);
+                setError("");
+              }
+            }}
+            onDelete={() => setCode(prev => prev.slice(0, -1))}
+          />
           
           <Button 
             type="submit"
