@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { FriendsList } from "./list/FriendsList";
 import { FriendRequests } from "./FriendRequests";
@@ -5,7 +6,6 @@ import { FriendsSearchSection } from "./FriendsSearchSection";
 import { QrCodeSection } from "./QrCodeSection";
 import { DecryptedMessage } from "@/types/message";
 import { WebRTCManager } from "@/utils/webrtc";
-import { useOptimizedFriends } from "@/hooks/useOptimizedFriends";
 import { useFriendRequestHandler } from "./hooks/useFriendRequestHandler";
 
 interface FriendsContainerProps {
@@ -26,7 +26,6 @@ export const FriendsContainer = ({
   userProfiles = {}
 }: FriendsContainerProps) => {
   const [activeTab, setActiveTab] = useState<"friends" | "requests">("friends");
-  const { friends, loading } = useOptimizedFriends(currentUserId);
   const { handleSendFriendRequest } = useFriendRequestHandler(currentUserId);
 
   const handleStartChat = (userId: string) => {
@@ -47,7 +46,7 @@ export const FriendsContainer = ({
             }`}
             onClick={() => setActiveTab("friends")}
           >
-            Venner ({friends.length})
+            Venner
           </button>
           <button
             className={`flex-1 px-4 py-3 text-sm font-medium ${
@@ -58,31 +57,18 @@ export const FriendsContainer = ({
             onClick={() => setActiveTab("requests")}
           >
             Forespørsler
-            {/* {pendingRequests.length > 0 && (
-              <span className="absolute top-2 right-2 bg-cybergold-500 text-cyberdark-900 text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                {pendingRequests.length}
-              </span>
-            )} */}
           </button>
         </div>
         <div className="p-4">
           {activeTab === "friends" ? (
-            friends.length > 0 ? (
-              <FriendsList 
-                friends={friends} 
-                currentUserId={currentUserId}
-                webRTCManager={webRTCManager}
-                directMessages={directMessages}
-                onNewMessage={onNewMessage}
-                onStartChat={handleStartChat}
-                userProfiles={userProfiles}
-              />
-            ) : (
-              <div className="text-center text-cybergold-500 py-4">
-                <p>Du har ingen venner ennå.</p>
-                <p className="text-sm mt-1">Søk etter brukere for å sende venneforespørsler.</p>
-              </div>
-            )
+            <FriendsList 
+              currentUserId={currentUserId}
+              webRTCManager={webRTCManager}
+              directMessages={directMessages}
+              onNewMessage={onNewMessage}
+              onStartChat={handleStartChat}
+              userProfiles={userProfiles}
+            />
           ) : (
             <FriendRequests 
               friendRequests={[]}

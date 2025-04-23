@@ -1,7 +1,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
-import { Friend } from '@/components/chat/friends/types';
+import { Friend, UserProfile } from '@/components/chat/friends/types';
 import { useToast } from "@/components/ui/use-toast";
 
 export const useOptimizedFriends = (userId: string | null) => {
@@ -15,37 +15,54 @@ export const useOptimizedFriends = (userId: string | null) => {
     setLoading(true);
 
     try {
-      // Fetch friendships and profiles in a single query using joins
+      // Fetch friendships where user is involved
       const { data: friendships, error: friendshipsError } = await supabase
         .from('friendships')
-        .select(`
-          *,
-          profiles:friend_id(id, username, full_name, avatar_url)
-        `)
+        .select('*')
         .eq('status', 'accepted')
         .or(`user_id.eq.${userId},friend_id.eq.${userId}`);
 
       if (friendshipsError) throw friendshipsError;
 
-      const processedFriends = friendships.map(friendship => {
-        const isFriendReceiver = friendship.user_id === userId;
-        const profile = isFriendReceiver ? friendship.profiles : 
-          friendship.profiles; // profile of the other user
-
-        return {
+      const processedFriends: Friend[] = [];
+      
+      // For each friendship, fetch the profile of the other user
+      for (const friendship of friendships || []) {
+        const otherUserId = friendship.user_id === userId ? friendship.friend_id : friendship.user_id;
+        
+        // Fetch profile data for this user
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('id, username, full_name, avatar_url')
+          .eq('id', otherUserId)
+          .single();
+          
+        if (profileError) {
+          console.error(`Error fetching profile for ${otherUserId}:`, profileError);
+        }
+        
+        // Create a valid Friend object
+        const friendObject: Friend = {
           id: friendship.id,
           user_id: friendship.user_id,
           friend_id: friendship.friend_id,
           status: friendship.status,
           created_at: friendship.created_at,
-          profile: profile || {
-            id: isFriendReceiver ? friendship.friend_id : friendship.user_id,
+          profile: profileData ? {
+            id: profileData.id,
+            username: profileData.username || 'Unknown User',
+            full_name: profileData.full_name,
+            avatar_url: profileData.avatar_url
+          } : {
+            id: otherUserId,
             username: 'Unknown User',
             full_name: null,
             avatar_url: null
           }
         };
-      });
+        
+        processedFriends.push(friendObject);
+      }
 
       setFriends(processedFriends);
       setFriendsList(processedFriends.map(f => 
