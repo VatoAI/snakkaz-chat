@@ -83,11 +83,16 @@ export function useGroupFetching(currentUserId: string) {
           const isProfileError = isProfileObject && 'error' in member.profiles;
           
           // Create a profile object that conforms to the GroupMember.profile interface
+          // We need to explicitly check for properties to avoid TypeScript errors
+          // when member.profiles could be a SelectQueryError
           const profile = {
             id: member.user_id,
-            username: (isProfileObject && !isProfileError && member.profiles?.username) || null,
-            avatar_url: (isProfileObject && !isProfileError && member.profiles?.avatar_url) || null,
-            full_name: (isProfileObject && !isProfileError && member.profiles?.full_name) || null
+            username: isProfileObject && !isProfileError && 
+              'username' in member.profiles ? member.profiles.username : null,
+            avatar_url: isProfileObject && !isProfileError && 
+              'avatar_url' in member.profiles ? member.profiles.avatar_url : null,
+            full_name: isProfileObject && !isProfileError && 
+              'full_name' in member.profiles ? member.profiles.full_name : null
           };
             
           return {
