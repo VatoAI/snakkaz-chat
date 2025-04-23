@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { MessageSquare, Search, Users, Plus, Mail, Lock, Shield } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -303,7 +304,7 @@ export const PrivateChats = ({
       
       const { data: groupMembers, error: groupMembersError } = await supabase
         .from('group_members')
-        .select('id, user_id, role, joined_at')
+        .select('id, user_id, role, joined_at, group_id')
         .eq('group_id', groupId);
         
       if (groupMembersError) throw groupMembersError;
