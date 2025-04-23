@@ -1,3 +1,4 @@
+
 import { Group } from "@/types/group";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -36,7 +37,7 @@ export const GroupChatHeader = ({
   userProfiles = {},
   isAdmin = false,
   onShowInvite
-}: any) => {
+}: GroupChatHeaderProps) => {
   // Map the connection states to a display indicator
   const getConnectionStatus = () => {
     if (usingServerFallback) {
@@ -134,8 +135,9 @@ export const GroupChatHeader = ({
         <div className="flex items-center gap-2">
           <TooltipProvider>
             <SecurityBadge 
-              securityLevel={securityLevel} 
-              setSecurityLevel={setSecurityLevel}
+              securityLevel={securityLevel}
+              connectionState={connectionState}
+              dataChannelState={dataChannelState}
               usingServerFallback={usingServerFallback}
             />
             

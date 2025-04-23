@@ -10,6 +10,7 @@ interface SecurityBadgeProps {
   connectionState?: string;
   dataChannelState?: string;
   usingServerFallback?: boolean;
+  setSecurityLevel?: (level: SecurityLevel) => void;
   className?: string;
   showLabel?: boolean;
   size?: 'sm' | 'md' | 'lg';
@@ -20,6 +21,7 @@ export const SecurityBadge = ({
   connectionState,
   dataChannelState,
   usingServerFallback = false,
+  setSecurityLevel,
   className,
   showLabel = false,
   size = 'md'
@@ -87,13 +89,20 @@ export const SecurityBadge = ({
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className={cn(
-            "flex items-center gap-1.5 px-2 py-0.5 rounded-full", 
-            securityLevel === 'p2p_e2ee' ? "bg-green-500/10 border border-green-500/30" : 
-            securityLevel === 'server_e2ee' ? "bg-blue-500/10 border border-blue-500/30" : 
-            "bg-amber-500/10 border border-amber-500/30",
-            className
-          )}>
+          <div 
+            className={cn(
+              "flex items-center gap-1.5 px-2 py-0.5 rounded-full", 
+              securityLevel === 'p2p_e2ee' ? "bg-green-500/10 border border-green-500/30" : 
+              securityLevel === 'server_e2ee' ? "bg-blue-500/10 border border-blue-500/30" : 
+              "bg-amber-500/10 border border-amber-500/30",
+              className,
+              setSecurityLevel ? "cursor-pointer" : ""
+            )}
+            onClick={() => setSecurityLevel && setSecurityLevel(
+              securityLevel === 'p2p_e2ee' ? 'server_e2ee' : 
+              securityLevel === 'server_e2ee' ? 'standard' : 'p2p_e2ee'
+            )}
+          >
             {renderIcon()}
             {showLabel && (
               <span className={cn(

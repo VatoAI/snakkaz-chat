@@ -2,11 +2,9 @@ import { useState, useEffect } from "react";
 import { MessageSquare, Search, Users, Plus, Mail, Lock, Shield } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { DirectMessage } from "@/components/chat/friends/DirectMessage";
-import { GroupChat } from "@/components/chat/groups/GroupChat";
-import { GroupChatCreator } from "@/components/chat/security/GroupChatCreator";
-import { GroupPasswordDialog } from "@/components/chat/groups/GroupPasswordDialog";
-import { GroupInviteDialog } from "@/components/chat/groups/GroupInviteDialog";
+import { DirectMessage } from '@/components/chat/friends/DirectMessage';
+import { GroupChat } from '@/components/chat/groups/GroupChat';
+import { GroupChatCreator } from '@/components/chat/security/GroupChatCreator';
 import { Friend } from "@/components/chat/friends/types";
 import { Group, GroupInvite } from "@/types/group";
 import { DecryptedMessage } from "@/types/message";
@@ -47,7 +45,6 @@ export const PrivateChats = ({
   const [selectedPasswordGroup, setSelectedPasswordGroup] = useState<Group | null>(null);
   const [groupInvites, setGroupInvites] = useState<GroupInvite[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
-  const [groupConversations, setGroupConversations] = useState<Record<string, DecryptedMessage[]>>({});
   const { toast } = useToast();
   
   useEffect(() => {
@@ -177,7 +174,7 @@ export const PrivateChats = ({
     return acc;
   }, {} as Record<string, DecryptedMessage[]>);
 
-  const groupConversations = directMessages.reduce((acc, message) => {
+  const groupChats = directMessages.reduce((acc, message) => {
     if (!message.group_id) return acc;
     
     const groupId = message.group_id;
@@ -198,7 +195,7 @@ export const PrivateChats = ({
       return new Date(lastB.created_at).getTime() - new Date(lastA.created_at).getTime();
     });
     
-  const sortedGroupConversations = Object.entries(groupConversations)
+  const sortedGroupConversations = Object.entries(groupChats)
     .sort(([, a], [, b]) => {
       const lastA = a[a.length - 1];
       const lastB = b[b.length - 1];
@@ -555,7 +552,7 @@ export const PrivateChats = ({
       <div className="flex-1 overflow-auto p-4">
         <GroupList
           groups={groups}
-          groupConversations={groupConversations}
+          groupConversations={groupChats}
           currentUserId={currentUserId}
           userProfiles={userProfiles}
           setSelectedGroup={setSelectedGroup}
