@@ -2,9 +2,9 @@
 import { lazy, Suspense } from "react";
 import type { SecurityLevel } from "@/types/security";
 
-// Lazy-load the group chat creator dialog
+// Lazy-load the group chat creator dialog - update the path to the correct location
 const GroupChatCreator = lazy(() =>
-  import("../groups/GroupChatCreator").then((module) => ({
+  import("../security/GroupChatCreator").then((module) => ({
     default: module.GroupChatCreator,
   }))
 );
@@ -31,8 +31,11 @@ export const GroupChatCreatorLoader = ({
   currentUserId,
   userProfiles,
   friendsList
-}: GroupChatCreatorLoaderProps) =>
-  isOpen ? (
+}: GroupChatCreatorLoaderProps) => {
+  // Only render the component when it's open
+  if (!isOpen) return null;
+  
+  return (
     <Suspense fallback={<div className="p-4 text-center text-cybergold-300">Laster...</div>}>
       <GroupChatCreator
         isOpen={isOpen}
@@ -43,5 +46,5 @@ export const GroupChatCreatorLoader = ({
         friendsList={friendsList}
       />
     </Suspense>
-  ) : null;
-
+  );
+};
