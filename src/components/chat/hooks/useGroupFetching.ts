@@ -77,8 +77,13 @@ export function useGroupFetching(currentUserId: string) {
         
         // Create properly typed GroupMember objects
         const membersWithProfiles: GroupMember[] = membersData.map(member => {
-          // Check if profiles exist and handle possible error case
-          const profile = member.profiles && typeof member.profiles === 'object' && !('error' in member.profiles) 
+          // Fixed null checking - first check if profiles exists before checking its type
+          const profileExists = member.profiles !== null && member.profiles !== undefined;
+          const isProfileObject = profileExists && typeof member.profiles === 'object';
+          const isProfileError = isProfileObject && 'error' in member.profiles;
+          
+          // Create the profile object based on the checks
+          const profile = (isProfileObject && !isProfileError)
             ? member.profiles 
             : { 
                 id: member.user_id,
