@@ -1,13 +1,12 @@
 
 import { useEffect } from "react";
 import { useMessages } from "@/hooks/useMessages";
-import { useToast } from "@/components/ui/use-toast";
 import { WebRTCManager } from "@/utils/webrtc";
 
 interface ChatStateManagerProps {
   userId: string | null;
   webRTCManager: WebRTCManager | null;
-  children: React.ReactNode;
+  children: (chatState: any) => React.ReactElement;
 }
 
 export const ChatStateManager = ({ userId, webRTCManager, children }: ChatStateManagerProps) => {
@@ -57,9 +56,5 @@ export const ChatStateManager = ({ userId, webRTCManager, children }: ChatStateM
     setDirectMessages
   };
 
-  return (
-    <>
-      {children(chatState)}
-    </>
-  );
+  return children(chatState);
 };

@@ -3,12 +3,13 @@ import { ChatTabs } from "@/components/chat/ChatTabs";
 import { ChatHeader } from "@/components/chat/ChatHeader";
 import { MigrationHelper } from "@/components/chat/MigrationHelper";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { UserStatus } from "@/types/presence";
 
 interface ChatLayoutProps {
   userPresence: Record<string, any>;
   currentUserId: string;
-  currentStatus: string;
-  handleStatusChange: (status: any) => void;
+  currentStatus: UserStatus;
+  handleStatusChange: (status: UserStatus) => void;
   webRTCManager: any;
   directMessages: any[];
   handleStartEditMessage: (message: any) => void;
