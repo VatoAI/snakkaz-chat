@@ -1,10 +1,11 @@
 
-import { useState, FormEvent } from "react";
-import { Send, X } from "lucide-react";
+import { useState, FormEvent, useCallback } from "react";
+import { Send, X, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { SecurityBadge } from "../security/SecurityBadge";
 import { SecurityLevel } from "@/types/security";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface DirectMessageFormProps {
   usingServerFallback: boolean;
@@ -34,13 +35,24 @@ export const DirectMessageForm = ({
   securityLevel
 }: DirectMessageFormProps) => {
   const [isComposing, setIsComposing] = useState(false);
+  const [localError, setLocalError] = useState<string | null>(null);
   
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (newMessage.trim() === '' || isLoading) return;
     
     setIsComposing(false);
-    await onSendMessage(e, newMessage);
+    setLocalError(null);
+    
+    try {
+      const success = await onSendMessage(e, newMessage);
+      if (!success) {
+        setLocalError("Kunne ikke sende melding. Prøv igjen senere.");
+      }
+    } catch (error: any) {
+      console.error("Error in form submission:", error);
+      setLocalError(error.message || "Kunne ikke sende melding. Prøv igjen senere.");
+    }
   };
   
   const isConnected = 
@@ -50,6 +62,10 @@ export const DirectMessageForm = ({
     )) || 
     securityLevel === 'server_e2ee' || 
     securityLevel === 'standard';
+
+  const clearLocalError = useCallback(() => {
+    setLocalError(null);
+  }, []);
   
   return (
     <div className="border-t border-cybergold-500/30 p-4 bg-cyberdark-900">
@@ -60,10 +76,21 @@ export const DirectMessageForm = ({
         </div>
       )}
       
-      {sendError && (
-        <div className="mb-2 p-2 bg-red-600/20 border border-red-500/40 rounded-md text-sm text-red-300">
-          {sendError}
-        </div>
+      {(sendError || localError) && (
+        <Alert variant="destructive" className="mb-2 bg-red-600/20 border-red-500/40">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription className="text-sm text-red-300">
+            {sendError || localError}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearLocalError}
+              className="ml-2 h-6 w-6 p-0 text-red-300 hover:text-red-200 hover:bg-red-900/40"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </AlertDescription>
+        </Alert>
       )}
       
       {editingMessage && (
@@ -87,6 +114,7 @@ export const DirectMessageForm = ({
             onChange={(e) => {
               onChangeMessage(e.target.value);
               setIsComposing(true);
+              clearLocalError();
             }}
             placeholder="Skriv en melding..."
             rows={1}

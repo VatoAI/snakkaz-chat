@@ -56,9 +56,9 @@ export const useDirectMessageSender = (
       
       console.log('Message sent via server with end-to-end encryption');
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Server message failed:', error);
-      throw error;
+      throw new Error(error.message || 'Ukjent feil ved sending via server');
     }
   }, [currentUserId, friendId]);
 
@@ -105,15 +105,22 @@ export const useDirectMessageSender = (
           break;
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error processing message queue:', error);
+      throw new Error(error.message || 'Feil ved behandling av meldingskø');
     } finally {
       processingQueue.current = false;
     }
   }, [currentUserId, friendId, sendMessageViaServer, onNewMessage]);
 
-  const handleSendMessage = useCallback(async (e: React.FormEvent, message: string) => {
+  const handleSendMessage = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Extract message from form event or use the stored newMessage state
+    const form = e.target as HTMLFormElement;
+    const messageInput = form.querySelector('textarea, input[type="text"]') as HTMLTextAreaElement | HTMLInputElement | null;
+    const message = messageInput?.value || '';
+    
     if (!message.trim() || !friendId || !currentUserId) {
       console.log('Message sending aborted: empty message or missing IDs', { 
         messageEmpty: !message.trim(), 
@@ -134,14 +141,22 @@ export const useDirectMessageSender = (
       // Start processing the queue if not already processing
       await processMessageQueue();
       
+      // Clear the input field after successful send
+      if (messageInput) {
+        messageInput.value = '';
+      }
+      
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error sending message:', error);
-      setSendError('Kunne ikke sende melding. Prøv igjen senere.');
+      
+      // Provide a more specific error message
+      const errorMessage = error.message || 'Kunne ikke sende melding. Sjekk nettverksforbindelsen din.';
+      setSendError(errorMessage);
       
       toast({
-        title: "Feil",
-        description: "Kunne ikke sende melding. Prøv igjen senere.",
+        title: "Feil ved sending av melding",
+        description: errorMessage,
         variant: "destructive",
       });
       

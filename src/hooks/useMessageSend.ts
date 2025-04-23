@@ -23,60 +23,80 @@ export const useMessageSend = (
       let mediaType = null;
 
       if (mediaFile) {
-        const fileExt = mediaFile.name.split('.').pop();
-        const filePath = `${crypto.randomUUID()}.${fileExt}`;
+        try {
+          console.log("Forbereder opplasting av mediafil:", mediaFile.name);
+          const fileExt = mediaFile.name.split('.').pop();
+          const filePath = `${crypto.randomUUID()}.${fileExt}`;
 
-        const { error: uploadError } = await supabase.storage
-          .from('chat-media')
-          .upload(filePath, mediaFile);
+          console.log("Laster opp til path:", filePath);
+          const { error: uploadError, data } = await supabase.storage
+            .from('chat-media')
+            .upload(filePath, mediaFile);
 
-        if (uploadError) {
-          throw uploadError;
-        }
-
-        mediaUrl = filePath;
-        mediaType = mediaFile.type;
-      }
-
-      if (webRTCManager && !receiverId) {
-        onlineUsers.forEach(peerId => {
-          if (peerId !== userId) {
-            webRTCManager.sendMessage(peerId, newMessage.trim());
+          if (uploadError) {
+            console.error("Opplastingsfeil:", uploadError);
+            throw new Error(`Feil ved opplasting av fil: ${uploadError.message}`);
           }
-        });
+
+          console.log("Opplasting vellykket:", data);
+          mediaUrl = filePath;
+          mediaType = mediaFile.type;
+        } catch (mediaError: any) {
+          console.error("Mediafeil:", mediaError);
+          throw new Error(`Mediafeil: ${mediaError.message}`);
+        }
       }
 
-      const { encryptedContent, key, iv } = await encryptMessage(newMessage.trim());
-      
-      const { error } = await supabase
-        .from('messages')
-        .insert({
-          encrypted_content: encryptedContent,
-          encryption_key: key,
-          iv: iv,
-          sender_id: userId,
-          ephemeral_ttl: ttl,
-          media_url: mediaUrl,
-          media_type: mediaType,
-          receiver_id: receiverId
-        });
-
-      if (error) {
-        console.error('Send message error:', error);
-        toast({
-          title: "Feil",
-          description: "Kunne ikke sende melding: " + error.message,
-          variant: "destructive",
-        });
-      } else {
-        console.log("Melding sendt vellykket");
-        setNewMessage("");
+      // WebRTC sending (peer-to-peer)
+      if (webRTCManager && !receiverId) {
+        try {
+          console.log("Forsøker å sende via WebRTC til", Array.from(onlineUsers).filter(id => id !== userId));
+          onlineUsers.forEach(peerId => {
+            if (peerId !== userId) {
+              webRTCManager.sendMessage(peerId, newMessage.trim());
+            }
+          });
+        } catch (webrtcError: any) {
+          console.error("WebRTC sendingsfeil:", webrtcError);
+          // Continue with server send even if WebRTC fails
+        }
       }
-    } catch (error) {
+
+      // Server sending (encrypted)
+      try {
+        console.log("Krypterer melding...");
+        const { encryptedContent, key, iv } = await encryptMessage(newMessage.trim());
+        
+        console.log("Sender melding til server...");
+        const { error } = await supabase
+          .from('messages')
+          .insert({
+            encrypted_content: encryptedContent,
+            encryption_key: key,
+            iv: iv,
+            sender_id: userId,
+            ephemeral_ttl: ttl,
+            media_url: mediaUrl,
+            media_type: mediaType,
+            receiver_id: receiverId
+          });
+
+        if (error) {
+          console.error('Send message error:', error);
+          throw new Error(`Kunne ikke sende melding: ${error.message}`);
+        } else {
+          console.log("Melding sendt vellykket");
+          setNewMessage("");
+        }
+      } catch (serverError: any) {
+        console.error('Error sending to server:', serverError);
+        throw new Error(`Serverfeil: ${serverError.message}`);
+      }
+    } catch (error: any) {
       console.error('Error sending message:', error);
       toast({
         title: "Feil",
-        description: "Kunne ikke sende melding",
+        description: error.message || "Kunne ikke sende melding. Sjekk nettverksforbindelsen din.",
         variant: "destructive",
       });
     } finally {
