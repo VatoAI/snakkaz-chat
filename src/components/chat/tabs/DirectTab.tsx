@@ -1,5 +1,5 @@
 
-import { DirectMessage } from '../friends/DirectMessage';
+import { DirectMessageContainer } from '../direct-message/DirectMessageContainer';
 import { Friend } from '../friends/types';
 import { WebRTCManager } from '@/utils/webrtc';
 import { DecryptedMessage } from '@/types/message';
@@ -24,7 +24,7 @@ export const DirectTab = ({
   userProfiles
 }: DirectTabProps) => {
   return (
-    <DirectMessage 
+    <DirectMessageContainer 
       friend={friend}
       currentUserId={currentUserId}
       webRTCManager={webRTCManager}
