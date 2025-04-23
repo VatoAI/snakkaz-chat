@@ -3,9 +3,9 @@ import { useState } from 'react';
 import { Friend } from '../friends/types';
 import { WebRTCManager } from '@/utils/webrtc';
 import { DecryptedMessage } from '@/types/message';
-import { DirectMessageHeader } from '../friends/DirectMessageHeader';
+import { DirectMessageHeader } from './DirectMessageHeader';
 import { DirectMessageContent } from './DirectMessageContent';
-import { DirectMessageForm } from '../friends/DirectMessageForm';
+import { DirectMessageForm } from './DirectMessageForm';
 import { SecurityLevel } from '@/types/security';
 import { useDirectMessage } from '../friends/hooks/useDirectMessage';
 
