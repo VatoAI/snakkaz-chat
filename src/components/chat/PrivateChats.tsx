@@ -16,6 +16,9 @@ import { Badge } from "@/components/ui/badge";
 import { GroupList } from "./groups/GroupList";
 import { ConversationList } from "./friends/ConversationList";
 import { ChatDialogs } from "./ChatDialogs";
+import { useGroups } from "./hooks/useGroups";
+import { useGroupInvites } from "./hooks/useGroupInvites";
+import { reduceConversations, reduceGroupConversations } from "./hooks/useConversationUtils";
 
 interface PrivateChatsProps {
   currentUserId: string;
@@ -37,156 +40,29 @@ export const PrivateChats = ({
   friendsList = []
 }: PrivateChatsProps) => {
   const [selectedConversation, setSelectedConversation] = useState<Friend | null>(null);
-  const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isGroupCreatorOpen, setIsGroupCreatorOpen] = useState(false);
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [selectedPasswordGroup, setSelectedPasswordGroup] = useState<Group | null>(null);
-  const [groupInvites, setGroupInvites] = useState<GroupInvite[]>([]);
-  const [groups, setGroups] = useState<Group[]>([]);
-  const { toast } = useToast();
-  
-  useEffect(() => {
-    const fetchGroups = async () => {
-      try {
-        const { data: memberData, error: memberError } = await supabase
-          .from('group_members')
-          .select('group_id')
-          .eq('user_id', currentUserId);
 
-        if (memberError) throw memberError;
+  const {
+    groups,
+    setGroups,
+    selectedGroup,
+    setSelectedGroup,
+    handleCreateGroup,
+    handleJoinGroup,
+    refreshGroups,
+  } = useGroups({ currentUserId, userProfiles });
 
-        if (memberData && memberData.length > 0) {
-          const groupIds = memberData.map(m => m.group_id);
+  const {
+    groupInvites,
+    setGroupInvites,
+  } = useGroupInvites({ currentUserId, userProfiles });
 
-          const { data: groupsData, error: groupsError } = await supabase
-            .from('groups')
-            .select('id, name, created_at, creator_id, security_level, password, avatar_url')
-            .in('id', groupIds);
-
-          if (groupsError) throw groupsError;
-
-          const groupsWithMembers = await Promise.all(
-            groupsData.map(async (group) => {
-              const { data: members, error: membersError } = await supabase
-                .from('group_members')
-                .select('id, user_id, role, joined_at, group_id')
-                .eq('group_id', group.id);
-
-              if (membersError) throw membersError;
-
-              return {
-                ...group,
-                members: (members || []).map(member => ({
-                  ...member,
-                  group_id: member.group_id ?? group.id
-                }))
-              } as Group;
-            })
-          );
-
-          setGroups(groupsWithMembers);
-        }
-      } catch (error) {
-        console.error("Error fetching groups:", error);
-        toast({
-          title: "Kunne ikke hente grupper",
-          description: "En feil oppstod. Prøv igjen senere.",
-          variant: "destructive"
-        });
-      }
-    };
-
-    if (currentUserId) {
-      fetchGroups();
-    }
-  }, [currentUserId, toast]);
-
-  useEffect(() => {
-    const fetchInvites = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('group_invites')
-          .select(`
-            id, 
-            group_id, 
-            invited_by, 
-            created_at, 
-            expires_at,
-            groups(name)
-          `)
-          .eq('invited_user_id', currentUserId)
-          .lte('expires_at', new Date(Date.now() + 7*24*60*60*1000).toISOString())
-          .gte('expires_at', new Date().toISOString());
-          
-        if (error) throw error;
-        
-        if (data) {
-          const invites: GroupInvite[] = data.map(item => ({
-            id: item.id,
-            group_id: item.group_id,
-            invited_by: item.invited_by,
-            invited_user_id: currentUserId,
-            created_at: item.created_at,
-            expires_at: item.expires_at,
-            group_name: item.groups?.name,
-            sender_username: userProfiles[item.invited_by]?.username || null
-          }));
-          
-          setGroupInvites(invites);
-        }
-      } catch (error) {
-        console.error("Error fetching group invites:", error);
-      }
-    };
-    
-    if (currentUserId) {
-      fetchInvites();
-      
-      const channel = supabase.channel('group-invites')
-        .on('postgres_changes', { 
-          event: '*', 
-          schema: 'public', 
-          table: 'group_invites',
-          filter: `invited_user_id=eq.${currentUserId}`
-        }, () => {
-          fetchInvites();
-        })
-        .subscribe();
-        
-      return () => {
-        supabase.removeChannel(channel);
-      };
-    }
-  }, [currentUserId, userProfiles]);
-
-  const conversations = directMessages.reduce((acc, message) => {
-    if (message.group_id) return acc;
-    
-    const partnerId = message.sender.id === currentUserId ? message.receiver_id : message.sender.id;
-    if (!partnerId) return acc;
-    
-    if (!acc[partnerId]) {
-      acc[partnerId] = [];
-    }
-    acc[partnerId].push(message);
-    return acc;
-  }, {} as Record<string, DecryptedMessage[]>);
-
-  const groupChats = directMessages.reduce((acc, message) => {
-    if (!message.group_id) return acc;
-    
-    const groupId = message.group_id;
-    
-    if (typeof groupId !== 'string') return acc;
-    
-    if (!acc[groupId]) {
-      acc[groupId] = [];
-    }
-    acc[groupId].push(message);
-    return acc;
-  }, {} as Record<string, DecryptedMessage[]>);
+  const conversations = reduceConversations(directMessages, currentUserId);
+  const groupConversations = reduceGroupConversations(directMessages);
 
   const sortedConversations = Object.entries(conversations)
     .sort(([, a], [, b]) => {
@@ -194,8 +70,8 @@ export const PrivateChats = ({
       const lastB = b[b.length - 1];
       return new Date(lastB.created_at).getTime() - new Date(lastA.created_at).getTime();
     });
-    
-  const sortedGroupConversations = Object.entries(groupChats)
+
+  const sortedGroupConversations = Object.entries(groupConversations)
     .sort(([, a], [, b]) => {
       const lastA = a[a.length - 1];
       const lastB = b[b.length - 1];
@@ -207,225 +83,12 @@ export const PrivateChats = ({
     if (!searchQuery) return true;
     return profile?.username?.toLowerCase().includes(searchQuery.toLowerCase());
   });
-  
+
   const filteredGroups = groups.filter(group => {
     if (!searchQuery) return true;
     return group.name.toLowerCase().includes(searchQuery.toLowerCase());
   });
 
-  const handleCreateGroup = async (
-    name: string, 
-    members: string[], 
-    securityLevel: SecurityLevel,
-    password?: string,
-    avatar?: File
-  ) => {
-    try {
-      const { data: groupData, error: groupError } = await supabase
-        .from('groups')
-        .insert({
-          name,
-          creator_id: currentUserId,
-          security_level: securityLevel,
-          password: password || null
-        })
-        .select('id')
-        .single();
-        
-      if (groupError) throw groupError;
-      
-      const groupId = groupData.id;
-      
-      let avatarUrl = null;
-      if (avatar) {
-        const fileExt = avatar.name.split('.').pop();
-        const filePath = `${groupId}/${Date.now()}.${fileExt}`;
-        
-        const { error: uploadError } = await supabase.storage
-          .from('group_avatars')
-          .upload(filePath, avatar);
-          
-        if (uploadError) throw uploadError;
-        
-        avatarUrl = filePath;
-        
-        const { error: updateError } = await supabase
-          .from('groups')
-          .update({ avatar_url: avatarUrl })
-          .eq('id', groupId);
-          
-        if (updateError) throw updateError;
-      }
-      
-      const { error: memberError } = await supabase
-        .from('group_members')
-        .insert({
-          user_id: currentUserId,
-          group_id: groupId,
-          role: 'admin'
-        });
-        
-      if (memberError) throw memberError;
-      
-      if (members.length > 0) {
-        const memberInserts = members.map(userId => ({
-          user_id: userId,
-          group_id: groupId,
-          role: 'member'
-        }));
-        
-        const { error: membersError } = await supabase
-          .from('group_members')
-          .insert(memberInserts);
-          
-        if (membersError) throw membersError;
-      }
-      
-      const invites = members.map(userId => ({
-        group_id: groupId,
-        invited_by: currentUserId,
-        invited_user_id: userId
-      }));
-      
-      const { error: invitesError } = await supabase
-        .from('group_invites')
-        .insert(invites);
-        
-      if (invitesError) console.warn("Failed to create invites:", invitesError);
-      
-      const { data: completeGroup, error: completeError } = await supabase
-        .from('groups')
-        .select('id, name, created_at, creator_id, security_level, password, avatar_url')
-        .eq('id', groupId)
-        .single();
-        
-      if (completeError) throw completeError;
-      
-      const { data: groupMembers, error: groupMembersError } = await supabase
-        .from('group_members')
-        .select('id, user_id, role, joined_at, group_id')
-        .eq('group_id', groupId);
-        
-      if (groupMembersError) throw groupMembersError;
-      
-      const typedMembers: GroupMember[] = (groupMembers || []).map(member => ({
-        ...member,
-        role: member.role as 'admin' | 'member'
-      }));
-      
-      const newGroup: Group = {
-        ...completeGroup,
-        members: typedMembers
-      };
-      
-      setGroups(prevGroups => [...prevGroups, newGroup]);
-      setSelectedGroup(newGroup);
-      
-      toast({
-        title: "Gruppe opprettet",
-        description: `Gruppen "${name}" ble opprettet`,
-      });
-    } catch (error) {
-      console.error("Error creating group:", error);
-      toast({
-        title: "Kunne ikke opprette gruppe",
-        description: "En feil oppstod. Prøv igjen senere.",
-        variant: "destructive",
-      });
-    }
-  };
-  
-  const handleJoinGroup = async (groupId: string, password?: string) => {
-    try {
-      if (password) {
-        const { data: group, error: groupError } = await supabase
-          .from('groups')
-          .select('password')
-          .eq('id', groupId)
-          .single();
-          
-        if (groupError) throw groupError;
-        
-        if (group.password !== password) {
-          return false;
-        }
-      }
-      
-      const { error: joinError } = await supabase
-        .from('group_members')
-        .insert({
-          user_id: currentUserId,
-          group_id: groupId,
-          role: 'member'
-        });
-        
-      if (joinError) throw joinError;
-      
-      await refreshGroups();
-      
-      const joinedGroup = groups.find(g => g.id === groupId);
-      if (joinedGroup) {
-        setSelectedGroup(joinedGroup);
-      }
-      
-      return true;
-    } catch (error) {
-      console.error("Error joining group:", error);
-      toast({
-        title: "Kunne ikke bli med i gruppen",
-        description: "En feil oppstod. Prøv igjen senere.",
-        variant: "destructive",
-      });
-      return false;
-    }
-  };
-  
-  const refreshGroups = async () => {
-    try {
-      const { data: memberData, error: memberError } = await supabase
-        .from('group_members')
-        .select('group_id')
-        .eq('user_id', currentUserId);
-        
-      if (memberError) throw memberError;
-      
-      if (memberData && memberData.length > 0) {
-        const groupIds = memberData.map(m => m.group_id);
-        
-        const { data: groupsData, error: groupsError } = await supabase
-          .from('groups')
-          .select('id, name, created_at, creator_id, security_level, password, avatar_url')
-          .in('id', groupIds);
-          
-        if (groupsError) throw groupsError;
-        
-        const groupsWithMembers = await Promise.all(
-          groupsData.map(async (group) => {
-            const { data: members, error: membersError } = await supabase
-              .from('group_members')
-              .select('id, user_id, role, joined_at, group_id')
-              .eq('group_id', group.id);
-              
-            if (membersError) throw membersError;
-            
-            return {
-              ...group,
-              members: (members || []).map(member => ({
-                ...member,
-                group_id: member.group_id ?? group.id,
-                role: member.role as 'admin' | 'member'
-              }))
-            } as Group;
-          })
-        );
-        
-        setGroups(groupsWithMembers);
-      }
-    } catch (error) {
-      console.error("Error refreshing groups:", error);
-    }
-  };
-  
   const handleAcceptInvite = async (invite: GroupInvite) => {
     try {
       const { error: joinError } = await supabase
@@ -435,47 +98,47 @@ export const PrivateChats = ({
           group_id: invite.group_id,
           role: 'member'
         });
-        
+
       if (joinError) throw joinError;
-      
+
       const { error: deleteError } = await supabase
         .from('group_invites')
         .delete()
         .eq('id', invite.id);
-        
+
       if (deleteError) throw deleteError;
-      
+
       await refreshGroups();
       setGroupInvites(invites => invites.filter(inv => inv.id !== invite.id));
-      
+
       const joinedGroup = groups.find(g => g.id === invite.group_id);
       if (joinedGroup) {
         setSelectedGroup(joinedGroup);
       }
-      
+
       setIsInviteDialogOpen(false);
     } catch (error) {
       console.error("Error accepting invite:", error);
       throw error;
     }
   };
-  
+
   const handleDeclineInvite = async (invite: GroupInvite) => {
     try {
       const { error } = await supabase
         .from('group_invites')
         .delete()
         .eq('id', invite.id);
-        
+
       if (error) throw error;
-      
+
       setGroupInvites(invites => invites.filter(inv => inv.id !== invite.id));
     } catch (error) {
       console.error("Error declining invite:", error);
       throw error;
     }
   };
-  
+
   const handlePasswordSubmit = async (password: string) => {
     if (!selectedPasswordGroup) return false;
     return handleJoinGroup(selectedPasswordGroup.id, password);
@@ -494,7 +157,7 @@ export const PrivateChats = ({
       />
     );
   }
-  
+
   if (selectedGroup) {
     return (
       <GroupChat
@@ -524,7 +187,7 @@ export const PrivateChats = ({
               >
                 <Mail className="h-4 w-4" />
                 <span>Invitasjoner</span>
-                <Badge 
+                <Badge
                   className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 bg-cybergold-500 text-black"
                 >
                   {groupInvites.length}
@@ -542,7 +205,7 @@ export const PrivateChats = ({
             </Button>
           </div>
         </div>
-        
+
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-cyberdark-400" />
           <input
@@ -558,7 +221,7 @@ export const PrivateChats = ({
       <div className="flex-1 overflow-auto p-4">
         <GroupList
           groups={groups}
-          groupConversations={groupChats}
+          groupConversations={groupConversations}
           currentUserId={currentUserId}
           userProfiles={userProfiles}
           setSelectedGroup={setSelectedGroup}
@@ -579,7 +242,7 @@ export const PrivateChats = ({
           </div>
         )}
       </div>
-      
+
       <GroupChatCreator
         isOpen={isGroupCreatorOpen}
         onClose={() => setIsGroupCreatorOpen(false)}
@@ -588,7 +251,7 @@ export const PrivateChats = ({
         userProfiles={userProfiles}
         friendsList={friendsList}
       />
-      
+
       <ChatDialogs
         isPasswordDialogOpen={isPasswordDialogOpen}
         isInviteDialogOpen={isInviteDialogOpen}
