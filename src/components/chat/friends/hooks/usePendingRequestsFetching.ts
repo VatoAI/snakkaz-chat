@@ -31,7 +31,7 @@ export const usePendingRequestsFetching = (currentUserId: string) => {
           .from('profiles')
           .select('id, username, full_name, avatar_url')
           .eq('id', request.user_id)
-          .single();
+          .maybeSingle(); // Use maybeSingle instead of single
           
         if (!profileError && profileData) {
           formattedRequests.push({
@@ -41,6 +41,21 @@ export const usePendingRequestsFetching = (currentUserId: string) => {
             status: request.status,
             created_at: request.created_at,
             profile: profileData
+          });
+        } else {
+          // Include basic profile info even if profile doesn't exist
+          formattedRequests.push({
+            id: request.id,
+            user_id: request.user_id,
+            friend_id: request.friend_id,
+            status: request.status,
+            created_at: request.created_at,
+            profile: {
+              id: request.user_id,
+              username: 'Unknown User',
+              full_name: null,
+              avatar_url: null
+            }
           });
         }
       }

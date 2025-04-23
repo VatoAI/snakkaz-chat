@@ -33,7 +33,7 @@ export const useAcceptedFriendsFetching = (currentUserId: string) => {
           .from('profiles')
           .select('id, username, full_name, avatar_url')
           .eq('id', profileId)
-          .single();
+          .maybeSingle(); // Use maybeSingle instead of single
           
         if (!profileError && profileData) {
           formattedFriends.push({
@@ -43,6 +43,21 @@ export const useAcceptedFriendsFetching = (currentUserId: string) => {
             status: friendship.status,
             created_at: friendship.created_at,
             profile: profileData
+          });
+        } else {
+          // Include basic profile info even if profile doesn't exist
+          formattedFriends.push({
+            id: friendship.id,
+            user_id: friendship.user_id,
+            friend_id: friendship.friend_id,
+            status: friendship.status,
+            created_at: friendship.created_at,
+            profile: {
+              id: profileId,
+              username: 'Unknown User',
+              full_name: null,
+              avatar_url: null
+            }
           });
         }
       }

@@ -23,16 +23,22 @@ export const useProfileLoader = () => {
         .from('profiles')
         .select('username, avatar_url')
         .eq('id', userId)
-        .maybeSingle();
+        .maybeSingle(); // Use maybeSingle instead of single
       
       if (error) throw error;
       
       setProfileCache(prev => ({
         ...prev,
-        [userId]: data || { username: null, avatar_url: null }
+        [userId]: data || { username: 'Unknown User', avatar_url: null }
       }));
     } catch (error) {
       console.error('Error loading profile:', error);
+      // Cache fallback profile data even on error
+      setProfileCache(prev => ({
+        ...prev,
+        [userId]: { username: 'Unknown User', avatar_url: null }
+      }));
+      
       toast({
         title: "Feil ved lasting av profil",
         description: "Kunne ikke laste brukerens profil",
@@ -41,7 +47,7 @@ export const useProfileLoader = () => {
     } finally {
       setLoading(prev => ({ ...prev, [userId]: false }));
     }
-  }, [toast]);
+  }, [toast, profileCache]);
 
   const getProfile = useCallback((userId: string): Profile => {
     if (!profileCache[userId]) {

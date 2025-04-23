@@ -49,7 +49,7 @@ export const UsersProfiles = ({ setUserProfiles }: UsersProfilesProps) => {
             setUserProfiles(prev => ({
               ...prev,
               [newProfile.id]: {
-                username: newProfile.username,
+                username: newProfile.username || 'Unknown User',
                 avatar_url: newProfile.avatar_url
               }
             }));
