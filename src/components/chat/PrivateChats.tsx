@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { MessageSquare, Search, Users, Plus, Mail, Lock, Shield } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -7,7 +6,7 @@ import { DirectMessage } from '@/components/chat/friends/DirectMessage';
 import { GroupChat } from '@/components/chat/groups/GroupChat';
 import { GroupChatCreator } from '@/components/chat/security/GroupChatCreator';
 import { Friend } from "@/components/chat/friends/types";
-import { Group, GroupInvite } from "@/types/group";
+import { Group, GroupInvite, GroupMember } from "@/types/group";
 import { DecryptedMessage } from "@/types/message";
 import { WebRTCManager } from "@/utils/webrtc";
 import { SecurityLevel } from "@/types/security";
@@ -309,9 +308,14 @@ export const PrivateChats = ({
         
       if (groupMembersError) throw groupMembersError;
       
+      const typedMembers: GroupMember[] = (groupMembers || []).map(member => ({
+        ...member,
+        role: member.role as 'admin' | 'member'
+      }));
+      
       const newGroup: Group = {
         ...completeGroup,
-        members: groupMembers || []
+        members: typedMembers
       };
       
       setGroups(prevGroups => [...prevGroups, newGroup]);
@@ -408,7 +412,8 @@ export const PrivateChats = ({
               ...group,
               members: (members || []).map(member => ({
                 ...member,
-                group_id: member.group_id ?? group.id
+                group_id: member.group_id ?? group.id,
+                role: member.role as 'admin' | 'member'
               }))
             } as Group;
           })
