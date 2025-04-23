@@ -1,28 +1,18 @@
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useChatCode } from "@/hooks/useChatCode";
 import { ChatCodeModal } from "@/components/mobile/ChatCodeModal";
-import { useToast } from "@/components/ui/use-toast";
+import { usePinSecurity } from "@/hooks/usePinSecurity";
+import { useScreenOrientation } from "@/hooks/useScreenOrientation";
 
 export function useMobilePinGuard({ isMobile }: { isMobile: boolean }) {
   const chatCodeHook = useChatCode();
   const [showSetCodeModal, setShowSetCodeModal] = useState(false);
   const [pinUnlocked, setPinUnlocked] = useState(!isMobile);
-  const { toast } = useToast();
+  const { isLocked, handleFailedAttempt, resetSecurity, remainingAttempts } = usePinSecurity();
 
-  // Lock orientation for mobile devices
-  useEffect(() => {
-    if (isMobile) {
-      try {
-        // Lock to portrait
-        if (screen.orientation && screen.orientation.lock) {
-          screen.orientation.lock('portrait').catch(console.error);
-        }
-      } catch (error) {
-        console.error('Could not lock screen orientation:', error);
-      }
-    }
-  }, [isMobile]);
+  // Handle screen orientation
+  useScreenOrientation(isMobile);
 
   // Handle visibility change to relock when app returns to foreground
   useEffect(() => {
@@ -31,13 +21,14 @@ export function useMobilePinGuard({ isMobile }: { isMobile: boolean }) {
         if (document.visibilityState === 'visible' && chatCodeHook.chatCode) {
           setPinUnlocked(false);
           chatCodeHook.promptCodeIfNeeded();
+          resetSecurity();
         }
       };
 
       document.addEventListener('visibilitychange', handleVisibilityChange);
       return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
     }
-  }, [isMobile, chatCodeHook]);
+  }, [isMobile, chatCodeHook, resetSecurity]);
 
   // Prompt PIN setup or entry on mobile if needed
   useEffect(() => {
@@ -60,13 +51,25 @@ export function useMobilePinGuard({ isMobile }: { isMobile: boolean }) {
   }, [chatCodeHook.promptForCode, isMobile]);
 
   const showMobilePinModal = isMobile && !pinUnlocked;
+
+  const handlePinFailure = () => {
+    handleFailedAttempt();
+  };
   
   const mobilePinModal = (
     <ChatCodeModal
       open={chatCodeHook.promptForCode}
       onClose={() => {}}
       onPinSuccess={() => setPinUnlocked(true)}
-      verifyPin={chatCodeHook.verifyChatCode}
+      verifyPin={(code) => {
+        const isValid = chatCodeHook.verifyChatCode(code);
+        if (!isValid && !isLocked) {
+          handlePinFailure();
+        }
+        return isValid;
+      }}
+      isLocked={isLocked}
+      remainingAttempts={remainingAttempts}
     />
   );
 
