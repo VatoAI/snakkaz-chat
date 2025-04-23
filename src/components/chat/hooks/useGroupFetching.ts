@@ -75,15 +75,27 @@ export function useGroupFetching(currentUserId: string) {
         
         if (!membersData) continue;
         
-        // Ensure role is cast to the correct type and handle the profiles properly
-        const membersWithProfiles: GroupMember[] = membersData.map(member => ({
-          id: member.id,
-          user_id: member.user_id,
-          group_id: member.group_id,
-          role: member.role as 'admin' | 'member', // Explicitly cast to the allowed values
-          joined_at: member.joined_at,
-          profile: member.profiles // Map the joined profile data
-        }));
+        // Create properly typed GroupMember objects
+        const membersWithProfiles: GroupMember[] = membersData.map(member => {
+          // Check if profiles exist and handle possible error case
+          const profile = member.profiles && typeof member.profiles === 'object' && !('error' in member.profiles) 
+            ? member.profiles 
+            : { 
+                id: member.user_id,
+                username: null, 
+                avatar_url: null, 
+                full_name: null 
+              };
+            
+          return {
+            id: member.id,
+            user_id: member.user_id,
+            group_id: member.group_id,
+            role: member.role as 'admin' | 'member', // Explicitly cast to the allowed values
+            joined_at: member.joined_at,
+            profile: profile
+          };
+        });
         
         groupsWithMembers.push({
           ...group,
