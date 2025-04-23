@@ -1,9 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Lock, Unlock, X } from "lucide-react";
+import { Lock, Unlock, X, AlertTriangle } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
 interface ChatCodeModalProps {
   open: boolean;
@@ -26,22 +26,57 @@ export const ChatCodeModal = ({
   const [error, setError] = useState("");
   const [showNumber, setShowNumber] = useState(false);
   const [animateError, setAnimateError] = useState(false);
+  const [attempts, setAttempts] = useState(0);
+  const [isLocked, setIsLocked] = useState(false);
+  const [lockoutTimer, setLockoutTimer] = useState(0);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (open) {
-      // Reset state when dialog opens
       setCode("");
       setError("");
       setAnimateError(false);
     }
   }, [open]);
 
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isLocked && lockoutTimer > 0) {
+      interval = setInterval(() => {
+        setLockoutTimer(prev => {
+          if (prev <= 1) {
+            setIsLocked(false);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isLocked, lockoutTimer]);
+
+  const handleFailedAttempt = () => {
+    setAttempts(prev => {
+      const newAttempts = prev + 1;
+      if (newAttempts >= 5) {
+        setIsLocked(true);
+        setLockoutTimer(300); // 5 minutes
+        toast({
+          variant: "destructive",
+          title: "For mange forsøk",
+          description: "Prøv igjen om 5 minutter",
+        });
+        setAttempts(0);
+      }
+      return newAttempts;
+    });
+  };
+
   const handleCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const input = e.target.value.replace(/\D/g, ""); // only digits
     setCode(input.slice(0, 4));
     setError("");
     
-    // Auto-submit when 4 digits entered
     if (input.length === 4) {
       setTimeout(() => {
         handleSubmit(e as unknown as React.FormEvent);
@@ -55,6 +90,12 @@ export const ChatCodeModal = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (isLocked) {
+      setError(`Låst i ${Math.ceil(lockoutTimer / 60)} minutter`);
+      return;
+    }
+
     if (code.length !== 4) {
       setError("Koden må være 4 siffer");
       setAnimateError(true);
@@ -70,12 +111,13 @@ export const ChatCodeModal = ({
     } else if (verifyPin && verifyPin(code)) {
       setCode("");
       setError("");
+      setAttempts(0);
       onPinSuccess();
     } else {
-      setError("Feil kode!");
+      handleFailedAttempt();
+      setError(`Feil kode! ${4 - attempts} forsøk igjen`);
       setAnimateError(true);
       setTimeout(() => setAnimateError(false), 500);
-      // Clear code on error for better UX
       setCode("");
     }
   };
@@ -132,6 +174,13 @@ export const ChatCodeModal = ({
           {error && (
             <div className={`text-sm text-cyberred-400 text-center ${animateError ? 'animate-pulse' : ''}`}>
               {error}
+            </div>
+          )}
+          
+          {isLocked && (
+            <div className="text-cyberred-400 text-center p-4 bg-cyberred-900/20 rounded-md border border-cyberred-500/20 flex items-center justify-center gap-2">
+              <AlertTriangle className="h-4 w-4" />
+              Låst i {Math.ceil(lockoutTimer / 60)} minutter
             </div>
           )}
           

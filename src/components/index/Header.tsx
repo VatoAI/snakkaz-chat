@@ -1,4 +1,3 @@
-
 import { useNavigate } from 'react-router-dom';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -7,7 +6,7 @@ export const Header = () => {
   const isMobile = useIsMobile();
   
   const handleChatRedirect = () => {
-    navigate('/chat');
+    window.location.href = 'https://v3.snakkaz.com/chat';
   };
   
   return (
