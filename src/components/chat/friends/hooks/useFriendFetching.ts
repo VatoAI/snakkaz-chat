@@ -1,24 +1,45 @@
 
 import { useCallback } from 'react';
-import { useAcceptedFriendsFetching } from './useAcceptedFriendsFetching';
-import { usePendingRequestsFetching } from './usePendingRequestsFetching';
+import { supabase } from "@/integrations/supabase/client";
+import { Friend } from '../types';
 
 export const useFriendFetching = (currentUserId: string) => {
-  const { friends, fetchAcceptedFriends } = useAcceptedFriendsFetching(currentUserId);
-  const { pendingRequests, fetchPendingRequests } = usePendingRequestsFetching(currentUserId);
-
-  const fetchFriends = useCallback(async () => {
-    if (!currentUserId) return;
-    
+  const fetchAcceptedFriends = useCallback(async () => {
     try {
-      await Promise.all([
-        fetchAcceptedFriends(),
-        fetchPendingRequests()
-      ]);
-    } catch (error) {
-      console.error('Error fetching friends and requests:', error);
-    }
-  }, [currentUserId, fetchAcceptedFriends, fetchPendingRequests]);
+      const { data: friendships, error: friendshipsError } = await supabase
+        .from('friendships')
+        .select(`
+          id,
+          user_id,
+          friend_id,
+          status,
+          created_at,
+          profiles:friend_id (
+            id,
+            username,
+            full_name,
+            avatar_url
+          )
+        `)
+        .eq('status', 'accepted')
+        .or(`user_id.eq.${currentUserId},friend_id.eq.${currentUserId}`);
 
-  return { friends, pendingRequests, fetchFriends };
+      if (friendshipsError) throw friendshipsError;
+
+      if (!friendships) return [];
+
+      // Process and return friends with their profiles
+      const processedFriends: Friend[] = friendships.map(friendship => ({
+        ...friendship,
+        profile: friendship.profiles
+      }));
+
+      return processedFriends;
+    } catch (error) {
+      console.error('Error fetching accepted friends:', error);
+      return [];
+    }
+  }, [currentUserId]);
+
+  return { fetchAcceptedFriends };
 };

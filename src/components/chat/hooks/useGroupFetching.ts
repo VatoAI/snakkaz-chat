@@ -5,51 +5,73 @@ import { Group, GroupMember } from "@/types/group";
 import { SecurityLevel } from "@/types/security";
 import { useToast } from "@/components/ui/use-toast";
 
-// Utility: fetch groups and their members for signed-in user
 export function useGroupFetching(currentUserId: string) {
   const { toast } = useToast();
 
   const fetchGroups = useCallback(async (): Promise<Group[]> => {
     try {
+      // First fetch groups where user is a member
       const { data: memberData, error: memberError } = await supabase
         .from('group_members')
-        .select('group_id')
+        .select(`
+          group_id,
+          role,
+          groups (
+            id,
+            name,
+            created_at,
+            creator_id,
+            security_level,
+            password,
+            avatar_url
+          )
+        `)
         .eq('user_id', currentUserId);
 
       if (memberError) throw memberError;
 
-      if (memberData && memberData.length > 0) {
-        const groupIds = memberData.map(m => m.group_id);
+      if (!memberData?.length) return [];
 
-        const { data: groupsData, error: groupsError } = await supabase
-          .from('groups')
-          .select('id, name, created_at, creator_id, security_level, password, avatar_url')
-          .in('id', groupIds);
+      // Format the groups data
+      const groups = memberData.map(membership => {
+        const group = membership.groups as any;
+        return {
+          ...group,
+          security_level: group.security_level as SecurityLevel
+        };
+      });
 
-        if (groupsError) throw groupsError;
+      // Fetch all members for these groups
+      const groupIds = groups.map(g => g.id);
+      const { data: membersData, error: membersError } = await supabase
+        .from('group_members')
+        .select(`
+          id,
+          user_id,
+          role,
+          joined_at,
+          group_id,
+          profiles:user_id (
+            id,
+            username,
+            avatar_url,
+            full_name
+          )
+        `)
+        .in('group_id', groupIds);
 
-        const groupsWithMembers = await Promise.all(
-          groupsData.map(async (group) => {
-            const { data: members, error: membersError } = await supabase
-              .from('group_members')
-              .select('id, user_id, role, joined_at, group_id')
-              .eq('group_id', group.id);
+      if (membersError) throw membersError;
 
-            if (membersError) throw membersError;
-
-            return {
-              ...group,
-              members: (members || []).map(member => ({
-                ...member,
-                group_id: member.group_id ?? group.id,
-                role: member.role as 'admin' | 'member'
-              }))
-            } as Group;
-          })
-        );
-        return groupsWithMembers;
-      }
-      return [];
+      // Add members to their respective groups
+      return groups.map(group => ({
+        ...group,
+        members: (membersData || [])
+          .filter(member => member.group_id === group.id)
+          .map(member => ({
+            ...member,
+            profile: member.profiles
+          })) as GroupMember[]
+      }));
     } catch (error) {
       console.error("Error fetching groups:", error);
       toast({
