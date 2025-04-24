@@ -23,4 +23,7 @@ export interface DecryptedMessage {
   group_id?: string | null; // Changed to string | null to match our usage
   read_at?: string | null;
   is_delivered?: boolean;
+  media_encryption_key?: string;
+  media_iv?: string;
+  media_metadata?: string;
 }

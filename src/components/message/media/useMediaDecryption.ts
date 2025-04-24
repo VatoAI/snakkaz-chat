@@ -4,6 +4,7 @@ import { DecryptedMessage } from "@/types/message";
 import { decryptMedia } from "@/utils/encryption/media";
 import { GLOBAL_E2EE_KEY, GLOBAL_E2EE_IV } from "@/utils/encryption/global-e2ee";
 import { useToast } from "@/components/ui/use-toast";
+import { arrayBufferToBase64 } from "@/utils/encryption/data-conversion";
 
 export const useMediaDecryption = (message: DecryptedMessage) => {
   const [decryptedUrl, setDecryptedUrl] = useState<string | null>(null);
@@ -49,7 +50,12 @@ export const useMediaDecryption = (message: DecryptedMessage) => {
       if (!message.receiver_id && !message.group_id && !encryptionKey && !iv) {
         console.log("Using global E2EE key for public message media");
         encryptionKey = GLOBAL_E2EE_KEY;
-        iv = btoa(GLOBAL_E2EE_IV);
+        // Convert ArrayBuffer to Base64 string for iv
+        if (GLOBAL_E2EE_IV instanceof ArrayBuffer) {
+          iv = arrayBufferToBase64(GLOBAL_E2EE_IV);
+        } else {
+          iv = btoa(String.fromCharCode.apply(null, new Uint8Array(GLOBAL_E2EE_IV)));
+        }
       }
 
       if (!encryptionKey || !iv) {

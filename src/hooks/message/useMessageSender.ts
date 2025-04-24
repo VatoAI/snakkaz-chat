@@ -7,6 +7,7 @@ import { ensureMessageColumnsExist } from "./utils/message-db-utils";
 import { useMediaHandler } from "./useMessageSender/useMediaHandler";
 import { useP2PDelivery } from "./useMessageSender/useP2PDelivery";
 import { globalEncryptMessage } from "./useMessageSender/globalEncryption";
+import { arrayBufferToBase64 } from "@/utils/encryption/data-conversion";
 
 export const useMessageSender = (
   userId: string | null,
@@ -44,7 +45,12 @@ export const useMessageSender = (
       let globalE2eeIv: string | undefined;
       if (isGlobalRoom) {
         globalE2eeKey = GLOBAL_E2EE_KEY;
-        globalE2eeIv = btoa(GLOBAL_E2EE_IV);
+        // Convert ArrayBuffer to Base64 string
+        if (GLOBAL_E2EE_IV instanceof ArrayBuffer) {
+          globalE2eeIv = arrayBufferToBase64(GLOBAL_E2EE_IV);
+        } else {
+          globalE2eeIv = btoa(String.fromCharCode.apply(null, new Uint8Array(GLOBAL_E2EE_IV)));
+        }
       }
 
       // Handle media file upload/encryption if provided
