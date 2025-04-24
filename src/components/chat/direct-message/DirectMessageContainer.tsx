@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Friend } from '../friends/types';
 import { WebRTCManager } from '@/utils/webrtc';
 import { DecryptedMessage } from '@/types/message';
@@ -8,6 +8,7 @@ import { DirectMessageContent } from './DirectMessageContent';
 import { DirectMessageForm } from './DirectMessageForm';
 import { SecurityLevel } from '@/types/security';
 import { useDirectMessage } from '../friends/hooks/useDirectMessage';
+import { useToast } from '@/hooks/use-toast';
 
 interface DirectMessageContainerProps {
   friend: Friend;
@@ -28,6 +29,9 @@ export const DirectMessageContainer = ({
   onNewMessage,
   userProfiles
 }: DirectMessageContainerProps) => {
+  const { toast } = useToast();
+  const [isOnline] = useState<boolean>(navigator.onLine);
+  
   const {
     newMessage,
     setNewMessage,
@@ -49,26 +53,50 @@ export const DirectMessageContainer = ({
     setSecurityLevel
   } = useDirectMessage(friend, currentUserId, webRTCManager, onNewMessage, messages);
 
-  // Extract username and avatar from profiles for header
+  // Auto-mark messages as read
+  useEffect(() => {
+    const markRead = async () => {
+      try {
+        const unreadMessages = messages.filter(
+          msg => !msg.read_at && msg.sender.id !== currentUserId
+        );
+        
+        for (const msg of unreadMessages) {
+          await handleMarkMessageRead(msg.id);
+        }
+      } catch (error) {
+        console.error('Error marking messages as read:', error);
+      }
+    };
+
+    if (messages.length > 0) {
+      markRead();
+    }
+  }, [messages, currentUserId]);
+
   const username = friend.profile?.username || userProfiles[friend.user_id]?.username || "User";
   const avatarUrl = friend.profile?.avatar_url || userProfiles[friend.user_id]?.avatar_url;
-  
-  // Check for network connectivity
-  const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
-  
-  // Wrapper function to adapt the return type to match what DirectMessageForm expects
+
   const handleSendMessageWrapper = async (e: React.FormEvent, text: string): Promise<boolean> => {
     try {
       if (!navigator.onLine) {
-        console.error("Cannot send message: Device is offline");
+        toast({
+          title: "Error",
+          description: "Cannot send message: Device is offline",
+          variant: "destructive"
+        });
         return false;
       }
       
-      // We'll use the event but ignore the text since it's already in the state
       await handleSendMessage(e);
       return true; 
     } catch (error) {
       console.error("Error in send message wrapper:", error);
+      toast({
+        title: "Error",
+        description: "Failed to send message",
+        variant: "destructive"
+      });
       return false;
     }
   };
