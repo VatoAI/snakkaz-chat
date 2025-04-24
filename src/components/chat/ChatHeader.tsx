@@ -1,4 +1,3 @@
-
 import { UserStatus } from "@/types/presence";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from "react";
@@ -47,7 +46,11 @@ export const ChatHeader = ({
 
   return (
     <TooltipProvider>
-      <header className="w-full backdrop-blur-sm bg-cyberdark-900/85 border-b border-cybergold-400/40 shadow-neon-blue sticky top-0 z-40 animate-fadeIn">
+      <header className={`
+        w-full backdrop-blur-sm bg-cyberdark-900/85 border-b border-cybergold-400/40 
+        shadow-neon-blue sticky top-0 z-40 animate-fadeIn
+        ${isMobile ? 'mobile-top-safe pt-safe' : ''}
+      `}>
         <div className="relative">
           <div className="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none">
             <img
