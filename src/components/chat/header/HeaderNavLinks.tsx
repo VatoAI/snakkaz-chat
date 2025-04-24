@@ -1,4 +1,3 @@
-
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Home, Globe, MessageSquare, Users, Volume, VolumeX, Info } from "lucide-react";
@@ -84,7 +83,7 @@ export const HeaderNavLinks = ({ activeTab, onTabChange, currentStatus = 'online
 
   return (
     <TooltipProvider>
-      <nav className="flex gap-1 items-center">
+      <nav className={`flex ${isMobile ? 'gap-0.5' : 'gap-1'} items-center justify-center flex-wrap`}>
         {links.map((link, index) => (
           <Tooltip key={index}>
             <TooltipTrigger asChild>
@@ -93,13 +92,13 @@ export const HeaderNavLinks = ({ activeTab, onTabChange, currentStatus = 'online
                 size={isMobile ? "sm" : "icon"}
                 className={`${link.color} ${link.hoverColor} transition-all duration-300
                           ${activeTab === link.value ? 'bg-cyberdark-800 shadow-neon-blue' : ''}
-                          ${isMobile ? 'w-10 h-10 p-0' : ''}`}
+                          ${isMobile ? 'w-9 h-9 min-w-9 p-0' : ''}`}
                 onClick={link.onClick}
               >
-                <link.icon className={isMobile ? "h-5 w-5" : "h-4 w-4"} />
+                <link.icon className={isMobile ? "h-4 w-4" : "h-4 w-4"} />
               </Button>
             </TooltipTrigger>
-            <TooltipContent side="bottom">
+            <TooltipContent side={isMobile ? "bottom" : "bottom"}>
               <p>{link.label}</p>
             </TooltipContent>
           </Tooltip>
