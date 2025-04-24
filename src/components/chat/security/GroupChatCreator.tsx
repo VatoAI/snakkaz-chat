@@ -64,7 +64,7 @@ export const GroupChatCreator = ({
       password: "",
       security_level: "server_e2ee" as SecurityLevel,
       write_permissions: "all" as GroupWritePermission,
-      default_message_ttl: null
+      default_message_ttl: 86400 // Endret fra null til 86400 (24 timer) som standard
     }
   });
   
