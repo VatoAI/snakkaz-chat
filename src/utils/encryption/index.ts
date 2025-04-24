@@ -1,4 +1,3 @@
-
 /**
  * Entry point for encryption utilities
  */
@@ -9,3 +8,4 @@ export * from './secure-connection';
 export * from './message-encryption';
 export * from './data-conversion';
 export * from './types';
+export * from './group-keys'; // Eksporterer den nye group-keys.ts filen
