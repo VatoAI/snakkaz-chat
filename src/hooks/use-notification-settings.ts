@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import type { NotificationSettings } from '@/types/notification';
 
@@ -9,20 +8,31 @@ const defaultSettings: NotificationSettings = {
   quietHoursEnabled: false,
   quietHoursStart: "22:00",
   quietHoursEnd: "07:00",
+  customSoundId: "soft-chime", // Standard meldingslyd
 };
 
 export const useNotificationSettings = () => {
   const [settings, setSettings] = useState<NotificationSettings>(defaultSettings);
 
-  // Load saved settings from localStorage
+  // Last inn lagrede innstillinger fra localStorage
   useEffect(() => {
     const savedSettings = localStorage.getItem('notificationSettings');
     if (savedSettings) {
-      setSettings(JSON.parse(savedSettings));
+      try {
+        const parsed = JSON.parse(savedSettings);
+        // Sikre at standardverdier er på plass for eventuelt manglende felter
+        setSettings({
+          ...defaultSettings,
+          ...parsed
+        });
+      } catch (error) {
+        console.error('Feil ved parsing av varslingsinnstillinger:', error);
+        setSettings(defaultSettings);
+      }
     }
   }, []);
 
-  // Save settings to localStorage when they change
+  // Lagre innstillinger til localStorage når de endres
   useEffect(() => {
     localStorage.setItem('notificationSettings', JSON.stringify(settings));
   }, [settings]);
