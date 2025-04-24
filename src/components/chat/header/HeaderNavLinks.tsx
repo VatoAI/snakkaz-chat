@@ -81,10 +81,15 @@ export const HeaderNavLinks = ({ activeTab, onTabChange, currentStatus = 'online
     }
   ];
 
+  // For mobile, we'll show fewer buttons if space is limited
+  const displayLinks = isMobile 
+    ? links.filter(link => ["global", "private", "friends"].includes(link.value))
+    : links;
+
   return (
     <TooltipProvider>
-      <nav className={`flex ${isMobile ? 'gap-0.5' : 'gap-1'} items-center justify-center flex-wrap`}>
-        {links.map((link, index) => (
+      <nav className={`flex ${isMobile ? 'gap-1' : 'gap-1.5'} items-center justify-center flex-wrap overflow-x-auto`}>
+        {displayLinks.map((link, index) => (
           <Tooltip key={index}>
             <TooltipTrigger asChild>
               <Button
@@ -92,13 +97,13 @@ export const HeaderNavLinks = ({ activeTab, onTabChange, currentStatus = 'online
                 size={isMobile ? "sm" : "icon"}
                 className={`${link.color} ${link.hoverColor} transition-all duration-300
                           ${activeTab === link.value ? 'bg-cyberdark-800 shadow-neon-blue' : ''}
-                          ${isMobile ? 'w-9 h-9 min-w-9 p-0' : ''}`}
+                          ${isMobile ? 'w-10 h-10 min-w-10 p-0' : ''}`}
                 onClick={link.onClick}
               >
-                <link.icon className={isMobile ? "h-4 w-4" : "h-4 w-4"} />
+                <link.icon className="h-4 w-4" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent side={isMobile ? "bottom" : "bottom"}>
+            <TooltipContent side="bottom">
               <p>{link.label}</p>
             </TooltipContent>
           </Tooltip>
