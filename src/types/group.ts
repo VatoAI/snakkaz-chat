@@ -1,7 +1,8 @@
 import { SecurityLevel } from './security';
 
 export type GroupWritePermission = 'all' | 'admin' | 'selected';
-export type MessageTTLOption = null | 300 | 1800 | 3600 | 86400 | 604800; // null, 5min, 30min, 1h, 24h, 7d
+// Fjernet null som et alternativ siden alle meldinger skal slettes 
+export type MessageTTLOption = 300 | 1800 | 3600 | 86400 | 604800; // 5min, 30min, 1h, 24h, 7d
 
 export interface Group {
   id: string;
@@ -14,7 +15,7 @@ export interface Group {
   avatar_url?: string;
   // Nye felter
   write_permissions: GroupWritePermission; // 'all', 'admin', eller 'selected'
-  default_message_ttl?: MessageTTLOption; // Standard TTL for meldinger i gruppen
+  default_message_ttl: MessageTTLOption; // Standard TTL for meldinger i gruppen, nå påkrevd
 }
 
 export interface GroupMember {
