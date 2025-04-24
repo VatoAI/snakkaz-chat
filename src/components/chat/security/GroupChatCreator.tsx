@@ -172,9 +172,9 @@ export const GroupChatCreator = ({
       case 300: return "5 minutter";
       case 1800: return "30 minutter";
       case 3600: return "1 time";
-      case 86400: return "24 timer";
+      case 86400: return "24 timer (standard)";
       case 604800: return "7 dager";
-      default: return "Ingen auto-sletting";
+      default: return "24 timer (standard)";
     }
   };
   
@@ -334,8 +334,8 @@ export const GroupChatCreator = ({
                     Automatisk sletting av meldinger
                   </FormLabel>
                   <Select
-                    onValueChange={(val) => field.onChange(val === "null" ? null : Number(val))}
-                    defaultValue={field.value?.toString() || "null"}
+                    onValueChange={(val) => field.onChange(Number(val))}
+                    defaultValue={field.value?.toString() || "86400"}
                   >
                     <FormControl>
                       <SelectTrigger className="bg-cyberdark-800 border-cybergold-500/30">
@@ -343,11 +343,10 @@ export const GroupChatCreator = ({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent className="bg-cyberdark-800 border-cybergold-500/30">
-                      <SelectItem value="null">Ingen auto-sletting</SelectItem>
                       <SelectItem value="300">5 minutter</SelectItem>
                       <SelectItem value="1800">30 minutter</SelectItem>
                       <SelectItem value="3600">1 time</SelectItem>
-                      <SelectItem value="86400">24 timer</SelectItem>
+                      <SelectItem value="86400">24 timer (standard)</SelectItem>
                       <SelectItem value="604800">7 dager</SelectItem>
                     </SelectContent>
                   </Select>
