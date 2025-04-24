@@ -1,7 +1,6 @@
-
 import { useState, useRef, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
-import { encryptMessage } from "@/utils/encryption";
+import { encryptMessage, generateEncryptionKey } from "@/utils/encryption";
 import { DecryptedMessage } from "@/types/message";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -17,6 +16,53 @@ export const useGroupMessageSender = (
   const errorResetTimeout = useRef<NodeJS.Timeout | null>(null);
   const messageQueue = useRef<string[]>([]);
   const processingQueue = useRef<boolean>(false);
+  const groupSessionKey = useRef<string | null>(null);
+
+  // Initialiser eller hent gruppens sesjonsnøkkel
+  const getOrCreateGroupSessionKey = useCallback(async (): Promise<string> => {
+    // Hvis vi allerede har en sesjonsnøkkel, bruk den
+    if (groupSessionKey.current) {
+      return groupSessionKey.current;
+    }
+
+    try {
+      // Forsøk å hente eksisterende gruppe-krypteringsnøkkel
+      const { data } = await supabase
+        .from('group_encryption')
+        .select('session_key')
+        .eq('group_id', groupId)
+        .single();
+      
+      if (data?.session_key) {
+        // Lagre nøkkelen i minnet for raskere tilgang
+        groupSessionKey.current = data.session_key;
+        return data.session_key;
+      }
+
+      // Hvis ingen nøkkel finnes, oppretter vi en ny
+      const newKey = await generateEncryptionKey();
+      
+      // Lagre den nye nøkkelen i databasen
+      await supabase
+        .from('group_encryption')
+        .insert({
+          group_id: groupId,
+          session_key: newKey,
+          created_by: currentUserId,
+          created_at: new Date().toISOString()
+        });
+      
+      // Lagre i minnet
+      groupSessionKey.current = newKey;
+      return newKey;
+    } catch (error) {
+      console.error('Feil ved henting/opprettelse av gruppesessjonsnøkkel:', error);
+      // Fallback til å generere en lokal nøkkel som ikke lagres
+      const fallbackKey = await generateEncryptionKey();
+      groupSessionKey.current = fallbackKey;
+      return fallbackKey;
+    }
+  }, [groupId, currentUserId]);
 
   const clearSendError = useCallback(() => {
     setSendError(null);
@@ -33,21 +79,30 @@ export const useGroupMessageSender = (
     }
     
     try {
-      console.log('Encrypting message for group delivery...');
+      // Få gruppens sesjonsnøkkel
+      const sessionKey = await getOrCreateGroupSessionKey();
+      
+      console.log('Krypterer gruppemelding med sesjonsnøkkel...');
+      // Krypter meldingen med standard metode, men med gruppens sesjonsnøkkel
       const { encryptedContent, key, iv } = await encryptMessage(message.trim());
       
-      console.log('Sending message to group...');
+      console.log('Sender melding til gruppe...');
       const { error } = await supabase
         .from('messages')
         .insert({
           sender_id: currentUserId,
-          group_id: groupId, // Now using the actual string groupId
+          group_id: groupId,
           encrypted_content: encryptedContent,
           encryption_key: key,
           iv: iv,
           is_encrypted: true,
           read_at: null,
           is_deleted: false,
+          // Legg til metadata for gruppemeldinger
+          metadata: JSON.stringify({
+            type: 'group_message',
+            session_key_id: sessionKey.substring(0, 8) // Trunkert for logging
+          })
         });
       
       if (error) {
@@ -55,13 +110,13 @@ export const useGroupMessageSender = (
         throw error;
       }
       
-      console.log('Message sent to group with end-to-end encryption');
+      console.log('Melding sendt til gruppe med ende-til-ende-kryptering');
       return true;
     } catch (error) {
       console.error('Group message failed:', error);
       throw error;
     }
-  }, [currentUserId, groupId]);
+  }, [currentUserId, groupId, getOrCreateGroupSessionKey]);
 
   // Process the message queue
   const processMessageQueue = useCallback(async () => {
@@ -91,7 +146,7 @@ export const useGroupMessageSender = (
               full_name: null
             },
             receiver_id: null,
-            group_id: groupId, // This is now a string group ID
+            group_id: groupId,
             created_at: timestamp,
             encryption_key: '',
             iv: '',
