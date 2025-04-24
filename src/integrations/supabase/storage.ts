@@ -1,6 +1,6 @@
 
 import { supabase } from './client';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 
 // Utility function to check if the storage bucket exists
 export const checkStorageBucket = async (bucketName: string) => {
@@ -38,14 +38,31 @@ export const uploadMediaFile = async (file: File, path?: string) => {
   // Check if bucket exists
   const bucketExists = await checkStorageBucket('chat-media');
   if (!bucketExists) {
-    throw new Error('Storage bucket "chat-media" does not exist');
+    console.log('Storage bucket "chat-media" does not exist, attempting to create it');
+    
+    try {
+      const { error } = await supabase.storage.createBucket('chat-media', {
+        public: true,
+        fileSizeLimit: 20971520, // 20MB
+        allowedMimeTypes: ['image/*', 'video/*', 'audio/*', 'application/pdf', 'application/msword', 'text/plain']
+      });
+      
+      if (error) {
+        throw error;
+      }
+      
+      console.log('Created "chat-media" bucket successfully');
+    } catch (e) {
+      console.error('Error creating bucket:', e);
+      throw new Error('Storage bucket "chat-media" does not exist and could not be created');
+    }
   }
   
   // Try with retries
   while (attempt < MAX_RETRIES) {
     try {
-      const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
-      const filePath = path ? `${path}/${fileName}` : fileName;
+      const fileName = path ? path : `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+      const filePath = fileName;
       
       console.log(`Upload attempt ${attempt + 1}/${MAX_RETRIES}: ${filePath}`);
       
@@ -109,9 +126,12 @@ export const getMediaUrl = (path: string) => {
 // Check if media exists
 export const checkMediaExists = async (path: string): Promise<boolean> => {
   try {
+    if (!path) return false;
+    
+    // Try to get file metadata - this will fail if it doesn't exist
     const { data, error } = await supabase.storage
       .from('chat-media')
-      .list(path.split('/').slice(0, -1).join('/'), {
+      .list(path.split('/').slice(0, -1).join('/') || '', {
         search: path.split('/').pop() || ''
       });
       

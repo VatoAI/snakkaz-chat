@@ -1,15 +1,8 @@
 
-/**
- * Static GLOBAL E2EE key/IV for use in the public chat room.
- * For demonstration ONLY. Rotate and store securely in production use.
- */
+// This file contains the global encryption keys for the public chat room
 
-// Example: 256-bit AES-GCM key/IV
-export const GLOBAL_E2EE_KEY = JSON.stringify({
-  kty: "oct",
-  alg: "A256GCM",
-  ext: true,
-  k: "Cf5QwH_q4mf1Ws8tNf1rTMkxlJAYuf9K5Tfa2Q2VrQw", // base64-encoded for test
-});
-export const GLOBAL_E2EE_IV = "uFzR8Z0O36trKk1F"; // base64-encoded example, 12 bytes
+// Global E2EE key (never expose in non-compiled code in a real app)
+export const GLOBAL_E2EE_KEY = '{"alg":"A256GCM","ext":true,"k":"xmcXQ9yJgUBYj8p1_X28v_iP-UBeC9mQYm1_iBZ5CWs","key_ops":["encrypt","decrypt"],"kty":"oct"}';
 
+// Global E2EE initialization vector (never expose in non-compiled code in a real app)
+export const GLOBAL_E2EE_IV = new Uint8Array([12, 45, 99, 23, 235, 111, 90, 188, 76, 108, 55, 33]).buffer;

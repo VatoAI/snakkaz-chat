@@ -1,7 +1,7 @@
 
-import { File, Lock } from "lucide-react";
+import { useState } from "react";
+import { FileText, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface FileMediaProps {
   url: string;
@@ -10,35 +10,60 @@ interface FileMediaProps {
 }
 
 export const FileMedia = ({ url, fileName, mediaType }: FileMediaProps) => {
+  const fileExtension = fileName.split('.').pop()?.toUpperCase() || 'FILE';
+  const [isDownloading, setIsDownloading] = useState(false);
+  
+  const handleDownload = async () => {
+    try {
+      setIsDownloading(true);
+      
+      // Create a temporary link and click it
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Download failed');
+      
+      const blob = await response.blob();
+      const downloadUrl = URL.createObjectURL(blob);
+      
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      
+      // Cleanup
+      document.body.removeChild(a);
+      URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error('Download error:', error);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   return (
-    <div className="mt-2 p-3 border border-cyberdark-700 rounded-lg bg-cyberdark-900/50 flex items-center relative group">
-      <File className="h-6 w-6 text-cybergold-400 mr-3" />
-      <div className="flex-1 min-w-0">
-        <p className="text-cybergold-200 text-sm truncate">
-          {fileName}
-        </p>
-        <p className="text-xs text-cyberdark-400">
-          {mediaType || "Document"}
-        </p>
+    <div className="mt-2 p-2 bg-cyberdark-800/60 rounded-md flex items-center gap-3">
+      <div className="w-10 h-10 flex items-center justify-center bg-cyberdark-700 rounded-md">
+        <FileText className="h-5 w-5 text-cyberblue-400" />
       </div>
-      <Button
+      
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium text-cybergold-300 truncate">{fileName}</p>
+        <p className="text-xs text-cybergold-500/70">{mediaType.split('/')[1] || fileExtension}</p>
+      </div>
+      
+      <Button 
         size="sm"
         variant="ghost"
-        className="text-cybergold-300 hover:text-cybergold-200"
-        onClick={() => window.open(url, '_blank')}
+        className="text-cyberblue-400 hover:text-cyberblue-300"
+        onClick={handleDownload}
+        disabled={isDownloading}
       >
-        Open
+        {isDownloading ? (
+          <div className="h-4 w-4 border-2 border-t-transparent border-current rounded-full animate-spin"></div>
+        ) : (
+          <Download className="h-4 w-4" />
+        )}
       </Button>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div className="absolute top-2 right-2 bg-cyberdark-900/80 p-1 rounded-full">
-            <Lock className="h-3 w-3 text-green-400" />
-          </div>
-        </TooltipTrigger>
-        <TooltipContent side="left">
-          <p className="text-xs">End-to-end encrypted media</p>
-        </TooltipContent>
-      </Tooltip>
     </div>
   );
 };

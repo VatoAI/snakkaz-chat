@@ -1,39 +1,36 @@
 
-import { Lock } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Shield } from "lucide-react";
 
 interface SecureMediaIconProps {
-  position?: 'top-right' | 'bottom-right' | 'top-left' | 'bottom-left';
+  position: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
   size?: 'sm' | 'md' | 'lg';
 }
 
-export const SecureMediaIcon = ({ 
-  position = 'top-right', 
-  size = 'sm' 
-}: SecureMediaIconProps) => {
-  const positionClass = {
-    'top-right': 'top-2 right-2',
-    'bottom-right': 'bottom-2 right-2',
+export const SecureMediaIcon = ({ position, size = 'md' }: SecureMediaIconProps) => {
+  // Position classes
+  const positionClasses = {
     'top-left': 'top-2 left-2',
-    'bottom-left': 'bottom-2 left-2'
-  }[position];
-  
-  const sizeClass = {
-    'sm': 'h-3 w-3',
-    'md': 'h-4 w-4',
-    'lg': 'h-5 w-5'
-  }[size];
-  
+    'top-right': 'top-2 right-2',
+    'bottom-left': 'bottom-2 left-2',
+    'bottom-right': 'bottom-2 right-2',
+  };
+
+  // Size classes
+  const sizeClasses = {
+    sm: 'p-1 rounded-sm',
+    md: 'p-1.5 rounded',
+    lg: 'p-2 rounded-md',
+  };
+
+  const iconSize = {
+    sm: 'h-3 w-3',
+    md: 'h-4 w-4',
+    lg: 'h-5 w-5',
+  };
+
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <div className={`absolute ${positionClass} bg-cyberblue-900/80 p-1.5 rounded-full border border-cyberblue-500/30 shadow-neon-blue transition-all duration-300 hover:bg-cyberblue-800`}>
-          <Lock className={`${sizeClass} text-cyberblue-400`} />
-        </div>
-      </TooltipTrigger>
-      <TooltipContent side="left">
-        <p className="text-xs">Ende-til-ende kryptert</p>
-      </TooltipContent>
-    </Tooltip>
+    <div className={`absolute ${positionClasses[position]} ${sizeClasses[size]} bg-cybergold-900/80 backdrop-blur-sm z-10`}>
+      <Shield className={`${iconSize[size]} text-cybergold-400`} />
+    </div>
   );
 };

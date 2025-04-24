@@ -1,9 +1,9 @@
 
 import { useEffect, useState } from "react";
-import { Dialog, DialogContent, DialogClose } from "@/components/ui/dialog";
+import { X, Shield, Timer } from "lucide-react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { X, Clock } from "lucide-react";
-import { useScreenshotPrevention } from "@/utils/security/screenshot-prevention";
+import { cn } from "@/lib/utils";
 
 interface SecureImageViewerProps {
   url: string;
@@ -20,24 +20,19 @@ export const SecureImageViewer = ({
   expiresIn,
   onExpired
 }: SecureImageViewerProps) => {
-  const [timeLeft, setTimeLeft] = useState<number | null>(expiresIn || null);
+  const [timeRemaining, setTimeRemaining] = useState<number | null>(
+    expiresIn ? expiresIn : null
+  );
   
-  // Apply screenshot prevention
-  useScreenshotPrevention({
-    showToast: true,
-    toastTitle: "Skjermdump deaktivert",
-    toastMessage: "Av sikkerhetsgrunner er skjermdump deaktivert"
-  });
-  
+  // Handle countdown timer if the media has TTL
   useEffect(() => {
-    if (!isOpen || !expiresIn) return;
+    if (!isOpen || !expiresIn || !timeRemaining) return;
     
-    setTimeLeft(expiresIn);
     const timer = setInterval(() => {
-      setTimeLeft(prev => {
+      setTimeRemaining(prev => {
         if (prev === null || prev <= 1) {
           clearInterval(timer);
-          if (onExpired) onExpired();
+          onExpired?.();
           onClose();
           return 0;
         }
@@ -46,36 +41,56 @@ export const SecureImageViewer = ({
     }, 1000);
     
     return () => clearInterval(timer);
-  }, [isOpen, expiresIn, onClose, onExpired]);
+  }, [isOpen, expiresIn, timeRemaining, onExpired, onClose]);
   
-  if (!isOpen) return null;
+  // Format the remaining time
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
   
   return (
     <Dialog open={isOpen} onOpenChange={open => !open && onClose()}>
-      <DialogContent className="sm:max-w-[90vw] max-h-[90vh] bg-cyberdark-950 border-cybergold-500/30">
-        <div className="relative">
-          <DialogClose asChild>
-            <Button 
-              variant="ghost" 
+      <DialogContent 
+        className="bg-cyberdark-950 border-cybergold-800/30 p-1 max-w-4xl w-[95vw]"
+        onContextMenu={e => e.preventDefault()}
+      >
+        <div className="relative w-full">
+          <div className="absolute top-2 right-2 z-10 flex items-center gap-2">
+            {timeRemaining !== null && (
+              <div className={cn(
+                "bg-cyberdark-900/70 backdrop-blur-sm px-2 py-1 rounded flex items-center gap-1",
+                timeRemaining < 10 && "animate-pulse bg-cyberred-900/70"
+              )}>
+                <Timer className="h-3 w-3 text-cybergold-400" />
+                <span className="text-xs text-cybergold-300">
+                  {formatTime(timeRemaining)}
+                </span>
+              </div>
+            )}
+            
+            <Button
               size="icon"
-              className="absolute top-0 right-0 z-10 text-white/70 hover:text-white"
+              variant="ghost"
+              className="h-8 w-8 rounded-full bg-cyberdark-900/70 backdrop-blur-sm"
               onClick={onClose}
             >
               <X className="h-4 w-4" />
             </Button>
-          </DialogClose>
+          </div>
           
-          {timeLeft && (
-            <div className="absolute top-2 left-2 bg-cyberdark-900/80 px-2 py-1 rounded-md flex items-center gap-1 text-xs text-cyberblue-300">
-              <Clock className="h-3 w-3" />
-              <span>{timeLeft}s</span>
+          <div className="absolute top-2 left-2 z-10">
+            <div className="bg-cyberdark-900/70 backdrop-blur-sm px-2 py-1 rounded flex items-center gap-1">
+              <Shield className="h-3 w-3 text-cybergold-400" />
+              <span className="text-xs text-cybergold-300">Secure media</span>
             </div>
-          )}
+          </div>
           
-          <div className="flex items-center justify-center">
-            <img 
-              src={url} 
-              alt="Secured image" 
+          <div className="flex items-center justify-center min-h-[50vh]">
+            <img
+              src={url}
+              alt="Secure media"
               className="max-w-full max-h-[80vh] object-contain"
               onContextMenu={e => e.preventDefault()}
               draggable="false"
