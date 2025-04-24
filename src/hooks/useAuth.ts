@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 export const useAuth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const validateForm = (email: string, password: string) => {
     let isValid = true;
@@ -75,7 +77,7 @@ export const useAuth = () => {
           title: "Suksess!",
           description: "Du er nå logget inn.",
         });
-        window.location.href = 'https://www.SnakkaZ.com/chat';
+        navigate('/chat');
       }
     } catch (error) {
       console.error('Unexpected login error:', error);
