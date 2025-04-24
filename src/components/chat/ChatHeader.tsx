@@ -65,8 +65,8 @@ export const ChatHeader = ({
             />
           </div>
 
-          <div className="max-w-full flex flex-row items-center justify-between h-[50px] px-2 sm:px-6 py-1 gap-2 relative z-10">
-            <div className="flex items-center gap-2">
+          <div className={`max-w-full flex flex-row items-center justify-between ${isMobile ? 'h-[60px]' : 'h-[50px]'} px-1 sm:px-6 py-1 gap-1 sm:gap-2 relative z-10`}>
+            <div className="flex items-center gap-1 sm:gap-2">
               {!isMobile && (
                 <div className="text-base font-semibold text-cybergold-100">
                   SnakkaZ
@@ -74,7 +74,7 @@ export const ChatHeader = ({
               )}
             </div>
 
-            <div className="flex-1 flex justify-center">
+            <div className={`flex-1 flex justify-center ${isMobile ? 'mx-1' : 'mx-4'}`}>
               <HeaderNavLinks 
                 activeTab={activeTab} 
                 onTabChange={onTabChange}
@@ -82,7 +82,7 @@ export const ChatHeader = ({
               />
             </div>
 
-            <div className="flex flex-row items-center gap-2">
+            <div className="flex flex-row items-center gap-1 sm:gap-2">
               {!isMobile && <NotificationSettings />}
               <AIAssistantButton currentUserId={currentUserId || ''} />
               {isAdmin && <AdminButton />}
