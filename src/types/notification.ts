@@ -1,4 +1,3 @@
-
 export interface NotificationSettings {
   soundEnabled: boolean;
   soundVolume: number;
@@ -6,6 +5,7 @@ export interface NotificationSettings {
   quietHoursEnabled: boolean;
   quietHoursStart: string;
   quietHoursEnd: string;
+  customSoundId?: string; // ID for valgt meldingslyd
 }
 
 export interface NotificationContextType {
