@@ -65,16 +65,30 @@ export const ChatHeader = ({
             />
           </div>
 
-          <div className={`max-w-full flex flex-row items-center justify-between ${isMobile ? 'h-[60px]' : 'h-[50px]'} px-1 sm:px-6 py-1 gap-1 sm:gap-2 relative z-10`}>
+          <div className={`
+            max-w-full flex flex-row items-center justify-between 
+            ${isMobile ? 'h-[64px] py-2' : 'h-[50px] py-1'} 
+            px-2 sm:px-6 gap-1 sm:gap-2 relative z-10`
+          }>
             <div className="flex items-center gap-1 sm:gap-2">
               {!isMobile && (
                 <div className="text-base font-semibold text-cybergold-100">
                   SnakkaZ
                 </div>
               )}
+              {/* Mobile logo - small version */}
+              {isMobile && (
+                <div className="w-7 h-7 overflow-hidden rounded-full border border-cybergold-500/40">
+                  <img
+                    src="/snakkaz-logo.png" 
+                    alt="SnakkaZ"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
             </div>
 
-            <div className={`flex-1 flex justify-center ${isMobile ? 'mx-1' : 'mx-4'}`}>
+            <div className={`flex-1 flex justify-center ${isMobile ? 'mx-0.5' : 'mx-4'}`}>
               <HeaderNavLinks 
                 activeTab={activeTab} 
                 onTabChange={onTabChange}
