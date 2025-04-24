@@ -4,20 +4,19 @@ import { ProfileCard } from "@/components/profile/ProfileCard";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
-import { PinManagement } from "@/components/pin/PinManagement";
+import { useState } from "react";
 import { useProfileState } from "@/components/profile/hooks/useProfileState";
 import { useProfileValidation } from "@/components/profile/hooks/useProfileValidation";
 import { ProfileUsernameForm } from "@/components/profile/ProfileUsernameForm";
 import { ProfileShareSection } from "@/components/profile/ProfileShareSection";
-import { PinPreferences } from "@/components/profile/PinPreferences";
+import { SecuritySettings } from "@/components/security/SecuritySettings";
 import { useAuth } from "@/contexts/AuthContext";
 import { StatusDropdown } from "@/components/online-users/StatusDropdown";
 import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
-import { UserStatus } from "@/types/presence";
 import { usePresence } from "@/components/chat/hooks/usePresence";
 import { useStatusRefresh } from "@/hooks/useStatusRefresh";
 import { supabase } from "@/integrations/supabase/client";
+import { NotificationSettings } from "@/components/chat/notification/NotificationSettings";
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -40,7 +39,7 @@ const Profile = () => {
   const { validateUsername } = useProfileValidation();
   const { user } = useAuth();
 
-  const { currentStatus, handleStatusChange, userPresence } = usePresence(
+  const { currentStatus, handleStatusChange } = usePresence(
     user?.id,
     'online',
     undefined,
@@ -213,17 +212,29 @@ const Profile = () => {
         
         {activeTab === "security" && (
           <ProfileCard>
-            <PinManagement />
+            <SecuritySettings userId={user?.id || null} />
           </ProfileCard>
         )}
         
         {activeTab === "notifications" && (
           <ProfileCard>
             <h2 className="text-lg font-semibold text-cybergold-300 mb-6">Varslingsinnstillinger</h2>
-            <div className="space-y-8">
-              <PinPreferences userId={user?.id || null} />
-              <h2 className="text-lg font-semibold text-cybergold-300 mb-4">Varslingsinnstillinger</h2>
-              <p className="text-cyberdark-300">Varslingsinnstillinger kommer snart.</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-4">
+                <p className="text-cyberdark-300">
+                  Velg hvordan du vil motta varsler og tilpass lyden etter dine preferanser.
+                </p>
+                <div className="w-full md:max-w-xs">
+                  <NotificationSettings />
+                </div>
+              </div>
+              <div>
+                <img 
+                  src="/placeholder.svg" 
+                  alt="Notifications illustration" 
+                  className="opacity-40 w-full max-w-xs mx-auto"
+                />
+              </div>
             </div>
           </ProfileCard>
         )}
