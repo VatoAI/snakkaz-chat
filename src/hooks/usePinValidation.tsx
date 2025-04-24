@@ -1,110 +1,89 @@
 
 import { useState, useEffect } from "react";
+import { useMobilePinSecurity } from "./useMobilePinSecurity";
 import { useToast } from "@/components/ui/use-toast";
 
 interface UsePinValidationProps {
   onSuccess: () => void;
-  verifyPin?: (code: string) => boolean;
+  onCancel?: () => void;
   isSetMode?: boolean;
-  onSetPin?: (code: string) => void;
-  initialIsLocked?: boolean;
+  pinRequired?: boolean;
+  preventAutoUnlock?: boolean;
 }
 
 export const usePinValidation = ({
   onSuccess,
-  verifyPin,
+  onCancel,
   isSetMode = false,
-  onSetPin,
-  initialIsLocked = false
+  pinRequired = true,
+  preventAutoUnlock = false
 }: UsePinValidationProps) => {
-  const [code, setCode] = useState("");
-  const [error, setError] = useState("");
-  const [animateError, setAnimateError] = useState(false);
-  const [attempts, setAttempts] = useState(0);
-  const [isLocked, setIsLocked] = useState(initialIsLocked);
-  const [lockoutTimer, setLockoutTimer] = useState(0);
-  const { toast } = useToast();
-
+  const [showPinModal, setShowPinModal] = useState(pinRequired);
+  const toast = useToast();
+  
+  const security = useMobilePinSecurity({
+    lockOnBackground: true,
+    lockOnOrientationChange: !isSetMode, // Don't lock on orientation when setting PIN
+    lockTimeout: 60000 // 1 minute of inactivity
+  });
+  
+  // Auto-unlock if no PIN required
   useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isLocked && lockoutTimer > 0) {
-      interval = setInterval(() => {
-        setLockoutTimer(prev => {
-          if (prev <= 1) {
-            setIsLocked(false);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [isLocked, lockoutTimer]);
-
-  const handleFailedAttempt = () => {
-    setAttempts(prev => {
-      const newAttempts = prev + 1;
-      if (newAttempts >= 5) {
-        setIsLocked(true);
-        setLockoutTimer(300); // 5 minutes
-        toast({
-          variant: "destructive",
-          title: "For mange forsøk",
-          description: "Prøv igjen om 5 minutter",
-        });
-        return 0;
-      }
-      return newAttempts;
-    });
-  };
-
-  const validatePin = (pinCode: string) => {
-    if (isLocked) {
-      setError(`Låst i ${Math.ceil(lockoutTimer / 60)} minutter`);
-      return false;
-    }
-
-    if (pinCode.length !== 4) {
-      setError("Koden må være 4 siffer");
-      setAnimateError(true);
-      setTimeout(() => setAnimateError(false), 500);
-      return false;
-    }
-
-    if (isSetMode && onSetPin) {
-      onSetPin(pinCode);
-      resetState();
+    if (!pinRequired || (!security.hasPin && !isSetMode)) {
       onSuccess();
-      return true;
-    } 
-    
-    if (verifyPin && verifyPin(pinCode)) {
-      resetState();
-      onSuccess();
-      return true;
     }
-
-    handleFailedAttempt();
-    setError(`Feil kode! ${4 - attempts} forsøk igjen`);
-    setAnimateError(true);
-    setTimeout(() => setAnimateError(false), 500);
-    return false;
+  }, [pinRequired, security.hasPin, isSetMode, onSuccess]);
+  
+  // Auto-unlock if already unlocked (unless preventAutoUnlock is true)
+  useEffect(() => {
+    if (!security.isLocked && security.hasPin && !preventAutoUnlock) {
+      onSuccess();
+    }
+  }, [security.isLocked, security.hasPin, onSuccess, preventAutoUnlock]);
+  
+  // Handle PIN setup
+  const handleSetPin = (pin: string): boolean => {
+    const success = security.setPin(pin);
+    if (success) {
+      toast.toast({
+        title: "PIN Set Successfully",
+        description: "Your secure PIN has been set",
+        variant: "default"
+      });
+      setShowPinModal(false);
+      onSuccess();
+    }
+    return success;
   };
-
-  const resetState = () => {
-    setCode("");
-    setError("");
-    setAnimateError(false);
+  
+  // Handle PIN verification
+  const handleVerifyPin = (pin: string): boolean => {
+    const success = security.verifyPin(pin);
+    if (success) {
+      setShowPinModal(false);
+      onSuccess();
+    }
+    return success;
   };
-
+  
+  // Handle cancel
+  const handleCancel = () => {
+    setShowPinModal(false);
+    if (onCancel) onCancel();
+  };
+  
   return {
-    code,
-    setCode,
-    error,
-    isLocked,
-    lockoutTimer,
-    animateError,
-    validatePin,
-    resetState
+    showPinModal,
+    setShowPinModal,
+    handleSetPin,
+    handleVerifyPin,
+    handleCancel,
+    isLocked: security.isLocked,
+    lockoutTimer: security.lockoutTimer,
+    remainingAttempts: security.attemptsRemaining,
+    isLockedOut: security.isLockedOut,
+    hasPin: security.hasPin,
+    lock: security.lock,
+    resetPin: security.resetPin
   };
 };

@@ -2,83 +2,76 @@
 import { useState, useEffect } from "react";
 import { useChatCode } from "@/hooks/useChatCode";
 import { ChatCodeModal } from "@/components/mobile/ChatCodeModal";
-import { usePinSecurity } from "@/hooks/usePinSecurity";
+import { useMobilePinSecurity } from "@/hooks/useMobilePinSecurity";
 import { useScreenOrientation } from "@/hooks/useScreenOrientation";
 
 export function useMobilePinGuard({ isMobile }: { isMobile: boolean }) {
-  const chatCodeHook = useChatCode();
-  const [showSetCodeModal, setShowSetCodeModal] = useState(false);
   const [pinUnlocked, setPinUnlocked] = useState(!isMobile);
-  const { isLocked, handleFailedAttempt, resetSecurity, remainingAttempts } = usePinSecurity();
-
+  const [showSetCodeModal, setShowSetCodeModal] = useState(false);
+  
+  // Initialize PIN security system
+  const pinSecurity = useMobilePinSecurity({
+    lockOnBackground: true,
+    lockOnOrientationChange: true,
+    lockTimeout: 60000 // 1 minute of inactivity
+  });
+  
   // Handle screen orientation
   useScreenOrientation(isMobile);
-
-  // Handle visibility change to relock when app returns to foreground
+  
+  // Determine if we need to show PIN modals
   useEffect(() => {
-    if (isMobile) {
-      const handleVisibilityChange = () => {
-        if (document.visibilityState === 'visible' && chatCodeHook.chatCode) {
-          setPinUnlocked(false);
-          chatCodeHook.promptCodeIfNeeded();
-          resetSecurity();
-        }
-      };
-
-      document.addEventListener('visibilitychange', handleVisibilityChange);
-      return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+    if (!isMobile) {
+      setPinUnlocked(true);
+      return;
     }
-  }, [isMobile, chatCodeHook, resetSecurity]);
-
-  // Prompt PIN setup or entry on mobile if needed
-  useEffect(() => {
-    if (isMobile) {
-      if (!chatCodeHook.chatCode) {
-        setShowSetCodeModal(true);
-      } else {
-        chatCodeHook.promptCodeIfNeeded();
-      }
+    
+    if (!pinSecurity.hasPin) {
+      setShowSetCodeModal(true);
+      setPinUnlocked(false);
+    } else if (pinSecurity.isLocked) {
+      setPinUnlocked(false);
     } else {
       setPinUnlocked(true);
     }
-  }, [isMobile, chatCodeHook.chatCode]);
-
-  // Lock/unlock handling
-  useEffect(() => {
-    if (!isMobile) setPinUnlocked(true);
-    else if (chatCodeHook.promptForCode) setPinUnlocked(false);
-    else setPinUnlocked(true);
-  }, [chatCodeHook.promptForCode, isMobile]);
-
-  const showMobilePinModal = isMobile && !pinUnlocked;
-
-  const handlePinFailure = () => {
-    handleFailedAttempt();
-  };
+  }, [isMobile, pinSecurity.hasPin, pinSecurity.isLocked]);
   
-  const mobilePinModal = (
+  // Handle visibility change to relock when app returns to foreground
+  useEffect(() => {
+    if (!isMobile) return;
+    
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && pinSecurity.hasPin) {
+        pinSecurity.lock();
+        setPinUnlocked(false);
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [isMobile, pinSecurity]);
+  
+  // PIN verification modal
+  const verifyPinModal = (
     <ChatCodeModal
-      open={chatCodeHook.promptForCode}
+      open={pinSecurity.hasPin && pinSecurity.isLocked}
       onClose={() => {}}
       onPinSuccess={() => setPinUnlocked(true)}
-      verifyPin={(code) => {
-        const isValid = chatCodeHook.verifyChatCode(code);
-        if (!isValid && !isLocked) {
-          handlePinFailure();
-        }
-        return isValid;
-      }}
-      remainingAttempts={remainingAttempts}
+      verifyPin={(code) => pinSecurity.verifyPin(code)}
+      lockoutTimer={pinSecurity.lockoutTimer}
+      remainingAttempts={pinSecurity.attemptsRemaining}
+      isLocked={pinSecurity.isLockedOut}
     />
   );
-
+  
+  // PIN setup modal
   const setPinModal = (
     <ChatCodeModal
-      open={showSetCodeModal && !chatCodeHook.chatCode}
+      open={showSetCodeModal && !pinSecurity.hasPin}
       onClose={() => {}}
-      isSetMode
+      isSetMode={true}
       onSetPin={(code) => {
-        chatCodeHook.setChatCode(code);
+        pinSecurity.setPin(code);
         setShowSetCodeModal(false);
         setPinUnlocked(true);
       }}
@@ -88,14 +81,14 @@ export function useMobilePinGuard({ isMobile }: { isMobile: boolean }) {
       }}
     />
   );
-
+  
   return {
-    showSetCodeModal,
-    setShowSetCodeModal,
     pinUnlocked,
-    chatCodeHook,
-    showMobilePinModal,
-    mobilePinModal,
-    setPinModal
+    showVerifyPin: pinSecurity.hasPin && pinSecurity.isLocked,
+    showSetPin: showSetCodeModal && !pinSecurity.hasPin,
+    verifyPinModal,
+    setPinModal,
+    resetPin: pinSecurity.resetPin,
+    lock: pinSecurity.lock
   };
 }

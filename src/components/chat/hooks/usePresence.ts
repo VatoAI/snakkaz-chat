@@ -12,6 +12,7 @@ export const usePresence = (
   const [currentStatus, setCurrentStatus] = useState<UserStatus>(initialStatus);
   const [userPresence, setUserPresence] = useState<Record<string, any>>({});
   const heartbeatInterval = useRef<NodeJS.Timeout | null>(null);
+  const presenceChannel = useRef<any>(null);
 
   // Handle status changes
   const handleStatusChange = useCallback(async (newStatus: UserStatus) => {
@@ -54,10 +55,10 @@ export const usePresence = (
       if (error) throw error;
       
       if (presenceData) {
-        const presenceMap = presenceData.reduce((acc, presence) => ({
+        const presenceMap = presenceData.reduce((acc, presence: any) => ({
           ...acc,
           [presence.user_id]: presence
-        }), {});
+        }), {} as Record<string, any>);
         
         setUserPresence(presenceMap);
         if (onPresenceChange) onPresenceChange(presenceMap);
@@ -71,11 +72,16 @@ export const usePresence = (
   useEffect(() => {
     if (!userId) return;
     
+    // Clear any existing channel
+    if (presenceChannel.current) {
+      supabase.removeChannel(presenceChannel.current);
+    }
+    
     // Initial presence fetch
     fetchAllPresence();
     
     // Set up realtime subscription
-    const channel = supabase
+    presenceChannel.current = supabase
       .channel('presence-changes')
       .on(
         'postgres_changes',
@@ -86,9 +92,13 @@ export const usePresence = (
     
     // Set up heartbeat
     if (!hidden && !heartbeatInterval.current) {
+      // First update immediately
+      handleStatusChange(currentStatus);
+      
+      // Then set up interval
       heartbeatInterval.current = setInterval(() => {
         handleStatusChange(currentStatus);
-      }, 20000); // Every 20 seconds
+      }, 30000); // Every 30 seconds
     }
     
     // Cleanup
@@ -98,17 +108,23 @@ export const usePresence = (
         heartbeatInterval.current = null;
       }
       
-      supabase.removeChannel(channel);
+      if (presenceChannel.current) {
+        supabase.removeChannel(presenceChannel.current);
+        presenceChannel.current = null;
+      }
       
-      // Clean up presence on unmount if not hidden
+      // Set offline status on unmount if not hidden
       if (!hidden) {
         supabase
           .from('user_presence')
-          .delete()
+          .update({ 
+            status: 'offline', 
+            last_seen: new Date().toISOString() 
+          })
           .eq('user_id', userId)
           .then(({ error }) => {
             if (error) {
-              console.error("Error cleaning up presence:", error);
+              console.error("Error setting offline status:", error);
             }
           });
       }

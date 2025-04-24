@@ -1,11 +1,10 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { UserStatus } from '@/types/presence';
 import { useToast } from '@/hooks/use-toast';
 
-export type UserStatus = 'online' | 'offline' | 'away' | 'busy';
-
-interface PresenceState {
+export type PresenceState = {
   status: UserStatus;
   lastSeen: string;
 }
@@ -19,14 +18,31 @@ export const useUserPresence = (userId: string | null) => {
 
     const channel = supabase.channel('online-users')
       .on('presence', { event: 'sync' }, () => {
-        const newState = channel.presenceState<PresenceState>();
-        setPresence(newState);
+        const state = channel.presenceState<PresenceState>();
+        const typedState: Record<string, PresenceState> = {};
+        
+        // Convert to properly typed state
+        Object.keys(state).forEach(key => {
+          if (Array.isArray(state[key]) && state[key].length > 0) {
+            typedState[key] = {
+              status: state[key][0].status,
+              lastSeen: state[key][0].lastSeen
+            };
+          }
+        });
+        
+        setPresence(typedState);
       })
       .on('presence', { event: 'join' }, ({ key, newPresences }) => {
-        setPresence(prev => ({
-          ...prev,
-          [key]: newPresences[0]
-        }));
+        if (newPresences.length > 0) {
+          setPresence(prev => ({
+            ...prev,
+            [key]: {
+              status: newPresences[0].status,
+              lastSeen: newPresences[0].lastSeen
+            }
+          }));
+        }
       })
       .on('presence', { event: 'leave' }, ({ key }) => {
         setPresence(prev => {
@@ -38,7 +54,7 @@ export const useUserPresence = (userId: string | null) => {
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
           await channel.track({
-            status: 'online',
+            status: 'online' as UserStatus,
             lastSeen: new Date().toISOString()
           });
         }
@@ -47,7 +63,7 @@ export const useUserPresence = (userId: string | null) => {
     const interval = setInterval(async () => {
       try {
         await channel.track({
-          status: 'online',
+          status: 'online' as UserStatus,
           lastSeen: new Date().toISOString()
         });
       } catch (error) {
@@ -63,11 +79,17 @@ export const useUserPresence = (userId: string | null) => {
 
   const updateStatus = async (status: UserStatus) => {
     try {
+      // Ensure status is a valid value
+      const validStatus: UserStatus = 
+        ['online', 'offline', 'busy', 'brb'].includes(status) 
+          ? status as UserStatus 
+          : 'online';
+          
       const { error } = await supabase
         .from('user_presence')
         .upsert({
           user_id: userId,
-          status,
+          status: validStatus,
           last_seen: new Date().toISOString()
         });
 

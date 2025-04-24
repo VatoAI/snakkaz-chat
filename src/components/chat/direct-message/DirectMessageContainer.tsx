@@ -9,6 +9,7 @@ import { DirectMessageForm } from './DirectMessageForm';
 import { SecurityLevel } from '@/types/security';
 import { useDirectMessage } from '../friends/hooks/useDirectMessage';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface DirectMessageContainerProps {
   friend: Friend;
@@ -62,7 +63,7 @@ export const DirectMessageContainer = ({
         );
         
         for (const msg of unreadMessages) {
-          await handleMarkMessageRead(msg.id);
+          await markMessageAsRead(msg.id);
         }
       } catch (error) {
         console.error('Error marking messages as read:', error);
@@ -73,6 +74,22 @@ export const DirectMessageContainer = ({
       markRead();
     }
   }, [messages, currentUserId]);
+
+  // Helper function to mark messages as read
+  const markMessageAsRead = async (messageId: string) => {
+    try {
+      const { error } = await supabase
+        .from('messages')
+        .update({ read_at: new Date().toISOString(), is_delivered: true })
+        .eq('id', messageId);
+        
+      if (error) {
+        console.error('Error marking message as read:', error);
+      }
+    } catch (error) {
+      console.error('Error in markMessageAsRead:', error);
+    }
+  };
 
   const username = friend.profile?.username || userProfiles[friend.user_id]?.username || "User";
   const avatarUrl = friend.profile?.avatar_url || userProfiles[friend.user_id]?.avatar_url;
