@@ -171,15 +171,18 @@ export const AdminUsersManager = () => {
         if (countError) throw countError;
         setUserCount(count || 0);
         
+        // First try using admin APIs to get full user data including emails
         const { data: authData, error: authError } = await supabase.auth.admin.listUsers();
         if (authError) throw authError;
 
+        // Get profile data to complement user information
         const { data: profilesData, error: profilesError } = await supabase
           .from("profiles")
           .select("id, username, full_name, avatar_url");
 
         if (profilesError) throw profilesError;
 
+        // Get admin role information
         const { data: rolesData, error: rolesError } = await supabase
           .from('user_roles')
           .select("user_id, role")
@@ -209,14 +212,16 @@ export const AdminUsersManager = () => {
 
         setUsers(sortUsers(combinedUsers, sortOption));
       } catch (adminApiError) {
-        console.error("Admin API error, falling back to regular query:", adminApiError);
+        console.error("Admin API error, falling back to manual email fetch:", adminApiError);
 
+        // Fallback: Get profile data first
         const { data: profilesData, error: profilesError } = await supabase
           .from("profiles")
           .select("id, username, full_name, avatar_url");
 
         if (profilesError) throw profilesError;
 
+        // Get admin role information
         const { data: rolesData, error: rolesError } = await supabase
           .from('user_roles')
           .select("user_id, role")
@@ -226,15 +231,36 @@ export const AdminUsersManager = () => {
 
         const adminRoles = new Set((rolesData as any[] || []).map(role => role.user_id));
 
-        const usersWithProfiles = profilesData.map(profile => ({
-          id: profile.id,
-          email: 'Fetching...',
-          username: profile.username || 'Ikke angitt',
-          full_name: profile.full_name || 'Ikke angitt',
-          avatar_url: profile.avatar_url,
-          created_at: new Date().toISOString(),
-          is_admin: adminRoles.has(profile.id)
-        }));
+        // Use RPC to fetch emails - requires a secure server-side function
+        const usersWithProfiles = await Promise.all(
+          profilesData.map(async (profile) => {
+            let email = 'Ikke tilgjengelig';
+            
+            try {
+              // Call a secure RPC function to get the email
+              // This function must be implemented in Supabase edge functions
+              const { data: emailData, error: emailError } = await supabase.rpc('get_user_email', {
+                user_id: profile.id
+              });
+              
+              if (!emailError && emailData) {
+                email = emailData;
+              }
+            } catch (emailFetchError) {
+              console.error(`Error fetching email for user ${profile.id}:`, emailFetchError);
+            }
+
+            return {
+              id: profile.id,
+              email: email,
+              username: profile.username || 'Ikke angitt',
+              full_name: profile.full_name || 'Ikke angitt',
+              avatar_url: profile.avatar_url,
+              created_at: new Date().toISOString(),
+              is_admin: adminRoles.has(profile.id)
+            };
+          })
+        );
 
         setUsers(sortUsers(usersWithProfiles, sortOption));
       }
