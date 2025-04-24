@@ -13,21 +13,23 @@ export const useMediaUpload = () => {
     setUploadProgress(0);
 
     try {
-      const toastId = toast({
+      // Remove the id property and use the toast return directly
+      const uploadToast = toast({
         title: "Uploading file...",
         description: "Starting upload",
       });
 
       const result = await uploadMedia(file, (progress) => {
         setUploadProgress(progress);
-        toast({
-          id: toastId,
+        // Update the existing toast instead of creating a new one
+        uploadToast.update({
           title: "Uploading file...",
           description: `${Math.round(progress)}% complete`,
         });
       });
 
-      toast({
+      // Replace the upload toast with a success toast
+      uploadToast.update({
         title: "Upload complete",
         description: "File uploaded successfully",
       });
