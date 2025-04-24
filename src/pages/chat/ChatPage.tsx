@@ -55,11 +55,11 @@ const ChatPage = () => {
     return <LoadingScreen />;
   }
 
-  if (pinGuard.showMobilePinModal) {
-    return pinGuard.mobilePinModal;
+  if (pinGuard.showVerifyPin) {
+    return pinGuard.verifyPinModal;
   }
 
-  if (pinGuard.showSetCodeModal) {
+  if (pinGuard.showSetPin) {
     return pinGuard.setPinModal;
   }
 
