@@ -1,4 +1,5 @@
-
+// DEPRECATED: This file is no longer in use and should be removed.
+// The new login form is at /src/components/auth/LoginForm.tsx
 import { Button } from "@/components/ui/button";
 import { KeyRound } from "lucide-react";
 
@@ -9,6 +10,9 @@ interface LoginFormProps {
 }
 
 export const LoginForm = ({ email, setEmail, onSubmit }: LoginFormProps) => {
+  // This component is deprecated and should not be used
+  console.warn('Using deprecated LoginForm component. Use /src/components/auth/LoginForm.tsx instead');
+  
   return (
     <div className="min-h-screen bg-cyberdark-950 flex items-center justify-center p-4">
       <div className="w-full max-w-md relative">
