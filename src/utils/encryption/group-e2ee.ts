@@ -159,3 +159,116 @@ export const encryptGroupMessage = async (
 export const clearGroupEncryptionKey = (groupId: string): void => {
   delete groupKeyCache[groupId];
 };
+
+/**
+ * Krypterer media for en gruppemelding
+ */
+export const encryptGroupMedia = async (
+  groupId: string,
+  file: File
+): Promise<{
+  encryptedData: ArrayBuffer,
+  encryptionKey: string,
+  iv: string,
+  mediaType: string,
+  metadata: {
+    size: number,
+    originalName: string,
+    isEncrypted: boolean,
+  }
+}> => {
+  try {
+    // Hent gruppens krypteringsnøkkel
+    const { key: groupKeyStr, iv: groupIvStr } = await getGroupEncryptionKey(groupId);
+    const groupKey = await window.crypto.subtle.importKey(
+      "jwk",
+      JSON.parse(groupKeyStr),
+      {
+        name: "AES-GCM",
+        length: 256,
+      },
+      false,
+      ["encrypt"]
+    );
+    
+    const groupIv = base64ToArrayBuffer(groupIvStr);
+    
+    // Les filen som ArrayBuffer
+    const fileData = await file.arrayBuffer();
+    
+    // Krypter fildataene
+    const encryptedData = await window.crypto.subtle.encrypt(
+      {
+        name: "AES-GCM",
+        iv: new Uint8Array(groupIv),
+      },
+      groupKey,
+      fileData
+    );
+    
+    return {
+      encryptedData,
+      encryptionKey: groupKeyStr,
+      iv: groupIvStr,
+      mediaType: file.type,
+      metadata: {
+        size: file.size,
+        originalName: file.name,
+        isEncrypted: true,
+      }
+    };
+  } catch (error) {
+    console.error("Gruppemedia-kryptering feilet:", error);
+    throw new Error("Kunne ikke kryptere mediafil for gruppe");
+  }
+};
+
+/**
+ * Dekrypterer mediafiler for gruppesamtaler
+ */
+export const decryptGroupMedia = async (
+  groupId: string,
+  encryptedData: ArrayBuffer,
+  encryptionKey?: string,
+  iv?: string
+): Promise<ArrayBuffer> => {
+  try {
+    // Hvis krypteringsnøkkel og IV ikke er gitt, hent fra gruppen
+    let keyToUse = encryptionKey;
+    let ivToUse = iv;
+    
+    if (!keyToUse || !ivToUse) {
+      const groupKeys = await getGroupEncryptionKey(groupId);
+      keyToUse = groupKeys.key;
+      ivToUse = groupKeys.iv;
+    }
+    
+    // Importer krypteringsnøkkel
+    const cryptoKey = await window.crypto.subtle.importKey(
+      "jwk",
+      JSON.parse(keyToUse),
+      {
+        name: "AES-GCM",
+        length: 256,
+      },
+      false,
+      ["decrypt"]
+    );
+    
+    // Dekrypter data
+    const ivArrayBuffer = base64ToArrayBuffer(ivToUse);
+    const decryptedData = await window.crypto.subtle.decrypt(
+      {
+        name: "AES-GCM",
+        iv: new Uint8Array(ivArrayBuffer),
+      },
+      cryptoKey,
+      encryptedData
+    );
+    
+    return decryptedData;
+  } catch (error) {
+    console.error("Gruppemedia-dekryptering feilet:", error);
+    throw new Error("Kunne ikke dekryptere mediafil for gruppe");
+  }
+};
