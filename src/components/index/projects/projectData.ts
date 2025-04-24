@@ -1,4 +1,3 @@
-
 import { ProjectProps } from "../ProjectCard";
 
 export const projects: (ProjectProps & { isFeatured?: boolean })[] = [
@@ -12,6 +11,14 @@ export const projects: (ProjectProps & { isFeatured?: boolean })[] = [
     progress: 98
   },
   {
+    title: "SnakkaZ Guardian Chat",
+    description: "En sikker chat-plattform med ende-til-ende-kryptering. Del meldinger, bilder og filer med full sikkerhet.",
+    previewUrl: "https://www.snakkaz.com",
+    category: "chat",
+    hasSupabase: true,
+    progress: 95
+  },
+  {
     title: "AI Dash Hub",
     description: "Interaktivt dashboard for AI-basert datavisualisering og analyse. Integrer flere datakilder og få innsikt i sanntid.",
     previewUrl: "https://dash.snakkaz.com",
@@ -19,14 +26,6 @@ export const projects: (ProjectProps & { isFeatured?: boolean })[] = [
     category: "analytics",
     hasSupabase: true,
     progress: 92
-  },
-  {
-    title: "SnakkaZ Guardian Chat",
-    description: "En sikker chat-plattform med ende-til-ende-kryptering. Del meldinger, bilder og filer med full sikkerhet.",
-    previewUrl: "https://chat.snakkaz.com",
-    category: "chat",
-    hasSupabase: true,
-    progress: 95
   },
   {
     title: "SnakkaZ Business Analyser",

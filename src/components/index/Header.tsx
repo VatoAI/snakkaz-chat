@@ -6,7 +6,7 @@ export const Header = () => {
   const isMobile = useIsMobile();
   
   const handleChatRedirect = () => {
-    window.location.href = 'https://v3.snakkaz.com/chat';
+    navigate('/chat');
   };
   
   return (

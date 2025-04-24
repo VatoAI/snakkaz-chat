@@ -1,4 +1,3 @@
-
 import { SyncStatus } from "./SyncStatus";
 import { DomainStatus } from "./DomainStatus";
 import { GitHubStatus } from "./GitHubStatus";
