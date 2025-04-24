@@ -1,4 +1,3 @@
-
 import { DecryptedMessage } from "@/types/message";
 import { UserStatus } from "@/types/presence";
 import { SecurityLevel } from "@/types/security";
@@ -31,22 +30,32 @@ export const MessageBodyContent = ({
     );
   }
 
+  const hasContent = message.content && message.content.trim() !== '';
+  const hasMedia = !!message.media_url;
+
   return (
-    <div>
-      <div className="break-words">
-        {message.content}
-        {message.is_edited && (
-          <span className="text-[10px] text-cyberdark-400 ml-1">(redigert)</span>
-        )}
-      </div>
-      
-      {message.media_url && (
-        <MessageMedia 
-          message={message} 
-          onMediaExpired={() => onMessageExpired && onMessageExpired(message.id)} 
-        />
+    <div className="message-content">
+      {/* Vis meldingsinnhold hvis det finnes */}
+      {hasContent && (
+        <div className={`break-words ${hasMedia ? 'mb-2' : ''}`}>
+          {message.content}
+          {message.is_edited && (
+            <span className="text-[10px] text-cyberdark-400 ml-1">(redigert)</span>
+          )}
+        </div>
       )}
       
+      {/* Vis media hvis det finnes */}
+      {hasMedia && (
+        <div className={`${!hasContent ? 'mt-1' : ''}`}>
+          <MessageMedia 
+            message={message} 
+            onMediaExpired={() => onMessageExpired && onMessageExpired(message.id)} 
+          />
+        </div>
+      )}
+      
+      {/* Vis tidspunkt og lesebekreftelse */}
       <div className="flex justify-end items-center mt-1 gap-1 text-xs text-gray-400">
         <span>
           {new Date(message.created_at).toLocaleTimeString([], {
