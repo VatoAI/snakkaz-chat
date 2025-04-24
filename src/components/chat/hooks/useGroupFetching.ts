@@ -1,93 +1,145 @@
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Group, GroupMember } from "@/types/group";
 import { SecurityLevel } from "@/types/security";
 import { useToast } from "@/components/ui/use-toast";
+import { PostgrestError } from "@supabase/supabase-js";
 
 export function useGroupFetching(currentUserId: string) {
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+
+  const handleSupabaseError = (error: PostgrestError, operation: string): void => {
+    console.error(`Supabase ${operation} error:`, {
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+      code: error.code
+    });
+    
+    if (error.code === 'POSTGRES_ERROR') {
+      if (error.message.includes('timeout')) {
+        toast({
+          title: "Tidsavbrudd",
+          description: "Forespørselen tok for lang tid. Sjekk nettverkstilkoblingen din og prøv igjen.",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Databasefeil",
+          description: "En feil oppstod i databasen. Vennligst prøv igjen senere.",
+          variant: "destructive"
+        });
+      }
+    }
+  };
+
+  const retryWithBackoff = async (fn: () => Promise<any>, maxRetries = 3): Promise<any> => {
+    let retries = 0;
+    
+    while (retries < maxRetries) {
+      try {
+        return await fn();
+      } catch (error) {
+        retries++;
+        if (retries >= maxRetries) throw error;
+        
+        const delay = Math.pow(2, retries) * 1000;
+        console.log(`Retry attempt ${retries}/${maxRetries} after ${delay}ms`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+  };
 
   const fetchGroups = useCallback(async (): Promise<Group[]> => {
+    setIsLoading(true);
+    
     try {
       if (!currentUserId) {
         console.error("No user ID provided to fetchGroups");
         return [];
       }
 
-      // First fetch groups where user is a member
-      const { data: memberData, error: memberError } = await supabase
-        .from('group_members')
-        .select(`
-          group_id,
-          role,
-          groups (
-            id,
-            name,
-            created_at,
-            creator_id,
-            security_level,
-            password,
-            avatar_url,
-            write_permissions,
-            default_message_ttl
-          )
-        `)
-        .eq('user_id', currentUserId);
+      const fetchMemberships = async () => {
+        const { data, error } = await supabase
+          .from('group_members')
+          .select(`
+            group_id,
+            role,
+            groups (
+              id,
+              name,
+              created_at,
+              creator_id,
+              security_level,
+              password,
+              avatar_url,
+              write_permissions,
+              default_message_ttl
+            )
+          `)
+          .eq('user_id', currentUserId);
 
-      if (memberError) {
-        console.error("Error fetching group memberships:", memberError);
-        throw memberError;
-      }
+        if (error) {
+          handleSupabaseError(error, "group_members query");
+          throw error;
+        }
+        
+        return data || [];
+      };
+
+      const memberData = await retryWithBackoff(fetchMemberships);
 
       if (!memberData?.length) return [];
 
-      // Format the groups data
       const groups = memberData
-        .filter(membership => membership.groups) // Filter out any null groups
+        .filter(membership => membership.groups)
         .map(membership => {
           const group = membership.groups as any;
           return {
             ...group,
             security_level: group.security_level as SecurityLevel,
-            // Hvis disse feltene ikke eksisterer, bruk standardverdier
-            write_permissions: group.write_permissions || 'all', // 'all', 'admin', 'selected'
+            write_permissions: group.write_permissions || 'all',
             default_message_ttl: group.default_message_ttl || null
           };
         });
 
-      // Process each group to get its members with profiles
       const groupsWithMembers: Group[] = [];
+      const failedGroups: string[] = [];
       
       for (const group of groups) {
         try {
-          const { data: membersData, error: membersError } = await supabase
-            .from('group_members')
-            .select(`
-              id,
-              user_id,
-              role,
-              joined_at,
-              can_write,
-              group_id,
-              profiles:user_id (
+          const fetchMembers = async () => {
+            const { data, error } = await supabase
+              .from('group_members')
+              .select(`
                 id,
-                username,
-                avatar_url,
-                full_name
-              )
-            `)
-            .eq('group_id', group.id);
+                user_id,
+                role,
+                joined_at,
+                can_write,
+                group_id,
+                profiles:user_id (
+                  id,
+                  username,
+                  avatar_url,
+                  full_name
+                )
+              `)
+              .eq('group_id', group.id);
 
-          if (membersError) {
-            console.error("Error fetching group members for group", group.id, ":", membersError);
-            continue; // Skip this group but don't fail the whole request
-          }
+            if (error) {
+              handleSupabaseError(error, `members query for group ${group.id}`);
+              throw error;
+            }
+            
+            return data || [];
+          };
           
-          if (!membersData) continue;
+          const membersData = await retryWithBackoff(fetchMembers);
           
-          // Create properly typed GroupMember objects with improved error handling
           const membersWithProfiles: GroupMember[] = membersData.map(member => {
-            // Håndter profil-data på en sikker måte
             const profile = {
               id: member.user_id,
               username: member.profiles?.username || null,
@@ -101,8 +153,7 @@ export function useGroupFetching(currentUserId: string) {
               group_id: member.group_id,
               role: (member.role || 'member') as 'admin' | 'member',
               joined_at: member.joined_at,
-              // Ny felt for å kontrollere skriverettigheter
-              can_write: member.can_write !== false, // Standard er true hvis ikke spesifisert
+              can_write: member.can_write !== false, 
               profile: profile
             };
           });
@@ -113,21 +164,46 @@ export function useGroupFetching(currentUserId: string) {
           });
         } catch (error) {
           console.error("Error processing group data for group", group.id, ":", error);
-          // Fortsett med neste gruppe istedenfor å avbryte hele prosessen
+          failedGroups.push(group.name || `Gruppe ${group.id}`);
         }
       }
 
+      if (failedGroups.length > 0 && failedGroups.length < groups.length) {
+        toast({
+          title: "Delvis lastet grupper",
+          description: `Kunne ikke laste komplett informasjon for ${failedGroups.length} grupper. Oppdater for å prøve igjen.`,
+          variant: "warning"
+        });
+      }
+
+      setRetryCount(0);
       return groupsWithMembers;
+      
     } catch (error) {
-      console.error("Error fetching groups:", error);
+      console.error("Fatal error fetching groups:", error);
+      
+      const newRetryCount = retryCount + 1;
+      setRetryCount(newRetryCount);
+      
+      let errorMessage = "En feil oppstod ved henting av grupper. ";
+      
+      if (newRetryCount <= 3) {
+        errorMessage += "Sjekk nettverkstilkoblingen din og prøv igjen.";
+      } else {
+        errorMessage += "Dette problemet vedvarer. Prøv å logge ut og inn igjen, eller kontakt support.";
+      }
+      
       toast({
         title: "Kunne ikke hente grupper",
-        description: "En feil oppstod ved henting av grupper. Sjekk nettverkstilkoblingen din og prøv igjen senere.",
+        description: errorMessage,
         variant: "destructive"
       });
+      
       return [];
+    } finally {
+      setIsLoading(false);
     }
-  }, [currentUserId, toast]);
+  }, [currentUserId, toast, retryCount]);
 
-  return { fetchGroups };
+  return { fetchGroups, isLoading };
 }
