@@ -1,6 +1,7 @@
-
 import { useState, useCallback } from 'react';
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { encryptMessage } from "@/utils/encryption";
 
 export const useGroupMessageSubmit = (
   currentUserId: string,
@@ -27,15 +28,34 @@ export const useGroupMessageSubmit = (
     
     try {
       if (editingMessage) {
-        // TODO: Implement group message editing once backend supports it
+        // Implementasjon av gruppemeldingsredigering
+        const { encryptedContent, key, iv } = await encryptMessage(newMessage.trim());
+        
+        const { error } = await supabase
+          .from('messages')
+          .update({
+            encrypted_content: encryptedContent,
+            encryption_key: key,
+            iv: iv,
+            is_edited: true,
+            edited_at: new Date().toISOString()
+          })
+          .eq('id', editingMessage.id)
+          .eq('sender_id', currentUserId); // Sikre at kun avsender kan redigere
+        
+        if (error) {
+          throw error;
+        }
+        
         toast({
-          title: "Ikke støttet",
-          description: "Redigering av gruppemeldinger er ikke støttet ennå.",
-          variant: "destructive",
+          title: "Melding redigert",
+          description: "Gruppemeldingen ble oppdatert",
         });
+        
         resetEditingMessage(null);
+        setNewMessage('');
       } else {
-        // Send new message
+        // Send ny melding
         const success = await handleSendGroupMessage(e, newMessage);
         
         if (success) {
@@ -46,7 +66,7 @@ export const useGroupMessageSubmit = (
       console.error('Error submitting message:', error);
       toast({
         title: "Feil",
-        description: "Kunne ikke sende melding. Prøv igjen senere.",
+        description: "Kunne ikke sende eller redigere melding. Prøv igjen senere.",
         variant: "destructive",
       });
     } finally {
@@ -61,18 +81,42 @@ export const useGroupMessageSubmit = (
     setNewMessage, 
     resetEditingMessage, 
     handleSendGroupMessage, 
-    toast
+    toast,
+    currentUserId
   ]);
 
   const handleDeleteMessage = useCallback(async (messageId: string) => {
-    // TODO: Implement group message deletion once backend supports it
-    toast({
-      title: "Ikke støttet",
-      description: "Sletting av gruppemeldinger er ikke støttet ennå.",
-      variant: "destructive",
-    });
-    return Promise.resolve();
-  }, [toast]);
+    try {
+      // Implementasjon av gruppemeldingssletting
+      const { error } = await supabase
+        .from('messages')
+        .update({
+          is_deleted: true,
+          deleted_at: new Date().toISOString()
+        })
+        .eq('id', messageId)
+        .eq('sender_id', currentUserId); // Sikre at kun avsender kan slette
+      
+      if (error) {
+        throw error;
+      }
+      
+      toast({
+        title: "Melding slettet",
+        description: "Gruppemeldingen ble slettet",
+      });
+      
+      return Promise.resolve();
+    } catch (error) {
+      console.error('Error deleting message:', error);
+      toast({
+        title: "Feil",
+        description: "Kunne ikke slette meldingen",
+        variant: "destructive",
+      });
+      return Promise.reject(error);
+    }
+  }, [toast, currentUserId]);
 
   return {
     handleSubmit,
