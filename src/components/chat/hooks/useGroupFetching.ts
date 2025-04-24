@@ -9,6 +9,11 @@ export function useGroupFetching(currentUserId: string) {
 
   const fetchGroups = useCallback(async (): Promise<Group[]> => {
     try {
+      if (!currentUserId) {
+        console.error("No user ID provided to fetchGroups");
+        return [];
+      }
+
       // First fetch groups where user is a member
       const { data: memberData, error: memberError } = await supabase
         .from('group_members')
@@ -22,7 +27,9 @@ export function useGroupFetching(currentUserId: string) {
             creator_id,
             security_level,
             password,
-            avatar_url
+            avatar_url,
+            write_permissions,
+            default_message_ttl
           )
         `)
         .eq('user_id', currentUserId);
@@ -41,7 +48,10 @@ export function useGroupFetching(currentUserId: string) {
           const group = membership.groups as any;
           return {
             ...group,
-            security_level: group.security_level as SecurityLevel
+            security_level: group.security_level as SecurityLevel,
+            // Hvis disse feltene ikke eksisterer, bruk standardverdier
+            write_permissions: group.write_permissions || 'all', // 'all', 'admin', 'selected'
+            default_message_ttl: group.default_message_ttl || null
           };
         });
 
@@ -49,64 +59,62 @@ export function useGroupFetching(currentUserId: string) {
       const groupsWithMembers: Group[] = [];
       
       for (const group of groups) {
-        const { data: membersData, error: membersError } = await supabase
-          .from('group_members')
-          .select(`
-            id,
-            user_id,
-            role,
-            joined_at,
-            group_id,
-            profiles:user_id (
+        try {
+          const { data: membersData, error: membersError } = await supabase
+            .from('group_members')
+            .select(`
               id,
-              username,
-              avatar_url,
-              full_name
-            )
-          `)
-          .eq('group_id', group.id);
+              user_id,
+              role,
+              joined_at,
+              can_write,
+              group_id,
+              profiles:user_id (
+                id,
+                username,
+                avatar_url,
+                full_name
+              )
+            `)
+            .eq('group_id', group.id);
 
-        if (membersError) {
-          console.error("Error fetching group members:", membersError);
-          throw membersError;
-        }
-        
-        if (!membersData) continue;
-        
-        // Create properly typed GroupMember objects
-        const membersWithProfiles: GroupMember[] = membersData.map(member => {
-          const profileExists = member.profiles !== null && member.profiles !== undefined;
-          const isProfileObject = profileExists && typeof member.profiles === 'object';
-          const isProfileError = isProfileObject && 'error' in member.profiles;
+          if (membersError) {
+            console.error("Error fetching group members for group", group.id, ":", membersError);
+            continue; // Skip this group but don't fail the whole request
+          }
           
-          // Create a typed profile object
-          const profile = {
-            id: member.user_id,
-            username: (isProfileObject && !isProfileError && 
-              'username' in member.profiles && member.profiles.username !== null) ? 
-              String(member.profiles.username) : "",
-            avatar_url: (isProfileObject && !isProfileError && 
-              'avatar_url' in member.profiles && member.profiles.avatar_url !== null) ? 
-              String(member.profiles.avatar_url) : "",
-            full_name: (isProfileObject && !isProfileError && 
-              'full_name' in member.profiles && member.profiles.full_name !== null) ? 
-              String(member.profiles.full_name) : ""
-          };
-            
-          return {
-            id: member.id,
-            user_id: member.user_id,
-            group_id: member.group_id,
-            role: member.role as 'admin' | 'member',
-            joined_at: member.joined_at,
-            profile: profile
-          };
-        });
-        
-        groupsWithMembers.push({
-          ...group,
-          members: membersWithProfiles
-        });
+          if (!membersData) continue;
+          
+          // Create properly typed GroupMember objects with improved error handling
+          const membersWithProfiles: GroupMember[] = membersData.map(member => {
+            // Håndter profil-data på en sikker måte
+            const profile = {
+              id: member.user_id,
+              username: member.profiles?.username || null,
+              avatar_url: member.profiles?.avatar_url || null,
+              full_name: member.profiles?.full_name || null
+            };
+              
+            return {
+              id: member.id,
+              user_id: member.user_id,
+              group_id: member.group_id,
+              role: (member.role || 'member') as 'admin' | 'member',
+              joined_at: member.joined_at,
+              // Ny felt for å kontrollere skriverettigheter
+              can_write: member.can_write !== false, // Standard er true hvis ikke spesifisert
+              profile: profile
+            };
+          });
+          
+          groupsWithMembers.push({
+            ...group,
+            members: membersWithProfiles
+          });
+        } catch (error) {
+          console.error("Error processing group data for group", group.id, ":", error);
+          // Fortsett med neste gruppe istedenfor å avbryte hele prosessen
+        }
       }
 
       return groupsWithMembers;
@@ -114,7 +122,7 @@ export function useGroupFetching(currentUserId: string) {
       console.error("Error fetching groups:", error);
       toast({
         title: "Kunne ikke hente grupper",
-        description: "En feil oppstod. Prøv igjen senere.",
+        description: "En feil oppstod ved henting av grupper. Sjekk nettverkstilkoblingen din og prøv igjen senere.",
         variant: "destructive"
       });
       return [];
