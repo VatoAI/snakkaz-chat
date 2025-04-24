@@ -60,15 +60,15 @@
   "related_applications": [
     {
       "platform": "webapp",
-      "url": "https://snakkaz.app"
+      "url": "https://www.snakkaz.com"
     },
     {
       "platform": "windows",
-      "url": "https://snakkaz.app/download/windows"
+      "url": "https://www.snakkaz.com/download/windows"
     },
     {
       "platform": "itunes",
-      "url": "https://snakkaz.app/download/ios"
+      "url": "https://www.snakkaz.com/download/ios"
     }
   ],
   "prefer_related_applications": false

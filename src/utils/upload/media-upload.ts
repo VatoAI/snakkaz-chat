@@ -32,14 +32,20 @@ export const uploadMedia = async (
 
     console.log("Upload successful:", data);
 
-    // Get public URL
+    // Get public URL - with domain-aware path generation
     const { data: { publicUrl } } = supabase.storage
       .from('chat-media')
       .getPublicUrl(filePath);
 
+    // For production domain, we customize the URL (optional)
+    // This allows us to use a CDN or custom domain if needed
+    const customDomainUrl = process.env.NODE_ENV === 'production' 
+      ? `https://media.snakkaz.com/chat-media/${filePath}`
+      : publicUrl;
+
     return {
       path: filePath,
-      publicUrl
+      publicUrl: customDomainUrl
     };
   } catch (error) {
     console.error("Upload failed:", error);

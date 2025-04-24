@@ -1,4 +1,5 @@
-const CACHE_NAME = 'snakkaz-cache-v4';
+
+const CACHE_NAME = 'snakkaz-cache-v5';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -9,8 +10,8 @@ const urlsToCache = [
   '/chat',
   '/profil',
   '/register',
-  'https://chatcipher-assistant.lovable.app/thumbnail.png',
-  'https://ai-dash-hub.lovable.app/thumbnail.png'
+  'https://www.snakkaz.com/thumbnail.png',
+  'https://dash.snakkaz.com/thumbnail.png'
 ];
 
 // Install Service Worker and cache essential resources

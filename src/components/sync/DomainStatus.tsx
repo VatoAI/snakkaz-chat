@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -23,6 +22,91 @@ export const DomainStatus = ({ domains }: DomainStatusProps) => {
   
   // Simulate domain status check
   useEffect(() => {
+    // Initialize domains with checking status
+    setDomainStatus(domains.map(url => ({
+      url,
+      status: 'checking',
+      responseTime: null,
+      lastChecked: null,
+      uptime: 100
+    })));
+    
+    // Simulate checking each domain
+    domains.forEach((url, index) => {
+      setTimeout(() => {
+        const randomStatus = Math.random();
+        let status: StatusType;
+        let responseTime: number;
+        
+        if (randomStatus > 0.9) {
+          status = 'offline';
+          responseTime = 0;
+        } else if (randomStatus > 0.7) {
+          status = 'degraded';
+          responseTime = Math.floor(Math.random() * 1000) + 500; // 500-1500ms
+        } else {
+          status = 'online';
+          responseTime = Math.floor(Math.random() * 200) + 50; // 50-250ms
+        }
+        
+        // Update status for this domain
+        setDomainStatus(prev => prev.map((domain, i) => 
+          i === index 
+            ? { 
+                ...domain, 
+                status, 
+                responseTime, 
+                lastChecked: new Date(),
+                uptime: domain.uptime - (status === 'offline' ? Math.random() * 2 : 0)
+              } 
+            : domain
+        ));
+      }, (index + 1) * 1000); // Stagger checks for visual effect
+    });
+    
+    // Set up periodic checks
+    const interval = setInterval(() => {
+      setDomainStatus(prev => prev.map(domain => {
+        const randomStatus = Math.random();
+        let status: StatusType;
+        let responseTime: number;
+        
+        if (randomStatus > 0.95) {
+          status = 'offline';
+          responseTime = 0;
+        } else if (randomStatus > 0.8) {
+          status = 'degraded';
+          responseTime = Math.floor(Math.random() * 1000) + 500;
+        } else {
+          status = 'online';
+          responseTime = Math.floor(Math.random() * 200) + 50;
+        }
+        
+        return { 
+          ...domain, 
+          status, 
+          responseTime, 
+          lastChecked: new Date(),
+          uptime: domain.uptime - (status === 'offline' ? Math.random() * 2 : 0)
+        };
+      }));
+    }, 30000); // Check every 30 seconds
+    
+    return () => clearInterval(interval);
+  }, [domains]);
+  
+  // Updated domains array to use new domain names
+  useEffect(() => {
+    if (domains.length === 0) {
+      // Default domains if none provided
+      domains = [
+        'www.snakkaz.com',
+        'api.snakkaz.com',
+        'chat.snakkaz.com',
+        'auth.snakkaz.com'
+      ];
+    }
+    
     // Initialize domains with checking status
     setDomainStatus(domains.map(url => ({
       url,

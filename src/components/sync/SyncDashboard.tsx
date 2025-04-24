@@ -5,10 +5,10 @@ import { GitHubStatus } from "./GitHubStatus";
 
 export const SyncDashboard = () => {
   const domains = [
-    'api.snakkaz.io',
-    'app.snakkaz.io',
-    'cdn.snakkaz.io',
-    'auth.snakkaz.io'
+    'www.snakkaz.com',
+    'api.snakkaz.com',
+    'chat.snakkaz.com',
+    'auth.snakkaz.com'
   ];
   
   return (

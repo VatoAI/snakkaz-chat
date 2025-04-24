@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -102,7 +101,7 @@ export const useAuth = () => {
         email,
         password,
         options: {
-          emailRedirectTo: 'https://www.SnakkaZ.com/chat'
+          emailRedirectTo: 'https://www.snakkaz.com/chat'
         }
       });
 

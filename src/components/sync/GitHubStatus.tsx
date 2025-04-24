@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Github, GitCommit, GitBranch, GitPullRequest, Clock, User } from "lucide-react";
 
@@ -14,12 +13,10 @@ export const GitHubStatus = () => {
   const [commits, setCommits] = useState<CommitInfo[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // Simulate loading recent commits
   useEffect(() => {
     const simulateCommits = () => {
       setLoading(true);
       
-      // Simulate network delay
       setTimeout(() => {
         const mockCommits: CommitInfo[] = [
           {
@@ -38,10 +35,10 @@ export const GitHubStatus = () => {
           },
           {
             id: "9c8b7a6",
-            message: "Implement real-time Supabase sync status indicators",
+            message: "Implement custom domain support for www.snakkaz.com",
             author: "johndoe",
             date: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(), // 5 hours ago
-            branch: "feature/sync-status"
+            branch: "feature/custom-domain"
           },
           {
             id: "5d4c3b2",
@@ -59,11 +56,9 @@ export const GitHubStatus = () => {
     
     simulateCommits();
     
-    // Set up a webhook listener simulation
     const setupGitHubWebhookListener = () => {
       console.log("Setting up GitHub webhook listener simulation");
       
-      // We're just simulating webhook events with setInterval
       return () => {
         console.log("Cleaning up GitHub webhook listener simulation");
       };
@@ -71,8 +66,7 @@ export const GitHubStatus = () => {
     
     setupGitHubWebhookListener();
     
-    // Refresh commits periodically
-    const interval = setInterval(simulateCommits, 5 * 60 * 1000); // Refresh every 5 minutes
+    const interval = setInterval(simulateCommits, 5 * 60 * 1000);
     
     return () => clearInterval(interval);
   }, []);
