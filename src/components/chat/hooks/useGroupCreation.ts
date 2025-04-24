@@ -1,6 +1,5 @@
-
 import { supabase } from "@/integrations/supabase/client";
-import { Group } from "@/types/group";
+import { Group, GroupWritePermission, MessageTTLOption } from "@/types/group";
 import { SecurityLevel } from "@/types/security";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -16,7 +15,10 @@ export function useGroupCreation(
     members: string[],
     securityLevel: SecurityLevel,
     password?: string,
-    avatar?: File
+    avatar?: File,
+    writePermissions: GroupWritePermission = 'all',
+    defaultMessageTtl: MessageTTLOption = null,
+    memberWritePermissions?: Record<string, boolean>
   ) => {
     try {
       // Validate members are friends
@@ -37,14 +39,17 @@ export function useGroupCreation(
         throw new Error('Some selected users are not in your friends list');
       }
 
-      // Create the group
+      // Create the group with nye felt
       const { data: groupData, error: groupError } = await supabase
         .from('groups')
         .insert({
           name,
           creator_id: currentUserId,
           security_level: securityLevel,
-          password: password || null
+          password: password || null,
+          // Nye felt
+          write_permissions: writePermissions,
+          default_message_ttl: defaultMessageTtl
         })
         .select()
         .single();
@@ -72,22 +77,39 @@ export function useGroupCreation(
           .eq('id', groupData.id);
       }
 
-      // Add creator as admin
+      // Add creator as admin med skrivetillatelse
       await supabase
         .from('group_members')
         .insert({
           user_id: currentUserId,
           group_id: groupData.id,
-          role: 'admin'
+          role: 'admin',
+          can_write: true // Admin kan alltid skrive
         });
 
-      // Add selected members
+      // Add selected members med skrivetillatelser
       if (members.length > 0) {
-        const memberInserts = members.map(userId => ({
-          user_id: userId,
-          group_id: groupData.id,
-          role: 'member'
-        }));
+        const memberInserts = members.map(userId => {
+          // Sjekk om medlemmet har spesifikk skrivetillatelse
+          // Standard er: 
+          // - Ingen skrivetillatelse hvis writePermissions === 'admin' 
+          // - Spesifikk skrivetillatelse hvis writePermissions === 'selected'
+          // - Alle kan skrive hvis writePermissions === 'all'
+          let canWrite = true;
+          
+          if (writePermissions === 'admin') {
+            canWrite = false; // Kun administratorer kan skrive
+          } else if (writePermissions === 'selected') {
+            canWrite = memberWritePermissions?.[userId] ?? false;
+          }
+          
+          return {
+            user_id: userId,
+            group_id: groupData.id,
+            role: 'member',
+            can_write: canWrite
+          };
+        });
 
         await supabase
           .from('group_members')
@@ -104,6 +126,7 @@ export function useGroupCreation(
             user_id,
             role,
             joined_at,
+            can_write,
             profiles:user_id (
               id,
               username,
@@ -120,9 +143,11 @@ export function useGroupCreation(
       const newGroup: Group = {
         ...completeGroup,
         security_level: completeGroup.security_level as SecurityLevel,
+        write_permissions: (completeGroup.write_permissions || 'all') as GroupWritePermission,
         members: completeGroup.members.map((m: any) => ({
           ...m,
-          profile: m.profiles
+          profile: m.profiles,
+          can_write: m.can_write !== false // Default til true hvis ikke spesifisert
         }))
       };
 
