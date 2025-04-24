@@ -1,9 +1,9 @@
-
 import { useState, useRef, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { encryptMessage } from "@/utils/encryption";
 import { DecryptedMessage } from "@/types/message";
 import { useToast } from "@/components/ui/use-toast";
+import { encryptGroupMessage } from "@/utils/encryption/group-e2ee";
 
 export const useGroupMessageSender = (
   currentUserId: string,
@@ -26,6 +26,7 @@ export const useGroupMessageSender = (
     }
   }, []);
 
+  // Send melding til gruppe via server med forbedret kryptering
   const sendGroupMessage = useCallback(async (message: string): Promise<boolean> => {
     if (!currentUserId || !groupId) {
       console.log('Group message failed: Missing currentUserId or groupId', { currentUserId, groupId });
@@ -33,15 +34,17 @@ export const useGroupMessageSender = (
     }
     
     try {
-      console.log('Encrypting message for group delivery...');
-      const { encryptedContent, key, iv } = await encryptMessage(message.trim());
+      console.log('Krypterer melding med gruppespesifikk kryptering...');
       
-      console.log('Sending message to group...');
+      // Bruk gruppespesifikk kryptering istedenfor standard kryptering
+      const { encryptedContent, key, iv } = await encryptGroupMessage(groupId, message.trim());
+      
+      console.log('Sender melding til gruppe...');
       const { error } = await supabase
         .from('messages')
         .insert({
           sender_id: currentUserId,
-          group_id: groupId, // Now using the actual string groupId
+          group_id: groupId,
           encrypted_content: encryptedContent,
           encryption_key: key,
           iv: iv,
@@ -51,11 +54,11 @@ export const useGroupMessageSender = (
         });
       
       if (error) {
-        console.error('Error from server when sending group message:', error);
+        console.error('Error fra server ved sending av gruppemelding:', error);
         throw error;
       }
       
-      console.log('Message sent to group with end-to-end encryption');
+      console.log('Melding sendt til gruppe med forbedret ende-til-ende-kryptering');
       return true;
     } catch (error) {
       console.error('Group message failed:', error);
@@ -91,7 +94,7 @@ export const useGroupMessageSender = (
               full_name: null
             },
             receiver_id: null,
-            group_id: groupId, // This is now a string group ID
+            group_id: groupId,
             created_at: timestamp,
             encryption_key: '',
             iv: '',
