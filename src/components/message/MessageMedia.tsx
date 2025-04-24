@@ -1,4 +1,3 @@
-
 import { ShieldAlert, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -26,25 +25,34 @@ export const MessageMedia = ({ message, onMediaExpired }: MessageMediaProps) => 
     setDecryptError
   } = useMediaDecryption(message);
   
+  useEffect(() => {
+    if (!message.media_url) return;
+
+    try {
+      const storageUrl = supabase.storage.from('chat-media').getPublicUrl(message.media_url).data.publicUrl;
+      console.log("MessageMedia: Attempting to decrypt media:", message.media_url);
+      handleDecryptMedia(storageUrl);
+    } catch (error) {
+      console.error("Error getting storage URL:", error);
+      setDecryptError("Kunne ikke hente mediafil");
+    }
+
+    return () => {
+      if (decryptedUrl) {
+        URL.revokeObjectURL(decryptedUrl);
+      }
+    };
+  }, [message.media_url, decryptedUrl, handleDecryptMedia, setDecryptError]);
+  
   if (!message.media_url) return null;
 
   if (message.is_deleted) {
     return <DeletedMedia />;
   }
   
-  // Get proper storage URL with error handling
+  // Forsøk å få lagring-URL med feilhåndtering
   try {
     const storageUrl = supabase.storage.from('chat-media').getPublicUrl(message.media_url).data.publicUrl;
-    
-    useEffect(() => {
-      console.log("MessageMedia: Attempting to decrypt media:", message.media_url);
-      handleDecryptMedia(storageUrl);
-      return () => {
-        if (decryptedUrl) {
-          URL.revokeObjectURL(decryptedUrl);
-        }
-      };
-    }, [message.media_url]);
     
     if (isDecrypting) {
       return <DecryptingMedia />;
@@ -55,7 +63,7 @@ export const MessageMedia = ({ message, onMediaExpired }: MessageMediaProps) => 
         <div className="mt-2 p-3 border border-cyberred-800/50 rounded-lg bg-cyberred-950/30 flex items-center">
           <ShieldAlert className="h-5 w-5 text-cyberred-400 mr-2" />
           <div className="flex-1">
-            <p className="text-cyberred-300 text-sm">Failed to decrypt media</p>
+            <p className="text-cyberred-300 text-sm">Kunne ikke dekryptere media</p>
             <p className="text-xs text-cyberred-400/70">{decryptError}</p>
           </div>
           <Button
@@ -64,7 +72,7 @@ export const MessageMedia = ({ message, onMediaExpired }: MessageMediaProps) => 
             onClick={() => handleDecryptMedia(storageUrl)}
             className="text-cyberred-300 hover:text-cyberred-200 ml-2"
           >
-            Retry
+            Prøv igjen
           </Button>
         </div>
       );
@@ -101,8 +109,8 @@ export const MessageMedia = ({ message, onMediaExpired }: MessageMediaProps) => 
       <div className="mt-2 p-3 border border-cyberred-800/50 rounded-lg bg-cyberred-950/30 flex items-center">
         <ShieldAlert className="h-5 w-5 text-cyberred-400 mr-2" />
         <div className="flex-1">
-          <p className="text-cyberred-300 text-sm">Media unavailable</p>
-          <p className="text-xs text-cyberred-400/70">Could not load media content</p>
+          <p className="text-cyberred-300 text-sm">Mediafil utilgjengelig</p>
+          <p className="text-xs text-cyberred-400/70">Kunne ikke laste mediafilen</p>
         </div>
       </div>
     );
