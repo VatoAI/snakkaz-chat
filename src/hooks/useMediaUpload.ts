@@ -14,26 +14,28 @@ export const useMediaUpload = () => {
 
     try {
       // Create the initial toast with an open property
-      const uploadToast = toast({
+      const { id, update, dismiss } = toast({
         title: "Uploading file...",
         description: "Starting upload",
         open: true,
         onOpenChange: (open) => {
-          if (!open) uploadToast.dismiss();
+          if (!open) dismiss();
         }
       });
 
       const result = await uploadMedia(file, (progress) => {
         setUploadProgress(progress);
         // Update the existing toast
-        uploadToast.update({
+        update({
+          id, // Include the id when updating
           title: "Uploading file...",
           description: `${Math.round(progress)}% complete`
         });
       });
 
       // Update toast to show success
-      uploadToast.update({
+      update({
+        id, // Include the id when updating
         title: "Upload complete",
         description: "File uploaded successfully"
       });
