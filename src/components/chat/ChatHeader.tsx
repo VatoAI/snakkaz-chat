@@ -12,6 +12,9 @@ import { UserAvatar } from "./header/UserAvatar";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { AIAssistantButton } from "./header/AIAssistantButton";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { AdminButton } from "./AdminButton";
+import { useAuth } from "@/contexts/AuthContext";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 
 interface ChatHeaderProps {
   userPresence: Record<string, any>;
@@ -43,6 +46,8 @@ export const ChatHeader = ({
   const { toast } = useToast();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const { user } = useAuth();
+  const { isAdmin } = useIsAdmin(user?.id);
 
   return (
     <TooltipProvider>
@@ -80,6 +85,7 @@ export const ChatHeader = ({
             <div className="flex flex-row items-center gap-2">
               {!isMobile && <NotificationSettings />}
               <AIAssistantButton currentUserId={currentUserId || ''} />
+              {isAdmin && <AdminButton />}
               {currentUserId && (
                 <ProfileDropdown
                   currentUserId={currentUserId}
