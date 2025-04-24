@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
-import { encryptMessage, generateEncryptionKey } from "@/utils/encryption";
+import { encryptMessage } from "@/utils/encryption"; // Fjernet avhengigheten av generateEncryptionKey
 import { DecryptedMessage } from "@/types/message";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -17,6 +17,32 @@ export const useGroupMessageSender = (
   const messageQueue = useRef<string[]>([]);
   const processingQueue = useRef<boolean>(false);
   const groupSessionKey = useRef<string | null>(null);
+
+  // Vår egen funksjon for å generere krypteringsnøkler
+  const generateNewEncryptionKey = useCallback(async (): Promise<string> => {
+    try {
+      // Bruk WebCrypto API direkte
+      const key = await window.crypto.subtle.generateKey(
+        {
+          name: "AES-GCM",
+          length: 256, // Fikset fra 'the256' til 256
+        },
+        true,
+        ["encrypt", "decrypt"]
+      );
+      
+      const exportedKey = await window.crypto.subtle.exportKey("jwk", key);
+      return JSON.stringify(exportedKey);
+    } catch (error) {
+      console.error("Encryption key generation failed:", error);
+      // Fallback: Bruk en pseudotilfeldig nøkkel
+      const randomKey = Array.from(
+        window.crypto.getRandomValues(new Uint8Array(32)),
+        byte => byte.toString(16).padStart(2, "0")
+      ).join("");
+      return randomKey;
+    }
+  }, []);
 
   // Initialiser eller hent gruppens sesjonsnøkkel
   const getOrCreateGroupSessionKey = useCallback(async (): Promise<string> => {
@@ -40,7 +66,7 @@ export const useGroupMessageSender = (
       }
 
       // Hvis ingen nøkkel finnes, oppretter vi en ny
-      const newKey = await generateEncryptionKey();
+      const newKey = await generateNewEncryptionKey(); // Bruker vår egen funksjon her
       
       // Lagre den nye nøkkelen i databasen
       await supabase
@@ -58,11 +84,11 @@ export const useGroupMessageSender = (
     } catch (error) {
       console.error('Feil ved henting/opprettelse av gruppesessjonsnøkkel:', error);
       // Fallback til å generere en lokal nøkkel som ikke lagres
-      const fallbackKey = await generateEncryptionKey();
+      const fallbackKey = await generateNewEncryptionKey(); // Bruker vår egen funksjon her også
       groupSessionKey.current = fallbackKey;
       return fallbackKey;
     }
-  }, [groupId, currentUserId]);
+  }, [groupId, currentUserId, generateNewEncryptionKey]);
 
   const clearSendError = useCallback(() => {
     setSendError(null);
