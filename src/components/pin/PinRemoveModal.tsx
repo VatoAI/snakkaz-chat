@@ -1,9 +1,9 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { useChatCode } from "@/hooks/useChatCode";
+import { useMobilePinSecurity } from "@/hooks/useMobilePinSecurity";
 import { PinInput } from "./PinInput";
 import { AlertCircle, Shield } from "lucide-react";
 
@@ -17,6 +17,7 @@ export const PinRemoveModal = ({ isOpen, onClose }: PinRemoveModalProps) => {
   const [error, setError] = useState("");
   const { toast } = useToast();
   const { verifyChatCode, resetChatCode } = useChatCode();
+  const { resetPin } = useMobilePinSecurity();
 
   const handlePinComplete = (value: string) => {
     setPin(value);
@@ -29,8 +30,9 @@ export const PinRemoveModal = ({ isOpen, onClose }: PinRemoveModalProps) => {
       return;
     }
 
-    // Remove the PIN
+    // Remove the PIN from both chat code and mobile security system
     resetChatCode();
+    resetPin();
     
     toast({
       title: "PIN-kode fjernet",
