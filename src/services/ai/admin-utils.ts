@@ -21,22 +21,32 @@ export const fetchUserEmail = async (userId: string): Promise<string> => {
       return userData.user.email;
     }
     
-    // Fall back to the RPC function
-    const { data: emailData, error: rpcError } = await supabase.rpc('get_user_email', {
-      user_id: userId
-    });
-    
-    if (rpcError) {
-      console.error('Error fetching user email via RPC:', rpcError);
+    // Fall back to the RPC function - using direct fetch to avoid RPC name issues
+    try {
+      const { data, error } = await supabase.functions.invoke('get-user-email', {
+        body: { userId }
+      });
       
-      // Final fallback - try the Edge Function
+      if (error) throw error;
+      return data || 'E-post utilgjengelig';
+    } catch (rpcError) {
+      console.error('Error fetching user email via functions:', rpcError);
+      
+      // Final fallback - try the Edge Function with direct fetch
       try {
+        const sessionData = await supabase.auth.getSession();
+        const accessToken = sessionData.data?.session?.access_token;
+        
+        if (!accessToken) {
+          return 'E-post utilgjengelig - no authentication';
+        }
+        
         // Using custom fetch instead of directly invoking to avoid type issues
         const response = await fetch(`https://wqpoozpbceucynsojmbk.supabase.co/functions/v1/get-user-email`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${supabase.auth.session()?.access_token}`
+            'Authorization': `Bearer ${accessToken}`
           },
           body: JSON.stringify({ userId })
         });
@@ -53,9 +63,6 @@ export const fetchUserEmail = async (userId: string): Promise<string> => {
         return 'E-post utilgjengelig';
       }
     }
-    
-    // Ensure we return a string
-    return String(emailData) || 'E-post ikke funnet';
   } catch (error) {
     console.error('Error in fetchUserEmail:', error);
     return 'Feil ved henting av e-post';
@@ -69,7 +76,9 @@ export const fetchUserEmail = async (userId: string): Promise<string> => {
  */
 export const checkIsAdmin = async (): Promise<boolean> => {
   try {
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data } = await supabase.auth.getSession();
+    const session = data.session;
+    
     if (!session) return false;
     
     const { data: hasAdminRole, error: roleError } = await supabase.rpc('has_role', {
@@ -77,11 +86,11 @@ export const checkIsAdmin = async (): Promise<boolean> => {
       role: 'admin'
     });
     
-    if (roleError || !hasAdminRole) {
+    if (roleError || hasAdminRole === null) {
       return false;
     }
     
-    return true;
+    return Boolean(hasAdminRole);
   } catch (error) {
     console.error('Error checking admin status:', error);
     return false;

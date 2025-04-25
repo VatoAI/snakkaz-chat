@@ -40,7 +40,7 @@ export function useGroupCreation(
         throw new Error('Some selected users are not in your friends list');
       }
 
-      // Create the group with nye felt
+      // Create the group with new fields
       const { data: groupData, error: groupError } = await supabase
         .from('groups')
         .insert({
@@ -48,7 +48,7 @@ export function useGroupCreation(
           creator_id: currentUserId,
           security_level: securityLevel,
           password: password || null,
-          // Nye felt
+          // New fields
           write_permissions: writePermissions,
           default_message_ttl: defaultMessageTtl
         })
@@ -141,8 +141,7 @@ export function useGroupCreation(
 
       if (completeError) throw completeError;
 
-      // Cast the returned data to ensure TypeScript recognizes the properties
-      // TypeScript doesn't recognize fields from the "*" selector, so we need to explicitly cast
+      // Cast the returned data with proper type assertions
       const newGroup: Group = {
         id: completeGroup.id,
         name: completeGroup.name,
@@ -150,11 +149,11 @@ export function useGroupCreation(
         creator_id: completeGroup.creator_id,
         security_level: completeGroup.security_level as SecurityLevel,
         write_permissions: (completeGroup.write_permissions || 'all') as GroupWritePermission,
-        default_message_ttl: completeGroup.default_message_ttl || 86400, // Ensure default is set
+        default_message_ttl: completeGroup.default_message_ttl || 86400 as MessageTTLOption,
         members: completeGroup.members.map((m: any) => ({
           ...m,
           profile: m.profiles,
-          can_write: m.can_write !== false // Default til true hvis ikke spesifisert
+          can_write: m.can_write !== false // Default to true if not specified
         })),
         // Add other optional fields
         password: completeGroup.password,

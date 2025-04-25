@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { encryptBlob } from "@/utils/encryption/media";
 
 export const useMediaHandler = () => {
-  const handleMediaUpload = useCallback(async (mediaFile: File, toast: any) => {
+  const handleMediaUpload = useCallback(async (mediaFile: File, toast: any, globalOverride?: any) => {
     const toastId = Date.now().toString();
     toast({
       id: toastId,
@@ -13,8 +13,9 @@ export const useMediaHandler = () => {
     });
 
     try {
-      // Encrypt the media file
-      const { encryptedBlob, encryptionKey, iv, metadata } = await encryptBlob(mediaFile);
+      // Encrypt the media file with optional global override
+      const { encryptedData: encryptedBlob, encryptionKey, iv, mediaType, metadata } = 
+        await encryptBlob(mediaFile, globalOverride);
 
       // Upload the encrypted file
       const fileExt = mediaFile.name.split('.').pop();
