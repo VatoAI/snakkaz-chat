@@ -2,6 +2,7 @@
 import { useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { encryptMessage } from "@/utils/encryption";
+import { useMediaHandler } from "./useMessageSender/useMediaHandler";
 
 export const useMessageSend = (
   userId: string | null,
@@ -11,6 +12,8 @@ export const useMessageSend = (
   setIsLoading: (loading: boolean) => void,
   toast: any
 ) => {
+  const { handleMediaUpload } = useMediaHandler();
+
   const handleSendMessage = useCallback(async (
     webRTCManager: any, 
     onlineUsers: Set<string>, 
@@ -90,7 +93,7 @@ export const useMessageSend = (
     } finally {
       setIsLoading(false);
     }
-  }, [newMessage, userId, ttl, setNewMessage, setIsLoading, toast]);
+  }, [newMessage, userId, ttl, setNewMessage, setIsLoading, toast, handleMediaUpload]);
 
   return { handleSendMessage };
 };

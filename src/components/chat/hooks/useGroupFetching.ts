@@ -172,7 +172,7 @@ export function useGroupFetching(currentUserId: string) {
         toast({
           title: "Delvis lastet grupper",
           description: `Kunne ikke laste komplett informasjon for ${failedGroups.length} grupper. Oppdater for å prøve igjen.`,
-          variant: "warning"
+          variant: "default"
         });
       }
 

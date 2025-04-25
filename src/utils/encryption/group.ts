@@ -1,4 +1,5 @@
 
+import { supabase } from "@/integrations/supabase/client";
 import { generateEncryptionKey } from "./key-management";
 
 export const createGroupEncryptionKey = async (groupId: string, userId: string) => {

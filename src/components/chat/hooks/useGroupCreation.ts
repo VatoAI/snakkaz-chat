@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Group, GroupWritePermission, MessageTTLOption } from "@/types/group";
 import { SecurityLevel } from "@/types/security";
@@ -17,7 +18,7 @@ export function useGroupCreation(
     password?: string,
     avatar?: File,
     writePermissions: GroupWritePermission = 'all',
-    defaultMessageTtl: MessageTTLOption = null,
+    defaultMessageTtl: MessageTTLOption = 86400,
     memberWritePermissions?: Record<string, boolean>
   ) => {
     try {
@@ -144,6 +145,7 @@ export function useGroupCreation(
         ...completeGroup,
         security_level: completeGroup.security_level as SecurityLevel,
         write_permissions: (completeGroup.write_permissions || 'all') as GroupWritePermission,
+        default_message_ttl: completeGroup.default_message_ttl || 86400, // Ensure default is set
         members: completeGroup.members.map((m: any) => ({
           ...m,
           profile: m.profiles,

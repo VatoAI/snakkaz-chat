@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from "react";
-import { supabase } from "../../integrations/supabase";
-import { useToast } from "../../hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
 import { Button } from "../ui/button";
 import { Loader2, Mail, Shield, User, UserPlus } from "lucide-react";

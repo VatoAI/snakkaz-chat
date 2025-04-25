@@ -1,4 +1,4 @@
-import { supabase } from '../../integrations/supabase';
+import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Utility functions for admin operations

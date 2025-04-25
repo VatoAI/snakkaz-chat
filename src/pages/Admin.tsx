@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Slider } from "@/components/ui/slider";
 import { useProgressState } from "@/hooks/useProgressState";
-import { AdminUsersManager } from "@/components/admin/AdminUsersManager";
+import AdminUsersManager from "@/components/admin/AdminUsersManager";
 import { AdminSystemHealth } from "@/components/admin/AdminSystemHealth";
 import { AdminErrorLogs } from "@/components/admin/AdminErrorLogs";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
