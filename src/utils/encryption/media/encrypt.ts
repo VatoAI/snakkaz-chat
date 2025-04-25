@@ -1,5 +1,5 @@
 
-import { encryptMediaBuffer, exportEncryptionKey } from '../crypto-operations';
+import { encryptMediaBuffer, exportEncryptionKey } from './crypto-operations';
 import { extractMediaMetadata } from './metadata-extractor';
 
 export const encryptMedia = async (file: File) => {
@@ -16,7 +16,7 @@ export const encryptMedia = async (file: File) => {
   const encryptionKey = await exportEncryptionKey(key);
 
   // Extract media metadata
-  const metadata = extractMediaMetadata(file);
+  const metadata = await extractMediaMetadata(file);
 
   return {
     encryptedData: encryptedBlob,
@@ -26,4 +26,3 @@ export const encryptMedia = async (file: File) => {
     metadata
   };
 };
-
