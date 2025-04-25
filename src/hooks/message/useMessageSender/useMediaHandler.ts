@@ -11,34 +11,40 @@ export const useMediaHandler = () => {
     encryptionOverride?: { encryptionKey: string, iv: string }
   ) => {
     let toastId = null;
-    let mediaUrl = null, mediaType = null, encryptionKey = null, iv = null, mediaMetadata = null;
-
+    
     try {
-      // First encrypt the media
-      console.log("Encrypting media file:", mediaFile.name);
+      console.log("Starting media encryption for:", mediaFile.name);
       const encryptedMedia = await encryptMedia(mediaFile, encryptionOverride);
       
-      // Create encrypted file blob
+      // Create encrypted file blob with proper metadata
       const encryptedBlob = new Blob([encryptedMedia.encryptedData], { 
         type: 'application/octet-stream' 
       });
+      
       const encryptedFile = new File([encryptedBlob], 
-        `${Date.now()}_encrypted.bin`, 
+        `${Date.now()}_${mediaFile.name.replace(/[^a-zA-Z0-9._-]/g, '_')}_encrypted.bin`,
         { type: 'application/octet-stream' }
       );
 
-      // Upload the encrypted file
+      console.log("Uploading encrypted media...");
       const { path } = await upload(encryptedFile);
       
-      mediaUrl = path;
-      mediaType = encryptedMedia.mediaType;
-      encryptionKey = encryptedMedia.encryptionKey;
-      iv = encryptedMedia.iv;
-      mediaMetadata = encryptedMedia.metadata;
-
-      return { mediaUrl, mediaType, encryptionKey, iv, mediaMetadata, toastId };
+      console.log("Media upload successful:", path);
+      return {
+        mediaUrl: path,
+        mediaType: encryptedMedia.mediaType,
+        encryptionKey: encryptedMedia.encryptionKey,
+        iv: encryptedMedia.iv,
+        mediaMetadata: encryptedMedia.metadata,
+        toastId
+      };
     } catch (error) {
       console.error("Media upload failed:", error);
+      toast({
+        title: "Error",
+        description: "Could not upload media file. Please try again.",
+        variant: "destructive",
+      });
       throw error;
     }
   };

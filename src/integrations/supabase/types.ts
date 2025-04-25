@@ -99,6 +99,38 @@ export type Database = {
         }
         Relationships: []
       }
+      group_encryption: {
+        Row: {
+          created_at: string
+          created_by: string
+          group_id: string
+          id: string
+          session_key: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          group_id: string
+          id?: string
+          session_key: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          group_id?: string
+          id?: string
+          session_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_encryption_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       group_invites: {
         Row: {
           created_at: string
