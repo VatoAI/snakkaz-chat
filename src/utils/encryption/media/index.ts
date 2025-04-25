@@ -1,5 +1,3 @@
 
-// Properly export the encryptBlob function
-import { encryptMedia } from './encrypt';
-export { encryptMedia };
+export * from './encrypt';
 export const encryptBlob = encryptMedia;
