@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 
 /**
@@ -29,19 +30,24 @@ export const fetchUserEmail = async (userId: string): Promise<string> => {
       console.error('Error fetching user email via RPC:', rpcError);
       
       // Final fallback - try the Edge Function
-      const { data: edgeFnData, error: edgeFnError } = await supabase.functions.invoke('get-user-email', {
-        body: { userId }
-      });
-      
-      if (edgeFnError) {
-        console.error('Error fetching user email via Edge Function:', edgeFnError);
+      try {
+        const { data: edgeFnData, error: edgeFnError } = await supabase.functions.invoke('get-user-email', {
+          body: { userId }
+        });
+        
+        if (edgeFnError) {
+          console.error('Error fetching user email via Edge Function:', edgeFnError);
+          return 'E-post utilgjengelig';
+        }
+        
+        return edgeFnData as string || 'E-post utilgjengelig';
+      } catch (edgeError) {
+        console.error('Error calling edge function:', edgeError);
         return 'E-post utilgjengelig';
       }
-      
-      return edgeFnData || 'E-post utilgjengelig';
     }
     
-    return emailData || 'E-post ikke funnet';
+    return emailData as string || 'E-post ikke funnet';
   } catch (error) {
     console.error('Error in fetchUserEmail:', error);
     return 'Feil ved henting av e-post';

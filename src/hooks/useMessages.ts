@@ -50,16 +50,16 @@ export const useMessages = (userId: string | null, receiverId?: string, groupId?
   // Message expiry handling
   const { handleMessageExpired } = useMessageExpiry(setMessages);
   
-  // Create simple edit and delete handlers since they're not provided by useMessageSend
+  // Create simple edit and delete handlers
   const handleEditMessage = useCallback(async (messageId: string, content: string) => {
-    // Simple implementation since the original hook doesn't provide this
-    console.log('Edit message functionality not implemented yet');
+    // Implementation to be added later if needed
+    console.log('Edit message functionality not implemented yet', messageId, content);
     return Promise.resolve();
   }, []);
   
   const handleDeleteMessageById = useCallback(async (messageId: string) => {
-    // Simple implementation since the original hook doesn't provide this
-    console.log('Delete message functionality not implemented yet');
+    // Implementation to be added later if needed
+    console.log('Delete message functionality not implemented yet', messageId);
     return Promise.resolve();
   }, []);
   

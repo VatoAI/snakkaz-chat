@@ -141,8 +141,13 @@ export function useGroupCreation(
 
       if (completeError) throw completeError;
 
+      // Make sure we're handling the types correctly for the returned data
       const newGroup: Group = {
         ...completeGroup,
+        id: completeGroup.id,
+        name: completeGroup.name,
+        created_at: completeGroup.created_at,
+        creator_id: completeGroup.creator_id,
         security_level: completeGroup.security_level as SecurityLevel,
         write_permissions: (completeGroup.write_permissions || 'all') as GroupWritePermission,
         default_message_ttl: completeGroup.default_message_ttl || 86400, // Ensure default is set
@@ -150,7 +155,10 @@ export function useGroupCreation(
           ...m,
           profile: m.profiles,
           can_write: m.can_write !== false // Default til true hvis ikke spesifisert
-        }))
+        })),
+        // Add other optional fields
+        password: completeGroup.password,
+        avatar_url: completeGroup.avatar_url
       };
 
       setGroups(prev => [...prev, newGroup]);
