@@ -31,23 +31,31 @@ export const fetchUserEmail = async (userId: string): Promise<string> => {
       
       // Final fallback - try the Edge Function
       try {
-        const { data: edgeFnData, error: edgeFnError } = await supabase.functions.invoke('get-user-email', {
-          body: { userId }
+        // Using custom fetch instead of directly invoking to avoid type issues
+        const response = await fetch(`https://wqpoozpbceucynsojmbk.supabase.co/functions/v1/get-user-email`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabase.auth.session()?.access_token}`
+          },
+          body: JSON.stringify({ userId })
         });
         
-        if (edgeFnError) {
-          console.error('Error fetching user email via Edge Function:', edgeFnError);
+        if (!response.ok) {
+          console.error('Error fetching user email via Edge Function:', response.statusText);
           return 'E-post utilgjengelig';
         }
         
-        return edgeFnData as string || 'E-post utilgjengelig';
+        const data = await response.text();
+        return data || 'E-post utilgjengelig';
       } catch (edgeError) {
         console.error('Error calling edge function:', edgeError);
         return 'E-post utilgjengelig';
       }
     }
     
-    return emailData as string || 'E-post ikke funnet';
+    // Ensure we return a string
+    return String(emailData) || 'E-post ikke funnet';
   } catch (error) {
     console.error('Error in fetchUserEmail:', error);
     return 'Feil ved henting av e-post';

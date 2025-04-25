@@ -1,53 +1,50 @@
 
-import { encryptMedia } from "@/utils/encryption/media";
-import { useMediaUpload } from "@/hooks/useMediaUpload";
+import { useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { encryptBlob } from "@/utils/encryption/media";
 
 export const useMediaHandler = () => {
-  const { upload, isUploading } = useMediaUpload();
+  const handleMediaUpload = useCallback(async (mediaFile: File, toast: any) => {
+    const toastId = Date.now().toString();
+    toast({
+      id: toastId,
+      title: "Uploading media",
+      description: "Encrypting and uploading your file...",
+    });
 
-  const handleMediaUpload = async (
-    mediaFile: File,
-    toast: any,
-    encryptionOverride?: { encryptionKey: string, iv: string }
-  ) => {
-    let toastId = null;
-    
     try {
-      console.log("Starting media encryption for:", mediaFile.name);
-      const encryptedMedia = await encryptMedia(mediaFile, encryptionOverride);
-      
-      // Create encrypted file blob with proper metadata
-      const encryptedBlob = new Blob([encryptedMedia.encryptedData], { 
-        type: 'application/octet-stream' 
-      });
-      
-      const encryptedFile = new File([encryptedBlob], 
-        `${Date.now()}_${mediaFile.name.replace(/[^a-zA-Z0-9._-]/g, '_')}_encrypted.bin`,
-        { type: 'application/octet-stream' }
-      );
+      // Encrypt the media file
+      const { encryptedBlob, encryptionKey, iv, metadata } = await encryptBlob(mediaFile);
 
-      console.log("Uploading encrypted media...");
-      const { path } = await upload(encryptedFile);
-      
-      console.log("Media upload successful:", path);
+      // Upload the encrypted file
+      const fileExt = mediaFile.name.split('.').pop();
+      const filePath = `${crypto.randomUUID()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('chat-media')
+        .upload(filePath, encryptedBlob);
+
+      if (uploadError) throw uploadError;
+
       return {
-        mediaUrl: path,
-        mediaType: encryptedMedia.mediaType,
-        encryptionKey: encryptedMedia.encryptionKey,
-        iv: encryptedMedia.iv,
-        mediaMetadata: encryptedMedia.metadata,
+        mediaUrl: filePath,
+        mediaType: mediaFile.type,
+        encryptionKey,
+        iv,
+        mediaMetadata: metadata,
         toastId
       };
     } catch (error) {
-      console.error("Media upload failed:", error);
+      console.error("Error uploading media:", error);
       toast({
-        title: "Error",
-        description: "Could not upload media file. Please try again.",
+        id: toastId,
+        title: "Upload failed",
+        description: "Failed to upload media file",
         variant: "destructive",
       });
       throw error;
     }
-  };
+  }, []);
 
-  return { handleMediaUpload, isUploading };
+  return { handleMediaUpload };
 };

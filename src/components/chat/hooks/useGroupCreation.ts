@@ -141,9 +141,9 @@ export function useGroupCreation(
 
       if (completeError) throw completeError;
 
-      // Make sure we're handling the types correctly for the returned data
+      // Cast the returned data to ensure TypeScript recognizes the properties
+      // TypeScript doesn't recognize fields from the "*" selector, so we need to explicitly cast
       const newGroup: Group = {
-        ...completeGroup,
         id: completeGroup.id,
         name: completeGroup.name,
         created_at: completeGroup.created_at,
