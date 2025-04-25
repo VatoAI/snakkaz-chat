@@ -168,6 +168,7 @@ export type Database = {
       }
       group_members: {
         Row: {
+          can_write: boolean
           group_id: string
           id: string
           joined_at: string
@@ -175,6 +176,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          can_write?: boolean
           group_id: string
           id?: string
           joined_at?: string
@@ -182,6 +184,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          can_write?: boolean
           group_id?: string
           id?: string
           joined_at?: string
@@ -203,28 +206,34 @@ export type Database = {
           avatar_url: string | null
           created_at: string
           creator_id: string
+          default_message_ttl: number
           id: string
           name: string
           password: string | null
           security_level: string
+          write_permissions: string
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string
           creator_id: string
+          default_message_ttl?: number
           id?: string
           name: string
           password?: string | null
           security_level?: string
+          write_permissions?: string
         }
         Update: {
           avatar_url?: string | null
           created_at?: string
           creator_id?: string
+          default_message_ttl?: number
           id?: string
           name?: string
           password?: string | null
           security_level?: string
+          write_permissions?: string
         }
         Relationships: []
       }
@@ -468,6 +477,10 @@ export type Database = {
       check_and_add_columns: {
         Args: { p_table_name: string; column_names: string[] }
         Returns: undefined
+      }
+      get_user_email: {
+        Args: { userid: string }
+        Returns: string
       }
       has_role: {
         Args: { user_id: string; role: Database["public"]["Enums"]["app_role"] }

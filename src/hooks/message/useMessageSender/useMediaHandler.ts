@@ -1,10 +1,10 @@
 
 import { useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { encryptBlob } from "@/utils/encryption/media";
+import { encryptMedia } from "@/utils/encryption/media";
 
 export const useMediaHandler = () => {
-  const handleMediaUpload = useCallback(async (mediaFile: File, toast: any, globalOverride?: any) => {
+  const handleMediaUpload = useCallback(async (mediaFile: File, toast: any) => {
     const toastId = Date.now().toString();
     toast({
       id: toastId,
@@ -13,9 +13,9 @@ export const useMediaHandler = () => {
     });
 
     try {
-      // Encrypt the media file with optional global override
+      // Encrypt the media file
       const { encryptedData: encryptedBlob, encryptionKey, iv, mediaType, metadata } = 
-        await encryptBlob(mediaFile, globalOverride);
+        await encryptMedia(mediaFile);
 
       // Upload the encrypted file
       const fileExt = mediaFile.name.split('.').pop();

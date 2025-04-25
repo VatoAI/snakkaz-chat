@@ -1,4 +1,3 @@
-
 /**
  * Key management utilities for encryption
  */
@@ -62,7 +61,7 @@ export const generateEncryptionKey = async (): Promise<string> => {
   }
 };
 
-// Adding missing functions to resolve import errors
+// Add missing exports for encryption functions
 export const encryptSessionKey = async (key: string): Promise<string> => {
   // Implementation placeholder
   return key;

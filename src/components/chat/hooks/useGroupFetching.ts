@@ -101,7 +101,7 @@ export function useGroupFetching(currentUserId: string) {
             ...group,
             security_level: group.security_level as SecurityLevel,
             write_permissions: group.write_permissions || 'all',
-            default_message_ttl: group.default_message_ttl || null
+            default_message_ttl: group.default_message_ttl || 86400
           };
         });
 
