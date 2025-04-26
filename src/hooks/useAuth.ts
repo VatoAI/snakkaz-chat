@@ -10,7 +10,7 @@ export const useAuth = () => {
   const [passwordError, setPasswordError] = useState('');
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { setAutoLogoutTime } = useAuthContext();
+  const { setAutoLogoutTime, setIsRemembered, session, user } = useAuthContext();
 
   const validateForm = (email: string, password: string) => {
     let isValid = true;
@@ -81,14 +81,8 @@ export const useAuth = () => {
       }
 
       if (data.user) {
-        // Set auto-logout time based on rememberMe option
-        if (rememberMe) {
-          // Default to 30 minutes of inactivity for auto-logout if remembered
-          setAutoLogoutTime(30);
-        } else {
-          // Default to 5 minutes of inactivity for auto-logout if not remembered
-          setAutoLogoutTime(5);
-        }
+        // Store the remember me preference in context and localStorage
+        setIsRemembered(rememberMe);
         
         toast({
           title: "Suksess!",
@@ -161,11 +155,32 @@ export const useAuth = () => {
     }
   };
 
+  const signOut = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast({
+        title: "Utlogget",
+        description: "Du er nå logget ut.",
+      });
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast({
+        title: "Utloggingsfeil",
+        description: "Kunne ikke logge ut. Prøv igjen senere.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return {
     isLoading,
     emailError,
     passwordError,
     handleLogin,
-    handleSignup
+    handleSignup,
+    signOut,
+    session,
+    user
   };
 };
