@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, LogIn, UserPlus } from "lucide-react";
+import { Loader2, LogIn, UserPlus, Eye, EyeOff } from "lucide-react";
 
 interface LoginFormProps {
   onLogin: (email: string, password: string) => Promise<void>;
@@ -20,10 +20,15 @@ export const LoginForm = ({
 }: LoginFormProps) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     await onLogin(email, password);
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
   };
 
   return (
@@ -49,7 +54,7 @@ export const LoginForm = ({
       </div>
       
       <div className="space-y-3">
-        <label htmlFor="email" className="block text-sm font-medium text-cyberblue-300">
+        <label htmlFor="email" className="block text-sm font-medium text-white">
           E-post
         </label>
         <Input
@@ -57,7 +62,7 @@ export const LoginForm = ({
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="bg-cyberdark-800 border-cyberblue-500/30 text-cyberblue-200 placeholder:text-cyberblue-300/50 focus:border-cyberblue-400 focus:ring-2 focus:ring-cyberblue-400/50 h-12 text-base px-4"
+          className="bg-cyberdark-800 border-cyberblue-500/30 text-white placeholder:text-cyberblue-300/50 focus:border-cyberblue-400 focus:ring-2 focus:ring-cyberblue-400/50 h-12 text-base px-4"
           placeholder="din@epost.no"
           autoComplete="email"
         />
@@ -67,18 +72,28 @@ export const LoginForm = ({
       </div>
 
       <div className="space-y-3">
-        <label htmlFor="password" className="block text-sm font-medium text-cyberblue-300">
+        <label htmlFor="password" className="block text-sm font-medium text-white">
           Passord
         </label>
-        <Input
-          id="password"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="bg-cyberdark-800 border-cyberblue-500/30 text-cyberblue-200 placeholder:text-cyberblue-300/50 focus:border-cyberblue-400 focus:ring-2 focus:ring-cyberblue-400/50 h-12 text-base px-4"
-          placeholder="••••••••"
-          autoComplete="current-password"
-        />
+        <div className="relative">
+          <Input
+            id="password"
+            type={showPassword ? "text" : "password"}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="bg-cyberdark-800 border-cyberblue-500/30 text-white placeholder:text-cyberblue-300/50 focus:border-cyberblue-400 focus:ring-2 focus:ring-cyberblue-400/50 h-12 text-base px-4 pr-10"
+            placeholder="••••••••"
+            autoComplete="current-password"
+          />
+          <button
+            type="button"
+            onClick={togglePasswordVisibility}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-cyberblue-400 hover:text-cyberblue-300"
+            tabIndex={-1}
+          >
+            {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+          </button>
+        </div>
         {passwordError && (
           <p className="text-sm text-cyberred-400">{passwordError}</p>
         )}
@@ -88,6 +103,17 @@ export const LoginForm = ({
       </div>
 
       <div className="space-y-4 pt-2">
+        <div className="flex items-center">
+          <input
+            type="checkbox"
+            id="remember-me"
+            className="h-4 w-4 rounded border-gray-300 text-cyberblue-600 focus:ring-cyberblue-500"
+          />
+          <label htmlFor="remember-me" className="ml-2 block text-sm text-white">
+            Hold meg pålogget
+          </label>
+        </div>
+
         <Button
           type="submit"
           className="w-full bg-gradient-to-r from-cyberblue-500 to-cyberblue-700 hover:from-cyberblue-600 hover:to-cyberblue-800 text-white font-medium text-lg h-14 shadow-neon-blue transition-all duration-200 rounded-lg"
