@@ -1,4 +1,4 @@
-import { User, MessageSquare } from "lucide-react";
+import { User, MessageSquare, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
@@ -41,6 +41,7 @@ export const FriendListItem = ({
   const friendProfile = friend.profile;
   const username = friendProfile?.username || 'Ukjent bruker';
   const avatarUrl = friendProfile?.avatar_url;
+  const isPremium = friendProfile?.isPremium || false;
   
   // Get status color
   const getStatusColor = (status: string) => {
@@ -78,42 +79,33 @@ export const FriendListItem = ({
           </Avatar>
           <span 
             className={cn(
-              "absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-cyberdark-800",
+              "absolute bottom-0 right-0 block h-3 w-3 rounded-full border-2 border-cyberdark-800",
               getStatusColor(onlineStatus)
             )}
-          ></span>
+          />
         </div>
-        <div>
-          <div className="flex items-center gap-1">
-            <p className="text-cybergold-200 font-medium">
-              {username}
-            </p>
-            {onlineStatus !== 'offline' && (
-              <span className="text-xs text-gray-400">
-                • {onlineStatus === 'online' ? 'pålogget' : onlineStatus === 'busy' ? 'opptatt' : 'straks tilbake'}
-              </span>
+        
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center">
+            <p className="text-sm font-medium text-cybergold-100 truncate">{username}</p>
+            {isPremium && (
+              <Crown className="h-3 w-3 ml-1 text-cybergold-400" />
             )}
           </div>
           {lastMessage && (
-            <p className="text-xs text-cybergold-400 truncate max-w-[150px]">
+            <p className="text-xs text-cybergold-400 truncate">
               {lastMessage.sender.id === currentUserId ? 'Du: ' : ''}
               {lastMessage.content}
             </p>
           )}
         </div>
       </div>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="relative text-cybergold-400 hover:text-cybergold-300 hover:bg-cyberdark-600"
-      >
-        <MessageSquare className="w-5 h-5" />
-        {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-cybergold-500 text-cyberdark-900 text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-            {unreadCount}
-          </span>
-        )}
-      </Button>
+      
+      {unreadCount > 0 && (
+        <div className="flex items-center justify-center bg-cybergold-500 text-cyberdark-800 rounded-full h-5 min-w-[20px] px-1 text-xs font-medium">
+          {unreadCount}
+        </div>
+      )}
     </div>
   );
 };
