@@ -1,12 +1,20 @@
-
 import { CheckCircle, XCircle, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Friend } from "./types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 
+// Import the FriendRecord type from the useOptimizedFriends hook
+type FriendRecord = {
+  id: string;
+  username: string | null;
+  full_name: string | null;
+  avatar_url: string | null;
+  status: 'online' | 'busy' | 'brb' | 'offline';
+  last_seen: string | null;
+};
+
 interface FriendRequestsProps {
-  friendRequests: Friend[];
+  friendRequests: FriendRecord[];
   onAccept: (friendshipId: string) => void;
   onReject: (friendshipId: string) => void;
   userProfiles?: Record<string, {username: string | null, avatar_url: string | null}>;
@@ -25,15 +33,13 @@ export const FriendRequests = ({
       <h3 className="text-sm font-medium text-cybergold-300 px-1">Venneforespørsler ({friendRequests.length})</h3>
       <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
         {friendRequests.map((request) => {
-          // Get user profile info from either friend object or userProfiles
-          const userId = request.user_id;
-          const userProfile = request.profile || userProfiles[userId];
-          const username = userProfile?.username || 'Ukjent bruker';
-          const avatarUrl = userProfile?.avatar_url;
+          const userId = request.id;
+          const username = request.username || 'Ukjent bruker';
+          const avatarUrl = request.avatar_url;
           
           return (
             <div 
-              key={request.id}
+              key={userId}
               className="flex items-center justify-between gap-2 p-3 bg-cyberdark-800/70 border border-cybergold-500/30 rounded-md"
             >
               <div className="flex items-center gap-3">
@@ -58,7 +64,7 @@ export const FriendRequests = ({
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => onAccept(request.id)}
+                  onClick={() => onAccept(userId)}
                   className="h-8 w-8 text-green-500 hover:text-green-400 hover:bg-green-400/10"
                   title="Godta venneforespørsel"
                 >
@@ -67,7 +73,7 @@ export const FriendRequests = ({
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => onReject(request.id)}
+                  onClick={() => onReject(userId)}
                   className="h-8 w-8 text-red-500 hover:text-red-400 hover:bg-red-400/10"
                   title="Avslå venneforespørsel"
                 >
