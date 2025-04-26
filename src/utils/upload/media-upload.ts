@@ -8,10 +8,82 @@ export const checkNetworkConnection = async (): Promise<boolean> => {
   try {
     // Try to fetch a small resource from Supabase to test connection
     const { error } = await supabase.from('health_check').select('count').limit(1).maybeSingle();
-    return !error;
+    
+    // Try a standard ping if that fails
+    if (error) {
+      // Try a more reliable backup method
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      
+      try {
+        const response = await fetch('https://api.supabase.com/ping', {
+          method: 'GET',
+          signal: controller.signal,
+          cache: 'no-cache'
+        });
+        clearTimeout(timeoutId);
+        return response.ok;
+      } catch (e) {
+        return false;
+      }
+    }
+    
+    return true;
   } catch (e) {
+    return navigator.onLine; // Fallback to navigator.onLine as last resort
+  }
+};
+
+/**
+ * Ensure the storage bucket exists
+ */
+export const ensureStorageBucket = async (): Promise<boolean> => {
+  try {
+    // Check if bucket exists
+    const { data: buckets, error: listError } = await supabase.storage.listBuckets();
+    
+    if (listError) {
+      console.error('Error listing buckets:', listError);
+      return false;
+    }
+    
+    const bucketExists = buckets.some(bucket => bucket.name === 'chat-media');
+    
+    if (bucketExists) {
+      return true;
+    }
+    
+    // Create bucket if it doesn't exist
+    const { error: createError } = await supabase.storage.createBucket('chat-media', {
+      public: true,
+      fileSizeLimit: 20971520, // 20MB
+      allowedMimeTypes: ['image/*', 'video/*', 'audio/*', 'application/pdf']
+    });
+    
+    if (createError) {
+      console.error('Error creating bucket:', createError);
+      return false;
+    }
+    
+    return true;
+  } catch (e) {
+    console.error('Error ensuring storage bucket:', e);
     return false;
   }
+};
+
+/**
+ * Check if file type is allowed
+ */
+export const isAllowedFileType = (file: File): boolean => {
+  const allowedTypes = [
+    'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
+    'video/mp4', 'video/webm', 'video/ogg',
+    'audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/webm',
+    'application/pdf'
+  ];
+  
+  return allowedTypes.includes(file.type);
 };
 
 /**
@@ -23,21 +95,41 @@ export const uploadMedia = async (
 ): Promise<{ path: string; publicUrl: string }> => {
   try {
     // Validate file
-    if (!file) throw new Error("No file provided");
-    if (file.size > 10 * 1024 * 1024) throw new Error("File too large (max 10MB)");
-
+    if (!file) throw new Error("Ingen fil angitt");
+    
+    // Check file type
+    if (!isAllowedFileType(file)) {
+      throw new Error("Filtypen støttes ikke. Støttede formater inkluderer bilder, video, lyd og PDF");
+    }
+    
+    // Check file size (10MB max)
+    if (file.size > 10 * 1024 * 1024) {
+      throw new Error("Filen er for stor (maksimalt 10MB)");
+    }
+    
     // Check network connection first
     const isConnected = await checkNetworkConnection();
     if (!isConnected) {
       throw new Error("Ingen nettverkstilkobling. Sjekk internettforbindelsen din og prøv igjen.");
     }
+    
+    // Ensure bucket exists
+    const bucketExists = await ensureStorageBucket();
+    if (!bucketExists) {
+      throw new Error("Kunne ikke opprette eller få tilgang til lagringsområdet. Prøv igjen senere.");
+    }
 
-    // Create unique file path
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
-    const filePath = `${fileName}`;
+    // Create unique file path with sanitized filename
+    const fileExt = file.name.split('.').pop()?.toLowerCase() || 'bin';
+    const sanitizedName = file.name
+      .replace(/[^a-zA-Z0-9._-]/g, '_') // Replace special chars with underscore
+      .substring(0, 50); // Limit filename length
+    
+    const timestamp = Date.now();
+    const randomStr = Math.random().toString(36).substring(2, 8);
+    const filePath = `${timestamp}_${randomStr}_${sanitizedName}`;
 
-    console.log("Starting upload:", { fileName, size: file.size, type: file.type });
+    console.log("Starting upload:", { fileName: sanitizedName, size: file.size, type: file.type });
 
     // Set up retry mechanism with exponential backoff
     const maxRetries = 3;
@@ -53,19 +145,14 @@ export const uploadMedia = async (
           const { data, error } = await uploadWithProgress(file, filePath, onProgress);
           if (error) throw error;
           
-          // Get public URL - with domain-aware path generation
+          // Get public URL
           const { data: { publicUrl } } = supabase.storage
             .from('chat-media')
             .getPublicUrl(filePath);
 
-          // For production domain, we customize the URL (optional)
-          const customDomainUrl = process.env.NODE_ENV === 'production' 
-            ? `https://media.snakkaz.com/chat-media/${filePath}`
-            : publicUrl;
-
           return {
             path: filePath,
-            publicUrl: customDomainUrl
+            publicUrl: publicUrl
           };
         } else {
           // Standard upload without progress tracking
@@ -73,7 +160,7 @@ export const uploadMedia = async (
             .from('chat-media')
             .upload(filePath, file, {
               cacheControl: '3600',
-              upsert: false
+              upsert: true
             });
 
           if (error) throw error;
@@ -82,13 +169,9 @@ export const uploadMedia = async (
             .from('chat-media')
             .getPublicUrl(filePath);
 
-          const customDomainUrl = process.env.NODE_ENV === 'production' 
-            ? `https://media.snakkaz.com/chat-media/${filePath}`
-            : publicUrl;
-
           return {
             path: filePath,
-            publicUrl: customDomainUrl
+            publicUrl: publicUrl
           };
         }
       } catch (error) {
@@ -105,7 +188,7 @@ export const uploadMedia = async (
     }
 
     // If we've exhausted all retries, throw the last error
-    throw lastError || new Error("Upload failed after multiple attempts");
+    throw lastError || new Error("Opplasting mislyktes etter flere forsøk. Sjekk din nettverkstilkobling.");
   } catch (error) {
     console.error("Upload failed:", error);
     throw error;
@@ -130,6 +213,9 @@ const uploadWithProgress = async (
 
         const xhr = new XMLHttpRequest();
         xhr.open('PUT', data.signedUrl);
+        
+        // Add appropriate content type
+        xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
 
         // Set up progress tracking
         xhr.upload.onprogress = (event) => {
@@ -143,13 +229,20 @@ const uploadWithProgress = async (
           if (xhr.status === 200) {
             resolve({ data: { path: filePath }, error: null });
           } else {
-            reject(new Error(`Server responded with status ${xhr.status}`));
+            reject(new Error(`Server svarte med status ${xhr.status}: ${xhr.statusText}`));
           }
         };
 
         xhr.onerror = () => {
-          reject(new Error('Network error during upload'));
+          reject(new Error('Nettverksfeil under opplastingen'));
         };
+        
+        xhr.ontimeout = () => {
+          reject(new Error('Tidsavbrudd under opplasting'));
+        };
+        
+        // Set timeout to 60 seconds
+        xhr.timeout = 60000;
 
         xhr.send(file);
       })
