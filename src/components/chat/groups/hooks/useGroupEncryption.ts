@@ -52,10 +52,10 @@ export function useGroupEncryption(
     try {
       if (!group?.id) return;
 
-      // Use group_encryption table instead of group_encryption_keys
+      // Use group_encryption table with session_key instead of encryption_key
       const { data, error } = await supabase
         .from('group_encryption')
-        .select('encryption_key')
+        .select('session_key')
         .eq('group_id', group.id)
         .single();
 
@@ -64,8 +64,8 @@ export function useGroupEncryption(
         return;
       }
 
-      if (data?.encryption_key) {
-        setEncryptionKey(data.encryption_key);
+      if (data?.session_key) {
+        setEncryptionKey(data.session_key);
         setIsEncryptionEnabled(true);
       }
     } catch (err) {
@@ -105,12 +105,12 @@ export function useGroupEncryption(
         throw new Error('Kunne ikke generere krypteringsnøkkel');
       }
       
-      // Lagre nøkkelen i databasen - using group_encryption table
+      // Lagre nøkkelen i databasen - using group_encryption table with session_key
       const { error: saveError } = await supabase
         .from('group_encryption')
         .upsert({
           group_id: group.id,
-          encryption_key: keyPair.key,
+          session_key: keyPair.key,
           created_by: currentUserId,
           created_at: new Date().toISOString()
         });
@@ -176,12 +176,12 @@ export function useGroupEncryption(
         throw new Error('Kryptering feilet');
       }
       
-      // Use the existing messages table to store encrypted data
+      // Use the existing messages table to store encrypted data with encrypted_content
       const { error: updateError } = await supabase
         .from('messages')
         .insert({
           group_id: group.id,
-          content: encryptedData, // Store encrypted data in content field
+          encrypted_content: encryptedData, // Store encrypted data in encrypted_content field
           sender_id: currentUserId,
           type: 'encrypted_group_data',
           created_at: new Date().toISOString()
@@ -219,22 +219,22 @@ export function useGroupEncryption(
       
       setEncryptionStatus('decrypting');
       
-      // Hent kryptert data fra messages tabellen
+      // Hent kryptert data fra messages tabellen, using encrypted_content field
       const { data, error: fetchError } = await supabase
         .from('messages')
-        .select('content')
+        .select('encrypted_content')
         .eq('group_id', group.id)
         .eq('type', 'encrypted_group_data')
         .order('created_at', { ascending: false })
         .limit(1)
         .single();
         
-      if (fetchError || !data?.content) {
+      if (fetchError || !data?.encrypted_content) {
         throw new Error('Kunne ikke hente kryptert data');
       }
       
       // Dekryptere dataen
-      const decryptedData = await decryptPage(data.content, encryptionKey);
+      const decryptedData = await decryptPage(data.encrypted_content, encryptionKey);
       
       if (!decryptedData) {
         throw new Error('Dekryptering feilet');
