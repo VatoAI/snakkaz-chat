@@ -389,20 +389,67 @@ export class EnhancedMediaUploader {
    */
   private async ensureStorageBucket(): Promise<boolean> {
     try {
+      // First, try using the bucket directly instead of checking/creating it
+      // This works if the bucket has been pre-created in the Supabase project
+      try {
+        // Simple test operation to see if we can access the bucket 
+        const { data, error } = await supabase.storage
+          .from('chat-media')
+          .list('', { limit: 1 });
+          
+        if (!error) {
+          // We can access the bucket, so it exists
+          return true;
+        }
+      } catch (directError) {
+        console.warn('Error accessing storage bucket directly:', directError);
+        // Continue with the fallback approach
+      }
+      
+      // Fallback: Try to list buckets to check if it exists
       const { data: buckets, error: listError } = await supabase.storage.listBuckets();
       
       if (listError) {
         console.error('Error listing buckets:', listError);
+        
+        // If we get a permission error, the bucket may still exist but we can't list it
+        // Let's try a direct upload to see if the bucket works regardless
+        try {
+          const testData = new Blob(['test'], { type: 'text/plain' });
+          const testPath = `test_${Date.now()}.txt`;
+          
+          const { error: testError } = await supabase.storage
+            .from('chat-media')
+            .upload(testPath, testData, {
+              upsert: true
+            });
+            
+          // If no error, we can use the bucket
+          if (!testError) {
+            // Clean up the test file
+            supabase.storage.from('chat-media').remove([testPath])
+              .catch(e => console.warn('Error cleaning up test file:', e));
+              
+            return true;
+          } else {
+            console.error('Test upload failed:', testError);
+          }
+        } catch (testError) {
+          console.error('Test upload failed:', testError);
+        }
+        
         return false;
       }
       
+      // Check if the bucket exists
       const bucketExists = buckets.some(bucket => bucket.name === 'chat-media');
       
       if (bucketExists) {
         return true;
       }
       
-      // Create bucket if it doesn't exist
+      // If bucket doesn't exist and we have permission to list buckets,
+      // try to create it - this will only work with admin permissions
       const { error: createError } = await supabase.storage.createBucket('chat-media', {
         public: true,
         fileSizeLimit: 52428800, // 50MB
@@ -411,6 +458,31 @@ export class EnhancedMediaUploader {
       
       if (createError) {
         console.error('Error creating bucket:', createError);
+        
+        // Even though creation failed, the bucket might have been created by another admin previously
+        // Let's try a direct upload to see if the bucket works regardless
+        try {
+          const testData = new Blob(['test'], { type: 'text/plain' });
+          const testPath = `test_${Date.now()}.txt`;
+          
+          const { error: testError } = await supabase.storage
+            .from('chat-media')
+            .upload(testPath, testData, {
+              upsert: true
+            });
+            
+          // If no error, we can use the bucket
+          if (!testError) {
+            // Clean up the test file
+            supabase.storage.from('chat-media').remove([testPath])
+              .catch(e => console.warn('Error cleaning up test file:', e));
+              
+            return true;
+          }
+        } catch (testError) {
+          console.error('Test upload failed:', testError);
+        }
+        
         return false;
       }
       
