@@ -52,8 +52,9 @@ export function useGroupEncryption(
     try {
       if (!group?.id) return;
 
+      // Use group_encryption table instead of group_encryption_keys
       const { data, error } = await supabase
-        .from('group_encryption_keys')
+        .from('group_encryption')
         .select('encryption_key')
         .eq('group_id', group.id)
         .single();
@@ -104,13 +105,12 @@ export function useGroupEncryption(
         throw new Error('Kunne ikke generere krypteringsnøkkel');
       }
       
-      // Lagre nøkkelen i databasen
+      // Lagre nøkkelen i databasen - using group_encryption table
       const { error: saveError } = await supabase
-        .from('group_encryption_keys')
+        .from('group_encryption')
         .upsert({
           group_id: group.id,
           encryption_key: keyPair.key,
-          key_id: keyPair.keyId,
           created_by: currentUserId,
           created_at: new Date().toISOString()
         });
@@ -176,14 +176,15 @@ export function useGroupEncryption(
         throw new Error('Kryptering feilet');
       }
       
-      // Oppdater databasen med kryptert versjon
+      // Use the existing messages table to store encrypted data
       const { error: updateError } = await supabase
-        .from('group_encrypted_data')
-        .upsert({
+        .from('messages')
+        .insert({
           group_id: group.id,
-          encrypted_data: encryptedData,
-          updated_at: new Date().toISOString(),
-          updated_by: currentUserId
+          content: encryptedData, // Store encrypted data in content field
+          sender_id: currentUserId,
+          type: 'encrypted_group_data',
+          created_at: new Date().toISOString()
         });
         
       if (updateError) {
@@ -218,19 +219,22 @@ export function useGroupEncryption(
       
       setEncryptionStatus('decrypting');
       
-      // Hent kryptert data fra databasen
+      // Hent kryptert data fra messages tabellen
       const { data, error: fetchError } = await supabase
-        .from('group_encrypted_data')
-        .select('encrypted_data')
+        .from('messages')
+        .select('content')
         .eq('group_id', group.id)
+        .eq('type', 'encrypted_group_data')
+        .order('created_at', { ascending: false })
+        .limit(1)
         .single();
         
-      if (fetchError || !data?.encrypted_data) {
+      if (fetchError || !data?.content) {
         throw new Error('Kunne ikke hente kryptert data');
       }
       
       // Dekryptere dataen
-      const decryptedData = await decryptPage(data.encrypted_data, encryptionKey);
+      const decryptedData = await decryptPage(data.content, encryptionKey);
       
       if (!decryptedData) {
         throw new Error('Dekryptering feilet');
