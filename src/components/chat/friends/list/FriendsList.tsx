@@ -130,7 +130,7 @@ export const FriendsList = ({
             readMessages={readMessages}
             onSelect={handleSelectFriend}
             unreadCount={unreadCountByFriend[friend.friend_id] || 0}
-            onlineStatus={friend.profile.status}
+            onlineStatus="offline" // Default to offline instead of using friend.profile.status
           />
         ))}
       </div>
