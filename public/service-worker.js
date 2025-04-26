@@ -1,4 +1,3 @@
-
 const CACHE_NAME = 'snakkaz-cache-v5';
 const urlsToCache = [
   '/',
@@ -12,6 +11,15 @@ const urlsToCache = [
   '/register',
   'https://www.snakkaz.com/thumbnail.png',
   'https://dash.snakkaz.com/thumbnail.png'
+];
+
+// List of external service domains to bypass caching for
+const EXTERNAL_SERVICE_DOMAINS = [
+  'analyser.snakkaz.com',
+  'docs.snakkaz.com',
+  'ai-dash.snakkaz.com',
+  'analytics.snakkaz.com',
+  'static.cloudflareinsights.com'
 ];
 
 // Install Service Worker and cache essential resources
@@ -61,20 +69,53 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+// Check if a URL belongs to an external service
+function isExternalServiceUrl(url) {
+  try {
+    const urlObj = new URL(url);
+    return EXTERNAL_SERVICE_DOMAINS.some(domain => urlObj.hostname.includes(domain));
+  } catch (e) {
+    return false;
+  }
+}
+
 // Network-first strategy for most requests, falling back to cache
 self.addEventListener('fetch', (event) => {
-  // Skip cross-origin requests
-  if (!event.request.url.startsWith(self.location.origin)) {
+  const url = event.request.url;
+  
+  // Skip cross-origin requests that aren't in our allowed list
+  if (!url.startsWith(self.location.origin) && 
+      !urlsToCache.includes(url) && 
+      !isExternalServiceUrl(url)) {
     return;
   }
   
   // Skip supabase API requests
-  if (event.request.url.includes('supabase')) {
+  if (url.includes('supabase')) {
+    return;
+  }
+  
+  // Special handling for external services - don't cache, just pass through
+  if (isExternalServiceUrl(url)) {
+    event.respondWith(
+      fetch(event.request).catch(() => {
+        // For external service URLs, return an empty JSON response instead of failing
+        // This prevents console errors when services are unavailable
+        if (event.request.headers.get('Accept')?.includes('application/json')) {
+          return new Response(JSON.stringify({ status: 'service_unavailable' }), {
+            headers: { 'Content-Type': 'application/json' },
+            status: 200
+          });
+        }
+        // For other resource types (like scripts), return a minimal response
+        return new Response('', { status: 200 });
+      })
+    );
     return;
   }
 
   // For HTML files, always try network first
-  if (event.request.headers.get('Accept').includes('text/html')) {
+  if (event.request.headers.get('Accept')?.includes('text/html')) {
     event.respondWith(
       fetch(event.request)
         .then(response => {

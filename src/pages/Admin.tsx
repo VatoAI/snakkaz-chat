@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, Settings, Users, AlertCircle, BarChart, Shield } from "lucide-react";
+import { ChevronLeft, Settings, Users, AlertCircle, BarChart, Shield, Globe } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { AdminApiKeySection } from "@/components/AdminApiKeySection";
 import { AdminLogoSection } from "@/components/AdminLogoSection";
@@ -15,6 +15,7 @@ import { useProgressState } from "@/hooks/useProgressState";
 import AdminUsersManager from "@/components/admin/AdminUsersManager";
 import { AdminErrorLogs } from "@/components/admin/AdminErrorLogs";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
+import ExternalServicesStatus from "@/components/admin/ExternalServicesStatus";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
@@ -166,7 +167,7 @@ const Admin = () => {
           </div>
           
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
-            <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 bg-cyberdark-900">
+            <TabsList className="grid w-full grid-cols-3 md:grid-cols-7 bg-cyberdark-900">
               <TabsTrigger value="dashboard">
                 <BarChart className="h-4 w-4 mr-2" />
                 Dashboard
@@ -186,6 +187,10 @@ const Admin = () => {
               <TabsTrigger value="logs">
                 <AlertCircle className="h-4 w-4 mr-2" />
                 Logger
+              </TabsTrigger>
+              <TabsTrigger value="services">
+                <Globe className="h-4 w-4 mr-2" />
+                Tjenester
               </TabsTrigger>
               <TabsTrigger value="appearance">
                 <Settings className="h-4 w-4 mr-2" />
@@ -267,6 +272,32 @@ const Admin = () => {
             
             <TabsContent value="appearance" className="space-y-6">
               <AdminLogoSection />
+            </TabsContent>
+
+            <TabsContent value="services" className="space-y-6">
+              <Card className="bg-cyberdark-900 border-gray-700">
+                <CardHeader>
+                  <CardTitle className="text-cyberblue-300">Eksterne Tjenester</CardTitle>
+                  <CardDescription>Overvåk tilkoblingsstatus for eksterne SnakkaZ-tjenester</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ExternalServicesStatus />
+                  
+                  <div className="mt-6 pt-4 border-t border-gray-700">
+                    <h3 className="font-medium text-cyberblue-300 mb-2">Opprydding</h3>
+                    <p className="text-gray-400 mb-4 text-sm">
+                      Hvis du opplever problemer med signalering eller bruker-tilstedeværelse, 
+                      kan du kjøre opprydningsverktøyet.
+                    </p>
+                    <Button 
+                      onClick={triggerCleanup}
+                      className="bg-cyberblue-500 hover:bg-cyberblue-600"
+                    >
+                      Kjør opprydning
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             </TabsContent>
           </Tabs>
         </div>
