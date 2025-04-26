@@ -13,15 +13,14 @@ import { SecuritySettings } from "@/components/security/SecuritySettings";
 import { useAuth } from "@/contexts/AuthContext";
 import { StatusDropdown } from "@/components/online-users/StatusDropdown";
 import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
-import { usePresence } from "@/components/chat/hooks/usePresence";
-import { useStatusRefresh } from "@/hooks/useStatusRefresh";
+import { useGlobalPresence } from "@/contexts/PresenceContext";
 import { supabase } from "@/integrations/supabase/client";
 import { NotificationSettings } from "@/components/chat/notification/NotificationSettings";
 
 const Profile = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("profile");
-  const { isRefreshing, lastUpdated, refresh } = useStatusRefresh();
+  const { isRefreshing, lastUpdated, refresh } = useGlobalPresence();
   
   const {
     loading,
@@ -38,13 +37,6 @@ const Profile = () => {
   
   const { validateUsername } = useProfileValidation();
   const { user } = useAuth();
-
-  const { currentStatus, handleStatusChange } = usePresence(
-    user?.id,
-    'online',
-    undefined,
-    false
-  );
 
   const uploadAvatar = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
@@ -165,10 +157,7 @@ const Profile = () => {
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <span className="text-sm text-cyberdark-400">Status:</span>
-              <StatusDropdown 
-                currentStatus={currentStatus} 
-                onStatusChange={handleStatusChange} 
-              />
+              <StatusDropdown />
             </div>
             
             <Button
