@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -23,11 +22,12 @@ export default {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
-        background: "hsl(var(--background))",
+        background: "#0a0a0a", // sort
         foreground: "hsl(var(--foreground))",
         primary: {
-          DEFAULT: "hsl(var(--primary))",
+          DEFAULT: "#2563eb", // blå
           foreground: "hsl(var(--primary-foreground))",
+          dark: "#1e40af",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
@@ -44,6 +44,8 @@ export default {
         accent: {
           DEFAULT: "hsl(var(--accent))",
           foreground: "hsl(var(--accent-foreground))",
+          red: "#ef4444", // rød
+          blue: "#2563eb",
         },
         popover: {
           DEFAULT: "hsl(var(--popover))",
@@ -66,23 +68,26 @@ export default {
           900: "#354790",
           950: "#232d54",
         },
-        // Add cyberpunk theme colors
+        gold: {
+          DEFAULT: "#FFD700",
+          dark: "#B8860B",
+        },
         cyberblue: {
           50: "#e6f7ff",
           100: "#b3e0ff",
           200: "#80caff",
           300: "#4db3ff",
-          400: "#1a9dff",
-          500: "#0088ff",
+          400: "#60a5fa",
+          500: "#2563eb",
           600: "#006bb3",
-          700: "#004d80",
-          800: "#00304d",
+          700: "#1e40af",
+          800: "#172554",
           900: "#00121a",
         },
         cyberdark: {
           950: "#0a0a0a",
-          900: "#1a1a1a",
-          800: "#2b2b2b",
+          900: "#0a0a0a",
+          800: "#18181b",
           700: "#3d3d3d",
           600: "#4f4f4f",
         },
@@ -103,7 +108,7 @@ export default {
           100: "#ffb3b3",
           200: "#ff8080",
           300: "#ff4d4d",
-          400: "#ff1a1a",
+          400: "#f87171",
           500: "#e60000",
           600: "#b30000",
           700: "#800000",

@@ -1,50 +1,87 @@
 import { useState, useEffect, useRef } from "react";
 import { IconArrowsMaximize, IconExclamationCircle, IconRefresh } from "@tabler/icons-react";
 import { ExpiringMediaContainer } from "./ExpiringMediaContainer";
+import CryptoJS from "crypto-js";
 
 interface ImageMediaProps {
   url: string;
   ttl?: number | null;
   onExpired?: () => void;
   retryDecryption?: () => void;
+  encryptionKey?: string; // NYTT: nøkkel for dekryptering
 }
 
 export const ImageMedia = ({ 
   url, 
   ttl = null,
   onExpired,
-  retryDecryption
+  retryDecryption,
+  encryptionKey
 }: ImageMediaProps) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  const [decryptedUrl, setDecryptedUrl] = useState<string | null>(null);
+  const [isDecrypting, setIsDecrypting] = useState(false);
   const imageRef = useRef<HTMLImageElement>(null);
-  
+
+  // Dekrypter bildet hvis det er kryptert
   useEffect(() => {
-    const img = new Image();
-    img.src = url;
-    
+    let revoked = false;
+    async function decryptImage() {
+      if (!encryptionKey) {
+        setDecryptedUrl(url);
+        return;
+      }
+      setIsDecrypting(true);
+      setHasError(false);
+      try {
+        const resp = await fetch(url);
+        const encryptedText = await resp.text();
+        const decrypted = CryptoJS.AES.decrypt(encryptedText, encryptionKey);
+        const wordArray = decrypted;
+        // Konverter til Uint8Array
+        const uint8 = new Uint8Array(wordArray.sigBytes);
+        for (let i = 0; i < wordArray.sigBytes; i++) {
+          uint8[i] = (wordArray.words[Math.floor(i / 4)] >> (24 - 8 * (i % 4))) & 0xff;
+        }
+        const blob = new Blob([uint8], { type: "image/webp" });
+        const objectUrl = URL.createObjectURL(blob);
+        if (!revoked) setDecryptedUrl(objectUrl);
+      } catch (e) {
+        setHasError(true);
+      } finally {
+        setIsDecrypting(false);
+      }
+    }
+    decryptImage();
+    return () => {
+      revoked = true;
+      if (decryptedUrl) URL.revokeObjectURL(decryptedUrl);
+    };
+    // eslint-disable-next-line
+  }, [url, encryptionKey]);
+
+  useEffect(() => {
+    if (!decryptedUrl) return;
+    const img = new window.Image();
+    img.src = decryptedUrl;
     img.onload = () => {
       setIsLoaded(true);
       setHasError(false);
-      setDimensions({
-        width: img.width,
-        height: img.height
-      });
+      setDimensions({ width: img.width, height: img.height });
     };
-    
     img.onerror = () => {
       setHasError(true);
       setIsLoaded(false);
     };
-    
     return () => {
       img.onload = null;
       img.onerror = null;
     };
-  }, [url]);
-  
+  }, [decryptedUrl]);
+
   const handleImageClick = () => {
     setIsFullscreen(true);
   };
@@ -60,43 +97,15 @@ export const ImageMedia = ({
     }
   };
 
-  // Calculate responsive size based on original dimensions
-  const getResponsiveSize = () => {
-    const maxWidth = 320;  // Maximum width for thumbnails
-    const maxHeight = 240; // Maximum height for thumbnails
-    
-    if (dimensions.width === 0 || dimensions.height === 0) {
-      return { width: 'auto', height: 'auto' };
-    }
-    
-    // Calculate aspect ratio
-    const aspectRatio = dimensions.width / dimensions.height;
-    
-    // Determine if width or height should be constrained
-    if (dimensions.width > maxWidth || dimensions.height > maxHeight) {
-      if (aspectRatio > 1) {
-        // Wider than tall, constrain width
-        return {
-          width: `${maxWidth}px`,
-          height: `${Math.min(maxHeight, maxWidth / aspectRatio)}px`
-        };
-      } else {
-        // Taller than wide, constrain height
-        return {
-          width: `${Math.min(maxWidth, maxHeight * aspectRatio)}px`,
-          height: `${maxHeight}px`
-        };
-      }
-    }
-    
-    // Image is already smaller than maximums
-    return {
-      width: `${dimensions.width}px`,
-      height: `${dimensions.height}px`
-    };
+  // Responsive visning
+  const responsiveSize = {
+    maxWidth: '80vw',
+    maxHeight: '40vh',
+    width: 'auto',
+    height: 'auto',
+    borderRadius: '0.75rem',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
   };
-
-  const responsiveSize = getResponsiveSize();
 
   if (hasError) {
     return (
@@ -117,15 +126,23 @@ export const ImageMedia = ({
   return (
     <ExpiringMediaContainer ttl={ttl} onExpired={onExpired}>
       <div className="mt-2 relative group">
-        <img
-          ref={imageRef}
-          src={url}
-          alt="Encrypted message attachment"
-          className={`rounded-md ${isLoaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-200 cursor-pointer object-contain`}
-          onClick={handleImageClick}
-          style={responsiveSize}
-          onLoad={() => setIsLoaded(true)}
-        />
+        {isDecrypting && (
+          <div className="flex items-center justify-center min-h-[120px]">
+            <div className="h-7 w-7 border-2 border-t-transparent border-cyberblue-400 rounded-full animate-spin"></div>
+            <span className="ml-2 text-xs text-muted-foreground">Dekrypterer bilde...</span>
+          </div>
+        )}
+        {decryptedUrl && (
+          <img
+            ref={imageRef}
+            src={decryptedUrl}
+            alt="Encrypted message attachment"
+            className={`rounded-lg shadow-lg object-cover cursor-pointer ${isLoaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-200`}
+            onClick={handleImageClick}
+            style={responsiveSize}
+            onLoad={() => setIsLoaded(true)}
+          />
+        )}
         
         {!isLoaded && (
           <div className="absolute inset-0 flex items-center justify-center bg-cyberdark-800/50 rounded-md">
@@ -149,7 +166,7 @@ export const ImageMedia = ({
             onClick={handleCloseFullscreen}
           >
             <img 
-              src={url}
+              src={decryptedUrl || url}
               alt="Fullscreen view" 
               className="max-w-[90vw] max-h-[90vh] object-contain"
             />
