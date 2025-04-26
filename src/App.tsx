@@ -11,10 +11,12 @@ import Info from '@/pages/Info';
 import Admin from '@/pages/Admin';
 import Login from '@/pages/Login';
 import { useProfileSync } from '@/hooks/useProfileSync';
+import { useStorageInit } from '@/hooks/useStorageInit';
 import "./App.css";
 
 function AppContent() {
-  // Aktiver global profilsynkronisering
+  // Initialize storage buckets and profile synchronization
+  useStorageInit();
   useProfileSync();
   
   return (
