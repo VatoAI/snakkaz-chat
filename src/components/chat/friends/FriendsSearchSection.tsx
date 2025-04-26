@@ -12,7 +12,8 @@ interface FriendsSearchSectionProps {
 
 export const FriendsSearchSection = ({ 
   currentUserId, 
-  onSendFriendRequest 
+  onSendFriendRequest,
+  existingFriends = []
 }: FriendsSearchSectionProps) => {
   const [searchUsername, setSearchUsername] = useState("");
   const [searchResults, setSearchResults] = useState<UserProfile[]>([]);
@@ -33,7 +34,11 @@ export const FriendsSearchSection = ({
 
       if (error) throw error;
 
-      const filteredResults = data?.filter(profile => profile.id !== currentUserId) || [];
+      // Filter out the current user and existing friends
+      const filteredResults = data?.filter(profile => 
+        profile.id !== currentUserId && !existingFriends.includes(profile.id)
+      ) || [];
+      
       setSearchResults(filteredResults);
     } catch (error) {
       console.error('Error searching users:', error);
