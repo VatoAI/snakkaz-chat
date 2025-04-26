@@ -1,6 +1,6 @@
 
 import { useState, useCallback, useEffect } from "react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/contexts/AuthContext";
 import { useMessages } from "@/hooks/useMessages";
 import { useProfiles } from "@/hooks/useProfiles";
 import { usePresence } from "@/hooks/usePresence";
@@ -8,12 +8,11 @@ import { ChatLayout } from "./components/ChatLayout";
 import { useWebRTC } from "@/hooks/useWebRTC";
 import { useFriendships } from "@/hooks/useFriendships";
 import { Friend } from "@/components/chat/friends/types";
-import { MessageState } from "@/hooks/message/MessageProvider";
 import { DecryptedMessage } from "@/types/message";
 
 const ChatPage = () => {
   const { user } = useAuth();
-  const { webRTCManager, initializeWebRTC } = useWebRTC();
+  const { manager: webRTCManager, setupWebRTC: initializeWebRTC } = useWebRTC();
   const { friends, friendships, friendsMap } = useFriendships();
   const { userProfiles, fetchProfiles } = useProfiles();
   const { userPresence, currentStatus, handleStatusChange } = usePresence(user?.id || null);
@@ -27,12 +26,9 @@ const ChatPage = () => {
   // Init WebRTC connections
   useEffect(() => {
     if (user && !webRTCManager) {
-      initializeWebRTC(user.id, (peerId: string, message: string) => {
-        console.log(`Message from ${peerId}: ${message}`);
-        chatState.addP2PMessage(peerId, message);
-      });
+      initializeWebRTC(user.id);
     }
-  }, [user, webRTCManager, initializeWebRTC, chatState]);
+  }, [user, webRTCManager, initializeWebRTC]);
 
   // Load initial data
   useEffect(() => {
