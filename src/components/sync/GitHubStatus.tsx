@@ -1,5 +1,7 @@
+
 import { useState, useEffect } from "react";
 import { Github, GitCommit, GitBranch, GitPullRequest, Clock, User } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface CommitInfo {
   id: string;
@@ -12,6 +14,7 @@ interface CommitInfo {
 export const GitHubStatus = () => {
   const [commits, setCommits] = useState<CommitInfo[]>([]);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
   
   useEffect(() => {
     const simulateCommits = () => {
@@ -21,31 +24,24 @@ export const GitHubStatus = () => {
         const mockCommits: CommitInfo[] = [
           {
             id: "8d7f3c2",
-            message: "Fix responsive design issues in project grid",
+            message: "Enhance chat message components and media display",
             author: "johndoe",
-            date: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 minutes ago
+            date: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
             branch: "main"
           },
           {
             id: "3f5e2a1",
-            message: "Update API endpoints for domain health checks",
+            message: "Implement subscription system database schema",
             author: "janedoe",
-            date: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
-            branch: "feature/domain-monitoring"
+            date: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
+            branch: "feature/subscriptions"
           },
           {
             id: "9c8b7a6",
-            message: "Implement custom domain support for www.snakkaz.com",
+            message: "Update message bubble styling and media handling",
             author: "johndoe",
-            date: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(), // 5 hours ago
-            branch: "feature/custom-domain"
-          },
-          {
-            id: "5d4c3b2",
-            message: "Merge pull request #42: Enhanced cyberpunk theme",
-            author: "system",
-            date: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
-            branch: "main"
+            date: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
+            branch: "feature/message-ui"
           }
         ];
         
@@ -55,16 +51,6 @@ export const GitHubStatus = () => {
     };
     
     simulateCommits();
-    
-    const setupGitHubWebhookListener = () => {
-      console.log("Setting up GitHub webhook listener simulation");
-      
-      return () => {
-        console.log("Cleaning up GitHub webhook listener simulation");
-      };
-    };
-    
-    setupGitHubWebhookListener();
     
     const interval = setInterval(simulateCommits, 5 * 60 * 1000);
     
