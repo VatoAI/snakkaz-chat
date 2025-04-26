@@ -101,7 +101,10 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   }
 
   function handleSendMessage() {
-    if ((message.trim() || attachments.length > 0) && !uploadState.isUploading && !isLoading) {
+    // Allow sending either text OR attachments (or both)
+    const hasContent = message.trim().length > 0 || attachments.length > 0;
+    
+    if (hasContent && !uploadState.isUploading && !isLoading) {
       onSendMessage(
         message,
         attachments.map(att => ({ url: att.url, type: att.type }))
@@ -121,6 +124,13 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       handleSendMessage();
     }
   }
+
+  // Calculate if send button should be enabled
+  const sendButtonEnabled = 
+    !disabled && 
+    ((message.trim() !== '' || attachments.length > 0)) && 
+    !uploadState.isUploading && 
+    !isLoading;
 
   return (
     <div 
@@ -206,7 +216,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           onKeyDown={handleKeyPress}
-          placeholder={placeholder}
+          placeholder={attachments.length > 0 ? 'Send med eller uten tekst...' : placeholder}
           disabled={disabled || isLoading}
           rows={1}
           className="flex-1 resize-none bg-transparent outline-none placeholder:text-muted-foreground py-2.5 px-3 max-h-[150px]"
@@ -214,10 +224,13 @@ export const MessageInput: React.FC<MessageInputProps> = ({
 
         <Button
           type="button"
-          disabled={disabled || (message.trim() === '' && attachments.length === 0) || uploadState.isUploading || isLoading}
+          disabled={!sendButtonEnabled}
           onClick={handleSendMessage}
           size="icon"
-          className="flex-shrink-0 h-9 w-9 rounded-full"
+          className={cn(
+            "flex-shrink-0 h-9 w-9 rounded-full",
+            attachments.length > 0 && !message.trim() ? "bg-green-600 hover:bg-green-700" : ""
+          )}
         >
           {isLoading || uploadState.isUploading ? (
             <Loader2 size={18} className="animate-spin" />
