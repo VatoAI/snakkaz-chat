@@ -1,130 +1,155 @@
 /**
- * Whole Page Encryption for SnakkaZ
- * Implementerer kryptering av hele sider eller grupper i ett steg
+ * Implementering av kryptering for hele sider eller større datastrukturer
+ * Bruker AES-GCM for sikker kryptering
  */
 
-import { importGroupEncryptionKey } from './group-keys';
-import { str2ab, ab2str, arrayBufferToBase64, base64ToArrayBuffer } from './data-conversion';
+export type WholePageData = Record<string, any>;
 
-interface WholePageData {
-  messages: any[];
-  metadata: any;
-  settings: any;
-  [key: string]: any; // Tillater andre felter som kan være nødvendige
+interface EncryptedData {
+  encryptedContent: string; // Base64-kodet kryptert innhold
+  iv: string; // Initialiserings vektor (IV)
+  salt: string; // Salt for nøkkelderivering
+  timestamp: string; // Tidsstempel for krypteringen
 }
 
 /**
- * Krypterer hele sidens data med én enkelt nøkkel
- * Dette gjør kryptering mer effektiv og sikker
+ * Konverterer en streng til en ArrayBuffer
+ */
+const stringToArrayBuffer = (str: string): ArrayBuffer => {
+  const encoder = new TextEncoder();
+  return encoder.encode(str).buffer;
+};
+
+/**
+ * Konverterer en ArrayBuffer til en streng
+ */
+const arrayBufferToString = (buffer: ArrayBuffer): string => {
+  const decoder = new TextDecoder();
+  return decoder.decode(new Uint8Array(buffer));
+};
+
+/**
+ * Konverterer en streng til en krypteringsnøkkel
+ */
+const importKeyFromString = async (keyString: string): Promise<CryptoKey> => {
+  try {
+    // Dekoder base64-strengen til rådata
+    const keyData = stringToArrayBuffer(atob(keyString));
+    
+    // Importerer nøkkelen til Web Crypto API
+    const key = await crypto.subtle.importKey(
+      'raw',
+      keyData,
+      { name: 'AES-GCM', length: 256 },
+      false, // extractable
+      ['encrypt', 'decrypt']
+    );
+    
+    return key;
+  } catch (err) {
+    console.error('Feil ved import av krypteringsnøkkel:', err);
+    throw new Error('Kunne ikke importere krypteringsnøkkel');
+  }
+};
+
+/**
+ * Krypterer sidedata med AES-GCM
  */
 export const encryptWholePage = async (
   pageData: WholePageData, 
-  encryptionKeyString: string
+  keyString: string
 ): Promise<string> => {
   try {
-    // Importer krypteringsnøkkelen
-    const key = await importGroupEncryptionKey(encryptionKeyString);
+    // Importerer nøkkelen
+    const key = await importKeyFromString(keyString);
     
-    // Konverter sidedata til JSON string
-    const dataString = JSON.stringify(pageData);
+    // Genererer en tilfeldig IV (Initialization Vector)
+    const iv = crypto.getRandomValues(new Uint8Array(12));
     
-    // Generer en tilfeldig IV
-    const iv = window.crypto.getRandomValues(new Uint8Array(12));
+    // Genererer et salt
+    const salt = crypto.getRandomValues(new Uint8Array(16));
     
-    // Krypter dataen
-    const encryptedBuffer = await window.crypto.subtle.encrypt(
+    // Konverterer dataene til JSON
+    const jsonData = JSON.stringify(pageData);
+    
+    // Krypterer dataene
+    const encryptedBuffer = await crypto.subtle.encrypt(
       {
-        name: "AES-GCM",
-        iv: iv,
+        name: 'AES-GCM',
+        iv,
+        tagLength: 128
       },
       key,
-      str2ab(dataString)
+      stringToArrayBuffer(jsonData)
     );
     
-    // Kombiner IV og kryptert data for lagring/overføring
-    const combinedData = {
-      encryptedContent: arrayBufferToBase64(encryptedBuffer),
-      iv: arrayBufferToBase64(iv)
+    // Konverterer de krypterte dataene og IV til base64
+    const encryptedContent = btoa(String.fromCharCode.apply(null, [...new Uint8Array(encryptedBuffer)]));
+    const ivString = btoa(String.fromCharCode.apply(null, [...iv]));
+    const saltString = btoa(String.fromCharCode.apply(null, [...salt]));
+    
+    // Pakker inn de krypterte dataene med metadata
+    const encryptedData: EncryptedData = {
+      encryptedContent,
+      iv: ivString,
+      salt: saltString,
+      timestamp: new Date().toISOString()
     };
     
-    return JSON.stringify(combinedData);
-  } catch (error) {
-    console.error("Whole page encryption failed:", error);
-    throw new Error("Kunne ikke kryptere hele siden");
+    // Returnerer de krypterte dataene som JSON
+    return JSON.stringify(encryptedData);
+  } catch (err) {
+    console.error('Feil ved kryptering av sidedata:', err);
+    throw new Error('Kunne ikke kryptere sidedata');
   }
 };
 
 /**
- * Dekrypterer hele sidens data med den gitte nøkkelen
+ * Dekrypterer sidedata med AES-GCM
  */
-export const decryptWholePage = async (
-  encryptedPageData: string,
-  encryptionKeyString: string
-): Promise<WholePageData> => {
+export const decryptWholePage = async <T,>(
+  encryptedDataString: string, 
+  keyString: string
+): Promise<T> => {
   try {
-    // Parse den krypterte dataen
-    const { encryptedContent, iv } = JSON.parse(encryptedPageData);
+    // Importerer nøkkelen
+    const key = await importKeyFromString(keyString);
     
-    // Importer krypteringsnøkkelen
-    const key = await importGroupEncryptionKey(encryptionKeyString);
+    // Henter de krypterte dataene og metadata
+    const encryptedData: EncryptedData = JSON.parse(encryptedDataString);
     
-    // Konverter base64 tilbake til ArrayBuffer
-    const encryptedBuffer = base64ToArrayBuffer(encryptedContent);
-    const ivBuffer = base64ToArrayBuffer(iv);
+    // Konverterer IV fra base64 til Uint8Array
+    const iv = new Uint8Array(
+      atob(encryptedData.iv)
+        .split('')
+        .map(c => c.charCodeAt(0))
+    );
     
-    // Dekrypter dataen
-    const decryptedBuffer = await window.crypto.subtle.decrypt(
+    // Konverterer krypterte data fra base64 til ArrayBuffer
+    const encryptedContent = new Uint8Array(
+      atob(encryptedData.encryptedContent)
+        .split('')
+        .map(c => c.charCodeAt(0))
+    );
+    
+    // Dekrypterer dataene
+    const decryptedBuffer = await crypto.subtle.decrypt(
       {
-        name: "AES-GCM",
-        iv: new Uint8Array(ivBuffer),
+        name: 'AES-GCM',
+        iv,
+        tagLength: 128
       },
       key,
-      encryptedBuffer
+      encryptedContent
     );
     
-    // Konverter buffer tilbake til string og parse JSON
-    const decryptedData = JSON.parse(ab2str(decryptedBuffer));
+    // Konverterer dekrypterte data til JSON
+    const decryptedText = arrayBufferToString(decryptedBuffer);
+    const decryptedData = JSON.parse(decryptedText);
     
-    return decryptedData;
-  } catch (error) {
-    console.error("Whole page decryption failed:", error);
-    throw new Error("Kunne ikke dekryptere siden");
-  }
-};
-
-/**
- * Generer en gruppenøkkel for en ny gruppe
- * Dette er forskjellig fra enkelt-melding kryptering 
- * og brukes for å sikre hele gruppen
- */
-export const generateGroupPageKey = async (): Promise<{key: string, keyId: string}> => {
-  try {
-    // Generer en tilfeldig krypteringsnøkkel
-    const key = await window.crypto.subtle.generateKey(
-      {
-        name: "AES-GCM",
-        length: 256,
-      },
-      true,
-      ["encrypt", "decrypt"]
-    );
-    
-    // Eksporter nøkkelen
-    const exportedKey = await window.crypto.subtle.exportKey("jwk", key);
-    const keyString = JSON.stringify(exportedKey);
-    
-    // Generer en unik ID for nøkkelen
-    const keyId = Array.from(
-      window.crypto.getRandomValues(new Uint8Array(16)),
-      byte => byte.toString(16).padStart(2, "0")
-    ).join("");
-    
-    return {
-      key: keyString,
-      keyId
-    };
-  } catch (error) {
-    console.error("Group key generation failed:", error);
-    throw new Error("Kunne ikke generere gruppenøkkel");
+    return decryptedData as T;
+  } catch (err) {
+    console.error('Feil ved dekryptering av sidedata:', err);
+    throw new Error('Kunne ikke dekryptere sidedata');
   }
 };
