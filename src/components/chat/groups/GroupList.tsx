@@ -1,9 +1,10 @@
-
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Users, Lock, MessageSquare } from "lucide-react";
 import { Group, GroupMember } from "@/types/group";
-import { supabase } from "@/integrations/supabase/client";
+import { useState, useEffect } from "react";
+import { getGroupAvatarUrl } from "@/utils/group-avatar-utils";
+import { ResilientImage } from "@/components/ui/resilient-image";
 
 interface GroupListProps {
   groups: Group[];
@@ -22,9 +23,31 @@ export const GroupList = ({
   setSelectedGroup,
   searchQuery
 }: GroupListProps) => {
+  const [groupAvatarUrls, setGroupAvatarUrls] = useState<Record<string, string>>({});
+  
+  // Process all group avatar URLs using our utility
+  useEffect(() => {
+    const newUrls: Record<string, string> = {};
+    
+    groups.forEach(group => {
+      if (group.avatar_url) {
+        newUrls[group.id] = getGroupAvatarUrl(group.avatar_url);
+      }
+    });
+    
+    setGroupAvatarUrls(newUrls);
+  }, [groups]);
+  
   const filteredGroups = groups.filter(group =>
     !searchQuery ||
     group.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Prepare fallback content for group avatar
+  const groupAvatarFallback = (
+    <AvatarFallback className="bg-cybergold-500/20 text-cybergold-300">
+      <Users className="h-5 w-5" />
+    </AvatarFallback>
   );
 
   return (
@@ -36,6 +59,7 @@ export const GroupList = ({
             const groupMessages = groupConversations[group.id] || [];
             const lastMessage = groupMessages.length > 0 ? groupMessages[groupMessages.length - 1] : null;
             const isRecentMessage = lastMessage && (new Date().getTime() - new Date(lastMessage.created_at).getTime() < 300000); // 5 min
+            const avatarUrl = groupAvatarUrls[group.id] || '';
 
             return (
               <div
@@ -46,16 +70,17 @@ export const GroupList = ({
                 <div className="flex items-center gap-3">
                   <div className="relative">
                     <Avatar className="w-10 h-10 border-2 border-cybergold-500/20 bg-cyberdark-700">
-                      {group.avatar_url ? (
-                        <AvatarImage
-                          src={supabase.storage.from('group_avatars').getPublicUrl(group.avatar_url).data.publicUrl}
-                          alt={group.name}
-                        />
-                      ) : (
-                        <AvatarFallback className="bg-cybergold-500/20 text-cybergold-300">
-                          <Users className="h-5 w-5" />
-                        </AvatarFallback>
-                      )}
+                      {avatarUrl ? (
+                        <div className="absolute inset-0 w-full h-full">
+                          <ResilientImage
+                            src={avatarUrl}
+                            alt={group.name}
+                            className="w-full h-full object-cover"
+                            fallback={groupAvatarFallback}
+                            retryCount={2}
+                          />
+                        </div>
+                      ) : groupAvatarFallback}
                     </Avatar>
                     {isRecentMessage && (
                       <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border border-cyberdark-800"></span>
