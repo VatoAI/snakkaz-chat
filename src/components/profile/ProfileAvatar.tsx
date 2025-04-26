@@ -1,8 +1,8 @@
-
-import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Camera, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { getAvatarUrl } from "@/utils/avatar-utils";
 
 interface ProfileAvatarProps {
   avatarUrl: string | null;
@@ -11,16 +11,32 @@ interface ProfileAvatarProps {
 }
 
 export const ProfileAvatar = ({ avatarUrl, uploading, onUpload }: ProfileAvatarProps) => {
+  const [imageError, setImageError] = useState(false);
+  const [imageUrl, setImageUrl] = useState<string>('');
+  
+  // Process avatar URL
+  useEffect(() => {
+    if (avatarUrl) {
+      // Use our utility to get a properly formed URL with error handling
+      const url = getAvatarUrl(avatarUrl);
+      setImageUrl(url);
+      setImageError(false);
+    } else {
+      setImageUrl('');
+    }
+  }, [avatarUrl]);
+
   return (
     <div className="flex flex-col items-center space-y-4">
       <div className="relative group">
         <div className="absolute -inset-0.5 bg-gradient-to-tr from-cyberblue-500 via-cybergold-500 to-cyberred-500 rounded-full opacity-70 group-hover:opacity-100 blur transition duration-500"></div>
         <Avatar className="w-32 h-32 relative hover:scale-105 transition-transform duration-300 cursor-pointer group-hover:shadow-neon-dual border-4 border-cybergold-400/80 bg-cyberdark-800">
-          {avatarUrl ? (
+          {imageUrl && !imageError ? (
             <AvatarImage
-              src={`${supabase.storage.from('avatars').getPublicUrl(avatarUrl).data.publicUrl}`}
+              src={imageUrl}
               alt="Avatar"
               className="object-cover w-full h-full rounded-full"
+              onError={() => setImageError(true)}
             />
           ) : (
             <AvatarFallback className="bg-cyberdark-950 text-cybergold-300">
