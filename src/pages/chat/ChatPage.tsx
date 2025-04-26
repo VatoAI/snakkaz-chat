@@ -1,8 +1,7 @@
-
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
-import { useFriends } from "@/hooks/useFriends";
+import { useOptimizedFriends } from "@/hooks/useOptimizedFriends";
 import { usePresence } from "@/hooks/usePresence";
 import { useWebRTCSetup } from "./hooks/useWebRTCSetup";
 import { useMobilePinGuard } from "./hooks/useMobilePinGuard";
@@ -42,7 +41,15 @@ const ChatPage = () => {
     setupWebRTC
   });
 
-  const { friends, friendsList, handleSendFriendRequest, handleStartChat } = useFriends(
+  const { 
+    friends, 
+    friendsList, 
+    loading: friendsLoading,
+    refreshFriends,
+    lastRefreshed,
+    handleSendFriendRequest, 
+    handleStartChat 
+  } = useOptimizedFriends(
     user?.id,
     selectedFriend?.user_id || null,
     () => setSelectedFriend(null),
@@ -82,6 +89,10 @@ const ChatPage = () => {
           selectedFriend={selectedFriend}
           setSelectedFriend={setSelectedFriend}
           friendsList={friendsList}
+          friends={friends}
+          friendsLoading={friendsLoading}
+          refreshFriends={refreshFriends}
+          lastRefreshed={lastRefreshed}
         />
       )}
     </ChatStateManager>
