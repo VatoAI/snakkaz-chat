@@ -1,6 +1,5 @@
-
 import { useState, FormEvent } from "react";
-import { Send, X } from "lucide-react";
+import { Send, X, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { SecurityBadge } from "../security/SecurityBadge";
@@ -18,6 +17,7 @@ interface DirectMessageFormProps {
   editingMessage: { id: string; content: string } | null;
   onCancelEdit: () => void;
   securityLevel: SecurityLevel;
+  isPageEncrypted?: boolean; // Add the missing prop
 }
 
 export const DirectMessageForm = ({
@@ -31,7 +31,8 @@ export const DirectMessageForm = ({
   dataChannelState,
   editingMessage,
   onCancelEdit,
-  securityLevel
+  securityLevel,
+  isPageEncrypted = false // Add default value
 }: DirectMessageFormProps) => {
   const [isComposing, setIsComposing] = useState(false);
   
@@ -53,6 +54,14 @@ export const DirectMessageForm = ({
   
   return (
     <div className="border-t border-cybergold-500/30 p-4 bg-cyberdark-900">
+      {/* Page encryption indicator */}
+      {isPageEncrypted && (
+        <div className="mb-2 p-2 bg-cyberblue-600/10 border border-cyberblue-500/30 rounded-md text-sm text-cyberblue-300 flex items-center gap-2">
+          <Shield className="h-4 w-4" />
+          <span>Denne samtalen er helside-kryptert</span>
+        </div>
+      )}
+      
       {!isConnected && securityLevel === 'p2p_e2ee' && (
         <div className="mb-2 p-2 bg-amber-600/20 border border-amber-500/40 rounded-md text-sm text-amber-300">
           Venter på tilkobling. Meldingen vil sendes når tilkoblingen er etablert,
