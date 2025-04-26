@@ -373,8 +373,6 @@ export function useGroupCreation(
         // Add other optional fields
         password: completeGroup.password,
         avatar_url: completeGroup.avatar_url
-          can_write: m.can_write !== false // Default to true if not specified
-        }))
       };
 
       setGroups(prev => [...prev, newGroup]);
