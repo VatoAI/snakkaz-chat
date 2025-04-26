@@ -94,7 +94,7 @@ export function useGroupCreation(
         // We'll show a warning toast later if we need to
       }
 
-      // Create the group with retry logic and new fields
+      // Create the group with retry logic
       let groupData;
       let retryCount = 0;
       const maxRetries = 2;
@@ -134,6 +134,22 @@ export function useGroupCreation(
       if (!groupData) {
         throw new Error('Kunne ikke opprette gruppe. Sjekk nettverkstilkobling og prøv igjen.');
       }
+      // Create the group with new fields
+      const { data: groupData, error: groupError } = await supabase
+        .from('groups')
+        .insert({
+          name,
+          creator_id: currentUserId,
+          security_level: securityLevel,
+          password: password || null,
+          // New fields
+          write_permissions: writePermissions,
+          default_message_ttl: defaultMessageTtl
+        })
+        .select()
+        .single();
+
+      if (groupError) throw groupError;
 
       // Upload avatar if provided
       let avatarUrl = null;
@@ -357,6 +373,8 @@ export function useGroupCreation(
         // Add other optional fields
         password: completeGroup.password,
         avatar_url: completeGroup.avatar_url
+          can_write: m.can_write !== false // Default to true if not specified
+        }))
       };
 
       setGroups(prev => [...prev, newGroup]);
