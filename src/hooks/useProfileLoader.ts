@@ -23,17 +23,28 @@ export const useProfileLoader = () => {
         .from('profiles')
         .select('username, avatar_url')
         .eq('id', userId)
-        .maybeSingle(); // Use maybeSingle instead of single
+        .maybeSingle();
       
       if (error) throw error;
+
+      // If avatar_url exists, get the public URL
+      let publicAvatarUrl = null;
+      if (data?.avatar_url) {
+        const { data: { publicUrl } } = supabase.storage
+          .from('avatars')
+          .getPublicUrl(data.avatar_url);
+        publicAvatarUrl = publicUrl;
+      }
       
       setProfileCache(prev => ({
         ...prev,
-        [userId]: data || { username: 'Unknown User', avatar_url: null }
+        [userId]: {
+          username: data?.username || 'Unknown User',
+          avatar_url: publicAvatarUrl
+        }
       }));
     } catch (error) {
       console.error('Error loading profile:', error);
-      // Cache fallback profile data even on error
       setProfileCache(prev => ({
         ...prev,
         [userId]: { username: 'Unknown User', avatar_url: null }
