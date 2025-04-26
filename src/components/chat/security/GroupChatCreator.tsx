@@ -22,6 +22,8 @@ interface GroupFormData {
   avatar?: File;
   write_permissions: GroupWritePermission;
   default_message_ttl: MessageTTLOption;
+  is_premium: boolean;
+  description?: string;
 }
 
 interface GroupChatCreatorProps {
@@ -64,7 +66,9 @@ export const GroupChatCreator = ({
       password: "",
       security_level: "server_e2ee" as SecurityLevel,
       write_permissions: "all" as GroupWritePermission,
-      default_message_ttl: 86400 // Endret fra null til 86400 (24 timer) som standard
+      default_message_ttl: 86400, // 24 timer som standard
+      is_premium: false,
+      description: ""
     }
   });
   
@@ -352,6 +356,48 @@ export const GroupChatCreator = ({
                   </Select>
                   <FormDescription className="text-xs text-cybergold-500/70">
                     Meldinger i gruppen vil automatisk slettes etter valgt tid
+                  </FormDescription>
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="is_premium"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border border-cybergold-500/30 p-3 bg-cyberdark-800">
+                  <div className="space-y-0.5">
+                    <FormLabel className="text-cybergold-200">Premium gruppe</FormLabel>
+                    <FormDescription className="text-xs text-cybergold-500/70">
+                      Premium grupper får ekstra funksjoner og synlighet
+                    </FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      className="data-[state=checked]:bg-cybergold-500"
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-cybergold-200">Gruppebeskrivelse</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Skriv en beskrivelse av gruppen..."
+                      className="bg-cyberdark-800 border-cybergold-500/30"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormDescription className="text-xs text-cybergold-500/70">
+                    En kort beskrivelse som vises til medlemmer og i søkeresultater
                   </FormDescription>
                 </FormItem>
               )}
