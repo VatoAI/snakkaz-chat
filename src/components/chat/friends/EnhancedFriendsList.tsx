@@ -1,392 +1,366 @@
-import { useState, useMemo, memo } from "react";
-import { User, MessageSquare, RefreshCw, Phone, Video } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Friend } from "./types";
-import { DirectMessage } from "./DirectMessage";
-import { WebRTCManager } from "@/utils/webrtc";
-import { DecryptedMessage } from "@/types/message";
+import React, { useState, useEffect } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { supabase } from "@/integrations/supabase/client";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Badge } from "@/components/ui/badge";
-import { UserStatus } from "@/types/presence";
+import { Button } from "@/components/ui/button";
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardFooter, 
+  CardHeader, 
+  CardTitle 
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { 
+  MessageSquare, 
+  UserPlus, 
+  UserMinus, 
+  Search, 
+  UserCheck, 
+  X, 
+  Check, 
+  RefreshCw,
+  Clock
+} from "lucide-react";
+import { motion, AnimatePresence } from 'framer-motion';
+import { useGlobalPresence } from '@/contexts/PresenceContext';
+import { format, formatDistanceToNow } from 'date-fns';
 
-interface FriendsListProps {
-  friends: (Friend & { status?: UserStatus })[];
-  currentUserId: string;
-  webRTCManager: WebRTCManager | null;
-  directMessages: DecryptedMessage[];
-  onNewMessage: (message: DecryptedMessage) => void;
-  onStartChat?: (friendId: string) => void;
-  userProfiles?: Record<string, {username: string | null, avatar_url: string | null}>;
-  loading?: boolean;
-  onRefresh?: () => void;
-  lastRefreshed?: Date;
+interface Friend {
+  id: string;
+  user_id: string;
+  friend_id: string;
+  profile: {
+    id: string;
+    username: string;
+    avatar_url: string | null;
+    full_name: string | null;
+  };
+  status: string;
+  created_at: string;
 }
 
-// A memoized friend list item for better performance
-const FriendItem = memo(({
-  friend,
-  currentUserId,
-  unreadCount,
-  lastMessage,
-  isRecentMessage,
-  onClick
-}: {
-  friend: Friend & { status?: UserStatus };
-  currentUserId: string;
-  unreadCount: number;
-  lastMessage: DecryptedMessage | null;
-  isRecentMessage: boolean;
-  onClick: () => void;
-}) => {
-  const friendId = friend.user_id === currentUserId ? friend.friend_id : friend.user_id;
-  const friendProfile = friend.profile;
-  const username = friendProfile?.username || 'Ukjent bruker';
-  const avatarUrl = friendProfile?.avatar_url;
-  
-  // Get status info
-  const status = friend.status || 'offline';
-  const statusColor = {
-    'online': 'bg-green-500',
-    'busy': 'bg-red-500',
-    'brb': 'bg-yellow-500',
-    'offline': 'bg-gray-500'
-  }[status];
-  
-  // Format time for last message
-  const formattedTime = lastMessage ? (() => {
-    const date = new Date(lastMessage.created_at);
-    const now = new Date();
-    const isToday = date.toDateString() === now.toDateString();
-    
-    if (isToday) {
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    } else {
-      return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
-    }
-  })() : null;
+interface EnhancedFriendsListProps {
+  friends: Friend[];
+  friendRequests?: any[];
+  loading: boolean;
+  lastRefreshed: Date | null;
+  onStartChat: (friendId: string) => void;
+  onUnfriend: (friendId: string) => void;
+  onAcceptRequest?: (requestId: string) => void;
+  onRejectRequest?: (requestId: string) => void;
+  onSendRequest?: (username: string) => void;
+  onRefresh: () => void;
+  userId: string | null | undefined;
+}
 
-  return (
-    <div
-      className="flex items-center justify-between p-3 bg-cyberdark-850 border border-cybergold-500/20 rounded-md hover:bg-cyberdark-800 transition-colors cursor-pointer group"
-      onClick={onClick}
-    >
-      <div className="flex items-center gap-3">
-        <div className="relative">
-          <Avatar className="w-9 h-9 border border-cybergold-500/30">
-            {avatarUrl ? (
-              <AvatarImage 
-                src={supabase.storage.from('avatars').getPublicUrl(avatarUrl).data.publicUrl} 
-                alt={username}
-              />
-            ) : (
-              <AvatarFallback className="bg-cyberdark-700 text-cybergold-300">
-                {username.substring(0, 2).toUpperCase()}
-              </AvatarFallback>
-            )}
-          </Avatar>
-          <span className={`absolute bottom-0 right-0 w-2.5 h-2.5 ${statusColor} rounded-full border border-cyberdark-900`}></span>
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between">
-            <p className="text-cybergold-200 font-medium text-sm">
-              {username}
-            </p>
-            {formattedTime && (
-              <p className="text-[10px] text-cyberdark-400 ml-2">
-                {formattedTime}
-              </p>
-            )}
-          </div>
-          {lastMessage ? (
-            <p className="text-xs text-cybergold-400 truncate w-full max-w-[150px]">
-              {lastMessage.sender.id === currentUserId ? 'Du: ' : ''}
-              {lastMessage.content}
-            </p>
-          ) : (
-            <p className="text-xs text-cyberdark-500 italic">
-              Ingen meldinger
-            </p>
-          )}
-        </div>
-      </div>
-      
-      <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 rounded-full bg-cybergold-950/20 text-cybergold-500 hover:text-cybergold-300 hover:bg-cybergold-900/30"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  // Voice call function would go here
-                }}
-              >
-                <Phone className="w-3.5 h-3.5" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">
-              <p>Start samtale</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-        
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 rounded-full bg-cybergold-950/20 text-cybergold-500 hover:text-cybergold-300 hover:bg-cybergold-900/30"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  // Video call function would go here
-                }}
-              >
-                <Video className="w-3.5 h-3.5" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">
-              <p>Start videosamtale</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      </div>
-      
-      {unreadCount > 0 && (
-        <Badge 
-          className="absolute top-2 right-2 bg-cybergold-500 text-cyberdark-900 px-1.5 min-w-[20px] h-5"
-          variant="outline"
-        >
-          {unreadCount}
-        </Badge>
-      )}
-    </div>
-  );
-});
-
-FriendItem.displayName = "FriendItem";
-
-// Skeleton loading component
-const FriendItemSkeleton = () => (
-  <div className="flex items-center justify-between p-3 bg-cyberdark-850 border border-cybergold-500/10 rounded-md">
-    <div className="flex items-center gap-3">
-      <Skeleton className="w-9 h-9 rounded-full bg-cyberdark-700" />
-      <div>
-        <Skeleton className="h-4 w-24 mb-2 bg-cyberdark-700" />
-        <Skeleton className="h-3 w-32 bg-cyberdark-700/80" />
-      </div>
-    </div>
-    <Skeleton className="w-8 h-8 rounded-full bg-cyberdark-700/50" />
-  </div>
-);
-
-export const EnhancedFriendsList = ({ 
-  friends, 
-  currentUserId,
-  webRTCManager,
-  directMessages,
-  onNewMessage,
+export const EnhancedFriendsList: React.FC<EnhancedFriendsListProps> = ({
+  friends,
+  friendRequests = [],
+  loading,
+  lastRefreshed,
   onStartChat,
-  userProfiles = {},
-  loading = false,
+  onUnfriend,
+  onAcceptRequest,
+  onRejectRequest,
+  onSendRequest,
   onRefresh,
-  lastRefreshed
-}: FriendsListProps) => {
-  const [selectedFriend, setSelectedFriend] = useState<Friend | null>(null);
-  const [readMessages, setReadMessages] = useState<Set<string>>(new Set());
-
-  // Optimize message filtering with memoization
-  const messagesByFriend = useMemo(() => {
-    const result: Record<string, DecryptedMessage[]> = {};
-    
-    directMessages.forEach(msg => {
-      const friendId = msg.sender.id === currentUserId ? msg.receiver_id : msg.sender.id;
-      if (!result[friendId]) {
-        result[friendId] = [];
-      }
-      result[friendId].push(msg);
+  userId
+}) => {
+  const [tab, setTab] = useState('all');
+  const [search, setSearch] = useState('');
+  const [newFriendUsername, setNewFriendUsername] = useState('');
+  const { userStatuses } = useGlobalPresence();
+  
+  // Filter friends based on search and tab
+  const filteredFriends = React.useMemo(() => {
+    return friends.filter(friend => {
+      const matchesSearch = search.trim() === '' || 
+        friend.profile?.username?.toLowerCase().includes(search.toLowerCase()) ||
+        friend.profile?.full_name?.toLowerCase().includes(search.toLowerCase());
+      
+      const matchesTab = tab === 'all' || 
+        (tab === 'online' && (userStatuses[friend.profile?.id] === 'online' || friend.status === 'online')) || 
+        (tab === 'offline' && (userStatuses[friend.profile?.id] === 'offline' || friend.status === 'offline'));
+        
+      return matchesSearch && matchesTab;
     });
+  }, [friends, search, tab, userStatuses]);
+  
+  // Status indicator component
+  const StatusIndicator = ({ status }: { status: string }) => {
+    const color = status === 'online' ? 'bg-green-500' : 'bg-gray-400';
+    return (
+      <span className={`absolute bottom-0 right-0 w-3 h-3 ${color} border-2 border-white rounded-full`}></span>
+    );
+  };
+  
+  // Friend card component
+  const FriendCard = ({ friend }: { friend: Friend }) => {
+    const friendId = friend.user_id === userId ? friend.friend_id : friend.user_id;
+    const friendStatus = userStatuses[friendId] || friend.status || 'offline';
     
-    // Sort messages for each friend
-    Object.keys(result).forEach(friendId => {
-      result[friendId].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-    });
-    
-    return result;
-  }, [directMessages, currentUserId]);
-
-  const handleSelectFriend = (friend: Friend) => {
-    // Mark all messages from this friend as read
-    const friendId = friend.user_id === currentUserId ? friend.friend_id : friend.user_id;
-    const messagesFromFriend = directMessages.filter(msg => msg.sender.id === friendId);
-    
-    const newReadMessages = new Set(readMessages);
-    messagesFromFriend.forEach(msg => newReadMessages.add(msg.id));
-    
-    setReadMessages(newReadMessages);
-    
-    if (onStartChat) {
-      onStartChat(friendId);
-    } else {
-      setSelectedFriend(friend);
-    }
+    return (
+      <motion.div
+        layout
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.8 }}
+        transition={{ duration: 0.2 }}
+        className="w-full"
+      >
+        <Card className="mb-2 hover:bg-gray-50/5 transition-all border-gray-800">
+          <CardContent className="p-4 flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="relative">
+                <Avatar className="h-10 w-10 border border-gray-700">
+                  <AvatarImage src={friend.profile?.avatar_url || ''} />
+                  <AvatarFallback className="bg-gradient-to-br from-cyberblue-500 to-cyberblue-700 text-white">
+                    {friend.profile?.username?.substring(0, 2)?.toUpperCase() || 'U'}
+                  </AvatarFallback>
+                </Avatar>
+                <StatusIndicator status={friendStatus} />
+              </div>
+              <div>
+                <div className="font-medium text-white">
+                  {friend.profile?.username || 'Unknown'}
+                </div>
+                <div className="text-xs text-gray-400">
+                  {friend.profile?.full_name}
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-gray-300 hover:text-white hover:bg-cyberblue-700/30"
+                onClick={() => onStartChat(friendId)}
+              >
+                <MessageSquare size={18} />
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-gray-300 hover:text-red-500 hover:bg-red-700/20"
+                onClick={() => onUnfriend(friendId)}
+              >
+                <UserMinus size={18} />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+    );
+  };
+  
+  // Request card component
+  const RequestCard = ({ request }: { request: any }) => {
+    return (
+      <motion.div
+        layout
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.8 }}
+        transition={{ duration: 0.2 }}
+        className="w-full"
+      >
+        <Card className="mb-2 hover:bg-gray-50/5 transition-all border-gray-800">
+          <CardContent className="p-4 flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <Avatar className="h-10 w-10 border border-gray-700">
+                <AvatarImage src={request.sender?.avatar_url || ''} />
+                <AvatarFallback className="bg-gradient-to-br from-cyberred-500 to-cyberred-700 text-white">
+                  {request.sender?.username?.substring(0, 2)?.toUpperCase() || 'U'}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <div className="font-medium text-white flex items-center gap-2">
+                  {request.sender?.username || 'Unknown'}
+                  <Badge variant="outline" className="bg-cyberred-900/50 text-cyberred-300 text-[10px] py-0 px-1.5">
+                    REQUEST
+                  </Badge>
+                </div>
+                <div className="text-xs text-gray-400">
+                  Requested {formatDistanceToNow(new Date(request.created_at), { addSuffix: true })}
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-gray-300 hover:text-green-500 hover:bg-green-700/20"
+                onClick={() => onAcceptRequest && onAcceptRequest(request.id)}
+              >
+                <Check size={18} />
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-gray-300 hover:text-red-500 hover:bg-red-700/20"
+                onClick={() => onRejectRequest && onRejectRequest(request.id)}
+              >
+                <X size={18} />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+    );
   };
 
-  if (selectedFriend && !onStartChat) {
-    return (
-      <DirectMessage 
-        friend={selectedFriend}
-        currentUserId={currentUserId}
-        webRTCManager={webRTCManager}
-        onBack={() => setSelectedFriend(null)}
-        messages={directMessages}
-        onNewMessage={onNewMessage}
-        userProfiles={userProfiles}
-      />
-    );
-  }
-
-  if (loading) {
-    return (
-      <div className="space-y-2">
-        <div className="flex items-center justify-between px-1">
-          <h3 className="text-sm font-medium text-cybergold-300">Dine venner</h3>
-          <Button variant="ghost" size="sm" className="h-8 w-8 p-0" disabled>
-            <RefreshCw className="h-4 w-4 animate-spin text-cybergold-500/50" />
+  return (
+    <Card className="w-full border-gray-800 bg-gray-950/60 backdrop-blur-sm">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg text-white">Friends</CardTitle>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="text-gray-300 hover:text-white"
+            onClick={onRefresh}
+          >
+            <RefreshCw size={16} className="mr-1" />
+            Refresh
           </Button>
         </div>
-        <div className="space-y-2">
-          {[...Array(4)].map((_, i) => (
-            <FriendItemSkeleton key={i} />
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  if (friends.length === 0) {
-    return (
-      <div className="text-center text-cybergold-500 py-6 bg-cyberdark-800/40 rounded-md p-4 border border-cybergold-500/10">
-        <div className="mb-3 flex justify-center">
-          <User className="h-10 w-10 text-cybergold-400/50" />
-        </div>
-        <p className="font-medium text-cybergold-300">Du har ingen venner ennå</p>
-        <p className="text-sm mt-2 text-cybergold-400">
-          Søk etter brukere og send venneforespørsler for å begynne å chatte
-        </p>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="mt-4 text-cybergold-400 border-cybergold-500/30 hover:bg-cybergold-900/20"
-        >
-          Finn venner
-        </Button>
-      </div>
-    );
-  }
-
-  // Sort friends: online first, then by last message time
-  const sortedFriends = [...friends].sort((a, b) => {
-    // First by online status
-    if ((a.status === 'online') && (b.status !== 'online')) return -1;
-    if ((a.status !== 'online') && (b.status === 'online')) return 1;
-    
-    // Then by unread message count
-    const aFriendId = a.user_id === currentUserId ? a.friend_id : a.user_id;
-    const bFriendId = b.user_id === currentUserId ? b.friend_id : b.user_id;
-    
-    const aUnread = messagesByFriend[aFriendId]?.filter(
-      msg => msg.sender.id === aFriendId && !readMessages.has(msg.id)
-    ).length || 0;
-    
-    const bUnread = messagesByFriend[bFriendId]?.filter(
-      msg => msg.sender.id === bFriendId && !readMessages.has(msg.id)
-    ).length || 0;
-    
-    if (aUnread > bUnread) return -1;
-    if (aUnread < bUnread) return 1;
-    
-    // Finally by most recent message
-    const aLastMessage = messagesByFriend[aFriendId]?.[0];
-    const bLastMessage = messagesByFriend[bFriendId]?.[0];
-    
-    if (aLastMessage && !bLastMessage) return -1;
-    if (!aLastMessage && bLastMessage) return 1;
-    if (aLastMessage && bLastMessage) {
-      return new Date(bLastMessage.created_at).getTime() - new Date(aLastMessage.created_at).getTime();
-    }
-    
-    return 0;
-  });
-
-  return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between px-1">
-        <h3 className="text-sm font-medium text-cybergold-300">Dine venner</h3>
-        {onRefresh && (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  onClick={onRefresh}
-                  className="h-7 w-7 text-cybergold-500 hover:text-cybergold-300 hover:bg-cyberdark-700"
-                >
-                  <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="left">
-                <p>
-                  {lastRefreshed 
-                    ? `Oppdatert: ${lastRefreshed.toLocaleTimeString()}` 
-                    : 'Oppdater venneliste'}
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        )}
-      </div>
-
-      <ScrollArea className="h-[400px] rounded-md">
-        <div className="space-y-2 pr-3">
-          {sortedFriends.map((friend) => {
-            const friendId = friend.user_id === currentUserId ? friend.friend_id : friend.user_id;
-            
-            // Get messages from this friend
-            const friendMessages = messagesByFriend[friendId] || [];
-            
-            // Get unread messages
-            const unreadMessages = friendMessages.filter(
-              msg => msg.sender.id === friendId && !readMessages.has(msg.id)
-            );
-            
-            // Get the most recent message
-            const lastMessage = friendMessages.length > 0 ? friendMessages[0] : null;
-            const isRecentMessage = lastMessage && 
-              (new Date().getTime() - new Date(lastMessage.created_at).getTime() < 300000); // Within last 5 minutes
-            
-            return (
-              <FriendItem 
-                key={friend.id}
-                friend={friend}
-                currentUserId={currentUserId}
-                unreadCount={unreadMessages.length}
-                lastMessage={lastMessage}
-                isRecentMessage={isRecentMessage}
-                onClick={() => handleSelectFriend(friend)}
+        <CardDescription>
+          {lastRefreshed ? (
+            <span className="flex items-center text-xs text-gray-400">
+              <Clock size={12} className="mr-1" />
+              Last updated {formatDistanceToNow(lastRefreshed, { addSuffix: true })}
+            </span>
+          ) : (
+            'Manage your connections'
+          )}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Tabs value={tab} onValueChange={setTab} className="w-full">
+          <TabsList className="w-full mb-4 bg-gray-900 border-gray-800">
+            <TabsTrigger 
+              value="all" 
+              className="flex-1 data-[state=active]:bg-cyberblue-600 data-[state=active]:text-white"
+            >
+              All
+            </TabsTrigger>
+            <TabsTrigger 
+              value="online" 
+              className="flex-1 data-[state=active]:bg-green-600 data-[state=active]:text-white"
+            >
+              Online
+            </TabsTrigger>
+            <TabsTrigger 
+              value="offline" 
+              className="flex-1 data-[state=active]:bg-gray-600 data-[state=active]:text-white"
+            >
+              Offline
+            </TabsTrigger>
+            <TabsTrigger 
+              value="requests" 
+              className="flex-1 data-[state=active]:bg-cyberred-600 data-[state=active]:text-white"
+            >
+              Requests
+              {friendRequests.length > 0 && (
+                <Badge className="ml-1 bg-cyberred-500 hover:bg-cyberred-600">
+                  {friendRequests.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+          </TabsList>
+          
+          <div className="mb-4">
+            <div className="relative">
+              <Input
+                placeholder={tab === 'requests' ? "Find new friends..." : "Search friends..."}
+                value={tab === 'requests' ? newFriendUsername : search}
+                onChange={(e) => tab === 'requests' ? setNewFriendUsername(e.target.value) : setSearch(e.target.value)}
+                className="pl-9 bg-gray-900 border-gray-800 text-white"
               />
-            );
-          })}
-        </div>
-      </ScrollArea>
-    </div>
+              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                <Search size={16} />
+              </div>
+              {tab === 'requests' && (
+                <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                  <Button 
+                    size="sm" 
+                    className="h-7 px-3 bg-cyberblue-600 hover:bg-cyberblue-700 text-white"
+                    onClick={() => {
+                      if (newFriendUsername.trim() && onSendRequest) {
+                        onSendRequest(newFriendUsername.trim());
+                        setNewFriendUsername('');
+                      }
+                    }}
+                  >
+                    <UserPlus size={14} className="mr-1" />
+                    Add
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <TabsContent value="requests" className="m-0">
+            {friendRequests.length > 0 ? (
+              <div className="space-y-2">
+                <AnimatePresence>
+                  {friendRequests.map((request) => (
+                    <RequestCard key={request.id} request={request} />
+                  ))}
+                </AnimatePresence>
+              </div>
+            ) : (
+              <div className="text-center py-6 text-gray-400">
+                <UserCheck size={40} className="mx-auto mb-2 opacity-50" />
+                <p className="text-sm">No pending friend requests</p>
+              </div>
+            )}
+          </TabsContent>
+          
+          <TabsContent value={tab !== 'requests' ? tab : 'all'} className="m-0">
+            {loading ? (
+              <div className="space-y-3">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="flex items-center space-x-3">
+                    <Skeleton className="h-10 w-10 rounded-full" />
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-32" />
+                      <Skeleton className="h-3 w-20" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : filteredFriends.length > 0 ? (
+              <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1 pb-1 custom-scrollbar">
+                <AnimatePresence>
+                  {filteredFriends.map((friend) => (
+                    <FriendCard key={friend.id} friend={friend} />
+                  ))}
+                </AnimatePresence>
+              </div>
+            ) : (
+              <div className="text-center py-6 text-gray-400">
+                <Search size={40} className="mx-auto mb-2 opacity-50" />
+                <p className="text-sm">
+                  {search.trim() ? 
+                    "No matching friends found" : 
+                    tab === 'online' ? 
+                      "No friends are currently online" : 
+                      tab === 'offline' ? 
+                        "All your friends are online!" : 
+                        "You haven't added any friends yet"}
+                </p>
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+      <CardFooter className="pt-0 text-xs text-gray-500">
+        <p>Add friends to start chatting with them</p>
+      </CardFooter>
+    </Card>
   );
 };
