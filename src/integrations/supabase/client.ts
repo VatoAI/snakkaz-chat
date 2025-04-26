@@ -21,36 +21,60 @@ if (!supabaseAnonKey || isPlaceholderKey) {
 
 // Create a mock client to prevent app crashes when credentials are missing
 const createMockClient = () => {
-  const mockHandler = {
-    get: function(target: any, prop: string) {
-      // Return a nested proxy for properties that are accessed
-      if (typeof target[prop] === 'undefined') {
-        return new Proxy({}, mockHandler);
-      }
-      
-      // Return function for methods
-      if (typeof target[prop] === 'function') {
-        // For auth methods, return basic mocks
-        if (prop === 'getSession') {
-          return async () => ({ data: { session: null }, error: null });
+  // Create a proper mock for auth functionality
+  const mockAuth = {
+    getSession: async () => ({ data: { session: null }, error: null }),
+    getUser: async () => ({ data: { user: null }, error: null }),
+    signIn: async () => ({ data: { user: null, session: null }, error: { message: 'Mock auth: Cannot sign in' } }),
+    signUp: async () => ({ data: { user: null, session: null }, error: { message: 'Mock auth: Cannot sign up' } }),
+    signOut: async () => ({ error: null }),
+    // Critical fix for onAuthStateChange
+    onAuthStateChange: (callback: any) => {
+      console.warn('Mock Supabase: onAuthStateChange registered but will not trigger events');
+      // Return an object with a subscription that can be unsubscribed
+      return {
+        data: {
+          subscription: {
+            unsubscribe: () => {
+              console.warn('Mock Supabase: unsubscribe called on mock auth listener');
+            }
+          }
         }
-        
-        // For other methods like from(), select(), etc.
-        return (...args: any[]) => {
-          console.warn(`Mock Supabase: Method "${prop}" called with`, args);
-          return new Proxy({}, mockHandler);
-        };
-      }
-      
-      return target[prop];
-    },
-    apply: function(target: any, _: any, args: any[]) {
-      console.warn(`Mock Supabase: Function called with args:`, args);
-      return new Proxy({}, mockHandler);
+      };
     }
   };
-
-  return new Proxy({}, mockHandler);
+  
+  // Create basic mocks for commonly used Supabase methods
+  const mockFrom = (table: string) => {
+    const mockQuery = {
+      select: () => mockQuery,
+      insert: () => Promise.resolve({ data: [], error: null }),
+      update: () => Promise.resolve({ data: [], error: null }),
+      delete: () => Promise.resolve({ data: [], error: null }),
+      eq: () => mockQuery,
+      neq: () => mockQuery,
+      in: () => mockQuery,
+      order: () => mockQuery,
+      limit: () => mockQuery,
+      single: () => Promise.resolve({ data: null, error: null }),
+      maybeSingle: () => Promise.resolve({ data: null, error: null }),
+      then: (callback: any) => Promise.resolve(callback({ data: [], error: null })),
+    };
+    return mockQuery;
+  };
+  
+  // Main mock client
+  const mockClient = {
+    auth: mockAuth,
+    from: (table: string) => mockFrom(table),
+    channel: (name: string) => ({
+      on: () => ({ subscribe: () => ({}) }),
+      subscribe: () => ({})
+    }),
+    // Add any other methods your app commonly uses
+  };
+  
+  return mockClient;
 };
 
 // Create the client only if we have valid credentials
