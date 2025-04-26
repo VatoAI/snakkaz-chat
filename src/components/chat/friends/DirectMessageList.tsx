@@ -1,4 +1,3 @@
-
 import { useRef, useEffect } from "react";
 import { DecryptedMessage } from "@/types/message";
 import { MessageGroup } from "@/components/message/MessageGroup";
@@ -15,6 +14,7 @@ interface DirectMessageListProps {
   onEditMessage?: (message: DecryptedMessage) => void;
   onDeleteMessage?: (messageId: string) => void;
   securityLevel?: SecurityLevel;
+  isPageEncrypted?: boolean; // Add the missing prop
 }
 
 export const DirectMessageList = ({
@@ -27,7 +27,8 @@ export const DirectMessageList = ({
   usingServerFallback,
   onEditMessage,
   onDeleteMessage,
-  securityLevel = 'server_e2ee'
+  securityLevel = 'server_e2ee',
+  isPageEncrypted = false // Add default value
 }: DirectMessageListProps) => {
   const bottomRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -39,6 +40,12 @@ export const DirectMessageList = ({
 
   return (
     <div className="flex-1 overflow-y-auto p-4 space-y-4" ref={bottomRef}>
+      {isPageEncrypted && (
+        <div className="text-center p-2 mb-2 text-xs text-cybergold-300 bg-cybergold-900/10 rounded-md border border-cybergold-500/20">
+          Denne samtalen er beskyttet med helside-kryptering
+        </div>
+      )}
+      
       {messages.map((message) => (
         <MessageGroup
           key={message.id}

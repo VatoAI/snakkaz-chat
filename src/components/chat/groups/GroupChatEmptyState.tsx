@@ -1,6 +1,5 @@
-
 import { Button } from "@/components/ui/button";
-import { MessageSquare, Shield, UserPlus } from "lucide-react";
+import { MessageSquare, Shield, UserPlus, Lock } from "lucide-react";
 import { SecurityLevel } from "@/types/security";
 
 interface GroupChatEmptyStateProps {
@@ -9,6 +8,8 @@ interface GroupChatEmptyStateProps {
   isAdmin?: boolean;
   memberCount?: number;
   onShowInvite?: () => void;
+  isPageEncryptionEnabled?: boolean;
+  onEnablePageEncryption?: () => Promise<void>;
 }
 
 export const GroupChatEmptyState = ({ 
@@ -16,7 +17,9 @@ export const GroupChatEmptyState = ({
   securityLevel,
   isAdmin = false,
   memberCount = 0,
-  onShowInvite
+  onShowInvite,
+  isPageEncryptionEnabled = false,
+  onEnablePageEncryption
 }: GroupChatEmptyStateProps) => {
   let securityText = "End-to-end kryptert";
   
@@ -29,6 +32,7 @@ export const GroupChatEmptyState = ({
   }
   
   const showInviteButton = isAdmin && memberCount <= 1 && onShowInvite;
+  const showEncryptionButton = isAdmin && !isPageEncryptionEnabled && onEnablePageEncryption;
 
   return (
     <div className="flex flex-col items-center justify-center h-full p-6 text-center">
@@ -51,15 +55,27 @@ export const GroupChatEmptyState = ({
         <span className="text-green-500">{securityText}</span>
       </div>
       
-      {showInviteButton && (
-        <Button 
-          onClick={onShowInvite} 
-          className="bg-cybergold-600 hover:bg-cybergold-700 text-black flex gap-2"
-        >
-          <UserPlus className="h-4 w-4" />
-          <span>Inviter venner</span>
-        </Button>
-      )}
+      <div className="flex gap-3 flex-wrap justify-center">
+        {showInviteButton && (
+          <Button 
+            onClick={onShowInvite} 
+            className="bg-cybergold-600 hover:bg-cybergold-700 text-black flex gap-2"
+          >
+            <UserPlus className="h-4 w-4" />
+            <span>Inviter venner</span>
+          </Button>
+        )}
+        
+        {showEncryptionButton && (
+          <Button 
+            onClick={onEnablePageEncryption} 
+            className="bg-cyberblue-600 hover:bg-cyberblue-700 text-black flex gap-2"
+          >
+            <Lock className="h-4 w-4" />
+            <span>Aktiver helside-kryptering</span>
+          </Button>
+        )}
+      </div>
     </div>
   );
 };
