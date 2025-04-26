@@ -13,6 +13,11 @@ const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB maximum
 const MAX_RETRIES = 3;
 const RETRY_DELAY_BASE = 2000; // 2 seconds base, will be multiplied by attempt number
 
+// Compression settings
+const DEFAULT_IMAGE_QUALITY = 1.0; // 100%
+//  quality for images
+const MAX_IMAGE_DIMENSION = 1920; // Max width/height for compressed images
+
 /**
  * Enhanced media upload with chunk support for large files
  */
@@ -89,6 +94,106 @@ export class EnhancedMediaUploader {
     } catch (e) {
       return navigator.onLine; // Fallback to navigator.onLine as last resort
     }
+  }
+
+  /**
+   * Compress image file before upload to reduce bandwidth
+   */
+  private async compressImage(file: File, options: { 
+    quality?: number,
+    maxDimension?: number,
+  } = {}): Promise<File> {
+    // Skip compression for non-compressible formats
+    const compressibleTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!compressibleTypes.includes(file.type)) {
+      return file;
+    }
+
+    const quality = options.quality || DEFAULT_IMAGE_QUALITY;
+    const maxDimension = options.maxDimension || MAX_IMAGE_DIMENSION;
+
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        // Create a canvas with the desired dimensions
+        const canvas = document.createElement('canvas');
+        let { width, height } = img;
+        
+        // Calculate new dimensions while maintaining aspect ratio
+        if (width > height && width > maxDimension) {
+          height *= maxDimension / width;
+          width = maxDimension;
+        } else if (height > maxDimension) {
+          width *= maxDimension / height;
+          height = maxDimension;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        // Draw image to canvas and export as blob
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Failed to get canvas context'));
+          return;
+        }
+        
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        // Get output format
+        let outputFormat = file.type;
+        // Convert PNG to WebP for better compression if supported
+        if (outputFormat === 'image/png' && canvas.toBlob !== undefined) {
+          try {
+            canvas.toBlob(
+              (blob) => {
+                if (!blob) {
+                  reject(new Error('Canvas to Blob conversion failed'));
+                  return;
+                }
+                
+                const compressedFile = new File(
+                  [blob], 
+                  file.name.replace(/\.(png|jpg|jpeg)$/i, '.webp'),
+                  { type: 'image/webp' }
+                );
+                
+                console.log(`Compressed image: ${(file.size / 1024).toFixed(2)}KB → ${(compressedFile.size / 1024).toFixed(2)}KB`);
+                resolve(compressedFile);
+              },
+              'image/webp',
+              quality
+            );
+            return;
+          } catch (e) {
+            // Fallback to original format if WebP not supported
+            console.warn('WebP conversion failed, using original format', e);
+          }
+        }
+        
+        // Use the original format if WebP conversion failed or wasn't attempted
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              reject(new Error('Canvas to Blob conversion failed'));
+              return;
+            }
+            
+            const compressedFile = new File([blob], file.name, { type: file.type });
+            console.log(`Compressed image: ${(file.size / 1024).toFixed(2)}KB → ${(compressedFile.size / 1024).toFixed(2)}KB`);
+            resolve(compressedFile);
+          },
+          outputFormat,
+          quality
+        );
+      };
+      
+      img.onerror = () => {
+        reject(new Error('Failed to load image for compression'));
+      };
+      
+      img.src = URL.createObjectURL(file);
+    });
   }
 
   /**
@@ -518,8 +623,11 @@ export class EnhancedMediaUploader {
         throw new Error("Kunne ikke opprette eller få tilgang til lagringsområdet.");
       }
       
+      // Compress image if applicable
+      const compressedFile = await this.compressImage(file);
+      
       // Generate file path
-      const filePath = this.generateFilePath(file);
+      const filePath = this.generateFilePath(compressedFile);
       
       // Progress tracking callback
       const progressCallback = (progress: UploadProgress) => {
@@ -529,22 +637,22 @@ export class EnhancedMediaUploader {
       let uploadedPath: string;
       
       // Choose upload strategy based on file size
-      if (file.size > MAX_CHUNK_SIZE) {
+      if (compressedFile.size > MAX_CHUNK_SIZE) {
         // Use chunked upload for large files
-        uploadedPath = await this.uploadChunked(file, filePath, progressCallback);
+        uploadedPath = await this.uploadChunked(compressedFile, filePath, progressCallback);
       } else {
         // Use direct upload for small files
         try {
           const { error } = await supabase.storage
             .from('chat-media')
-            .upload(filePath, file, {
+            .upload(filePath, compressedFile, {
               cacheControl: '3600',
               upsert: true,
               onUploadProgress: (progress) => {
                 progressCallback({
                   loaded: progress.loaded,
-                  total: progress.totalBytes || file.size,
-                  percentage: Math.floor((progress.loaded / (progress.totalBytes || file.size)) * 100)
+                  total: progress.totalBytes || compressedFile.size,
+                  percentage: Math.floor((progress.loaded / (progress.totalBytes || compressedFile.size)) * 100)
                 });
               }
             });
