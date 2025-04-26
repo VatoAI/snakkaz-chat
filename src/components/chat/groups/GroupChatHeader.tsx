@@ -8,12 +8,14 @@ import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { 
   DropdownMenu, 
-  DropdownMenu, 
   DropdownMenuContent, 
   DropdownMenuItem, 
   DropdownMenuSeparator, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
+import { useState, useEffect } from "react";
+import { getGroupAvatarUrl } from "@/utils/group-avatar-utils";
+import { ResilientImage } from "@/components/ui/resilient-image";
 
 interface GroupChatHeaderProps {
   group: Group;
@@ -54,6 +56,18 @@ export const GroupChatHeader = ({
   onEnablePageEncryption,
   onEncryptAllMessages
 }: GroupChatHeaderProps) => {
+  const [imageUrl, setImageUrl] = useState<string>('');
+  
+  // Process avatar URL using the new utility
+  useEffect(() => {
+    if (group.avatar_url) {
+      const url = getGroupAvatarUrl(group.avatar_url);
+      setImageUrl(url);
+    } else {
+      setImageUrl('');
+    }
+  }, [group.avatar_url]);
+  
   // Map the connection states to a display indicator
   const getConnectionStatus = () => {
     if (usingServerFallback) {
@@ -97,6 +111,13 @@ export const GroupChatHeader = ({
   
   const connectionStatus = getConnectionStatus();
   
+  // Prepare fallback content for group avatar
+  const groupAvatarFallback = (
+    <AvatarFallback className="bg-cybergold-500/20 text-cybergold-300">
+      <Users className="h-5 w-5" />
+    </AvatarFallback>
+  );
+  
   return (
     <header className="bg-cyberdark-900 border-b border-cybergold-500/20 p-3">
       <div className="flex items-center justify-between">
@@ -112,16 +133,17 @@ export const GroupChatHeader = ({
           
           <div className="flex items-center gap-2">
             <Avatar className="h-10 w-10 border-2 border-cybergold-500/20">
-              {group.avatar_url ? (
-                <AvatarImage 
-                  src={supabase.storage.from('group_avatars').getPublicUrl(group.avatar_url).data.publicUrl} 
-                  alt={group.name} 
-                />
-              ) : (
-                <AvatarFallback className="bg-cybergold-500/20 text-cybergold-300">
-                  <Users className="h-5 w-5" />
-                </AvatarFallback>
-              )}
+              {imageUrl ? (
+                <div className="absolute inset-0 w-full h-full">
+                  <ResilientImage
+                    src={imageUrl}
+                    alt={group.name}
+                    className="w-full h-full object-cover"
+                    fallback={groupAvatarFallback}
+                    retryCount={2}
+                  />
+                </div>
+              ) : groupAvatarFallback}
             </Avatar>
             
             <div>
