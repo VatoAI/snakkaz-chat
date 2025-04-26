@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from "react";
 import { groupMessagesByTime } from "@/utils/messageUtils";
 import { MessageListContent } from "@/components/message/MessageListContent";
@@ -6,6 +5,7 @@ import { UnreadCounter } from "./UnreadCounter";
 import { DecryptedMessage } from "@/types/message";
 import { UserPresence } from "@/types/presence"; 
 import { useDeleteMessageHandler } from "./DeleteMessageHandler";
+import { ScrollStabilizer } from "@/components/chat/ScrollStabilizer";
 
 interface MessageListProps {
   messages: DecryptedMessage[];
@@ -25,48 +25,21 @@ export const MessageList = ({
   userPresence = {}
 }: MessageListProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
   const [newMessageCount, setNewMessageCount] = useState(0);
   const [autoScroll, setAutoScroll] = useState(true);
   const [isAtBottom, setIsAtBottom] = useState(true);
+  const [scrollToBottom, setScrollToBottom] = useState(false);
 
   // Use the delete message handler hook
   const { confirmDelete, setConfirmDelete, DialogUI, isDeleting } = useDeleteMessageHandler({
     onDeleteMessage
   });
 
-  // Handle scrolling behavior
-  const handleScroll = () => {
-    if (!containerRef.current) return;
-    const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
-    const scrolledToBottom = scrollHeight - scrollTop - clientHeight < 50;
-    setIsAtBottom(scrolledToBottom);
-    if (scrolledToBottom) {
-      setAutoScroll(true);
-      setNewMessageCount(0);
-    } else {
-      setAutoScroll(false);
-    }
-  };
-
-  const scrollDownIfNeeded = () => {
-    if (autoScroll && messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-  };
-
   const isMobile = window.innerWidth < 768;
 
-  // Pull-to-refresh hook for mobile - fix argument count
-  const pullToRefreshProps = {
-    scrollAreaRef: containerRef,
-    onRefresh: () => console.log("Refresh triggered")
-  };
-
-  // Handle auto-scrolling when new messages arrive
+  // Handle new messages - calculate if we need to show unread counter
   useEffect(() => {
     if (isAtBottom) {
-      scrollDownIfNeeded();
       setNewMessageCount(0);
     } else if (messages.length > 0) {
       const lastMessage = messages[messages.length - 1];
@@ -88,11 +61,14 @@ export const MessageList = ({
     message.sender.id === currentUserId;
 
   const handleScrollToBottom = () => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
-      setNewMessageCount(0);
-      setAutoScroll(true);
-    }
+    setScrollToBottom(true);
+    setNewMessageCount(0);
+    setAutoScroll(true);
+    
+    // Reset the scrollToBottom flag after it's been consumed
+    setTimeout(() => {
+      setScrollToBottom(false);
+    }, 100);
   };
 
   const handleDelete = async () => {
@@ -101,13 +77,25 @@ export const MessageList = ({
       setConfirmDelete(null);
     }
   };
+  
+  // Handle scroll events from the ScrollStabilizer
+  const handleScrollStateChange = (atBottom: boolean) => {
+    setIsAtBottom(atBottom);
+    setAutoScroll(atBottom);
+    if (atBottom) {
+      setNewMessageCount(0);
+    }
+  };
 
-  // Render the message list UI
+  // Render the message list UI with the ScrollStabilizer
   return (
-    <div
-      ref={containerRef}
-      className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-cyberblue-500/40 scrollbar-track-transparent relative"
-      onScroll={handleScroll}
+    <ScrollStabilizer
+      className="h-full scrollbar-thin scrollbar-thumb-cyberblue-500/40 scrollbar-track-transparent relative"
+      scrollToBottom={scrollToBottom || autoScroll}
+      recomputeKey={messages.length}
+      threshold={100}
+      debug={false}
+      onScrollStateChange={handleScrollStateChange}
     >
       <MessageListContent
         messageGroups={messageGroups}
@@ -126,7 +114,8 @@ export const MessageList = ({
         userPresence={userPresence}
       />
 
-      <UnreadCounter count={newMessageCount} show={!autoScroll} />
-    </div>
+      <UnreadCounter count={newMessageCount} show={!autoScroll} onClick={handleScrollToBottom} />
+      <div ref={messagesEndRef} />
+    </ScrollStabilizer>
   );
 };
