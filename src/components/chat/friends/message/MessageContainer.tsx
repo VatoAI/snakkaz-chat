@@ -50,12 +50,6 @@ export const MessageContainer = ({
     isDeleted && "opacity-50"
   );
 
-  const formattedTime = new Date(message.created_at).toLocaleTimeString([], {
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-  const formattedDate = new Date(message.created_at).toLocaleDateString();
-
   const username = message?.sender?.username || message?.sender?.full_name ||
     (message?.sender?.id ? message.sender.id.substring(0, 8) : "Ukjent");
 
@@ -77,8 +71,11 @@ export const MessageContainer = ({
             <div className="flex flex-col text-xs items-start">
               <span className={cn("font-semibold", secColor.primary)}>{username}</span>
               <div className="flex items-center gap-2 text-cyberdark-200 text-[11px]">
-                <span>{formattedDate}</span>
-                <span>{formattedTime}</span>
+                <span>{new Date(message.created_at).toLocaleDateString()}</span>
+                <span>{new Date(message.created_at).toLocaleTimeString([], {
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}</span>
                 {userStatus && (
                   <span className={cn("ml-1 capitalize", statusColors[userStatus].primary)}>
                     {userStatus}
@@ -95,7 +92,7 @@ export const MessageContainer = ({
           </div>
         )}
 
-        <div className="mb-1">{children}</div>
+        {children}
 
         {showTimer && !message.is_deleted && (
           <div className="flex mt-1">

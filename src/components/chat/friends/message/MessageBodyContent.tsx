@@ -1,7 +1,9 @@
+
 import { DecryptedMessage } from "@/types/message";
 import { UserStatus } from "@/types/presence";
 import { SecurityLevel } from "@/types/security";
 import { MessageMedia } from "@/components/message/MessageMedia";
+import { cn } from "@/lib/utils";
 
 export interface MessageBodyContentProps {
   message: DecryptedMessage;
@@ -24,7 +26,7 @@ export const MessageBodyContent = ({
 }: MessageBodyContentProps) => {
   if (message.is_deleted) {
     return (
-      <div className="text-gray-400 italic">
+      <div className="text-cyberdark-400 italic">
         Denne meldingen er slettet
       </div>
     );
@@ -35,9 +37,11 @@ export const MessageBodyContent = ({
 
   return (
     <div className="message-content">
-      {/* Vis meldingsinnhold hvis det finnes */}
       {hasContent && (
-        <div className={`break-words ${hasMedia ? 'mb-2' : ''}`}>
+        <div className={cn(
+          "break-words",
+          hasMedia && "mb-2"
+        )}>
           {message.content}
           {message.is_edited && (
             <span className="text-[10px] text-cyberdark-400 ml-1">(redigert)</span>
@@ -45,18 +49,19 @@ export const MessageBodyContent = ({
         </div>
       )}
       
-      {/* Vis media hvis det finnes */}
       {hasMedia && (
-        <div className={`${!hasContent ? 'mt-1' : ''}`}>
+        <div className={cn(
+          "rounded-lg overflow-hidden",
+          !hasContent && "mt-1"
+        )}>
           <MessageMedia 
             message={message} 
-            onMediaExpired={() => onMessageExpired && onMessageExpired(message.id)} 
+            onMediaExpired={() => onMessageExpired?.(message.id)} 
           />
         </div>
       )}
       
-      {/* Vis tidspunkt og lesebekreftelse */}
-      <div className="flex justify-end items-center mt-1 gap-1 text-xs text-gray-400">
+      <div className="flex justify-end items-center mt-1 gap-1 text-xs text-cyberdark-400">
         <span>
           {new Date(message.created_at).toLocaleTimeString([], {
             hour: '2-digit',
@@ -64,7 +69,7 @@ export const MessageBodyContent = ({
           })}
         </span>
         {isCurrentUser && isMessageRead && isMessageRead(message.id) && (
-          <span className="text-green-500">✓</span>
+          <span className="text-cyberblue-400">✓</span>
         )}
       </div>
     </div>

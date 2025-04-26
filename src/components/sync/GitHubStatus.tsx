@@ -93,8 +93,8 @@ export const GitHubStatus = () => {
   return (
     <div className="cyber-bg p-4 rounded-lg border border-gray-800 bg-cyberdark-900/90">
       <h2 className="text-lg font-semibold mb-4 flex items-center">
-        <Github size={20} className="mr-2 text-white" />
-        <span className="cyber-text">Recent GitHub Activity</span>
+        <Github size={20} className="mr-2 text-cybergold-400" />
+        <span className="text-cybergold-300">Git Sync Status</span>
       </h2>
       
       <div className="space-y-3">
@@ -108,8 +108,8 @@ export const GitHubStatus = () => {
                 <GitCommit size={16} className="text-cyberblue-400" />
               </div>
               <div>
-                <p className="text-white font-medium">{commit.message}</p>
-                <div className="flex flex-wrap items-center mt-2 text-xs text-gray-400 gap-x-4 gap-y-1">
+                <p className="text-cybergold-300 font-medium">{commit.message}</p>
+                <div className="flex flex-wrap items-center mt-2 text-xs text-cyberdark-200 gap-x-4 gap-y-1">
                   <span className="flex items-center">
                     <User size={12} className="mr-1" /> 
                     {commit.author}
@@ -122,7 +122,7 @@ export const GitHubStatus = () => {
                     <Clock size={12} className="mr-1" /> 
                     {new Date(commit.date).toLocaleString()}
                   </span>
-                  <span className="text-cyberblue-300 font-mono">
+                  <span className="text-cyberblue-400 font-mono">
                     {commit.id}
                   </span>
                 </div>
