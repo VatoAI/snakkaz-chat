@@ -67,10 +67,12 @@ export const CreatePremiumGroupModal = ({
         .from('groups')
         .insert({
           name: data.name,
-          description: data.description || '',
-          created_by: session.user.id,
+          description: data.description || null,
+          creator_id: session.user.id,
           is_premium: false, // Starter som ikke-premium
-          is_temp: true // Markerer som midlertidig til betaling er bekreftet
+          security_level: "server_e2ee", // Standard sikkerhetsnivå
+          write_permissions: "all", // Standard skrivetillatelser
+          default_message_ttl: 86400 // Standard 24 timer
         })
         .select('id')
         .single();
@@ -110,9 +112,7 @@ export const CreatePremiumGroupModal = ({
         await supabase
           .from('groups')
           .update({
-            is_premium: true,
-            is_temp: false,
-            premium_active_until: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+            is_premium: true
           })
           .eq('id', tempGroupId);
           
