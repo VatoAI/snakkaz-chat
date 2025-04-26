@@ -4,6 +4,10 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://localhost';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'placeholder_key';
 
+// Legg til ekstra logging for debugging
+console.log('Supabase URL:', supabaseUrl);
+console.log('Supabase Key (første 10 tegn):', supabaseAnonKey?.substring(0, 10) + '...');
+
 // Check for placeholder values that were not replaced
 const isPlaceholderUrl = supabaseUrl?.includes('your-project-id') || supabaseUrl === 'https://localhost';
 const isPlaceholderKey = supabaseAnonKey?.includes('your-anon-key') || supabaseAnonKey === 'placeholder_key';
@@ -43,7 +47,7 @@ const createMockClient = () => {
       };
     }
   };
-  
+
   // Create basic mocks for commonly used Supabase methods
   const mockFrom = (table: string) => {
     const mockQuery = {
@@ -62,7 +66,7 @@ const createMockClient = () => {
     };
     return mockQuery;
   };
-  
+
   // Main mock client
   const mockClient = {
     auth: mockAuth,
@@ -73,26 +77,51 @@ const createMockClient = () => {
     }),
     // Add any other methods your app commonly uses
   };
-  
+
   return mockClient;
 };
 
 // Create the client only if we have valid credentials
 const hasValidCredentials = supabaseUrl && supabaseAnonKey && !isPlaceholderUrl && !isPlaceholderKey;
 
-export const supabase = hasValidCredentials 
-  ? createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        autoRefreshToken: true,
-        persistSession: true,
+// Prøv å opprette klienten uansett, men med bedre feilhåndtering
+let supabaseClient;
+try {
+  supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      autoRefreshToken: true,
+      persistSession: true,
+    },
+    realtime: {
+      params: {
+        eventsPerSecond: 10,
       },
-      realtime: {
-        params: {
-          eventsPerSecond: 10,
-        },
-      },
+    },
+  });
+
+  // Test tilkoblingen for å validere API-nøkkelen
+  supabaseClient.auth.getSession()
+    .then(response => {
+      if (response.error) {
+        console.error('Supabase connection test failed:', response.error.message);
+        if (response.error.message.includes('invalid key')) {
+          console.error('%c⚠️ API NØKKELFEIL: Den oppgitte API-nøkkelen er ugyldig! ⚠️', 'font-size: 16px; color: red;');
+          console.error('Vennligst sjekk at du bruker den korrekte "anon" eller "public" nøkkelen fra Supabase-dashbordet.');
+        }
+      } else {
+        console.log('Supabase connection test succeeded!', response.data ? 'Session exists' : 'No session');
+      }
     })
-  : createMockClient(); 
+    .catch(err => {
+      console.error('Supabase connection test error:', err);
+    });
+} catch (error) {
+  console.error('Failed to create Supabase client:', error);
+  supabaseClient = null;
+}
+
+// Export the client or mock if creation failed
+export const supabase = supabaseClient || createMockClient();
 
 // Add enhanced logging for debugging - safely check if the method exists
 if (supabase && typeof supabase.channel === 'function') {
@@ -107,14 +136,15 @@ if (supabase && typeof supabase.channel === 'function') {
   } catch (e) {
     console.warn('Could not enable Supabase debug logging:', e);
   }
-} else if (hasValidCredentials && !supabase) {
+} else if (!supabaseClient) {
   console.warn('Supabase client was not initialized properly.');
-  
+
   // Create a more visible error message in the browser console
   if (typeof window !== 'undefined') {
     console.error('%c⚠️ Supabase Connection Error ⚠️', 'font-size: 20px; font-weight: bold; color: red;');
     console.error('%cCould not connect to Supabase. Please check your environment variables.', 'font-size: 16px;');
     console.error('%c1. Ensure .env file has valid VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY', 'font-size: 14px;');
     console.error('%c2. Restart your dev server after making changes', 'font-size: 14px;');
+    console.error('%c3. Try getting new API keys from your Supabase dashboard', 'font-size: 14px;');
   }
 }
