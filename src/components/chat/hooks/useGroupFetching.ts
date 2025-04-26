@@ -1,4 +1,4 @@
-import { useCallback, useState, useEffect } from "react";
+import { useCallback, useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Group, GroupMember } from "@/types/group";
 import { SecurityLevel } from "@/types/security";
@@ -10,11 +10,22 @@ export function useGroupFetching(currentUserId: string) {
   const [isLoading, setIsLoading] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const [isOnline, setIsOnline] = useState(window.navigator.onLine);
+  const cachedGroups = useRef<{timestamp: number, groups: Group[]} | null>(null);
+  const isFetchingRef = useRef(false);
 
   // Monitor online/offline status
   useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
+    const handleOnline = () => {
+      setIsOnline(true);
+      // Try to refetch when we come back online
+      if (cachedGroups.current && (Date.now() - cachedGroups.current.timestamp > 60000)) {
+        fetchGroups().catch(console.error);
+      }
+    };
+    
+    const handleOffline = () => {
+      setIsOnline(false);
+    };
 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
@@ -25,7 +36,7 @@ export function useGroupFetching(currentUserId: string) {
     };
   }, []);
 
-  const handleSupabaseError = (error: PostgrestError, operation: string): void => {
+  const handleSupabaseError = useCallback((error: PostgrestError, operation: string): void => {
     console.error(`Supabase ${operation} error:`, {
       message: error.message,
       details: error.details,
@@ -63,7 +74,7 @@ export function useGroupFetching(currentUserId: string) {
         variant: "destructive"
       });
     }
-  };
+  }, [isOnline, toast]);
 
   const retryWithBackoff = async (fn: () => Promise<any>, maxRetries = 3): Promise<any> => {
     let retries = 0;
@@ -82,8 +93,27 @@ export function useGroupFetching(currentUserId: string) {
     }
   };
 
-  const fetchGroups = useCallback(async (): Promise<Group[]> => {
+  const fetchGroups = useCallback(async (forceRefresh = false): Promise<Group[]> => {
+    // Prevent concurrent fetches
+    if (isFetchingRef.current) {
+      console.log("Already fetching groups, waiting for current fetch to complete");
+      return cachedGroups.current?.groups || [];
+    }
+    
+    // Return cached data if recent and not forcing refresh
+    if (!forceRefresh && 
+        cachedGroups.current && 
+        (Date.now() - cachedGroups.current.timestamp < 30000)) {
+      console.log("Returning cached groups data");
+      return cachedGroups.current.groups;
+    }
+    
     if (!isOnline) {
+      // If offline, return cached data (if any) without showing another toast
+      if (cachedGroups.current) {
+        return cachedGroups.current.groups;
+      }
+      
       toast({
         title: "Ingen nettverkstilkobling",
         description: "Du er ikke tilkoblet internett. Koble til og prøv igjen.",
@@ -93,11 +123,12 @@ export function useGroupFetching(currentUserId: string) {
     }
     
     setIsLoading(true);
+    isFetchingRef.current = true;
     
     try {
       if (!currentUserId) {
         console.error("No user ID provided to fetchGroups");
-        return [];
+        return cachedGroups.current?.groups || [];
       }
 
       const fetchMemberships = async () => {
@@ -106,6 +137,7 @@ export function useGroupFetching(currentUserId: string) {
           .select(`
             group_id,
             role,
+            can_write,
             groups (
               id,
               name,
@@ -130,7 +162,11 @@ export function useGroupFetching(currentUserId: string) {
 
       const memberData = await retryWithBackoff(fetchMemberships);
 
-      if (!memberData?.length) return [];
+      if (!memberData?.length) {
+        // Store empty array in cache
+        cachedGroups.current = { timestamp: Date.now(), groups: [] };
+        return [];
+      }
 
       const groups = memberData
         .filter(membership => membership.groups)
@@ -147,6 +183,7 @@ export function useGroupFetching(currentUserId: string) {
       const groupsWithMembers: Group[] = [];
       const failedGroups: string[] = [];
       
+      // Fetch members for each group
       for (const group of groups) {
         try {
           const fetchMembers = async () => {
@@ -204,9 +241,33 @@ export function useGroupFetching(currentUserId: string) {
         } catch (error) {
           console.error("Error processing group data for group", group.id, ":", error);
           failedGroups.push(group.name || `Gruppe ${group.id}`);
+          
+          // Still add the group but with placeholder data
+          const userMembership = memberData.find(m => m.group_id === group.id);
+          
+          if (userMembership) {
+            groupsWithMembers.push({
+              ...group,
+              members: [{
+                id: `temp-${Date.now()}`,
+                user_id: currentUserId,
+                group_id: group.id,
+                role: (userMembership.role as 'admin' | 'member') || 'member',
+                joined_at: new Date().toISOString(),
+                can_write: userMembership.can_write !== false,
+                profile: {
+                  id: currentUserId,
+                  username: 'You',
+                  avatar_url: null,
+                  full_name: null
+                }
+              }]
+            });
+          }
         }
       }
 
+      // Show warning if some groups failed to load completely
       if (failedGroups.length > 0 && failedGroups.length < groups.length) {
         toast({
           title: "Delvis lastet grupper",
@@ -215,15 +276,35 @@ export function useGroupFetching(currentUserId: string) {
         });
       }
 
+      // Reset retry count on success
       setRetryCount(0);
+      
+      // Update cache
+      cachedGroups.current = {
+        timestamp: Date.now(),
+        groups: groupsWithMembers
+      };
+      
       return groupsWithMembers;
       
     } catch (error) {
       console.error("Fatal error fetching groups:", error);
       
+      // Increment retry count
       const newRetryCount = retryCount + 1;
       setRetryCount(newRetryCount);
       
+      // Return cached results if available rather than empty array
+      if (cachedGroups.current) {
+        toast({
+          title: "Bruker lagrede gruppedata",
+          description: "Kunne ikke hente oppdaterte gruppedata. Viser lagrede data.",
+          variant: "warning"
+        });
+        return cachedGroups.current.groups;
+      }
+      
+      // Otherwise show error message
       let errorMessage = "En feil oppstod ved henting av grupper. ";
       
       if (newRetryCount <= 3) {
@@ -241,8 +322,16 @@ export function useGroupFetching(currentUserId: string) {
       return [];
     } finally {
       setIsLoading(false);
+      isFetchingRef.current = false;
     }
-  }, [currentUserId, toast, retryCount, isOnline]);
+  }, [currentUserId, toast, retryCount, isOnline, handleSupabaseError]);
+
+  // Initial fetch on mount
+  useEffect(() => {
+    if (currentUserId && !cachedGroups.current) {
+      fetchGroups().catch(console.error);
+    }
+  }, [currentUserId, fetchGroups]);
 
   return { fetchGroups, isLoading, isOnline };
 }
