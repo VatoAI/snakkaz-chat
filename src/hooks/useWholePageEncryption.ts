@@ -1,81 +1,73 @@
-/**
- * Hook for helside kryptering i SnakkaZ
- * Gjør det enkelt å kryptere hele sider og grupper
- */
-
 import { useState, useCallback } from 'react';
-import { encryptWholePage, decryptWholePage, generateGroupPageKey } from '../utils/encryption/whole-page-encryption';
+import { 
+  encryptWholePage, 
+  decryptWholePage,
+  WholePageData 
+} from '@/utils/encryption/whole-page-encryption';
+import { generateEncryptionKey } from '@/utils/encryption/group-keys';
 
 interface UseWholePageEncryptionOptions {
   onError?: (error: Error) => void;
 }
 
+/**
+ * Hook for å håndtere kryptering av en hel side eller større datastrukturer
+ */
 export function useWholePageEncryption(options?: UseWholePageEncryptionOptions) {
-  const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-
-  // Generere en ny nøkkel for gruppekryptering
+  
+  /**
+   * Genererer en ny krypteringsnøkkel for en gruppe eller side
+   */
   const generateNewGroupKey = useCallback(async () => {
     try {
-      setIsProcessing(true);
-      setError(null);
-      const keyPair = await generateGroupPageKey();
-      return keyPair;
+      const keyPair = await generateEncryptionKey();
+      return {
+        key: keyPair.keyString,
+        keyId: keyPair.keyId
+      };
     } catch (err) {
-      const error = err instanceof Error ? err : new Error('Ukjent feil ved generering av gruppenøkkel');
+      const error = err instanceof Error ? err : new Error('Kunne ikke generere krypteringsnøkkel');
       setError(error);
-      if (options?.onError) {
-        options.onError(error);
-      }
+      options?.onError?.(error);
       return null;
-    } finally {
-      setIsProcessing(false);
     }
   }, [options]);
-
-  // Kryptere hele sidens data
-  const encryptPage = useCallback(async (pageData: any, encryptionKey: string) => {
+  
+  /**
+   * Krypterer sidedata med den oppgitte nøkkelen
+   */
+  const encryptPage = useCallback(async <T,>(pageData: T, keyString: string): Promise<string> => {
     try {
-      setIsProcessing(true);
-      setError(null);
-      const encryptedData = await encryptWholePage(pageData, encryptionKey);
-      return encryptedData;
+      const encrypted = await encryptWholePage(pageData as unknown as WholePageData, keyString);
+      return encrypted;
     } catch (err) {
-      const error = err instanceof Error ? err : new Error('Feil ved kryptering av siden');
+      const error = err instanceof Error ? err : new Error('Kunne ikke kryptere data');
       setError(error);
-      if (options?.onError) {
-        options.onError(error);
-      }
-      return null;
-    } finally {
-      setIsProcessing(false);
+      options?.onError?.(error);
+      throw error;
     }
   }, [options]);
-
-  // Dekryptere hele sidens data
-  const decryptPage = useCallback(async (encryptedData: string, encryptionKey: string) => {
+  
+  /**
+   * Dekrypterer sidedata med den oppgitte nøkkelen
+   */
+  const decryptPage = useCallback(async <T,>(encryptedData: string, keyString: string): Promise<T> => {
     try {
-      setIsProcessing(true);
-      setError(null);
-      const decryptedData = await decryptWholePage(encryptedData, encryptionKey);
-      return decryptedData;
+      const decrypted = await decryptWholePage(encryptedData, keyString);
+      return decrypted as unknown as T;
     } catch (err) {
-      const error = err instanceof Error ? err : new Error('Feil ved dekryptering av siden');
+      const error = err instanceof Error ? err : new Error('Kunne ikke dekryptere data');
       setError(error);
-      if (options?.onError) {
-        options.onError(error);
-      }
-      return null;
-    } finally {
-      setIsProcessing(false);
+      options?.onError?.(error);
+      throw error;
     }
   }, [options]);
-
+  
   return {
-    isProcessing,
-    error,
-    generateNewGroupKey,
     encryptPage,
-    decryptPage
+    decryptPage,
+    generateNewGroupKey,
+    error
   };
 }
