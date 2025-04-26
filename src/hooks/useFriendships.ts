@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext'; // Changed from @/hooks/useAuth
 import { useToast } from '@/components/ui/use-toast';
 import { Friend } from '@/components/chat/friends/types';
 
@@ -10,7 +10,7 @@ export const useFriendships = () => {
   const [friendships, setFriendships] = useState<any[]>([]);
   const [friendsMap, setFriendsMap] = useState<Record<string, Friend>>({});
   const [isLoading, setIsLoading] = useState(false);
-  const { user } = useAuth();
+  const { user } = useAuth(); // Using the user from AuthContext
   const { toast } = useToast();
 
   const fetchFriendships = useCallback(async () => {
@@ -28,7 +28,7 @@ export const useFriendships = () => {
           created_at,
           user_id, 
           friend_id,
-          profiles!friendships_friend_id_fkey (id, username, avatar_url, full_name)
+          profiles:friend_id (id, username, avatar_url, full_name)
         `)
         .or(`user_id.eq.${user.id},friend_id.eq.${user.id}`)
         .eq('status', 'accepted');
@@ -43,6 +43,14 @@ export const useFriendships = () => {
           // Get the other user's ID
           const friendUserId = isFriend ? friendship.friend_id : friendship.user_id;
           
+          // Get profile data safely - handle case where profiles might be null
+          const profile = friendship.profiles || {
+            id: friendUserId,
+            username: 'Unknown User',
+            avatar_url: null,
+            full_name: null
+          };
+          
           return {
             id: friendship.id,
             user_id: friendUserId,
@@ -50,10 +58,10 @@ export const useFriendships = () => {
             status: friendship.status,
             created_at: friendship.created_at,
             profile: {
-              id: friendship.profiles.id,
-              username: friendship.profiles.username,
-              avatar_url: friendship.profiles.avatar_url,
-              full_name: friendship.profiles.full_name
+              id: profile.id,
+              username: profile.username,
+              avatar_url: profile.avatar_url,
+              full_name: profile.full_name
             }
           };
         });
