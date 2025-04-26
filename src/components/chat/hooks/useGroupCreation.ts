@@ -172,7 +172,7 @@ export function useGroupCreation(
           toast({
             title: "Kunne ikke laste opp bilde",
             description: "Gruppen ble opprettet, men profilbildet kunne ikke lastes opp.",
-            variant: "warning"
+            variant: "default"
           });
         }
       }
@@ -204,7 +204,7 @@ export function useGroupCreation(
             toast({
               title: "Advarsel",
               description: "Du ble ikke lagt til som administrator. Du kan måtte slette og opprette gruppen på nytt.",
-              variant: "warning"
+              variant: "default"
             });
             break;
           }
@@ -269,7 +269,7 @@ export function useGroupCreation(
           toast({
             title: "Advarsel",
             description: `${failedMembersCount} medlemmer kunne ikke legges til i gruppen. De kan inviteres senere.`,
-            variant: "warning"
+            variant: "default"
           });
         }
       }
@@ -334,7 +334,7 @@ export function useGroupCreation(
         toast({
           title: "Gruppe delvis opprettet",
           description: `Gruppen "${name}" ble opprettet, men noen data mangler. Oppdater siden for å se alle detaljer.`,
-          variant: "warning"
+          variant: "default"
         });
         
         return;
