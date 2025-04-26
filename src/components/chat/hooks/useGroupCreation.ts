@@ -134,23 +134,7 @@ export function useGroupCreation(
       if (!groupData) {
         throw new Error('Kunne ikke opprette gruppe. Sjekk nettverkstilkobling og prøv igjen.');
       }
-      // Create the group with new fields
-      const { data: groupData, error: groupError } = await supabase
-        .from('groups')
-        .insert({
-          name,
-          creator_id: currentUserId,
-          security_level: securityLevel,
-          password: password || null,
-          // New fields
-          write_permissions: writePermissions,
-          default_message_ttl: defaultMessageTtl
-        })
-        .select()
-        .single();
-
-      if (groupError) throw groupError;
-
+      
       // Upload avatar if provided
       let avatarUrl = null;
       if (avatar) {
