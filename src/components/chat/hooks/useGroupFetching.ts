@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Group, GroupMember } from "@/types/group";
 import { SecurityLevel } from "@/types/security";
@@ -9,6 +9,21 @@ export function useGroupFetching(currentUserId: string) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
+  const [isOnline, setIsOnline] = useState(window.navigator.onLine);
+
+  // Monitor online/offline status
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   const handleSupabaseError = (error: PostgrestError, operation: string): void => {
     console.error(`Supabase ${operation} error:`, {
@@ -17,6 +32,15 @@ export function useGroupFetching(currentUserId: string) {
       hint: error.hint,
       code: error.code
     });
+    
+    if (!isOnline) {
+      toast({
+        title: "Ingen nettverkstilkobling",
+        description: "Du er ikke tilkoblet internett. Koble til og prøv igjen.",
+        variant: "destructive"
+      });
+      return;
+    }
     
     if (error.code === 'POSTGRES_ERROR') {
       if (error.message.includes('timeout')) {
@@ -32,6 +56,12 @@ export function useGroupFetching(currentUserId: string) {
           variant: "destructive"
         });
       }
+    } else if (error.code === 'PGRST301' || error.message.includes('JWT')) {
+      toast({
+        title: "Autentiseringsfeil",
+        description: "Din økt har utløpt. Vennligst logg inn på nytt.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -53,6 +83,15 @@ export function useGroupFetching(currentUserId: string) {
   };
 
   const fetchGroups = useCallback(async (): Promise<Group[]> => {
+    if (!isOnline) {
+      toast({
+        title: "Ingen nettverkstilkobling",
+        description: "Du er ikke tilkoblet internett. Koble til og prøv igjen.",
+        variant: "destructive"
+      });
+      return [];
+    }
+    
     setIsLoading(true);
     
     try {
@@ -203,7 +242,7 @@ export function useGroupFetching(currentUserId: string) {
     } finally {
       setIsLoading(false);
     }
-  }, [currentUserId, toast, retryCount]);
+  }, [currentUserId, toast, retryCount, isOnline]);
 
-  return { fetchGroups, isLoading };
+  return { fetchGroups, isLoading, isOnline };
 }
