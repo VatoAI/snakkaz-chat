@@ -1,6 +1,11 @@
--- POSTGRESQL SYNTAX
--- Dette skriptet bruker PostgreSQL-spesifikk syntaks og er ment å kjøres på Supabase (PostgreSQL)
--- Ignorer eventuelle MS SQL Server-relaterte syntaksfeil fra editoren
+-- filepath: /workspaces/snakkaz-chat/src/sql/optimizations/fix_rls_performance.sql
+-- POSTGRESQL SYNTAX - NOT MS SQL SERVER
+-- =============================================================================
+-- IMPORTANT: This file uses PostgreSQL-specific syntax for Supabase Row Level Security
+-- Your editor may show MS SQL Server syntax errors which should be IGNORED
+-- VS Code may incorrectly validate this as MS SQL Server syntax, but this file is meant
+-- to be run on PostgreSQL databases only
+-- =============================================================================
 
 -- fix_rls_performance.sql
 -- Dette skriptet fikser ytelsesproblemene som er identifisert av Supabase Database Linter
