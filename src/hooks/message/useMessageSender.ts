@@ -56,11 +56,11 @@ export const useMessageSender = (
       // Handle media file upload/encryption if provided
       let mediaUrl = null, mediaType = null, encryptionKey = null, iv = null, mediaMetadata = null;
       if (mediaFile) {
-        const result = await handleMediaUpload(
-          mediaFile,
-          toast,
-          globalE2eeKey && globalE2eeIv ? { encryptionKey: globalE2eeKey, iv: globalE2eeIv } : undefined
-        );
+        // Fixed: Pass correct parameters to handleMediaUpload
+        const globalOverride = globalE2eeKey && globalE2eeIv ? 
+          { encryptionKey: globalE2eeKey, iv: globalE2eeIv } : undefined;
+          
+        const result = await handleMediaUpload(mediaFile, toast, globalOverride);
         mediaUrl = result.mediaUrl;
         mediaType = result.mediaType;
         encryptionKey = result.encryptionKey;

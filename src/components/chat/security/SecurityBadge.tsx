@@ -2,6 +2,7 @@
 import { ShieldCheck, ShieldAlert, Shield } from "lucide-react";
 import { SecurityLevel } from "@/types/security";
 import { cn } from "@/lib/utils";
+import { securityColors } from "@/constants/colors";
 
 interface SecurityBadgeProps {
   securityLevel: SecurityLevel;
@@ -33,34 +34,28 @@ export const SecurityBadge = ({
     lg: "h-5 w-5"
   };
   
-  // Determine color and icon based on security level
-  let bgColor = '';
   let Icon = Shield;
+  let colors = securityColors[securityLevel];
   let title = '';
   
   switch (securityLevel) {
     case 'p2p_e2ee':
       if (fallback) {
-        bgColor = 'bg-amber-500/30';
         Icon = ShieldAlert;
         title = 'P2P Kryptering (Fallback)';
       } else if (!isConnected && (connectionState || dataChannelState)) {
-        bgColor = 'bg-amber-500/30';
         Icon = ShieldAlert;
         title = 'P2P Kryptering (Kobler til...)';
       } else {
-        bgColor = 'bg-green-500/30';
         Icon = ShieldCheck;
         title = 'Peer-to-Peer End-to-End Kryptering';
       }
       break;
     case 'server_e2ee':
-      bgColor = 'bg-blue-500/30';
       Icon = ShieldCheck;
       title = 'Server End-to-End Kryptering';
       break;
     case 'standard':
-      bgColor = 'bg-amber-600/30';
       Icon = Shield;
       title = 'Standard Kryptering';
       break;
@@ -69,13 +64,17 @@ export const SecurityBadge = ({
   return (
     <div 
       className={cn(
-        "flex items-center justify-center rounded-full", 
-        bgColor,
+        "flex items-center justify-center rounded-full transition-all duration-300", 
+        colors.bg,
+        colors.glow,
         sizeClasses[size]
       )}
       title={title}
     >
-      <Icon className={iconSizes[size]} />
+      <Icon className={cn(
+        iconSizes[size],
+        colors.primary
+      )} />
     </div>
   );
 };

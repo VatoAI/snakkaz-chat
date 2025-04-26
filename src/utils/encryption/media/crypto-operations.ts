@@ -1,64 +1,54 @@
 
-import { arrayBufferToBase64, base64ToArrayBuffer } from '../data-conversion';
-
-export const encryptMediaBuffer = async (
-  fileBuffer: ArrayBuffer,
-  customKey?: CryptoKey,
-  customIv?: Uint8Array
-): Promise<{ encryptedBuffer: ArrayBuffer; key: CryptoKey; iv: Uint8Array }> => {
-  // Use provided key and IV if available, otherwise generate new ones
-  const key = customKey || await window.crypto.subtle.generateKey(
-    {
-      name: "AES-GCM",
-      length: 256,
-    },
+export const encryptMediaBuffer = async (buffer: ArrayBuffer) => {
+  // Generate a random key for encrypting this specific media file
+  const key = await crypto.subtle.generateKey(
+    { name: 'AES-GCM', length: 256 },
     true,
-    ["encrypt", "decrypt"]
+    ['encrypt', 'decrypt']
   );
 
-  const iv = customIv || window.crypto.getRandomValues(new Uint8Array(12));
-  
-  const encryptedBuffer = await window.crypto.subtle.encrypt(
-    {
-      name: "AES-GCM",
-      iv: iv,
-    },
+  // Generate random IV
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+
+  // Encrypt the file data
+  const encryptedBuffer = await crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv },
     key,
-    fileBuffer
+    buffer
   );
 
   return { encryptedBuffer, key, iv };
 };
 
 export const decryptMediaBuffer = async (
-  encryptedBuffer: ArrayBuffer,
+  encryptedData: ArrayBuffer,
   key: CryptoKey,
   iv: Uint8Array
 ): Promise<ArrayBuffer> => {
-  return window.crypto.subtle.decrypt(
-    {
-      name: "AES-GCM",
-      iv: iv,
-    },
-    key,
-    encryptedBuffer
-  );
+  try {
+    return await crypto.subtle.decrypt(
+      { name: 'AES-GCM', iv },
+      key,
+      encryptedData
+    );
+  } catch (error) {
+    console.error('Media decryption failed:', error);
+    throw new Error('Failed to decrypt media content');
+  }
 };
 
 export const exportEncryptionKey = async (key: CryptoKey): Promise<string> => {
-  const exportedKey = await window.crypto.subtle.exportKey("jwk", key);
-  return JSON.stringify(exportedKey);
+  const exported = await crypto.subtle.exportKey('raw', key);
+  return btoa(String.fromCharCode(...new Uint8Array(exported)));
 };
 
-export const importEncryptionKey = async (keyString: string): Promise<CryptoKey> => {
-  return window.crypto.subtle.importKey(
-    "jwk",
-    JSON.parse(keyString),
-    {
-      name: "AES-GCM",
-      length: 256,
-    },
+export const importEncryptionKey = async (keyStr: string): Promise<CryptoKey> => {
+  const keyData = Uint8Array.from(atob(keyStr), c => c.charCodeAt(0));
+  return await crypto.subtle.importKey(
+    'raw',
+    keyData,
+    { name: 'AES-GCM', length: 256 },
     false,
-    ["decrypt", "encrypt"] // Add encrypt permission to support global encryption
+    ['decrypt']
   );
 };

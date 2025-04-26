@@ -8,7 +8,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { UserStatus } from "@/types/presence";
-import { statusIcons, statusLabels, statusColors } from "./StatusIcons";
+import { statusIcons, statusLabels } from "./StatusIcons";
+import { statusColors } from "@/constants/colors";
 import { cn } from "@/lib/utils";
 
 interface StatusDropdownProps {
@@ -30,7 +31,7 @@ export const StatusDropdown = ({ currentStatus, onStatusChange }: StatusDropdown
         >
           <StatusIcon className={cn(
             "w-4 h-4 mr-2",
-            statusColors[currentStatus]
+            statusColors[currentStatus].primary
           )} />
           {statusLabels[currentStatus]}
         </Button>
@@ -53,7 +54,7 @@ export const StatusDropdown = ({ currentStatus, onStatusChange }: StatusDropdown
               return (
                 <Icon className={cn(
                   "w-4 h-4",
-                  statusColors[status as UserStatus]
+                  statusColors[status as UserStatus].primary
                 )} />
               );
             })()}

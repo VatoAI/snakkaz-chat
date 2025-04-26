@@ -19,7 +19,7 @@ export function useGroupCreation(
     password?: string,
     avatar?: File,
     writePermissions: GroupWritePermission = 'all',
-    defaultMessageTtl: MessageTTLOption = null,
+    defaultMessageTtl: MessageTTLOption = 86400,
     memberWritePermissions?: Record<string, boolean>
   ) => {
     // Prevent multiple simultaneous attempts
@@ -94,7 +94,7 @@ export function useGroupCreation(
         // We'll show a warning toast later if we need to
       }
 
-      // Create the group with retry logic
+      // Create the group with retry logic and new fields
       let groupData;
       let retryCount = 0;
       const maxRetries = 2;
@@ -340,15 +340,23 @@ export function useGroupCreation(
         return;
       }
 
+      // Cast the returned data with proper type assertions
       const newGroup: Group = {
-        ...completeGroup,
+        id: completeGroup.id,
+        name: completeGroup.name,
+        created_at: completeGroup.created_at,
+        creator_id: completeGroup.creator_id,
         security_level: completeGroup.security_level as SecurityLevel,
         write_permissions: (completeGroup.write_permissions || 'all') as GroupWritePermission,
+        default_message_ttl: completeGroup.default_message_ttl as MessageTTLOption,
         members: completeGroup.members.map((m: any) => ({
           ...m,
           profile: m.profiles,
           can_write: m.can_write !== false // Default to true if not specified
-        }))
+        })),
+        // Add other optional fields
+        password: completeGroup.password,
+        avatar_url: completeGroup.avatar_url
       };
 
       setGroups(prev => [...prev, newGroup]);

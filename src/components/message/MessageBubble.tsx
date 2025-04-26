@@ -35,7 +35,7 @@ export const MessageBubble = memo(({
 
   const usingServerFallback = false;
 
-  // Do not return null even if message is invalid - render a placeholder instead
+  // Do not render invalid messages - instead use a placeholder
   if (!message || !message.id) {
     return <div className="hidden"></div>;
   }

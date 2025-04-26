@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { useState } from 'react';
 import { EnhancedMediaUploader } from '@/utils/upload/enhanced-media-upload';
 import { toast } from '@/components/ui/use-toast';
@@ -49,14 +50,51 @@ export function useMediaUpload() {
         title: 'Ikke pålogget',
         description: 'Du må være pålogget for å laste opp filer.',
         variant: 'destructive',
+=======
+
+import { useState } from "react";
+import { uploadMedia } from "@/utils/upload/media-upload";
+import { useToast } from "@/components/ui/use-toast";
+
+export const useMediaUpload = () => {
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const { toast } = useToast();
+
+  const upload = async (file: File) => {
+    // Validate file before upload
+    if (!file) {
+      toast({
+        title: "Error",
+        description: "No file selected",
+        variant: "destructive",
+>>>>>>> 9ac3f1f48b79b65030eb7862226aebf58d99bcf5
       });
       return null;
     }
+<<<<<<< HEAD
+=======
+    
+    // Check file size (10MB max)
+    const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+    if (file.size > MAX_SIZE) {
+      toast({
+        title: "Error",
+        description: "File too large (max 10MB)",
+        variant: "destructive",
+      });
+      throw new Error("File too large (max 10MB)");
+    }
+    
+    setIsUploading(true);
+    setUploadProgress(0);
+>>>>>>> 9ac3f1f48b79b65030eb7862226aebf58d99bcf5
 
     let lastProgressUpdate = Date.now();
     let startTime = Date.now();
     
     try {
+<<<<<<< HEAD
       setState({
         isUploading: true,
         progress: 0,
@@ -120,6 +158,31 @@ export function useMediaUpload() {
       toast({
         title: 'Opplasting fullført',
         description: `${file.name} (${formatFileSize(file.size)}) ble lastet opp på ${totalTime}s`,
+=======
+      // Create toast to show progress
+      const { id, update, dismiss } = toast({
+        title: "Uploading file...",
+        description: "Starting upload",
+        duration: 5000,
+      });
+
+      const result = await uploadMedia(file, (progress) => {
+        setUploadProgress(progress);
+        // Update toast with progress
+        update({
+          id,
+          title: "Uploading file...",
+          description: `${Math.round(progress)}% complete`,
+          duration: 5000,
+        });
+      });
+
+      // Update toast to show success
+      update({
+        id,
+        title: "Upload complete",
+        description: "File was uploaded successfully",
+>>>>>>> 9ac3f1f48b79b65030eb7862226aebf58d99bcf5
         duration: 3000,
       });
       
@@ -131,6 +194,7 @@ export function useMediaUpload() {
       
       return result;
     } catch (error) {
+<<<<<<< HEAD
       console.error('Upload failed:', error);
       
       const errorMessage = error instanceof Error ? error.message : 'Ukjent feil under opplasting';
@@ -140,6 +204,13 @@ export function useMediaUpload() {
         description: errorMessage,
         variant: 'destructive',
         duration: 5000,
+=======
+      console.error("Upload error:", error);
+      toast({
+        title: "Upload failed",
+        description: error instanceof Error ? error.message : "Could not upload file",
+        variant: "destructive",
+>>>>>>> 9ac3f1f48b79b65030eb7862226aebf58d99bcf5
       });
       
       setState({

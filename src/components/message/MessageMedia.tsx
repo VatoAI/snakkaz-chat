@@ -1,218 +1,135 @@
-import { ShieldAlert, RefreshCw, LinkBroken } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { DecryptedMessage } from "@/types/message";
-import { useEffect, useState, useCallback } from "react";
-import { useMediaDecryption } from "./media/useMediaDecryption";
-import { DeletedMedia } from "./media/DeletedMedia";
-import { ImageMedia } from "./media/ImageMedia";
+import { useState, useEffect } from "react";
+import { IconFile, IconFileText, IconLock } from "@tabler/icons-react";
+import { decryptMediaMetadata } from "@/utils/encryption/media/metadata-extractor";
+import { useMediaDecryption } from "@/utils/encryption/media/useMediaDecryption";
 import { VideoMedia } from "./media/VideoMedia";
-import { AudioMedia } from "./media/AudioMedia";
+import { ImageMedia } from "./media/ImageMedia";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { FileMedia } from "./media/FileMedia";
-import { DecryptingMedia } from "./media/DecryptingMedia";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 interface MessageMediaProps {
-  message: DecryptedMessage;
-  onMediaExpired?: () => void;
+  encryptedUrl: string;
+  encryptionKey: string;
+  fileType: string;
+  messageId?: string;
+  ttl?: number | null;
+  onDelete?: () => void;
+  onShowDeleteConfirm?: () => void;
 }
 
-export const MessageMedia = ({ message, onMediaExpired }: MessageMediaProps) => {
-  const {
-    decryptedUrl,
-    isDecrypting,
-    decryptError,
-    handleDecryptMedia,
-    setDecryptError,
-    decryptAttempts
-  } = useMediaDecryption(message);
-  
-  const [storageUrl, setStorageUrl] = useState<string | null>(null);
-  const [storageError, setStorageError] = useState<string | null>(null);
+export const MessageMedia = ({ 
+  encryptedUrl, 
+  encryptionKey, 
+  fileType,
+  messageId,
+  ttl,
+  onDelete,
+  onShowDeleteConfirm
+}: MessageMediaProps) => {
+  const [decryptFailed, setDecryptFailed] = useState(false);
+  const [metadata, setMetadata] = useState<any>(null);
   const { toast } = useToast();
   
-  // Get the storage URL and decrypt the media
-  const initMedia = useCallback(async () => {
-    if (!message.media_url) return;
-    
-    try {
-      setStorageError(null);
-      const { data } = supabase.storage
-        .from('chat-media')
-        .getPublicUrl(message.media_url);
-        
-      if (!data?.publicUrl) {
-        throw new Error("Kunne ikke få tilgang til media URL");
-      }
-      
-      setStorageUrl(data.publicUrl);
-      console.log("MessageMedia: Starting decryption for:", message.media_url);
-      handleDecryptMedia(data.publicUrl);
-    } catch (error) {
-      console.error("Error getting storage URL:", error);
-      setStorageError("Kunne ikke få tilgang til mediafilen");
-    }
-  }, [message.media_url, handleDecryptMedia]);
+  const {
+    decryptedDataUrl,
+    isLoading,
+    error,
+    retry: retryDecryption
+  } = useMediaDecryption(encryptedUrl, encryptionKey);
   
-  // Initialize when message media changes
+  // Try to extract metadata
   useEffect(() => {
-    if (message.media_url) {
-      initMedia();
-    }
-    
-    // Clean up resources when component unmounts
-    return () => {
-      setStorageUrl(null);
-      setStorageError(null);
-    };
-  }, [message.media_url, initMedia]);
-  
-  if (!message.media_url) return null;
-
-  if (message.is_deleted) {
-    return <DeletedMedia />;
-  }
-  
-  // Handle storage access errors
-  if (storageError) {
-    return (
-      <div className="mt-2 p-3 border border-cyberred-800/50 rounded-lg bg-cyberred-950/30 flex items-center gap-2">
-        <LinkBroken className="h-5 w-5 text-cyberred-400 flex-shrink-0" />
-        <div className="flex-1">
-          <p className="text-cyberred-300 text-sm">Mediafil utilgjengelig</p>
-          <p className="text-xs text-cyberred-400/70">{storageError}</p>
-        </div>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => initMedia()}
-          className="ml-2 border-cyberred-700 bg-cyberdark-900 hover:bg-cyberdark-800"
-        >
-          <RefreshCw className="h-3 w-3 mr-1" />
-          Prøv igjen
-        </Button>
-      </div>
-    );
-  }
-  
-  // Show loading state while getting storage URL
-  if (!storageUrl) {
-    return <DecryptingMedia />;
-  }
-  
-  // Show decrypting state
-  if (isDecrypting) {
-    return <DecryptingMedia />;
-  }
-  
-  // Handle decryption errors
-  if (decryptError) {
-    return (
-      <div className="mt-2 p-3 border border-cyberred-800/50 rounded-lg bg-cyberred-950/30 flex items-center">
-        <ShieldAlert className="h-5 w-5 text-cyberred-400 mr-2 flex-shrink-0" />
-        <div className="flex-1">
-          <p className="text-cyberred-300 text-sm">Kunne ikke dekryptere media</p>
-          <p className="text-xs text-cyberred-400/70 truncate max-w-xs">{decryptError}</p>
-        </div>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => {
-            if (decryptAttempts > 3) {
-              toast({
-                title: "Forsøker igjen",
-                description: "Henter og dekrypterer mediafilen på nytt...",
-              });
-            }
-            handleDecryptMedia(storageUrl);
-          }}
-          className="ml-2 border-cyberred-700 bg-cyberdark-900 hover:bg-cyberdark-800 whitespace-nowrap"
-        >
-          <RefreshCw className="h-3 w-3 mr-1" />
-          Prøv igjen
-        </Button>
-      </div>
-    );
-  }
-
-  // Render appropriate media component based on media type
-  try {
-    // Extract media type from either direct media_type or from metadata if available
-    let mediaType = message.media_type || 'application/octet-stream';
-    let originalName: string | undefined;
-    
-    try {
-      if (message.media_metadata) {
-        const metadata = typeof message.media_metadata === 'string' 
-          ? JSON.parse(message.media_metadata) 
-          : message.media_metadata;
-          
-        if (metadata.originalType) {
-          mediaType = metadata.originalType;
+    const extractMetadata = async () => {
+      try {
+        if (encryptionKey) {
+          const meta = await decryptMediaMetadata(encryptedUrl, encryptionKey);
+          if (meta) {
+            setMetadata(meta);
+          }
         }
-        
-        if (metadata.originalName) {
-          originalName = metadata.originalName;
-        }
+      } catch (err) {
+        console.error("Failed to extract metadata:", err);
       }
-    } catch (e) {
-      console.error("Error parsing media metadata:", e);
-    }
+    };
     
-    if (mediaType.startsWith('image/')) {
-      return (
-        <ImageMedia
-          url={decryptedUrl || ''}
-          ttl={message.ephemeral_ttl || null}
-          onExpired={onMediaExpired}
-          retryDecryption={() => storageUrl && handleDecryptMedia(storageUrl)}
-        />
-      );
+    extractMetadata();
+  }, [encryptedUrl, encryptionKey]);
+
+  // Handle media expiration
+  const handleMediaExpired = () => {
+    if (onDelete) {
+      onDelete();
+      toast({
+        title: "Media Expired",
+        description: "This media has reached its time limit and been deleted.",
+        variant: "warning",
+      });
     }
-    
-    if (mediaType.startsWith('video/')) {
-      return <VideoMedia 
-        url={decryptedUrl || ''} 
-        mediaType={mediaType} 
-        retryDecryption={() => storageUrl && handleDecryptMedia(storageUrl)}
-      />;
-    }
-    
-    if (mediaType.startsWith('audio/')) {
-      return <AudioMedia 
-        url={decryptedUrl || ''} 
-        mediaType={mediaType}
-        retryDecryption={() => storageUrl && handleDecryptMedia(storageUrl)}
-      />;
-    }
-    
+  };
+  
+  if (isLoading || (!decryptedDataUrl && !error)) {
     return (
-      <FileMedia
-        url={decryptedUrl || ''}
-        fileName={originalName || message.media_url.split('/').pop() || 'File'}
-        mediaType={mediaType}
-        retryDecryption={() => storageUrl && handleDecryptMedia(storageUrl)}
+      <div className="flex flex-col items-center justify-center bg-cyberdark-800/50 rounded-lg p-4 min-h-[150px] w-full max-w-md mt-2 shadow-md">
+        <IconLock className="text-cyberblue-400 mb-2" size={24} />
+        <div className="h-6 w-6 border-2 border-t-transparent border-cyberblue-400 rounded-full animate-spin mb-2"></div>
+        <p className="text-xs text-cyberdark-200">Decrypting media...</p>
+      </div>
+    );
+  }
+
+  if (error || decryptFailed) {
+    return (
+      <div className="bg-cyberdark-800/80 p-4 rounded-md mt-2 flex flex-col items-center max-w-md">
+        <IconLock className="text-cyberred-400 mb-2" size={24} />
+        <p className="text-cyberred-400 text-sm">Failed to decrypt media</p>
+        <p className="text-cyberdark-300 text-xs my-1">The encryption key may be invalid or the file is corrupted</p>
+        
+        <div className="flex gap-2 mt-2">
+          <Button 
+            size="sm" 
+            variant="outline"
+            onClick={() => retryDecryption()}
+            className="text-xs border-cyberblue-700 bg-cyberdark-900 hover:bg-cyberdark-800"
+          >
+            Retry Decryption
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (fileType.startsWith("image/")) {
+    return (
+      <ImageMedia 
+        url={decryptedDataUrl} 
+        ttl={ttl}
+        onExpired={handleMediaExpired}
+        retryDecryption={retryDecryption}
       />
     );
-  } catch (error) {
-    console.error("Error rendering media:", error);
+  }
+  
+  if (fileType.startsWith("video/")) {
     return (
-      <div className="mt-2 p-3 border border-cyberred-800/50 rounded-lg bg-cyberred-950/30 flex items-center">
-        <ShieldAlert className="h-5 w-5 text-cyberred-400 mr-2" />
-        <div className="flex-1">
-          <p className="text-cyberred-300 text-sm">Mediafil utilgjengelig</p>
-          <p className="text-xs text-cyberred-400/70">Feil ved visning av media</p>
-        </div>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={initMedia}
-          className="ml-2 border-cyberred-700 bg-cyberdark-900 hover:bg-cyberdark-800"
-        >
-          <RefreshCw className="h-3 w-3 mr-1" />
-          Prøv igjen
-        </Button>
-      </div>
+      <VideoMedia 
+        url={decryptedDataUrl}
+        mimeType={fileType}
+        ttl={ttl}
+        onExpired={handleMediaExpired}
+      />
     );
   }
+  
+  // For files like PDF, documents, etc.
+  return (
+    <FileMedia 
+      url={decryptedDataUrl}
+      fileType={fileType}
+      filename={metadata?.filename || "secured-file"}
+      ttl={ttl}
+      onExpired={handleMediaExpired}
+    />
+  );
 };

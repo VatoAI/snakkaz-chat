@@ -7,8 +7,8 @@ import { SecurityBadge } from "../../security/SecurityBadge";
 import { UserAvatar } from "@/components/chat/header/UserAvatar";
 import { MessageTimer } from "@/components/message/MessageTimer";
 import { UserStatus } from "@/types/presence";
+import { statusColors, securityColors } from "@/constants/colors";
 
-// Helper interface for bringing in metadata
 interface MessageContainerProps {
   children: ReactNode;
   isCurrentUser: boolean;
@@ -37,76 +37,63 @@ export const MessageContainer = ({
     isCurrentUser ? "ml-auto" : "mr-auto"
   );
 
+  const secColor = securityColors[securityLevel];
+  const statusColor = userStatus ? statusColors[userStatus] : null;
+
   const bubbleClasses = cn(
-    // Cyberpunk-theme bubble
-    "relative group p-3 rounded-lg shadow-neon-blue shadow-lg border-2 border-cyberblue-400/30 hover:border-cyberred-500/40 transition-all duration-300",
+    "relative group p-3 rounded-lg transition-all duration-300",
+    secColor.glow,
+    `border-2 ${secColor.border}/30`,
     isCurrentUser
-      ? "bg-gradient-to-br from-cyberblue-700 via-cybergold-500/10 to-cyberred-900 text-white rounded-br-none"
-      : "bg-cyberdark-800/80 border-cybergold-500/20 text-cybergold-50 rounded-bl-none",
+      ? "bg-gradient-to-br from-cyberdark-800 via-cyberdark-900 to-cyberdark-950 text-white rounded-br-none"
+      : "bg-cyberdark-800/80 text-white rounded-bl-none",
     isDeleted && "opacity-50"
   );
 
-  // Show security badge always, label only on hover (for current user)
-  const renderSecurityBadge = () => (
-    <div className="ml-1">
-      <SecurityBadge
-        securityLevel={securityLevel}
-        connectionState={undefined}
-        dataChannelState={undefined}
-        usingServerFallback={undefined}
-        size="sm"
-      />
-    </div>
-  );
-
-  // Format date and time nicely
-  const formattedTime = new Date(message.created_at).toLocaleTimeString([], {
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-  const formattedDate = new Date(message.created_at).toLocaleDateString();
-
-  // Build name fallback
   const username = message?.sender?.username || message?.sender?.full_name ||
     (message?.sender?.id ? message.sender.id.substring(0, 8) : "Ukjent");
 
   return (
     <div className={containerClasses}>
       <div className={bubbleClasses}>
-        {/* Header row: Avatar, Username, Status, DateTime, E2EE */}
         {showMeta && message.sender && (
           <div className={cn(
             "flex items-center gap-2 mb-1",
             isCurrentUser ? "justify-end flex-row-reverse" : ""
           )}>
-            {/* Avatar with initials and status ring */}
             <UserAvatar
               avatarUrl={message.sender.avatar_url}
               username={username}
               size={28}
               status={userStatus ?? "online"}
-              className="shadow-neon-blue"
+              className={userStatus ? statusColors[userStatus].glow : undefined}
             />
-            {/* Sender + time/status block */}
             <div className="flex flex-col text-xs items-start">
-              <span className="font-semibold text-cyberblue-200">{username}</span>
+              <span className={cn("font-semibold", secColor.primary)}>{username}</span>
               <div className="flex items-center gap-2 text-cyberdark-200 text-[11px]">
-                <span>{formattedDate}</span>
-                <span>{formattedTime}</span>
+                <span>{new Date(message.created_at).toLocaleDateString()}</span>
+                <span>{new Date(message.created_at).toLocaleTimeString([], {
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}</span>
                 {userStatus && (
-                  <span className="ml-1 capitalize">{userStatus}</span>
+                  <span className={cn("ml-1 capitalize", statusColors[userStatus].primary)}>
+                    {userStatus}
+                  </span>
                 )}
               </div>
             </div>
-            {/* Security badge */}
-            <div className="ml-auto pr-1">{renderSecurityBadge()}</div>
+            <div className="ml-auto pr-1">
+              <SecurityBadge
+                securityLevel={securityLevel}
+                size="sm"
+              />
+            </div>
           </div>
         )}
 
-        {/* Message text & content */}
-        <div className="mb-1">{children}</div>
+        {children}
 
-        {/* Countdown timer */}
         {showTimer && !message.is_deleted && (
           <div className="flex mt-1">
             <MessageTimer

@@ -2,6 +2,7 @@
 import { Circle, Clock, Loader2 } from "lucide-react";
 import { UserStatus } from "@/types/presence";
 import { cn } from "@/lib/utils";
+import { statusColors } from "@/constants/colors";
 
 export const statusIcons = {
   online: Circle,
@@ -17,13 +18,6 @@ export const statusLabels = {
   offline: "Offline"
 };
 
-export const statusColors = {
-  online: "text-green-500",
-  busy: "text-yellow-500",
-  brb: "text-blue-500",
-  offline: "text-gray-500"
-};
-
 interface StatusIconProps {
   status: UserStatus;
   className?: string;
@@ -35,7 +29,7 @@ export const StatusIcon = ({ status, className, size = 4 }: StatusIconProps) => 
   return (
     <Icon className={cn(
       `w-${size} h-${size}`,
-      statusColors[status],
+      statusColors[status].primary,
       className
     )} />
   );

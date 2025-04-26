@@ -1,6 +1,7 @@
+
 import React, { useEffect, useState } from "react";
-import { supabase } from "../../integrations/supabase";
-import { useToast } from "../../hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
 import { Button } from "../ui/button";
 import { Loader2, Mail, Shield, User, UserPlus } from "lucide-react";
@@ -261,7 +262,7 @@ export default function AdminUsersManager() {
   return (
     <div className="space-y-4 p-4">
       <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
-        <div></div>
+        <div>
           <h2 className="text-2xl font-bold">Brukeradministrasjon</h2>
           <p className="text-gray-500">Totalt {userCount} brukere registrert</p>
         </div>
@@ -291,7 +292,7 @@ export default function AdminUsersManager() {
       </div>
 
       {loading ? (
-        <div className="flex justify-center items-center py-8"></div>
+        <div className="flex justify-center items-center py-8">
           <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
         </div>
       ) : (

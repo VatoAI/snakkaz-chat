@@ -176,7 +176,7 @@ export function useGroupFetching(currentUserId: string) {
             ...group,
             security_level: group.security_level as SecurityLevel,
             write_permissions: group.write_permissions || 'all',
-            default_message_ttl: group.default_message_ttl || null
+            default_message_ttl: group.default_message_ttl || 86400
           };
         });
 
@@ -272,7 +272,7 @@ export function useGroupFetching(currentUserId: string) {
         toast({
           title: "Delvis lastet grupper",
           description: `Kunne ikke laste komplett informasjon for ${failedGroups.length} grupper. Oppdater for å prøve igjen.`,
-          variant: "warning"
+          variant: "default"
         });
       }
 

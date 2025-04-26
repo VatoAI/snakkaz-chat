@@ -12,8 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Slider } from "@/components/ui/slider";
 import { useProgressState } from "@/hooks/useProgressState";
-import { AdminUsersManager } from "@/components/admin/AdminUsersManager";
-import { AdminSystemHealth } from "@/components/admin/AdminSystemHealth";
+import AdminUsersManager from "@/components/admin/AdminUsersManager";
 import { AdminErrorLogs } from "@/components/admin/AdminErrorLogs";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -195,7 +194,7 @@ const Admin = () => {
             </TabsList>
             
             <TabsContent value="dashboard" className="space-y-6">
-              <AdminDashboard healthStatus={healthStatus} triggerCleanup={triggerCleanup} />
+              <AdminDashboard />
             </TabsContent>
             
             <TabsContent value="users" className="space-y-6">
@@ -205,7 +204,7 @@ const Admin = () => {
             <TabsContent value="general" className="space-y-6">
               <div className="grid gap-6 md:grid-cols-2">
                 <AdminApiKeySection />
-                <AdminSystemHealth healthStatus={healthStatus} triggerCleanup={triggerCleanup} />
+                
               </div>
             </TabsContent>
             
