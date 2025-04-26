@@ -7,6 +7,7 @@ interface ScrollStabilizerProps {
   recomputeKey?: any; // A value that changes when we should re-evaluate scroll position
   threshold?: number; // How close to bottom (in pixels) to trigger auto-scroll
   debug?: boolean; // Enable debug logging
+  onScrollStateChange?: (atBottom: boolean) => void; // Callback for when scroll state changes
 }
 
 /**
@@ -20,6 +21,7 @@ export const ScrollStabilizer: React.FC<ScrollStabilizerProps> = ({
   recomputeKey,
   threshold = 100,
   debug = false,
+  onScrollStateChange,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const lastScrollHeightRef = useRef<number>(0);
@@ -63,9 +65,15 @@ export const ScrollStabilizer: React.FC<ScrollStabilizerProps> = ({
       if (wasNearBottom && !isNearBottom) {
         log('User scrolled away from bottom, disabling auto-scroll');
         setAutoScrollEnabled(false);
+        if (onScrollStateChange) {
+          onScrollStateChange(false);
+        }
       } else if (!wasNearBottom && isNearBottom) {
         log('User scrolled to bottom, enabling auto-scroll');
         setAutoScrollEnabled(true);
+        if (onScrollStateChange) {
+          onScrollStateChange(true);
+        }
       }
       
       // Clear the user scrolling flag after a delay
@@ -82,7 +90,7 @@ export const ScrollStabilizer: React.FC<ScrollStabilizerProps> = ({
         window.clearTimeout(scrollTimerRef.current);
       }
     };
-  }, [threshold, debug]);
+  }, [threshold, debug, onScrollStateChange]);
 
   // Handle initial scroll position
   useEffect(() => {
@@ -98,7 +106,11 @@ export const ScrollStabilizer: React.FC<ScrollStabilizerProps> = ({
       height: container.scrollHeight,
       scrollTop: container.scrollTop
     });
-  }, [debug]);
+    
+    if (onScrollStateChange) {
+      onScrollStateChange(true);
+    }
+  }, [debug, onScrollStateChange]);
 
   // Maintain scroll position when content changes
   useEffect(() => {
@@ -166,10 +178,14 @@ export const ScrollStabilizer: React.FC<ScrollStabilizerProps> = ({
           container.scrollTop = container.scrollHeight;
           lastScrollHeightRef.current = container.scrollHeight;
           lastScrollTopRef.current = container.scrollTop;
+          
+          if (onScrollStateChange) {
+            onScrollStateChange(true);
+          }
         });
       }
     }
-  }, [scrollToBottom, debug]);
+  }, [scrollToBottom, debug, onScrollStateChange]);
 
   // Handle recomputeKey changes - recalculate scroll position
   useEffect(() => {
@@ -182,12 +198,16 @@ export const ScrollStabilizer: React.FC<ScrollStabilizerProps> = ({
       requestAnimationFrame(() => {
         if (autoScrollEnabled || scrollToBottom) {
           container.scrollTop = container.scrollHeight;
+          
+          if (onScrollStateChange) {
+            onScrollStateChange(true);
+          }
         }
         lastScrollHeightRef.current = container.scrollHeight;
         lastScrollTopRef.current = container.scrollTop;
       });
     }
-  }, [recomputeKey, autoScrollEnabled, scrollToBottom, debug]);
+  }, [recomputeKey, autoScrollEnabled, scrollToBottom, debug, onScrollStateChange]);
 
   return (
     <div 
