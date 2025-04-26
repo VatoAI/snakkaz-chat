@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Loader2, LogIn, UserPlus, Eye, EyeOff } from "lucide-react";
 
 interface LoginFormProps {
-  onLogin: (email: string, password: string) => Promise<void>;
+  onLogin: (email: string, password: string, rememberMe: boolean) => Promise<void>;
   onSignup: (email: string, password: string) => Promise<void>;
   isLoading: boolean;
   emailError: string;
@@ -21,10 +21,11 @@ export const LoginForm = ({
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onLogin(email, password);
+    await onLogin(email, password, rememberMe);
   };
 
   const togglePasswordVisibility = () => {
@@ -107,6 +108,8 @@ export const LoginForm = ({
           <input
             type="checkbox"
             id="remember-me"
+            checked={rememberMe}
+            onChange={(e) => setRememberMe(e.target.checked)}
             className="h-4 w-4 rounded border-gray-300 text-cyberblue-600 focus:ring-cyberblue-500"
           />
           <label htmlFor="remember-me" className="ml-2 block text-sm text-white">
