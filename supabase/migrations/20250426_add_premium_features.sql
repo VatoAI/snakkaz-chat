@@ -1,3 +1,16 @@
+/*
+ * IMPORTANT: This file contains PostgreSQL syntax specifically for Supabase.
+ * These SQL statements use PostgreSQL features that are not compatible with MS SQL Server.
+ * Your IDE may show syntax errors if it's using MS SQL Server validation rules, but the SQL 
+ * is correct for PostgreSQL and will run properly on your Supabase instance.
+ * 
+ * Common differences from MS SQL Server syntax include:
+ * - "IF NOT EXISTS" syntax for table and column creation
+ * - RLS (Row Level Security) policies
+ * - "auth.uid()" function for user identification
+ * - Different constraint definition syntax
+ */
+
 -- Add is_premium column to profiles table
 ALTER TABLE profiles
 ADD COLUMN IF NOT EXISTS is_premium BOOLEAN DEFAULT false;
