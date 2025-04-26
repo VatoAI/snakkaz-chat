@@ -1,7 +1,6 @@
-
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, MessageSquare, Shield, Lock, Globe, Home } from "lucide-react";
+import { ChevronLeft, MessageSquare, Shield, Lock, Globe, Home, Zap, Crown, Clock, RefreshCw } from "lucide-react";
 
 const Info = () => {
   const navigate = useNavigate();
@@ -75,6 +74,78 @@ const Info = () => {
             </div>
           </div>
 
+          {/* Ny seksjon med ytelsesoptimaliseringer */}
+          <div 
+            className="p-6 rounded-xl mb-8 bg-gradient-to-r from-cyberdark-900/90 to-cyberdark-800/90"
+            style={{
+              borderImage: 'linear-gradient(90deg, #4caf50, #2196f3) 1',
+              border: '2px solid',
+            }}
+          >
+            <h2 
+              className="text-2xl font-semibold mb-4"
+              style={{
+                background: 'linear-gradient(90deg, #4caf50, #ffffff)',
+                WebkitBackgroundClip: 'text',
+                backgroundClip: 'text',
+                color: 'transparent',
+              }}
+            >
+              Nye forbedringer (April 2025)
+            </h2>
+            
+            <div className="space-y-6">
+              <div className="flex items-start">
+                <div className="bg-gradient-to-r from-green-500/20 to-cyberdark-900 p-3 rounded-full mr-4">
+                  <Zap className="text-green-400" size={24} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold mb-1 text-green-300">Optimalisert ytelse</h3>
+                  <p className="text-gray-400">
+                    Vi har gjennomført omfattende ytelsesoptimaliseringer i databasen som gir betydelig raskere responstider, 
+                    spesielt for grupper med mange meldinger og brukere.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-start">
+                <div className="bg-gradient-to-r from-amber-500/20 to-cyberdark-900 p-3 rounded-full mr-4">
+                  <Crown className="text-amber-400" size={24} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold mb-1 text-amber-300">Premium funksjoner</h3>
+                  <p className="text-gray-400">
+                    Nye premium-grupperom med avansert kryptering, utvidede tillatelser for administratorer og skreddersydde innstillinger.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-start">
+                <div className="bg-gradient-to-r from-purple-500/20 to-cyberdark-900 p-3 rounded-full mr-4">
+                  <Clock className="text-purple-400" size={24} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold mb-1 text-purple-300">Tidsbegrensede meldinger</h3>
+                  <p className="text-gray-400">
+                    Angi hvor lenge meldingene dine skal eksistere før de slettes automatisk, fra 5 minutter til 7 dager.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-start">
+                <div className="bg-gradient-to-r from-blue-500/20 to-cyberdark-900 p-3 rounded-full mr-4">
+                  <RefreshCw className="text-blue-400" size={24} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold mb-1 text-blue-300">Kontinuerlig synkronisering</h3>
+                  <p className="text-gray-400">
+                    Forbedret synkronisering mellom enheter sikrer at du alltid har de mest oppdaterte meldingene, uavhengig av hvor du logger inn.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div 
             className="p-6 rounded-xl mb-8 bg-gradient-to-r from-cyberdark-900/90 to-cyberdark-800/90"
             style={{
@@ -102,7 +173,8 @@ const Info = () => {
                 <div>
                   <h3 className="text-lg font-semibold mb-1 text-red-300">Intelligent Kryptering</h3>
                   <p className="text-gray-400">
-                    Våre avanserte krypteringsalgoritmer sikrer at dine samtaler forblir private og sikre.
+                    Våre avanserte krypteringsalgoritmer sikrer at dine samtaler forblir private og sikre, 
+                    med support for hele-side kryptering i premium-grupper.
                   </p>
                 </div>
               </div>
@@ -114,7 +186,8 @@ const Info = () => {
                 <div>
                   <h3 className="text-lg font-semibold mb-1 text-cyberblue-300">Global Tilgjengelighet</h3>
                   <p className="text-gray-400">
-                    Koble til fra hvor som helst i verden med vår robuste infrastruktur.
+                    Koble til fra hvor som helst i verden med vår robuste infrastruktur og høyhastighets servere 
+                    som sikrer at meldingene dine leveres umiddelbart.
                   </p>
                 </div>
               </div>
