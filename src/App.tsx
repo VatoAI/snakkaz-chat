@@ -8,6 +8,7 @@ import Admin from "./pages/Admin";
 import Info from "./pages/Info";
 import SafeChatPage from "./pages/chat/SafeChatPage";
 import NotFound from "./pages/NotFound";
+import SupabaseTest from "./pages/SupabaseTest";
 import { AuthProvider } from "./contexts/AuthContext";
 import { NotificationProvider } from "./contexts/NotificationContext";
 import { PresenceProvider } from "./contexts/PresenceContext";
@@ -28,6 +29,7 @@ function App() {
               <Route path="/admin" element={<Admin />} />
               <Route path="/info" element={<Info />} />
               <Route path="/chat" element={<SafeChatPage />} />
+              <Route path="/supabase-test" element={<SupabaseTest />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
             <Toaster />
