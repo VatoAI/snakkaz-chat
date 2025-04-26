@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 interface UseFileInputOptions {
   onFilesSelected: (files: FileList | null) => void;
@@ -26,7 +26,7 @@ export const useFileInput = (options: UseFileInputOptions) => {
       const validFiles = Array.from(files).filter(validateFile);
 
       if (validFiles.length > 0) {
-        options.onFilesSelected(new DataTransfer().files);
+        options.onFilesSelected(files);
       } else {
         toast({
           title: "Invalid file(s)",
@@ -34,7 +34,6 @@ export const useFileInput = (options: UseFileInputOptions) => {
           variant: "destructive",
         });
       }
-
       e.dataTransfer.clearData();
     }
   }, [options, toast]);
@@ -59,7 +58,7 @@ export const useFileInput = (options: UseFileInputOptions) => {
       const validFiles = Array.from(files).filter(validateFile);
 
       if (validFiles.length > 0) {
-        options.onFilesSelected(new DataTransfer().files);
+        options.onFilesSelected(files);
       } else {
         toast({
           title: "Invalid file(s)",
@@ -82,7 +81,7 @@ export const useFileInput = (options: UseFileInputOptions) => {
         const validFiles = Array.from(files).filter(validateFile);
 
         if (validFiles.length > 0) {
-          options.onFilesSelected(new DataTransfer().files);
+          options.onFilesSelected(files);
         } else {
           toast({
             title: "Invalid file(s)",
