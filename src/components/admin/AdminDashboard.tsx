@@ -30,12 +30,7 @@ interface DashboardStatsType {
   activeUsersTrend: 'up' | 'down' | 'stable';
 }
 
-interface AdminDashboardProps {
-  healthStatus: Record<string, string>;
-  triggerCleanup: () => Promise<void>;
-}
-
-export const AdminDashboard = ({ healthStatus, triggerCleanup }: AdminDashboardProps) => {
+export const AdminDashboard = () => {
   const [stats, setStats] = useState<DashboardStatsType>({
     totalUsers: 0,
     totalMessages: 0,
@@ -138,18 +133,6 @@ export const AdminDashboard = ({ healthStatus, triggerCleanup }: AdminDashboardP
     }
   };
 
-  const getSystemStatus = () => {
-    // Check if any health status contains "error"
-    const hasError = Object.values(healthStatus).some(status => status?.includes("error"));
-    if (hasError) return { label: "Problemer oppdaget", color: "text-red-400" };
-    
-    // Check if any health status contains "warning"
-    const hasWarning = Object.values(healthStatus).some(status => status?.includes("warning"));
-    if (hasWarning) return { label: "Mindre problemer", color: "text-yellow-400" };
-    
-    return { label: "Alle systemer operasjonelle", color: "text-green-400" };
-  };
-
   const getTrendIcon = (trend: 'up' | 'down' | 'stable') => {
     switch (trend) {
       case 'up':
@@ -172,73 +155,8 @@ export const AdminDashboard = ({ healthStatus, triggerCleanup }: AdminDashboardP
     }
   };
 
-  const systemStatus = getSystemStatus();
-
   return (
     <div className="space-y-6">
-      {/* System Status Card */}
-      <Card className="bg-cyberdark-900 border-gray-700">
-        <CardHeader className="pb-2">
-          <div className="flex justify-between items-center">
-            <CardTitle className="text-cyberblue-300 flex items-center">
-              <Activity className="mr-2" size={20} />
-              System Status
-            </CardTitle>
-            <Button 
-              variant="ghost" 
-              size="sm"
-              className="text-gray-400 hover:text-gray-300"
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-            >
-              {isRefreshing ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <RefreshCcw size={16} />
-              )}
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className={`text-xl font-semibold ${systemStatus.color} mb-4`}>
-            {systemStatus.label}
-          </div>
-          
-          <div className="flex flex-col space-y-2">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-400">Server-uptime</span>
-              <span className="text-sm text-green-400">{stats.uptime}%</span>
-            </div>
-            <Progress 
-              value={stats.uptime} 
-              className="h-1"
-            />
-            
-            <div className="pt-2 flex justify-between items-center">
-              <span className="text-sm text-gray-400">Database</span>
-              <span className="text-sm text-green-400">Online</span>
-            </div>
-            <Progress 
-              value={100} 
-              className="h-1"
-            />
-            
-            <div className="pt-2 flex justify-between items-center">
-              <span className="text-sm text-gray-400">Signalering</span>
-              <span className="text-sm text-green-400">
-                {healthStatus['38d75fee-16f2-4b42-a084-93567e21e3a7']?.includes('error') 
-                  ? 'Problemer' 
-                  : 'Normal'}
-              </span>
-            </div>
-            <Progress 
-              value={healthStatus['38d75fee-16f2-4b42-a084-93567e21e3a7']?.includes('error') ? 50 : 100} 
-              className="h-1"
-            />
-          </div>
-        </CardContent>
-      </Card>
-      
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="bg-cyberdark-900 border-gray-700">
@@ -381,41 +299,6 @@ export const AdminDashboard = ({ healthStatus, triggerCleanup }: AdminDashboardP
                 </AreaChart>
               </ResponsiveContainer>
             )}
-          </div>
-        </CardContent>
-      </Card>
-      
-      {/* System Maintenance Card */}
-      <Card className="bg-cyberdark-900 border-gray-700">
-        <CardHeader>
-          <CardTitle className="text-cyberblue-300">System vedlikehold</CardTitle>
-          <CardDescription>Kjør vedlikeholdsoppgaver for å forbedre systemytelsen</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-start space-x-4 p-4 bg-cyberdark-800 rounded-md">
-            <div className="flex-shrink-0 mt-1">
-              <CloudOff className="h-6 w-6 text-cyberblue-400" />
-            </div>
-            <div className="flex-1">
-              <h4 className="text-sm font-medium text-gray-200">Opprydning av signaldata</h4>
-              <p className="text-sm text-gray-400 mt-1">
-                Rydder opp i gamle signaldata og tilstedeværelsesoppføringer for å forbedre systemytelsen.
-              </p>
-              <Button 
-                className="mt-3 bg-cyberblue-600 hover:bg-cyberblue-700"
-                onClick={triggerCleanup}
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Kjører...
-                  </>
-                ) : (
-                  'Kjør opprydning'
-                )}
-              </Button>
-            </div>
           </div>
         </CardContent>
       </Card>
