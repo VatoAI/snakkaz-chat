@@ -1,5 +1,8 @@
 import { supabase } from "@/integrations/supabase/client";
 
+// Add these imports for encryption
+import CryptoJS from 'crypto-js';
+
 type UploadProgress = {
   loaded: number;
   total: number;
@@ -7,16 +10,32 @@ type UploadProgress = {
   speed?: number; // bytes per second
 };
 
+// Resumable upload metadata
+interface UploadMetadata {
+  fileId: string;
+  fileName: string;
+  fileSize: number;
+  fileType: string;
+  chunkSize: number;
+  totalChunks: number;
+  uploadedChunks: number[];
+  filePath: string;
+  createdAt: number;
+  lastUpdated: number;
+}
+
 // Configuration
 const MAX_CHUNK_SIZE = 5 * 1024 * 1024; // 5MB chunks
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB maximum
 const MAX_RETRIES = 3;
 const RETRY_DELAY_BASE = 2000; // 2 seconds base, will be multiplied by attempt number
+const RESUMABLE_UPLOAD_EXPIRY = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
 
 // Compression settings
-const DEFAULT_IMAGE_QUALITY = 1.0; // 100%
+const DEFAULT_IMAGE_QUALITY = 0.85; // Reduced to 85% for better compression by default
 //  quality for images
 const MAX_IMAGE_DIMENSION = 1920; // Max width/height for compressed images
+const THUMBNAIL_SIZE = 320; // Thumbnail size for preview
 
 /**
  * Enhanced media upload with chunk support for large files
@@ -29,6 +48,7 @@ export class EnhancedMediaUploader {
     bytesLoaded: 0,
     speeds: [] as number[],
   };
+  private uploadMetadata: UploadMetadata | null = null;
 
   /**
    * Check if file type is allowed
@@ -197,6 +217,174 @@ export class EnhancedMediaUploader {
   }
 
   /**
+   * Generate thumbnail for an image or video file
+   */
+  private async generateThumbnail(file: File): Promise<File | null> {
+    // Only generate thumbnails for images and videos
+    if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
+      return null;
+    }
+
+    return new Promise((resolve) => {
+      try {
+        if (file.type.startsWith('image/')) {
+          // For images
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            let { width, height } = img;
+            
+            // Calculate new dimensions while maintaining aspect ratio
+            if (width > height && width > THUMBNAIL_SIZE) {
+              height *= THUMBNAIL_SIZE / width;
+              width = THUMBNAIL_SIZE;
+            } else if (height > THUMBNAIL_SIZE) {
+              width *= THUMBNAIL_SIZE / height;
+              height = THUMBNAIL_SIZE;
+            }
+            
+            canvas.width = width;
+            canvas.height = height;
+            
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+              resolve(null);
+              return;
+            }
+            
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            canvas.toBlob(
+              (blob) => {
+                if (!blob) {
+                  resolve(null);
+                  return;
+                }
+                
+                const thumbnailFile = new File(
+                  [blob], 
+                  `thumb_${file.name.replace(/\.[^/.]+$/, '.webp')}`,
+                  { type: 'image/webp' }
+                );
+                
+                resolve(thumbnailFile);
+              },
+              'image/webp',
+              0.7 // Lower quality for thumbnails
+            );
+          };
+          
+          img.onerror = () => resolve(null);
+          img.src = URL.createObjectURL(file);
+        } else if (file.type.startsWith('video/')) {
+          // For videos - create thumbnail from first frame
+          const video = document.createElement('video');
+          video.preload = 'metadata';
+          video.onloadedmetadata = () => {
+            // Seek to the first frame
+            video.currentTime = 0;
+            
+            video.onseeked = () => {
+              const canvas = document.createElement('canvas');
+              let { videoWidth, videoHeight } = video;
+              
+              // Calculate new dimensions while maintaining aspect ratio
+              if (videoWidth > videoHeight && videoWidth > THUMBNAIL_SIZE) {
+                videoHeight *= THUMBNAIL_SIZE / videoWidth;
+                videoWidth = THUMBNAIL_SIZE;
+              } else if (videoHeight > THUMBNAIL_SIZE) {
+                videoWidth *= THUMBNAIL_SIZE / videoHeight;
+                videoHeight = THUMBNAIL_SIZE;
+              }
+              
+              canvas.width = videoWidth;
+              canvas.height = videoHeight;
+              
+              const ctx = canvas.getContext('2d');
+              if (!ctx) {
+                resolve(null);
+                return;
+              }
+              
+              ctx.drawImage(video, 0, 0, videoWidth, videoHeight);
+              
+              canvas.toBlob(
+                (blob) => {
+                  if (!blob) {
+                    resolve(null);
+                    return;
+                  }
+                  
+                  const thumbnailFile = new File(
+                    [blob], 
+                    `thumb_${file.name.replace(/\.[^/.]+$/, '.webp')}`,
+                    { type: 'image/webp' }
+                  );
+                  
+                  resolve(thumbnailFile);
+                },
+                'image/webp',
+                0.7 // Lower quality for thumbnails
+              );
+            };
+          };
+          
+          video.onerror = () => resolve(null);
+          video.src = URL.createObjectURL(file);
+        } else {
+          resolve(null);
+        }
+      } catch (e) {
+        console.error('Error generating thumbnail:', e);
+        resolve(null);
+      }
+    });
+  }
+
+  /**
+   * Encrypt a file before upload for enhanced privacy
+   */
+  public async encryptFile(file: File, encryptionKey: string): Promise<File> {
+    return new Promise((resolve, reject) => {
+      try {
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+          if (!e.target || !e.target.result) {
+            reject(new Error('Failed to read file'));
+            return;
+          }
+          
+          // Get array buffer of file
+          const arrayBuffer = e.target.result as ArrayBuffer;
+          
+          // Convert to WordArray for CryptoJS
+          const wordArray = CryptoJS.lib.WordArray.create(arrayBuffer);
+          
+          // Encrypt the file content
+          const encrypted = CryptoJS.AES.encrypt(wordArray, encryptionKey).toString();
+          
+          // Create a new file with encrypted content
+          const encryptedFile = new File(
+            [encrypted],
+            `${file.name}.enc`,
+            { type: 'application/octet-stream' }
+          );
+          
+          resolve(encryptedFile);
+        };
+        
+        reader.onerror = () => {
+          reject(new Error('Error reading file for encryption'));
+        };
+        
+        reader.readAsArrayBuffer(file);
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
+
+  /**
    * Ensure the storage bucket exists
    */
   private async ensureStorageBucket(): Promise<boolean> {
@@ -248,6 +436,80 @@ export class EnhancedMediaUploader {
   }
 
   /**
+   * Save upload metadata to enable resumable uploads
+   */
+  private saveUploadMetadata(metadata: UploadMetadata): void {
+    try {
+      // Save to localStorage for persistence
+      const storedUploads = localStorage.getItem('resumable-uploads');
+      let uploads = storedUploads ? JSON.parse(storedUploads) : {};
+      
+      // Update or add this upload
+      uploads[metadata.fileId] = metadata;
+      
+      // Clean up old uploads
+      const now = Date.now();
+      for (const id in uploads) {
+        if (now - uploads[id].lastUpdated > RESUMABLE_UPLOAD_EXPIRY) {
+          delete uploads[id];
+        }
+      }
+      
+      localStorage.setItem('resumable-uploads', JSON.stringify(uploads));
+      this.uploadMetadata = metadata;
+    } catch (e) {
+      console.error('Error saving upload metadata:', e);
+    }
+  }
+
+  /**
+   * Get upload metadata for a file if it exists
+   */
+  private getUploadMetadata(file: File): UploadMetadata | null {
+    try {
+      const storedUploads = localStorage.getItem('resumable-uploads');
+      if (!storedUploads) return null;
+      
+      const uploads = JSON.parse(storedUploads);
+      
+      // Generate a file ID based on name and size
+      const fileId = this.generateFileId(file);
+      
+      // Find existing uploads for this file
+      const metadata = uploads[fileId];
+      if (metadata && 
+         metadata.fileSize === file.size && 
+         metadata.fileName === file.name && 
+         metadata.fileType === file.type) {
+        return metadata;
+      }
+      
+      return null;
+    } catch (e) {
+      console.error('Error retrieving upload metadata:', e);
+      return null;
+    }
+  }
+
+  /**
+   * Generate a unique ID for a file based on its properties
+   */
+  private generateFileId(file: File): string {
+    return `${file.name}_${file.size}_${file.lastModified}`.replace(/[^a-zA-Z0-9]/g, '');
+  }
+
+  /**
+   * Update upload metadata with progress
+   */
+  private updateUploadMetadata(chunkIndex: number): void {
+    if (!this.uploadMetadata) return;
+    
+    this.uploadMetadata.uploadedChunks.push(chunkIndex);
+    this.uploadMetadata.lastUpdated = Date.now();
+    this.saveUploadMetadata(this.uploadMetadata);
+  }
+
+  /**
    * Upload a file in chunks
    */
   private async uploadChunked(
@@ -262,6 +524,15 @@ export class EnhancedMediaUploader {
       speeds: [],
     };
     
+    // Check for existing upload
+    let existingMetadata = this.getUploadMetadata(file);
+    let uploadedChunks: number[] = [];
+    
+    if (existingMetadata && existingMetadata.filePath === filePath) {
+      uploadedChunks = existingMetadata.uploadedChunks;
+      console.log(`Resuming upload: ${uploadedChunks.length} chunks already uploaded`);
+    }
+    
     // Create chunks
     const chunks: Blob[] = [];
     let offset = 0;
@@ -272,91 +543,108 @@ export class EnhancedMediaUploader {
     }
 
     const totalChunks = chunks.length;
-    let completedChunks = 0;
+    let completedChunks = uploadedChunks.length;
     let failedChunkIndexes: number[] = [];
 
-    console.log(`Starting chunked upload: ${totalChunks} chunks`);
+    console.log(`Starting chunked upload: ${totalChunks} chunks (${completedChunks} already uploaded)`);
 
-    // Initial progress report
+    // Create upload metadata if not resuming
+    if (!existingMetadata) {
+      this.uploadMetadata = {
+        fileId: this.generateFileId(file),
+        fileName: file.name,
+        fileSize: file.size,
+        fileType: file.type,
+        chunkSize: MAX_CHUNK_SIZE,
+        totalChunks,
+        uploadedChunks: [],
+        filePath,
+        createdAt: Date.now(),
+        lastUpdated: Date.now()
+      };
+      this.saveUploadMetadata(this.uploadMetadata);
+    } else {
+      this.uploadMetadata = existingMetadata;
+    }
+
+    // Initial progress report based on already uploaded chunks
+    const initialProgress = completedChunks / totalChunks;
     onProgress({
-      loaded: 0,
+      loaded: initialProgress * file.size,
       total: file.size,
-      percentage: 0
+      percentage: initialProgress * 100
     });
 
     // Abort controller for cancellation
     this.abortController = new AbortController();
 
-    // First pass: try to upload all chunks
-    try {
-      await Promise.all(
-        chunks.map(async (chunk, index) => {
-          if (this.abortController?.signal.aborted) {
-            throw new Error('Upload aborted');
-          }
-
-          try {
-            await this.uploadChunk(
-              chunk, 
-              `${filePath}__chunk_${index}`, 
-              (chunkProgress) => {
-                if (this.abortController?.signal.aborted) return;
-                
-                // Calculate overall progress based on all chunks
-                const chunkSize = chunk.size;
-                const chunkLoaded = (chunkProgress.percentage / 100) * chunkSize;
-                
-                // Update speed tracker
-                const now = Date.now();
-                const timeDiff = now - this.speedTracker.lastUpdate;
-                
-                // Only update speed every 500ms to smooth it out
-                if (timeDiff > 500) {
-                  const bytesLoaded = completedChunks * MAX_CHUNK_SIZE + chunkLoaded;
-                  const bytesLoadedDiff = bytesLoaded - this.speedTracker.bytesLoaded;
-                  const speed = (bytesLoadedDiff / timeDiff) * 1000; // bytes per second
-                  
-                  this.speedTracker.speeds.push(speed);
-                  // Keep last 5 speed measurements for better average
-                  if (this.speedTracker.speeds.length > 5) {
-                    this.speedTracker.speeds.shift();
-                  }
-                  
-                  this.speedTracker.bytesLoaded = bytesLoaded;
-                  this.speedTracker.lastUpdate = now;
-                }
-                
-                const totalLoaded = completedChunks * MAX_CHUNK_SIZE + chunkLoaded;
-                const overallPercentage = Math.min(99, (totalLoaded / file.size) * 100);
-                
-                // Calculate average speed
-                const avgSpeed = this.speedTracker.speeds.length > 0
-                  ? this.speedTracker.speeds.reduce((a, b) => a + b, 0) / this.speedTracker.speeds.length
-                  : 0;
-                
-                onProgress({
-                  loaded: totalLoaded,
-                  total: file.size,
-                  percentage: overallPercentage,
-                  speed: avgSpeed
-                });
-              }
-            );
-            completedChunks++;
-          } catch (error) {
-            console.error(`Chunk ${index} failed:`, error);
-            failedChunkIndexes.push(index);
-          }
-        })
-      );
-    } catch (error) {
-      if (this.abortController?.signal.aborted) {
-        throw new Error('Upload aborted by user');
+    // Upload all remaining chunks
+    for (let i = 0; i < chunks.length; i++) {
+      if (this.abortController.signal.aborted) {
+        throw new Error('Upload aborted');
       }
-      console.error("Error during initial chunk uploads:", error);
+      
+      // Skip already uploaded chunks
+      if (uploadedChunks.includes(i)) {
+        continue;
+      }
+      
+      try {
+        await this.uploadChunk(
+          chunks[i], 
+          `${filePath}__chunk_${i}`, 
+          (chunkProgress) => {
+            if (this.abortController?.signal.aborted) return;
+            
+            // Calculate overall progress based on all chunks
+            const chunkSize = chunks[i].size;
+            const chunkLoaded = (chunkProgress.percentage / 100) * chunkSize;
+            
+            // Update speed tracker
+            const now = Date.now();
+            const timeDiff = now - this.speedTracker.lastUpdate;
+            
+            // Only update speed every 500ms to smooth it out
+            if (timeDiff > 500) {
+              const bytesLoaded = completedChunks * MAX_CHUNK_SIZE + chunkLoaded;
+              const bytesLoadedDiff = bytesLoaded - this.speedTracker.bytesLoaded;
+              const speed = (bytesLoadedDiff / timeDiff) * 1000; // bytes per second
+              
+              this.speedTracker.speeds.push(speed);
+              // Keep last 5 speed measurements for better average
+              if (this.speedTracker.speeds.length > 5) {
+                this.speedTracker.speeds.shift();
+              }
+              
+              this.speedTracker.bytesLoaded = bytesLoaded;
+              this.speedTracker.lastUpdate = now;
+            }
+            
+            const totalLoaded = completedChunks * MAX_CHUNK_SIZE + chunkLoaded;
+            const overallPercentage = Math.min(99, (totalLoaded / file.size) * 100);
+            
+            // Calculate average speed
+            const avgSpeed = this.speedTracker.speeds.length > 0
+              ? this.speedTracker.speeds.reduce((a, b) => a + b, 0) / this.speedTracker.speeds.length
+              : 0;
+            
+            onProgress({
+              loaded: totalLoaded,
+              total: file.size,
+              percentage: overallPercentage,
+              speed: avgSpeed
+            });
+          }
+        );
+        completedChunks++;
+        this.updateUploadMetadata(i);
+      } catch (error) {
+        console.error(`Chunk ${i} failed:`, error);
+        failedChunkIndexes.push(i);
+      }
     }
 
-    // Second pass: retry failed chunks
+    // Retry failed chunks
     let retryAttempt = 0;
     while (failedChunkIndexes.length > 0 && retryAttempt < MAX_RETRIES) {
       retryAttempt++;
@@ -368,43 +656,37 @@ export class EnhancedMediaUploader {
       const retryIndexes = [...failedChunkIndexes];
       failedChunkIndexes = [];
       
-      await Promise.all(
-        retryIndexes.map(async (index) => {
-          if (this.abortController?.signal.aborted) return;
-          
-          try {
-            await this.uploadChunk(
-              chunks[index], 
-              `${filePath}__chunk_${index}`, 
-              () => {} // Skip progress reporting on retries
-            );
-            completedChunks++;
-          } catch (error) {
-            console.error(`Chunk ${index} failed on retry ${retryAttempt}:`, error);
-            failedChunkIndexes.push(index);
-          }
-        })
-      );
+      for (const index of retryIndexes) {
+        if (this.abortController?.signal.aborted) {
+          throw new Error('Upload aborted');
+        }
+        
+        try {
+          await this.uploadChunk(
+            chunks[index], 
+            `${filePath}__chunk_${index}`, 
+            () => {} // Skip progress reporting on retries
+          );
+          completedChunks++;
+          this.updateUploadMetadata(index);
+        } catch (error) {
+          console.error(`Chunk ${index} failed on retry ${retryAttempt}:`, error);
+          failedChunkIndexes.push(index);
+        }
+      }
     }
 
     // Check if all chunks were uploaded successfully
     if (failedChunkIndexes.length > 0) {
-      // Cleanup any successful chunks
-      chunks.forEach((_, index) => {
-        if (!failedChunkIndexes.includes(index)) {
-          supabase.storage
-            .from('chat-media')
-            .remove([`${filePath}__chunk_${index}`])
-            .then(() => console.log(`Cleaned up chunk ${index}`))
-            .catch(err => console.error(`Failed to clean up chunk ${index}:`, err));
-        }
-      });
-      
-      throw new Error(`Upload failed: ${failedChunkIndexes.length} chunks could not be uploaded`);
+      // We won't clean up successful chunks to allow resuming later
+      throw new Error(`Upload paused: ${failedChunkIndexes.length} chunks could not be uploaded. You can retry later.`);
     }
 
     // If all chunks are uploaded, combine them
     const finalFilePath = await this.combineChunks(filePath, totalChunks);
+    
+    // Clear upload metadata as it's complete
+    this.clearUploadMetadata();
     
     // 100% progress
     onProgress({
@@ -414,6 +696,25 @@ export class EnhancedMediaUploader {
     });
 
     return finalFilePath;
+  }
+
+  /**
+   * Clear upload metadata once complete
+   */
+  private clearUploadMetadata(): void {
+    if (!this.uploadMetadata) return;
+    
+    try {
+      const storedUploads = localStorage.getItem('resumable-uploads');
+      if (!storedUploads) return;
+      
+      const uploads = JSON.parse(storedUploads);
+      delete uploads[this.uploadMetadata.fileId];
+      localStorage.setItem('resumable-uploads', JSON.stringify(uploads));
+      this.uploadMetadata = null;
+    } catch (e) {
+      console.error('Error clearing upload metadata:', e);
+    }
   }
 
   /**
@@ -595,39 +896,84 @@ export class EnhancedMediaUploader {
    */
   public async uploadFile(
     file: File,
-    onProgress?: (progress: UploadProgress) => void
-  ): Promise<{ path: string; publicUrl: string }> {
+    options: {
+      onProgress?: (progress: UploadProgress) => void;
+      compress?: boolean;
+      encrypt?: boolean;
+      encryptionKey?: string;
+      generateThumbnail?: boolean;
+    } = {}
+  ): Promise<{ 
+    path: string; 
+    publicUrl: string;
+    thumbnailPath?: string;
+    thumbnailUrl?: string;
+    isEncrypted?: boolean;
+  }> {
+    const { onProgress, compress = true, encrypt = false, encryptionKey, generateThumbnail = true } = options;
+    
     try {
       // Validate file
-      if (!file) throw new Error("Ingen fil angitt");
+      if (!file) throw new Error("No file provided");
       
       // Check file type
       if (!this.isAllowedFileType(file)) {
-        throw new Error("Filtypen støttes ikke. Støttede formater inkluderer bilder, video, lyd og PDF");
+        throw new Error("File type not supported. Supported formats include images, video, audio and PDF");
       }
       
       // Check file size
       if (file.size > MAX_FILE_SIZE) {
-        throw new Error(`Filen er for stor (maksimalt ${MAX_FILE_SIZE / (1024 * 1024)}MB)`);
+        throw new Error(`File is too large (maximum ${MAX_FILE_SIZE / (1024 * 1024)}MB)`);
       }
       
       // Check network connection
       const isConnected = await this.checkNetworkConnection();
       if (!isConnected) {
-        throw new Error("Ingen nettverkstilkobling. Sjekk internettforbindelsen din og prøv igjen.");
+        throw new Error("No network connection. Check your internet connection and try again.");
       }
       
       // Ensure storage bucket exists
       const bucketExists = await this.ensureStorageBucket();
       if (!bucketExists) {
-        throw new Error("Kunne ikke opprette eller få tilgang til lagringsområdet.");
+        throw new Error("Could not create or access storage bucket.");
       }
+
+      let processedFile = file;
+      let isEncrypted = false;
       
       // Compress image if applicable
-      const compressedFile = await this.compressImage(file);
+      if (compress && file.type.startsWith('image/')) {
+        try {
+          processedFile = await this.compressImage(file);
+        } catch (error) {
+          console.warn('Image compression failed, using original file:', error);
+          processedFile = file;
+        }
+      }
+      
+      // Generate thumbnail if requested (before encryption)
+      let thumbnailFile: File | null = null;
+      if (generateThumbnail && (file.type.startsWith('image/') || file.type.startsWith('video/'))) {
+        try {
+          thumbnailFile = await this.generateThumbnail(file);
+        } catch (error) {
+          console.warn('Thumbnail generation failed:', error);
+        }
+      }
+      
+      // Encrypt file if requested
+      if (encrypt && encryptionKey) {
+        try {
+          processedFile = await this.encryptFile(processedFile, encryptionKey);
+          isEncrypted = true;
+        } catch (error) {
+          console.warn('File encryption failed, using unencrypted file:', error);
+        }
+      }
       
       // Generate file path
-      const filePath = this.generateFilePath(compressedFile);
+      const filePath = this.generateFilePath(processedFile);
+      let thumbnailPath: string | undefined;
       
       // Progress tracking callback
       const progressCallback = (progress: UploadProgress) => {
@@ -637,22 +983,22 @@ export class EnhancedMediaUploader {
       let uploadedPath: string;
       
       // Choose upload strategy based on file size
-      if (compressedFile.size > MAX_CHUNK_SIZE) {
+      if (processedFile.size > MAX_CHUNK_SIZE) {
         // Use chunked upload for large files
-        uploadedPath = await this.uploadChunked(compressedFile, filePath, progressCallback);
+        uploadedPath = await this.uploadChunked(processedFile, filePath, progressCallback);
       } else {
         // Use direct upload for small files
         try {
           const { error } = await supabase.storage
             .from('chat-media')
-            .upload(filePath, compressedFile, {
+            .upload(filePath, processedFile, {
               cacheControl: '3600',
               upsert: true,
               onUploadProgress: (progress) => {
                 progressCallback({
                   loaded: progress.loaded,
-                  total: progress.totalBytes || compressedFile.size,
-                  percentage: Math.floor((progress.loaded / (progress.totalBytes || compressedFile.size)) * 100)
+                  total: progress.totalBytes || processedFile.size,
+                  percentage: Math.floor((progress.loaded / (progress.totalBytes || processedFile.size)) * 100)
                 });
               }
             });
@@ -665,19 +1011,87 @@ export class EnhancedMediaUploader {
         }
       }
       
-      // Get public URL
+      // Upload thumbnail if available
+      if (thumbnailFile) {
+        try {
+          thumbnailPath = `thumb_${uploadedPath}`;
+          const { error } = await supabase.storage
+            .from('chat-media')
+            .upload(thumbnailPath, thumbnailFile, {
+              cacheControl: '3600',
+              upsert: true
+            });
+            
+          if (error) {
+            console.warn('Thumbnail upload failed:', error);
+            thumbnailPath = undefined;
+          }
+        } catch (error) {
+          console.warn('Thumbnail upload failed:', error);
+          thumbnailPath = undefined;
+        }
+      }
+      
+      // Get public URLs
       const { data: { publicUrl } } = supabase.storage
         .from('chat-media')
         .getPublicUrl(uploadedPath);
         
+      let thumbnailUrl: string | undefined;
+      if (thumbnailPath) {
+        const { data: { publicUrl: thumbUrl } } = supabase.storage
+          .from('chat-media')
+          .getPublicUrl(thumbnailPath);
+          
+        thumbnailUrl = thumbUrl;
+      }
+      
       return {
         path: uploadedPath,
-        publicUrl
+        publicUrl,
+        thumbnailPath,
+        thumbnailUrl,
+        isEncrypted
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Upload failed:', error);
-      throw error;
+      // Provide user-friendly error messages
+      throw new Error(this.getUserFriendlyErrorMessage(error));
     }
+  }
+  
+  /**
+   * Convert technical error messages to user-friendly ones
+   */
+  private getUserFriendlyErrorMessage(error: any): string {
+    const errorMessage = error?.message || String(error);
+    
+    if (errorMessage.includes('network')) {
+      return 'Network connection issue. Please check your internet connection and try again.';
+    }
+    
+    if (errorMessage.includes('timeout')) {
+      return 'Upload timed out. Please try again with a better connection.';
+    }
+    
+    if (errorMessage.includes('permission')) {
+      return 'You don\'t have permission to upload files. Please contact support.';
+    }
+    
+    if (errorMessage.includes('large')) {
+      return `File is too large. Maximum allowed size is ${MAX_FILE_SIZE / (1024 * 1024)}MB.`;
+    }
+
+    if (errorMessage.includes('type')) {
+      return 'This file type is not supported. Please upload images, videos, audio or PDF files.';
+    }
+    
+    if (errorMessage.includes('paused')) {
+      return 'Upload paused due to connection issues. You can resume it later.';
+    }
+    
+    // Return the original error if no friendly message is available
+    return errorMessage;
   }
   
   /**
@@ -687,6 +1101,33 @@ export class EnhancedMediaUploader {
     if (this.abortController) {
       this.abortController.abort();
       this.abortController = null;
+    }
+  }
+
+  /**
+   * Get a list of resumable uploads
+   */
+  public getResumableUploads(): UploadMetadata[] {
+    try {
+      const storedUploads = localStorage.getItem('resumable-uploads');
+      if (!storedUploads) return [];
+      
+      const uploads = JSON.parse(storedUploads);
+      return Object.values(uploads);
+    } catch (e) {
+      console.error('Error getting resumable uploads:', e);
+      return [];
+    }
+  }
+
+  /**
+   * Clear all resumable uploads
+   */
+  public clearAllResumableUploads(): void {
+    try {
+      localStorage.removeItem('resumable-uploads');
+    } catch (e) {
+      console.error('Error clearing resumable uploads:', e);
     }
   }
 }
