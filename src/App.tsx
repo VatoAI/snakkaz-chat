@@ -1,4 +1,3 @@
-
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
@@ -9,22 +8,33 @@ import Admin from "./pages/Admin";
 import Info from "./pages/Info";
 import SafeChatPage from "./pages/chat/SafeChatPage";
 import NotFound from "./pages/NotFound";
+import { AuthProvider } from "./contexts/AuthContext";
+import { NotificationProvider } from "./contexts/NotificationContext";
+import { PresenceProvider } from "./contexts/PresenceContext";
+import { Toaster } from "@/components/ui/toaster";
 import './App.css';
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/admin" element={<Admin />} />
-        <Route path="/info" element={<Info />} />
-        <Route path="/chat" element={<SafeChatPage />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </BrowserRouter>
+    <AuthProvider>
+      <NotificationProvider>
+        <PresenceProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/admin" element={<Admin />} />
+              <Route path="/info" element={<Info />} />
+              <Route path="/chat" element={<SafeChatPage />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+            <Toaster />
+          </BrowserRouter>
+        </PresenceProvider>
+      </NotificationProvider>
+    </AuthProvider>
   );
 }
 
