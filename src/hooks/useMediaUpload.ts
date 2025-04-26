@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { EnhancedMediaUploader } from '@/utils/upload/enhanced-media-upload';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from './useAuth';
+import { supabase } from '@/integrations/supabase/client';
 
 type UploadState = {
   isUploading: boolean;
@@ -45,7 +46,21 @@ export function useMediaUpload() {
 
   const uploadFile = async (file: File): Promise<UploadResult | null> => {
     if (!file) return null;
-    if (!session) {
+    
+    // Attempt to use session or check with Supabase directly
+    let isAuthenticated = !!session;
+    
+    // If no session was found in context, try to get it directly from Supabase
+    if (!isAuthenticated) {
+      try {
+        const { data } = await supabase.auth.getSession();
+        isAuthenticated = !!data.session;
+      } catch (error) {
+        console.error("Error checking authentication:", error);
+      }
+    }
+    
+    if (!isAuthenticated) {
       toast({
         title: 'Ikke pålogget',
         description: 'Du må være pålogget for å laste opp filer.',
