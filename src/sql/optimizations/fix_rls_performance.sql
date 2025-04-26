@@ -1,3 +1,7 @@
+-- POSTGRESQL SYNTAX
+-- Dette skriptet bruker PostgreSQL-spesifikk syntaks og er ment å kjøres på Supabase (PostgreSQL)
+-- Ignorer eventuelle MS SQL Server-relaterte syntaksfeil fra editoren
+
 -- fix_rls_performance.sql
 -- Dette skriptet fikser ytelsesproblemene som er identifisert av Supabase Database Linter
 -- Problemet er todelt:
