@@ -1,8 +1,11 @@
-
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
+
+// Import our service connector and external scripts utilities
+import { initializeExternalServices } from './utils/serviceConnector';
+import './utils/externalScripts'; // This auto-initializes
 
 // PWA registration function
 async function registerServiceWorker() {
@@ -38,6 +41,16 @@ async function registerServiceWorker() {
 
 // Register PWA service worker
 registerServiceWorker();
+
+// Initialize external services (non-blocking)
+if (import.meta.env.PROD || import.meta.env.VITE_ENABLE_EXTERNAL_SERVICES === 'true') {
+  // Use setTimeout to ensure this doesn't block initial rendering
+  setTimeout(() => {
+    initializeExternalServices().catch(() => {
+      // Silent catch - errors are already handled in the service
+    });
+  }, 1000);
+}
 
 // Get the root element
 const rootElement = document.getElementById("root");
