@@ -1,15 +1,18 @@
-
-import { useRef } from "react";
+import { useRef, useCallback } from "react";
 import { useToast } from "@/components/ui/use-toast";
 
 interface UseFileInputProps {
-  setSelectedFile: (file: File | null) => void;
+  onFilesSelected?: (files: FileList | null) => void;
+  accept?: string;
+  multiple?: boolean; 
   maxSizeInMB?: number;
   acceptedTypes?: string[];
 }
 
 export const useFileInput = ({ 
-  setSelectedFile, 
+  onFilesSelected,
+  accept = "*",
+  multiple = false,
   maxSizeInMB = 10, 
   acceptedTypes 
 }: UseFileInputProps) => {
@@ -63,12 +66,17 @@ export const useFileInput = ({
       return;
     }
     
+    // Call the callback with all files if provided
+    if (onFilesSelected) {
+      onFilesSelected(files);
+    }
+    
+    // For backward compatibility
     const file = files[0];
     console.log("Selected file:", file.name, file.size, file.type);
     
     if (validateFile(file)) {
-      console.log("File validation passed, setting selected file");
-      setSelectedFile(file);
+      console.log("File validation passed");
       toast({
         title: "File selected",
         description: `${file.name} (${(file.size / 1024).toFixed(1)} KB)`,
@@ -79,12 +87,43 @@ export const useFileInput = ({
       e.target.value = "";
     }
   };
+  
+  // Implementing the required functions for react-dropzone compatibility
+  const getRootProps = useCallback(() => ({
+    onClick: (e: React.MouseEvent) => e.stopPropagation(),
+    onKeyDown: (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        open();
+      }
+    },
+    role: "button",
+    tabIndex: 0
+  }), []);
+  
+  const getInputProps = useCallback(() => ({
+    accept,
+    multiple,
+    onChange: handleFileSelect,
+    style: { display: 'none' },
+    type: 'file'
+  }), [accept, multiple]);
+  
+  const open = useCallback(() => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  }, []);
 
   return {
     fileInputRef,
     videoInputRef,
     cameraInputRef,
     documentInputRef,
-    handleFileSelect
+    handleFileSelect,
+    // Add the missing functions
+    getRootProps,
+    getInputProps,
+    open
   };
 };
