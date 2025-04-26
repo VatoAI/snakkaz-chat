@@ -27,8 +27,7 @@ export const useFriendships = () => {
           status, 
           created_at,
           user_id, 
-          friend_id,
-          profiles:friend_id (id, username, avatar_url, full_name)
+          friend_id
         `)
         .or(`user_id.eq.${user.id},friend_id.eq.${user.id}`)
         .eq('status', 'accepted');
@@ -36,15 +35,23 @@ export const useFriendships = () => {
       if (error) throw error;
 
       if (data) {
-        const processedFriends: Friend[] = data.map(friendship => {
+        // For each friendship, fetch the profile separately to avoid join issues
+        const processedFriends: Friend[] = await Promise.all(data.map(async (friendship) => {
           // Determine if the current user is user_id or friend_id
           const isFriend = friendship.user_id === user.id;
           
           // Get the other user's ID
           const friendUserId = isFriend ? friendship.friend_id : friendship.user_id;
           
-          // Get profile data safely - handle case where profiles might be null
-          const profile = friendship.profiles || {
+          // Fetch profile data
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('id, username, avatar_url, full_name')
+            .eq('id', friendUserId)
+            .single();
+          
+          // Use profile data or fallback to default values
+          const profile = profileData || {
             id: friendUserId,
             username: 'Unknown User',
             avatar_url: null,
@@ -64,7 +71,7 @@ export const useFriendships = () => {
               full_name: profile.full_name
             }
           };
-        });
+        }));
 
         setFriends(processedFriends);
         setFriendships(data);
