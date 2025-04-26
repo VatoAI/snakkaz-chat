@@ -1,5 +1,4 @@
-
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 
@@ -23,26 +22,49 @@ export function useMobilePinSecurity(options: Partial<PinSecurityOptions> = {}) 
   const mergedOptions = { ...DEFAULT_OPTIONS, ...options };
   
   const [pinHash, setPinHash] = useLocalStorage<string | null>('pinHash', null);
-  const [isLocked, setIsLocked] = useState(true);
+  const [isLocked, setIsLocked] = useState<boolean>(!!pinHash);
   const [attempts, setAttempts] = useState(0);
   const [lockoutTimer, setLockoutTimer] = useState(0);
   const [lastActive, setLastActive] = useState<number>(Date.now());
   const { toast } = useToast();
+  const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const lockoutTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Ensure initial state is correct based on PIN existence
+  useEffect(() => {
+    // If PIN exists, we start locked; if no PIN, we start unlocked
+    setIsLocked(!!pinHash);
+  }, []);
 
   // Handle lockout timer
   useEffect(() => {
-    let interval: NodeJS.Timeout | undefined;
+    if (lockoutTimerRef.current) {
+      clearInterval(lockoutTimerRef.current);
+      lockoutTimerRef.current = null;
+    }
     
     if (lockoutTimer > 0) {
-      interval = setInterval(() => {
-        setLockoutTimer(prev => prev - 1);
+      lockoutTimerRef.current = setInterval(() => {
+        setLockoutTimer(prev => {
+          if (prev <= 1) {
+            if (lockoutTimerRef.current) {
+              clearInterval(lockoutTimerRef.current);
+              lockoutTimerRef.current = null;
+            }
+            return 0;
+          }
+          return prev - 1;
+        });
       }, 1000);
     } else if (lockoutTimer === 0 && attempts >= mergedOptions.maxAttempts) {
       setAttempts(0); // Reset attempts after lockout
     }
     
     return () => {
-      if (interval) clearInterval(interval);
+      if (lockoutTimerRef.current) {
+        clearInterval(lockoutTimerRef.current);
+        lockoutTimerRef.current = null;
+      }
     };
   }, [lockoutTimer, attempts, mergedOptions.maxAttempts]);
 
@@ -82,7 +104,14 @@ export function useMobilePinSecurity(options: Partial<PinSecurityOptions> = {}) 
 
   // Auto-lock after inactivity
   useEffect(() => {
-    if (!pinHash || mergedOptions.lockTimeout === 0) return;
+    if (!pinHash || mergedOptions.lockTimeout === 0) {
+      // Clean up any existing timer if PIN is removed
+      if (inactivityTimerRef.current) {
+        clearInterval(inactivityTimerRef.current);
+        inactivityTimerRef.current = null;
+      }
+      return;
+    }
     
     const handleUserActivity = () => {
       setLastActive(Date.now());
@@ -95,7 +124,11 @@ export function useMobilePinSecurity(options: Partial<PinSecurityOptions> = {}) 
     window.addEventListener('keypress', handleUserActivity);
     
     // Setup inactivity timer
-    const inactivityTimer = setInterval(() => {
+    if (inactivityTimerRef.current) {
+      clearInterval(inactivityTimerRef.current);
+    }
+    
+    inactivityTimerRef.current = setInterval(() => {
       const now = Date.now();
       if (now - lastActive > mergedOptions.lockTimeout && !isLocked) {
         setIsLocked(true);
@@ -107,34 +140,61 @@ export function useMobilePinSecurity(options: Partial<PinSecurityOptions> = {}) 
       window.removeEventListener('touchmove', handleUserActivity);
       window.removeEventListener('mousemove', handleUserActivity);
       window.removeEventListener('keypress', handleUserActivity);
-      clearInterval(inactivityTimer);
+      
+      if (inactivityTimerRef.current) {
+        clearInterval(inactivityTimerRef.current);
+        inactivityTimerRef.current = null;
+      }
     };
   }, [pinHash, lastActive, isLocked, mergedOptions.lockTimeout]);
 
   // Create a new PIN (hashed)
-  const setPin = useCallback((pin: string) => {
-    if (pin.length !== 4) {
+  const setPin = useCallback((pin: string): boolean => {
+    if (!pin || pin.length !== 4 || !/^\d{4}$/.test(pin)) {
       toast({
-        title: "Invalid PIN",
-        description: "PIN must be exactly 4 digits",
+        title: "Ugyldig PIN",
+        description: "PIN-koden må være nøyaktig 4 siffer",
         variant: "destructive"
       });
       return false;
     }
     
-    // Simple hash (in real app, use a proper crypto library)
-    const hash = btoa(pin);
-    setPinHash(hash);
-    setIsLocked(false);
-    return true;
+    try {
+      // Simple hash (in real app, use a proper crypto library)
+      const hash = btoa(pin);
+      setPinHash(hash);
+      setIsLocked(false);
+      
+      // Sync with localStorage directly as well to ensure it's saved
+      localStorage.setItem('pinHash', hash);
+      
+      toast({
+        title: "PIN aktivert",
+        description: "Din sikre PIN-kode er nå satt opp",
+      });
+      
+      return true;
+    } catch (error) {
+      console.error("Error setting PIN:", error);
+      toast({
+        title: "Feil ved oppretting av PIN",
+        description: "Kunne ikke opprette PIN-kode. Prøv igjen.",
+        variant: "destructive"
+      });
+      return false;
+    }
   }, [setPinHash, toast]);
 
   // Verify PIN
   const verifyPin = useCallback((pin: string): boolean => {
+    if (!pin || !pinHash) {
+      return false;
+    }
+    
     if (lockoutTimer > 0) {
       toast({
-        title: "Account Locked",
-        description: `Try again in ${Math.ceil(lockoutTimer / 60)} minutes`,
+        title: "Konto låst",
+        description: `Prøv igjen om ${Math.ceil(lockoutTimer / 60)} minutter`,
         variant: "destructive"
       });
       return false;
@@ -151,14 +211,14 @@ export function useMobilePinSecurity(options: Partial<PinSecurityOptions> = {}) 
       if (newAttempts >= mergedOptions.maxAttempts) {
         setLockoutTimer(mergedOptions.lockoutDuration);
         toast({
-          title: "Too Many Failed Attempts",
-          description: `Try again in ${Math.ceil(mergedOptions.lockoutDuration / 60)} minutes`,
+          title: "For mange mislykkede forsøk",
+          description: `Prøv igjen om ${Math.ceil(mergedOptions.lockoutDuration / 60)} minutter`,
           variant: "destructive"
         });
       } else {
         toast({
-          title: "Incorrect PIN",
-          description: `${mergedOptions.maxAttempts - newAttempts} attempts remaining`,
+          title: "Feil PIN",
+          description: `${mergedOptions.maxAttempts - newAttempts} forsøk gjenstår`,
           variant: "destructive"
         });
       }
@@ -172,11 +232,40 @@ export function useMobilePinSecurity(options: Partial<PinSecurityOptions> = {}) 
 
   // Reset PIN
   const resetPin = useCallback(() => {
-    setPinHash(null);
-    setIsLocked(false);
-    setAttempts(0);
-    setLockoutTimer(0);
-  }, [setPinHash]);
+    try {
+      setPinHash(null);
+      setIsLocked(false);
+      setAttempts(0);
+      setLockoutTimer(0);
+      
+      // Ensure we also remove from localStorage directly
+      localStorage.removeItem('pinHash');
+      
+      // Also clean up any related data
+      localStorage.removeItem('chatCode'); 
+      
+      // Clean up any existing timers
+      if (inactivityTimerRef.current) {
+        clearInterval(inactivityTimerRef.current);
+        inactivityTimerRef.current = null;
+      }
+      
+      if (lockoutTimerRef.current) {
+        clearInterval(lockoutTimerRef.current);
+        lockoutTimerRef.current = null;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error("Error resetting PIN:", error);
+      toast({
+        title: "Feil ved fjerning av PIN",
+        description: "Kunne ikke fjerne PIN-kode. Prøv igjen.",
+        variant: "destructive"
+      });
+      return false;
+    }
+  }, [setPinHash, toast]);
 
   // Force lock
   const lock = useCallback(() => {
