@@ -1,4 +1,5 @@
 
+// Status colors for user online status indicators
 export const statusColors = {
   online: {
     primary: 'text-emerald-500',
@@ -26,6 +27,7 @@ export const statusColors = {
   }
 };
 
+// Security level colors for encryption indicators
 export const securityColors = {
   p2p_e2ee: {
     primary: 'text-emerald-500',
