@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { useAuth as useAuthContext } from '@/contexts/AuthContext';
 
 export const useAuth = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -9,6 +10,7 @@ export const useAuth = () => {
   const [passwordError, setPasswordError] = useState('');
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { setAutoLogoutTime } = useAuthContext();
 
   const validateForm = (email: string, password: string) => {
     let isValid = true;
@@ -34,7 +36,7 @@ export const useAuth = () => {
     return isValid;
   };
 
-  const handleLogin = async (email: string, password: string) => {
+  const handleLogin = async (email: string, password: string, rememberMe: boolean = true) => {
     if (!validateForm(email, password)) {
       return;
     }
@@ -42,9 +44,15 @@ export const useAuth = () => {
     setIsLoading(true);
 
     try {
+      // Set session expiration based on rememberMe choice
+      const expiresIn = rememberMe ? 60 * 60 * 24 * 30 : 60 * 60 * 24; // 30 days or 1 day in seconds
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
+        options: {
+          expiresIn: expiresIn
+        }
       });
 
       if (error) {
@@ -73,6 +81,15 @@ export const useAuth = () => {
       }
 
       if (data.user) {
+        // Set auto-logout time based on rememberMe option
+        if (rememberMe) {
+          // Default to 30 minutes of inactivity for auto-logout if remembered
+          setAutoLogoutTime(30);
+        } else {
+          // Default to 5 minutes of inactivity for auto-logout if not remembered
+          setAutoLogoutTime(5);
+        }
+        
         toast({
           title: "Suksess!",
           description: "Du er nå logget inn.",

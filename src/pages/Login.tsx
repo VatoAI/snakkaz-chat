@@ -1,4 +1,3 @@
-
 import { LoginLayout } from '@/components/auth/LoginLayout';
 import { LoginForm } from '@/components/auth/LoginForm';
 import { useAuth } from '@/hooks/useAuth';
@@ -15,6 +14,11 @@ const Login = () => {
   } = useAuth();
 
   const navigate = useNavigate();
+
+  // Custom handler with remember me parameter
+  const handleLoginWithRememberMe = async (email: string, password: string, rememberMe: boolean) => {
+    await handleLogin(email, password, rememberMe);
+  };
 
   useEffect(() => {
     // Redirect authenticated users out of login page if already logged in
@@ -40,7 +44,7 @@ const Login = () => {
       <div className="relative z-10 w-full max-w-md">
         <LoginLayout>
             <LoginForm
-              onLogin={handleLogin}
+              onLogin={handleLoginWithRememberMe}
               onSignup={handleSignup}
               isLoading={isLoading}
               emailError={emailError}
