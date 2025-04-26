@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { HeaderLogo } from "./HeaderLogo";
@@ -49,9 +50,9 @@ export const MainHeader = ({
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-cyberdark-900 border-b border-cyberblue-900/30 shadow-md backdrop-blur-sm bg-opacity-90">
+    <header className="sticky top-0 z-50 w-full bg-cyberdark-900/95 border-b border-cyberblue-500/30 shadow-neon-blue backdrop-blur-sm">
       <div className="container mx-auto px-4 py-2 flex items-center justify-between">
-        {/* Logo og titel */}
+        {/* Logo and title */}
         <div className="flex items-center space-x-3">
           <HeaderLogo />
           <h1 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-cybergold-400 via-white to-cybergold-400 text-transparent bg-clip-text">
@@ -75,17 +76,17 @@ export const MainHeader = ({
             <Button 
               variant="outline" 
               size="sm"
-              className="text-cyberblue-400 border-cyberblue-800/40 hover:bg-cyberblue-900/20 hover:text-cyberblue-300"
+              className="text-cyberblue-300 border-cyberblue-500/40 hover:bg-cyberblue-900/20 hover:text-cyberblue-200"
               onClick={handleProfile}
             >
               <User className="h-4 w-4 mr-2" />
               <span>Profil</span>
             </Button>
             <Button 
-              variant="destructive" 
+              variant="ghost" 
               size="sm"
-              className="bg-cyberred-600 hover:bg-cyberred-700 text-white"
-              onClick={handleSignOut}
+              className="text-cyberred-400 hover:bg-cyberred-900/20 hover:text-cyberred-300"
+              onClick={signOut}
             >
               <LogOut className="h-4 w-4 mr-2" />
               <span>Logg ut</span>
@@ -100,7 +101,7 @@ export const MainHeader = ({
             <Button 
               variant="ghost" 
               size="icon" 
-              className="text-cyberblue-400 hover:text-cyberblue-300 h-9 w-9"
+              className="text-cyberblue-300 hover:text-cyberblue-200 hover:bg-cyberblue-900/20 h-9 w-9"
             >
               <Bell className="h-5 w-5" />
             </Button>
@@ -109,7 +110,7 @@ export const MainHeader = ({
             <Button 
               variant="ghost" 
               size="icon" 
-              className="text-cybergold-400 hover:text-cybergold-300 h-9 w-9"
+              className="text-cybergold-300 hover:text-cybergold-200 hover:bg-cyberdark-800 h-9 w-9"
               onClick={handleToggleMobileMenu}
             >
               {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -120,7 +121,7 @@ export const MainHeader = ({
 
       {/* Mobile menu dropdown */}
       {isMobile && mobileMenuOpen && (
-        <div className="absolute top-full left-0 w-full bg-cyberdark-900/95 border-b border-cyberblue-900/30 shadow-lg animate-fadeIn">
+        <div className="absolute top-full left-0 w-full bg-cyberdark-900/95 border-b border-cyberblue-500/30 shadow-neon-blue animate-fadeIn">
           {showNavigation && (
             <div className="px-4 py-3 border-b border-cyberdark-800">
               <HeaderNavLinks 
@@ -134,7 +135,7 @@ export const MainHeader = ({
           <div className="py-4 px-6 space-y-3">
             <Button 
               variant="ghost" 
-              className="w-full justify-start text-cybergold-400 hover:bg-cyberdark-800"
+              className="w-full justify-start text-cyberblue-300 hover:bg-cyberdark-800 hover:text-cyberblue-200"
               onClick={handleProfile}
             >
               <User className="h-4 w-4 mr-2" />
@@ -143,7 +144,7 @@ export const MainHeader = ({
             <Button 
               variant="destructive" 
               className="w-full justify-start bg-cyberred-600 hover:bg-cyberred-700 text-white"
-              onClick={handleSignOut}
+              onClick={signOut}
             >
               <LogOut className="h-4 w-4 mr-2" />
               Logg ut
