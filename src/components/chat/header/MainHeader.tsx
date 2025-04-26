@@ -39,9 +39,13 @@ export const MainHeader = ({
   };
 
   const handleSignOut = async () => {
-    await signOut();
-    setMobileMenuOpen(false);
-    navigate("/login");
+    try {
+      await signOut();
+      setMobileMenuOpen(false);
+      navigate("/login");
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
   };
 
   return (
@@ -67,7 +71,7 @@ export const MainHeader = ({
 
         {/* Desktop User Menu */}
         {!isMobile && session && (
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-3">
             <Button 
               variant="outline" 
               size="sm"
@@ -78,9 +82,9 @@ export const MainHeader = ({
               <span>Profil</span>
             </Button>
             <Button 
-              variant="ghost" 
+              variant="destructive" 
               size="sm"
-              className="text-cyberred-400 hover:bg-cyberred-900/20 hover:text-cyberred-300"
+              className="bg-cyberred-600 hover:bg-cyberred-700 text-white"
               onClick={handleSignOut}
             >
               <LogOut className="h-4 w-4 mr-2" />
@@ -137,8 +141,8 @@ export const MainHeader = ({
               Min Profil
             </Button>
             <Button 
-              variant="ghost" 
-              className="w-full justify-start text-cyberred-400 hover:bg-cyberdark-800"
+              variant="destructive" 
+              className="w-full justify-start bg-cyberred-600 hover:bg-cyberred-700 text-white"
               onClick={handleSignOut}
             >
               <LogOut className="h-4 w-4 mr-2" />
