@@ -6,6 +6,13 @@ import { supabase } from "@/integrations/supabase/client";
  */
 export const checkNetworkConnection = async (): Promise<boolean> => {
   try {
+    // Try multiple ways to verify connectivity
+    
+    // First check the browser's navigator.onLine
+    if (!navigator.onLine) {
+      return false;
+    }
+    
     // Try to fetch a small resource from Supabase to test connection
     const { error } = await supabase.from('health_check').select('count').limit(1).maybeSingle();
     
@@ -57,7 +64,7 @@ export const ensureStorageBucket = async (): Promise<boolean> => {
     const { error: createError } = await supabase.storage.createBucket('chat-media', {
       public: true,
       fileSizeLimit: 20971520, // 20MB
-      allowedMimeTypes: ['image/*', 'video/*', 'audio/*', 'application/pdf']
+      allowedMimeTypes: ['image/*', 'video/*', 'audio/*', 'application/pdf', 'application/octet-stream']
     });
     
     if (createError) {
@@ -76,14 +83,31 @@ export const ensureStorageBucket = async (): Promise<boolean> => {
  * Check if file type is allowed
  */
 export const isAllowedFileType = (file: File): boolean => {
+  // If it's an encrypted file, allow it
+  if (file.type === 'application/octet-stream') {
+    return true;
+  }
+  
   const allowedTypes = [
     'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
-    'video/mp4', 'video/webm', 'video/ogg',
+    'video/mp4', 'video/webm', 'video/ogg', 'video/quicktime',
     'audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/webm',
     'application/pdf'
   ];
   
-  return allowedTypes.includes(file.type);
+  // Check by MIME type first
+  if (allowedTypes.includes(file.type)) {
+    return true;
+  }
+  
+  // Fallback to extension checking
+  const fileExtension = file.name.split('.').pop()?.toLowerCase();
+  const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 
+                            'mp4', 'webm', 'ogg', 'mov', 
+                            'mp3', 'wav', 'ogg', 
+                            'pdf', 'bin'];
+                            
+  return allowedExtensions.includes(fileExtension || '');
 };
 
 /**
@@ -102,9 +126,9 @@ export const uploadMedia = async (
       throw new Error("Filtypen støttes ikke. Støttede formater inkluderer bilder, video, lyd og PDF");
     }
     
-    // Check file size (10MB max)
-    if (file.size > 10 * 1024 * 1024) {
-      throw new Error("Filen er for stor (maksimalt 10MB)");
+    // Check file size (15MB max)
+    if (file.size > 15 * 1024 * 1024) {
+      throw new Error("Filen er for stor (maksimalt 15MB)");
     }
     
     // Check network connection first
@@ -140,10 +164,12 @@ export const uploadMedia = async (
       try {
         attempt++;
         
-        // Use custom XHR for better progress tracking
+        // Signal initial progress
+        onProgress?.(1);
+        
+        // Use direct upload with progress tracking if callback provided
         if (onProgress) {
-          const { data, error } = await uploadWithProgress(file, filePath, onProgress);
-          if (error) throw error;
+          const result = await uploadWithProgress(file, filePath, onProgress);
           
           // Get public URL
           const { data: { publicUrl } } = supabase.storage
@@ -152,7 +178,7 @@ export const uploadMedia = async (
 
           return {
             path: filePath,
-            publicUrl: publicUrl
+            publicUrl
           };
         } else {
           // Standard upload without progress tracking
@@ -171,7 +197,7 @@ export const uploadMedia = async (
 
           return {
             path: filePath,
-            publicUrl: publicUrl
+            publicUrl
           };
         }
       } catch (error) {
@@ -182,7 +208,14 @@ export const uploadMedia = async (
         if (attempt < maxRetries) {
           const delay = Math.pow(2, attempt) * 1000; // Exponential backoff: 2s, 4s, 8s...
           console.log(`Retrying in ${delay/1000}s...`);
+          
+          // Signal recovery attempt to user
+          onProgress?.(0);
+          
           await new Promise(resolve => setTimeout(resolve, delay));
+          
+          // Signal retry in progress
+          onProgress?.(1);
         }
       }
     }
@@ -204,11 +237,14 @@ const uploadWithProgress = async (
   onProgress: (progress: number) => void
 ): Promise<{ data: any; error: any }> => {
   return new Promise((resolve, reject) => {
-    // Get pre-signed URL for direct upload
+    // Try with createSignedUploadUrl first (better for large files)
     supabase.storage.from('chat-media').createSignedUploadUrl(filePath)
       .then(({ data, error }) => {
         if (error) {
-          return reject(error);
+          console.warn("Failed to get signed URL, falling back to direct upload", error);
+          // Fall back to direct upload
+          fallbackUpload();
+          return;
         }
 
         const xhr = new XMLHttpRequest();
@@ -220,13 +256,14 @@ const uploadWithProgress = async (
         // Set up progress tracking
         xhr.upload.onprogress = (event) => {
           if (event.lengthComputable) {
-            const percentComplete = (event.loaded / event.total) * 100;
+            const percentComplete = Math.min(99, (event.loaded / event.total) * 100);
             onProgress(percentComplete);
           }
         };
 
         xhr.onload = () => {
-          if (xhr.status === 200) {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            onProgress(100);
             resolve({ data: { path: filePath }, error: null });
           } else {
             reject(new Error(`Server svarte med status ${xhr.status}: ${xhr.statusText}`));
@@ -246,6 +283,47 @@ const uploadWithProgress = async (
 
         xhr.send(file);
       })
-      .catch(reject);
+      .catch(error => {
+        console.warn("Error in signed URL upload, falling back to direct upload:", error);
+        fallbackUpload();
+      });
+    
+    // Fallback upload method using standard Supabase upload
+    function fallbackUpload() {
+      let uploadPromise = supabase.storage
+        .from('chat-media')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
+      
+      // Simulate progress since we don't have real progress in fallback mode
+      let fakeProgress = 0;
+      const progressInterval = setInterval(() => {
+        fakeProgress += Math.random() * 5;
+        if (fakeProgress > 95) {
+          clearInterval(progressInterval);
+          fakeProgress = 95;
+        }
+        onProgress(fakeProgress);
+      }, 500);
+      
+      uploadPromise
+        .then(({ data, error }) => {
+          clearInterval(progressInterval);
+          if (error) {
+            onProgress(0);
+            reject(error);
+          } else {
+            onProgress(100);
+            resolve({ data, error: null });
+          }
+        })
+        .catch(error => {
+          clearInterval(progressInterval);
+          onProgress(0);
+          reject(error);
+        });
+    }
   });
 };
