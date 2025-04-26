@@ -35,8 +35,13 @@ export const FriendsList = ({
   const [readMessages, setReadMessages] = useState<Set<string>>(new Set());
   const [isRefreshing, setIsRefreshing] = useState(false);
   
+  // Check if we have valid friends data
+  const hasFriends = Array.isArray(friends) && friends.length > 0;
+  
   // Create a mapping for friend data to match the expected Friend type
-  const friendsData = friends.map(friend => {
+  const friendsData = hasFriends ? friends.map(friend => {
+    if (!friend) return null;
+    
     return {
       id: friend.id,
       user_id: currentUserId,
@@ -44,12 +49,12 @@ export const FriendsList = ({
       status: "accepted",
       profile: {
         id: friend.id,
-        username: friend.username,
+        username: friend.username || "Ukjent bruker",
         full_name: friend.full_name,
         avatar_url: friend.avatar_url
       }
     } as Friend;
-  });
+  }).filter(Boolean) : [];
 
   const handleRefresh = () => {
     if (onRefresh) {
