@@ -11,6 +11,13 @@ interface MessageInputProps {
   disabled?: boolean;
   placeholder?: string;
   className?: string;
+  newMessage?: string;
+  setNewMessage?: (message: string) => void;
+  isLoading?: boolean;
+  ttl?: number;
+  setTtl?: (ttl: number) => void;
+  editingMessage?: any;
+  onCancelEdit?: () => void;
 }
 
 export const MessageInput: React.FC<MessageInputProps> = ({
@@ -18,8 +25,16 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   disabled = false,
   placeholder = 'Skriv en melding...',
   className,
+  newMessage: externalMessage,
+  setNewMessage: externalSetMessage,
+  isLoading = false,
+  editingMessage,
+  onCancelEdit,
 }) => {
-  const [message, setMessage] = useState('');
+  const [internalMessage, setInternalMessage] = useState('');
+  const message = externalMessage !== undefined ? externalMessage : internalMessage;
+  const setMessage = externalSetMessage || setInternalMessage;
+
   const [attachments, setAttachments] = useState<Array<{ url: string; type: string; name: string }>>([]);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const { uploadFile, cancelUpload, uploadState } = useMediaUpload();
@@ -44,13 +59,21 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     }
   }, [disabled]);
 
+  // Handle editing message
+  useEffect(() => {
+    if (editingMessage && editingMessage.content) {
+      setMessage(editingMessage.content);
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+    }
+  }, [editingMessage, setMessage]);
+
   async function handleFilesSelected(files: FileList | null) {
     if (!files || files.length === 0) return;
     
-    // Convert FileList to Array for easier handling
     const fileArray = Array.from(files);
     
-    // Process each file one at a time
     for (const file of fileArray) {
       try {
         const result = await uploadFile(file);
@@ -78,7 +101,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   }
 
   function handleSendMessage() {
-    if ((message.trim() || attachments.length > 0) && !uploadState.isUploading) {
+    if ((message.trim() || attachments.length > 0) && !uploadState.isUploading && !isLoading) {
       onSendMessage(
         message,
         attachments.map(att => ({ url: att.url, type: att.type }))
@@ -86,7 +109,6 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       setMessage('');
       setAttachments([]);
       
-      // Reset height
       if (inputRef.current) {
         inputRef.current.style.height = 'auto';
       }
@@ -107,7 +129,20 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         className
       )}
     >
-      {/* Attachments preview */}
+      {editingMessage && (
+        <div className="flex justify-between items-center bg-muted px-3 py-1.5 text-xs">
+          <span>Redigerer melding</span>
+          {onCancelEdit && (
+            <button 
+              onClick={onCancelEdit}
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Avbryt
+            </button>
+          )}
+        </div>
+      )}
+      
       {attachments.length > 0 && (
         <div className="flex flex-wrap gap-2 p-2 border-b">
           {attachments.map((attachment, index) => (
@@ -128,7 +163,6 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         </div>
       )}
 
-      {/* Upload progress */}
       {uploadState.isUploading && (
         <div className="p-2 border-b">
           <div className="flex justify-between items-center mb-1">
@@ -149,7 +183,6 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         </div>
       )}
 
-      {/* Input area */}
       <div className="flex items-end p-2 gap-1.5">
         <div 
           {...getRootProps()}
@@ -160,7 +193,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
             type="button"
             variant="ghost"
             size="icon"
-            disabled={disabled || uploadState.isUploading}
+            disabled={disabled || uploadState.isUploading || isLoading}
             onClick={open}
             className="h-9 w-9 rounded-full"
           >
@@ -174,19 +207,19 @@ export const MessageInput: React.FC<MessageInputProps> = ({
           onChange={(e) => setMessage(e.target.value)}
           onKeyDown={handleKeyPress}
           placeholder={placeholder}
-          disabled={disabled}
+          disabled={disabled || isLoading}
           rows={1}
           className="flex-1 resize-none bg-transparent outline-none placeholder:text-muted-foreground py-2.5 px-3 max-h-[150px]"
         />
 
         <Button
           type="button"
-          disabled={disabled || (message.trim() === '' && attachments.length === 0) || uploadState.isUploading}
+          disabled={disabled || (message.trim() === '' && attachments.length === 0) || uploadState.isUploading || isLoading}
           onClick={handleSendMessage}
           size="icon"
           className="flex-shrink-0 h-9 w-9 rounded-full"
         >
-          {uploadState.isUploading ? (
+          {isLoading || uploadState.isUploading ? (
             <Loader2 size={18} className="animate-spin" />
           ) : (
             <Send size={18} />
