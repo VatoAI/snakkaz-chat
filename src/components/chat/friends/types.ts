@@ -4,6 +4,8 @@ export interface UserProfile {
   full_name?: string | null;
   avatar_url?: string | null;
   isPremium?: boolean;
+  is_premium?: boolean; // Database field name
+  subscription_type?: string;
 }
 
 export interface Friend {
