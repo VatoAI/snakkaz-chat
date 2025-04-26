@@ -2,7 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Group, GroupWritePermission, MessageTTLOption } from "@/types/group";
 import { SecurityLevel } from "@/types/security";
 import { useToast } from "@/components/ui/use-toast";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 
 export function useGroupCreation(
   currentUserId: string, 
@@ -10,6 +10,7 @@ export function useGroupCreation(
   setSelectedGroup: (group: Group) => void
 ) {
   const { toast } = useToast();
+  const [isCreatingGroup, setIsCreatingGroup] = useState(false);
 
   const handleCreateGroup = useCallback(async (
     name: string,
@@ -21,6 +22,18 @@ export function useGroupCreation(
     defaultMessageTtl: MessageTTLOption = null,
     memberWritePermissions?: Record<string, boolean>
   ) => {
+    // Prevent multiple simultaneous attempts
+    if (isCreatingGroup) {
+      toast({
+        title: "Oppretter allerede gruppe",
+        description: "Vennligst vent til den nåværende operasjonen er fullført",
+      });
+      return;
+    }
+    
+    setIsCreatingGroup(true);
+    let createdGroupId: string | null = null;
+    
     try {
       // Validate inputs
       if (!name || name.trim() === '') {
@@ -41,6 +54,7 @@ export function useGroupCreation(
         return;
       }
       
+      // Check network connectivity
       if (!navigator.onLine) {
         toast({
           title: "Ingen nettverkstilkobling",
@@ -51,7 +65,7 @@ export function useGroupCreation(
       }
 
       // Show progress toast
-      toast({
+      const progressToast = toast({
         title: "Oppretter gruppe",
         description: "Vennligst vent mens gruppen opprettes...",
       });
@@ -72,58 +86,79 @@ export function useGroupCreation(
         f.user_id === currentUserId ? f.friend_id : f.user_id
       );
 
-      const invalidMembers = members.filter(m => !friendIds.includes(m));
-      if (invalidMembers.length > 0) {
-        throw new Error('Noen utvalgte brukere er ikke i vennelisten din');
+      // Filter out invalid members but continue with valid ones
+      const validMembers = members.filter(m => friendIds.includes(m));
+      
+      if (validMembers.length < members.length) {
+        console.warn(`${members.length - validMembers.length} invalid members were filtered out`);
+        // We'll show a warning toast later if we need to
       }
 
-      // Create the group
-      const { data: groupData, error: groupError } = await supabase
-        .from('groups')
-        .insert({
-          name,
-          creator_id: currentUserId,
-          security_level: securityLevel,
-          password: password || null,
-          write_permissions: writePermissions,
-          default_message_ttl: defaultMessageTtl
-        })
-        .select()
-        .single();
+      // Create the group with retry logic
+      let groupData;
+      let retryCount = 0;
+      const maxRetries = 2;
+      
+      while (retryCount <= maxRetries) {
+        try {
+          const { data, error } = await supabase
+            .from('groups')
+            .insert({
+              name: name.trim(),
+              creator_id: currentUserId,
+              security_level: securityLevel,
+              password: password && password.trim() !== "" ? password : null,
+              write_permissions: writePermissions || 'all',
+              default_message_ttl: defaultMessageTtl || null
+            })
+            .select()
+            .single();
+          
+          if (error) throw error;
+          groupData = data;
+          createdGroupId = data.id;
+          break;
+        } catch (error) {
+          console.error(`Attempt ${retryCount + 1} failed:`, error);
+          retryCount++;
+          
+          if (retryCount > maxRetries) {
+            throw new Error('Kunne ikke opprette gruppe. Sjekk nettverkstilkobling og prøv igjen.');
+          }
+          
+          // Wait before retrying
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
 
-      if (groupError) {
-        console.error("Error creating group:", groupError);
+      if (!groupData) {
         throw new Error('Kunne ikke opprette gruppe. Sjekk nettverkstilkobling og prøv igjen.');
       }
 
       // Upload avatar if provided
       let avatarUrl = null;
       if (avatar) {
-        // Validate file type and size
-        if (!avatar.type.startsWith('image/')) {
-          throw new Error('Ugyldig filtype. Kun bildefiler er tillatt.');
-        }
+        try {
+          // Validate file type and size
+          if (!avatar.type.startsWith('image/')) {
+            throw new Error('Ugyldig filtype. Kun bildefiler er tillatt.');
+          }
 
-        if (avatar.size > 5 * 1024 * 1024) { // 5MB max
-          throw new Error('Bildet er for stort. Maksimal størrelse er 5MB.');
-        }
-        
-        const fileExt = avatar.name.split('.').pop();
-        const filePath = `${groupData.id}/${Date.now()}.${fileExt}`;
+          if (avatar.size > 5 * 1024 * 1024) { // 5MB max
+            throw new Error('Bildet er for stort. Maksimal størrelse er 5MB.');
+          }
+          
+          const fileExt = avatar.name.split('.').pop() || 'png';
+          const filePath = `${groupData.id}/${Date.now()}.${fileExt}`;
 
-        const { error: uploadError } = await supabase.storage
-          .from('group_avatars')
-          .upload(filePath, avatar);
+          const { error: uploadError } = await supabase.storage
+            .from('group_avatars')
+            .upload(filePath, avatar);
 
-        if (uploadError) {
-          console.error("Error uploading avatar:", uploadError);
-          // Continue without avatar if upload fails
-          toast({
-            title: "Kunne ikke laste opp bilde",
-            description: "Gruppen ble opprettet, men profilbildet kunne ikke lastes opp.",
-            variant: "warning"
-          });
-        } else {
+          if (uploadError) {
+            throw uploadError;
+          }
+          
           avatarUrl = filePath;
 
           // Update group with avatar URL
@@ -131,31 +166,62 @@ export function useGroupCreation(
             .from('groups')
             .update({ avatar_url: avatarUrl })
             .eq('id', groupData.id);
+        } catch (error) {
+          console.error("Error uploading avatar:", error);
+          // Continue without avatar if upload fails
+          toast({
+            title: "Kunne ikke laste opp bilde",
+            description: "Gruppen ble opprettet, men profilbildet kunne ikke lastes opp.",
+            variant: "warning"
+          });
         }
       }
 
-      // Add creator as admin med skrivetillatelse
-      const { error: creatorError } = await supabase
-        .from('group_members')
-        .insert({
-          user_id: currentUserId,
-          group_id: groupData.id,
-          role: 'admin',
-          can_write: true // Admin kan alltid skrive
-        });
-        
-      if (creatorError) {
-        console.error("Error adding creator as admin:", creatorError);
-        throw new Error('Kunne ikke legge til deg som administrator. Prøv å slette og opprette gruppen på nytt.');
+      // Add creator as admin with write permission (retry if needed)
+      let creatorMemberAdded = false;
+      retryCount = 0;
+      
+      while (retryCount <= maxRetries && !creatorMemberAdded) {
+        try {
+          const { error } = await supabase
+            .from('group_members')
+            .insert({
+              user_id: currentUserId,
+              group_id: groupData.id,
+              role: 'admin',
+              can_write: true // Admin can always write
+            });
+            
+          if (error) throw error;
+          creatorMemberAdded = true;
+        } catch (error) {
+          console.error(`Attempt ${retryCount + 1} to add creator as admin failed:`, error);
+          retryCount++;
+          
+          if (retryCount > maxRetries) {
+            // If we can't add the creator as admin, we have a problem but the group exists
+            // Let's warn the user but continue
+            toast({
+              title: "Advarsel",
+              description: "Du ble ikke lagt til som administrator. Du kan måtte slette og opprette gruppen på nytt.",
+              variant: "warning"
+            });
+            break;
+          }
+          
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
       }
 
-      // Add selected members med skrivetillatelser
-      if (members.length > 0) {
-        const memberInserts = members.map(userId => {
+      // Add selected members with write permissions
+      let failedMembersCount = 0;
+      
+      if (validMembers.length > 0) {
+        const memberInserts = validMembers.map(userId => {
           let canWrite = true;
           
           if (writePermissions === 'admin') {
-            canWrite = false; // Kun administratorer kan skrive
+            canWrite = false; // Only admins can write
           } else if (writePermissions === 'selected') {
             canWrite = memberWritePermissions?.[userId] ?? false;
           }
@@ -168,16 +234,41 @@ export function useGroupCreation(
           };
         });
 
-        const { error: membersError } = await supabase
-          .from('group_members')
-          .insert(memberInserts);
+        try {
+          const { error: membersError } = await supabase
+            .from('group_members')
+            .insert(memberInserts);
+            
+          if (membersError) {
+            console.error("Error adding members:", membersError);
+            failedMembersCount = validMembers.length;
+            throw membersError;
+          }
+        } catch (error) {
+          // Try adding members one by one instead
+          console.error("Batch insert of members failed, trying individually:", error);
           
-        if (membersError) {
-          console.error("Error adding members:", membersError);
-          // Continue with group creation even if some members couldn't be added
+          for (const member of memberInserts) {
+            try {
+              const { error } = await supabase
+                .from('group_members')
+                .insert(member);
+                
+              if (error) {
+                console.error(`Failed to add member ${member.user_id}:`, error);
+                failedMembersCount++;
+              }
+            } catch (memberError) {
+              console.error(`Error adding member ${member.user_id}:`, memberError);
+              failedMembersCount++;
+            }
+          }
+        }
+        
+        if (failedMembersCount > 0) {
           toast({
             title: "Advarsel",
-            description: "Gruppen ble opprettet, men noen medlemmer kunne ikke legges til.",
+            description: `${failedMembersCount} medlemmer kunne ikke legges til i gruppen. De kan inviteres senere.`,
             variant: "warning"
           });
         }
@@ -207,7 +298,46 @@ export function useGroupCreation(
 
       if (completeError) {
         console.error("Error fetching complete group:", completeError);
-        throw new Error('Gruppen ble opprettet, men kunne ikke lastes fullstendig. Oppdater siden.');
+        // Group exists but we couldn't fetch complete data
+        // We can still try to show a basic version
+        const basicGroup: Group = {
+          id: groupData.id,
+          name: name,
+          created_at: groupData.created_at,
+          creator_id: currentUserId,
+          security_level: securityLevel,
+          password: password || null,
+          avatar_url: avatarUrl,
+          write_permissions: writePermissions || 'all',
+          default_message_ttl: defaultMessageTtl || null,
+          members: [
+            {
+              id: `temp-${Date.now()}`,
+              user_id: currentUserId,
+              group_id: groupData.id,
+              role: 'admin',
+              joined_at: new Date().toISOString(),
+              can_write: true,
+              profile: {
+                id: currentUserId,
+                username: 'You',
+                avatar_url: null,
+                full_name: null
+              }
+            }
+          ]
+        };
+        
+        setGroups(prev => [...prev, basicGroup]);
+        setSelectedGroup(basicGroup);
+        
+        toast({
+          title: "Gruppe delvis opprettet",
+          description: `Gruppen "${name}" ble opprettet, men noen data mangler. Oppdater siden for å se alle detaljer.`,
+          variant: "warning"
+        });
+        
+        return;
       }
 
       const newGroup: Group = {
@@ -217,27 +347,41 @@ export function useGroupCreation(
         members: completeGroup.members.map((m: any) => ({
           ...m,
           profile: m.profiles,
-          can_write: m.can_write !== false // Default til true hvis ikke spesifisert
+          can_write: m.can_write !== false // Default to true if not specified
         }))
       };
 
       setGroups(prev => [...prev, newGroup]);
       setSelectedGroup(newGroup);
 
+      // Clear the progress toast
       toast({
         title: "Gruppe opprettet",
-        description: `Gruppen "${name}" ble opprettet`,
+        description: `Gruppen "${name}" ble opprettet${failedMembersCount > 0 ? ', men noen medlemmer kunne ikke legges til' : ''}.`,
       });
 
     } catch (error) {
       console.error("Error creating group:", error);
+      
+      // If the group was partly created but something failed, try to clean up
+      if (createdGroupId) {
+        try {
+          // Try to delete the partially created group
+          await supabase.from('groups').delete().eq('id', createdGroupId);
+        } catch (cleanupError) {
+          console.error("Failed to clean up partially created group:", cleanupError);
+        }
+      }
+      
       toast({
         title: "Kunne ikke opprette gruppe",
         description: error instanceof Error ? error.message : "En feil oppstod. Prøv igjen senere.",
         variant: "destructive",
       });
+    } finally {
+      setIsCreatingGroup(false);
     }
-  }, [currentUserId, toast, setGroups, setSelectedGroup]);
+  }, [currentUserId, toast, setGroups, setSelectedGroup, isCreatingGroup]);
 
-  return { handleCreateGroup };
+  return { handleCreateGroup, isCreatingGroup };
 }
