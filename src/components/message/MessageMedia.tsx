@@ -8,15 +8,18 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { FileMedia } from "./media/FileMedia";
 import { useToast } from "@/hooks/use-toast";
+import { DecryptedMessage } from "@/types/message";
 
 interface MessageMediaProps {
-  encryptedUrl: string;
-  encryptionKey: string;
-  fileType: string;
+  encryptedUrl?: string;
+  encryptionKey?: string;
+  fileType?: string;
   messageId?: string;
   ttl?: number | null;
   onDelete?: () => void;
   onShowDeleteConfirm?: () => void;
+  message?: DecryptedMessage;
+  onMediaExpired?: () => void;
 }
 
 export const MessageMedia = ({ 
@@ -26,25 +29,34 @@ export const MessageMedia = ({
   messageId,
   ttl,
   onDelete,
-  onShowDeleteConfirm
+  onShowDeleteConfirm,
+  message,
+  onMediaExpired
 }: MessageMediaProps) => {
   const [decryptFailed, setDecryptFailed] = useState(false);
   const [metadata, setMetadata] = useState<any>(null);
   const { toast } = useToast();
+  
+  // Extract values from message prop if provided
+  const mediaUrl = message?.media_url || encryptedUrl || '';
+  const mediaKey = message?.media_key || encryptionKey || '';
+  const mediaType = message?.media_type || fileType || '';
+  const mediaTtl = message?.ttl || ttl;
+  const messageIdToUse = message?.id || messageId;
   
   const {
     decryptedDataUrl,
     isLoading,
     error,
     retry: retryDecryption
-  } = useMediaDecryption(encryptedUrl, encryptionKey);
+  } = useMediaDecryption(mediaUrl, mediaKey);
   
   // Try to extract metadata
   useEffect(() => {
     const extractMetadata = async () => {
       try {
-        if (encryptionKey) {
-          const meta = await decryptMediaMetadata(encryptedUrl, encryptionKey);
+        if (mediaKey) {
+          const meta = await decryptMediaMetadata(mediaUrl, mediaKey);
           if (meta) {
             setMetadata(meta);
           }
@@ -55,7 +67,7 @@ export const MessageMedia = ({
     };
     
     extractMetadata();
-  }, [encryptedUrl, encryptionKey]);
+  }, [mediaUrl, mediaKey]);
 
   // Handle media expiration
   const handleMediaExpired = () => {
@@ -66,6 +78,8 @@ export const MessageMedia = ({
         description: "This media has reached its time limit and been deleted.",
         variant: "warning",
       });
+    } else if (onMediaExpired) {
+      onMediaExpired();
     }
   };
   
@@ -100,23 +114,23 @@ export const MessageMedia = ({
     );
   }
 
-  if (fileType.startsWith("image/")) {
+  if (mediaType.startsWith("image/")) {
     return (
       <ImageMedia 
         url={decryptedDataUrl} 
-        ttl={ttl}
+        ttl={mediaTtl}
         onExpired={handleMediaExpired}
         retryDecryption={retryDecryption}
       />
     );
   }
   
-  if (fileType.startsWith("video/")) {
+  if (mediaType.startsWith("video/")) {
     return (
       <VideoMedia 
         url={decryptedDataUrl}
-        mimeType={fileType}
-        ttl={ttl}
+        mimeType={mediaType}
+        ttl={mediaTtl}
         onExpired={handleMediaExpired}
       />
     );
@@ -126,9 +140,9 @@ export const MessageMedia = ({
   return (
     <FileMedia 
       url={decryptedDataUrl}
-      fileType={fileType}
+      fileType={mediaType}
       filename={metadata?.filename || "secured-file"}
-      ttl={ttl}
+      ttl={mediaTtl}
       onExpired={handleMediaExpired}
     />
   );
