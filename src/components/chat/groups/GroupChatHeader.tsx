@@ -1,13 +1,13 @@
 import { Group } from "@/types/group";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, RefreshCw, Shield, Users, UserPlus, Lock, Layers } from "lucide-react";
 import { SecurityLevel } from "@/types/security";
 import { SecurityBadge } from "../security/SecurityBadge";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/integrations/supabase/client";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { 
+  DropdownMenu, 
   DropdownMenu, 
   DropdownMenuContent, 
   DropdownMenuItem, 
