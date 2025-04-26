@@ -122,7 +122,7 @@ export const FriendsContainer = ({
             <FriendsSearchSection 
               currentUserId={currentUserId}
               onSendFriendRequest={handleSendFriendRequest}
-              friendsList={friendsList}
+              existingFriends={friendsList}
             />
           </div>
         </>
