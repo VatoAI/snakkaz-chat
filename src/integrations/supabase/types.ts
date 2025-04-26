@@ -207,7 +207,9 @@ export type Database = {
           created_at: string
           creator_id: string
           default_message_ttl: number
+          description: string | null
           id: string
+          is_premium: boolean
           name: string
           password: string | null
           security_level: string
@@ -218,7 +220,9 @@ export type Database = {
           created_at?: string
           creator_id: string
           default_message_ttl?: number
+          description?: string | null
           id?: string
+          is_premium?: boolean
           name: string
           password?: string | null
           security_level?: string
@@ -229,7 +233,9 @@ export type Database = {
           created_at?: string
           creator_id?: string
           default_message_ttl?: number
+          description?: string | null
           id?: string
+          is_premium?: boolean
           name?: string
           password?: string | null
           security_level?: string
