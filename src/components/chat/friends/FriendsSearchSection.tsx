@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { FriendSearch } from "./FriendSearch";
 import { UserProfile } from "./types";
@@ -8,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 interface FriendsSearchSectionProps {
   currentUserId: string;
   onSendFriendRequest: (userId: string) => void;
+  existingFriends?: string[];
 }
 
 export const FriendsSearchSection = ({ 
