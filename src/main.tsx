@@ -13,12 +13,12 @@ async function registerServiceWorker() {
     try {
       const registration = await navigator.serviceWorker.register('/service-worker.js');
       console.log('Service Worker registered with scope:', registration.scope);
-      
+
       // Check for updates
       registration.addEventListener('updatefound', () => {
         const newWorker = registration.installing;
         console.log('Service Worker update found!');
-        
+
         if (newWorker) {
           newWorker.addEventListener('statechange', () => {
             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
@@ -28,7 +28,7 @@ async function registerServiceWorker() {
           });
         }
       });
-      
+
       // Check if there's an existing controller, indicating PWA is already installed
       if (navigator.serviceWorker.controller) {
         console.log('PWA already installed and active');
