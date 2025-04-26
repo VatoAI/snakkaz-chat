@@ -19,10 +19,12 @@ interface GroupFormData {
   name: string;
   security_level: SecurityLevel;
   write_permissions: GroupWritePermission;
-  message_ttl: MessageTTLOption | null;
+  message_ttl: MessageTTLOption;
   encrypted: boolean;
   is_premium: boolean;
   description: string;
+  password?: string;
+  avatar?: File;
 }
 
 interface GroupChatCreatorProps {

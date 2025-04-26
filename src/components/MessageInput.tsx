@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, FormEvent } from 'react';
 import { useFileInput } from '@/hooks/useFileInput';
 import { useMediaUpload } from '@/hooks/useMediaUpload';
 import { Button } from '@/components/ui/button';
@@ -25,6 +25,7 @@ interface MessageInputProps {
   setTtl?: (ttl: number) => void;
   editingMessage?: any;
   onCancelEdit?: () => void;
+  onSubmit?: (e: FormEvent) => Promise<void>;
 }
 
 export const MessageInput: React.FC<MessageInputProps> = ({
