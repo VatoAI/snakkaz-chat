@@ -1,10 +1,10 @@
-
 import { User, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { Friend } from "../types";
 import { DecryptedMessage } from "@/types/message";
+import { cn } from "@/lib/utils";
 
 interface FriendListItemProps {
   friend: Friend;
@@ -12,6 +12,8 @@ interface FriendListItemProps {
   messages: DecryptedMessage[];
   readMessages: Set<string>;
   onSelect: (friend: Friend) => void;
+  unreadCount?: number;
+  onlineStatus?: 'online' | 'busy' | 'brb' | 'offline';
 }
 
 export const FriendListItem = ({ 
@@ -19,14 +21,11 @@ export const FriendListItem = ({
   currentUserId,
   messages,
   readMessages,
-  onSelect
+  onSelect,
+  unreadCount = 0,
+  onlineStatus = 'offline'
 }: FriendListItemProps) => {
   const friendId = friend.user_id === currentUserId ? friend.friend_id : friend.user_id;
-  
-  // Get messages from this friend that haven't been read
-  const unreadMessages = messages.filter(
-    msg => msg.sender.id === friendId && !readMessages.has(msg.id)
-  );
   
   // Find the most recent message for this friend
   const recentMessages = messages.filter(
@@ -42,10 +41,25 @@ export const FriendListItem = ({
   const friendProfile = friend.profile;
   const username = friendProfile?.username || 'Ukjent bruker';
   const avatarUrl = friendProfile?.avatar_url;
+  
+  // Get status color
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'online': return 'bg-green-500';
+      case 'busy': return 'bg-red-500';
+      case 'brb': return 'bg-yellow-500';
+      default: return 'bg-gray-500';
+    }
+  };
 
   return (
     <div
-      className="flex items-center justify-between p-3 bg-cyberdark-800 border border-cybergold-500/30 rounded-md hover:bg-cyberdark-700 transition-colors cursor-pointer"
+      className={cn(
+        "flex items-center justify-between p-3 border rounded-md transition-colors cursor-pointer",
+        unreadCount > 0 
+          ? "bg-cyberdark-700 border-cybergold-500/50" 
+          : "bg-cyberdark-800 border-cybergold-500/30 hover:bg-cyberdark-700"
+      )}
       onClick={() => onSelect(friend)}
     >
       <div className="flex items-center gap-3">
@@ -62,17 +76,27 @@ export const FriendListItem = ({
               </AvatarFallback>
             )}
           </Avatar>
-          {isRecentMessage && (
-            <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border border-cyberdark-800"></span>
-          )}
+          <span 
+            className={cn(
+              "absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-cyberdark-800",
+              getStatusColor(onlineStatus)
+            )}
+          ></span>
         </div>
         <div>
-          <p className="text-cybergold-200 font-medium">
-            {username}
-          </p>
+          <div className="flex items-center gap-1">
+            <p className="text-cybergold-200 font-medium">
+              {username}
+            </p>
+            {onlineStatus !== 'offline' && (
+              <span className="text-xs text-gray-400">
+                • {onlineStatus === 'online' ? 'pålogget' : onlineStatus === 'busy' ? 'opptatt' : 'straks tilbake'}
+              </span>
+            )}
+          </div>
           {lastMessage && (
             <p className="text-xs text-cybergold-400 truncate max-w-[150px]">
-              {lastMessage.sender.id === currentUserId ? 'You: ' : ''}
+              {lastMessage.sender.id === currentUserId ? 'Du: ' : ''}
               {lastMessage.content}
             </p>
           )}
@@ -84,9 +108,9 @@ export const FriendListItem = ({
         className="relative text-cybergold-400 hover:text-cybergold-300 hover:bg-cyberdark-600"
       >
         <MessageSquare className="w-5 h-5" />
-        {unreadMessages.length > 0 && (
+        {unreadCount > 0 && (
           <span className="absolute -top-1 -right-1 bg-cybergold-500 text-cyberdark-900 text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-            {unreadMessages.length}
+            {unreadCount}
           </span>
         )}
       </Button>
