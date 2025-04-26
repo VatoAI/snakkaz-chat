@@ -12,6 +12,8 @@ interface AuthContextType {
   setAutoLogoutTime: (minutes: number | null) => void;
   usePinLock: boolean;
   setUsePinLock: (usePinLock: boolean) => void;
+  isRemembered: boolean;
+  setIsRemembered: (isRemembered: boolean) => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -21,11 +23,14 @@ const AuthContext = createContext<AuthContextType>({
   autoLogoutTime: null,
   setAutoLogoutTime: () => {},
   usePinLock: false,
-  setUsePinLock: () => {}
+  setUsePinLock: () => {},
+  isRemembered: false,
+  setIsRemembered: () => {}
 });
 
 const AUTO_LOGOUT_KEY = 'snakkaz_auto_logout_time';
 const USE_PIN_LOCK_KEY = 'snakkaz_use_pin_lock';
+const REMEMBER_ME_KEY = 'snakkaz_remember_me';
 
 export const useAuth = () => useContext(AuthContext);
 
@@ -39,6 +44,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   });
   const [usePinLock, setUsePinLockState] = useState<boolean>(() => {
     const saved = localStorage.getItem(USE_PIN_LOCK_KEY);
+    return saved ? saved === 'true' : false;
+  });
+  const [isRemembered, setIsRememberedState] = useState<boolean>(() => {
+    const saved = localStorage.getItem(REMEMBER_ME_KEY);
     return saved ? saved === 'true' : false;
   });
   const [inactivityTimer, setInactivityTimer] = useState<NodeJS.Timeout | null>(null);
@@ -61,6 +70,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const setUsePinLock = (usePinLock: boolean) => {
     setUsePinLockState(usePinLock);
     localStorage.setItem(USE_PIN_LOCK_KEY, usePinLock.toString());
+  };
+
+  // Save remember me preference to localStorage
+  const setIsRemembered = (isRemembered: boolean) => {
+    setIsRememberedState(isRemembered);
+    localStorage.setItem(REMEMBER_ME_KEY, isRemembered.toString());
+    
+    // Update auto-logout time based on remember me preference
+    if (isRemembered) {
+      setAutoLogoutTime(30); // 30 minutes for remembered users
+    } else {
+      setAutoLogoutTime(5);  // 5 minutes for non-remembered users
+    }
   };
 
   // Reset the inactivity timer whenever there is user activity
@@ -159,7 +181,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       autoLogoutTime, 
       setAutoLogoutTime,
       usePinLock,
-      setUsePinLock
+      setUsePinLock,
+      isRemembered,
+      setIsRemembered
     }}>
       {children}
     </AuthContext.Provider>
