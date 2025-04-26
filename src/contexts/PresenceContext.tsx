@@ -1,130 +1,85 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { UserStatus } from '@/types/presence';
 
+// Types for our context
 type PresenceContextType = {
-  userStatus: UserStatus;
-  setUserStatus: (status: UserStatus) => Promise<void>;
-  userStatuses: Record<string, UserStatus>;
+  userStatuses: Record<string, string>;
+  updateUserStatus: (userId: string, status: string) => void;
 };
 
+// Create the context with default values
 const PresenceContext = createContext<PresenceContextType>({
-  userStatus: 'offline',
-  setUserStatus: async () => {},
   userStatuses: {},
+  updateUserStatus: () => {},
 });
 
+// Custom hook to use the presence context
 export const useGlobalPresence = () => useContext(PresenceContext);
 
-interface PresenceProviderProps {
-  children: ReactNode;
+export const PresenceProvider: React.FC<{
+  children: React.ReactNode;
   userId?: string | null;
-}
+}> = ({ children, userId }) => {
+  // Track all user statuses in the system
+  const [userStatuses, setUserStatuses] = useState<Record<string, string>>({});
 
-export const PresenceProvider = ({ children, userId }: PresenceProviderProps) => {
-  const [userStatus, setStatus] = useState<UserStatus>('offline');
-  const [userStatuses, setUserStatuses] = useState<Record<string, UserStatus>>({});
-
-  // Update the user's status in the database
-  const setUserStatus = async (status: UserStatus) => {
-    if (!userId) return;
-
-    try {
-      // Update the status in the database
-      const { error } = await supabase
-        .from('user_presence')
-        .upsert({ 
-          user_id: userId, 
-          status,
-          last_seen: new Date().toISOString()
-        });
-
-      if (error) throw error;
-      setStatus(status);
-    } catch (error) {
-      console.error('Error updating status:', error);
-    }
+  // Update a single user's status
+  const updateUserStatus = (userId: string, status: string) => {
+    setUserStatuses((prev) => ({
+      ...prev,
+      [userId]: status,
+    }));
   };
 
-  // Fetch initial statuses and subscribe to changes
+  // Initialize presence tracking
   useEffect(() => {
     if (!userId) return;
 
-    // Set initial status when user logs in
-    setUserStatus('online');
-
-    // Fetch all user statuses for initial state
-    const fetchUserStatuses = async () => {
+    // Initial fetch of all online users
+    const fetchOnlineUsers = async () => {
       try {
         const { data, error } = await supabase
           .from('user_presence')
-          .select('user_id, status');
+          .select('user_id, status')
+          .not('status', 'eq', 'offline');
 
         if (error) throw error;
 
-        const statuses: Record<string, UserStatus> = {};
-        data.forEach(item => {
-          statuses[item.user_id] = item.status as UserStatus;
-        });
-        setUserStatuses(statuses);
+        if (data) {
+          const statusMap: Record<string, string> = {};
+          data.forEach((presence) => {
+            statusMap[presence.user_id] = presence.status;
+          });
+          setUserStatuses(statusMap);
+        }
       } catch (error) {
-        console.error('Error fetching user statuses:', error);
+        console.error('Error fetching online users:', error);
       }
     };
 
-    fetchUserStatuses();
+    fetchOnlineUsers();
 
-    // Subscribe to changes in the user_presence table
+    // Subscribe to all presence changes
     const presenceChannel = supabase
-      .channel('global-presence-changes')
+      .channel('global-presence')
       .on('postgres_changes', 
-        { 
-          event: '*', 
-          schema: 'public',
-          table: 'user_presence' 
-        },
+        { event: '*', schema: 'public', table: 'user_presence' }, 
         (payload) => {
-          // Update the local state when presence changes
-          setUserStatuses(prev => ({
-            ...prev,
-            [payload.new.user_id]: payload.new.status as UserStatus
-          }));
+          const { new: newPresence } = payload;
+          if (newPresence) {
+            updateUserStatus(newPresence.user_id, newPresence.status);
+          }
         }
       )
       .subscribe();
 
-    // Set up interval for automatic status refresh
-    const refreshInterval = setInterval(() => {
-      // Update last_seen timestamp while user is online
-      if (userStatus !== 'offline') {
-        supabase
-          .from('user_presence')
-          .update({ last_seen: new Date().toISOString() })
-          .eq('user_id', userId)
-          .then(() => {})
-          .catch(error => console.error('Error updating last seen:', error));
-      }
-    }, 60000); // Every minute
-
-    // Set offline status when component unmounts
     return () => {
-      clearInterval(refreshInterval);
       supabase.removeChannel(presenceChannel);
-      
-      // Set status to offline when user logs out
-      if (userId) {
-        supabase
-          .from('user_presence')
-          .update({ status: 'offline', last_seen: new Date().toISOString() })
-          .eq('user_id', userId)
-          .then(() => {})
-          .catch(error => console.error('Error updating status to offline:', error));
-      }
     };
-  }, [userId, userStatus]);
+  }, [userId]);
 
   return (
-    <PresenceContext.Provider value={{ userStatus, setUserStatus, userStatuses }}>
+    <PresenceContext.Provider value={{ userStatuses, updateUserStatus }}>
       {children}
     </PresenceContext.Provider>
   );
