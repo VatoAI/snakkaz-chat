@@ -1,4 +1,3 @@
-
 -- Drop the existing function if it exists
 DROP FUNCTION IF EXISTS public.cleanup_old_signaling_records;
 
@@ -6,6 +5,8 @@ DROP FUNCTION IF EXISTS public.cleanup_old_signaling_records;
 CREATE OR REPLACE FUNCTION public.cleanup_old_signaling_records()
 RETURNS trigger
 LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
 AS $$
 DECLARE
   cleaned_count INTEGER;
@@ -42,6 +43,8 @@ DROP FUNCTION IF EXISTS public.clean_stale_presence;
 CREATE OR REPLACE FUNCTION public.clean_stale_presence()
 RETURNS trigger
 LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
 AS $$
 DECLARE
   cleaned_count INTEGER;
