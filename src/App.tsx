@@ -16,10 +16,10 @@ import './App.css';
 
 function App() {
   return (
-    <AuthProvider>
-      <NotificationProvider>
-        <PresenceProvider>
-          <BrowserRouter>
+    <BrowserRouter>
+      <AuthProvider>
+        <NotificationProvider>
+          <PresenceProvider>
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<Login />} />
@@ -31,10 +31,10 @@ function App() {
               <Route path="*" element={<NotFound />} />
             </Routes>
             <Toaster />
-          </BrowserRouter>
-        </PresenceProvider>
-      </NotificationProvider>
-    </AuthProvider>
+          </PresenceProvider>
+        </NotificationProvider>
+      </AuthProvider>
+    </BrowserRouter>
   );
 }
 
