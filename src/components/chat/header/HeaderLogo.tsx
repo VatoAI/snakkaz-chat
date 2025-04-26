@@ -1,9 +1,13 @@
-
 import { useNavigate } from 'react-router-dom';
 
 export const HeaderLogo = () => {
+  const navigate = useNavigate();
+  
   return (
-    <div className="hidden sm:flex w-12 h-12 rounded-full mr-2 border-2 border-cybergold-500/40 shadow-neon-gold overflow-hidden">
+    <div 
+      onClick={() => navigate("/")}
+      className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-cybergold-500/40 shadow-neon-gold overflow-hidden cursor-pointer hover:shadow-neon-intense transition-all duration-300"
+    >
       <img 
         src="/snakkaz-logo.png" 
         alt="SnakkaZ" 
