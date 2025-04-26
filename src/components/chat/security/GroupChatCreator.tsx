@@ -17,13 +17,12 @@ import { Switch } from "@/components/ui/switch";
 
 interface GroupFormData {
   name: string;
-  password?: string;
   security_level: SecurityLevel;
-  avatar?: File;
   write_permissions: GroupWritePermission;
-  default_message_ttl: MessageTTLOption;
+  message_ttl: MessageTTLOption | null;
+  encrypted: boolean;
   is_premium: boolean;
-  description?: string;
+  description: string;
 }
 
 interface GroupChatCreatorProps {
@@ -63,10 +62,10 @@ export const GroupChatCreator = ({
   const form = useForm<GroupFormData>({
     defaultValues: {
       name: "",
-      password: "",
       security_level: "server_e2ee" as SecurityLevel,
       write_permissions: "all" as GroupWritePermission,
-      default_message_ttl: 86400, // 24 timer som standard
+      message_ttl: null,
+      encrypted: false,
       is_premium: false,
       description: ""
     }
@@ -95,7 +94,7 @@ export const GroupChatCreator = ({
       data.password && data.password.trim() !== "" ? data.password : undefined,
       data.avatar,
       data.write_permissions,
-      data.default_message_ttl,
+      data.message_ttl,
       memberWritePermissions
     );
     

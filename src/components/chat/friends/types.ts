@@ -3,8 +3,7 @@ export interface UserProfile {
   username: string | null;
   full_name?: string | null;
   avatar_url?: string | null;
-  isPremium?: boolean;
-  is_premium?: boolean; // Database field name
+  is_premium?: boolean; // Use only the database field name consistently
   subscription_type?: string;
 }
 
