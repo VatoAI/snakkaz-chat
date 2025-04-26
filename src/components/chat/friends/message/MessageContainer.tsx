@@ -72,7 +72,7 @@ export const MessageContainer = ({
               username={username}
               size={28}
               status={userStatus ?? "online"}
-              className={statusColor?.glow}
+              className={userStatus ? statusColors[userStatus].glow : undefined}
             />
             <div className="flex flex-col text-xs items-start">
               <span className={cn("font-semibold", secColor.primary)}>{username}</span>
@@ -80,7 +80,9 @@ export const MessageContainer = ({
                 <span>{formattedDate}</span>
                 <span>{formattedTime}</span>
                 {userStatus && (
-                  <span className={cn("ml-1 capitalize", statusColor?.primary)}>{userStatus}</span>
+                  <span className={cn("ml-1 capitalize", statusColors[userStatus].primary)}>
+                    {userStatus}
+                  </span>
                 )}
               </div>
             </div>
