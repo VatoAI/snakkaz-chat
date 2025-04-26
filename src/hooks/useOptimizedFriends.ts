@@ -11,6 +11,7 @@ type FriendRecord = {
   avatar_url: string | null;
   status: 'online' | 'busy' | 'brb' | 'offline';
   last_seen: string | null;
+  isPremium?: boolean; // Added premium flag
 };
 
 export const useOptimizedFriends = (userId: string | null) => {
@@ -23,8 +24,10 @@ export const useOptimizedFriends = (userId: string | null) => {
   
   // For cache invalidation
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  // Cache to prevent redundant fetches
+  const [profileCache, setProfileCache] = useState<Record<string, any>>({});
 
-  // Fetch friends efficiently with a single query
+  // Fetch friends efficiently with a single query and use caching
   const fetchFriends = useCallback(async () => {
     if (!userId) return;
     
@@ -59,45 +62,70 @@ export const useOptimizedFriends = (userId: string | null) => {
       
       setFriendsList(friendIds);
       
-      // Step 4: Batch fetch profiles for all friends at once
-      if (friendIds.length > 0) {
+      // Determine which profiles we need to fetch (those not in cache or older than 5 minutes)
+      const now = new Date();
+      const cacheTimeout = 5 * 60 * 1000; // 5 minutes
+      const idsToFetch = [...friendIds, ...pendingFriendIds].filter(id => 
+        !profileCache[id] || now.getTime() - profileCache[id].timestamp > cacheTimeout
+      );
+      
+      // Step 4: If we need to fetch profiles, do it in batch
+      if (idsToFetch.length > 0) {
         const { data: profiles } = await supabase
           .from('profiles')
-          .select('id, username, full_name, avatar_url')
-          .in('id', [...friendIds, ...pendingFriendIds]);
+          .select('id, username, full_name, avatar_url, subscription_type')
+          .in('id', idsToFetch);
           
         if (profiles) {
-          // Step 5: Map friend profiles to records with status
-          const friendRecords: FriendRecord[] = profiles
-            .filter(profile => friendIds.includes(profile.id))
-            .map(profile => ({
+          // Update cache
+          const newCache = {...profileCache};
+          profiles.forEach(profile => {
+            newCache[profile.id] = {
               ...profile,
-              status: (userStatuses[profile.id] || 'offline'),
-              last_seen: null
-            }));
-            
-          const pendingRecords: FriendRecord[] = profiles
-            .filter(profile => pendingFriendIds.includes(profile.id))
-            .map(profile => ({
-              ...profile,
-              status: (userStatuses[profile.id] || 'offline'),
-              last_seen: null
-            }));
-          
-          // Sort by online status first, then by name
-          const sortedFriends = friendRecords.sort((a, b) => {
-            // First by online status
-            const statusPriority = { 'online': 0, 'brb': 1, 'busy': 2, 'offline': 3 };
-            const statusDiff = statusPriority[a.status] - statusPriority[b.status];
-            if (statusDiff !== 0) return statusDiff;
-            
-            // Then by name
-            return (a.username || a.id).localeCompare(b.username || b.id);
+              isPremium: profile.subscription_type === 'premium',
+              timestamp: now.getTime() 
+            };
           });
-          
-          setFriends(sortedFriends);
-          setPendingRequests(pendingRecords);
+          setProfileCache(newCache);
         }
+      }
+      
+      // Use cached data + newly fetched data
+      if (friendIds.length > 0 || pendingFriendIds.length > 0) {
+        const allProfiles = [...friendIds, ...pendingFriendIds].map(id => profileCache[id]).filter(Boolean);
+        
+        // Map to friend records
+        const friendRecords: FriendRecord[] = allProfiles
+          .filter(profile => friendIds.includes(profile.id))
+          .map(profile => ({
+            ...profile,
+            status: (userStatuses[profile.id] || 'offline'),
+            last_seen: null,
+            isPremium: profile.isPremium
+          }));
+          
+        const pendingRecords: FriendRecord[] = allProfiles
+          .filter(profile => pendingFriendIds.includes(profile.id))
+          .map(profile => ({
+            ...profile,
+            status: (userStatuses[profile.id] || 'offline'),
+            last_seen: null,
+            isPremium: profile.isPremium
+          }));
+        
+        // Sort by online status first, then by name
+        const sortedFriends = friendRecords.sort((a, b) => {
+          // First by online status
+          const statusPriority = { 'online': 0, 'brb': 1, 'busy': 2, 'offline': 3 };
+          const statusDiff = statusPriority[a.status] - statusPriority[b.status];
+          if (statusDiff !== 0) return statusDiff;
+          
+          // Then by name
+          return (a.username || a.id).localeCompare(b.username || b.id);
+        });
+        
+        setFriends(sortedFriends);
+        setPendingRequests(pendingRecords);
       } else {
         setFriends([]);
         setPendingRequests([]);
@@ -114,9 +142,9 @@ export const useOptimizedFriends = (userId: string | null) => {
       setLoading(false);
       setLastUpdated(new Date());
     }
-  }, [userId, userStatuses, toast]);
+  }, [userId, userStatuses, toast, profileCache]);
   
-  // Refresh when userId changes or every 30 seconds to keep statuses fresh
+  // Initial fetch and refresh interval
   useEffect(() => {
     if (!userId) return;
     
@@ -124,7 +152,7 @@ export const useOptimizedFriends = (userId: string | null) => {
     
     const refreshInterval = setInterval(() => {
       fetchFriends();
-    }, 30000);
+    }, 60000); // Reduced from 30s to 60s to lower server load
     
     // Set up subscription for friendship changes
     const friendsChannel = supabase
@@ -173,6 +201,7 @@ export const useOptimizedFriends = (userId: string | null) => {
     }
   }, [userStatuses, friends]);
 
+  // Rest of the methods stay the same
   const handleSendFriendRequest = useCallback(async (friendId: string) => {
     if (!userId) return;
     
