@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
 import { NotificationProvider } from "@/contexts/NotificationContext";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { PresenceProvider } from "@/contexts/PresenceContext";
 import Index from '@/pages/Index';
 import Chat from '@/pages/Chat';
 import NotFound from '@/pages/NotFound';
@@ -48,7 +49,9 @@ function App() {
     <NotificationProvider>
       <Router>
         <AuthProvider>
-          <AppContent />
+          <PresenceProvider>
+            <AppContent />
+          </PresenceProvider>
         </AuthProvider>
       </Router>
     </NotificationProvider>
