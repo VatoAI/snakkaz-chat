@@ -1,90 +1,83 @@
 
-import { useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { useUserRole } from "@/hooks/useUserRole";
-import { useFriends } from "@/hooks/useFriends";
+import { useState, useCallback, useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { useMessages } from "@/hooks/useMessages";
+import { useProfiles } from "@/hooks/useProfiles";
 import { usePresence } from "@/hooks/usePresence";
-import { useWebRTCSetup } from "./hooks/useWebRTCSetup";
-import { useMobilePinGuard } from "./hooks/useMobilePinGuard";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { LoadingScreen } from "./LoadingScreen";
-import { ChatStateManager } from "./components/ChatStateManager";
 import { ChatLayout } from "./components/ChatLayout";
-import { useChatInitialization } from "./hooks/useChatInitialization";
+import { useWebRTC } from "@/hooks/useWebRTC";
+import { useFriendships } from "@/hooks/useFriendships";
+import { Friend } from "@/components/chat/friends/types";
+import { MessageState } from "@/hooks/message/MessageProvider";
+import { DecryptedMessage } from "@/types/message";
 
 const ChatPage = () => {
-  const { user, loading } = useAuth();
-  const { isAdmin } = useUserRole(user?.id);
+  const { user } = useAuth();
+  const { webRTCManager, initializeWebRTC } = useWebRTC();
+  const { friends, friendships, friendsMap } = useFriendships();
+  const { userProfiles, fetchProfiles } = useProfiles();
+  const { userPresence, currentStatus, handleStatusChange } = usePresence(user?.id || null);
+  const [selectedFriend, setSelectedFriend] = useState<Friend | null>(null);
   const [activeTab, setActiveTab] = useState("global");
-  const [selectedFriend, setSelectedFriend] = useState(null);
-  const [userProfiles, setUserProfiles] = useState({});
-  const [hidden, setHidden] = useState(false);
-  const isMobile = useIsMobile();
+  const [directMessages, setDirectMessages] = useState<Array<DecryptedMessage>>([]);
+  
+  // Initialize chat state
+  const chatState = useMessages(user?.id || null);
 
-  const { currentStatus, handleStatusChange, userPresence } = usePresence(
-    user?.id,
-    'online',
-    undefined,
-    hidden
-  );
+  // Init WebRTC connections
+  useEffect(() => {
+    if (user && !webRTCManager) {
+      initializeWebRTC(user.id, (peerId: string, message: string) => {
+        console.log(`Message from ${peerId}: ${message}`);
+        chatState.addP2PMessage(peerId, message);
+      });
+    }
+  }, [user, webRTCManager, initializeWebRTC, chatState]);
 
-  const {
-    manager: webRTCManager,
-    isReady,
-    setupWebRTC,
-    status
-  } = useWebRTCSetup();
+  // Load initial data
+  useEffect(() => {
+    if (user?.id) {
+      chatState.fetchMessages();
+      chatState.setupRealtimeSubscription();
+      fetchProfiles();
+    }
+  }, [user?.id, chatState, fetchProfiles]);
 
-  const { isInitialized } = useChatInitialization({
-    user,
-    loading,
-    isReady,
-    setupWebRTC
-  });
+  // Get available friend IDs for WebRTC connections
+  const friendsList = friends.map(friend => friend.user_id);
 
-  const { friends, friendsList, handleSendFriendRequest, handleStartChat } = useFriends(
-    user?.id,
-    selectedFriend?.user_id || null,
-    () => setSelectedFriend(null),
-    setSelectedFriend
-  );
+  // Handle starting a direct chat
+  const handleStartChat = useCallback((userId: string) => {
+    const friend = friendsMap[userId];
+    if (friend) {
+      setSelectedFriend(friend);
+      setActiveTab("directMessage");
+    }
+  }, [friendsMap]);
 
-  const pinGuard = useMobilePinGuard({ isMobile });
-
-  if (loading || !user || !isReady) {
-    return <LoadingScreen />;
-  }
-
-  if (pinGuard.showVerifyPin) {
-    return pinGuard.verifyPinModal;
-  }
-
-  if (pinGuard.showSetPin) {
-    return pinGuard.setPinModal;
-  }
+  // Handle edit message action
+  const handleStartEditMessage = useCallback((message: DecryptedMessage) => {
+    chatState.handleStartEditMessage(message);
+  }, [chatState]);
 
   return (
-    <ChatStateManager userId={user.id} webRTCManager={webRTCManager}>
-      {(chatState) => (
-        <ChatLayout
-          userPresence={userPresence}
-          currentUserId={user.id}
-          currentStatus={currentStatus}
-          handleStatusChange={handleStatusChange}
-          webRTCManager={webRTCManager}
-          directMessages={chatState.directMessages}
-          handleStartEditMessage={chatState.handleStartEditMessage}
-          onStartChat={handleStartChat}
-          userProfiles={userProfiles}
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          chatState={chatState}
-          selectedFriend={selectedFriend}
-          setSelectedFriend={setSelectedFriend}
-          friendsList={friendsList}
-        />
-      )}
-    </ChatStateManager>
+    <ChatLayout
+      userPresence={userPresence}
+      currentUserId={user?.id || ""}
+      currentStatus={currentStatus}
+      handleStatusChange={handleStatusChange}
+      webRTCManager={webRTCManager}
+      directMessages={directMessages}
+      handleStartEditMessage={handleStartEditMessage}
+      onStartChat={handleStartChat}
+      userProfiles={userProfiles}
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+      chatState={chatState}
+      selectedFriend={selectedFriend}
+      setSelectedFriend={setSelectedFriend}
+      friendsList={friendsList}
+    />
   );
 };
 

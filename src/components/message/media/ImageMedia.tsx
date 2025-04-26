@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { EyeOff } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { SecureImageViewer } from "./SecureImageViewer";
@@ -9,12 +9,64 @@ interface ImageMediaProps {
   url: string;
   ttl?: number | null;
   onExpired?: () => void;
+  maxHeight?: number;
+  maxWidth?: number;
 }
 
-export const ImageMedia = ({ url, ttl, onExpired }: ImageMediaProps) => {
+export const ImageMedia = ({ 
+  url, 
+  ttl, 
+  onExpired,
+  maxHeight = 300,
+  maxWidth = 400
+}: ImageMediaProps) => {
   const [isViewerOpen, setIsViewerOpen] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [loadError, setLoadError] = useState(false);
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  
+  // Calculate responsive dimensions preserving aspect ratio
+  useEffect(() => {
+    if (isLoaded && dimensions.width > 0 && dimensions.height > 0) {
+      const aspectRatio = dimensions.width / dimensions.height;
+      
+      let finalWidth = dimensions.width;
+      let finalHeight = dimensions.height;
+      
+      // Constrain by width
+      if (finalWidth > maxWidth) {
+        finalWidth = maxWidth;
+        finalHeight = finalWidth / aspectRatio;
+      }
+      
+      // Further constrain by height if needed
+      if (finalHeight > maxHeight) {
+        finalHeight = maxHeight;
+        finalWidth = finalHeight * aspectRatio;
+      }
+      
+      setDimensions({
+        width: finalWidth,
+        height: finalHeight
+      });
+    }
+  }, [isLoaded, maxHeight, maxWidth]);
+
+  // Handle image preloading to get dimensions
+  useEffect(() => {
+    const img = new Image();
+    img.onload = () => {
+      setDimensions({ width: img.width, height: img.height });
+      setIsLoaded(true);
+    };
+    img.onerror = () => setLoadError(true);
+    img.src = url;
+    
+    return () => {
+      img.onload = null;
+      img.onerror = null;
+    };
+  }, [url]);
 
   if (loadError) {
     return (
@@ -33,7 +85,7 @@ export const ImageMedia = ({ url, ttl, onExpired }: ImageMediaProps) => {
   return (
     <div className="relative group mt-2">
       {!isLoaded && (
-        <div className="absolute inset-0 flex items-center justify-center bg-cyberdark-800/50 rounded-lg">
+        <div className="flex items-center justify-center h-32 bg-cyberdark-800/50 rounded-lg">
           <div className="h-6 w-6 border-2 border-t-transparent border-cyberblue-500 rounded-full animate-spin"></div>
         </div>
       )}
@@ -42,14 +94,18 @@ export const ImageMedia = ({ url, ttl, onExpired }: ImageMediaProps) => {
         <img 
           src={url} 
           alt="Secure media" 
-          className="w-full h-auto rounded-lg max-h-[300px] object-contain shadow-lg shadow-cyberdark-900/30"
+          className="w-full h-auto rounded-lg object-contain shadow-lg shadow-cyberdark-900/30"
           onContextMenu={e => e.preventDefault()}
           draggable="false"
           onClick={() => setIsViewerOpen(true)}
           onLoad={() => setIsLoaded(true)}
           onError={() => setLoadError(true)}
           loading="lazy"
-          style={{ display: isLoaded ? 'block' : 'none' }}
+          style={{ 
+            display: isLoaded ? 'block' : 'none',
+            maxHeight: `${maxHeight}px`,
+            maxWidth: `${maxWidth}px`,
+          }}
         />
         <SecureMediaIcon position="top-right" size="sm" />
       </div>
@@ -64,7 +120,7 @@ export const ImageMedia = ({ url, ttl, onExpired }: ImageMediaProps) => {
           </TooltipTrigger>
           <TooltipContent side="left">
             <p className="text-xs">Screenshot and sharing is disabled</p>
-            {ttl && (
+            {ttl && ttl > 0 && (
               <p className="text-xs text-cyberblue-300">Auto-deletion enabled</p>
             )}
           </TooltipContent>
