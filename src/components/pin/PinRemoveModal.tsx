@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
@@ -15,31 +15,76 @@ interface PinRemoveModalProps {
 export const PinRemoveModal = ({ isOpen, onClose }: PinRemoveModalProps) => {
   const [pin, setPin] = useState("");
   const [error, setError] = useState("");
+  const [isRemoving, setIsRemoving] = useState(false);
   const { toast } = useToast();
   const { verifyChatCode, resetChatCode } = useChatCode();
   const { resetPin } = useMobilePinSecurity();
+  
+  // Clear state when dialog opens/closes
+  useEffect(() => {
+    if (!isOpen) {
+      setPin("");
+      setError("");
+      setIsRemoving(false);
+    }
+  }, [isOpen]);
 
   const handlePinComplete = (value: string) => {
     setPin(value);
+    setError(""); // Clear any previous errors
   };
 
-  const handleConfirmRemove = () => {
+  const handleConfirmRemove = async () => {
+    if (isRemoving) return; // Prevent multiple clicks
+    
+    if (!pin) {
+      setError("Vennligst skriv inn PIN-koden");
+      return;
+    }
+    
     if (!verifyChatCode(pin)) {
       setError("Feil PIN-kode. Prøv igjen.");
       setPin("");
       return;
     }
 
-    // Remove the PIN from both chat code and mobile security system
-    resetChatCode();
-    resetPin();
-    
-    toast({
-      title: "PIN-kode fjernet",
-      description: "Din PIN-kode er nå deaktivert."
-    });
-    
-    onClose();
+    try {
+      setIsRemoving(true);
+      
+      // Remove the PIN from both chat code and mobile security system
+      const chatCodeReset = resetChatCode();
+      const pinReset = resetPin();
+      
+      // Also try direct localStorage removal for extra safety
+      localStorage.removeItem('chatCode');
+      localStorage.removeItem('pinHash');
+      
+      // Only show success toast if at least one reset worked
+      if (chatCodeReset || pinReset) {
+        toast({
+          title: "PIN-kode fjernet",
+          description: "Din PIN-kode er nå deaktivert."
+        });
+      } else {
+        // Show warning if something might have gone wrong
+        toast({
+          title: "PIN-kode forsøkt fjernet",
+          description: "PIN-koden kan ha blitt delvis fjernet. Kontroller innstillingene dine.",
+          variant: "warning"
+        });
+      }
+      
+      onClose();
+    } catch (error) {
+      console.error("Error removing PIN:", error);
+      toast({
+        title: "Feil ved fjerning av PIN",
+        description: "Noe gikk galt. Prøv igjen senere.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsRemoving(false);
+    }
   };
 
   return (
@@ -87,7 +132,12 @@ export const PinRemoveModal = ({ isOpen, onClose }: PinRemoveModalProps) => {
         </div>
 
         <DialogFooter className="flex flex-col sm:flex-row gap-2">
-          <Button variant="outline" onClick={onClose} className="w-full sm:w-auto border-cybergold-500/30">
+          <Button 
+            variant="outline" 
+            onClick={onClose} 
+            className="w-full sm:w-auto border-cybergold-500/30"
+            disabled={isRemoving}
+          >
             Avbryt
           </Button>
           
@@ -95,8 +145,9 @@ export const PinRemoveModal = ({ isOpen, onClose }: PinRemoveModalProps) => {
             onClick={handleConfirmRemove} 
             variant="destructive"
             className="w-full sm:w-auto bg-cyberred-900 hover:bg-cyberred-800 text-white"
+            disabled={isRemoving || pin.length !== 4}
           >
-            Bekreft fjerning
+            {isRemoving ? "Fjerner..." : "Bekreft fjerning"}
           </Button>
         </DialogFooter>
       </DialogContent>
