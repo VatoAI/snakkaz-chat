@@ -1,129 +1,122 @@
-import { useRef, useCallback } from "react";
+import { useCallback, useState } from 'react';
 import { useToast } from "@/components/ui/use-toast";
 
-interface UseFileInputProps {
-  onFilesSelected?: (files: FileList | null) => void;
+interface UseFileInputOptions {
+  onFilesSelected: (files: FileList | null) => void;
   accept?: string;
-  multiple?: boolean; 
-  maxSizeInMB?: number;
-  acceptedTypes?: string[];
+  multiple?: boolean;
 }
 
-export const useFileInput = ({ 
-  onFilesSelected,
-  accept = "*",
-  multiple = false,
-  maxSizeInMB = 10, 
-  acceptedTypes 
-}: UseFileInputProps) => {
+export const useFileInput = (options: UseFileInputOptions) => {
   const { toast } = useToast();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const videoInputRef = useRef<HTMLInputElement>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
-  const documentInputRef = useRef<HTMLInputElement>(null);
+  const [isDragActive, setIsDragActive] = useState(false);
 
   const validateFile = (file: File): boolean => {
-    // Size validation
-    if (file.size > maxSizeInMB * 1024 * 1024) {
-      toast({
-        title: "File too large",
-        description: `Please select a file smaller than ${maxSizeInMB}MB`,
-        variant: "destructive"
-      });
-      return false;
-    }
-
-    // Type validation if enabled
-    if (acceptedTypes && acceptedTypes.length > 0) {
-      const fileType = file.type.split('/')[0];
-      const fileExtension = file.name.split('.').pop()?.toLowerCase();
-      
-      if (!acceptedTypes.some(type => 
-        file.type.includes(type) || 
-        type.includes(fileExtension || '')
-      )) {
-        toast({
-          title: "Unsupported file type",
-          description: `Please select a ${acceptedTypes.join(', ')} file`,
-          variant: "destructive"
-        });
-        return false;
-      }
-    }
-
+    // Add validation logic here if needed
     return true;
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const onDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    
-    console.log("File input change event triggered");
-    
-    const files = e.target.files;
-    
-    if (!files || files.length === 0) {
-      console.log("No files selected");
-      return;
-    }
-    
-    // Call the callback with all files if provided
-    if (onFilesSelected) {
-      onFilesSelected(files);
-    }
-    
-    // For backward compatibility
-    const file = files[0];
-    console.log("Selected file:", file.name, file.size, file.type);
-    
-    if (validateFile(file)) {
-      console.log("File validation passed");
-      toast({
-        title: "File selected",
-        description: `${file.name} (${(file.size / 1024).toFixed(1)} KB)`,
-      });
-    } else {
-      console.log("File validation failed");
-      // Reset the input
-      e.target.value = "";
-    }
-  };
-  
-  // Implementing the required functions for react-dropzone compatibility
-  const getRootProps = useCallback(() => ({
-    onClick: (e: React.MouseEvent) => e.stopPropagation(),
-    onKeyDown: (e: React.KeyboardEvent) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        open();
+    e.stopPropagation();
+    setIsDragActive(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const files = e.dataTransfer.files;
+      const validFiles = Array.from(files).filter(validateFile);
+
+      if (validFiles.length > 0) {
+        options.onFilesSelected(new DataTransfer().files);
+      } else {
+        toast({
+          title: "Invalid file(s)",
+          description: "Some files did not meet the validation criteria.",
+          variant: "destructive",
+        });
       }
-    },
-    role: "button",
-    tabIndex: 0
-  }), []);
-  
-  const getInputProps = useCallback(() => ({
-    accept,
-    multiple,
-    onChange: handleFileSelect,
-    style: { display: 'none' },
-    type: 'file'
-  }), [accept, multiple]);
-  
-  const open = useCallback(() => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
+
+      e.dataTransfer.clearData();
     }
+  }, [options, toast]);
+
+  const onDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isDragActive) {
+      setIsDragActive(true);
+    }
+  }, [isDragActive]);
+
+  const onDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragActive(false);
   }, []);
 
+  const onInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const files = e.target.files;
+      const validFiles = Array.from(files).filter(validateFile);
+
+      if (validFiles.length > 0) {
+        options.onFilesSelected(new DataTransfer().files);
+      } else {
+        toast({
+          title: "Invalid file(s)",
+          description: "Some files did not meet the validation criteria.",
+          variant: "destructive",
+        });
+      }
+    }
+  }, [options, toast]);
+
+  const open = useCallback(() => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = options.accept || '';
+    input.multiple = options.multiple || false;
+    input.onchange = (e) => {
+      const target = e.target as HTMLInputElement;
+      if (target.files) {
+        const files = target.files;
+        const validFiles = Array.from(files).filter(validateFile);
+
+        if (validFiles.length > 0) {
+          options.onFilesSelected(new DataTransfer().files);
+        } else {
+          toast({
+            title: "Invalid file(s)",
+            description: "Some files did not meet the validation criteria.",
+            variant: "destructive",
+          });
+        }
+      }
+    };
+    input.click();
+  }, [options, toast]);
+
+  const getRootProps = useCallback(() => {
+    return {
+      onDrop,
+      onDragOver,
+      onDragLeave,
+      onClick: (e: React.MouseEvent) => e.stopPropagation(),
+    };
+  }, [onDrop, onDragOver, onDragLeave]);
+
+  const getInputProps = useCallback(() => {
+    return {
+      onChange: onInputChange,
+      accept: options.accept || '',
+      multiple: options.multiple || false,
+      style: { display: 'none' },
+    };
+  }, [onInputChange, options.accept, options.multiple]);
+
   return {
-    fileInputRef,
-    videoInputRef,
-    cameraInputRef,
-    documentInputRef,
-    handleFileSelect,
-    // Add the missing functions
     getRootProps,
     getInputProps,
-    open
+    isDragActive,
+    open,
   };
 };
