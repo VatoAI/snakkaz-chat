@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
@@ -11,6 +11,38 @@ export const useAuth = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { setAutoLogoutTime, setIsRemembered, session, user } = useAuthContext();
+
+  // Sjekk Supabase-tilkoblingen ved oppstart
+  useEffect(() => {
+    const checkSupabaseConnection = async () => {
+      try {
+        // Test Supabase-tilkoblingen direkte
+        const { data, error } = await supabase.from('profiles').select('id').limit(1);
+
+        if (error) {
+          if (error.message.includes('invalid api key') || error.message.includes('Invalid API key')) {
+            console.error('API Key Error:', error.message);
+            toast({
+              title: "Tilkoblingsfeil",
+              description: "Ugyldig API-nøkkel. Vennligst kontakt systemadministrator.",
+              variant: "destructive",
+              duration: 10000, // Vis i 10 sekunder
+            });
+          } else if (error.code === '401' || error.message.includes('JWT')) {
+            toast({
+              title: "Autentiseringsfeil",
+              description: "Kunne ikke verifisere tilkobling til databasen. Prøv å logge inn på nytt.",
+              variant: "destructive",
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Connection check error:', error);
+      }
+    };
+
+    checkSupabaseConnection();
+  }, [toast]);
 
   const validateForm = (email: string, password: string) => {
     let isValid = true;
@@ -46,7 +78,7 @@ export const useAuth = () => {
     try {
       // Set session expiration based on rememberMe choice
       const expiresIn = rememberMe ? 60 * 60 * 24 * 30 : 60 * 60 * 24; // 30 days or 1 day in seconds
-      
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -57,7 +89,7 @@ export const useAuth = () => {
 
       if (error) {
         console.error('Login error details:', error);
-        
+
         if (error.message.includes('Invalid login credentials')) {
           toast({
             title: "Påloggingsfeil",
@@ -70,6 +102,17 @@ export const useAuth = () => {
             description: "Vennligst bekreft e-posten din før du logger inn. Sjekk innboksen din for en bekreftelseslenke.",
             variant: "destructive",
           });
+        } else if (error.message.includes('invalid api key') || error.message.includes('Invalid API key')) {
+          toast({
+            title: "Påloggingsfeil",
+            description: "Systemfeil: Ugyldig API-nøkkel. Vennligst kontakt systemadministrator.",
+            variant: "destructive",
+          });
+
+          // Legg til mer synlig logging i konsollen
+          console.error('%c⚠️ SUPABASE API KEY ERROR ⚠️', 'font-size: 16px; color: red;');
+          console.error('The API key provided in your .env file is invalid or expired.');
+          console.error('Please update your VITE_SUPABASE_ANON_KEY with a valid key from your Supabase dashboard.');
         } else {
           toast({
             title: "Påloggingsfeil",
@@ -83,7 +126,7 @@ export const useAuth = () => {
       if (data.user) {
         // Store the remember me preference in context and localStorage
         setIsRemembered(rememberMe);
-        
+
         toast({
           title: "Suksess!",
           description: "Du er nå logget inn.",
@@ -120,7 +163,7 @@ export const useAuth = () => {
 
       if (error) {
         console.error('Signup error details:', error);
-        
+
         if (error.message.includes('User already registered')) {
           toast({
             title: "Registreringsfeil",
