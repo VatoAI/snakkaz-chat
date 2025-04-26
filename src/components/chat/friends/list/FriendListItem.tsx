@@ -41,7 +41,7 @@ export const FriendListItem = ({
   const friendProfile = friend.profile;
   const username = friendProfile?.username || 'Ukjent bruker';
   const avatarUrl = friendProfile?.avatar_url;
-  const isPremium = friendProfile?.isPremium || false;
+  const isPremium = friendProfile?.is_premium || false;
   
   // Get status color
   const getStatusColor = (status: string) => {
