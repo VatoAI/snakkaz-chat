@@ -6,8 +6,15 @@ import { Loader2, Paperclip, Send, X } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 
+const TTL_OPTIONS = [
+  { label: '1 time', value: 3600 },
+  { label: '1 dag', value: 86400 },
+  { label: '3 dager', value: 259200 },
+  { label: '7 dager', value: 604800 },
+];
+
 interface MessageInputProps {
-  onSendMessage: (text: string, attachments?: Array<{ url: string; type: string; }>) => void;
+  onSendMessage: (text: string, attachments?: Array<{ url: string; type: string; }>, ttl?: number) => void;
   disabled?: boolean;
   placeholder?: string;
   className?: string;
@@ -36,6 +43,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   const setMessage = externalSetMessage || setInternalMessage;
 
   const [attachments, setAttachments] = useState<Array<{ url: string; type: string; name: string }>>([]);
+  const [ttl, setTtl] = useState(604800); // default 7 dager
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const { uploadFile, cancelUpload, uploadState } = useMediaUpload();
   const { getRootProps, getInputProps, open } = useFileInput({
@@ -76,7 +84,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     
     for (const file of fileArray) {
       try {
-        const result = await uploadFile(file);
+        const result = await uploadFile(file, { ttlSeconds: ttl });
         
         if (result) {
           const fileType = file.type.split('/')[0] || 'application';
@@ -107,7 +115,8 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     if (hasContent && !uploadState.isUploading && !isLoading) {
       onSendMessage(
         message,
-        attachments.map(att => ({ url: att.url, type: att.type }))
+        attachments.map(att => ({ url: att.url, type: att.type })),
+        ttl
       );
       setMessage('');
       setAttachments([]);
@@ -192,6 +201,19 @@ export const MessageInput: React.FC<MessageInputProps> = ({
           <Progress value={uploadState.progress} className="h-1.5" />
         </div>
       )}
+
+      <div className="flex items-center gap-2 px-2 pt-2">
+        <label className="text-xs text-muted-foreground">Slett etter:</label>
+        <select
+          value={ttl}
+          onChange={e => setTtl(Number(e.target.value))}
+          className="text-xs rounded bg-muted px-2 py-1 border border-muted-foreground"
+        >
+          {TTL_OPTIONS.map(opt => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </select>
+      </div>
 
       <div className="flex items-end p-2 gap-1.5">
         <div 
