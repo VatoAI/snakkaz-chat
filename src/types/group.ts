@@ -16,6 +16,9 @@ export interface Group {
   // Nye felter
   write_permissions: GroupWritePermission; // 'all', 'admin', eller 'selected'
   default_message_ttl: MessageTTLOption; // Standard TTL for meldinger i gruppen, nå påkrevd
+  // Premium features
+  is_premium: boolean;
+  description: string | null;
 }
 
 export interface GroupMember {
