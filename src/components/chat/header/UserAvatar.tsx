@@ -1,9 +1,10 @@
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Circle, Clock, Loader2 } from "lucide-react";
 import { UserStatus } from "@/types/presence";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { getAvatarUrl } from "@/utils/avatar-utils";
+import { ResilientImage } from "@/components/ui/resilient-image";
 
 // Sz: New avatar glass effect settings
 const glassEffect = "backdrop-blur-md bg-cyberdark-800/50 border-cybergold-400/30"; // for overlay
@@ -57,6 +58,13 @@ export function UserAvatar({
 
   const StatusIcon = statusIcons[status];
 
+  // Prepare fallback content
+  const fallbackContent = (
+    <AvatarFallback className="bg-cyberdark-800 text-cybergold-300 text-lg font-bold">
+      {initials}
+    </AvatarFallback>
+  );
+
   return (
     <div className="relative select-none" style={{ width: size, height: size }}>
       <Avatar
@@ -66,19 +74,18 @@ export function UserAvatar({
         )}
         style={{ width: size, height: size }}
       >
-        {imageUrl && !imageError ? (
-          // Show only image, status ring overlays, NO initials on top of avatar!
-          <AvatarImage
-            src={imageUrl}
-            alt={username || "Avatar"}
-            className="absolute inset-0 w-full h-full object-cover"
-            onError={() => setImageError(true)}
-          />
-        ) : (
-          <AvatarFallback className="bg-cyberdark-800 text-cybergold-300 text-lg font-bold">
-            {initials}
-          </AvatarFallback>
-        )}
+        {imageUrl ? (
+          <div className="absolute inset-0 w-full h-full">
+            <ResilientImage
+              src={imageUrl}
+              alt={username || "Avatar"}
+              className="w-full h-full object-cover"
+              fallback={fallbackContent}
+              retryCount={2}
+              onLoadFail={() => setImageError(true)}
+            />
+          </div>
+        ) : fallbackContent}
       </Avatar>
       <div className={cn(
         "absolute -bottom-1 -right-1 rounded-full p-0.5 border-2 border-cyberdark-950",
