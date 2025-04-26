@@ -2,21 +2,27 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { HeaderLogo } from "./HeaderLogo";
 import { HeaderNavLinks } from "./HeaderNavLinks";
-import { Menu, X, User, LogOut } from "lucide-react";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { Menu, X, User, LogOut, Bell } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 
 interface MainHeaderProps {
-  activeTab: string;
-  onTabChange: (tab: string) => void;
+  activeTab?: string;
+  onTabChange?: (tab: string) => void;
+  showNavigation?: boolean;
 }
 
-export const MainHeader = ({ activeTab, onTabChange }: MainHeaderProps) => {
+export const MainHeader = ({ 
+  activeTab = "home", 
+  onTabChange = () => {}, 
+  showNavigation = true 
+}: MainHeaderProps) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const isMobile = useIsMobile();
-  const { signOut, user } = useAuth();
+  const { signOut, session } = useAuth();
   const navigate = useNavigate();
+  
+  // Check if the screen is mobile based on width
+  const isMobile = window.innerWidth < 768;
 
   const handleToggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
@@ -39,7 +45,7 @@ export const MainHeader = ({ activeTab, onTabChange }: MainHeaderProps) => {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-cyberdark-900 border-b border-cyberdark-800 shadow-md backdrop-blur-md bg-opacity-80">
+    <header className="sticky top-0 z-50 w-full bg-cyberdark-900 border-b border-cyberblue-900/30 shadow-md backdrop-blur-sm bg-opacity-90">
       <div className="container mx-auto px-4 py-2 flex items-center justify-between">
         {/* Logo og titel */}
         <div className="flex items-center space-x-3">
@@ -49,8 +55,8 @@ export const MainHeader = ({ activeTab, onTabChange }: MainHeaderProps) => {
           </h1>
         </div>
 
-        {/* Desktop: Navigation links */}
-        {!isMobile && (
+        {/* Desktop Navigation */}
+        {!isMobile && showNavigation && (
           <div className="flex-1 flex justify-center">
             <HeaderNavLinks 
               activeTab={activeTab} 
@@ -59,45 +65,47 @@ export const MainHeader = ({ activeTab, onTabChange }: MainHeaderProps) => {
           </div>
         )}
 
-        {/* Desktop: User menu */}
-        {!isMobile && (
+        {/* Desktop User Menu */}
+        {!isMobile && session && (
           <div className="flex items-center space-x-2">
             <Button 
-              variant="ghost" 
+              variant="outline" 
               size="sm"
-              className="text-cybergold-400 hover:bg-cyberdark-800"
+              className="text-cyberblue-400 border-cyberblue-800/40 hover:bg-cyberblue-900/20 hover:text-cyberblue-300"
               onClick={handleProfile}
             >
               <User className="h-4 w-4 mr-2" />
-              Profil
+              <span>Profil</span>
             </Button>
             <Button 
               variant="ghost" 
               size="sm"
-              className="text-cyberred-400 hover:bg-cyberdark-800"
+              className="text-cyberred-400 hover:bg-cyberred-900/20 hover:text-cyberred-300"
               onClick={handleSignOut}
             >
               <LogOut className="h-4 w-4 mr-2" />
-              Logg ut
+              <span>Logg ut</span>
             </Button>
           </div>
         )}
 
-        {/* Mobile: Hamburger menu button */}
+        {/* Mobile Navigation */}
         {isMobile && (
-          <div className="flex items-center">
-            {/* Mobile nav links (condensed version) */}
-            <div className="mr-2">
-              <HeaderNavLinks 
-                activeTab={activeTab} 
-                onTabChange={handleNavigation} 
-              />
-            </div>
-            
+          <div className="flex items-center space-x-3">
+            {/* Notifications icon */}
             <Button 
               variant="ghost" 
-              size="sm" 
-              className="text-cyberblue-400"
+              size="icon" 
+              className="text-cyberblue-400 hover:text-cyberblue-300 h-9 w-9"
+            >
+              <Bell className="h-5 w-5" />
+            </Button>
+            
+            {/* Hamburger menu */}
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="text-cybergold-400 hover:text-cybergold-300 h-9 w-9"
               onClick={handleToggleMobileMenu}
             >
               {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -108,7 +116,17 @@ export const MainHeader = ({ activeTab, onTabChange }: MainHeaderProps) => {
 
       {/* Mobile menu dropdown */}
       {isMobile && mobileMenuOpen && (
-        <div className="absolute top-full left-0 w-full bg-cyberdark-900 border-b border-cyberdark-800 shadow-lg animate-fadeIn">
+        <div className="absolute top-full left-0 w-full bg-cyberdark-900/95 border-b border-cyberblue-900/30 shadow-lg animate-fadeIn">
+          {showNavigation && (
+            <div className="px-4 py-3 border-b border-cyberdark-800">
+              <HeaderNavLinks 
+                activeTab={activeTab} 
+                onTabChange={handleNavigation}
+                vertical={true}
+              />
+            </div>
+          )}
+          
           <div className="py-4 px-6 space-y-3">
             <Button 
               variant="ghost" 
