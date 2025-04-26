@@ -1,3 +1,4 @@
+
 import { ShieldAlert, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -34,7 +35,7 @@ export const MessageMedia = ({ message, onMediaExpired }: MessageMediaProps) => 
       handleDecryptMedia(storageUrl);
     } catch (error) {
       console.error("Error getting storage URL:", error);
-      setDecryptError("Kunne ikke hente mediafil");
+      setDecryptError("Could not fetch media file");
     }
 
     return () => {
@@ -50,7 +51,7 @@ export const MessageMedia = ({ message, onMediaExpired }: MessageMediaProps) => 
     return <DeletedMedia />;
   }
   
-  // Forsøk å få lagring-URL med feilhåndtering
+  // Try to get storage URL with error handling
   try {
     const storageUrl = supabase.storage.from('chat-media').getPublicUrl(message.media_url).data.publicUrl;
     
@@ -63,7 +64,7 @@ export const MessageMedia = ({ message, onMediaExpired }: MessageMediaProps) => 
         <div className="mt-2 p-3 border border-cyberred-800/50 rounded-lg bg-cyberred-950/30 flex items-center">
           <ShieldAlert className="h-5 w-5 text-cyberred-400 mr-2" />
           <div className="flex-1">
-            <p className="text-cyberred-300 text-sm">Kunne ikke dekryptere media</p>
+            <p className="text-cyberred-300 text-sm">Could not decrypt media</p>
             <p className="text-xs text-cyberred-400/70">{decryptError}</p>
           </div>
           <Button
@@ -72,7 +73,7 @@ export const MessageMedia = ({ message, onMediaExpired }: MessageMediaProps) => 
             onClick={() => handleDecryptMedia(storageUrl)}
             className="text-cyberred-300 hover:text-cyberred-200 ml-2"
           >
-            Prøv igjen
+            Try again
           </Button>
         </div>
       );
@@ -109,8 +110,8 @@ export const MessageMedia = ({ message, onMediaExpired }: MessageMediaProps) => 
       <div className="mt-2 p-3 border border-cyberred-800/50 rounded-lg bg-cyberred-950/30 flex items-center">
         <ShieldAlert className="h-5 w-5 text-cyberred-400 mr-2" />
         <div className="flex-1">
-          <p className="text-cyberred-300 text-sm">Mediafil utilgjengelig</p>
-          <p className="text-xs text-cyberred-400/70">Kunne ikke laste mediafilen</p>
+          <p className="text-cyberred-300 text-sm">Media file unavailable</p>
+          <p className="text-xs text-cyberred-400/70">Could not load media file</p>
         </div>
       </div>
     );

@@ -1,33 +1,30 @@
+
 import { useState } from "react";
 import { uploadMedia } from "@/utils/upload/media-upload";
 import { useToast } from "@/components/ui/use-toast";
 
-/**
- * Hook for å håndtere opplasting av mediafiler med forbedret feilhåndtering
- * og tilbakemeldinger til brukeren
- */
 export const useMediaUpload = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const { toast } = useToast();
 
   const upload = async (file: File) => {
-    // Valider fil før opplasting
+    // Validate file before upload
     if (!file) {
       toast({
-        title: "Feil",
-        description: "Ingen fil er valgt",
+        title: "Error",
+        description: "No file selected",
         variant: "destructive",
       });
       throw new Error("No file provided");
     }
     
-    // Sjekk filstørrelse (10MB max)
+    // Check file size (10MB max)
     const MAX_SIZE = 10 * 1024 * 1024; // 10MB
     if (file.size > MAX_SIZE) {
       toast({
-        title: "Feil",
-        description: "Filen er for stor (maks 10MB)",
+        title: "Error",
+        description: "File too large (max 10MB)",
         variant: "destructive",
       });
       throw new Error("File too large (max 10MB)");
@@ -37,38 +34,38 @@ export const useMediaUpload = () => {
     setUploadProgress(0);
 
     try {
-      // Opprett toast som viser fremdrift
+      // Create toast to show progress
       const { id, update, dismiss } = toast({
-        title: "Laster opp fil...",
-        description: "Starter opplasting",
+        title: "Uploading file...",
+        description: "Starting upload",
         duration: 5000,
       });
 
       const result = await uploadMedia(file, (progress) => {
         setUploadProgress(progress);
-        // Oppdater toast med fremdrift
+        // Update toast with progress
         update({
           id,
-          title: "Laster opp fil...",
-          description: `${Math.round(progress)}% fullført`,
+          title: "Uploading file...",
+          description: `${Math.round(progress)}% complete`,
           duration: 5000,
         });
       });
 
-      // Oppdater toast til suksess
+      // Update toast to show success
       update({
         id,
-        title: "Opplasting fullført",
-        description: "Filen ble lastet opp",
+        title: "Upload complete",
+        description: "File was uploaded successfully",
         duration: 3000,
       });
 
       return result;
     } catch (error) {
-      console.error("Opplastingsfeil:", error);
+      console.error("Upload error:", error);
       toast({
-        title: "Opplasting feilet",
-        description: error instanceof Error ? error.message : "Kunne ikke laste opp fil",
+        title: "Upload failed",
+        description: error instanceof Error ? error.message : "Could not upload file",
         variant: "destructive",
       });
       throw error;
