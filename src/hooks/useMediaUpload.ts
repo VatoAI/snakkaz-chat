@@ -68,8 +68,7 @@ export function useMediaUpload() {
   });
   const { session } = useAuth();
   const { toast } = useToast();
-  const uploader = new EnhancedMediaUploader();
-  
+
   // Format file size in human readable format
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return '0 Bytes';
@@ -78,7 +77,7 @@ export function useMediaUpload() {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
-  
+
   // Format speed in human readable format
   const formatSpeed = (bytesPerSecond: number): string => {
     if (bytesPerSecond === 0) return '0 KB/s';
@@ -90,10 +89,10 @@ export function useMediaUpload() {
   // Nytt: uploadFile støtter komprimering, kryptering og TTL
   const uploadFile = async (file: File, opts?: { ttlSeconds?: number; encryptionKey?: string }): Promise<UploadResult | null> => {
     if (!file) return null;
-    
+
     // Attempt to use session or check with Supabase directly
     let isAuthenticated = !!session;
-    
+
     // If no session was found in context, try to get it directly from Supabase
     if (!isAuthenticated) {
       try {
@@ -103,7 +102,7 @@ export function useMediaUpload() {
         console.error("Error checking authentication:", error);
       }
     }
-    
+
     if (!isAuthenticated) {
       toast({
         title: 'Ikke pålogget',
@@ -112,7 +111,7 @@ export function useMediaUpload() {
       });
       return null;
     }
-    
+
     // Check file size (10MB max)
     const MAX_SIZE = 10 * 1024 * 1024; // 10MB
     if (file.size > MAX_SIZE) {
@@ -126,7 +125,7 @@ export function useMediaUpload() {
 
     let lastProgressUpdate = Date.now();
     let startTime = Date.now();
-    
+
     try {
       setState({
         isUploading: true,
@@ -140,9 +139,13 @@ export function useMediaUpload() {
         description: `Starter opplasting av ${file.name} (${formatFileSize(file.size)})`,
         duration: 10000,
       }).id;
-      
+
       let processed: Blob = file;
-      let filename = file.name;
+      // Generate unique filename with timestamp to avoid conflicts
+      const timestamp = Date.now();
+      const randomStr = Math.random().toString(36).substring(2, 8);
+      const sanitizedName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_').substring(0, 50);
+      let filename = `${timestamp}_${randomStr}_${sanitizedName}`;
 
       // Komprimer hvis bilde
       if (file.type.startsWith("image/")) {
@@ -156,114 +159,79 @@ export function useMediaUpload() {
         filename += ".enc";
       }
 
-      // Lagre metadata for TTL
-      const metadata: Record<string, any> = {};
-      if (opts?.ttlSeconds) {
-        metadata.ttl = opts.ttlSeconds;
-        metadata.expires_at = Date.now() + opts.ttlSeconds * 1000;
-      }
-
-      // Use our enhanced uploader
-      const result = await uploader.uploadFile(file, (progress) => {
-        // Update state with progress
-        setState(prev => ({
-          ...prev,
-          progress: progress.percentage,
-          speed: progress.speed,
-          timeRemaining: progress.speed && progress.speed > 0 ? 
-            Math.ceil((progress.total - progress.loaded) / progress.speed) : 
-            undefined
-        }));
-        
-        // Update toast every 1 second to avoid too many updates
-        const now = Date.now();
-        if (now - lastProgressUpdate > 1000) {
-          lastProgressUpdate = now;
-          
-          let description = `${progress.percentage.toFixed(0)}% fullført`;
-          
-          if (progress.speed) {
-            description += ` • ${formatSpeed(progress.speed)}`;
-            
-            // Add time remaining if available
-            if (progress.speed > 0) {
-              const secondsRemaining = Math.ceil((progress.total - progress.loaded) / progress.speed);
-              if (secondsRemaining < 60) {
-                description += ` • ${secondsRemaining}s gjenstår`;
-              } else if (secondsRemaining < 3600) {
-                description += ` • ${Math.ceil(secondsRemaining / 60)}m gjenstår`;
-              } else {
-                description += ` • ${Math.ceil(secondsRemaining / 3600)}h gjenstår`;
-              }
-            }
-          }
-          
-          toast({
-            id: toastId,
-            title: 'Laster opp fil',
-            description: description,
-            duration: 3000,
-          });
-        }
+      // Gjør det enklere å spore trafikken i utviklermodus
+      const processedFile = processed instanceof File ? processed : new File([processed], filename, {
+        type: processed.type || "application/octet-stream"
       });
 
-      // Bruk supabase.storage.upload med metadata
+      // Update progress display
+      let lastProgressUpdate = Date.now();
+      let startTime = Date.now();
+
+      // Bruk direkte upload istedenfor EnhancedMediaUploader
+      // Dette unngår problemet med metadata og infinite recursion
       const { error } = await supabase.storage
         .from('chat-media')
-        .upload(filename, processed, {
+        .upload(filename, processedFile, {
           cacheControl: '3600',
           upsert: true,
-          contentType: processed.type,
-          metadata,
         });
-      if (error) throw error;
-      
+
+      if (error) {
+        console.error('Upload error:', error);
+        throw error;
+      }
+
+      // Hent public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('chat-media')
+        .getPublicUrl(filename);
+
       // Upload completed
       const totalTime = ((Date.now() - startTime) / 1000).toFixed(1);
-      
+
       toast({
         title: 'Opplasting fullført',
         description: `${file.name} (${formatFileSize(file.size)}) ble lastet opp på ${totalTime}s`,
         duration: 3000,
       });
-      
+
       setState({
         isUploading: false,
         progress: 100,
         error: null,
       });
-      
-      return { path: filename, publicUrl: "" };
+
+      return { path: filename, publicUrl };
     } catch (error) {
       console.error('Upload failed:', error);
-      
+
       const errorMessage = error instanceof Error ? error.message : 'Ukjent feil under opplasting';
-      
+
       toast({
         title: 'Opplasting feilet',
         description: errorMessage,
         variant: 'destructive',
         duration: 5000,
       });
-      
+
       setState({
         isUploading: false,
         progress: 0,
         error: errorMessage,
       });
-      
+
       return null;
     }
   };
 
   const cancelUpload = () => {
-    uploader.abortUpload();
     setState({
       isUploading: false,
       progress: 0,
       error: 'Upload cancelled',
     });
-    
+
     toast({
       title: 'Opplasting avbrutt',
       description: 'Filoverføringen ble avbrutt',
