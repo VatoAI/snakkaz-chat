@@ -1,3 +1,8 @@
 
 import ChatPage from "./chat/ChatPage";
-export default ChatPage;
+
+const Chat = () => {
+  return <ChatPage />;
+};
+
+export default Chat;

@@ -33,7 +33,7 @@ export const AIAgentChat = ({ currentUserId }: AIAgentChatProps) => {
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    await handleSubmit(e); // Adding the event parameter here
+    await handleSubmit(e);
   };
 
   return (
