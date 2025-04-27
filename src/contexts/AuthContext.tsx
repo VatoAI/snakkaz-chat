@@ -37,29 +37,45 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [autoLogoutTime, setAutoLogoutTime] = useState<number | null>(null);
   const [usePinLock, setUsePinLock] = useState(false);
-
+  
+  // Handle auth state changes
   useEffect(() => {
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
+    const setupAuth = async () => {
+      try {
+        // Get the current session first
+        const { data: sessionData } = await supabase.auth.getSession();
+        setSession(sessionData.session);
+        setUser(sessionData.session?.user ?? null);
+        
+        // Set up the listener for auth state changes
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+          (_event, newSession) => {
+            setSession(newSession);
+            setUser(newSession?.user ?? null);
+          }
+        );
+        
+        setIsLoading(false);
+        
+        // Clean up subscription on unmount
+        return () => {
+          subscription.unsubscribe();
+        };
+      } catch (error) {
+        console.error("Auth initialization error:", error);
         setIsLoading(false);
       }
-    );
-
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setIsLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
+    };
+    
+    setupAuth();
   }, []);
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.error("Sign out error:", error);
+    }
   };
 
   const value = {

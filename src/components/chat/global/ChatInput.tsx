@@ -1,5 +1,6 @@
 
 import { MessageInput } from "@/components/MessageInput";
+import { FormEvent } from "react";
 
 interface ChatInputProps {
   newMessage: string;
