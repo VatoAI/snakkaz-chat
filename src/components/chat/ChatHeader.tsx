@@ -52,10 +52,14 @@ export const ChatHeader = ({
   return (
     <TooltipProvider>
       <header className={`
-        w-full backdrop-blur-sm bg-cyberdark-900/85 border-b border-cybergold-400/40 
-        shadow-neon-blue sticky top-0 z-40 animate-fadeIn
-        ${isMobile ? 'mobile-top-safe pt-safe' : ''}
-      `}>
+        w-full backdrop-blur-sm bg-cyberdark-900/90 border-b border-cybergold-400/40 
+        shadow-lg sticky top-0 z-40 animate-fadeIn
+        ${isMobile ? 'mobile-top-safe pt-safe pb-1' : ''}
+      `}
+        style={{
+          boxShadow: '0 2px 15px rgba(26, 157, 255, 0.3), 0 2px 8px rgba(214, 40, 40, 0.25)'
+        }}
+      >
         <div className="relative">
           <div className="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none">
             <img
@@ -67,20 +71,22 @@ export const ChatHeader = ({
 
           <div className={`
             max-w-full flex flex-row items-center justify-between 
-            ${isMobile ? 'h-[64px] py-2' : 'h-[50px] py-1'} 
+            ${isMobile ? 'h-[60px] py-1.5' : 'h-[50px] py-1'} 
             px-2 sm:px-6 gap-1 sm:gap-2 relative z-10`
           }>
             <div className="flex items-center gap-1 sm:gap-2">
               {!isMobile && (
-                <div className="text-base font-semibold text-cybergold-100">
-                  SnakkaZ
+                <div className="text-base font-semibold text-cybergold-100 flex items-center">
+                  <span className="bg-gradient-to-r from-cyberblue-400 to-red-400 bg-clip-text text-transparent">
+                    SnakkaZ
+                  </span>
                 </div>
               )}
-              {/* Mobile logo - small version */}
+              {/* Mobile logo - small version with better styling */}
               {isMobile && (
-                <div className="w-7 h-7 overflow-hidden rounded-full border border-cybergold-500/40">
+                <div className="w-8 h-8 overflow-hidden rounded-full border border-cybergold-500/60 shadow-glow">
                   <img
-                    src="/snakkaz-logo.png" 
+                    src="/snakkaz-logo.png"
                     alt="SnakkaZ"
                     className="w-full h-full object-cover"
                   />
@@ -88,9 +94,9 @@ export const ChatHeader = ({
               )}
             </div>
 
-            <div className={`flex-1 flex justify-center ${isMobile ? 'mx-0.5' : 'mx-4'}`}>
-              <HeaderNavLinks 
-                activeTab={activeTab} 
+            <div className={`flex-1 flex justify-center ${isMobile ? 'mx-0.5 px-0.5' : 'mx-4'}`}>
+              <HeaderNavLinks
+                activeTab={activeTab}
                 onTabChange={onTabChange}
                 currentStatus={currentStatus}
               />
