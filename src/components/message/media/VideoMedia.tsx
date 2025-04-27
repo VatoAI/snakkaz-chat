@@ -1,19 +1,33 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Shield } from "lucide-react";
 
 interface VideoMediaProps {
   url: string;
-  mediaType: string;
+  mimeType?: string;
   maxHeight?: number;
+  ttl?: number | null;
+  onExpired?: () => void;
 }
 
 export const VideoMedia = ({ 
   url, 
-  mediaType,
-  maxHeight = 300
+  mimeType,
+  maxHeight = 300,
+  ttl,
+  onExpired
 }: VideoMediaProps) => {
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Add TTL expiration handling
+  useEffect(() => {
+    if (!ttl) return;
+    
+    const timer = setTimeout(() => {
+      if (onExpired) onExpired();
+    }, ttl * 1000);
+    
+    return () => clearTimeout(timer);
+  }, [ttl, onExpired]);
   
   return (
     <div className="relative mt-2">

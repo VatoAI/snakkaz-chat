@@ -36,15 +36,20 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   newMessage: externalMessage,
   setNewMessage: externalSetMessage,
   isLoading = false,
+  ttl: externalTtl,
+  setTtl: externalSetTtl,
   editingMessage,
   onCancelEdit,
+  onSubmit,
 }) => {
   const [internalMessage, setInternalMessage] = useState('');
   const message = externalMessage !== undefined ? externalMessage : internalMessage;
   const setMessage = externalSetMessage || setInternalMessage;
 
   const [attachments, setAttachments] = useState<Array<{ url: string; type: string; name: string }>>([]);
-  const [ttl, setTtl] = useState(604800); // default 7 dager
+  const [internalTtl, setInternalTtl] = useState(604800); // default 7 dager
+  const ttl = externalTtl !== undefined ? externalTtl : internalTtl;
+  const setTtl = externalSetTtl || setInternalTtl;
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const { uploadFile, cancelUpload, uploadState } = useMediaUpload();
   const { getRootProps, getInputProps, open } = useFileInput({
@@ -128,10 +133,24 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     }
   }
 
+  async function handleFormSubmit(e: FormEvent) {
+    e.preventDefault();
+
+    if (onSubmit) {
+      await onSubmit(e);
+    } else {
+      handleSendMessage();
+    }
+  }
+
   function handleKeyPress(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSendMessage();
+      if (onSubmit) {
+        handleFormSubmit(e as unknown as FormEvent);
+      } else {
+        handleSendMessage();
+      }
     }
   }
 
@@ -226,7 +245,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         </select>
       </div>
 
-      <div className="flex items-end p-2 gap-1.5">
+      <form onSubmit={handleFormSubmit} className="flex items-end p-2 gap-1.5">
         <div
           {...getRootProps()}
           className="flex-shrink-0"
@@ -256,9 +275,8 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         />
 
         <Button
-          type="button"
+          type="submit"
           disabled={!sendButtonEnabled}
-          onClick={handleSendMessage}
           size="icon"
           className={cn(
             "flex-shrink-0 h-9 w-9 rounded-full",
@@ -271,7 +289,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
             <Send size={18} />
           )}
         </Button>
-      </div>
+      </form>
     </div>
   );
 };
