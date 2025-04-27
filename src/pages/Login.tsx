@@ -1,38 +1,134 @@
+
 import { LoginLayout } from '@/components/auth/LoginLayout';
 import { LoginForm } from '@/components/auth/LoginForm';
-import { useAuth } from '@/hooks/useAuth';
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const Login = () => {
-  const {
-    isLoading,
-    emailError,
-    passwordError,
-    handleLogin,
-    handleSignup
-  } = useAuth();
-
+  const [isLoading, setIsLoading] = useState(false);
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
+  const { toast } = useToast();
 
-  // Hent eventuell redirect-destinasjon fra location state
+  // Get redirect destination from location state
   const redirectTo = location.state?.redirectTo || '/chat';
 
-  // Custom handler med remember me parameter og støtte for redirect
-  const handleLoginWithRememberMe = async (email: string, password: string, rememberMe: boolean) => {
-    const success = await handleLogin(email, password, rememberMe);
-    if (success) {
-      // Hvis innloggingen var vellykket, naviger til redirect-målet
-      navigate(redirectTo);
+  // Handle login with remember me parameter and support for redirect
+  const handleLogin = async (email: string, password: string, rememberMe: boolean) => {
+    setEmailError("");
+    setPasswordError("");
+    
+    if (!email) {
+      setEmailError("Email er påkrevd");
+      return false;
+    }
+    
+    if (!password) {
+      setPasswordError("Passord er påkrevd");
+      return false;
+    }
+    
+    setIsLoading(true);
+    
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      if (error) {
+        if (error.message.includes("email")) {
+          setEmailError(error.message);
+        } else if (error.message.includes("password")) {
+          setPasswordError(error.message);
+        } else {
+          toast({
+            title: "Påloggingsfeil",
+            description: error.message,
+            variant: "destructive",
+          });
+        }
+        return false;
+      }
+      
+      if (data.user) {
+        navigate(redirectTo);
+        return true;
+      }
+      
+      return false;
+    } catch (error: any) {
+      toast({
+        title: "Påloggingsfeil",
+        description: error.message || "Kunne ikke logge inn",
+        variant: "destructive",
+      });
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle signup functionality
+  const handleSignup = async (email: string, password: string) => {
+    setEmailError("");
+    setPasswordError("");
+    
+    if (!email) {
+      setEmailError("Email er påkrevd");
+      return;
+    }
+    
+    if (!password || password.length < 6) {
+      setPasswordError("Passord må være minst 6 tegn");
+      return;
+    }
+    
+    setIsLoading(true);
+    
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+      
+      if (error) {
+        if (error.message.includes("email")) {
+          setEmailError(error.message);
+        } else {
+          toast({
+            title: "Registreringsfeil",
+            description: error.message,
+            variant: "destructive",
+          });
+        }
+        return;
+      }
+      
+      toast({
+        title: "Registrering fullført",
+        description: "Sjekk e-posten din for bekreftelseslenke",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Registreringsfeil",
+        description: error.message || "Kunne ikke registrere bruker",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    // Omdiriger autentiserte brukere bort fra login-siden hvis de allerede er logget inn
+    // Redirect authenticated users away from login page if they're already logged in
     const checked = async () => {
       try {
-        const { data } = await import("@/integrations/supabase/client").then(m => m.supabase.auth.getSession());
+        const { data } = await supabase.auth.getSession();
         if (data.session) {
           navigate(redirectTo);
         }
@@ -52,7 +148,7 @@ const Login = () => {
       <div className="relative z-10 w-full max-w-md">
         <LoginLayout>
           <LoginForm
-            onLogin={handleLoginWithRememberMe}
+            onLogin={handleLogin}
             onSignup={handleSignup}
             isLoading={isLoading}
             emailError={emailError}

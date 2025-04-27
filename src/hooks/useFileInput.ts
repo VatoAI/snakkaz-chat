@@ -1,9 +1,11 @@
+
 import { useRef } from "react";
 
 export interface UseFileInputOptions {
   onFilesSelected: (files: File[]) => void;
   accept?: string;
   multiple?: boolean;
+  setSelectedFile?: (file: File | null) => void;
 }
 
 export interface UseFileInputReturn {
@@ -24,7 +26,7 @@ export interface UseFileInputReturn {
   };
 }
 
-export const useFileInput = ({ onFilesSelected, accept, multiple }: UseFileInputOptions): UseFileInputReturn => {
+export const useFileInput = ({ onFilesSelected, accept, multiple, setSelectedFile }: UseFileInputOptions): UseFileInputReturn => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -35,6 +37,11 @@ export const useFileInput = ({ onFilesSelected, accept, multiple }: UseFileInput
     if (files && files.length > 0) {
       const fileArray = Array.from(files);
       onFilesSelected(fileArray);
+      
+      // If setSelectedFile is provided, set the first file
+      if (setSelectedFile && files.length > 0) {
+        setSelectedFile(fileArray[0]);
+      }
     }
   };
 

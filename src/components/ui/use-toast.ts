@@ -1,22 +1,26 @@
 
-// This file should only re-export from the hooks implementation
-import * as React from "react"
+// This file only re-exports from the hooks implementation
+import * as React from "react";
 
 import type {
   ToastActionElement,
   ToastProps,
-} from "@/components/ui/toast"
+} from "@/components/ui/toast";
 
-// We're changing this to avoid circular imports
+// Import types and hook from the hooks implementation
 import {
   useToast as useToastHook,
   type Toast,
-} from "@/hooks/use-toast"
+  type ExtendedUseToastOptions,
+} from "@/hooks/use-toast";
 
+// Export the types
 export { 
   type ToastProps,
   type ToastActionElement,
   type Toast,
-}
+  type ExtendedUseToastOptions,
+};
 
+// Export the hook
 export const useToast = useToastHook;

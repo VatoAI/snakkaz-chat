@@ -1,6 +1,5 @@
 
 import { MessageInput } from "@/components/MessageInput";
-import { FormEvent } from "react";
 
 interface ChatInputProps {
   newMessage: string;
@@ -23,12 +22,18 @@ export const ChatInput = ({
   editingMessage,
   onCancelEdit
 }: ChatInputProps) => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await onSubmit(e);
+    return true;
+  };
+
   return (
     <div className="p-2 sm:p-4 border-t border-cybergold-500/30">
       <MessageInput
         newMessage={newMessage}
         setNewMessage={setNewMessage}
-        onSubmit={onSubmit}
+        handleSubmit={handleSubmit}
         isLoading={isLoading}
         ttl={ttl}
         setTtl={setTtl}
