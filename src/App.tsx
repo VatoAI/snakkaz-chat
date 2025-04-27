@@ -6,24 +6,27 @@ import AuthPage from "./pages/auth/AuthPage";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { Toaster } from "./components/ui/toaster";
+import { NotificationProvider } from "./contexts/NotificationContext";
 
 function App() {
   return (
     <AuthProvider>
-      <Router>
-        <Routes>
-          <Route path="/" element={<Layout />}>
-            <Route index element={<Navigate to="/chat" replace />} />
-            <Route path="chat" element={
-              <ProtectedRoute>
-                <Chat />
-              </ProtectedRoute>
-            } />
-          </Route>
-          <Route path="/auth" element={<AuthPage />} />
-        </Routes>
-        <Toaster />
-      </Router>
+      <NotificationProvider>
+        <Router>
+          <Routes>
+            <Route path="/" element={<Layout />}>
+              <Route index element={<Navigate to="/chat" replace />} />
+              <Route path="chat" element={
+                <ProtectedRoute>
+                  <Chat />
+                </ProtectedRoute>
+              } />
+            </Route>
+            <Route path="/auth" element={<AuthPage />} />
+          </Routes>
+          <Toaster />
+        </Router>
+      </NotificationProvider>
     </AuthProvider>
   );
 }
