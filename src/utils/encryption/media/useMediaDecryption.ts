@@ -3,51 +3,53 @@ import { useState, useEffect, useCallback } from "react";
 import { DecryptedMessage } from "@/types/message";
 import { decryptMedia } from "@/utils/encryption/media";
 import { GLOBAL_E2EE_KEY, GLOBAL_E2EE_IV } from "@/utils/encryption/global-e2ee";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 import { arrayBufferToBase64 } from "@/utils/encryption/data-conversion";
 
-export const useMediaDecryption = (message: DecryptedMessage) => {
-  const [decryptedUrl, setDecryptedUrl] = useState<string | null>(null);
-  const [isDecrypting, setIsDecrypting] = useState(false);
-  const [decryptError, setDecryptError] = useState<string | null>(null);
+export const useMediaDecryption = (mediaUrl: string, encryptionKey?: string) => {
+  const [decryptedDataUrl, setDecryptedDataUrl] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [decryptAttempts, setDecryptAttempts] = useState(0);
   const { toast } = useToast();
 
   const cleanup = useCallback(() => {
     // Cleanup previous URL to prevent memory leaks
-    if (decryptedUrl) {
-      URL.revokeObjectURL(decryptedUrl);
+    if (decryptedDataUrl) {
+      URL.revokeObjectURL(decryptedDataUrl);
     }
-  }, [decryptedUrl]);
+  }, [decryptedDataUrl]);
 
-  const handleDecryptMedia = useCallback(async (storageUrl: string) => {
-    if (!storageUrl) {
-      console.error("No storage URL provided for decryption");
-      setDecryptError("Invalid media URL");
+  const retry = useCallback(() => {
+    setDecryptAttempts(prev => prev + 1);
+    setError(null);
+    // This will trigger the useEffect below
+  }, []);
+
+  const decrypt = useCallback(async () => {
+    if (!mediaUrl) {
+      setError("No media URL provided");
       return;
     }
     
     // Clear previous decryption
     cleanup();
-    setDecryptedUrl(null);
+    setDecryptedDataUrl(null);
     
-    setIsDecrypting(true);
-    setDecryptError(null);
-    setDecryptAttempts(prev => prev + 1);
+    setIsLoading(true);
+    setError(null);
 
     try {
-      console.log(`Decryption attempt ${decryptAttempts + 1} for ${message.media_url}`);
+      console.log(`Decryption attempt ${decryptAttempts + 1} for ${mediaUrl}`);
       
-      // Determine which keys to use
-      let encryptionKey: string | undefined = message.media_encryption_key || message.encryption_key;
-      let iv: string | undefined = message.media_iv || message.iv;
-      let mediaType: string = message.media_type || 'application/octet-stream';
-
+      // Use provided encryption key or try to get one from global
+      let key = encryptionKey;
+      let iv: string | undefined;
+      
       // For global messages, try global key/iv if no message-specific keys
-      const isGlobalMessage = !message.receiver_id && !message.group_id;
-      if (isGlobalMessage && !encryptionKey && !iv) {
-        console.log("Using global E2EE key for public message media");
-        encryptionKey = GLOBAL_E2EE_KEY;
+      if (!key) {
+        console.log("Using global E2EE key for media");
+        key = GLOBAL_E2EE_KEY;
         
         // Convert ArrayBuffer to Base64 string for iv
         if (GLOBAL_E2EE_IV instanceof ArrayBuffer) {
@@ -57,12 +59,12 @@ export const useMediaDecryption = (message: DecryptedMessage) => {
         }
       }
 
-      if (!encryptionKey || !iv) {
-        throw new Error("Missing encryption keys");
+      if (!key) {
+        throw new Error("Missing encryption key");
       }
 
       // Fetch the encrypted media
-      const response = await fetch(storageUrl);
+      const response = await fetch(mediaUrl);
       if (!response.ok) {
         throw new Error(`Failed to fetch media: ${response.status}`);
       }
@@ -75,20 +77,25 @@ export const useMediaDecryption = (message: DecryptedMessage) => {
 
       console.log(`Successfully fetched ${encryptedData.byteLength} bytes, attempting decryption`);
 
+      // Determine media type from URL or default to octet-stream
+      const mediaType = mediaUrl.endsWith('.webp') ? 'image/webp' : 
+                       mediaUrl.endsWith('.mp4') ? 'video/mp4' : 
+                       'application/octet-stream';
+
       // Decrypt the media
       const decryptedBlob = await decryptMedia({
         encryptedData,
-        encryptionKey,
-        iv,
+        encryptionKey: key,
+        iv: iv || '',
         mediaType,
       });
       
       const localUrl = URL.createObjectURL(decryptedBlob);
-      setDecryptedUrl(localUrl);
+      setDecryptedDataUrl(localUrl);
       console.log("Media successfully decrypted");
     } catch (error) {
       console.error('Media decryption failed:', error);
-      setDecryptError(error instanceof Error ? error.message : 'Unknown error');
+      setError(error instanceof Error ? error.message : 'Unknown error');
       
       // Show toast only on first attempt to avoid spam
       if (decryptAttempts === 0) {
@@ -99,9 +106,16 @@ export const useMediaDecryption = (message: DecryptedMessage) => {
         });
       }
     } finally {
-      setIsDecrypting(false);
+      setIsLoading(false);
     }
-  }, [message, decryptAttempts, cleanup, toast]);
+  }, [mediaUrl, encryptionKey, decryptAttempts, cleanup, toast]);
+
+  // Run decryption when URL or key changes or retry is called
+  useEffect(() => {
+    if (mediaUrl) {
+      decrypt();
+    }
+  }, [mediaUrl, encryptionKey, decryptAttempts, decrypt]);
 
   // Clean up the object URL when component unmounts
   useEffect(() => {
@@ -109,11 +123,10 @@ export const useMediaDecryption = (message: DecryptedMessage) => {
   }, [cleanup]);
 
   return {
-    decryptedUrl,
-    isDecrypting,
-    decryptError,
-    handleDecryptMedia,
-    setDecryptError,
-    decryptAttempts
+    decryptedDataUrl,
+    isLoading,
+    error,
+    retry,
+    setError
   };
 };

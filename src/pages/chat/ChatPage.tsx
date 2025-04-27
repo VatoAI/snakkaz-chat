@@ -9,6 +9,7 @@ import { useWebRTC } from "@/hooks/useWebRTC";
 import { useFriendships } from "@/hooks/useFriendships";
 import { Friend } from "@/components/chat/friends/types";
 import { DecryptedMessage } from "@/types/message";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 
 const ChatPage = () => {
   const { user } = useAuth();
@@ -57,23 +58,25 @@ const ChatPage = () => {
   }, [chatState]);
 
   return (
-    <ChatLayout
-      userPresence={userPresence}
-      currentUserId={user?.id || ""}
-      currentStatus={currentStatus}
-      handleStatusChange={handleStatusChange}
-      webRTCManager={webRTCManager}
-      directMessages={directMessages}
-      handleStartEditMessage={handleStartEditMessage}
-      onStartChat={handleStartChat}
-      userProfiles={userProfiles}
-      activeTab={activeTab}
-      onTabChange={setActiveTab}
-      chatState={chatState}
-      selectedFriend={selectedFriend}
-      setSelectedFriend={setSelectedFriend}
-      friendsList={friendsList}
-    />
+    <ProtectedRoute>
+      <ChatLayout
+        userPresence={userPresence}
+        currentUserId={user?.id || ""}
+        currentStatus={currentStatus}
+        handleStatusChange={handleStatusChange}
+        webRTCManager={webRTCManager}
+        directMessages={directMessages}
+        handleStartEditMessage={handleStartEditMessage}
+        onStartChat={handleStartChat}
+        userProfiles={userProfiles}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        chatState={chatState}
+        selectedFriend={selectedFriend}
+        setSelectedFriend={setSelectedFriend}
+        friendsList={friendsList}
+      />
+    </ProtectedRoute>
   );
 };
 
