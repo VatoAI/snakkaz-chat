@@ -1,4 +1,3 @@
-
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -6,7 +5,7 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuLab
 import { Copy, Link, Check, LogOut, User, Airplay } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { AdminBadge } from "./AdminBadge";
 
 interface ProfileDropdownProps {
@@ -36,13 +35,14 @@ export function ProfileDropdown({
 }: ProfileDropdownProps) {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { isAdmin } = useIsAdmin(user?.id);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const avatarUrl = userProfiles[currentUserId]?.avatar_url || null;
   const username = userProfiles[currentUserId]?.username || null;
   // Don't show initials if avatar is set!
-  const initials = avatarUrl ? null : (username?.slice(0,2).toUpperCase() ?? "SZ");
+  const initials = avatarUrl ? null : (username?.slice(0, 2).toUpperCase() ?? "SZ");
   // Log isAdmin for debug
   console.log("[ProfileDropdown] isAdmin:", isAdmin, "user id:", user?.id);
 
@@ -54,12 +54,40 @@ export function ProfileDropdown({
   ], [isOnline, isBusy, isBrb, isOffline]);
 
   const handleLogout = async () => {
-    const { error } = await import("@/integrations/supabase/client").then(m => m.supabase.auth.signOut());
-    if (error) {
-      toast({ title: "Kunne ikke logge ut", description: "Prøv igjen senere", variant: "destructive" });
-    } else {
-      toast({ title: "Logget ut", description: "Du er nå logget ut" });
-      navigate('/login', { replace: true });
+    try {
+      setIsLoggingOut(true);
+      const { error } = await import("@/integrations/supabase/client").then(m => m.supabase.auth.signOut());
+      if (error) {
+        console.error("Logout error:", error);
+        toast({
+          title: "Kunne ikke logge ut",
+          description: "Prøv igjen senere",
+          variant: "destructive",
+          duration: 3000
+        });
+      } else {
+        // Vis en visuell toast som bekrefter utlogging
+        toast({
+          title: "Logger ut...",
+          description: "Du blir nå logget ut av systemet",
+          duration: 1500
+        });
+
+        // Kort forsinkelse for å la brukeren se toast-meldingen før navigering
+        setTimeout(() => {
+          if (logout) logout(); // Bruk AuthContext sin logout-funksjon hvis tilgjengelig
+          navigate('/login', { replace: true });
+        }, 800);
+      }
+    } catch (e) {
+      console.error("Unexpected error during logout:", e);
+      toast({
+        title: "En feil oppstod",
+        description: "Kunne ikke fullføre utlogging",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoggingOut(false);
     }
   };
 
@@ -67,7 +95,7 @@ export function ProfileDropdown({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button
-          className="rounded-full focus:outline-none transition-all border-2 border-cybergold-400/40 hover:scale-105 bg-cyberdark-900/70 p-0.5"
+          className="rounded-full focus:outline-none transition-all border-2 border-cybergold-400/40 hover:scale-105 bg-cyberdark-900/70 p-0.5 hover:border-cybergold-400/70"
           title="Åpne brukerprofil"
         >
           <Avatar className="h-8 w-8">
@@ -83,7 +111,7 @@ export function ProfileDropdown({
       </DropdownMenuTrigger>
       <DropdownMenuContent side="bottom" align="end"
         className="z-[100] w-64 bg-gradient-to-br from-cyberdark-950 via-cyberdark-900 to-cyberblue-950/95 backdrop-blur-xl border border-cybergold-400/30 p-4 rounded-lg shadow-neon-gold"
-        style={{minWidth: 240, color: "#ffd54d"}}
+        style={{ minWidth: 240, color: "#ffd54d" }}
       >
         <div className="flex flex-col items-center gap-2 py-1">
           <Avatar className="h-16 w-16 border-2 border-cybergold-400/75 shadow-neon-gold">
@@ -138,9 +166,25 @@ export function ProfileDropdown({
           </DropdownMenuItem>
         ))}
         <DropdownMenuSeparator />
-        <DropdownMenuItem onSelect={handleLogout}>
-          <LogOut className="mr-2 h-4 w-4" />
-          Logg ut
+        <DropdownMenuItem
+          onSelect={(e) => {
+            e.preventDefault(); // Forhindre automatisk lukking av dropdown
+            handleLogout();
+          }}
+          disabled={isLoggingOut}
+          className="relative group"
+        >
+          {isLoggingOut ? (
+            <>
+              <div className="h-4 w-4 border-2 border-t-transparent border-cyberred-400 rounded-full animate-spin mr-2"></div>
+              Logger ut...
+            </>
+          ) : (
+            <>
+              <LogOut className="mr-2 h-4 w-4 group-hover:text-cyberred-400 transition-colors" />
+              <span className="group-hover:text-cyberred-400 transition-colors">Logg ut</span>
+            </>
+          )}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
