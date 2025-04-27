@@ -25,6 +25,11 @@ export const FileInputs = ({
     documentInputRef,
     handleFileSelect
   } = useFileInput({ 
+    onFilesSelected: (files: File[]) => {
+      if (files.length > 0) {
+        setSelectedFile(files[0]);
+      }
+    },
     setSelectedFile 
   });
 

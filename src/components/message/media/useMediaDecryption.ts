@@ -1,7 +1,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
-// Fix the import to use the correct path
-import { decryptFile } from '@/utils/encryption/media/decrypt';
+import { decryptMedia } from '@/utils/encryption/media';
 
 export interface MediaDecryptionResult {
   decryptedURL: string | null;
@@ -31,17 +30,18 @@ export const useMediaDecryption = (
       
       const arrayBuffer = await response.arrayBuffer();
       
-      const decrypted = await decryptFile(
-        new Uint8Array(arrayBuffer),
-        encryptionKey,
-        iv
-      );
+      // Convert IV string to an array
+      const ivArray = new Uint8Array(iv.split(',').map(Number));
       
-      // Create a new blob from the decrypted data
-      const blob = new Blob([decrypted], { type: mimeType });
+      const decrypted = await decryptMedia({
+        encryptedData: arrayBuffer,
+        encryptionKey,
+        iv,
+        mediaType: mimeType
+      });
       
       // Create a URL for the blob
-      const objectURL = URL.createObjectURL(blob);
+      const objectURL = URL.createObjectURL(decrypted);
 
       setDecryptedURL(objectURL);
       setIsLoading(false);

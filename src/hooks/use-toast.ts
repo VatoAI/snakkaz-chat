@@ -2,16 +2,15 @@
 import * as React from "react";
 import type { ToastProps, ToastActionElement } from "@/components/ui/toast";
 
-// Define the extended types
-export interface ExtendedToastProps extends ToastProps {
+// Define the extended types without incorrectly extending from ToastProps
+export interface Toast {
   id: string;
   title?: React.ReactNode;
   description?: React.ReactNode;
   action?: ToastActionElement;
   variant?: "default" | "destructive" | "warning";
+  duration?: number;
 }
-
-export type Toast = ExtendedToastProps;
 
 export interface ExtendedUseToastOptions {
   title?: React.ReactNode;
@@ -54,3 +53,6 @@ export const useToast = () => {
     toasts,
   };
 };
+
+// Re-export the types
+export type { ToastProps, ToastActionElement };

@@ -18,18 +18,18 @@ const Login = () => {
   const redirectTo = location.state?.redirectTo || '/chat';
 
   // Handle login with remember me parameter and support for redirect
-  const handleLogin = async (email: string, password: string, rememberMe: boolean) => {
+  const handleLogin = async (email: string, password: string, rememberMe: boolean): Promise<void> => {
     setEmailError("");
     setPasswordError("");
     
     if (!email) {
       setEmailError("Email er påkrevd");
-      return false;
+      return;
     }
     
     if (!password) {
       setPasswordError("Passord er påkrevd");
-      return false;
+      return;
     }
     
     setIsLoading(true);
@@ -52,22 +52,19 @@ const Login = () => {
             variant: "destructive",
           });
         }
-        return false;
+        return;
       }
       
       if (data.user) {
         navigate(redirectTo);
-        return true;
+        return;
       }
-      
-      return false;
     } catch (error: any) {
       toast({
         title: "Påloggingsfeil",
         description: error.message || "Kunne ikke logge inn",
         variant: "destructive",
       });
-      return false;
     } finally {
       setIsLoading(false);
     }
