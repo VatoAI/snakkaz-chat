@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { GithubIcon, ExternalLink, Database, RefreshCw, Activity, CheckCircle, AlertTriangle } from "lucide-react";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
@@ -17,33 +16,57 @@ export interface ProjectProps {
   progress?: number;
 }
 
+// Check if we're in development mode
+const isDevelopment = import.meta.env.DEV;
+
 export const ProjectCard = ({ title, description, previewUrl, githubUrl, category, hasSupabase, progress = 0 }: ProjectProps) => {
   const [refreshKey, setRefreshKey] = useState(0);
   const [imageError, setImageError] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
-  const [projectStatus, setProjectStatus] = useState<'online' | 'offline' | 'loading'>('loading');
+  const [projectStatus, setProjectStatus] = useState<'online' | 'offline' | 'loading'>(isDevelopment ? 'offline' : 'loading');
   const navigate = useNavigate();
   
-  // Fetch project status
+  // Fetch project status - with silent error handling in dev mode
   useEffect(() => {
     const checkProjectStatus = async () => {
+      // In development, set all external services to offline without making network requests
+      if (isDevelopment && !previewUrl.includes('snakkaz.com')) {
+        setProjectStatus('offline');
+        return;
+      }
+      
       try {
+        // Use a timeout to prevent long-running requests
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
+        
         const response = await fetch(`${previewUrl}/ping`, { 
           method: 'HEAD',
+          signal: controller.signal,
           mode: 'no-cors',
           cache: 'no-store'
         });
+        
+        clearTimeout(timeoutId);
         setProjectStatus('online');
       } catch (error) {
-        console.log(`Could not connect to ${title}`);
         setProjectStatus('offline');
+        // Only log in development mode if explicitly enabled
+        if (import.meta.env.VITE_DEBUG_NETWORK === 'true') {
+          console.debug(`[Dev] Could not connect to ${title} - expected in development`);
+        }
       }
     };
     
     checkProjectStatus();
-    // Check status every 60 seconds
-    const interval = setInterval(checkProjectStatus, 60000);
     
+    // In development, don't set up polling intervals for external services
+    if (isDevelopment && !previewUrl.includes('snakkaz.com')) {
+      return;
+    }
+    
+    // Check status every 60 seconds in production
+    const interval = setInterval(checkProjectStatus, 60000);
     return () => clearInterval(interval);
   }, [previewUrl, title]);
   
@@ -89,10 +112,19 @@ export const ProjectCard = ({ title, description, previewUrl, githubUrl, categor
     }
   };
 
+  // Use local thumbnails for development, real ones in production
+  const getImageUrl = () => {
+    // If we're in development and it's an external service, use a local placeholder
+    if (isDevelopment && !previewUrl.includes('snakkaz.com')) {
+      return `/thumbnails/${title.toLowerCase().replace(/\s+/g, '-')}.png`;
+    }
+    
+    // Otherwise use the remote URL
+    return `${previewUrl.replace('https://', 'https://thumbnail--').replace('.lovable.app', '.lovable.app')}/thumbnail.png?t=${refreshKey}&cache=${new Date().getTime()}`;
+  };
+
   const failbackUrl = "/snakkaz-logo.png";
-  const thumbnailUrl = imageError 
-    ? failbackUrl
-    : `${previewUrl.replace('https://', 'https://thumbnail--').replace('.lovable.app', '.lovable.app')}/thumbnail.png?t=${refreshKey}&cache=${new Date().getTime()}`;
+  const thumbnailUrl = imageError ? failbackUrl : getImageUrl();
 
   return (
     <Card 
@@ -114,7 +146,13 @@ export const ProjectCard = ({ title, description, previewUrl, githubUrl, categor
             <Badge variant="outline" className="ml-2 bg-cyberdark-800/40 text-gray-300 border-gray-500/30 flex items-center gap-1 px-2">
               {getStatusIcon()}
               <span className="text-xs ml-1">
-                {projectStatus === 'online' ? 'Live' : projectStatus === 'offline' ? 'Offline' : 'Sjekker...'}
+                {isDevelopment && !previewUrl.includes('snakkaz.com')
+                  ? 'Demo'
+                  : projectStatus === 'online' 
+                    ? 'Live' 
+                    : projectStatus === 'offline' 
+                      ? 'Offline' 
+                      : 'Sjekker...'}
               </span>
             </Badge>
           </div>
@@ -143,7 +181,9 @@ export const ProjectCard = ({ title, description, previewUrl, githubUrl, categor
                 className="w-full h-full object-cover transition-all duration-300 group-hover:scale-105"
                 onLoad={() => setImageLoading(false)}
                 onError={(e) => {
-                  console.log(`Image failed to load for ${title}, using SnakkaZ logo as fallback`);
+                  if (import.meta.env.VITE_DEBUG_IMAGES === 'true') {
+                    console.debug(`[Dev] Image failed to load for ${title}, using fallback`);
+                  }
                   setImageError(true);
                   setImageLoading(false);
                   (e.target as HTMLImageElement).src = failbackUrl;
@@ -185,7 +225,7 @@ export const ProjectCard = ({ title, description, previewUrl, githubUrl, categor
           className="flex items-center text-cyberblue-400 hover:text-cyberblue-300 text-sm transition-colors"
           onClick={(e) => {
             e.stopPropagation();
-            if (title === "SnakkaZ Guardian Chat" || title === "ChatCipher Assistant") {
+            if (title === "SnakkaZ Guardian Chat" || title === "ChatCipher Assistant" || title === "SnakkaZ") {
               navigate('/chat');
             } else {
               window.open(previewUrl, '_blank', 'noopener,noreferrer');
@@ -193,7 +233,7 @@ export const ProjectCard = ({ title, description, previewUrl, githubUrl, categor
           }}
         >
           <ExternalLink size={16} className="mr-1" />
-          {title === "SnakkaZ Guardian Chat" || title === "ChatCipher Assistant" ? "Åpne Chat" : "Preview"}
+          {title === "SnakkaZ Guardian Chat" || title === "ChatCipher Assistant" || title === "SnakkaZ" ? "Åpne Chat" : "Preview"}
         </button>
         
         {githubUrl ? (
