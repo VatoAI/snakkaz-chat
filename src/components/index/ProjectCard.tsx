@@ -25,7 +25,7 @@ export const ProjectCard = ({ title, description, previewUrl, githubUrl, categor
   const [imageLoading, setImageLoading] = useState(true);
   const [projectStatus, setProjectStatus] = useState<'online' | 'offline' | 'loading'>(isDevelopment ? 'offline' : 'loading');
   const navigate = useNavigate();
-  
+
   // Fetch project status - with silent error handling in dev mode
   useEffect(() => {
     const checkProjectStatus = async () => {
@@ -34,19 +34,19 @@ export const ProjectCard = ({ title, description, previewUrl, githubUrl, categor
         setProjectStatus('offline');
         return;
       }
-      
+
       try {
         // Use a timeout to prevent long-running requests
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 3000);
-        
-        const response = await fetch(`${previewUrl}/ping`, { 
+
+        const response = await fetch(`${previewUrl}/ping`, {
           method: 'HEAD',
           signal: controller.signal,
           mode: 'no-cors',
           cache: 'no-store'
         });
-        
+
         clearTimeout(timeoutId);
         setProjectStatus('online');
       } catch (error) {
@@ -57,19 +57,19 @@ export const ProjectCard = ({ title, description, previewUrl, githubUrl, categor
         }
       }
     };
-    
+
     checkProjectStatus();
-    
+
     // In development, don't set up polling intervals for external services
     if (isDevelopment && !previewUrl.includes('snakkaz.com')) {
       return;
     }
-    
+
     // Check status every 60 seconds in production
     const interval = setInterval(checkProjectStatus, 60000);
     return () => clearInterval(interval);
   }, [previewUrl, title]);
-  
+
   const getCategoryColor = (category: string) => {
     switch (category) {
       case 'chat':
@@ -92,7 +92,7 @@ export const ProjectCard = ({ title, description, previewUrl, githubUrl, categor
     setImageLoading(true);
     setRefreshKey(prev => prev + 1);
   };
-  
+
   const handleCardClick = () => {
     if (title === "SnakkaZ Guardian Chat" || title === "ChatCipher Assistant" || title === "SnakkaZ") {
       navigate('/chat');
@@ -118,7 +118,7 @@ export const ProjectCard = ({ title, description, previewUrl, githubUrl, categor
     if (isDevelopment && !previewUrl.includes('snakkaz.com')) {
       return `/thumbnails/${title.toLowerCase().replace(/\s+/g, '-')}.png`;
     }
-    
+
     // Otherwise use the remote URL
     return `${previewUrl.replace('https://', 'https://thumbnail--').replace('.lovable.app', '.lovable.app')}/thumbnail.png?t=${refreshKey}&cache=${new Date().getTime()}`;
   };
@@ -127,12 +127,12 @@ export const ProjectCard = ({ title, description, previewUrl, githubUrl, categor
   const thumbnailUrl = imageError ? failbackUrl : getImageUrl();
 
   return (
-    <Card 
+    <Card
       className={`h-full bg-cyberdark-900 border-2 ${getCategoryColor(category)} hover:shadow-[0_0_20px_rgba(26,157,255,0.3)_,_0_0_20px_rgba(214,40,40,0.3)] transition-all duration-300 cursor-pointer`}
       onClick={handleCardClick}
     >
       <CardHeader className="pb-2">
-        <CardTitle 
+        <CardTitle
           className="text-xl flex items-center justify-between"
           style={{
             background: 'linear-gradient(90deg, #1a9dff, #ffffff)',
@@ -148,10 +148,10 @@ export const ProjectCard = ({ title, description, previewUrl, githubUrl, categor
               <span className="text-xs ml-1">
                 {isDevelopment && !previewUrl.includes('snakkaz.com')
                   ? 'Demo'
-                  : projectStatus === 'online' 
-                    ? 'Live' 
-                    : projectStatus === 'offline' 
-                      ? 'Offline' 
+                  : projectStatus === 'online'
+                    ? 'Live'
+                    : projectStatus === 'offline'
+                      ? 'Offline'
                       : 'Sjekker...'}
               </span>
             </Badge>
@@ -164,17 +164,17 @@ export const ProjectCard = ({ title, description, previewUrl, githubUrl, categor
           )}
         </CardTitle>
       </CardHeader>
-      
+
       <CardContent className="text-gray-300 text-sm space-y-4">
         <div className="overflow-hidden rounded-md bg-cyberdark-800 relative group">
-          <AspectRatio ratio={16/9} className="bg-cyberdark-800">
+          <AspectRatio ratio={16 / 9} className="bg-cyberdark-800">
             <div className="block w-full h-full relative group">
               {imageLoading && (
                 <div className="absolute inset-0 flex items-center justify-center bg-cyberdark-900/60 z-10">
                   <div className="w-8 h-8 border-2 border-cyberblue-500 border-t-transparent rounded-full animate-spin"></div>
                 </div>
               )}
-              <img 
+              <img
                 key={refreshKey}
                 src={thumbnailUrl}
                 alt={`Preview of ${title}`}
@@ -197,7 +197,7 @@ export const ProjectCard = ({ title, description, previewUrl, githubUrl, categor
               </div>
             </div>
           </AspectRatio>
-          <button 
+          <button
             className="absolute top-2 right-2 bg-cyberdark-900/80 p-1 rounded-full text-cyberblue-400 hover:text-cyberblue-300 opacity-0 group-hover:opacity-100 transition-opacity z-10"
             onClick={refreshPreview}
             title="Oppdater forhåndsvisning"
@@ -205,7 +205,7 @@ export const ProjectCard = ({ title, description, previewUrl, githubUrl, categor
             <RefreshCw size={14} />
           </button>
         </div>
-        
+
         <p className="line-clamp-3">{description}</p>
 
         {/* Progress indicator */}
@@ -219,7 +219,7 @@ export const ProjectCard = ({ title, description, previewUrl, githubUrl, categor
           </div>
         )}
       </CardContent>
-      
+
       <CardFooter className="flex justify-between mt-auto pt-4">
         <button
           className="flex items-center text-cyberblue-400 hover:text-cyberblue-300 text-sm transition-colors"
@@ -235,7 +235,7 @@ export const ProjectCard = ({ title, description, previewUrl, githubUrl, categor
           <ExternalLink size={16} className="mr-1" />
           {title === "SnakkaZ Guardian Chat" || title === "ChatCipher Assistant" || title === "SnakkaZ" ? "Åpne Chat" : "Preview"}
         </button>
-        
+
         {githubUrl ? (
           <button
             className="flex items-center text-cyberblue-400 hover:text-cyberblue-300 text-sm transition-colors"

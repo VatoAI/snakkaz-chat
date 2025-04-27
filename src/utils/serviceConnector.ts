@@ -3,194 +3,178 @@
  * Provides graceful fallbacks when services are unavailable
  */
 
-// List of external services used by the application
-export type ServiceName =
-    | 'SnakkaZ Business Analyser'
-    | 'SnakkaZ Secure Docs'
-    | 'AI Dash Hub'
-    | 'SnakkaZ Analytics Hub';
+// Map of domains we want to suppress console errors for in development mode
+const SUPPRESS_DOMAINS = new Set([
+    'dash.snakkaz.com',
+    'business.snakkaz.com',
+    'docs.snakkaz.com',
+    'analytics.snakkaz.com',
+    'cloudflareinsights.com',
+]);
 
-// Service URL mapping
-export const SERVICE_URLS: Record<ServiceName, string> = {
-    'SnakkaZ Business Analyser': 'https://business.snakkaz.com/ping',
-    'SnakkaZ Secure Docs': 'https://docs.snakkaz.com/ping',
-    'AI Dash Hub': 'https://dash.snakkaz.com/ping',
-    'SnakkaZ Analytics Hub': 'https://analytics.snakkaz.com/ping'
+// Connection cache to prevent multiple connection attempts to the same service
+type ConnectionCache = {
+    [url: string]: {
+        status: 'online' | 'offline';
+        timestamp: number;
+    };
 };
 
-// Connection status tracking
-const serviceStatus: Record<ServiceName, boolean> = {
-    'SnakkaZ Business Analyser': false,
-    'SnakkaZ Secure Docs': false,
-    'AI Dash Hub': false,
-    'SnakkaZ Analytics Hub': false
-};
-
-// Track if we've already logged connection errors to avoid spamming the console
-const errorLogged: Record<ServiceName, boolean> = {
-    'SnakkaZ Business Analyser': false,
-    'SnakkaZ Secure Docs': false,
-    'AI Dash Hub': false,
-    'SnakkaZ Analytics Hub': false
-};
-
-// Environment detection
-const isDevelopment = import.meta.env.DEV;
-const isProd = import.meta.env.PROD;
-
-// Override console methods to filter unwanted messages
-const originalConsoleError = console.error;
-console.error = (...args) => {
-    // Filter out specific error messages
-    if (typeof args[0] === 'string' &&
-        (args[0].includes('Could not connect to SnakkaZ') ||
-            args[0].includes('cloudflareinsights'))) {
-        // Suppress these specific errors completely
-        return;
-    }
-    originalConsoleError.apply(console, args);
-};
+const connectionCache: ConnectionCache = {};
 
 /**
- * Initializes connections to all external services
- * This can be called on application startup
+ * Check if a service is available
+ * @param url The service URL to check
+ * @param timeout Timeout in milliseconds
+ * @returns Promise that resolves to true if service is online, false otherwise
  */
-export async function initializeExternalServices(): Promise<void> {
-    // Only attempt connections if explicitly enabled in development
-    if (isDevelopment && !import.meta.env.VITE_ENABLE_EXTERNAL_SERVICES) {
-        console.info('[Dev] External services disabled in development mode');
-        return;
+export async function checkServiceStatus(url: string, timeout = 3000): Promise<boolean> {
+    // Early return for development mode when testing locally
+    if (import.meta.env.DEV && !import.meta.env.VITE_CONNECT_EXTERNAL_SERVICES) {
+        const domain = new URL(url).hostname;
+        if (SUPPRESS_DOMAINS.has(domain)) {
+            return false;
+        }
     }
 
-    // Setup message interception for the specific error patterns
-    interceptErrorMessages([
-        'Could not connect to SnakkaZ',
-        'cloudflareinsights',
-        'Failed to load resource:'
-    ]);
-
-    // Attempt connecting to each service silently
-    const services = Object.keys(serviceStatus) as ServiceName[];
-    await Promise.all(
-        services.map(service =>
-            connectToService(service, SERVICE_URLS[service])
-                .catch(() => { }) // Silently catch any errors
-        )
-    );
-}
-
-/**
- * Sets up interception of error messages in the console
- * @param patterns Array of string patterns to intercept
- */
-function interceptErrorMessages(patterns: string[]): void {
-    if (typeof window === 'undefined') return;
-
-    // Create a proxy for the console to filter messages
-    const originalConsole = { ...console };
-
-    // Override error, warn, and log methods
-    ['error', 'warn', 'log'].forEach(method => {
-        console[method] = (...args) => {
-            // Check if any argument matches our patterns to filter
-            const shouldSuppress = args.some(arg =>
-                typeof arg === 'string' &&
-                patterns.some(pattern => arg.includes(pattern))
-            );
-
-            if (!shouldSuppress) {
-                originalConsole[method].apply(console, args);
-            }
-        };
-    });
-}
-
-/**
- * Attempts to connect to an external service with graceful error handling
- * @param serviceName The name of the service to connect to
- * @param serviceUrl The URL of the service endpoint
- * @param options Additional fetch options
- * @returns Promise resolving to the connection result
- */
-export async function connectToService(
-    serviceName: ServiceName,
-    serviceUrl: string,
-    options: RequestInit = {}
-): Promise<{ success: boolean; data?: any; error?: string }> {
-    // Skip actual connection in development unless explicitly enabled
-    if (isDevelopment && !import.meta.env.VITE_ENABLE_EXTERNAL_SERVICES) {
-        return { success: false, error: 'Service connections disabled in development' };
+    // Check cache first
+    if (connectionCache[url]) {
+        const cache = connectionCache[url];
+        // Cache valid for 5 minutes
+        if (Date.now() - cache.timestamp < 5 * 60 * 1000) {
+            return cache.status === 'online';
+        }
     }
 
     try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+        const timeoutId = setTimeout(() => controller.abort(), timeout);
 
-        const response = await fetch(serviceUrl, {
-            ...options,
+        const response = await fetch(`${url}/ping`, {
+            method: 'HEAD',
             signal: controller.signal,
-            headers: {
-                ...options.headers,
-                'Content-Type': 'application/json',
-            }
+            mode: 'no-cors',
+            cache: 'no-store',
         });
 
         clearTimeout(timeoutId);
 
-        if (!response.ok) {
-            throw new Error(`Service returned ${response.status}`);
-        }
-
-        // Try to parse as JSON, but don't fail if it's not valid JSON
-        let data;
-        try {
-            data = await response.json();
-        } catch {
-            data = { status: 'ok' };
-        }
-
-        serviceStatus[serviceName] = true;
-        errorLogged[serviceName] = false; // Reset error logged flag on success
-        return { success: true, data };
-    } catch (error) {
-        serviceStatus[serviceName] = false;
-
-        // Only log the error once to avoid console spam
-        if (!errorLogged[serviceName]) {
-            if (isDevelopment) {
-                console.debug(`[Dev] Service unavailable: ${serviceName} - this is normal in development.`);
-            }
-            errorLogged[serviceName] = true;
-        }
-
-        return {
-            success: false,
-            error: error instanceof Error ? error.message : 'Unknown connection error'
+        // Update cache
+        connectionCache[url] = {
+            status: 'online',
+            timestamp: Date.now()
         };
+
+        return true;
+    } catch (error) {
+        // Silent error handling in development mode
+        if (import.meta.env.DEV && !import.meta.env.VITE_DEBUG_NETWORK) {
+            // Don't log anything
+        } else {
+            console.debug(`Service connection failed: ${url}`);
+        }
+
+        // Update cache
+        connectionCache[url] = {
+            status: 'offline',
+            timestamp: Date.now()
+        };
+
+        return false;
     }
 }
 
 /**
- * Checks if a service is currently connected
- * @param serviceName The name of the service to check
- * @returns Whether the service is connected
+ * Initialize all external services and handle connections silently
+ * @returns Promise that resolves when all services have been checked
  */
-export function isServiceConnected(serviceName: ServiceName): boolean {
-    return serviceStatus[serviceName];
+export async function initializeExternalServices(): Promise<void> {
+    // List of all external services to initialize
+    const services = [
+        'https://dash.snakkaz.com',
+        'https://business.snakkaz.com',
+        'https://docs.snakkaz.com',
+        'https://analytics.snakkaz.com',
+    ];
+
+    // Check all services in parallel
+    await Promise.allSettled(services.map(service => checkServiceStatus(service)));
 }
 
 /**
- * Gets the status of all external services
- * @returns Record of service connection statuses
+ * Override the default fetch to handle certain errors silently
  */
-export function getAllServiceStatuses(): Record<ServiceName, boolean> {
-    return { ...serviceStatus };
+export function setupSilentFetch(): void {
+    // Save original fetch
+    const originalFetch = window.fetch;
+
+    // Override fetch to prevent certain errors from logging
+    window.fetch = async function (input, init) {
+        try {
+            return await originalFetch(input, init);
+        } catch (error) {
+            // If this is a request to a domain we want to suppress
+            const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+            const domain = new URL(url, window.location.origin).hostname;
+
+            if (SUPPRESS_DOMAINS.has(domain) && import.meta.env.DEV) {
+                // Return a mock response for development
+                return new Response(null, { status: 200 });
+            }
+
+            // Otherwise, let the error propagate
+            throw error;
+        }
+    };
 }
 
-// Initialize services on module load, but make it non-blocking
-if (typeof window !== 'undefined') {
-    // Use a small timeout to ensure this doesn't block initial rendering
-    setTimeout(() => {
-        initializeExternalServices().catch(() => { });
-    }, 2000);
+/**
+ * Setup global error handlers for resource loading errors
+ */
+export function setupErrorHandlers(): void {
+    if (typeof window === 'undefined') return;
+
+    // Suppress console errors for certain domains
+    const originalErrorHandler = window.onerror;
+    window.onerror = function (message, source, lineno, colno, error) {
+        if (typeof source === 'string') {
+            const suppressedDomains = Array.from(SUPPRESS_DOMAINS);
+            if (suppressedDomains.some(domain => source.includes(domain)) && import.meta.env.DEV) {
+                // Prevent error from showing in console
+                return true;
+            }
+        }
+
+        // Pass to original handler
+        if (originalErrorHandler) {
+            return originalErrorHandler.call(this, message, source, lineno, colno, error);
+        }
+        return false;
+    };
+
+    // Handle resource loading errors silently for certain domains
+    window.addEventListener('error', function (event) {
+        if (event.target && (event.target as HTMLElement).tagName === 'IMG') {
+            // Let the component's own error handler work
+            return;
+        }
+
+        if (typeof event.filename === 'string') {
+            const suppressedDomains = Array.from(SUPPRESS_DOMAINS);
+            if (suppressedDomains.some(domain => event.filename.includes(domain)) && import.meta.env.DEV) {
+                // Prevent error from showing in console
+                event.preventDefault();
+                event.stopPropagation();
+                return true;
+            }
+        }
+    }, true);
+}
+
+/**
+ * Initialize all error handling features
+ */
+export function initializeErrorHandling(): void {
+    setupSilentFetch();
+    setupErrorHandlers();
 }

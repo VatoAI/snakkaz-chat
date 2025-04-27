@@ -3,9 +3,12 @@ import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
 
-// Import our service connector and external scripts utilities
-import { initializeExternalServices } from './utils/serviceConnector';
+// Import our service connector and error handling utilities
+import { initializeExternalServices, initializeErrorHandling } from './utils/serviceConnector';
 import './utils/externalScripts'; // This auto-initializes
+
+// Initialize error handlers as early as possible to prevent console errors
+initializeErrorHandling();
 
 // PWA registration function
 async function registerServiceWorker() {
