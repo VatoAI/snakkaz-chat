@@ -1,4 +1,5 @@
 
+import { FormEvent } from 'react';
 import { MessageInput } from '@/components/MessageInput';
 import { useAIChat } from './ai/hooks/useAIChat';
 import { AIMessageList } from './ai/AIMessageList';
@@ -29,6 +30,11 @@ export const AIAgentChat = ({ currentUserId }: AIAgentChatProps) => {
     handleConfirmCommand,
     handleCancelCommand,
   } = useAIChat(currentUserId);
+
+  const onSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    await handleSubmit();
+  };
 
   return (
     <TooltipProvider>
@@ -76,7 +82,7 @@ export const AIAgentChat = ({ currentUserId }: AIAgentChatProps) => {
           <MessageInput
             newMessage={newMessage}
             setNewMessage={setNewMessage}
-            onSubmit={handleSubmit}
+            onSubmit={onSubmit}
             isLoading={isLoading}
             ttl={null}
             setTtl={() => {}}
