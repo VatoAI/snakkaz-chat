@@ -8,6 +8,10 @@ interface AuthContextType {
   session: Session | null;
   isLoading: boolean;
   signOut: () => Promise<void>;
+  autoLogoutTime: number | null;
+  setAutoLogoutTime: (minutes: number | null) => void;
+  usePinLock: boolean;
+  setUsePinLock: (usePinLock: boolean) => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -15,6 +19,10 @@ const AuthContext = createContext<AuthContextType>({
   session: null,
   isLoading: true,
   signOut: async () => {},
+  autoLogoutTime: null,
+  setAutoLogoutTime: () => {},
+  usePinLock: false,
+  setUsePinLock: () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -27,6 +35,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [autoLogoutTime, setAutoLogoutTime] = useState<number | null>(null);
+  const [usePinLock, setUsePinLock] = useState(false);
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -57,6 +67,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     session,
     isLoading,
     signOut,
+    autoLogoutTime,
+    setAutoLogoutTime,
+    usePinLock,
+    setUsePinLock,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

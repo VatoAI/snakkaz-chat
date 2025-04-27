@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -7,13 +6,18 @@ import { Input } from "@/components/ui/input";
 import { Users, Search, Check, X, Upload, Lock, Eye, EyeOff, MessageSquare, Clock } from "lucide-react";
 import { SecurityLevel } from "@/types/security";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { cn } from "@/lib/utils";
 import { GroupWritePermission, MessageTTLOption } from "@/types/group";
 import { SecurityLevelSelector } from "./SecurityLevelSelector";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+
+interface UserProfile {
+  username: string | null;
+  avatar_url: string | null;
+}
 
 interface GroupFormData {
   name: string;
@@ -41,7 +45,7 @@ interface GroupChatCreatorProps {
     memberWritePermissions?: Record<string, boolean>
   ) => void;
   currentUserId: string;
-  userProfiles: Record<string, {username: string | null, avatar_url: string | null}>;
+  userProfiles: Record<string, UserProfile>;
   friendsList: string[];
 }
 
@@ -418,7 +422,9 @@ export const GroupChatCreator = ({
                     {filteredFriends.map(friendId => {
                       const profile = userProfiles[friendId] || {};
                       const isSelected = selectedMembers.includes(friendId);
-                      const canWrite = memberWritePermissions[friendId];
+                      const canWrite = writePermissions === 'selected' ? 
+                        memberWritePermissions[friendId] || false : 
+                        writePermissions !== 'admin';
                       
                       return (
                         <div key={friendId} className="p-2 flex items-center justify-between">
@@ -437,23 +443,43 @@ export const GroupChatCreator = ({
                             </button>
                             <div className="flex items-center gap-2">
                               <Avatar className="h-8 w-8">
-                                <AvatarFallback className="bg-cyberdark-700 text-cybergold-400">
-                                  {(profile.username?.charAt(0) || '?').toUpperCase()}
-                                </AvatarFallback>
-                                {profile.avatar_url && (
-                                  <AvatarImage src={profile.avatar_url} alt={profile.username || ''} />
+                                {profile.avatar_url ? (
+                                  <AvatarImage src={profile.avatar_url} alt={profile.username || "Friend"} />
+                                ) : (
+                                  <AvatarFallback className="bg-cybergold-700 text-cybergold-300">
+                                    {profile.username?.[0] || "?"}
+                                  </AvatarFallback>
                                 )}
                               </Avatar>
-                              <span className="text-sm text-cybergold-300">{profile.username}</span>
+                              <span className="text-sm text-cybergold-300">{profile.username || friendId.slice(0, 8)}</span>
                             </div>
                           </div>
                           
-                          {isSelected && writePermissions === 'selected' && (
-                            <Switch
-                              checked={canWrite}
-                              onCheckedChange={() => toggleMemberWritePermission(friendId)}
-                              className="data-[state=checked]:bg-cybergold-600"
-                            />
+                          {isSelected && (
+                            <div className="flex items-center">
+                              {writePermissions === 'selected' && (
+                                <div 
+                                  className="flex items-center mr-2 cursor-pointer"
+                                  onClick={() => toggleMemberWritePermission(friendId)}
+                                >
+                                  <span className="text-xs text-cybergold-400 mr-1">Kan skrive</span>
+                                  <Switch 
+                                    checked={canWrite} 
+                                    className="data-[state=checked]:bg-cybergold-500"
+                                  />
+                                </div>
+                              )}
+                              
+                              <Button 
+                                type="button"
+                                size="sm"
+                                variant="ghost"
+                                className="h-6 w-6 p-1 text-cybergold-400 hover:text-cybergold-200"
+                                onClick={() => toggleFriendSelection(friendId)}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
                           )}
                         </div>
                       );

@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { Group, GroupWritePermission, MessageTTLOption } from "@/types/group";
 import { SecurityLevel } from "@/types/security";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useCallback, useState } from "react";
 
 export function useGroupCreation(
@@ -310,6 +310,8 @@ export function useGroupCreation(
           avatar_url: avatarUrl,
           write_permissions: writePermissions || 'all',
           default_message_ttl: defaultMessageTtl || null,
+          is_premium: false,
+          description: null,
           members: [
             {
               id: `temp-${Date.now()}`,
@@ -318,12 +320,6 @@ export function useGroupCreation(
               role: 'admin',
               joined_at: new Date().toISOString(),
               can_write: true,
-              profile: {
-                id: currentUserId,
-                username: 'You',
-                avatar_url: null,
-                full_name: null
-              }
             }
           ]
         };
@@ -349,6 +345,8 @@ export function useGroupCreation(
         security_level: completeGroup.security_level as SecurityLevel,
         write_permissions: (completeGroup.write_permissions || 'all') as GroupWritePermission,
         default_message_ttl: completeGroup.default_message_ttl as MessageTTLOption,
+        is_premium: completeGroup.is_premium || false,
+        description: completeGroup.description || null,
         members: completeGroup.members.map((m: any) => ({
           ...m,
           profile: m.profiles,

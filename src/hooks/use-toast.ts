@@ -1,14 +1,11 @@
 
-// src/hooks/use-toast.ts
 import {
   Toast,
-  ToastActionElement,
   ToastProps,
 } from "@/components/ui/toast";
 
 import {
   useToast as useToastOriginal,
-  type ToastActionElement as ToastActionElementOriginal,
 } from "@/components/ui/use-toast";
 
 type ExtendedToastProps = ToastProps & {
@@ -18,7 +15,7 @@ type ExtendedToastProps = ToastProps & {
 export interface ExtendedUseToastOptions extends Omit<ExtendedToastProps, "children"> {
   title?: React.ReactNode;
   description?: React.ReactNode;
-  action?: ToastActionElement;
+  action?: React.ReactNode;
   variant?: "default" | "destructive" | "warning";
 }
 
@@ -33,4 +30,5 @@ export const useToast = () => {
   };
 };
 
-export type { Toast, ToastActionElement };
+export { type Toast };
+export type ToastActionElement = React.ReactElement<unknown>;

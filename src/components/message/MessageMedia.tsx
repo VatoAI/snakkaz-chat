@@ -8,7 +8,7 @@ import { ImageMedia } from "./media/ImageMedia";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { FileMedia } from "./media/FileMedia";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { DecryptedMessage } from "@/types/message";
 
 interface MessageMediaProps {
@@ -130,7 +130,7 @@ export const MessageMedia = ({
     return (
       <VideoMedia 
         url={decryptedDataUrl}
-        mimeType={mediaType}
+        type={mediaType}  // Changed from mimeType to type
         ttl={mediaTtl}
         onExpired={handleMediaExpired}
       />
@@ -141,7 +141,7 @@ export const MessageMedia = ({
   return (
     <FileMedia 
       url={decryptedDataUrl}
-      fileType={mediaType}
+      type={mediaType}  // Changed from fileType to type
       filename={metadata?.filename || "secured-file"}
       ttl={mediaTtl}
       onExpired={handleMediaExpired}

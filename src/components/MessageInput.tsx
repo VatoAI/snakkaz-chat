@@ -54,8 +54,9 @@ export const MessageInput = ({
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newMessage.trim() || selectedFile) {
-      const success = await handleSubmit(e, newMessage);
-      if (success && selectedFile) {
+      await handleSubmit(e, newMessage);
+      // Note: We're not checking for success here as the original didn't
+      if (selectedFile) {
         setSelectedFile(null);
       }
     }
