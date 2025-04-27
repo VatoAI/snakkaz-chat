@@ -68,9 +68,9 @@ export const useAuth = () => {
     return isValid;
   };
 
-  const handleLogin = async (email: string, password: string, rememberMe: boolean = true) => {
+  const handleLogin = async (email: string, password: string, rememberMe: boolean = true): Promise<boolean> => {
     if (!validateForm(email, password)) {
-      return;
+      return false;
     }
 
     setIsLoading(true);
@@ -120,7 +120,7 @@ export const useAuth = () => {
             variant: "destructive",
           });
         }
-        return;
+        return false;
       }
 
       if (data.user) {
@@ -131,8 +131,12 @@ export const useAuth = () => {
           title: "Suksess!",
           description: "Du er nå logget inn.",
         });
-        navigate('/chat');
+
+        // Returner true for å indikere vellykket innlogging
+        return true;
       }
+
+      return false;
     } catch (error) {
       console.error('Unexpected login error:', error);
       toast({
@@ -140,6 +144,7 @@ export const useAuth = () => {
         description: "Kunne ikke logge inn. Prøv igjen senere.",
         variant: "destructive",
       });
+      return false;
     } finally {
       setIsLoading(false);
     }
