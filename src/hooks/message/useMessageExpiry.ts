@@ -1,3 +1,4 @@
+
 import { useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { DecryptedMessage } from "@/types/message";
@@ -8,12 +9,12 @@ export const useMessageExpiry = (
   setMessages: (updater: (prev: DecryptedMessage[]) => DecryptedMessage[]) => void
 ) => {
   const { toast } = useToast();
-  const { session } = useAuth();
+  const auth = useAuth();
   
   const handleMessageExpired = useCallback(async (messageId: string) => {
     try {
       // Check authentication before proceeding
-      if (!session?.user?.id) {
+      if (!auth.session?.user?.id) {
         console.warn("Cannot delete expired message: No authenticated user");
         // Still remove from UI even if we can't delete from database
         setMessages(prev => prev.filter(msg => msg.id !== messageId));
@@ -28,7 +29,7 @@ export const useMessageExpiry = (
       const { error: markError } = await supabase
         .rpc('mark_message_as_deleted', { 
           message_id: messageId, 
-          user_id: session.user.id 
+          user_id: auth.session.user.id 
         });
 
       // If marking as deleted succeeds, we're done
@@ -58,7 +59,7 @@ export const useMessageExpiry = (
       // Don't show toast to user for expired messages
       // It's confusing since the message is already gone from their view
     }
-  }, [setMessages, toast, session]);
+  }, [setMessages, toast, auth.session]);
 
   return { handleMessageExpired };
 };

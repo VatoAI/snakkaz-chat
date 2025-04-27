@@ -2,10 +2,11 @@
 import { useState, useEffect } from "react";
 import { Shield } from "lucide-react";
 
-interface VideoMediaProps {
+export interface VideoMediaProps {
   url: string;
   mimeType?: string;
   type?: string;
+  mediaType?: string;
   maxHeight?: number;
   ttl?: number | null;
   onExpired?: () => void;
@@ -15,6 +16,7 @@ export const VideoMedia = ({
   url,
   mimeType,
   type,
+  mediaType,
   maxHeight = 300,
   ttl,
   onExpired

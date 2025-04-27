@@ -1,24 +1,25 @@
 
 import * as React from "react";
-import {
-  ToastProps,
-  ToastActionElement,
-} from "@/components/ui/toast";
+import { ToastActionElement, ToastProps } from "@/components/ui/toast";
 
 // Define the extended types
 export interface ExtendedToastProps extends ToastProps {
+  id: string;
+  title?: React.ReactNode;
+  description?: React.ReactNode;
+  action?: ToastActionElement;
   variant?: "default" | "destructive" | "warning";
 }
+
+export type Toast = ExtendedToastProps;
 
 export interface ExtendedUseToastOptions {
   title?: React.ReactNode;
   description?: React.ReactNode;
-  action?: React.ReactNode;
+  action?: ToastActionElement;
   variant?: "default" | "destructive" | "warning";
   duration?: number;
 }
-
-export type Toast = ExtendedToastProps;
 
 // Create a unique ID
 const genId = () => Math.random().toString(36).substring(2, 9);
@@ -29,7 +30,7 @@ export const useToast = () => {
   const toast = React.useCallback(
     (props: ExtendedUseToastOptions) => {
       const id = genId();
-      const newToast = { id, ...props };
+      const newToast = { id, ...props } as Toast;
       
       setToasts((prevToasts) => [...prevToasts, newToast]);
       
@@ -53,5 +54,3 @@ export const useToast = () => {
     toasts,
   };
 };
-
-export type { ToastActionElement };

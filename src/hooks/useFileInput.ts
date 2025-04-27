@@ -1,11 +1,14 @@
 import { useRef, useState, useCallback } from "react";
 
+import { useRef } from "react";
+
 export interface UseFileInputOptions {
   onFilesSelected: (files: File[]) => void;
   accept?: string;
   multiple?: boolean;
   maxSizeInMB?: number;
   onError?: (error: string) => void;
+  setSelectedFile?: (file: File | null) => void;
 }
 
 export interface UseFileInputReturn {
@@ -39,6 +42,7 @@ export const useFileInput = ({
   maxSizeInMB = 50,
   onError
 }: UseFileInputOptions): UseFileInputReturn => {
+export const useFileInput = ({ onFilesSelected, accept, multiple, setSelectedFile }: UseFileInputOptions): UseFileInputReturn => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -98,6 +102,19 @@ export const useFileInput = ({
         break;
     }
   }, []);
+      onFilesSelected(fileArray);
+      
+      // If setSelectedFile is provided, set the first file
+      if (setSelectedFile && files.length > 0) {
+        setSelectedFile(fileArray[0]);
+      }
+    }
+  };
+
+  // Add the open function to programmatically trigger file selection
+  const open = () => {
+    fileInputRef.current?.click();
+  };
 
   // Enhanced drag and drop functionality
   const onDragOver = useCallback((e: React.DragEvent) => {

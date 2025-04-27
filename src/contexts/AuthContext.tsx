@@ -1,9 +1,9 @@
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useEffect, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
-interface AuthContextType {
+export interface AuthContextType {
   user: User | null;
   session: Session | null;
   isLoading: boolean;
@@ -14,7 +14,7 @@ interface AuthContextType {
   setUsePinLock: (usePinLock: boolean) => void;
 }
 
-const AuthContext = createContext<AuthContextType>({
+export const AuthContext = createContext<AuthContextType>({
   user: null,
   session: null,
   isLoading: true,
@@ -24,8 +24,6 @@ const AuthContext = createContext<AuthContextType>({
   usePinLock: false,
   setUsePinLock: () => {},
 });
-
-export const useAuth = () => useContext(AuthContext);
 
 interface AuthProviderProps {
   children: React.ReactNode;

@@ -45,16 +45,20 @@ export const MessageInput = ({
   const formRef = useRef<HTMLFormElement>(null);
   const [attachments, setAttachments] = useState<Array<{ url: string; type: string; name: string }>>([]);
   const { uploadFile, cancelUpload, uploadState } = useMediaUpload();
-  const { getRootProps, getInputProps, open } = useFileInput({
+  
+  // Define the file handling function
+  const handleFilesSelected = (files: File[]) => {
+    if (files.length > 0) {
+      setSelectedFile(files[0]);
+    }
+  };
+  
+  const fileInput = useFileInput({
     onFilesSelected: handleFilesSelected,
     accept: 'image/*,video/*,audio/*,application/pdf',
     multiple: true,
+    setSelectedFile
   });
-
-  function handleFilesSelected(files: File[]) {
-    // Implementation would go here
-    console.log("Files selected:", files);
-  }
 
   // Update textarea height based on content
   useEffect(() => {
@@ -84,12 +88,14 @@ export const MessageInput = ({
 
     if (newMessage.trim() || selectedFile) {
       if (handleSubmit) {
-        await handleSubmit(e, newMessage);
-      }
-
-      // Note: We're not checking for success here as the original didn't
-      if (selectedFile) {
-        setSelectedFile(null);
+        const success = await handleSubmit(e, newMessage);
+        
+        if (success) {
+          setNewMessage("");
+          if (selectedFile) {
+            setSelectedFile(null);
+          }
+        }
       }
     }
   };
