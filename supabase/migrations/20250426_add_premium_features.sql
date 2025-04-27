@@ -1,14 +1,16 @@
 /*
- * IMPORTANT: This file contains PostgreSQL syntax specifically for Supabase.
- * These SQL statements use PostgreSQL features that are not compatible with MS SQL Server.
- * Your IDE may show syntax errors if it's using MS SQL Server validation rules, but the SQL 
- * is correct for PostgreSQL and will run properly on your Supabase instance.
- * 
- * Common differences from MS SQL Server syntax include:
- * - "IF NOT EXISTS" syntax for table and column creation
+ * POSTGRESQL-SPESIFIKK KODE FOR SUPABASE
+ * --------------------------------------
+ * MERK: Dette er PostgreSQL-syntaks for Supabase, ikke MS SQL Server.
+ * Din IDE kan vise syntaksfeil hvis den bruker MS SQL Server-validering, 
+ * men dette er korrekt PostgreSQL-syntaks som vil kjøre på Supabase.
+ *
+ * Noen hovedforskjeller fra MS SQL Server:
+ * - "IF NOT EXISTS" ved oppretting av tabeller/kolonner
  * - RLS (Row Level Security) policies
- * - "auth.uid()" function for user identification
- * - Different constraint definition syntax
+ * - "auth.uid()" for brukeridentifikasjon
+ * - USING og WITH CHECK i policyer
+ * - Annen constraint-syntaks
  */
 
 -- Add is_premium column to profiles table
@@ -44,6 +46,7 @@ ADD COLUMN IF NOT EXISTS is_premium BOOLEAN DEFAULT false;
 -- Update profiles definition in the types
 DO $$
 BEGIN
+  -- PostgreSQL-spesifikk kode for å sjekke og legge til kolonner
   PERFORM check_and_add_columns('profiles', ARRAY['is_premium', 'subscription_type']);
   PERFORM check_and_add_columns('groups', ARRAY['description', 'is_premium']);
 EXCEPTION
@@ -51,7 +54,7 @@ EXCEPTION
     RAISE NOTICE 'Error updating tables: %', SQLERRM;
 END $$;
 
--- Add RLS policies for user_subscriptions
+-- PostgreSQL RLS (Row Level Security) policies for user_subscriptions
 CREATE POLICY "Users can view their own subscriptions"
 ON user_subscriptions FOR SELECT
 TO authenticated
@@ -67,6 +70,6 @@ ON user_subscriptions FOR INSERT
 TO authenticated
 WITH CHECK (auth.uid() = user_id);
 
--- Grant permissions on the new table
+-- Grant PostgreSQL permissions on the new table
 GRANT ALL ON user_subscriptions TO service_role;
 GRANT SELECT, INSERT, UPDATE ON user_subscriptions TO authenticated;

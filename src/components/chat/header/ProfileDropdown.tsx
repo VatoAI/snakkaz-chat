@@ -35,7 +35,7 @@ export function ProfileDropdown({
 }: ProfileDropdownProps) {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, signOut } = useAuth();
   const { isAdmin } = useIsAdmin(user?.id);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
@@ -75,7 +75,7 @@ export function ProfileDropdown({
 
         // Kort forsinkelse for å la brukeren se toast-meldingen før navigering
         setTimeout(() => {
-          if (logout) logout(); // Bruk AuthContext sin logout-funksjon hvis tilgjengelig
+          if (signOut) signOut(); // Bruk AuthContext sin signOut-funksjon hvis tilgjengelig
           navigate('/login', { replace: true });
         }, 800);
       }
