@@ -13,6 +13,8 @@ export const useMessageExpiry = (
   
   const handleMessageExpired = useCallback(async (messageId: string) => {
     try {
+      console.log("Handling message expiration for:", messageId);
+      
       // Check authentication before proceeding
       if (!auth.session?.user?.id) {
         console.warn("Cannot delete expired message: No authenticated user");
@@ -24,8 +26,29 @@ export const useMessageExpiry = (
       // Update the messages list optimistically (remove from UI first)
       setMessages(prev => prev.filter(msg => msg.id !== messageId));
       
-      // First try to mark as deleted instead of actual deletion
-      // This has better chance of succeeding with RLS policies
+      // First try to get info about any media that needs to be cleaned up
+      const { data: messageData, error: fetchError } = await supabase
+        .from('messages')
+        .select('media_url')
+        .eq('id', messageId)
+        .single();
+
+      if (fetchError) {
+        console.warn("Could not fetch message data for cleanup:", fetchError);
+      } else if (messageData?.media_url) {
+        // Try to clean up the media file
+        try {
+          console.log("Attempting to delete media file:", messageData.media_url);
+          await supabase.storage
+            .from('chat-media')
+            .remove([messageData.media_url]);
+        } catch (storageError) {
+          console.warn("Failed to delete media file:", storageError);
+          // Continue with message deletion anyway
+        }
+      }
+
+      // Try to mark as deleted instead of actual deletion
       const { error: markError } = await supabase
         .rpc('mark_message_as_deleted', { 
           message_id: messageId, 

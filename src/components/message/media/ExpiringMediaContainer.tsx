@@ -1,4 +1,5 @@
-import { useState, useEffect, ReactNode } from "react";
+
+import { useState, useEffect, ReactNode, useRef } from "react";
 import { Progress } from "@/components/ui/progress";
 import { IconClockHour4 } from "@tabler/icons-react";
 
@@ -15,10 +16,16 @@ export const ExpiringMediaContainer = ({
 }: ExpiringMediaContainerProps) => {
   const [timeLeft, setTimeLeft] = useState<number | null>(ttl);
   const [progress, setProgress] = useState(100);
+  const timerRef = useRef<number | null>(null);
   
   useEffect(() => {
     // If no TTL or TTL is 0, media doesn't expire
     if (!ttl) return;
+    
+    // Clear any existing timer
+    if (timerRef.current) {
+      window.clearInterval(timerRef.current);
+    }
     
     // Set initial time left
     setTimeLeft(ttl);
@@ -26,7 +33,7 @@ export const ExpiringMediaContainer = ({
     const startTime = Date.now();
     const expiryTime = startTime + ttl * 1000; // Convert to milliseconds
     
-    const timer = setInterval(() => {
+    timerRef.current = window.setInterval(() => {
       const now = Date.now();
       const remaining = Math.max(0, expiryTime - now);
       const remainingSeconds = Math.ceil(remaining / 1000);
@@ -40,19 +47,34 @@ export const ExpiringMediaContainer = ({
       
       // Check if expired
       if (remaining <= 0) {
-        clearInterval(timer);
+        if (timerRef.current) {
+          window.clearInterval(timerRef.current);
+          timerRef.current = null;
+        }
+        
         if (onExpired) {
+          console.log("Media expired, calling onExpired callback");
           onExpired();
         }
       }
     }, 1000);
     
-    return () => clearInterval(timer);
+    return () => {
+      if (timerRef.current) {
+        window.clearInterval(timerRef.current);
+      }
+    };
   }, [ttl, onExpired]);
   
   // Format time for display
   const formatTimeLeft = () => {
     if (!timeLeft) return null;
+    
+    if (timeLeft > 3600) {
+      const hours = Math.floor(timeLeft / 3600);
+      const minutes = Math.floor((timeLeft % 3600) / 60);
+      return `${hours}h ${minutes}m`;
+    }
     
     const minutes = Math.floor(timeLeft / 60);
     const seconds = timeLeft % 60;

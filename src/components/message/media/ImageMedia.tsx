@@ -1,7 +1,7 @@
+
 import { useState, useEffect, useRef } from "react";
 import { IconArrowsMaximize, IconExclamationCircle, IconRefresh } from "@tabler/icons-react";
 import { ExpiringMediaContainer } from "./ExpiringMediaContainer";
-import CryptoJS from "crypto-js";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ImageMediaProps {
@@ -9,7 +9,6 @@ interface ImageMediaProps {
   ttl?: number | null;
   onExpired?: () => void;
   retryDecryption?: () => void;
-  encryptionKey?: string;
   maxWidth?: number;
   maxHeight?: number;
 }
@@ -19,7 +18,6 @@ export const ImageMedia = ({
   ttl = null,
   onExpired,
   retryDecryption,
-  encryptionKey,
   maxWidth = 400,
   maxHeight = 300
 }: ImageMediaProps) => {
@@ -27,76 +25,45 @@ export const ImageMedia = ({
   const [hasError, setHasError] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
-  const [decryptedUrl, setDecryptedUrl] = useState<string | null>(null);
-  const [isDecrypting, setIsDecrypting] = useState(false);
   const imageRef = useRef<HTMLImageElement>(null);
   const isMobile = useIsMobile();
-
-  // Dekrypter bildet hvis det er kryptert
+  
+  // Load image and get dimensions
   useEffect(() => {
-    let revoked = false;
-    async function decryptImage() {
-      if (!encryptionKey) {
-        setDecryptedUrl(url);
-        return;
-      }
-      setIsDecrypting(true);
-      setHasError(false);
-      try {
-        const resp = await fetch(url);
-        const encryptedText = await resp.text();
-        const decrypted = CryptoJS.AES.decrypt(encryptedText, encryptionKey);
-        const wordArray = decrypted;
-        // Konverter til Uint8Array
-        const uint8 = new Uint8Array(wordArray.sigBytes);
-        for (let i = 0; i < wordArray.sigBytes; i++) {
-          uint8[i] = (wordArray.words[Math.floor(i / 4)] >> (24 - 8 * (i % 4))) & 0xff;
-        }
-        const blob = new Blob([uint8], { type: "image/webp" });
-        const objectUrl = URL.createObjectURL(blob);
-        if (!revoked) setDecryptedUrl(objectUrl);
-      } catch (e) {
-        setHasError(true);
-      } finally {
-        setIsDecrypting(false);
-      }
-    }
-    decryptImage();
-    return () => {
-      revoked = true;
-      if (decryptedUrl) URL.revokeObjectURL(decryptedUrl);
-    };
-    // eslint-disable-next-line
-  }, [url, encryptionKey]);
-
-  useEffect(() => {
-    if (!decryptedUrl) return;
+    if (!url) return;
+    
     const img = new window.Image();
-    img.src = decryptedUrl;
     img.onload = () => {
       setIsLoaded(true);
       setHasError(false);
       setDimensions({ width: img.width, height: img.height });
+      console.log(`Image loaded successfully: ${img.width}x${img.height}`);
     };
-    img.onerror = () => {
+    
+    img.onerror = (e) => {
+      console.error("Failed to load image:", e);
       setHasError(true);
       setIsLoaded(false);
     };
+    
+    // Set source after adding event handlers
+    img.src = url;
+    
     return () => {
       img.onload = null;
       img.onerror = null;
     };
-  }, [decryptedUrl]);
+  }, [url]);
 
   const handleImageClick = () => {
     setIsFullscreen(true);
-    // Lås scrolling på body når fullskjerm er aktiv
+    // Lock scrolling on body when fullscreen is active
     document.body.style.overflow = "hidden";
   };
 
   const handleCloseFullscreen = () => {
     setIsFullscreen(false);
-    // Gjenopprett scrolling
+    // Restore scrolling
     document.body.style.overflow = "";
   };
 
@@ -107,22 +74,22 @@ export const ImageMedia = ({
     }
   };
 
-  // Beregn optimal størrelse for bildet basert på dimensjonene
+  // Calculate optimal size for the image based on dimensions
   const calculateImageSize = () => {
     if (!dimensions.width || !dimensions.height) {
       return {};
     }
 
-    // Standardstørrelser
+    // Default sizes
     const defaultMaxWidth = isMobile ? Math.min(280, window.innerWidth - 60) : maxWidth;
     const defaultMaxHeight = maxHeight;
 
-    // Beregn skaleringsforhold
+    // Calculate scale ratio
     const widthRatio = defaultMaxWidth / dimensions.width;
     const heightRatio = defaultMaxHeight / dimensions.height;
     const ratio = Math.min(widthRatio, heightRatio, 1);
 
-    // Beregn skalerte dimensjoner
+    // Calculate scaled dimensions
     const scaledWidth = Math.floor(dimensions.width * ratio);
     const scaledHeight = Math.floor(dimensions.height * ratio);
 
@@ -153,22 +120,28 @@ export const ImageMedia = ({
   return (
     <ExpiringMediaContainer ttl={ttl} onExpired={onExpired}>
       <div className="mt-2 relative group">
-        {isDecrypting && (
-          <div className="flex items-center justify-center min-h-[120px] bg-cyberdark-800/30 rounded-lg">
-            <div className="h-7 w-7 border-2 border-t-transparent border-cyberblue-400 rounded-full animate-spin"></div>
-            <span className="ml-2 text-xs text-cyberblue-300">Dekrypterer bilde...</span>
+        {!isLoaded && (
+          <div className="rounded-lg bg-cyberdark-800/50 flex items-center justify-center"
+            style={{
+              height: 150,
+              width: isMobile ? '100%' : 300,
+              maxWidth: '100%'
+            }}>
+            <div className="h-5 w-5 border-2 border-t-transparent border-cyberblue-400 rounded-full animate-spin"></div>
           </div>
         )}
-        {decryptedUrl && (
+        
+        {url && (
           <div className="relative overflow-hidden rounded-lg shadow-lg"
             style={{
               backgroundColor: 'rgba(13, 17, 23, 0.3)',
               maxWidth: isMobile ? '100%' : maxWidth,
-              margin: '0 auto'
+              margin: '0 auto',
+              display: isLoaded ? 'block' : 'none'
             }}>
             <img
               ref={imageRef}
-              src={decryptedUrl}
+              src={url}
               alt="Encrypted message attachment"
               className={`object-contain rounded-lg ${isLoaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-200`}
               onClick={handleImageClick}
@@ -183,17 +156,6 @@ export const ImageMedia = ({
               onLoad={() => setIsLoaded(true)}
               loading="lazy"
             />
-          </div>
-        )}
-
-        {!isLoaded && !isDecrypting && (
-          <div className="rounded-lg bg-cyberdark-800/50 flex items-center justify-center"
-            style={{
-              height: 150,
-              width: isMobile ? '100%' : 300,
-              maxWidth: '100%'
-            }}>
-            <div className="h-5 w-5 border-2 border-t-transparent border-cyberblue-400 rounded-full animate-spin"></div>
           </div>
         )}
 
@@ -216,7 +178,7 @@ export const ImageMedia = ({
           >
             <div className="relative w-full h-full flex items-center justify-center">
               <img
-                src={decryptedUrl || url}
+                src={url}
                 alt="Fullscreen view"
                 className="max-w-[95vw] max-h-[90vh] object-contain"
                 style={{

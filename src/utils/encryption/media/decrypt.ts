@@ -18,25 +18,31 @@ export const decryptMedia = async ({
   try {
     console.log("Beginning media decryption");
     
-    // Convert IV string to Uint8Array - handle various formats
+    // Convert IV string to Uint8Array - standardize on Base64 format
     let ivArray: Uint8Array;
     
-    if (iv.includes(',')) {
-      // Comma-separated numbers
-      ivArray = new Uint8Array(iv.split(',').map(Number));
-    } else {
-      try {
-        // Might be base64 encoded
-        const arrayBuffer = base64ToArrayBuffer(iv);
-        ivArray = new Uint8Array(arrayBuffer);
-      } catch (e) {
-        // Fallback to direct string conversion
-        console.warn("Failed to parse IV as base64, trying direct conversion", e);
+    try {
+      // Try Base64 decode first (our standard format)
+      const ivString = atob(iv);
+      ivArray = new Uint8Array(ivString.split('').map(c => c.charCodeAt(0)));
+      console.log("IV parsed as Base64 successfully, length:", ivArray.length);
+    } catch (e) {
+      console.warn("Failed to parse IV as Base64, trying comma-separated format", e);
+      
+      if (iv.includes(',')) {
+        // Fallback to comma-separated numbers for backward compatibility
+        ivArray = new Uint8Array(iv.split(',').map(Number));
+        console.log("IV parsed as comma-separated values, length:", ivArray.length);
+      } else {
+        // Last resort: direct string conversion
+        console.warn("Trying direct string conversion for IV");
         ivArray = new Uint8Array(Array.from(iv).map(c => c.charCodeAt(0)));
       }
     }
     
-    console.log("IV parsed successfully, length:", ivArray.length);
+    if (ivArray.length !== 12) {
+      console.warn(`IV length is ${ivArray.length}, expected 12. This might cause decryption to fail.`);
+    }
     
     // Import the encryption key
     const key = await importEncryptionKey(encryptionKey);

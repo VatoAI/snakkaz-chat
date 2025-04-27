@@ -66,7 +66,9 @@ export const CommandHandler = ({ action, payload, onComplete }: CommandHandlerPr
           variant: "destructive",
         });
       } finally {
-        onComplete?.();
+        if (onComplete) {
+          onComplete();
+        }
       }
     };
 

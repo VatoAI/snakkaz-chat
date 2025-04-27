@@ -1,14 +1,12 @@
 
 import { useState, useEffect } from "react";
 import { IconFile, IconFileText, IconLock } from "@tabler/icons-react";
-import { decryptMediaMetadata } from "@/utils/encryption/media/metadata-extractor";
-import { useMediaDecryption } from "@/utils/encryption/media/useMediaDecryption";
+import { useToast } from "@/hooks/use-toast";
+import { useMediaDecryption } from "./media/useMediaDecryption";
+import { Button } from "@/components/ui/button";
 import { VideoMedia } from "./media/VideoMedia";
 import { ImageMedia } from "./media/ImageMedia";
-import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { FileMedia } from "./media/FileMedia";
-import { useToast } from "@/hooks/use-toast";
 import { DecryptedMessage } from "@/types/message";
 
 interface MessageMediaProps {
@@ -35,7 +33,6 @@ export const MessageMedia = ({
   onMediaExpired
 }: MessageMediaProps) => {
   const [decryptFailed, setDecryptFailed] = useState(false);
-  const [metadata, setMetadata] = useState<any>(null);
   const { toast } = useToast();
   
   // Extract values from message prop if provided
@@ -45,30 +42,13 @@ export const MessageMedia = ({
   const mediaTtl = message?.ephemeral_ttl || ttl;
   const messageIdToUse = message?.id || messageId;
   
+  // Use our media decryption hook
   const {
-    decryptedDataUrl,
+    decryptedURL,
     isLoading,
     error,
     retry
-  } = useMediaDecryption(mediaUrl, mediaKey);
-  
-  // Try to extract metadata
-  useEffect(() => {
-    const extractMetadata = async () => {
-      try {
-        if (mediaKey) {
-          const meta = await decryptMediaMetadata(mediaUrl, mediaKey);
-          if (meta) {
-            setMetadata(meta);
-          }
-        }
-      } catch (err) {
-        console.error("Failed to extract metadata:", err);
-      }
-    };
-    
-    extractMetadata();
-  }, [mediaUrl, mediaKey]);
+  } = useMediaDecryption(mediaUrl, mediaKey, message?.media_iv || '', mediaType);
 
   // Handle media expiration
   const handleMediaExpired = () => {
@@ -83,8 +63,18 @@ export const MessageMedia = ({
       onMediaExpired();
     }
   };
+
+  // Effect to check for decryption failures
+  useEffect(() => {
+    if (error) {
+      setDecryptFailed(true);
+      console.error('Media decryption failed:', error);
+    } else {
+      setDecryptFailed(false);
+    }
+  }, [error]);
   
-  if (isLoading || (!decryptedDataUrl && !error)) {
+  if (isLoading || (!decryptedURL && !error && !decryptFailed)) {
     return (
       <div className="flex flex-col items-center justify-center bg-cyberdark-800/50 rounded-lg p-4 min-h-[150px] w-full max-w-md mt-2 shadow-md">
         <IconLock className="text-cyberblue-400 mb-2" size={24} />
@@ -115,10 +105,10 @@ export const MessageMedia = ({
     );
   }
 
-  if (mediaType.startsWith("image/")) {
+  if (mediaType.startsWith("image/") && decryptedURL) {
     return (
       <ImageMedia 
-        url={decryptedDataUrl} 
+        url={decryptedURL} 
         ttl={mediaTtl}
         onExpired={handleMediaExpired}
         retryDecryption={retry}
@@ -126,11 +116,11 @@ export const MessageMedia = ({
     );
   }
   
-  if (mediaType.startsWith("video/")) {
+  if (mediaType.startsWith("video/") && decryptedURL) {
     return (
       <VideoMedia 
-        url={decryptedDataUrl}
-        type={mediaType}  // Changed from mimeType to type
+        url={decryptedURL}
+        type={mediaType}
         ttl={mediaTtl}
         onExpired={handleMediaExpired}
       />
@@ -138,13 +128,26 @@ export const MessageMedia = ({
   }
   
   // For files like PDF, documents, etc.
+  if (decryptedURL) {
+    return (
+      <FileMedia 
+        url={decryptedURL}
+        type={mediaType}
+        filename={messageIdToUse || "secure-file"}
+        ttl={mediaTtl}
+        onExpired={handleMediaExpired}
+      />
+    );
+  }
+  
+  // Fallback if we somehow get here
   return (
-    <FileMedia 
-      url={decryptedDataUrl}
-      type={mediaType}  // Changed from fileType to type
-      filename={metadata?.filename || "secured-file"}
-      ttl={mediaTtl}
-      onExpired={handleMediaExpired}
-    />
+    <div className="bg-cyberdark-800/80 p-4 rounded-md mt-2 flex items-center gap-2">
+      <IconFileText className="text-cyberblue-400" size={24} />
+      <div>
+        <p className="text-sm">Attachment</p>
+        <p className="text-xs text-cyberdark-300">Unable to display media</p>
+      </div>
+    </div>
   );
 };

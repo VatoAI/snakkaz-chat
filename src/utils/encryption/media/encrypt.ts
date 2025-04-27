@@ -21,9 +21,9 @@ export const encryptMedia = async (file: File) => {
     // Export encryption key as a string
     const encryptionKey = await exportEncryptionKey(key);
     
-    // Convert IV to string format
-    const ivString = Array.from(iv).join(',');
-    console.log("IV prepared:", ivString.substring(0, 20) + "...");
+    // Convert IV to base64 string format for consistent storage
+    const ivBase64 = btoa(String.fromCharCode.apply(null, iv));
+    console.log("IV prepared:", ivBase64.substring(0, 20) + "...");
 
     // Extract media metadata
     console.log("Extracting media metadata");
@@ -33,7 +33,7 @@ export const encryptMedia = async (file: File) => {
     return {
       encryptedData: encryptedBlob,
       encryptionKey,
-      iv: ivString,
+      iv: ivBase64,
       mediaType: file.type,
       metadata
     };
