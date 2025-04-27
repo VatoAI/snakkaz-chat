@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { DecryptedMessage } from "@/types/message";
 import { decryptMedia } from "@/utils/encryption/media";
 import { GLOBAL_E2EE_KEY, GLOBAL_E2EE_IV } from "@/utils/encryption/global-e2ee";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { arrayBufferToBase64 } from "@/utils/encryption/data-conversion";
 
 // Cache to avoid decrypting the same media multiple times
@@ -132,18 +132,29 @@ export const useMediaDecryption = (message: DecryptedMessage) => {
         console.log("Using global E2EE key for public message media");
         encryptionKey = GLOBAL_E2EE_KEY;
         
-        // Convert ArrayBuffer to Base64 string for iv
-        if (GLOBAL_E2EE_IV instanceof ArrayBuffer) {
-          iv = arrayBufferToBase64(GLOBAL_E2EE_IV);
-        } else if (GLOBAL_E2EE_IV instanceof Uint8Array) {
-          iv = arrayBufferToBase64(GLOBAL_E2EE_IV.buffer);
-        } else {
-          try {
-            iv = btoa(String.fromCharCode.apply(null, new Uint8Array(GLOBAL_E2EE_IV)));
-          } catch (e) {
-            console.error('Error converting IV:', e);
-            iv = undefined;
+        // Convert ArrayBuffer to Base64 string for iv using a safer approach
+        if (typeof GLOBAL_E2EE_IV === 'object') {
+          if (GLOBAL_E2EE_IV instanceof ArrayBuffer) {
+            iv = arrayBufferToBase64(GLOBAL_E2EE_IV);
+          } else if (GLOBAL_E2EE_IV instanceof Uint8Array) {
+            // Convert Uint8Array to ArrayBuffer safely
+            const arrayBuffer = GLOBAL_E2EE_IV.buffer.slice(
+              GLOBAL_E2EE_IV.byteOffset, 
+              GLOBAL_E2EE_IV.byteOffset + GLOBAL_E2EE_IV.byteLength
+            );
+            iv = arrayBufferToBase64(arrayBuffer);
+          } else {
+            // Handle other binary types
+            try {
+              const uint8Array = new Uint8Array(GLOBAL_E2EE_IV as any);
+              iv = arrayBufferToBase64(uint8Array.buffer);
+            } catch (e) {
+              console.error('Error converting IV:', e);
+              iv = undefined;
+            }
           }
+        } else {
+          iv = GLOBAL_E2EE_IV as string;
         }
       }
 
@@ -218,14 +229,25 @@ export const useMediaDecryption = (message: DecryptedMessage) => {
           try {
             console.log("Attempting fallback decryption with global keys");
             
-            // Convert global IV to proper format
+            // Convert global IV to proper format more safely
             let fallbackIv: string;
-            if (GLOBAL_E2EE_IV instanceof ArrayBuffer) {
-              fallbackIv = arrayBufferToBase64(GLOBAL_E2EE_IV);
-            } else if (GLOBAL_E2EE_IV instanceof Uint8Array) {
-              fallbackIv = arrayBufferToBase64(GLOBAL_E2EE_IV.buffer);
+            if (typeof GLOBAL_E2EE_IV === 'object') {
+              if (GLOBAL_E2EE_IV instanceof ArrayBuffer) {
+                fallbackIv = arrayBufferToBase64(GLOBAL_E2EE_IV);
+              } else if (GLOBAL_E2EE_IV instanceof Uint8Array) {
+                // Convert Uint8Array to ArrayBuffer safely
+                const arrayBuffer = GLOBAL_E2EE_IV.buffer.slice(
+                  GLOBAL_E2EE_IV.byteOffset, 
+                  GLOBAL_E2EE_IV.byteOffset + GLOBAL_E2EE_IV.byteLength
+                );
+                fallbackIv = arrayBufferToBase64(arrayBuffer);
+              } else {
+                // Fallback
+                const uint8Array = new Uint8Array(GLOBAL_E2EE_IV as any);
+                fallbackIv = arrayBufferToBase64(uint8Array.buffer);
+              }
             } else {
-              fallbackIv = btoa(String.fromCharCode.apply(null, new Uint8Array(GLOBAL_E2EE_IV)));
+              fallbackIv = GLOBAL_E2EE_IV as string;
             }
             
             const fallbackBlob = await decryptMedia({

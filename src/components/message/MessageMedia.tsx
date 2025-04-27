@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { IconFile, IconFileText, IconLock } from "@tabler/icons-react";
 import { decryptMediaMetadata } from "@/utils/encryption/media/metadata-extractor";
@@ -39,16 +40,16 @@ export const MessageMedia = ({
   
   // Extract values from message prop if provided
   const mediaUrl = message?.media_url || encryptedUrl || '';
-  const mediaKey = message?.media_key || encryptionKey || '';
+  const mediaKey = message?.media_encryption_key || encryptionKey || '';
   const mediaType = message?.media_type || fileType || '';
-  const mediaTtl = message?.ttl || ttl;
+  const mediaTtl = message?.ephemeral_ttl || ttl;
   const messageIdToUse = message?.id || messageId;
   
   const {
     decryptedDataUrl,
     isLoading,
     error,
-    retry: retryDecryption
+    retry
   } = useMediaDecryption(mediaUrl, mediaKey);
   
   // Try to extract metadata
@@ -104,7 +105,7 @@ export const MessageMedia = ({
           <Button 
             size="sm" 
             variant="outline"
-            onClick={() => retryDecryption()}
+            onClick={() => retry()}
             className="text-xs border-cyberblue-700 bg-cyberdark-900 hover:bg-cyberdark-800"
           >
             Retry Decryption
@@ -120,7 +121,7 @@ export const MessageMedia = ({
         url={decryptedDataUrl} 
         ttl={mediaTtl}
         onExpired={handleMediaExpired}
-        retryDecryption={retryDecryption}
+        retryDecryption={retry}
       />
     );
   }
@@ -129,7 +130,7 @@ export const MessageMedia = ({
     return (
       <VideoMedia 
         url={decryptedDataUrl}
-        mimeType={mediaType}
+        type={mediaType}  // Changed from mimeType to type
         ttl={mediaTtl}
         onExpired={handleMediaExpired}
       />
@@ -140,7 +141,7 @@ export const MessageMedia = ({
   return (
     <FileMedia 
       url={decryptedDataUrl}
-      fileType={mediaType}
+      type={mediaType}  // Changed from fileType to type
       filename={metadata?.filename || "secured-file"}
       ttl={mediaTtl}
       onExpired={handleMediaExpired}

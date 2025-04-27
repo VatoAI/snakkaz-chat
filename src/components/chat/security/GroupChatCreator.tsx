@@ -4,16 +4,20 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Users, Search, Check, X, Upload, Lock, Eye, EyeOff, MessageSquare, Clock } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { SecurityLevelSelector } from "./SecurityLevelSelector";
 import { SecurityLevel } from "@/types/security";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { cn } from "@/lib/utils";
 import { GroupWritePermission, MessageTTLOption } from "@/types/group";
+import { SecurityLevelSelector } from "./SecurityLevelSelector";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+
+interface UserProfile {
+  username: string | null;
+  avatar_url: string | null;
+}
 
 interface GroupFormData {
   name: string;
@@ -31,17 +35,17 @@ interface GroupChatCreatorProps {
   isOpen: boolean;
   onClose: () => void;
   onCreateGroup: (
-    name: string, 
-    members: string[], 
-    securityLevel: SecurityLevel, 
-    password?: string, 
+    name: string,
+    members: string[],
+    securityLevel: SecurityLevel,
+    password?: string,
     avatar?: File,
     writePermissions?: GroupWritePermission,
     defaultMessageTtl?: MessageTTLOption,
     memberWritePermissions?: Record<string, boolean>
   ) => void;
   currentUserId: string;
-  userProfiles: Record<string, {username: string | null, avatar_url: string | null}>;
+  userProfiles: Record<string, UserProfile>;
   friendsList: string[];
 }
 
@@ -60,19 +64,20 @@ export const GroupChatCreator = ({
   const [memberWritePermissions, setMemberWritePermissions] = useState<Record<string, boolean>>({});
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   const form = useForm<GroupFormData>({
     defaultValues: {
       name: "",
       security_level: "server_e2ee" as SecurityLevel,
       write_permissions: "all" as GroupWritePermission,
-      message_ttl: null,
+      message_ttl: 86400 as MessageTTLOption,
       encrypted: false,
       is_premium: false,
-      description: ""
+      description: "",
+      password: ""
     }
   });
-  
+
   const writePermissions = form.watch("write_permissions");
 
   const handleClose = () => {
@@ -83,36 +88,36 @@ export const GroupChatCreator = ({
     setMemberWritePermissions({});
     onClose();
   };
-  
+
   const handleCreateGroup = (data: GroupFormData) => {
     if (data.name.trim() === '') {
       return;
     }
-    
+
     onCreateGroup(
-      data.name, 
-      selectedMembers, 
-      data.security_level, 
+      data.name,
+      selectedMembers,
+      data.security_level,
       data.password && data.password.trim() !== "" ? data.password : undefined,
       data.avatar,
       data.write_permissions,
       data.message_ttl,
       memberWritePermissions
     );
-    
+
     handleClose();
   };
-  
+
   const toggleFriendSelection = (friendId: string) => {
     if (selectedMembers.includes(friendId)) {
       setSelectedMembers(selectedMembers.filter(id => id !== friendId));
-      
+
       const newPermissions = { ...memberWritePermissions };
       delete newPermissions[friendId];
       setMemberWritePermissions(newPermissions);
     } else {
       setSelectedMembers([...selectedMembers, friendId]);
-      
+
       setMemberWritePermissions(prev => ({
         ...prev,
         [friendId]: true
@@ -126,11 +131,11 @@ export const GroupChatCreator = ({
       [friendId]: !prev[friendId]
     }));
   };
-  
+
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      
+
       if (!file.type.startsWith('image/')) {
         toast({
           title: "Ugyldig filtype",
@@ -139,7 +144,7 @@ export const GroupChatCreator = ({
         });
         return;
       }
-      
+
       if (file.size > 5 * 1024 * 1024) {
         toast({
           title: "Filen er for stor",
@@ -148,9 +153,9 @@ export const GroupChatCreator = ({
         });
         return;
       }
-      
+
       form.setValue("avatar", file);
-      
+
       const reader = new FileReader();
       reader.onload = (event) => {
         setAvatarPreview(event.target?.result as string);
@@ -158,16 +163,16 @@ export const GroupChatCreator = ({
       reader.readAsDataURL(file);
     }
   };
-  
+
   const filteredFriends = friendsList.filter(friendId => {
-    const profile = userProfiles[friendId];
+    const profile = userProfiles[friendId] || {} as UserProfile;
     return (
-      profile && 
+      profile &&
       profile.username &&
       profile.username.toLowerCase().includes(searchQuery.toLowerCase())
     );
   });
-  
+
   const togglePasswordVisibility = () => {
     setPasswordVisible(!passwordVisible);
   };
@@ -182,7 +187,7 @@ export const GroupChatCreator = ({
       default: return "24 timer (standard)";
     }
   };
-  
+
   return (
     <Dialog open={isOpen} onOpenChange={open => !open && handleClose()}>
       <DialogContent className="bg-cyberdark-900 border border-cybergold-500/30 text-cybergold-200 sm:max-w-[550px] max-h-[90vh] overflow-y-auto">
@@ -192,7 +197,7 @@ export const GroupChatCreator = ({
             Legg til venner i gruppen og velg sikkerhetsnivå.
           </DialogDescription>
         </DialogHeader>
-        
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleCreateGroup)} className="space-y-4 pt-2">
             <div className="flex gap-4">
@@ -215,15 +220,15 @@ export const GroupChatCreator = ({
                     <Upload className="h-6 w-6 text-white" />
                   </div>
                 </div>
-                <input 
-                  type="file" 
-                  ref={fileInputRef} 
-                  accept="image/*" 
-                  onChange={handleAvatarChange} 
-                  className="hidden" 
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  accept="image/*"
+                  onChange={handleAvatarChange}
+                  className="hidden"
                 />
               </div>
-              
+
               <div className="flex-1 space-y-4">
                 <FormField
                   control={form.control}
@@ -241,7 +246,7 @@ export const GroupChatCreator = ({
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="password"
@@ -279,7 +284,7 @@ export const GroupChatCreator = ({
                 />
               </div>
             </div>
-            
+
             <FormField
               control={form.control}
               name="security_level"
@@ -289,7 +294,7 @@ export const GroupChatCreator = ({
                     Sikkerhetsnivå
                   </FormLabel>
                   <FormControl>
-                    <SecurityLevelSelector 
+                    <SecurityLevelSelector
                       value={field.value}
                       onChange={field.onChange}
                     />
@@ -322,25 +327,22 @@ export const GroupChatCreator = ({
                       <SelectItem value="selected">Utvalgte medlemmer kan skrive</SelectItem>
                     </SelectContent>
                   </Select>
-                  <FormDescription className="text-xs text-cybergold-500/70">
-                    Velg hvem som skal ha tillatelse til å skrive meldinger i gruppen
-                  </FormDescription>
                 </FormItem>
               )}
             />
 
             <FormField
               control={form.control}
-              name="default_message_ttl"
+              name="message_ttl"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-cybergold-200 flex items-center gap-2">
                     <Clock className="h-4 w-4" />
-                    Automatisk sletting av meldinger
+                    Standard meldingslevetid
                   </FormLabel>
                   <Select
-                    onValueChange={(val) => field.onChange(Number(val))}
-                    defaultValue={field.value?.toString() || "86400"}
+                    onValueChange={(value) => field.onChange(Number(value) as MessageTTLOption)}
+                    value={String(field.value)}
                   >
                     <FormControl>
                       <SelectTrigger className="bg-cyberdark-800 border-cybergold-500/30">
@@ -356,159 +358,155 @@ export const GroupChatCreator = ({
                     </SelectContent>
                   </Select>
                   <FormDescription className="text-xs text-cybergold-500/70">
-                    Meldinger i gruppen vil automatisk slettes etter valgt tid
+                    Meldinger slettes automatisk etter valgt tid
                   </FormDescription>
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="is_premium"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border border-cybergold-500/30 p-3 bg-cyberdark-800">
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border border-cybergold-500/30 p-4">
                   <div className="space-y-0.5">
                     <FormLabel className="text-cybergold-200">Premium gruppe</FormLabel>
-                    <FormDescription className="text-xs text-cybergold-500/70">
-                      Premium grupper får ekstra funksjoner og synlighet
+                    <FormDescription className="text-cybergold-500/70 text-xs">
+                      Gruppen vil ha tilgang til premium-funksjoner
                     </FormDescription>
                   </div>
                   <FormControl>
                     <Switch
                       checked={field.value}
                       onCheckedChange={field.onChange}
-                      className="data-[state=checked]:bg-cybergold-500"
+                      className="data-[state=checked]:bg-cybergold-600"
                     />
                   </FormControl>
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-cybergold-200">Gruppebeskrivelse</FormLabel>
+                  <FormLabel className="text-cybergold-200">Beskrivelse</FormLabel>
                   <FormControl>
-                    <Input
-                      placeholder="Skriv en beskrivelse av gruppen..."
-                      className="bg-cyberdark-800 border-cybergold-500/30"
+                    <textarea
+                      placeholder="Beskriv gruppen (valgfritt)..."
+                      className="w-full min-h-[80px] rounded-md border border-cybergold-500/30 bg-cyberdark-800 p-2 text-cybergold-200 resize-none"
                       {...field}
                     />
                   </FormControl>
-                  <FormDescription className="text-xs text-cybergold-500/70">
-                    En kort beskrivelse som vises til medlemmer og i søkeresultater
-                  </FormDescription>
                 </FormItem>
               )}
             />
-            
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <FormLabel className="text-cybergold-200">
-                  Legg til medlemmer (valgfritt)
-                </FormLabel>
-                <span className="text-xs text-cybergold-400">
-                  {selectedMembers.length} valgt
-                </span>
-              </div>
-              
-              <div className="relative mb-2">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-cyberdark-400" />
+
+            <div className="space-y-2">
+              <FormLabel className="text-cybergold-200">Legg til medlemmer</FormLabel>
+              <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-cybergold-500/70" />
                 <Input
+                  type="text"
+                  placeholder="Søk etter venner..."
+                  className="pl-9 bg-cyberdark-800 border-cybergold-500/30"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Søk etter venner..."
-                  className="pl-10 bg-cyberdark-800 border-cybergold-500/30"
                 />
               </div>
-              
-              <div className="h-48 overflow-y-auto border border-cybergold-500/20 rounded-md p-2 bg-cyberdark-800">
+
+              <div className="border rounded-md border-cybergold-500/20 max-h-[200px] overflow-y-auto">
                 {filteredFriends.length > 0 ? (
-                  filteredFriends.map(friendId => {
-                    const profile = userProfiles[friendId];
-                    const isSelected = selectedMembers.includes(friendId);
-                    const canWrite = memberWritePermissions[friendId];
-                    
-                    return (
-                      <div 
-                        key={friendId}
-                        className={cn(
-                          "flex items-center justify-between p-2 rounded-md cursor-pointer hover:bg-cyberdark-700",
-                          isSelected && "bg-cyberdark-700"
-                        )}
-                      >
-                        <div 
-                          className="flex items-center gap-2 flex-1"
-                          onClick={() => toggleFriendSelection(friendId)}
-                        >
-                          <Avatar className="h-8 w-8 border border-cybergold-500/20">
-                            {profile?.avatar_url ? (
-                              <AvatarImage 
-                                src={supabase.storage.from('avatars').getPublicUrl(profile.avatar_url).data.publicUrl} 
-                                alt={profile.username || 'User'} 
-                              />
-                            ) : (
-                              <AvatarFallback className="bg-cybergold-500/20 text-cybergold-300">
-                                {(profile.username || 'U')[0].toUpperCase()}
-                              </AvatarFallback>
-                            )}
-                          </Avatar>
-                          <span className="text-sm">{profile.username}</span>
-                        </div>
-                        
-                        <div className="flex items-center gap-3">
-                          {isSelected && writePermissions === 'selected' && (
-                            <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
-                              <Switch 
-                                checked={canWrite} 
-                                onCheckedChange={() => toggleMemberWritePermission(friendId)}
-                                className="data-[state=checked]:bg-green-500"
-                              />
-                              <span className="text-xs ml-1 whitespace-nowrap text-cybergold-400">
-                                {canWrite ? "Kan skrive" : "Kan ikke skrive"}
-                              </span>
+                  <div className="divide-y divide-cybergold-500/10">
+                    {filteredFriends.map(friendId => {
+                      const profile = userProfiles[friendId] || {} as UserProfile;
+                      const isSelected = selectedMembers.includes(friendId);
+                      const canWrite = writePermissions === 'selected' ?
+                        memberWritePermissions[friendId] || false :
+                        writePermissions !== 'admin';
+
+                      return (
+                        <div key={friendId} className="p-2 flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              className={cn(
+                                "flex items-center justify-center w-5 h-5 rounded-sm border",
+                                isSelected
+                                  ? "bg-cybergold-600 border-cybergold-600"
+                                  : "border-cybergold-500/30"
+                              )}
+                              onClick={() => toggleFriendSelection(friendId)}
+                            >
+                              {isSelected && <Check className="h-3 w-3 text-white" />}
+                            </button>
+                            <div className="flex items-center gap-2">
+                              <Avatar className="h-8 w-8">
+                                {profile && profile.avatar_url ? (
+                                  <AvatarImage src={profile.avatar_url} alt={profile.username || "Friend"} />
+                                ) : (
+                                  <AvatarFallback className="bg-cybergold-700 text-cybergold-300">
+                                    {profile && profile.username ? profile.username[0] : "?"}
+                                  </AvatarFallback>
+                                )}
+                              </Avatar>
+                              <span className="text-sm text-cybergold-300">{profile && profile.username || friendId.slice(0, 8)}</span>
+                            </div>
+                          </div>
+
+                          {isSelected && (
+                            <div className="flex items-center">
+                              {writePermissions === 'selected' && (
+                                <div
+                                  className="flex items-center mr-2 cursor-pointer"
+                                  onClick={() => toggleMemberWritePermission(friendId)}
+                                >
+                                  <span className="text-xs text-cybergold-400 mr-1">Kan skrive</span>
+                                  <Switch
+                                    checked={canWrite}
+                                    className="data-[state=checked]:bg-cybergold-500"
+                                  />
+                                </div>
+                              )}
+
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="ghost"
+                                className="h-6 w-6 p-1 text-cybergold-400 hover:text-cybergold-200"
+                                onClick={() => toggleFriendSelection(friendId)}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
                             </div>
                           )}
-                          <div onClick={() => toggleFriendSelection(friendId)}>
-                            {isSelected ? (
-                              <Check className="h-5 w-5 text-green-500" />
-                            ) : (
-                              <div className="h-5 w-5 rounded-full border border-cybergold-400/40" />
-                            )}
-                          </div>
                         </div>
-                      </div>
-                    );
-                  })
+                      );
+                    })}
+                  </div>
                 ) : (
-                  <div className="h-full flex flex-col items-center justify-center text-center p-4">
-                    <Users className="h-8 w-8 text-cyberdark-400 mb-2" />
-                    <p className="text-sm text-cyberdark-400">
-                      {searchQuery ? 'Ingen venner funnet' : 'Du har ingen venner å legge til ennå'}
-                    </p>
+                  <div className="p-4 text-center text-cybergold-500/70">
+                    {searchQuery ? "Ingen treff på søket" : "Ingen venner funnet"}
                   </div>
                 )}
               </div>
+
+              <div className="text-xs text-cybergold-500/70 flex items-center gap-1">
+                <Users className="h-3 w-3" />
+                <span>{selectedMembers.length} venner valgt</span>
+              </div>
             </div>
-            
-            <DialogFooter className="pt-2">
-              <Button 
-                type="button" 
-                variant="ghost" 
-                onClick={handleClose}
-                className="text-cybergold-400 hover:text-cybergold-300 hover:bg-cyberdark-800"
-              >
-                <X className="h-4 w-4 mr-2" />
+
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={handleClose} className="border-cybergold-500/30 text-cybergold-400">
                 Avbryt
               </Button>
-              <Button 
+              <Button
                 type="submit"
-                className="bg-cybergold-600 hover:bg-cybergold-700 text-black"
-                disabled={!form.getValues().name.trim()}
+                className="bg-cybergold-600 text-white hover:bg-cybergold-500"
+                disabled={!form.watch('name')}
               >
-                <Check className="h-4 w-4 mr-2" />
                 Opprett gruppe
               </Button>
             </DialogFooter>

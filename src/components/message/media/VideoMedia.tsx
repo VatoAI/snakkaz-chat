@@ -4,6 +4,7 @@ import { Shield } from "lucide-react";
 interface VideoMediaProps {
   url: string;
   mimeType?: string;
+  type?: string;
   maxHeight?: number;
   ttl?: number | null;
   onExpired?: () => void;
@@ -12,6 +13,7 @@ interface VideoMediaProps {
 export const VideoMedia = ({
   url,
   mimeType,
+  type,
   maxHeight = 300,
   ttl,
   onExpired

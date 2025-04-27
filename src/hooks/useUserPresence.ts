@@ -1,112 +1,149 @@
 
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { UserStatus } from '@/types/presence';
-import { useToast } from '@/hooks/use-toast';
-
-export type PresenceState = {
-  status: UserStatus;
-  lastSeen: string;
-}
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { UserPresence, UserStatus } from "@/types/presence";
+import { useToast } from "@/hooks/use-toast";
 
 export const useUserPresence = (userId: string | null) => {
-  const [presence, setPresence] = useState<Record<string, PresenceState>>({});
+  const [userPresence, setUserPresence] = useState<Record<string, UserPresence>>({});
+  const [currentStatus, setCurrentStatus] = useState<UserStatus>('online');
   const { toast } = useToast();
-
+  
   useEffect(() => {
     if (!userId) return;
-
-    const channel = supabase.channel('online-users')
-      .on('presence', { event: 'sync' }, () => {
-        const state = channel.presenceState<PresenceState>();
-        const typedState: Record<string, PresenceState> = {};
+    
+    // Initial fetch of user presence
+    const fetchPresence = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('user_presence')
+          .select('*');
+          
+        if (error) {
+          throw error;
+        }
         
-        // Convert to properly typed state
-        Object.keys(state).forEach(key => {
-          if (Array.isArray(state[key]) && state[key].length > 0) {
-            typedState[key] = {
-              status: state[key][0].status,
-              lastSeen: state[key][0].lastSeen
-            };
+        // Transform to Record<userId, UserPresence>
+        const presenceMap: Record<string, UserPresence> = {};
+        data.forEach((presence) => {
+          presenceMap[presence.user_id] = {
+            id: presence.id,
+            user_id: presence.user_id,
+            status: presence.status,
+            last_seen: presence.last_seen
+          };
+          
+          if (presence.user_id === userId) {
+            setCurrentStatus(presence.status);
           }
         });
         
-        setPresence(typedState);
-      })
-      .on('presence', { event: 'join' }, ({ key, newPresences }) => {
-        if (newPresences.length > 0) {
-          setPresence(prev => ({
-            ...prev,
-            [key]: {
-              status: newPresences[0].status,
-              lastSeen: newPresences[0].lastSeen
-            }
-          }));
-        }
-      })
-      .on('presence', { event: 'leave' }, ({ key }) => {
-        setPresence(prev => {
-          const newState = { ...prev };
-          delete newState[key];
-          return newState;
-        });
-      })
-      .subscribe(async (status) => {
-        if (status === 'SUBSCRIBED') {
-          await channel.track({
-            status: 'online' as UserStatus,
-            lastSeen: new Date().toISOString()
-          });
-        }
-      });
-
-    const interval = setInterval(async () => {
-      try {
-        await channel.track({
-          status: 'online' as UserStatus,
-          lastSeen: new Date().toISOString()
-        });
+        setUserPresence(presenceMap);
       } catch (error) {
-        console.error('Error updating presence:', error);
+        console.error("Error fetching user presence:", error);
       }
-    }, 30000);
-
+    };
+    
+    fetchPresence();
+    
+    // Subscribe to presence changes
+    const presenceSubscription = supabase
+      .channel('public:user_presence')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'user_presence' },
+        (payload) => {
+          const { eventType, new: newRecord, old: oldRecord } = payload;
+          
+          if (eventType === 'INSERT' || eventType === 'UPDATE') {
+            setUserPresence((prev) => ({
+              ...prev,
+              [newRecord.user_id]: {
+                id: newRecord.id,
+                user_id: newRecord.user_id,
+                status: newRecord.status,
+                last_seen: newRecord.last_seen
+              }
+            }));
+            
+            if (newRecord.user_id === userId) {
+              setCurrentStatus(newRecord.status);
+            }
+          } else if (eventType === 'DELETE') {
+            setUserPresence((prev) => {
+              const updated = { ...prev };
+              delete updated[oldRecord.user_id];
+              return updated;
+            });
+          }
+        }
+      )
+      .subscribe();
+      
+    // Update user's own presence
+    const updateUserPresence = async () => {
+      if (!userId) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('user_presence')
+          .upsert({ 
+            user_id: userId, 
+            status: 'online', 
+            last_seen: new Date().toISOString() 
+          })
+          .select()
+          .single();
+        
+        if (error) {
+          throw error;
+        }
+        
+        setCurrentStatus(data.status);
+      } catch (error) {
+        console.error("Error updating user presence:", error);
+      }
+    };
+    
+    // Update presence on load
+    updateUserPresence();
+    
+    // Set up interval to update presence
+    const interval = setInterval(updateUserPresence, 30000);
+    
+    // Clean up on unmount
     return () => {
       clearInterval(interval);
-      channel.unsubscribe();
+      presenceSubscription.unsubscribe();
     };
   }, [userId]);
-
-  const updateStatus = async (status: UserStatus) => {
+  
+  const handleStatusChange = async (status: UserStatus) => {
+    if (!userId) return;
+    
     try {
-      // Ensure status is a valid value
-      const validStatus: UserStatus = 
-        ['online', 'offline', 'busy', 'brb'].includes(status) 
-          ? status as UserStatus 
-          : 'online';
-          
       const { error } = await supabase
         .from('user_presence')
-        .upsert({
-          user_id: userId,
-          status: validStatus,
-          last_seen: new Date().toISOString()
+        .upsert({ 
+          user_id: userId, 
+          status, 
+          last_seen: new Date().toISOString() 
         });
-
-      if (error) throw error;
+      
+      if (error) {
+        throw error;
+      }
+      
+      setCurrentStatus(status);
     } catch (error) {
-      console.error('Error updating status:', error);
+      console.error("Error updating user status:", error);
       toast({
-        title: "Error",
-        description: "Failed to update status",
+        title: "Kunne ikke oppdatere status",
+        description: "Det oppstod en feil ved oppdatering av din status",
         variant: "destructive"
       });
     }
   };
-
-  return {
-    presence,
-    updateStatus,
-    isOnline: (uid: string) => !!presence[uid]
-  };
+  
+  return { userPresence, currentStatus, handleStatusChange };
 };

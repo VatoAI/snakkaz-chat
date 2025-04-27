@@ -24,7 +24,9 @@ export const FileInputs = ({
     cameraInputRef,
     documentInputRef,
     handleFileSelect
-  } = useFileInput({ setSelectedFile });
+  } = useFileInput({ 
+    setSelectedFile 
+  });
 
   const isDisabled = isLoading || isRecording;
 
