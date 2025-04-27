@@ -3,6 +3,17 @@
  * Provides graceful fallbacks when services are unavailable
  */
 
+// Define ServiceName type
+export type ServiceName = 'SnakkaZ Business Analyser' | 'SnakkaZ Secure Docs' | 'AI Dash Hub' | 'SnakkaZ Analytics Hub';
+
+// Service status tracking
+const serviceStatuses: Record<ServiceName, boolean> = {
+    'SnakkaZ Business Analyser': false,
+    'SnakkaZ Secure Docs': false,
+    'AI Dash Hub': false,
+    'SnakkaZ Analytics Hub': false
+};
+
 // Map of domains we want to suppress console errors for in development mode
 const SUPPRESS_DOMAINS = new Set([
     'dash.snakkaz.com',
@@ -21,6 +32,29 @@ type ConnectionCache = {
 };
 
 const connectionCache: ConnectionCache = {};
+
+/**
+ * Get all service statuses
+ * @returns Record of service names and their connection status
+ */
+export function getAllServiceStatuses(): Record<ServiceName, boolean> {
+    return { ...serviceStatuses };
+}
+
+/**
+ * Connect to a specific service
+ * @param service The service name to connect to
+ * @param url The service URL
+ * @returns Object with success status
+ */
+export async function connectToService(service: ServiceName, url: string): Promise<{ success: boolean }> {
+    const success = await checkServiceStatus(url);
+
+    // Update service status
+    serviceStatuses[service] = success;
+
+    return { success };
+}
 
 /**
  * Check if a service is available
