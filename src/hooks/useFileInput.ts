@@ -6,7 +6,25 @@ export interface UseFileInputOptions {
   multiple?: boolean;
 }
 
-export const useFileInput = ({ onFilesSelected, accept, multiple }: UseFileInputOptions) => {
+export interface UseFileInputReturn {
+  fileInputRef: React.MutableRefObject<HTMLInputElement | null>;
+  videoInputRef: React.MutableRefObject<HTMLInputElement | null>;
+  cameraInputRef: React.MutableRefObject<HTMLInputElement | null>;
+  documentInputRef: React.MutableRefObject<HTMLInputElement | null>;
+  handleFileSelect: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  open: () => void;
+  getRootProps: () => { onClick: (e: React.MouseEvent) => void };
+  getInputProps: () => {
+    ref: React.MutableRefObject<HTMLInputElement | null>;
+    type: string;
+    accept?: string;
+    multiple?: boolean;
+    onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+    style: { display: string };
+  };
+}
+
+export const useFileInput = ({ onFilesSelected, accept, multiple }: UseFileInputOptions): UseFileInputReturn => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
