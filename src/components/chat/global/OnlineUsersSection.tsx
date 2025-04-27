@@ -8,28 +8,30 @@ interface OnlineUsersSectionProps {
   currentUserId: string | null;
   onStartChat?: (userId: string) => void;
   className?: string;
+  isMobile?: boolean;
 }
 
 export const OnlineUsersSection = ({
   userPresence,
   currentUserId,
   onStartChat,
-  className
+  className,
+  isMobile = false
 }: OnlineUsersSectionProps) => {
   const [userProfiles, setUserProfiles] = useState<Record<string, { username: string | null, avatar_url: string | null }>>({});
   const [activeConversations, setActiveConversations] = useState<{ userId: string, lastMessage: string, timestamp: string }[]>([]);
-  
+
   // Fetch user profiles for all online users
   useEffect(() => {
     const fetchUserProfiles = async () => {
       const userIds = Object.keys(userPresence);
       if (userIds.length === 0) return;
-      
+
       const { data } = await supabase
         .from('profiles')
         .select('id, username, avatar_url')
         .in('id', userIds);
-        
+
       if (data) {
         const profiles: Record<string, { username: string | null, avatar_url: string | null }> = {};
         data.forEach(profile => {
@@ -41,12 +43,12 @@ export const OnlineUsersSection = ({
         setUserProfiles(profiles);
       }
     };
-    
+
     fetchUserProfiles();
   }, [userPresence]);
-  
+
   return (
-    <div className={className}>
+    <div className={`${className} ${isMobile ? 'mt-3' : ''}`}>
       <OnlineUsers
         userPresence={userPresence}
         currentUserId={currentUserId}
