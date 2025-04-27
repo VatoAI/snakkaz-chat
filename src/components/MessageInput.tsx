@@ -80,16 +80,16 @@ export const MessageInput: React.FC<MessageInputProps> = ({
 
   async function handleFilesSelected(files: FileList | null) {
     if (!files || files.length === 0) return;
-    
+
     const fileArray = Array.from(files);
-    
+
     for (const file of fileArray) {
       try {
         const result = await uploadFile(file, { ttlSeconds: ttl });
-        
+
         if (result) {
           const fileType = file.type.split('/')[0] || 'application';
-          
+
           setAttachments(prev => [
             ...prev,
             {
@@ -112,7 +112,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   function handleSendMessage() {
     // Allow sending either text OR attachments (or both)
     const hasContent = message.trim().length > 0 || attachments.length > 0;
-    
+
     if (hasContent && !uploadState.isUploading && !isLoading) {
       onSendMessage(
         message,
@@ -121,7 +121,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       );
       setMessage('');
       setAttachments([]);
-      
+
       if (inputRef.current) {
         inputRef.current.style.height = 'auto';
       }
@@ -136,14 +136,14 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   }
 
   // Calculate if send button should be enabled
-  const sendButtonEnabled = 
-    !disabled && 
-    ((message.trim() !== '' || attachments.length > 0)) && 
-    !uploadState.isUploading && 
+  const sendButtonEnabled =
+    !disabled &&
+    ((message.trim() !== '' || attachments.length > 0)) &&
+    !uploadState.isUploading &&
     !isLoading;
 
   return (
-    <div 
+    <div
       className={cn(
         "relative flex flex-col w-full border rounded-lg bg-background",
         className
@@ -153,7 +153,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         <div className="flex justify-between items-center bg-muted px-3 py-1.5 text-xs">
           <span>Redigerer melding</span>
           {onCancelEdit && (
-            <button 
+            <button
               onClick={onCancelEdit}
               className="text-muted-foreground hover:text-foreground transition-colors"
             >
@@ -162,12 +162,12 @@ export const MessageInput: React.FC<MessageInputProps> = ({
           )}
         </div>
       )}
-      
+
       {attachments.length > 0 && (
         <div className="flex flex-wrap gap-2 p-2 border-b">
           {attachments.map((attachment, index) => (
-            <div 
-              key={index} 
+            <div
+              key={index}
               className="relative group bg-muted rounded-md p-1 flex items-center gap-2"
             >
               <span className="text-xs max-w-[120px] truncate">{attachment.name}</span>
@@ -189,10 +189,10 @@ export const MessageInput: React.FC<MessageInputProps> = ({
             <span className="text-xs font-medium">
               Laster opp... ({uploadState.progress.toFixed(0)}%)
             </span>
-            <Button 
-              type="button" 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
               onClick={cancelUpload}
               className="h-6 px-2 text-xs"
             >
@@ -208,16 +208,26 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         <select
           value={ttl}
           onChange={e => setTtl(Number(e.target.value))}
-          className="text-xs rounded bg-muted px-2 py-1 border border-muted-foreground"
+          className="text-xs rounded bg-cyberdark-800 text-cyberblue-300 px-2 py-1 border border-cyberblue-600/30 focus:outline-none focus:ring-1 focus:ring-cyberblue-500"
+          style={{
+            boxShadow: '0 0 4px rgba(26, 157, 255, 0.3)',
+            appearance: 'menulist'
+          }}
         >
           {TTL_OPTIONS.map(opt => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
+            <option
+              key={opt.value}
+              value={opt.value}
+              className="bg-cyberdark-800 text-cyberblue-300"
+            >
+              {opt.label}
+            </option>
           ))}
         </select>
       </div>
 
       <div className="flex items-end p-2 gap-1.5">
-        <div 
+        <div
           {...getRootProps()}
           className="flex-shrink-0"
         >
