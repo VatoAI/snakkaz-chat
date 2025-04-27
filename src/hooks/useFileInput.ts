@@ -1,6 +1,5 @@
-import { useRef, useState, useCallback } from "react";
 
-import { useRef } from "react";
+import { useRef, useState, useCallback } from "react";
 
 export interface UseFileInputOptions {
   onFilesSelected: (files: File[]) => void;
@@ -40,9 +39,9 @@ export const useFileInput = ({
   accept, 
   multiple = false, 
   maxSizeInMB = 50,
-  onError
+  onError,
+  setSelectedFile
 }: UseFileInputOptions): UseFileInputReturn => {
-export const useFileInput = ({ onFilesSelected, accept, multiple, setSelectedFile }: UseFileInputOptions): UseFileInputReturn => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -77,12 +76,17 @@ export const useFileInput = ({ onFilesSelected, accept, multiple, setSelectedFil
       
       if (validFiles.length) {
         onFilesSelected(validFiles);
+        
+        // If setSelectedFile is provided, set the first file
+        if (setSelectedFile && validFiles.length > 0) {
+          setSelectedFile(validFiles[0]);
+        }
       }
       
       // Reset the input value to allow selecting the same file again
       event.target.value = '';
     }
-  }, [onFilesSelected, validateFiles]);
+  }, [onFilesSelected, validateFiles, setSelectedFile]);
 
   // Open function that can target different input types
   const open = useCallback((type: 'file' | 'video' | 'camera' | 'document' = 'file') => {
@@ -102,19 +106,6 @@ export const useFileInput = ({ onFilesSelected, accept, multiple, setSelectedFil
         break;
     }
   }, []);
-      onFilesSelected(fileArray);
-      
-      // If setSelectedFile is provided, set the first file
-      if (setSelectedFile && files.length > 0) {
-        setSelectedFile(fileArray[0]);
-      }
-    }
-  };
-
-  // Add the open function to programmatically trigger file selection
-  const open = () => {
-    fileInputRef.current?.click();
-  };
 
   // Enhanced drag and drop functionality
   const onDragOver = useCallback((e: React.DragEvent) => {
@@ -141,9 +132,14 @@ export const useFileInput = ({ onFilesSelected, accept, multiple, setSelectedFil
       
       if (validFiles.length) {
         onFilesSelected(validFiles);
+        
+        // If setSelectedFile is provided, set the first file
+        if (setSelectedFile && validFiles.length > 0) {
+          setSelectedFile(validFiles[0]);
+        }
       }
     }
-  }, [multiple, onFilesSelected, validateFiles]);
+  }, [multiple, onFilesSelected, validateFiles, setSelectedFile]);
 
   // Get props for the root element (drop zone)
   const getRootProps = useCallback(() => ({

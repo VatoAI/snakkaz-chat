@@ -1,4 +1,4 @@
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuItem } from "@/components/ui/dropdown-menu";
@@ -41,9 +41,7 @@ export function ProfileDropdown({
 
   const avatarUrl = userProfiles[currentUserId]?.avatar_url || null;
   const username = userProfiles[currentUserId]?.username || null;
-  // Don't show initials if avatar is set!
   const initials = avatarUrl ? null : (username?.slice(0, 2).toUpperCase() ?? "SZ");
-  // Log isAdmin for debug
   console.log("[ProfileDropdown] isAdmin:", isAdmin, "user id:", user?.id);
 
   const statusOptions = useMemo(() => [
@@ -66,16 +64,14 @@ export function ProfileDropdown({
           duration: 3000
         });
       } else {
-        // Vis en visuell toast som bekrefter utlogging
         toast({
           title: "Logger ut...",
           description: "Du blir nå logget ut av systemet",
           duration: 1500
         });
 
-        // Kort forsinkelse for å la brukeren se toast-meldingen før navigering
         setTimeout(() => {
-          if (signOut) signOut(); // Bruk AuthContext sin signOut-funksjon hvis tilgjengelig
+          if (signOut) signOut();
           navigate('/login', { replace: true });
         }, 800);
       }
@@ -168,7 +164,7 @@ export function ProfileDropdown({
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onSelect={(e) => {
-            e.preventDefault(); // Forhindre automatisk lukking av dropdown
+            e.preventDefault();
             handleLogout();
           }}
           disabled={isLoggingOut}
@@ -181,8 +177,8 @@ export function ProfileDropdown({
             </>
           ) : (
             <>
-              <LogOut className="mr-2 h-4 w-4 group-hover:text-cyberred-400 transition-colors" />
-              <span className="group-hover:text-cyberred-400 transition-colors">Logg ut</span>
+              <LogOut className="mr-2 h-4 w-4 group-hover:text-cybergred-400 transition-colors" />
+              <span className="group-hover:text-cybergred-400 transition-colors">Logg ut</span>
             </>
           )}
         </DropdownMenuItem>

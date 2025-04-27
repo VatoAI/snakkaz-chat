@@ -1,5 +1,5 @@
 
-// This file only re-exports from the hooks implementation
+// This file re-exports from the hooks implementation
 import * as React from "react";
 
 import type {

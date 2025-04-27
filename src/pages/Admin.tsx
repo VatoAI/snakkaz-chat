@@ -17,7 +17,7 @@ import { AdminErrorLogs } from "@/components/admin/AdminErrorLogs";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
 import ExternalServicesStatus from "@/components/admin/ExternalServicesStatus";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 
 const Admin = () => {

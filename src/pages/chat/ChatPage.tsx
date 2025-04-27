@@ -1,6 +1,6 @@
 
 import { useState, useCallback, useEffect } from "react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { useMessages } from "@/hooks/useMessages";
 import { useProfiles } from "@/hooks/useProfiles";
 import { usePresence } from "@/hooks/usePresence";

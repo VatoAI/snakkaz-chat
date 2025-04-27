@@ -13,7 +13,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { AIAssistantButton } from "./header/AIAssistantButton";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AdminButton } from "./AdminButton";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 
 interface ChatHeaderProps {

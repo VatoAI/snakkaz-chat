@@ -1,5 +1,7 @@
+
 import { useState, useEffect, useCallback } from 'react';
-import { decryptFile } from '@/utils/encryption/media';
+// Fix the import to use the correct path
+import { decryptFile } from '@/utils/encryption/media/decrypt';
 
 export interface MediaDecryptionResult {
   decryptedURL: string | null;
@@ -27,10 +29,10 @@ export const useMediaDecryption = (
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
-      const buffer = await extractArrayBuffer(response);
+      const arrayBuffer = await response.arrayBuffer();
       
       const decrypted = await decryptFile(
-        new Uint8Array(buffer),
+        new Uint8Array(arrayBuffer),
         encryptionKey,
         iv
       );
@@ -47,7 +49,7 @@ export const useMediaDecryption = (
       setError(error);
       setIsLoading(false);
     }
-  }, []);
+  }, [mimeType]);
 
   useEffect(() => {
     if (url && encryptionKey && iv) {
@@ -61,15 +63,4 @@ export const useMediaDecryption = (
   }, [url, encryptionKey, iv, decryptData, decryptedURL]);
 
   return { decryptedURL, isLoading, error };
-};
-
-// Extract ArrayBuffer from response safely
-const extractArrayBuffer = async (response: Response): Promise<ArrayBuffer> => {
-  try {
-    const arrayBuffer = await response.arrayBuffer();
-    return arrayBuffer;
-  } catch (error) {
-    console.error('Error extracting ArrayBuffer:', error);
-    throw error;
-  }
 };

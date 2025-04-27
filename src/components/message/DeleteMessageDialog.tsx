@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -14,7 +13,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { PinInput } from "@/components/pin/PinInput";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { usePinPreferences } from "@/hooks/usePinPreferences";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 
 interface DeleteMessageDialogProps {
   isOpen: boolean;

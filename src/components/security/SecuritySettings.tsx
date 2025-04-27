@@ -6,7 +6,7 @@ import { PinManagement } from "../pin/PinManagement";
 import { Separator } from "../ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Label } from "../ui/label";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 
 interface SecuritySettingsProps {
   userId: string | null;

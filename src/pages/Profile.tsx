@@ -10,7 +10,7 @@ import { useProfileValidation } from "@/components/profile/hooks/useProfileValid
 import { ProfileUsernameForm } from "@/components/profile/ProfileUsernameForm";
 import { ProfileShareSection } from "@/components/profile/ProfileShareSection";
 import { SecuritySettings } from "@/components/security/SecuritySettings";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { StatusDropdown } from "@/components/online-users/StatusDropdown";
 import { ProfileAvatar } from "@/components/profile/ProfileAvatar";
 import { usePresence } from "@/components/chat/hooks/usePresence";
@@ -375,7 +375,7 @@ const Profile = () => {
                         </Button>
                         <Button
                           variant="ghost"
-                          className="flex-1 text-cyberred-400 hover:bg-cyberred-900/10"
+                          className="flex-1 text-cybergred-400 hover:bg-cybergred-900/10"
                         >
                           Kanseller
                         </Button>
