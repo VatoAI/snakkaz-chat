@@ -26,8 +26,7 @@ export interface MessageInputProps {
 
 export const MessageInput = ({
   newMessage,
-  setNewMessage,  git add .
-  git commit
+  setNewMessage,
   handleSubmit,
   onSubmit,
   isLoading = false,
