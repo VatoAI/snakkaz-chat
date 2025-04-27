@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth"; 
 import { useToast } from "@/hooks/use-toast";
+import { useNotifications } from "@/contexts/NotificationContext";
 
 // Interface for upload state
 export interface UploadState {
@@ -23,6 +24,7 @@ export const useMediaUpload = () => {
   });
   const { toast } = useToast();
   const { session } = useAuth();
+  const { notify } = useNotifications();
 
   // Function to upload a file
   const uploadFile = useCallback(async (
@@ -67,6 +69,9 @@ export const useMediaUpload = () => {
     }));
 
     try {
+      // Log the upload attempt
+      console.log(`Uploading file: ${file.name} (${file.type}) to ${bucket}/${filePath}`);
+      
       // Upload the file to Supabase Storage
       const { data, error } = await supabase.storage
         .from(bucket)
@@ -82,14 +87,22 @@ export const useMediaUpload = () => {
         .from(bucket)
         .getPublicUrl(data.path);
 
+      const publicUrl = urlData.publicUrl;
+      console.log(`Upload successful. Public URL: ${publicUrl}`);
+      
       setUploadState(prev => ({
         ...prev,
         isUploading: false,
         progress: 100,
-        url: urlData.publicUrl
+        url: publicUrl
       }));
 
-      return urlData.publicUrl;
+      // Show notification of successful upload
+      notify("File uploaded", {
+        body: `Your file "${file.name}" has been uploaded successfully.`
+      });
+
+      return publicUrl;
     } catch (error) {
       console.error("Upload error:", error);
       setUploadState(prev => ({
@@ -106,7 +119,7 @@ export const useMediaUpload = () => {
 
       return null;
     }
-  }, [session, toast]);
+  }, [session, toast, notify]);
 
   // Function to cancel an upload
   const cancelUpload = useCallback(() => {

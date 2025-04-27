@@ -1,7 +1,8 @@
+
 import { UserStatus } from "@/types/presence";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from "react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { copyToClipboard } from "@/utils/clipboard";
 import { useNavigate } from "react-router-dom";
@@ -48,6 +49,22 @@ export const ChatHeader = ({
   const isMobile = useIsMobile();
   const { user } = useAuth();
   const { isAdmin } = useIsAdmin(user?.id);
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+  // Add window resize listener
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+  // Determine a more precise mobile value
+  const isVeryNarrowScreen = windowWidth < 360;
 
   return (
     <TooltipProvider>
@@ -74,7 +91,9 @@ export const ChatHeader = ({
             ${isMobile ? 'h-[60px] py-1.5' : 'h-[50px] py-1'} 
             px-2 sm:px-6 gap-1 sm:gap-2 relative z-10`
           }>
-            <div className="flex items-center gap-1 sm:gap-2">
+            {/* Left Section */}
+            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+              {/* Desktop logo */}
               {!isMobile && (
                 <div className="text-base font-semibold text-cybergold-100 flex items-center">
                   <span className="bg-gradient-to-r from-cyberblue-400 to-red-400 bg-clip-text text-transparent">
@@ -94,7 +113,8 @@ export const ChatHeader = ({
               )}
             </div>
 
-            <div className={`flex-1 flex justify-center ${isMobile ? 'mx-0.5 px-0.5' : 'mx-4'}`}>
+            {/* Center Section - navigation links */}
+            <div className={`flex-1 flex justify-center ${isVeryNarrowScreen ? 'mx-0.5 px-0' : (isMobile ? 'mx-0.5 px-0.5' : 'mx-4')}`}>
               <HeaderNavLinks
                 activeTab={activeTab}
                 onTabChange={onTabChange}
@@ -102,10 +122,11 @@ export const ChatHeader = ({
               />
             </div>
 
-            <div className="flex flex-row items-center gap-1 sm:gap-2">
-              {!isMobile && <NotificationSettings />}
+            {/* Right Section - actions and profile */}
+            <div className="flex flex-row items-center gap-1 sm:gap-2 flex-shrink-0">
+              {!isVeryNarrowScreen && !isMobile && <NotificationSettings />}
               <AIAssistantButton currentUserId={currentUserId || ''} />
-              {isAdmin && <AdminButton />}
+              {isAdmin && !isVeryNarrowScreen && <AdminButton />}
               {currentUserId && (
                 <ProfileDropdown
                   currentUserId={currentUserId}

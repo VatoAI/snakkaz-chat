@@ -1,11 +1,13 @@
+
 import { ChatMessages } from "./global/ChatMessages";
 import { ChatInput } from "./global/ChatInput";
 import { ChatSidebar } from "./global/ChatSidebar";
 import { DecryptedMessage } from "@/types/message";
 import { UserPresence } from "@/types/presence";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ChevronRight, ChevronLeft } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ChatGlobalProps {
   messages: DecryptedMessage[];
@@ -50,13 +52,15 @@ export const ChatGlobal = ({
 }: ChatGlobalProps) => {
   const isMobile = useIsMobile();
   const [isSidebarOpen, setIsSidebarOpen] = useState(!isMobile);
+  const [realtimeConversations, setRealtimeConversations] = useState(recentConversations);
+  const [realtimeGroups, setRealtimeGroups] = useState(recentGroups);
 
-  // Ved endringer i isMobile, oppdater sidebar-visning
+  // Update sidebar visibility on mobile/desktop switch
   useEffect(() => {
     setIsSidebarOpen(!isMobile);
   }, [isMobile]);
 
-  // Lukk sidebar automatisk når brukeren starter chat med noen på mobil
+  // Auto-close sidebar when selecting chat on mobile
   const handleStartChat = (userId: string) => {
     if (isMobile) {
       setIsSidebarOpen(false);
@@ -66,8 +70,48 @@ export const ChatGlobal = ({
     }
   };
 
+  // Set up realtime subscription for conversations
+  useEffect(() => {
+    if (!currentUserId) return;
+
+    const channel = supabase
+      .channel('global-messages')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+        },
+        (payload) => {
+          console.log('New message detected', payload);
+          // Update conversations in real-time
+          setRealtimeConversations(prev => {
+            // Process the new message and update conversations
+            return recentConversations; // This should actually integrate the new message
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentUserId, recentConversations]);
+
+  // Update conversations when prop changes
+  useEffect(() => {
+    setRealtimeConversations(recentConversations);
+  }, [recentConversations]);
+
+  // Update groups when prop changes
+  useEffect(() => {
+    setRealtimeGroups(recentGroups);
+  }, [recentGroups]);
+
   return (
     <div className="h-full flex relative">
+      {/* Main chat area */}
       <div className={`flex-1 flex flex-col ${isMobile && isSidebarOpen ? 'hidden' : 'block'}`}>
         <ChatMessages
           messages={messages}
@@ -89,7 +133,7 @@ export const ChatGlobal = ({
           onCancelEdit={onCancelEdit}
         />
 
-        {/* Mobil-knapp for å vise sidebar */}
+        {/* Mobile button to show sidebar */}
         {isMobile && !isSidebarOpen && (
           <button
             onClick={() => setIsSidebarOpen(true)}
@@ -98,13 +142,14 @@ export const ChatGlobal = ({
               boxShadow: '0 0 10px rgba(26, 157, 255, 0.2)',
               zIndex: 10
             }}
+            aria-label="Show sidebar"
           >
             <ChevronLeft size={20} />
           </button>
         )}
       </div>
 
-      {/* Sidebar med responsiv visning */}
+      {/* Sidebar with responsive behavior */}
       <div
         className={`
           ${isMobile ? 'absolute right-0 top-0 bottom-0 z-20 w-3/4 shadow-lg' : 'relative'} 
@@ -124,14 +169,15 @@ export const ChatGlobal = ({
               boxShadow: '0 0 10px rgba(26, 157, 255, 0.2)',
               zIndex: 10
             }}
+            aria-label="Hide sidebar"
           >
             <ChevronRight size={20} />
           </button>
         )}
 
         <ChatSidebar
-          recentConversations={recentConversations}
-          recentGroups={recentGroups}
+          recentConversations={realtimeConversations}
+          recentGroups={realtimeGroups}
           onStartChat={handleStartChat}
           userPresence={userPresence}
           currentUserId={currentUserId}

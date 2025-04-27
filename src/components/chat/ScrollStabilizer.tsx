@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useState } from 'react';
 
 interface ScrollStabilizerProps {
@@ -31,6 +32,7 @@ export const ScrollStabilizer: React.FC<ScrollStabilizerProps> = ({
   const [autoScrollEnabled, setAutoScrollEnabled] = useState(true);
   const scrollTimerRef = useRef<number | null>(null);
   const contentChangedRef = useRef(false);
+  const rafIdRef = useRef<number | null>(null);
 
   // Log debug info if debug is enabled
   const log = (message: string, ...args: any[]) => {
@@ -58,7 +60,18 @@ export const ScrollStabilizer: React.FC<ScrollStabilizerProps> = ({
       
       // Check if we're near the bottom
       const wasNearBottom = isNearBottomRef.current;
-      const isNearBottom = scrollHeight - scrollTop - clientHeight < threshold;
+      const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+      const isNearBottom = distanceFromBottom < threshold;
+      
+      log('Scroll position', { 
+        scrollTop, 
+        scrollHeight, 
+        clientHeight, 
+        distanceFromBottom,
+        isNearBottom,
+        wasNearBottom
+      });
+      
       isNearBottomRef.current = isNearBottom;
       
       // Update auto-scroll state based on user's scroll position
@@ -80,7 +93,8 @@ export const ScrollStabilizer: React.FC<ScrollStabilizerProps> = ({
       scrollTimerRef.current = window.setTimeout(() => {
         isUserScrollingRef.current = false;
         scrollTimerRef.current = null;
-      }, 150); // Slightly longer than animation frames
+        log('User scrolling timeout cleared');
+      }, 200); // Slightly longer than animation frames
     };
 
     container.addEventListener('scroll', handleScroll, { passive: true });
@@ -88,6 +102,9 @@ export const ScrollStabilizer: React.FC<ScrollStabilizerProps> = ({
       container.removeEventListener('scroll', handleScroll);
       if (scrollTimerRef.current) {
         window.clearTimeout(scrollTimerRef.current);
+      }
+      if (rafIdRef.current) {
+        window.cancelAnimationFrame(rafIdRef.current);
       }
     };
   }, [threshold, debug, onScrollStateChange]);
@@ -116,7 +133,15 @@ export const ScrollStabilizer: React.FC<ScrollStabilizerProps> = ({
   useEffect(() => {
     const handleContentMutation = () => {
       contentChangedRef.current = true;
-      requestAnimationFrame(() => {
+      
+      // Cancel existing animation frame if it exists
+      if (rafIdRef.current) {
+        window.cancelAnimationFrame(rafIdRef.current);
+      }
+      
+      // Schedule a new frame
+      rafIdRef.current = requestAnimationFrame(() => {
+        rafIdRef.current = null;
         const container = containerRef.current;
         if (!container) return;
         
@@ -165,6 +190,9 @@ export const ScrollStabilizer: React.FC<ScrollStabilizerProps> = ({
     
     return () => {
       observer.disconnect();
+      if (rafIdRef.current) {
+        window.cancelAnimationFrame(rafIdRef.current);
+      }
     };
   }, [autoScrollEnabled, scrollToBottom, debug]);
 
@@ -174,7 +202,15 @@ export const ScrollStabilizer: React.FC<ScrollStabilizerProps> = ({
       const container = containerRef.current;
       if (container) {
         log('Explicit scroll to bottom requested');
-        requestAnimationFrame(() => {
+        
+        // Cancel existing animation frame if it exists
+        if (rafIdRef.current) {
+          window.cancelAnimationFrame(rafIdRef.current);
+        }
+        
+        // Schedule a new frame
+        rafIdRef.current = requestAnimationFrame(() => {
+          rafIdRef.current = null;
           container.scrollTop = container.scrollHeight;
           lastScrollHeightRef.current = container.scrollHeight;
           lastScrollTopRef.current = container.scrollTop;
@@ -195,7 +231,14 @@ export const ScrollStabilizer: React.FC<ScrollStabilizerProps> = ({
       
       log('Recomputing scroll position due to key change', { recomputeKey });
       
-      requestAnimationFrame(() => {
+      // Cancel existing animation frame if it exists
+      if (rafIdRef.current) {
+        window.cancelAnimationFrame(rafIdRef.current);
+      }
+      
+      // Schedule a new frame
+      rafIdRef.current = requestAnimationFrame(() => {
+        rafIdRef.current = null;
         if (autoScrollEnabled || scrollToBottom) {
           container.scrollTop = container.scrollHeight;
           

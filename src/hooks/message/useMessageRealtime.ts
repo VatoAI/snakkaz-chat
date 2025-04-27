@@ -1,5 +1,5 @@
 
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { DecryptedMessage } from "@/types/message";
 import { decryptMessage } from "@/utils/encryption";
@@ -10,10 +10,19 @@ export const useMessageRealtime = (
   receiverId?: string,
   groupId?: string
 ) => {
+  const activeChannelRef = useRef<any>(null);
+
   const setupRealtimeSubscription = useCallback(() => {
     if (!userId) {
       console.log("User not authenticated");
       return () => {};
+    }
+
+    // Clean up any existing subscription
+    if (activeChannelRef.current) {
+      console.log("Cleaning up existing subscription");
+      supabase.removeChannel(activeChannelRef.current);
+      activeChannelRef.current = null;
     }
 
     let channelFilter = "*";
@@ -61,8 +70,6 @@ export const useMessageRealtime = (
             if (newMessage.receiver_id && newMessage.receiver_id !== userId) {
               return;
             }
-
-            // For group messages, make sure user is in the group (could be implemented further)
             
             const content = await decryptMessage(
               newMessage.encrypted_content,
@@ -87,7 +94,10 @@ export const useMessageRealtime = (
               receiver_id: newMessage.receiver_id,
               group_id: newMessage.group_id || null,
               read_at: newMessage.read_at,
-              is_delivered: newMessage.is_delivered || false
+              is_delivered: newMessage.is_delivered || false,
+              media_encryption_key: newMessage.media_encryption_key,
+              media_iv: newMessage.media_iv,
+              media_metadata: newMessage.media_metadata,
             };
 
             setMessages(prevMessages => [...prevMessages, decryptedMessage]);
@@ -158,11 +168,11 @@ export const useMessageRealtime = (
                         : m
                     )
                   );
-                }).catch(error => {
-                  console.error("Error decrypting updated message:", error);
+                }).catch(err => {
+                  console.error("Error decrypting updated message:", err);
                 });
                 
-                // Return original message for now; it will be updated after decryption
+                // Return the original message for now
                 return originalMsg;
               }
               return msg;
@@ -170,16 +180,41 @@ export const useMessageRealtime = (
           );
         }
       )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'messages',
+          filter: channelFilter
+        },
+        async (payload) => {
+          console.log("Realtime DELETE event received:", payload);
+          const deletedMessage = payload.old as any;
+          
+          // Remove the deleted message from the state
+          setMessages(prevMessages => 
+            prevMessages.filter(msg => msg.id !== deletedMessage.id)
+          );
+        }
+      )
       .subscribe();
+
+    // Save the channel reference for cleanup
+    activeChannelRef.current = channel;
 
     console.log("Realtime subscription set up successfully");
 
-    // Return cleanup function
+    // Return a cleanup function
     return () => {
       console.log("Cleaning up realtime subscription");
       supabase.removeChannel(channel);
+      activeChannelRef.current = null;
     };
-  }, [userId, setMessages, receiverId, groupId]);
+  }, [userId, receiverId, groupId, setMessages]);
 
-  return { setupRealtimeSubscription };
+  return { 
+    setupRealtimeSubscription,
+    activeChannel: activeChannelRef.current 
+  };
 };

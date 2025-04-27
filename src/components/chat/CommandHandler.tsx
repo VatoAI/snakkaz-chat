@@ -1,6 +1,8 @@
 
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { useNotifications } from "@/contexts/NotificationContext";
+import { useEffect } from "react";
 
 interface CommandHandlerProps {
   action: string;
@@ -11,55 +13,66 @@ interface CommandHandlerProps {
 export const CommandHandler = ({ action, payload, onComplete }: CommandHandlerProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { notify } = useNotifications();
 
-  const executeCommand = async () => {
-    try {
-      switch (action) {
-        case 'changeStatus':
-          // Implementere status endring
-          toast({
-            title: "Status endret",
-            description: `Din status er nå satt til: ${payload.status}`,
+  useEffect(() => {
+    const executeCommand = async () => {
+      try {
+        console.log(`Executing command: ${action}`, payload);
+        switch (action) {
+          case 'changeStatus':
+            // Implement status change
+            toast({
+              title: "Status endret",
+              description: `Din status er nå satt til: ${payload.status}`,
+            });
+            break;
+
+          case 'notifications':
+            // Navigate to notification settings
+            navigate('/profil?tab=notifications');
+            break;
+
+          case 'theme':
+            // Change app theme
+            document.documentElement.classList.toggle('dark');
+            toast({
+              title: "Tema endret",
+              description: "App-temaet er oppdatert",
+            });
+            break;
+
+          case 'logout':
+            // Perform logout
+            navigate('/logout');
+            break;
+
+          default:
+            console.warn('Unknown command:', action);
+        }
+        
+        // Notify via system notification if appropriate
+        if (action === 'changeStatus' || action === 'theme') {
+          notify("Command executed", {
+            body: `Command "${action}" was successfully executed`
           });
-          break;
-
-        case 'notifications':
-          // Navigere til varslingsinnstillinger
-          navigate('/profil?tab=notifications');
-          break;
-
-        case 'theme':
-          // Endre app-tema
-          document.documentElement.classList.toggle('dark');
-          toast({
-            title: "Tema endret",
-            description: "App-temaet er oppdatert",
-          });
-          break;
-
-        case 'logout':
-          // Utføre utlogging
-          navigate('/logout');
-          break;
-
-        default:
-          console.warn('Unknown command:', action);
+        }
+        
+      } catch (error) {
+        console.error('Error executing command:', error);
+        toast({
+          title: "Feil",
+          description: "Kunne ikke utføre kommandoen",
+          variant: "destructive",
+        });
+      } finally {
+        onComplete?.();
       }
-    } catch (error) {
-      console.error('Error executing command:', error);
-      toast({
-        title: "Feil",
-        description: "Kunne ikke utføre kommandoen",
-        variant: "destructive",
-      });
-    } finally {
-      onComplete?.();
-    }
-  };
+    };
 
-  // Kjør kommandoen når komponenten monteres
-  executeCommand();
+    executeCommand();
+  }, [action, payload, toast, navigate, notify, onComplete]);
 
-  // Denne komponenten trenger ikke å rendre noe
+  // This component doesn't need to render anything
   return null;
 };

@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import { DecryptedMessage } from "@/types/message";
 import { decryptMedia } from "@/utils/encryption/media";
 import { GLOBAL_E2EE_KEY, GLOBAL_E2EE_IV } from "@/utils/encryption/global-e2ee";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { arrayBufferToBase64 } from "@/utils/encryption/data-conversion";
 
 export const useMediaDecryption = (mediaUrl: string, encryptionKey?: string) => {
@@ -23,8 +23,9 @@ export const useMediaDecryption = (mediaUrl: string, encryptionKey?: string) => 
   const retry = useCallback(() => {
     setDecryptAttempts(prev => prev + 1);
     setError(null);
+    console.log("Retrying media decryption attempt #", decryptAttempts + 1);
     // This will trigger the useEffect below
-  }, []);
+  }, [decryptAttempts]);
 
   const decrypt = useCallback(async () => {
     if (!mediaUrl) {
@@ -51,11 +52,21 @@ export const useMediaDecryption = (mediaUrl: string, encryptionKey?: string) => 
         console.log("Using global E2EE key for media");
         key = GLOBAL_E2EE_KEY;
         
-        // Convert ArrayBuffer to Base64 string for iv
+        // Handle IV conversion properly
         if (GLOBAL_E2EE_IV instanceof ArrayBuffer) {
+          // Convert ArrayBuffer to Base64 string
           iv = arrayBufferToBase64(GLOBAL_E2EE_IV);
         } else if (GLOBAL_E2EE_IV) {
-          iv = btoa(String.fromCharCode.apply(null, new Uint8Array(GLOBAL_E2EE_IV)));
+          try {
+            // Handle array-like representation
+            iv = typeof GLOBAL_E2EE_IV === 'string' 
+              ? GLOBAL_E2EE_IV 
+              : Array.from(new Uint8Array(GLOBAL_E2EE_IV))
+                  .join(',');
+          } catch (ivError) {
+            console.error("Error converting IV:", ivError);
+            iv = '';
+          }
         }
       }
 
@@ -101,7 +112,7 @@ export const useMediaDecryption = (mediaUrl: string, encryptionKey?: string) => 
       if (decryptAttempts === 0) {
         toast({
           title: "Media decryption failed",
-          description: "There was an issue displaying the media",
+          description: "There was an issue displaying the media. Retrying...",
           variant: "destructive",
         });
       }

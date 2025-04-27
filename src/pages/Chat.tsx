@@ -1,8 +1,13 @@
 
 import ChatPage from "./chat/ChatPage";
+import { NotificationProvider } from "@/contexts/NotificationContext";
 
 const Chat = () => {
-  return <ChatPage />;
+  return (
+    <NotificationProvider>
+      <ChatPage />
+    </NotificationProvider>
+  );
 };
 
 export default Chat;
