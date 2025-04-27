@@ -1,11 +1,12 @@
-
 import { useRef } from "react";
 
 export interface UseFileInputOptions {
-  setSelectedFile: (file: File | null) => void;
+  onFilesSelected: (files: File[]) => void;
+  accept?: string;
+  multiple?: boolean;
 }
 
-export const useFileInput = ({ setSelectedFile }: UseFileInputOptions) => {
+export const useFileInput = ({ onFilesSelected, accept, multiple }: UseFileInputOptions) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -14,15 +15,41 @@ export const useFileInput = ({ setSelectedFile }: UseFileInputOptions) => {
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files && files.length > 0) {
-      setSelectedFile(files[0]);
+      const fileArray = Array.from(files);
+      onFilesSelected(fileArray);
     }
   };
+
+  // Add the open function to programmatically trigger file selection
+  const open = () => {
+    fileInputRef.current?.click();
+  };
+
+  // Add getRootProps and getInputProps for drag-n-drop functionality
+  const getRootProps = () => ({
+    onClick: (e: React.MouseEvent) => {
+      e.preventDefault();
+      open();
+    }
+  });
+
+  const getInputProps = () => ({
+    ref: fileInputRef,
+    type: 'file',
+    accept,
+    multiple,
+    onChange: handleFileSelect,
+    style: { display: 'none' }
+  });
 
   return {
     fileInputRef,
     videoInputRef,
     cameraInputRef,
     documentInputRef,
-    handleFileSelect
+    handleFileSelect,
+    open,
+    getRootProps,
+    getInputProps
   };
 };
