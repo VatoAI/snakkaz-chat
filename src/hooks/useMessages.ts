@@ -1,4 +1,3 @@
-
 import { useMessageState } from "./message/useMessageState";
 import { useMessageFetch } from "./message/useMessageFetch";
 import { useMessageRealtime } from "./message/useMessageRealtime";
@@ -22,7 +21,7 @@ export const useMessages = (userId: string | null, receiverId?: string, groupId?
     setTtl,
     toast
   } = useMessageState();
-  
+
   // Add directMessages state
   const [directMessages, setDirectMessages] = useState<DecryptedMessage[]>([]);
 
@@ -33,40 +32,45 @@ export const useMessages = (userId: string | null, receiverId?: string, groupId?
     }
   }, [ttl, setTtl]);
 
-  // Fetch messages from the server
-  const { fetchMessages } = useMessageFetch(userId, setMessages, toast, receiverId, groupId);
-  
+  // Fetch messages from the server with pagination
+  const {
+    fetchMessages,
+    loadMoreMessages,
+    hasMoreMessages,
+    isLoadingMore
+  } = useMessageFetch(userId, setMessages, toast, receiverId, groupId);
+
   // Setup realtime subscription
   const { setupRealtimeSubscription } = useMessageRealtime(userId, setMessages, receiverId, groupId);
-  
+
   // Message sending
   const { handleSendMessage: internalSendMessage } = useMessageSend(
     userId, newMessage, setNewMessage, ttl, setIsLoading, toast
   );
-  
+
   // P2P message handling
   const { addP2PMessage } = useMessageP2P(setMessages);
-  
+
   // Message expiry handling
   const { handleMessageExpired } = useMessageExpiry(setMessages);
-  
+
   // Create simple edit and delete handlers
   const handleEditMessage = useCallback(async (messageId: string, content: string) => {
     // Implementation to be added later if needed
     console.log('Edit message functionality not implemented yet', messageId, content);
     return Promise.resolve();
   }, []);
-  
+
   const handleDeleteMessageById = useCallback(async (messageId: string) => {
     // Implementation to be added later if needed
     console.log('Delete message functionality not implemented yet', messageId);
     return Promise.resolve();
   }, []);
-  
+
   // Message editing and deletion actions
-  const { 
-    editingMessage, 
-    handleStartEditMessage, 
+  const {
+    editingMessage,
+    handleStartEditMessage,
     handleCancelEditMessage,
     handleSubmitEditMessage,
     handleDeleteMessageById: messageActionsDeleteById
@@ -82,7 +86,7 @@ export const useMessages = (userId: string | null, receiverId?: string, groupId?
       const mediaFile = options?.mediaFile;
       const webRTCManager = options?.webRTCManager;
       const onlineUsers = options?.onlineUsers || new Set<string>();
-      
+
       await internalSendMessage(webRTCManager, onlineUsers, mediaFile, receiverId, groupId);
     }
   };
@@ -92,7 +96,7 @@ export const useMessages = (userId: string | null, receiverId?: string, groupId?
     try {
       // Apply optimistic update first
       optimisticallyDeleteMessage(messageId);
-      
+
       // Then perform actual deletion
       await messageActionsDeleteById(messageId);
       return Promise.resolve();
@@ -112,20 +116,25 @@ export const useMessages = (userId: string | null, receiverId?: string, groupId?
     isLoading,
     ttl,
     setTtl,
-    
+
     // Message operations
     fetchMessages,
     setupRealtimeSubscription,
     addP2PMessage,
     handleSendMessage: handleSubmitMessage,
     handleMessageExpired,
-    
+
+    // Pagination
+    loadMoreMessages,
+    hasMoreMessages,
+    isLoadingMore,
+
     // Editing and deletion
     editingMessage,
     handleStartEditMessage,
     handleCancelEditMessage,
     handleDeleteMessage,
-    
+
     // Direct messages
     directMessages,
     setDirectMessages

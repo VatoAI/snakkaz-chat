@@ -1,12 +1,12 @@
-
 import { useEffect, useRef, useState } from "react";
 import { groupMessagesByTime } from "@/utils/messageUtils";
 import { MessageListContent } from "@/components/message/MessageListContent";
 import { UnreadCounter } from "./UnreadCounter";
 import { DecryptedMessage } from "@/types/message";
-import { UserPresence } from "@/types/presence"; 
+import { UserPresence } from "@/types/presence";
 import { useDeleteMessageHandler } from "./DeleteMessageHandler";
 import { ScrollStabilizer } from "@/components/chat/ScrollStabilizer";
+import { LoadMoreMessages } from "@/components/message/LoadMoreMessages";
 
 interface MessageListProps {
   messages: DecryptedMessage[];
@@ -15,6 +15,11 @@ interface MessageListProps {
   onEditMessage: (message: DecryptedMessage) => void;
   onDeleteMessage: (messageId: string) => void;
   userPresence?: Record<string, UserPresence>;
+
+  // Pagination props
+  loadMoreMessages?: () => Promise<void>;
+  hasMoreMessages?: boolean;
+  isLoadingMoreMessages?: boolean;
 }
 
 export const MessageList = ({
@@ -23,7 +28,12 @@ export const MessageList = ({
   currentUserId,
   onEditMessage,
   onDeleteMessage,
-  userPresence = {}
+  userPresence = {},
+
+  // Pagination props with defaults
+  loadMoreMessages = async () => { },
+  hasMoreMessages = false,
+  isLoadingMoreMessages = false
 }: MessageListProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [newMessageCount, setNewMessageCount] = useState(0);
@@ -48,7 +58,7 @@ export const MessageList = ({
         currentUserId &&
         lastMessage.sender.id !== currentUserId &&
         new Date().getTime() - new Date(lastMessage.created_at).getTime() <
-          60000
+        60000
       ) {
         setNewMessageCount((prev) => prev + 1);
       }
@@ -65,19 +75,26 @@ export const MessageList = ({
     setScrollToBottom(true);
     setNewMessageCount(0);
     setAutoScroll(true);
-    
+
     // Reset the scrollToBottom flag after it's been consumed
     setTimeout(() => {
       setScrollToBottom(false);
     }, 100);
   };
-  
+
   // Handle scroll events from the ScrollStabilizer
   const handleScrollStateChange = (atBottom: boolean) => {
     setIsAtBottom(atBottom);
     setAutoScroll(atBottom);
     if (atBottom) {
       setNewMessageCount(0);
+    }
+  };
+
+  // Handler for loading more messages
+  const handleLoadMore = async () => {
+    if (loadMoreMessages && typeof loadMoreMessages === 'function') {
+      await loadMoreMessages();
     }
   };
 
@@ -91,6 +108,16 @@ export const MessageList = ({
       debug={false}
       onScrollStateChange={handleScrollStateChange}
     >
+      {/* Load More Messages button at the top */}
+      {hasMoreMessages && (
+        <LoadMoreMessages
+          onClick={handleLoadMore}
+          isLoading={isLoadingMoreMessages}
+          hasMore={hasMoreMessages}
+          className="sticky top-0 z-10"
+        />
+      )}
+
       <MessageListContent
         messageGroups={messageGroups}
         isUserMessage={isUserMessage}
@@ -108,11 +135,11 @@ export const MessageList = ({
         isDeleting={isDeleting}
         userPresence={userPresence}
       />
-      
+
       {!autoScroll && newMessageCount > 0 && (
-        <UnreadCounter 
-          count={newMessageCount} 
-          onClick={handleScrollToBottom} 
+        <UnreadCounter
+          count={newMessageCount}
+          onClick={handleScrollToBottom}
           show={true}
         />
       )}
