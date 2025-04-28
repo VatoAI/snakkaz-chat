@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Group, GroupMember, GroupInvitation } from '@/types/groups';
+import { useState, useEffect, useCallback } from 'react';
+import { Group, GroupMember, GroupInvitation, CreateGroupData } from '@/types/groups';
 import { useAuth } from './useAuth';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -61,14 +61,14 @@ export function useGroups() {
             try {
                 // I en virkelig implementasjon ville dette være et kall til Supabase
                 // For demo-formål setter vi premium-status basert på lokale data
-                
+
                 // Simuler API-kall for å hente premium-status
                 setTimeout(() => {
                     // 30% sjanse for at brukeren er premium i demo
                     const hasRandomPremium = Math.random() < 0.3;
                     setIsPremium(hasRandomPremium);
                 }, 500);
-                
+
                 // Virkelig implementasjon ville være noe som:
                 // const { data, error } = await supabase
                 //   .from('user_subscriptions')
@@ -79,7 +79,7 @@ export function useGroups() {
                 //   .single();
                 // 
                 // setIsPremium(!!data);
-                
+
             } catch (err) {
                 console.error('Error checking premium status:', err);
             }
@@ -88,24 +88,44 @@ export function useGroups() {
         checkPremiumStatus();
     }, [user]);
 
+    // Funksjon for å hente grupper på nytt
+    const fetchGroups = useCallback(async () => {
+        if (!user) return;
+
+        try {
+            setLoading(true);
+            // Simuler API-kall
+            return new Promise<void>((resolve) => {
+                setTimeout(() => {
+                    // Legg til simulerte uleste meldinger og sikkerhetsnivåer for demo
+                    const updatedGroups = dummyGroups.map(group => ({
+                        ...group,
+                        unreadCount: Math.floor(Math.random() * 5),
+                        securityLevel: ["low", "standard", "high", "maximum"][Math.floor(Math.random() * 4)] as any
+                    }));
+
+                    setGroups(updatedGroups);
+                    setMyGroups(updatedGroups);
+                    setLoading(false);
+                    resolve();
+                }, 500);
+            });
+        } catch (err) {
+            setError('Kunne ikke laste grupper');
+            setLoading(false);
+            console.error('Error loading groups:', err);
+            throw err;
+        }
+    }, [user]);
+
     // Last grupper
     useEffect(() => {
         if (user) {
-            try {
-                setLoading(true);
-                // Simuler API-kall
-                setTimeout(() => {
-                    setGroups(dummyGroups);
-                    setMyGroups(dummyGroups);
-                    setLoading(false);
-                }, 500);
-            } catch (err) {
-                setError('Kunne ikke laste grupper');
-                setLoading(false);
-                console.error('Error loading groups:', err);
-            }
+            fetchGroups().catch(err => {
+                console.error('Error in initial fetchGroups:', err);
+            });
         }
-    }, [user]);
+    }, [user, fetchGroups]);
 
     // Opprett en ny gruppe
     const createGroup = async (groupData: CreateGroupData) => {
@@ -126,24 +146,28 @@ export function useGroups() {
                 name: groupData.name,
                 description: groupData.description,
                 visibility: groupData.visibility,
+                securityLevel: groupData.securityLevel || "standard",
                 is_premium: false,
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
-                memberCount: 1
+                memberCount: 1,
+                unreadCount: 0
             };
 
-            setTimeout(() => {
-                setGroups(prev => [...prev, newGroup]);
-                setMyGroups(prev => [...prev, newGroup]);
-                setLoading(false);
+            return new Promise(resolve => {
+                setTimeout(() => {
+                    setGroups(prev => [...prev, newGroup]);
+                    setMyGroups(prev => [...prev, newGroup]);
+                    setLoading(false);
 
-                toast({
-                    title: "Gruppe opprettet",
-                    description: `${newGroup.name} har blitt opprettet!`
-                });
-            }, 500);
+                    toast({
+                        title: "Gruppe opprettet",
+                        description: `${newGroup.name} har blitt opprettet!`
+                    });
 
-            return newGroup;
+                    resolve(newGroup);
+                }, 500);
+            });
         } catch (err) {
             setError('Kunne ikke opprette gruppe');
             setLoading(false);
@@ -296,12 +320,12 @@ export function useGroups() {
                     });
                     return null;
                 }
-                
+
                 setMyGroups(prev => [...prev, group]);
-                
+
                 // Fjern invitasjonen fra listen
                 setInvites(prev => prev.filter(i => i.id !== invite.id));
-                
+
                 toast({
                     title: "Invitasjon akseptert",
                     description: `Du har blitt med i gruppen ${group.name}`,
@@ -329,7 +353,7 @@ export function useGroups() {
         try {
             // Oppdaterer gruppelisten
             setMyGroups(prev => prev.filter(g => g.id !== groupId));
-            
+
             // Hvis aktiv gruppe forlates, nullstill aktiv gruppe
             if (activeGroupId === groupId) {
                 setActiveGroupId(null);
@@ -359,12 +383,12 @@ export function useGroups() {
         // I en virkelig implementasjon ville dette åpne betalingssiden
         // For demo-formål setter vi premium til true direkte
         setIsPremium(true);
-        
+
         toast({
             title: "Oppgradert til Premium!",
             description: "Du har nå tilgang til alle premium-funksjoner.",
         });
-        
+
         return true;
     };
 
@@ -382,6 +406,7 @@ export function useGroups() {
         inviteToGroup,
         acceptInvite,
         leaveGroup,
-        upgradeToPremium
+        upgradeToPremium,
+        fetchGroups
     };
 }
