@@ -228,6 +228,6 @@ function DownloadCard({
           )}
         </div>
       </CardContent>
-    </Card >
+    </Card>
   );
 }
