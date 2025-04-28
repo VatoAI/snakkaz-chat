@@ -57,7 +57,8 @@ export const AppEncryptionProvider: React.FC<AppEncryptionProviderProps> = ({ ch
 
     // Funksjon for å veksle kryptering av/på
     const toggleEncryption = () => {
-        setIsEncryptionEnabled(prev => !prev);
+        // Fikset: Setter den nye verdien direkte i stedet for å bruke en funksjon
+        setIsEncryptionEnabled(!isEncryptionEnabled);
     };
 
     // Krypter data
