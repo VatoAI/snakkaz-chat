@@ -1,20 +1,32 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useGroups } from "@/hooks/useGroups";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CreateGroupModal } from "./CreateGroupModal";
 import { InviteGroupModal } from "./InviteGroupModal";
-import { UserPlus, Users, Lock, Globe, Plus, LoaderCircle } from "lucide-react";
-import { type Group } from "@/types/groups";
+import { UserPlus, Users, Lock, Globe, Plus, Shield, RefreshCcw } from "lucide-react";
+import { type Group, SecurityLevel } from "@/types/groups";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useToast } from "@/hooks/use-toast";
 
 export const GroupList = () => {
-    const { myGroups, loading, activeGroupId, setActiveGroupId } = useGroups();
+    const { myGroups, loading, activeGroupId, setActiveGroupId, fetchGroups } = useGroups();
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showInviteModal, setShowInviteModal] = useState(false);
     const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
+    const [isRefreshing, setIsRefreshing] = useState(false);
     const { theme } = useTheme();
+    const { toast } = useToast();
     const isDark = theme === 'dark';
+
+    // Automatisk refresh av gruppene hver 30. sekund for å fange opp nye grupper
+    useEffect(() => {
+        const intervalId = setInterval(() => {
+            fetchGroups().catch(console.error);
+        }, 30000);
+
+        return () => clearInterval(intervalId);
+    }, [fetchGroups]);
 
     const handleInviteClick = (groupId: string) => {
         setSelectedGroupId(groupId);
@@ -23,6 +35,54 @@ export const GroupList = () => {
 
     const handleGroupSelect = (groupId: string) => {
         setActiveGroupId(groupId);
+    };
+
+    const handleRefreshGroups = async () => {
+        setIsRefreshing(true);
+        try {
+            await fetchGroups();
+            toast({
+                title: "Grupper oppdatert",
+                description: "Gruppelisten er nå oppdatert.",
+                variant: "default"
+            });
+        } catch (error) {
+            console.error("Feil ved oppdatering av grupper:", error);
+            toast({
+                title: "Kunne ikke oppdatere grupper",
+                description: "Prøv igjen senere.",
+                variant: "destructive"
+            });
+        } finally {
+            setIsRefreshing(false);
+        }
+    };
+
+    const handleCreateSuccess = (newGroupId: string) => {
+        // Oppdaterer gruppene og aktiverer den nye gruppen automatisk
+        fetchGroups().then(() => {
+            setActiveGroupId(newGroupId);
+            toast({
+                title: "Gruppe aktivert",
+                description: "Du er nå i den nyopprettede gruppen.",
+                variant: "default"
+            });
+        }).catch(console.error);
+    };
+
+    const getSecurityLevelIcon = (securityLevel?: SecurityLevel) => {
+        switch (securityLevel) {
+            case "low":
+                return <span className="text-yellow-500 text-xs">●</span>;
+            case "standard":
+                return <span className="text-cyberblue-400 text-xs">●</span>;
+            case "high":
+                return <span className="text-cyberblue-600 text-xs">●</span>;
+            case "maximum":
+                return <span className="text-cyberred-400 text-xs">●</span>;
+            default:
+                return null;
+        }
     };
 
     if (loading) {
@@ -50,7 +110,20 @@ export const GroupList = () => {
         <>
             <div className="flex flex-col h-full">
                 <div className="flex justify-between items-center p-3">
-                    <h2 className="text-lg font-semibold">Mine grupper</h2>
+                    <div className="flex items-center">
+                        <h2 className="text-lg font-semibold">Mine grupper</h2>
+                        <button
+                            onClick={handleRefreshGroups}
+                            disabled={isRefreshing}
+                            className={`ml-2 p-1 rounded-full ${isDark
+                                    ? 'hover:bg-cyberdark-700 text-cyberblue-400'
+                                    : 'hover:bg-gray-200 text-blue-600'
+                                } transition-colors`}
+                            title="Oppdater gruppelisten"
+                        >
+                            <RefreshCcw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                        </button>
+                    </div>
                     <Button
                         size="sm"
                         onClick={() => setShowCreateModal(true)}
@@ -79,10 +152,10 @@ export const GroupList = () => {
                             <div
                                 key={group.id}
                                 className={`flex items-center p-2 my-1 rounded-lg cursor-pointer transition-colors 
-                  ${activeGroupId === group.id
+                                ${activeGroupId === group.id
                                         ? isDark
-                                            ? 'bg-cyberdark-700'
-                                            : 'bg-blue-100'
+                                            ? 'bg-cyberdark-700 border-l-2 border-cyberblue-500'
+                                            : 'bg-blue-100 border-l-2 border-blue-500'
                                         : isDark
                                             ? 'hover:bg-cyberdark-800'
                                             : 'hover:bg-gray-100'}`}
@@ -96,7 +169,7 @@ export const GroupList = () => {
                                     />
                                 ) : (
                                     <div className={`h-10 w-10 rounded-full flex items-center justify-center
-                    ${isDark ? 'bg-cyberblue-900 text-cyberblue-300' : 'bg-blue-100 text-blue-600'}`}>
+                                    ${isDark ? 'bg-cyberblue-900 text-cyberblue-300' : 'bg-blue-100 text-blue-600'}`}>
                                         <Users className="h-5 w-5" />
                                     </div>
                                 )}
@@ -104,20 +177,30 @@ export const GroupList = () => {
                                 <div className="ml-3 flex-1 overflow-hidden">
                                     <div className="flex items-center">
                                         <h3 className="font-medium truncate">{group.name}</h3>
-                                        {group.visibility === "private" ? (
-                                            <Lock className={`h-3 w-3 ml-1 ${isDark ? 'text-cyberred-400' : 'text-red-500'}`} />
-                                        ) : (
-                                            <Globe className={`h-3 w-3 ml-1 ${isDark ? 'text-cyberblue-400' : 'text-blue-500'}`} />
-                                        )}
+                                        <div className="flex items-center ml-1 space-x-1">
+                                            {group.visibility === "private" ? (
+                                                <Lock className={`h-3 w-3 ${isDark ? 'text-cyberred-400' : 'text-red-500'}`} />
+                                            ) : (
+                                                <Globe className={`h-3 w-3 ${isDark ? 'text-cyberblue-400' : 'text-blue-500'}`} />
+                                            )}
+                                            {group.securityLevel && getSecurityLevelIcon(group.securityLevel)}
+                                        </div>
                                     </div>
                                     {group.description && (
                                         <p className={`text-xs truncate ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                                             {group.description}
                                         </p>
                                     )}
-                                    <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
-                                        {group.memberCount} {group.memberCount === 1 ? "medlem" : "medlemmer"}
-                                    </p>
+                                    <div className="flex items-center text-xs space-x-2">
+                                        <p className={`${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
+                                            {group.memberCount} {group.memberCount === 1 ? "medlem" : "medlemmer"}
+                                        </p>
+                                        {group.unreadCount > 0 && (
+                                            <span className="px-1.5 py-0.5 bg-cyberblue-500 text-white text-xs rounded-full">
+                                                {group.unreadCount}
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
 
                                 <Button
@@ -128,6 +211,7 @@ export const GroupList = () => {
                                         e.stopPropagation();
                                         handleInviteClick(group.id);
                                     }}
+                                    title="Inviter medlemmer"
                                 >
                                     <UserPlus className="h-4 w-4" />
                                 </Button>
@@ -140,6 +224,7 @@ export const GroupList = () => {
             <CreateGroupModal
                 isOpen={showCreateModal}
                 onClose={() => setShowCreateModal(false)}
+                onSuccess={handleCreateSuccess}
             />
 
             {selectedGroupId && (

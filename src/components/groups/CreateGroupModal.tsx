@@ -1,26 +1,31 @@
 import { useState } from "react";
 import { useGroups } from "@/hooks/useGroups";
-import { GroupVisibility } from "@/types/groups";
+import { GroupVisibility, SecurityLevel } from "@/types/groups";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Loader2, Users, Lock, Globe } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Loader2, Users, Lock, Globe, Shield, AlertTriangle, BadgeCheck } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface CreateGroupModalProps {
     isOpen: boolean;
     onClose: () => void;
+    onSuccess?: (groupId: string) => void;
 }
 
-export const CreateGroupModal = ({ isOpen, onClose }: CreateGroupModalProps) => {
+export const CreateGroupModal = ({ isOpen, onClose, onSuccess }: CreateGroupModalProps) => {
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
     const [visibility, setVisibility] = useState<GroupVisibility>("private");
+    const [securityLevel, setSecurityLevel] = useState<SecurityLevel>("standard");
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const { createGroup } = useGroups();
+    const { toast } = useToast();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -30,23 +35,72 @@ export const CreateGroupModal = ({ isOpen, onClose }: CreateGroupModalProps) => 
         setIsSubmitting(true);
 
         try {
-            await createGroup({
+            const newGroup = await createGroup({
                 name: name.trim(),
                 description: description.trim(),
                 visibility,
+                securityLevel,
+            });
+
+            // Vis suksessmelding
+            toast({
+                title: "Gruppe opprettet!",
+                description: `${name} er nå opprettet og klar til bruk.`,
+                variant: "success",
             });
 
             // Reset form
             setName("");
             setDescription("");
             setVisibility("private");
+            setSecurityLevel("standard");
 
-            // Close modal
+            // Informer foreldre-komponenten om vellykket opprettelse
+            if (onSuccess && newGroup?.id) {
+                onSuccess(newGroup.id);
+            }
+
+            // Lukk modal
             onClose();
         } catch (error) {
             console.error("Error creating group:", error);
+            toast({
+                title: "Kunne ikke opprette gruppe",
+                description: "Det oppstod en feil ved opprettelse av gruppen. Vennligst prøv igjen.",
+                variant: "destructive",
+            });
         } finally {
             setIsSubmitting(false);
+        }
+    };
+
+    const getSecurityLevelDescription = (level: SecurityLevel) => {
+        switch (level) {
+            case "low":
+                return "Enkel kryptering. Best for uformelle grupper der ytelse er viktigere enn sikkerhet.";
+            case "standard":
+                return "Balansert kryptering for de fleste grupper. Anbefalt for vanlig bruk.";
+            case "high":
+                return "Avansert ende-til-ende kryptering. Ideell for sensitive samtaler og forretningsbruk.";
+            case "maximum":
+                return "Maksimal sikkerhet med militærgradert kryptering. Kan påvirke ytelsen.";
+            default:
+                return "";
+        }
+    };
+
+    const getSecurityLevelIcon = (level: SecurityLevel) => {
+        switch (level) {
+            case "low":
+                return <AlertTriangle className="h-4 w-4 text-yellow-500" />;
+            case "standard":
+                return <Shield className="h-4 w-4 text-cyberblue-400" />;
+            case "high":
+                return <Lock className="h-4 w-4 text-cyberblue-600" />;
+            case "maximum":
+                return <BadgeCheck className="h-4 w-4 text-cyberred-400" />;
+            default:
+                return null;
         }
     };
 
@@ -112,6 +166,49 @@ export const CreateGroupModal = ({ isOpen, onClose }: CreateGroupModalProps) => 
                                 </Label>
                             </div>
                         </RadioGroup>
+                    </div>
+
+                    {/* Sikkerhets-nivå velger */}
+                    <div className="space-y-2">
+                        <Label htmlFor="securityLevel" className="flex items-center gap-2">
+                            <Shield className="h-4 w-4 dark:text-cybergold-400" />
+                            Sikkerhetsnivå
+                        </Label>
+                        <Select value={securityLevel} onValueChange={(value: SecurityLevel) => setSecurityLevel(value)}>
+                            <SelectTrigger className="w-full dark:bg-cyberdark-800 dark:border-cybergold-500/30">
+                                <SelectValue placeholder="Velg sikkerhetsnivå" />
+                            </SelectTrigger>
+                            <SelectContent className="dark:bg-cyberdark-800">
+                                <SelectItem value="low" className="flex items-center">
+                                    <div className="flex items-center gap-2">
+                                        <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                                        <span>Lav</span>
+                                    </div>
+                                </SelectItem>
+                                <SelectItem value="standard">
+                                    <div className="flex items-center gap-2">
+                                        <Shield className="h-4 w-4 text-cyberblue-400" />
+                                        <span>Standard</span>
+                                    </div>
+                                </SelectItem>
+                                <SelectItem value="high">
+                                    <div className="flex items-center gap-2">
+                                        <Lock className="h-4 w-4 text-cyberblue-600" />
+                                        <span>Høy</span>
+                                    </div>
+                                </SelectItem>
+                                <SelectItem value="maximum">
+                                    <div className="flex items-center gap-2">
+                                        <BadgeCheck className="h-4 w-4 text-cyberred-400" />
+                                        <span>Maksimal</span>
+                                    </div>
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <p className="text-xs dark:text-gray-400 light:text-gray-500 mt-1 flex items-start gap-2">
+                            {getSecurityLevelIcon(securityLevel)}
+                            <span>{getSecurityLevelDescription(securityLevel)}</span>
+                        </p>
                     </div>
 
                     <DialogFooter className="pt-3">
