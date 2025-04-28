@@ -46,7 +46,7 @@ export const CreateGroupModal = ({ isOpen, onClose, onSuccess }: CreateGroupModa
             toast({
                 title: "Gruppe opprettet!",
                 description: `${name} er nå opprettet og klar til bruk.`,
-                variant: "success",
+                variant: "default",
             });
 
             // Reset form
