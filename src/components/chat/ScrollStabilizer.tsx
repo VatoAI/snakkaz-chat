@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect } from 'react';
 import { useScrollControl } from './hooks/useScrollControl';
 
@@ -27,6 +26,8 @@ export const ScrollStabilizer: React.FC<ScrollStabilizerProps> = ({
     autoScroll,
     setAutoScroll,
     handleScroll,
+    saveScrollPosition,
+    restoreScrollPosition,
   } = useScrollControl(threshold, debug);
 
   // Handle scroll events
@@ -36,24 +37,37 @@ export const ScrollStabilizer: React.FC<ScrollStabilizerProps> = ({
 
     const scrollHandler = () => handleScroll(container, onScrollStateChange);
     container.addEventListener('scroll', scrollHandler, { passive: true });
-    
+
     return () => {
       container.removeEventListener('scroll', scrollHandler);
     };
   }, [handleScroll, onScrollStateChange]);
 
-  // Handle explicit scroll to bottom
+  // Lagre scrollposisjon før innholdet oppdateres
   useEffect(() => {
-    if (scrollToBottom || autoScroll) {
-      const container = containerRef.current;
-      if (container) {
-        requestAnimationFrame(() => {
-          container.scrollTop = container.scrollHeight;
-          onScrollStateChange?.(true);
-        });
-      }
+    const container = containerRef.current;
+    if (container) {
+      saveScrollPosition(container);
     }
-  }, [scrollToBottom, autoScroll, onScrollStateChange, children]);
+  }, [children, saveScrollPosition]);
+
+  // Gjenopprett scrollposisjon og/eller rull til bunn etter oppdatering
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    // Bruker requestAnimationFrame for å sikre at DOM er oppdatert
+    requestAnimationFrame(() => {
+      // Hvis vi skal rulle til bunnen, gjør det
+      if (scrollToBottom || autoScroll) {
+        container.scrollTop = container.scrollHeight;
+        onScrollStateChange?.(true);
+      } else {
+        // Ellers, gjenopprett forrige scrollposisjon
+        restoreScrollPosition(container);
+      }
+    });
+  }, [scrollToBottom, autoScroll, onScrollStateChange, children, restoreScrollPosition]);
 
   // Handle recomputeKey changes
   useEffect(() => {
@@ -61,20 +75,25 @@ export const ScrollStabilizer: React.FC<ScrollStabilizerProps> = ({
       const container = containerRef.current;
       if (!container) return;
 
-      if (autoScroll || scrollToBottom) {
-        requestAnimationFrame(() => {
+      // Lagre posisjon først
+      saveScrollPosition(container);
+
+      requestAnimationFrame(() => {
+        if (autoScroll || scrollToBottom) {
           container.scrollTop = container.scrollHeight;
           onScrollStateChange?.(true);
-        });
-      }
+        } else {
+          restoreScrollPosition(container);
+        }
+      });
     }
-  }, [recomputeKey, autoScroll, scrollToBottom, onScrollStateChange]);
+  }, [recomputeKey, autoScroll, scrollToBottom, onScrollStateChange, saveScrollPosition, restoreScrollPosition]);
 
   return (
-    <div 
-      ref={containerRef} 
-      className={`overflow-y-auto overflow-x-hidden ${className}`}
-      style={{ WebkitOverflowScrolling: 'touch' }}
+    <div
+      ref={containerRef}
+      className={`overflow-y-auto overflow-x-hidden scroll-smooth ${className}`}
+      style={{ WebkitOverflowScrolling: 'touch', scrollBehavior: 'smooth' }}
     >
       {children}
     </div>
