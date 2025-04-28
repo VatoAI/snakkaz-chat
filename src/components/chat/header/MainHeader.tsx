@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { HeaderLogo } from "./HeaderLogo";
@@ -6,6 +5,7 @@ import { HeaderNavLinks } from "./HeaderNavLinks";
 import { Menu, X, User, LogOut, Bell } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
+import { MainNav } from "@/components/nav/MainNav";
 
 interface MainHeaderProps {
   activeTab?: string;
@@ -22,7 +22,6 @@ export const MainHeader = ({
   const { signOut, session } = useAuth();
   const navigate = useNavigate();
   
-  // Check if the screen is mobile based on width
   const isMobile = window.innerWidth < 768;
 
   const handleToggleMobileMenu = () => {
@@ -52,7 +51,6 @@ export const MainHeader = ({
   return (
     <header className="sticky top-0 z-50 w-full bg-cyberdark-900/95 border-b border-cyberblue-500/30 shadow-neon-blue backdrop-blur-sm">
       <div className="container mx-auto px-4 py-2 flex items-center justify-between">
-        {/* Logo and title */}
         <div className="flex items-center space-x-3">
           <HeaderLogo />
           <h1 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-cybergold-400 via-white to-cybergold-400 text-transparent bg-clip-text">
@@ -60,17 +58,12 @@ export const MainHeader = ({
           </h1>
         </div>
 
-        {/* Desktop Navigation */}
         {!isMobile && showNavigation && (
           <div className="flex-1 flex justify-center">
-            <HeaderNavLinks 
-              activeTab={activeTab} 
-              onTabChange={onTabChange} 
-            />
+            <MainNav />
           </div>
         )}
 
-        {/* Desktop User Menu */}
         {!isMobile && session && (
           <div className="flex items-center gap-3">
             <Button 
@@ -94,19 +87,9 @@ export const MainHeader = ({
           </div>
         )}
 
-        {/* Mobile Navigation */}
         {isMobile && (
           <div className="flex items-center space-x-3">
-            {/* Notifications icon */}
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="text-cyberblue-300 hover:text-cyberblue-200 hover:bg-cyberblue-900/20 h-9 w-9"
-            >
-              <Bell className="h-5 w-5" />
-            </Button>
-            
-            {/* Hamburger menu */}
+            <MainNav />
             <Button 
               variant="ghost" 
               size="icon" 
@@ -119,7 +102,6 @@ export const MainHeader = ({
         )}
       </div>
 
-      {/* Mobile menu dropdown */}
       {isMobile && mobileMenuOpen && (
         <div className="absolute top-full left-0 w-full bg-cyberdark-900/95 border-b border-cyberblue-500/30 shadow-neon-blue animate-fadeIn">
           {showNavigation && (

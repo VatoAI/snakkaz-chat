@@ -1,20 +1,17 @@
 
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect } from 'react';
+import { useScrollControl } from './hooks/useScrollControl';
 
 interface ScrollStabilizerProps {
   children: React.ReactNode;
   className?: string;
   scrollToBottom?: boolean;
-  recomputeKey?: any; // A value that changes when we should re-evaluate scroll position
-  threshold?: number; // How close to bottom (in pixels) to trigger auto-scroll
-  debug?: boolean; // Enable debug logging
-  onScrollStateChange?: (atBottom: boolean) => void; // Callback for when scroll state changes
+  recomputeKey?: any;
+  threshold?: number;
+  debug?: boolean;
+  onScrollStateChange?: (atBottom: boolean) => void;
 }
 
-/**
- * A component that stabilizes scroll position and prevents unexpected jumps
- * when content changes or user is scrolling
- */
 export const ScrollStabilizer: React.FC<ScrollStabilizerProps> = ({
   children,
   className = '',
@@ -25,232 +22,53 @@ export const ScrollStabilizer: React.FC<ScrollStabilizerProps> = ({
   onScrollStateChange,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const lastScrollHeightRef = useRef<number>(0);
-  const lastScrollTopRef = useRef<number>(0);
-  const isUserScrollingRef = useRef<boolean>(false);
-  const isNearBottomRef = useRef<boolean>(true);
-  const [autoScrollEnabled, setAutoScrollEnabled] = useState(true);
-  const scrollTimerRef = useRef<number | null>(null);
-  const contentChangedRef = useRef(false);
-  const rafIdRef = useRef<number | null>(null);
-
-  // Log debug info if debug is enabled
-  const log = (message: string, ...args: any[]) => {
-    if (debug) {
-      console.log(`[ScrollStabilizer] ${message}`, ...args);
-    }
-  };
+  const {
+    isAtBottom,
+    autoScroll,
+    setAutoScroll,
+    handleScroll,
+  } = useScrollControl(threshold, debug);
 
   // Handle scroll events
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
-    const handleScroll = () => {
-      const { scrollTop, scrollHeight, clientHeight } = container;
-      
-      // Clear any existing scroll timer
-      if (scrollTimerRef.current) {
-        window.clearTimeout(scrollTimerRef.current);
-      }
-      
-      isUserScrollingRef.current = true;
-      lastScrollTopRef.current = scrollTop;
-      lastScrollHeightRef.current = scrollHeight;
-      
-      // Check if we're near the bottom
-      const wasNearBottom = isNearBottomRef.current;
-      const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
-      const isNearBottom = distanceFromBottom < threshold;
-      
-      log('Scroll position', { 
-        scrollTop, 
-        scrollHeight, 
-        clientHeight, 
-        distanceFromBottom,
-        isNearBottom,
-        wasNearBottom
-      });
-      
-      isNearBottomRef.current = isNearBottom;
-      
-      // Update auto-scroll state based on user's scroll position
-      if (wasNearBottom && !isNearBottom) {
-        log('User scrolled away from bottom, disabling auto-scroll');
-        setAutoScrollEnabled(false);
-        if (onScrollStateChange) {
-          onScrollStateChange(false);
-        }
-      } else if (!wasNearBottom && isNearBottom) {
-        log('User scrolled to bottom, enabling auto-scroll');
-        setAutoScrollEnabled(true);
-        if (onScrollStateChange) {
-          onScrollStateChange(true);
-        }
-      }
-      
-      // Clear the user scrolling flag after a delay
-      scrollTimerRef.current = window.setTimeout(() => {
-        isUserScrollingRef.current = false;
-        scrollTimerRef.current = null;
-        log('User scrolling timeout cleared');
-      }, 200); // Slightly longer than animation frames
-    };
-
-    container.addEventListener('scroll', handleScroll, { passive: true });
-    return () => {
-      container.removeEventListener('scroll', handleScroll);
-      if (scrollTimerRef.current) {
-        window.clearTimeout(scrollTimerRef.current);
-      }
-      if (rafIdRef.current) {
-        window.cancelAnimationFrame(rafIdRef.current);
-      }
-    };
-  }, [threshold, debug, onScrollStateChange]);
-
-  // Handle initial scroll position
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-    
-    // Start at the bottom when first mounted
-    container.scrollTop = container.scrollHeight;
-    lastScrollHeightRef.current = container.scrollHeight;
-    lastScrollTopRef.current = container.scrollTop;
-    
-    log('Initial scroll position set', {
-      height: container.scrollHeight,
-      scrollTop: container.scrollTop
-    });
-    
-    if (onScrollStateChange) {
-      onScrollStateChange(true);
-    }
-  }, [debug, onScrollStateChange]);
-
-  // Maintain scroll position when content changes
-  useEffect(() => {
-    const handleContentMutation = () => {
-      contentChangedRef.current = true;
-      
-      // Cancel existing animation frame if it exists
-      if (rafIdRef.current) {
-        window.cancelAnimationFrame(rafIdRef.current);
-      }
-      
-      // Schedule a new frame
-      rafIdRef.current = requestAnimationFrame(() => {
-        rafIdRef.current = null;
-        const container = containerRef.current;
-        if (!container) return;
-        
-        const oldScrollHeight = lastScrollHeightRef.current;
-        const oldScrollTop = lastScrollTopRef.current;
-        const newScrollHeight = container.scrollHeight;
-        
-        log('Content changed', {
-          oldHeight: oldScrollHeight,
-          newHeight: newScrollHeight,
-          oldScrollTop,
-          autoScrollEnabled,
-          isUserScrolling: isUserScrollingRef.current,
-          isNearBottom: isNearBottomRef.current
-        });
-        
-        // If auto-scroll is enabled or we were explicitly told to scroll to bottom
-        if ((autoScrollEnabled && !isUserScrollingRef.current) || scrollToBottom) {
-          log('Scrolling to bottom');
-          container.scrollTop = newScrollHeight;
-        } 
-        // Otherwise, maintain relative scroll position
-        else if (!isUserScrollingRef.current && oldScrollHeight > 0 && newScrollHeight !== oldScrollHeight) {
-          log('Maintaining relative position');
-          container.scrollTop = oldScrollTop + (newScrollHeight - oldScrollHeight);
-        }
-        
-        lastScrollHeightRef.current = newScrollHeight;
-        lastScrollTopRef.current = container.scrollTop;
-        contentChangedRef.current = false;
-      });
-    };
-    
-    // Set up mutation observer to detect content changes
-    const observer = new MutationObserver(handleContentMutation);
-    const container = containerRef.current;
-    
-    if (container) {
-      observer.observe(container, { 
-        childList: true, 
-        subtree: true, 
-        characterData: true,
-        attributes: true
-      });
-    }
+    const scrollHandler = () => handleScroll(container, onScrollStateChange);
+    container.addEventListener('scroll', scrollHandler, { passive: true });
     
     return () => {
-      observer.disconnect();
-      if (rafIdRef.current) {
-        window.cancelAnimationFrame(rafIdRef.current);
-      }
+      container.removeEventListener('scroll', scrollHandler);
     };
-  }, [autoScrollEnabled, scrollToBottom, debug]);
+  }, [handleScroll, onScrollStateChange]);
 
-  // Handle explicit scroll to bottom when scrollToBottom prop changes
+  // Handle explicit scroll to bottom
   useEffect(() => {
-    if (scrollToBottom) {
+    if (scrollToBottom || autoScroll) {
       const container = containerRef.current;
       if (container) {
-        log('Explicit scroll to bottom requested');
-        
-        // Cancel existing animation frame if it exists
-        if (rafIdRef.current) {
-          window.cancelAnimationFrame(rafIdRef.current);
-        }
-        
-        // Schedule a new frame
-        rafIdRef.current = requestAnimationFrame(() => {
-          rafIdRef.current = null;
+        requestAnimationFrame(() => {
           container.scrollTop = container.scrollHeight;
-          lastScrollHeightRef.current = container.scrollHeight;
-          lastScrollTopRef.current = container.scrollTop;
-          
-          if (onScrollStateChange) {
-            onScrollStateChange(true);
-          }
+          onScrollStateChange?.(true);
         });
       }
     }
-  }, [scrollToBottom, debug, onScrollStateChange]);
+  }, [scrollToBottom, autoScroll, onScrollStateChange, children]);
 
-  // Handle recomputeKey changes - recalculate scroll position
+  // Handle recomputeKey changes
   useEffect(() => {
     if (recomputeKey !== undefined) {
       const container = containerRef.current;
-      if (!container || contentChangedRef.current) return;
-      
-      log('Recomputing scroll position due to key change', { recomputeKey });
-      
-      // Cancel existing animation frame if it exists
-      if (rafIdRef.current) {
-        window.cancelAnimationFrame(rafIdRef.current);
-      }
-      
-      // Schedule a new frame
-      rafIdRef.current = requestAnimationFrame(() => {
-        rafIdRef.current = null;
-        if (autoScrollEnabled || scrollToBottom) {
+      if (!container) return;
+
+      if (autoScroll || scrollToBottom) {
+        requestAnimationFrame(() => {
           container.scrollTop = container.scrollHeight;
-          
-          if (onScrollStateChange) {
-            onScrollStateChange(true);
-          }
-        }
-        lastScrollHeightRef.current = container.scrollHeight;
-        lastScrollTopRef.current = container.scrollTop;
-      });
+          onScrollStateChange?.(true);
+        });
+      }
     }
-  }, [recomputeKey, autoScrollEnabled, scrollToBottom, debug, onScrollStateChange]);
+  }, [recomputeKey, autoScroll, scrollToBottom, onScrollStateChange]);
 
   return (
     <div 
