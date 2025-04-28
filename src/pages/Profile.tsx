@@ -54,7 +54,7 @@ export default function Profile() {
     setIsSaving(true);
     try {
       await updateUserProfile({
-        name: displayName,
+        display_name: displayName,
       });
 
       if (isEncryptionEnabled && profileData) {
