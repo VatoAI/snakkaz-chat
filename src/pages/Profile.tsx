@@ -291,134 +291,134 @@ export default function Profile() {
                     className="bg-cyberblue-600 hover:bg-cyberblue-500"
                   >
                     {isSaving ? (
-                      <></>
+                      <>
                         <span className="mr-2 h-4 w-4 border-2 border-t-transparent border-white rounded-full animate-spin"></span>
                         Lagrer...
-                  </>
-                  ) : (
-                  "Lagre endringer"
+                      </>
+                    ) : (
+                      "Lagre endringer"
                     )}
-                </Button>
-              </CardFooter>
-            </Card>
-          </TabsContent>
+                  </Button>
+                </CardFooter>
+              </Card>
+            </TabsContent>
 
-          <TabsContent value="security" className="mt-4"></TabsContent>
-          <Card className="bg-cyberdark-900 border-cyberdark-700">
-            <CardHeader>
-              <CardTitle className="text-xl flex items-center gap-2 text-white">
-                <Key className="h-5 w-5" /> Sikkerhet
-              </CardTitle>
-              <CardDescription>
-                Administrer passord og sikkerhetsfunksjoner
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Button variant="outline" className="w-full border-cyberdark-600 text-gray-300">
-                <Lock className="h-4 w-4 mr-2" /> Endre passord
-              </Button>
-
-              {isPremium && (
-                <>
+            <TabsContent value="security" className="mt-4">
+              <Card className="bg-cyberdark-900 border-cyberdark-700">
+                <CardHeader>
+                  <CardTitle className="text-xl flex items-center gap-2 text-white">
+                    <Key className="h-5 w-5" /> Sikkerhet
+                  </CardTitle>
+                  <CardDescription>
+                    Administrer passord og sikkerhetsfunksjoner
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
                   <Button variant="outline" className="w-full border-cyberdark-600 text-gray-300">
-                    <Eye className="h-4 w-4 mr-2" /> Administrer to-faktor autentisering
+                    <Lock className="h-4 w-4 mr-2" /> Endre passord
                   </Button>
 
-                  <div className="p-3 border border-cyberdark-600 rounded-md"></div>
-                  <h3 className="text-sm font-medium text-white mb-2 flex items-center">
-                    <ShieldCheck className="h-4 w-4 mr-2 text-cyberblue-400" />
-                    Fullside-kryptering
-                  </h3>
-                  <p className="text-xs text-gray-400 mb-3">
-                    Fullside-kryptering sikrer at all din kommunikasjon og data er beskyttet
-                    ende-til-ende.
-                  </p>
-                  <div className="flex items-center">
-                    <div
-                      className={`w-3 h-3 rounded-full mr-2 ${isEncryptionEnabled ? "bg-green-500" : "bg-gray-500"
-                        }`}
-                    ></div>
-                    <p className="text-xs text-gray-300">
-                      {isEncryptionEnabled
-                        ? "Kryptering er aktivert"
-                        : "Kryptering er deaktivert"}
-                    </p>
-                  </div>
-                </div>
-            </>
+                  {isPremium && (
+                    <>
+                      <Button variant="outline" className="w-full border-cyberdark-600 text-gray-300">
+                        <Eye className="h-4 w-4 mr-2" /> Administrer to-faktor autentisering
+                      </Button>
+
+                      <div className="p-3 border border-cyberdark-600 rounded-md">
+                        <h3 className="text-sm font-medium text-white mb-2 flex items-center">
+                          <ShieldCheck className="h-4 w-4 mr-2 text-cyberblue-400" />
+                          Fullside-kryptering
+                        </h3>
+                        <p className="text-xs text-gray-400 mb-3">
+                          Fullside-kryptering sikrer at all din kommunikasjon og data er beskyttet
+                          ende-til-ende.
+                        </p>
+                        <div className="flex items-center">
+                          <div
+                            className={`w-3 h-3 rounded-full mr-2 ${isEncryptionEnabled ? "bg-green-500" : "bg-gray-500"
+                              }`}
+                          ></div>
+                          <p className="text-xs text-gray-300">
+                            {isEncryptionEnabled
+                              ? "Kryptering er aktivert"
+                              : "Kryptering er deaktivert"}
+                          </p>
+                        </div>
+                      </div>
+                    </>
                   )}
-          </CardContent>
-        </Card>
-      </TabsContent>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-      <TabsContent value="privacy" className="mt-4">
-        <Card className="bg-cyberdark-900 border-cyberdark-700">
-          <CardHeader>
-            <CardTitle className="text-xl flex items-center gap-2 text-white">
-              <ShieldCheck className="h-5 w-5" /> Personvern
-            </CardTitle>
-            <CardDescription>
-              Administrer personverninnstillinger
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-medium text-white">Vis online-status</h3>
-                  <p className="text-xs text-gray-400">La andre se når du er pålogget</p>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="online-status"
-                    defaultChecked={true}
-                    className="rounded text-cyberblue-500 focus:ring-cyberblue-500"
-                  />
-                </div>
-              </div>
+            <TabsContent value="privacy" className="mt-4">
+              <Card className="bg-cyberdark-900 border-cyberdark-700">
+                <CardHeader>
+                  <CardTitle className="text-xl flex items-center gap-2 text-white">
+                    <ShieldCheck className="h-5 w-5" /> Personvern
+                  </CardTitle>
+                  <CardDescription>
+                    Administrer personverninnstillinger
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-sm font-medium text-white">Vis online-status</h3>
+                        <p className="text-xs text-gray-400">La andre se når du er pålogget</p>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id="online-status"
+                          defaultChecked={true}
+                          className="rounded text-cyberblue-500 focus:ring-cyberblue-500"
+                        />
+                      </div>
+                    </div>
 
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-medium text-white">Lesebekreftelser</h3>
-                  <p className="text-xs text-gray-400">Send og motta lesebekreftelser</p>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="read-receipts"
-                    defaultChecked={true}
-                    className="rounded text-cyberblue-500 focus:ring-cyberblue-500"
-                  />
-                </div>
-              </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-sm font-medium text-white">Lesebekreftelser</h3>
+                        <p className="text-xs text-gray-400">Send og motta lesebekreftelser</p>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id="read-receipts"
+                          defaultChecked={true}
+                          className="rounded text-cyberblue-500 focus:ring-cyberblue-500"
+                        />
+                      </div>
+                    </div>
 
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-medium text-white">Tillat invitasjoner</h3>
-                  <p className="text-xs text-gray-400">Tillat andre å invitere deg til grupper</p>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="allow-invites"
-                    defaultChecked={true}
-                    className="rounded text-cyberblue-500 focus:ring-cyberblue-500"
-                  />
-                </div>
-              </div>
-            </div>
-          </CardContent>
-          <CardFooter>
-            <Button className="bg-cyberblue-600 hover:bg-cyberblue-500">
-              Lagre innstillinger
-            </Button>
-          </CardFooter>
-        </Card>
-      </TabsContent>
-    </Tabs>
-        </div >
-      </div >
-    </div >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-sm font-medium text-white">Tillat invitasjoner</h3>
+                        <p className="text-xs text-gray-400">Tillat andre å invitere deg til grupper</p>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id="allow-invites"
+                          defaultChecked={true}
+                          className="rounded text-cyberblue-500 focus:ring-cyberblue-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+                <CardFooter>
+                  <Button className="bg-cyberblue-600 hover:bg-cyberblue-500">
+                    Lagre innstillinger
+                  </Button>
+                </CardFooter>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </div>
+      </div>
+    </div>
   );
 }
