@@ -13,8 +13,25 @@
   <link rel="manifest" href="/manifest.json" />
   <!-- Content Security Policy for å beskytte mot XSS -->
   <meta http-equiv="Content-Security-Policy"
-    content="default-src 'self'; script-src 'self' https://cdn.gpteng.co/ 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://cdn.gpteng.co; img-src 'self' data: https://*.supabase.in https://*.supabase.co blob:; font-src 'self'; media-src 'self' blob:; object-src 'none'; frame-src 'none'; base-uri 'self'; form-action 'self'; worker-src 'self' blob:">
+    content="default-src 'self'; script-src 'self' https://cdn.gpteng.co/ https://static.cloudflareinsights.com 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://cdn.gpteng.co; img-src 'self' data: https://*.supabase.in https://*.supabase.co blob:; font-src 'self'; media-src 'self' blob:; object-src 'none'; frame-src 'none'; base-uri 'self'; form-action 'self'; worker-src 'self' blob:">
   <title>SnakkaZ Hub</title>
+  <!-- Cloudflare Web Analytics -->
+  <script defer>
+    // Feilhåndtering for Cloudflare Analytics
+    try {
+      const cfScript = document.createElement('script');
+      cfScript.defer = true;
+      cfScript.src = 'https://static.cloudflareinsights.com/beacon.min.js';
+      cfScript.setAttribute('data-cf-beacon', '{"token": "your-token-here"}');
+      cfScript.onerror = function () {
+        console.log('Cloudflare Analytics kunne ikke lastes, men det påvirker ikke nettsidens funksjonalitet');
+      };
+      document.body.appendChild(cfScript);
+    } catch (e) {
+      console.log('Cloudflare Analytics kunne ikke initialiseres');
+    }
+  </script>
+  <!-- End Cloudflare Web Analytics -->
 </head>
 
 <body>
