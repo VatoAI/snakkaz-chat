@@ -187,7 +187,7 @@ function DownloadCard({
               key={i} 
               variant="outline" 
               className="bg-cyberdark-900/80 text-cybergold-400 border-cybergold-700/30"
-            ></Badge>
+            >
               {badge}
             </Badge>
           ))}
