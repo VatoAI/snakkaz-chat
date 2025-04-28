@@ -1,6 +1,5 @@
-
-import { useState } from "react";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Eye, EyeOff, Loader2, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +9,13 @@ interface RegisterFormProps {
   onSuccess: () => void;
 }
 
+interface PasswordRequirement {
+  id: string;
+  label: string;
+  met: boolean;
+  validator: (password: string) => boolean;
+}
+
 export const RegisterForm = ({ onSuccess }: RegisterFormProps) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -17,7 +23,55 @@ export const RegisterForm = ({ onSuccess }: RegisterFormProps) => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showRequirements, setShowRequirements] = useState(false);
   const { toast } = useToast();
+
+  const passwordRequirements: PasswordRequirement[] = [
+    {
+      id: "length",
+      label: "Minst 8 tegn",
+      met: false,
+      validator: (pwd) => pwd.length >= 8
+    },
+    {
+      id: "uppercase",
+      label: "Minst én stor bokstav (A-Å)",
+      met: false,
+      validator: (pwd) => /[A-ZÆØÅ]/.test(pwd)
+    },
+    {
+      id: "lowercase",
+      label: "Minst én liten bokstav (a-å)",
+      met: false,
+      validator: (pwd) => /[a-zæøå]/.test(pwd)
+    },
+    {
+      id: "number",
+      label: "Minst ett tall (0-9)",
+      met: false,
+      validator: (pwd) => /[0-9]/.test(pwd)
+    },
+    {
+      id: "special",
+      label: "Minst ett spesialtegn (!@#$%&*, osv.)",
+      met: false,
+      validator: (pwd) => /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pwd)
+    }
+  ];
+
+  const [requirements, setRequirements] = useState<PasswordRequirement[]>(passwordRequirements);
+  
+  // Oppdater passordkravene når passordet endres
+  useEffect(() => {
+    const updatedRequirements = requirements.map(req => ({
+      ...req,
+      met: req.validator(password)
+    }));
+    setRequirements(updatedRequirements);
+  }, [password]);
+
+  // Sjekk om alle passordkravene er oppfylt
+  const allRequirementsMet = requirements.every(req => req.met);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,12 +94,13 @@ export const RegisterForm = ({ onSuccess }: RegisterFormProps) => {
       return;
     }
     
-    if (password.length < 6) {
+    if (!allRequirementsMet) {
       toast({
-        title: "Feil",
-        description: "Passordet må være minst 6 tegn.",
+        title: "Svakt passord",
+        description: "Passordet oppfyller ikke alle sikkerhetskravene.",
         variant: "destructive",
       });
+      setShowRequirements(true);
       return;
     }
     
@@ -128,7 +183,13 @@ export const RegisterForm = ({ onSuccess }: RegisterFormProps) => {
             type={showPassword ? "text" : "password"}
             placeholder="Ditt passord"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              if (!showRequirements && e.target.value) {
+                setShowRequirements(true);
+              }
+            }}
+            onFocus={() => setShowRequirements(true)}
             className="bg-cyberdark-800 border-cybergold-500/30 text-cybergold-200 pr-10"
             disabled={isLoading}
             required
@@ -141,6 +202,27 @@ export const RegisterForm = ({ onSuccess }: RegisterFormProps) => {
             {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </button>
         </div>
+        
+        {/* Passordkrav indikator */}
+        {showRequirements && (
+          <div className="mt-2 p-3 bg-cyberdark-950 border border-cybergold-500/20 rounded-md shadow-lg text-sm">
+            <h4 className="text-cybergold-300 font-medium mb-2">Passordet må inneholde:</h4>
+            <ul className="space-y-2">
+              {requirements.map((req) => (
+                <li key={req.id} className="flex items-center">
+                  {req.met ? (
+                    <Check className="h-4 w-4 text-green-500 mr-2" />
+                  ) : (
+                    <X className="h-4 w-4 text-red-500 mr-2" />
+                  )}
+                  <span className={req.met ? "text-green-500" : "text-cybergold-400"}>
+                    {req.label}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
       
       <div className="space-y-2">
@@ -158,7 +240,19 @@ export const RegisterForm = ({ onSuccess }: RegisterFormProps) => {
             disabled={isLoading}
             required
           />
+          {confirmPassword && password && (
+            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+              {confirmPassword === password ? (
+                <Check className="h-4 w-4 text-green-500" />
+              ) : (
+                <X className="h-4 w-4 text-red-500" />
+              )}
+            </div>
+          )}
         </div>
+        {confirmPassword && password && confirmPassword !== password && (
+          <p className="text-xs text-red-500 mt-1">Passordene er ikke like</p>
+        )}
       </div>
       
       <Button
