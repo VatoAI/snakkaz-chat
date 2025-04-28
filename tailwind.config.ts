@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import plugin from 'tailwindcss/plugin';
 
 export default {
   darkMode: ["class"],
@@ -170,5 +171,19 @@ export default {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    require("tailwindcss-animate"),
+    plugin(function ({ addVariant }) {
+      // Dette legger til 'light:' variant for lys modus
+      addVariant('light', ':root.light &, :root:not(.dark) &');
+    }),
+  ],
+  variants: {
+    extend: {
+      backgroundColor: ['light', 'dark'],
+      textColor: ['light', 'dark'],
+      borderColor: ['light', 'dark'],
+      ringColor: ['light', 'dark'],
+    },
+  },
 } satisfies Config;
