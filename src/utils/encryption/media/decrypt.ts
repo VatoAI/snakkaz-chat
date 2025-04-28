@@ -18,7 +18,7 @@ export const decryptMedia = async ({
   try {
     console.log("Beginning media decryption");
     
-    // Convert IV string to Uint8Array - standardize on Base64 format
+    // Convert IV string to Uint8Array - always try Base64 format first
     let ivArray: Uint8Array;
     
     try {
@@ -27,7 +27,7 @@ export const decryptMedia = async ({
       ivArray = new Uint8Array(ivString.split('').map(c => c.charCodeAt(0)));
       console.log("IV parsed as Base64 successfully, length:", ivArray.length);
     } catch (e) {
-      console.warn("Failed to parse IV as Base64, trying comma-separated format", e);
+      console.warn("Failed to parse IV as Base64, attempting alternative formats", e);
       
       if (iv.includes(',')) {
         // Fallback to comma-separated numbers for backward compatibility
@@ -35,13 +35,13 @@ export const decryptMedia = async ({
         console.log("IV parsed as comma-separated values, length:", ivArray.length);
       } else {
         // Last resort: direct string conversion
-        console.warn("Trying direct string conversion for IV");
+        console.warn("Using direct string conversion for IV");
         ivArray = new Uint8Array(Array.from(iv).map(c => c.charCodeAt(0)));
       }
     }
     
-    if (ivArray.length !== 12) {
-      console.warn(`IV length is ${ivArray.length}, expected 12. This might cause decryption to fail.`);
+    if (ivArray.length !== 12 && ivArray.length !== 16) {
+      console.warn(`IV length is ${ivArray.length}, expected 12 or 16. This might cause decryption to fail.`);
     }
     
     // Import the encryption key
@@ -52,7 +52,7 @@ export const decryptMedia = async ({
     const decryptedBuffer = await decryptMediaBuffer(encryptedData, key, ivArray);
     console.log("Media decryption successful, buffer size:", decryptedBuffer.byteLength);
     
-    // Convert back to Blob
+    // Convert back to Blob with correct media type
     return new Blob([decryptedBuffer], { type: mediaType });
   } catch (error) {
     console.error('Media decryption failed:', error);

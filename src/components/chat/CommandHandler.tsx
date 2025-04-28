@@ -3,6 +3,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { useEffect } from "react";
+import { useMediaHandler } from "@/hooks/message/useMessageSender/useMediaHandler";
 
 interface CommandHandlerProps {
   action: string;
@@ -14,6 +15,7 @@ export const CommandHandler = ({ action, payload, onComplete }: CommandHandlerPr
   const { toast } = useToast();
   const navigate = useNavigate();
   const { notify } = useNotifications();
+  const { handleMediaUpload } = useMediaHandler();
 
   useEffect(() => {
     const executeCommand = async () => {
@@ -40,6 +42,25 @@ export const CommandHandler = ({ action, payload, onComplete }: CommandHandlerPr
               title: "Tema endret",
               description: "App-temaet er oppdatert",
             });
+            break;
+          
+          case 'uploadMedia':
+            // Handle media upload command
+            if (payload.file) {
+              try {
+                const result = await handleMediaUpload(payload.file, toast);
+                if (result && payload.onSuccess) {
+                  payload.onSuccess(result);
+                }
+              } catch (error) {
+                console.error('Media upload failed:', error);
+                toast({
+                  title: "Opplastingsfeil",
+                  description: "Kunne ikke laste opp mediefilen",
+                  variant: "destructive",
+                });
+              }
+            }
             break;
 
           case 'logout':
@@ -73,7 +94,7 @@ export const CommandHandler = ({ action, payload, onComplete }: CommandHandlerPr
     };
 
     executeCommand();
-  }, [action, payload, toast, navigate, notify, onComplete]);
+  }, [action, payload, toast, navigate, notify, onComplete, handleMediaUpload]);
 
   // This component doesn't need to render anything
   return null;

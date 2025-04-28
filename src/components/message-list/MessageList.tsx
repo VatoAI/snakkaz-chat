@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState } from "react";
 import { groupMessagesByTime } from "@/utils/messageUtils";
 import { MessageListContent } from "@/components/message/MessageListContent";
@@ -31,7 +32,7 @@ export const MessageList = ({
   const [scrollToBottom, setScrollToBottom] = useState(false);
 
   // Use the delete message handler hook
-  const { confirmDelete, setConfirmDelete, DialogUI, isDeleting } = useDeleteMessageHandler({
+  const { confirmDelete, setConfirmDelete, handleDelete, isDeleting } = useDeleteMessageHandler({
     onDeleteMessage
   });
 
@@ -70,13 +71,6 @@ export const MessageList = ({
       setScrollToBottom(false);
     }, 100);
   };
-
-  const handleDelete = async () => {
-    if (confirmDelete) {
-      await onDeleteMessage(confirmDelete);
-      setConfirmDelete(null);
-    }
-  };
   
   // Handle scroll events from the ScrollStabilizer
   const handleScrollStateChange = (atBottom: boolean) => {
@@ -102,7 +96,7 @@ export const MessageList = ({
         isUserMessage={isUserMessage}
         onMessageExpired={onMessageExpired}
         onEdit={onEditMessage}
-        onDelete={setConfirmDelete}
+        onDelete={(id) => setConfirmDelete(id)}
         messagesEndRef={messagesEndRef}
         isMobile={isMobile}
         autoScroll={autoScroll}
@@ -111,11 +105,16 @@ export const MessageList = ({
         confirmDelete={confirmDelete}
         setConfirmDelete={setConfirmDelete}
         handleDelete={handleDelete}
+        isDeleting={isDeleting}
         userPresence={userPresence}
       />
-
-      <UnreadCounter count={newMessageCount} show={!autoScroll} onClick={handleScrollToBottom} />
-      <div ref={messagesEndRef} />
+      
+      {!autoScroll && newMessageCount > 0 && (
+        <UnreadCounter 
+          count={newMessageCount} 
+          onClick={handleScrollToBottom} 
+        />
+      )}
     </ScrollStabilizer>
   );
 };

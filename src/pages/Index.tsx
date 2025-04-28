@@ -1,3 +1,4 @@
+
 import { Header } from "@/components/index/Header";
 import { Footer } from "@/components/index/Footer";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -7,7 +8,7 @@ import { SyncDashboard } from "@/components/sync/SyncDashboard";
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Download, X, Info, Smartphone, Laptop, MessageCircle } from "lucide-react";
+import { Download, X, Info, Smartphone, Laptop, MessageCircle, Shield, Clock } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -146,6 +147,44 @@ const Index = () => {
                   ? 'Klikk for å fortsette chatte sikkert'
                   : 'Logg inn for å starte sikker kommunikasjon'}
               </p>
+            </div>
+          </div>
+
+          {/* App Features */}
+          <div className="max-w-3xl mx-auto my-12 px-4">
+            <h3 className="text-xl font-bold text-center mb-8 bg-gradient-to-r from-cyberblue-400 to-cybergold-400 bg-clip-text text-transparent">
+              Hvorfor velge SnakkaZ?
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-cyberdark-800/50 p-6 rounded-lg border border-cyberblue-500/20 shadow-lg">
+                <div className="flex items-center mb-4">
+                  <Shield className="text-cyberblue-400 mr-3" size={24} />
+                  <h4 className="text-lg font-medium text-white">End-to-End Kryptert</h4>
+                </div>
+                <p className="text-sm text-cyberdark-300">
+                  Full kryptering av både tekst og mediefiler. Ingen kan lese dine meldinger, ikke engang oss.
+                </p>
+              </div>
+              
+              <div className="bg-cyberdark-800/50 p-6 rounded-lg border border-cyberblue-500/20 shadow-lg">
+                <div className="flex items-center mb-4">
+                  <Clock className="text-cyberblue-400 mr-3" size={24} />
+                  <h4 className="text-lg font-medium text-white">Selvdestruerende Meldinger</h4>
+                </div>
+                <p className="text-sm text-cyberdark-300">
+                  Sett tidsfrist for når meldinger og bilder skal slettes automatisk for maksimal sikkerhet.
+                </p>
+              </div>
+              
+              <div className="bg-cyberdark-800/50 p-6 rounded-lg border border-cyberblue-500/20 shadow-lg">
+                <div className="flex items-center mb-4">
+                  <MessageCircle className="text-cyberblue-400 mr-3" size={24} />
+                  <h4 className="text-lg font-medium text-white">P2P Kommunikasjon</h4>
+                </div>
+                <p className="text-sm text-cyberdark-300">
+                  Direkte kommunikasjon mellom brukere uten mellomledd når begge er online.
+                </p>
+              </div>
             </div>
           </div>
 

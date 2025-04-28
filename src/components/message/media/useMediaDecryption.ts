@@ -75,7 +75,7 @@ export const useMediaDecryption = (
     } finally {
       setIsLoading(false);
     }
-  }, [mimeType]);
+  }, [mimeType, decryptedURL]);
 
   // Handle decryption
   useEffect(() => {

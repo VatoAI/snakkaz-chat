@@ -80,7 +80,6 @@ export const useMessageExpiry = (
     } catch (error) {
       console.error("Error handling message expiration:", error);
       // Don't show toast to user for expired messages
-      // It's confusing since the message is already gone from their view
     }
   }, [setMessages, toast, auth.session]);
 

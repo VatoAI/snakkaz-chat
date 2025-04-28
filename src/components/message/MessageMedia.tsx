@@ -8,6 +8,7 @@ import { VideoMedia } from "./media/VideoMedia";
 import { ImageMedia } from "./media/ImageMedia";
 import { FileMedia } from "./media/FileMedia";
 import { DecryptedMessage } from "@/types/message";
+import { ExpiringMediaContainer } from "./media/ExpiringMediaContainer";
 
 interface MessageMediaProps {
   encryptedUrl?: string;
@@ -107,36 +108,36 @@ export const MessageMedia = ({
 
   if (mediaType.startsWith("image/") && decryptedURL) {
     return (
-      <ImageMedia 
-        url={decryptedURL} 
-        ttl={mediaTtl}
-        onExpired={handleMediaExpired}
-        retryDecryption={retry}
-      />
+      <ExpiringMediaContainer ttl={mediaTtl} onExpired={handleMediaExpired}>
+        <ImageMedia 
+          url={decryptedURL} 
+          retryDecryption={retry}
+        />
+      </ExpiringMediaContainer>
     );
   }
   
   if (mediaType.startsWith("video/") && decryptedURL) {
     return (
-      <VideoMedia 
-        url={decryptedURL}
-        type={mediaType}
-        ttl={mediaTtl}
-        onExpired={handleMediaExpired}
-      />
+      <ExpiringMediaContainer ttl={mediaTtl} onExpired={handleMediaExpired}>
+        <VideoMedia 
+          url={decryptedURL}
+          type={mediaType}
+        />
+      </ExpiringMediaContainer>
     );
   }
   
   // For files like PDF, documents, etc.
   if (decryptedURL) {
     return (
-      <FileMedia 
-        url={decryptedURL}
-        type={mediaType}
-        filename={messageIdToUse || "secure-file"}
-        ttl={mediaTtl}
-        onExpired={handleMediaExpired}
-      />
+      <ExpiringMediaContainer ttl={mediaTtl} onExpired={handleMediaExpired}>
+        <FileMedia 
+          url={decryptedURL}
+          type={mediaType}
+          filename={messageIdToUse || "secure-file"}
+        />
+      </ExpiringMediaContainer>
     );
   }
   
