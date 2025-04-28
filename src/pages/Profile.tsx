@@ -25,6 +25,27 @@ export default function Profile() {
   const { isEncryptionEnabled } = useContext(AppEncryptionContext);
   const { profileData, isProfileLoading, refreshProfile } = useProfileLoader(user?.id);
 
+  // Wrapper funksjon for å konvertere Promise<boolean> til Promise<void>
+  const handleUpgrade = async (): Promise<void> => {
+    try {
+      const result = await upgradeToPremium();
+      if (!result) {
+        toast({
+          variant: "destructive",
+          title: "Oppgradering feilet",
+          description: "Kunne ikke oppgradere til premium. Vennligst prøv igjen senere."
+        });
+      }
+    } catch (error) {
+      console.error("Feil ved oppgradering til premium:", error);
+      toast({
+        variant: "destructive",
+        title: "Oppgradering feilet",
+        description: "Det oppsto en feil under oppgradering til premium."
+      });
+    }
+  };
+
   useEffect(() => {
     if (user) {
       setDisplayName(user.user_metadata?.name || "");
@@ -234,7 +255,7 @@ export default function Profile() {
           </Card>
 
           <div className="mt-6">
-            <PremiumUser isPremium={isPremium} onUpgrade={upgradeToPremium} />
+            <PremiumUser isPremium={isPremium} onUpgrade={handleUpgrade} />
           </div>
         </div>
 
