@@ -1,72 +1,56 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useState, useContext, useEffect } from 'react';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
 
-// Definerer tema typene
 type Theme = 'light' | 'dark';
 
-// Typen på konteksten som vi vil eksponere
-type ThemeContextType = {
+interface ThemeContextType {
     theme: Theme;
     setTheme: (theme: Theme) => void;
     toggleTheme: () => void;
-};
+}
 
-// Oppretter konteksten med standardverdier
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+const ThemeContext = createContext<ThemeContextType>({
+    theme: 'dark',
+    setTheme: () => { },
+    toggleTheme: () => { },
+});
 
-// Custom hook for å bruke tema-konteksten
-export const useTheme = (): ThemeContextType => {
-    const context = useContext(ThemeContext);
-    if (context === undefined) {
-        throw new Error('useTheme must be used within a ThemeProvider');
-    }
-    return context;
-};
-
-// Props for ThemeProvider
 interface ThemeProviderProps {
     children: React.ReactNode;
 }
 
-// Hovedkomponenten som gir tilgang til tema-konteksten i hele appen
 export const ThemeProvider = ({ children }: ThemeProviderProps) => {
-    // Lagrer tema i localStorage for å huske brukerens preferanse
-    const [theme, setTheme] = useState<Theme>(() => {
-        // Sjekk localStorage første gang komponenten laster
-        const savedTheme = localStorage.getItem('snakkaz-theme');
+    const [storedTheme, setStoredTheme] = useLocalStorage<Theme>('snakkaz-theme', 'dark');
+    const [theme, setThemeState] = useState<Theme>(storedTheme);
 
-        // Sjekk om brukeren har en systempreferanse for mørkt tema hvis ingen lagret preferanse finnes
-        if (!savedTheme) {
-            return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-        }
-
-        return (savedTheme as Theme) || 'dark'; // Default til dark theme hvis ingenting er lagret
-    });
-
-    // Effekt for å legge til eller fjerne 'dark' klassen på HTML-elementet
+    // Sjekk for systempreferanser ved oppstart
     useEffect(() => {
-        const root = window.document.documentElement;
-
-        if (theme === 'dark') {
-            root.classList.add('dark');
-        } else {
-            root.classList.remove('dark');
+        const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (!storedTheme) {
+            setThemeState(systemPrefersDark ? 'dark' : 'light');
         }
+    }, [storedTheme]);
 
-        // Lagre tema-valget i localStorage
-        localStorage.setItem('snakkaz-theme', theme);
-    }, [theme]);
+    // Oppdater dokumentklassen når temaet endres
+    useEffect(() => {
+        document.documentElement.classList.toggle('dark', theme === 'dark');
+        document.documentElement.classList.toggle('light', theme === 'light');
+        setStoredTheme(theme);
+    }, [theme, setStoredTheme]);
 
-    // Funksjon for å bytte tema
+    const setTheme = (newTheme: Theme) => {
+        setThemeState(newTheme);
+    };
+
     const toggleTheme = () => {
-        setTheme(prevTheme => (prevTheme === 'light' ? 'dark' : 'light'));
+        setThemeState((prevTheme) => (prevTheme === 'dark' ? 'light' : 'dark'));
     };
 
-    // Verdier som vil være tilgjengelige gjennom konteksten
-    const value = {
-        theme,
-        setTheme,
-        toggleTheme,
-    };
-
-    return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
+    return (
+        <ThemeContext.Provider value={{ theme, setTheme, toggleTheme }}>
+            {children}
+        </ThemeContext.Provider>
+    );
 };
+
+export const useTheme = () => useContext(ThemeContext);
