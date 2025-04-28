@@ -98,7 +98,7 @@
 
   input,
   textarea {
-    @apply dark:text-white dark:bg-cyberdark-800 dark:border-cybergold-500/30 text-gray-800 bg-gray-100 border-gray-300 light:border-cyberblue-200/70;
+    @apply dark:text-white dark:bg-cyberdark-800 dark:border-cybergold-500/30 text-gray-800 bg-gray-100 border-gray-300 border-cyberblue-200/70;
   }
 
   ::placeholder {
