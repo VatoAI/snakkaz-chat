@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -12,7 +11,7 @@ interface AdminAuthProps {
 }
 
 export const AdminAuth = ({ onAuthenticated }: AdminAuthProps) => {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isOpen, setIsOpen] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
@@ -26,7 +25,7 @@ export const AdminAuth = ({ onAuthenticated }: AdminAuthProps) => {
     // Check if already authenticated
     const isAuthenticated = localStorage.getItem("adminAuthenticated") === "true";
     const sessionExpiry = localStorage.getItem("adminSessionExpiry");
-    
+
     // Check if session is expired
     if (isAuthenticated && sessionExpiry) {
       const expiryTime = parseInt(sessionExpiry);
@@ -44,7 +43,7 @@ export const AdminAuth = ({ onAuthenticated }: AdminAuthProps) => {
         onAuthenticated();
       }
     }
-    
+
     // Check for locked state
     const lockedUntil = localStorage.getItem("adminLoginLocked");
     if (lockedUntil) {
@@ -53,7 +52,7 @@ export const AdminAuth = ({ onAuthenticated }: AdminAuthProps) => {
         setIsLocked(true);
         const remainingTime = Math.ceil((lockTime - Date.now()) / 1000);
         setLockTimer(remainingTime);
-        
+
         // Set up countdown timer
         const interval = setInterval(() => {
           setLockTimer(prev => {
@@ -66,13 +65,13 @@ export const AdminAuth = ({ onAuthenticated }: AdminAuthProps) => {
             return prev - 1;
           });
         }, 1000);
-        
+
         return () => clearInterval(interval);
       } else {
         localStorage.removeItem("adminLoginLocked");
       }
     }
-    
+
     // Retrieve previous login attempts
     const attempts = localStorage.getItem("adminLoginAttempts");
     if (attempts) {
@@ -82,92 +81,130 @@ export const AdminAuth = ({ onAuthenticated }: AdminAuthProps) => {
 
   const handleLogin = async () => {
     if (isLocked) return;
-    
+
+    // Valider e-post og passord
+    if (!email || !password) {
+      toast({
+        title: "Feil",
+        description: "Både e-post og passord er påkrevd",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
-    
+
     try {
-      // Simulate a slight delay for security
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      // For demo purposes - in a real app, this would use a secure authentication method
-      // like Supabase auth or JWT
-      if (username === "admin" && password === "admin123!") {
-        // Record successful login in database for audit
-        try {
-          await supabase
-            .from('health')
-            .upsert({
-              id: "admin-login-" + new Date().toISOString(),
-              status: `admin_login_successful_${new Date().toISOString()}`,
-              last_checked: new Date().toISOString()
-            });
-        } catch (error) {
-          console.error("Could not log admin login:", error);
-        }
-        
-        // Set 4-hour session expiry
-        const expiryTime = Date.now() + (4 * 60 * 60 * 1000);
-        localStorage.setItem("adminAuthenticated", "true");
-        localStorage.setItem("adminSessionExpiry", expiryTime.toString());
-        localStorage.removeItem("adminLoginAttempts");
-        
-        setIsOpen(false);
-        onAuthenticated();
+      // 1. Autentisering gjennom Supabase
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password
+      });
+
+      if (error) throw error;
+
+      if (!data || !data.user) {
+        throw new Error("Autentisering feilet");
+      }
+
+      // 2. Sjekk om brukeren har admin-rolle
+      const { data: hasAdminRole, error: roleError } = await supabase.rpc('has_role', {
+        user_id: data.user.id,
+        role: 'admin'
+      });
+
+      if (roleError) throw roleError;
+
+      if (!hasAdminRole) {
+        throw new Error("Ikke tilstrekkelige rettigheter");
+      }
+
+      // Autentisering vellykket og brukeren har admin-rettigheter
+      try {
+        await supabase
+          .from('health')
+          .upsert({
+            id: "admin-login-" + new Date().toISOString(),
+            status: `admin_login_successful_${data.user.id}`,
+            last_checked: new Date().toISOString()
+          });
+      } catch (error) {
+        console.error("Could not log admin login:", error);
+      }
+
+      // Set 4-hour session expiry
+      const expiryTime = Date.now() + (4 * 60 * 60 * 1000);
+      localStorage.setItem("adminAuthenticated", "true");
+      localStorage.setItem("adminSessionExpiry", expiryTime.toString());
+      localStorage.setItem("adminUserId", data.user.id);
+      localStorage.removeItem("adminLoginAttempts");
+
+      setIsOpen(false);
+      onAuthenticated();
+      toast({
+        title: "Innlogget",
+        description: "Du er nå logget inn som administrator",
+      });
+    } catch (error: any) {
+      console.error("Admin login error:", error);
+
+      // Håndter feilede innloggingsforsøk
+      const newAttempts = loginAttempts + 1;
+      setLoginAttempts(newAttempts);
+      localStorage.setItem("adminLoginAttempts", newAttempts.toString());
+
+      // Log failed attempt
+      try {
+        await supabase
+          .from('health')
+          .upsert({
+            id: "admin-login-failed-" + new Date().toISOString(),
+            status: `admin_login_failed_${new Date().toISOString()}`,
+            last_checked: new Date().toISOString()
+          });
+      } catch (logError) {
+        console.error("Could not log failed login:", logError);
+      }
+
+      // Vis spesifikke feilmeldinger
+      let errorMessage = "Ugyldig e-post eller passord";
+
+      if (error.message.includes("role") || error.message.includes("permission") ||
+        error.message === "Ikke tilstrekkelige rettigheter") {
+        errorMessage = "Du har ikke admin-rettigheter";
+      }
+
+      // If too many attempts, lock the login
+      if (newAttempts >= 5) {
+        const lockTime = Date.now() + (30 * 1000); // Lock for 30 seconds
+        localStorage.setItem("adminLoginLocked", lockTime.toString());
+        setIsLocked(true);
+        setLockTimer(30);
+
+        // Set up countdown timer
+        const interval = setInterval(() => {
+          setLockTimer(prev => {
+            if (prev <= 1) {
+              clearInterval(interval);
+              setIsLocked(false);
+              localStorage.removeItem("adminLoginLocked");
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+
         toast({
-          title: "Innlogget",
-          description: "Du er nå logget inn som administrator",
+          title: "For mange forsøk",
+          description: `Innlogging er låst i ${lockTimer} sekunder`,
+          variant: "destructive",
         });
       } else {
-        // Handle failed login
-        const newAttempts = loginAttempts + 1;
-        setLoginAttempts(newAttempts);
-        localStorage.setItem("adminLoginAttempts", newAttempts.toString());
-        
-        // Log failed attempt
-        try {
-          await supabase
-            .from('health')
-            .upsert({
-              id: "admin-login-failed-" + new Date().toISOString(),
-              status: `admin_login_failed_${new Date().toISOString()}`,
-              last_checked: new Date().toISOString()
-            });
-        } catch (error) {
-          console.error("Could not log failed login:", error);
-        }
-        
-        // If too many attempts, lock the login
-        if (newAttempts >= 5) {
-          const lockTime = Date.now() + (30 * 1000); // Lock for 30 seconds
-          localStorage.setItem("adminLoginLocked", lockTime.toString());
-          setIsLocked(true);
-          setLockTimer(30);
-          
-          // Set up countdown timer
-          const interval = setInterval(() => {
-            setLockTimer(prev => {
-              if (prev <= 1) {
-                clearInterval(interval);
-                setIsLocked(false);
-                localStorage.removeItem("adminLoginLocked");
-                return 0;
-              }
-              return prev - 1;
-            });
-          }, 1000);
-          
-          toast({
-            title: "For mange forsøk",
-            description: `Innlogging er låst i ${lockTimer} sekunder`,
-            variant: "destructive",
-          });
-        } else {
-          toast({
-            title: "Feil",
-            description: "Ugyldig brukernavn eller passord",
-            variant: "destructive",
-          });
-        }
+        toast({
+          title: "Feil",
+          description: errorMessage,
+          variant: "destructive",
+        });
       }
     } finally {
       setIsLoading(false);
@@ -194,7 +231,7 @@ export const AdminAuth = ({ onAuthenticated }: AdminAuthProps) => {
             Skriv inn dine admin-legitimasjoner for å fortsette
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className="space-y-4 py-4">
           {isLocked ? (
             <div className="bg-red-900/20 border border-red-500/30 rounded-md p-4 text-center">
@@ -208,11 +245,13 @@ export const AdminAuth = ({ onAuthenticated }: AdminAuthProps) => {
             <>
               <div className="space-y-2">
                 <Input
-                  placeholder="Brukernavn"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="E-post"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="bg-cyberdark-950 border-cyberblue-500/30"
                   disabled={isLoading}
+                  autoComplete="email"
                 />
               </div>
               <div className="space-y-2 relative">
@@ -223,6 +262,7 @@ export const AdminAuth = ({ onAuthenticated }: AdminAuthProps) => {
                   onChange={(e) => setPassword(e.target.value)}
                   className="bg-cyberdark-950 border-cyberblue-500/30 pr-10"
                   disabled={isLoading}
+                  autoComplete="current-password"
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && !isLoading) {
                       handleLogin();
@@ -242,18 +282,18 @@ export const AdminAuth = ({ onAuthenticated }: AdminAuthProps) => {
                   )}
                 </button>
               </div>
-              
+
               {loginAttempts > 0 && (
                 <div className="text-xs text-yellow-400 text-center">
                   {5 - loginAttempts} forsøk gjenstår før kontoen låses
                 </div>
               )}
-              
+
               <Button
                 type="submit"
                 className="w-full"
                 onClick={handleLogin}
-                disabled={isLoading || !username || !password}
+                disabled={isLoading || !email || !password}
                 style={{
                   background: 'linear-gradient(90deg, #1a9dff, #3b82f6)',
                   boxShadow: '0 0 10px rgba(26,157,255,0.4)',
@@ -271,7 +311,7 @@ export const AdminAuth = ({ onAuthenticated }: AdminAuthProps) => {
             </>
           )}
         </div>
-        
+
         <div className="text-xs text-gray-500 text-center">
           For admin tilgang, kontakt din systemadministrator
         </div>
