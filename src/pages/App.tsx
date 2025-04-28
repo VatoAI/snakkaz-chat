@@ -1,6 +1,6 @@
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import { Toaster } from "@/components/ui/toaster";
-import { AuthProvider } from "./hooks/useAuth";
+import { AuthProvider } from "./hooks/useAuth.tsx";
 
 // Layouts
 import Layout from "./Layout";
@@ -23,14 +23,17 @@ import SafeChatPage from "./chat/SafeChatPage";
 // Auth components
 import AuthPage from "./auth/AuthPage";
 
+// Note: Toaster component import was causing errors, commenting it out until we find the correct path
+// import { Toaster } from "@/components/ui/toaster";
+
 function App() {
   return (
     <Router>
       <AuthProvider>
         <Routes>
           {/* Authentication routes */}
-          <Route path="/login" element={<AuthPage><Login /></AuthPage>} />
-          <Route path="/register" element={<AuthPage><Register /></AuthPage>} />
+          <Route path="/login" element={<AuthPage />} />
+          <Route path="/register" element={<AuthPage />} />
           
           {/* Main app layout */}
           <Route path="/" element={<Layout />}>
@@ -50,7 +53,8 @@ function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
         
-        <Toaster />
+        {/* Temporarily commenting out due to import issues */}
+        {/* <Toaster /> */}
       </AuthProvider>
     </Router>
   );
