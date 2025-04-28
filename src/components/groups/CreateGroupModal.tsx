@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useGroups } from "@/hooks/useGroups";
-import { GroupVisibility, SecurityLevel } from "@/types/groups";
+import { GroupVisibility, SecurityLevel, Group } from "@/types/groups";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,7 +40,7 @@ export const CreateGroupModal = ({ isOpen, onClose, onSuccess }: CreateGroupModa
                 description: description.trim(),
                 visibility,
                 securityLevel,
-            });
+            }) as Group | null;
 
             // Vis suksessmelding
             toast({
