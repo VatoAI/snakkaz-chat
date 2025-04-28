@@ -3,8 +3,6 @@ export type GroupRole = "admin" | "moderator" | "member";
 
 export type GroupVisibility = "private" | "public";
 
-export type SecurityLevel = "low" | "standard" | "high" | "maximum";
-
 export interface GroupMember {
     id: string;
     group_id: string;
@@ -19,10 +17,8 @@ export interface Group {
     description?: string;
     avatarUrl?: string;
     visibility: GroupVisibility;
-    securityLevel?: SecurityLevel;
     is_premium: boolean;
     memberCount: number;
-    unreadCount?: number;
     createdAt: string;
     updatedAt: string;
 }
@@ -41,5 +37,4 @@ export interface CreateGroupData {
     name: string;
     description?: string;
     visibility: GroupVisibility;
-    securityLevel?: SecurityLevel;
 }
