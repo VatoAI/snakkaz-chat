@@ -1,4 +1,3 @@
-
 import { Friend } from './friends/types';
 import { DecryptedMessage } from '@/types/message';
 import { WebRTCManager } from '@/utils/webrtc';
@@ -31,14 +30,19 @@ interface ChatTabsProps {
   directMessages: DecryptedMessage[];
   onNewMessage: (message: { id: string; content: string }) => void;
   webRTCManager: WebRTCManager | null;
-  userProfiles: Record<string, {username: string | null, avatar_url: string | null}>;
+  userProfiles: Record<string, { username: string | null, avatar_url: string | null }>;
   handleCloseDirectChat: () => void;
   setSelectedFriend: (friend: Friend | null) => void;
   userPresence?: Record<string, UserPresence>;
   friendsList?: string[];
+
+  // Pagination props
+  loadMoreMessages?: () => Promise<void>;
+  hasMoreMessages?: boolean;
+  isLoadingMoreMessages?: boolean;
 }
 
-export const ChatTabs = ({ 
+export const ChatTabs = ({
   activeTab,
   setActiveTab,
   selectedFriend,
@@ -62,24 +66,27 @@ export const ChatTabs = ({
   handleCloseDirectChat,
   setSelectedFriend,
   userPresence = {},
-  friendsList = []
+  friendsList = [],
+  loadMoreMessages,
+  hasMoreMessages,
+  isLoadingMoreMessages
 }: ChatTabsProps) => {
   const recentConversations = useMemo(() => {
     if (!currentUserId) return [];
-    
+
     const conversations = new Map();
-    
+
     directMessages.forEach((msg) => {
       const isFromCurrentUser = msg.sender.id === currentUserId;
       const otherUserId = isFromCurrentUser ? msg.receiver_id : msg.sender.id;
-      
+
       if (!otherUserId) return;
-      
+
       if (!conversations.has(otherUserId)) {
-        const username = isFromCurrentUser 
-          ? userProfiles[otherUserId]?.username || otherUserId 
+        const username = isFromCurrentUser
+          ? userProfiles[otherUserId]?.username || otherUserId
           : msg.sender.username || otherUserId;
-        
+
         conversations.set(otherUserId, {
           userId: otherUserId,
           username,
@@ -90,22 +97,22 @@ export const ChatTabs = ({
         const existing = conversations.get(otherUserId);
         const newDate = new Date(msg.created_at);
         const existingDate = new Date(existing.lastActive);
-        
+
         if (newDate > existingDate) {
           existing.lastActive = msg.created_at;
         }
-        
+
         if (!isFromCurrentUser && !msg.read_at) {
           existing.unreadCount += 1;
         }
       }
     });
-    
+
     return Array.from(conversations.values());
   }, [currentUserId, directMessages, userProfiles]);
 
   return (
-    <TabsContainer 
+    <TabsContainer
       activeTab={activeTab}
       setActiveTab={setActiveTab}
       selectedFriend={selectedFriend}
@@ -149,6 +156,9 @@ export const ChatTabs = ({
           }}
           recentConversations={recentConversations}
           recentGroups={[]}
+          loadMoreMessages={loadMoreMessages}
+          hasMoreMessages={hasMoreMessages}
+          isLoadingMoreMessages={isLoadingMoreMessages}
         />
       </TabContent>
 
@@ -198,7 +208,7 @@ export const ChatTabs = ({
           userProfiles={userProfiles}
         />
       </TabContent>
-      
+
       {selectedFriend && (
         <TabContent value="direct">
           <DirectTab

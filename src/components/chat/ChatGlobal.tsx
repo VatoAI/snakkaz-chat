@@ -1,4 +1,3 @@
-
 import { ChatMessages } from "./global/ChatMessages";
 import { ChatInput } from "./global/ChatInput";
 import { ChatSidebar } from "./global/ChatSidebar";
@@ -28,6 +27,11 @@ interface ChatGlobalProps {
   onStartChat?: (userId: string) => void;
   recentGroups?: { id: string; name: string; unreadCount: number; lastActive: string }[];
   recentConversations?: { userId: string; username: string; unreadCount: number; lastActive: string }[];
+
+  // Pagination props
+  loadMoreMessages?: () => Promise<void>;
+  hasMoreMessages?: boolean;
+  isLoadingMoreMessages?: boolean;
 }
 
 export const ChatGlobal = ({
@@ -48,7 +52,12 @@ export const ChatGlobal = ({
   directMessages = [],
   onStartChat,
   recentGroups = [],
-  recentConversations = []
+  recentConversations = [],
+
+  // Pagination props
+  loadMoreMessages,
+  hasMoreMessages = false,
+  isLoadingMoreMessages = false
 }: ChatGlobalProps) => {
   const isMobile = useIsMobile();
   const [isSidebarOpen, setIsSidebarOpen] = useState(!isMobile);
@@ -120,6 +129,9 @@ export const ChatGlobal = ({
           onEditMessage={onEditMessage}
           onDeleteMessage={onDeleteMessage}
           userPresence={userPresence}
+          loadMoreMessages={loadMoreMessages}
+          hasMoreMessages={hasMoreMessages}
+          isLoadingMoreMessages={isLoadingMoreMessages}
         />
 
         <ChatInput

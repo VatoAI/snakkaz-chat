@@ -1,4 +1,3 @@
-
 import { ChatGlobal } from '@/components/chat/ChatGlobal';
 import { DecryptedMessage } from '@/types/message';
 import { UserPresence } from '@/types/presence';
@@ -22,6 +21,11 @@ interface GlobalTabProps {
   onStartChat?: (userId: string) => void;
   recentConversations?: { userId: string; username: string; unreadCount: number; lastActive: string }[];
   recentGroups?: { id: string; name: string; unreadCount: number; lastActive: string }[];
+
+  // Pagination props
+  loadMoreMessages?: () => Promise<void>;
+  hasMoreMessages?: boolean;
+  isLoadingMoreMessages?: boolean;
 }
 
 export const GlobalTab = ({
@@ -42,10 +46,15 @@ export const GlobalTab = ({
   directMessages,
   onStartChat,
   recentConversations = [],
-  recentGroups = []
+  recentGroups = [],
+
+  // Pagination props
+  loadMoreMessages,
+  hasMoreMessages,
+  isLoadingMoreMessages
 }: GlobalTabProps) => {
   return (
-    <ChatGlobal 
+    <ChatGlobal
       messages={messages}
       newMessage={newMessage}
       setNewMessage={setNewMessage}
@@ -64,6 +73,9 @@ export const GlobalTab = ({
       onStartChat={onStartChat}
       recentConversations={recentConversations}
       recentGroups={recentGroups}
+      loadMoreMessages={loadMoreMessages}
+      hasMoreMessages={hasMoreMessages}
+      isLoadingMoreMessages={isLoadingMoreMessages}
     />
   );
 };
