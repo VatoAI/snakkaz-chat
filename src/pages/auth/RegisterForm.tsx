@@ -60,7 +60,7 @@ export const RegisterForm = ({ onSuccess }: RegisterFormProps) => {
   ];
 
   const [requirements, setRequirements] = useState<PasswordRequirement[]>(passwordRequirements);
-  
+
   // Oppdater passordkravene når passordet endres
   useEffect(() => {
     const updatedRequirements = requirements.map(req => ({
@@ -75,7 +75,7 @@ export const RegisterForm = ({ onSuccess }: RegisterFormProps) => {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email || !password || !confirmPassword || !username) {
       toast({
         title: "Feil",
@@ -84,7 +84,7 @@ export const RegisterForm = ({ onSuccess }: RegisterFormProps) => {
       });
       return;
     }
-    
+
     if (password !== confirmPassword) {
       toast({
         title: "Feil",
@@ -93,7 +93,7 @@ export const RegisterForm = ({ onSuccess }: RegisterFormProps) => {
       });
       return;
     }
-    
+
     if (!allRequirementsMet) {
       toast({
         title: "Svakt passord",
@@ -103,9 +103,9 @@ export const RegisterForm = ({ onSuccess }: RegisterFormProps) => {
       setShowRequirements(true);
       return;
     }
-    
+
     setIsLoading(true);
-    
+
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -116,16 +116,16 @@ export const RegisterForm = ({ onSuccess }: RegisterFormProps) => {
           },
         },
       });
-      
+
       if (error) {
         throw error;
       }
-      
+
       toast({
         title: "Konto opprettet",
         description: "Din konto ble opprettet. Du kan nå logge inn.",
       });
-      
+
       onSuccess();
     } catch (error: any) {
       console.error("Registration error:", error);
@@ -156,7 +156,7 @@ export const RegisterForm = ({ onSuccess }: RegisterFormProps) => {
           required
         />
       </div>
-      
+
       <div className="space-y-2">
         <label htmlFor="username" className="block text-sm font-medium text-cybergold-300">
           Brukernavn
@@ -172,7 +172,7 @@ export const RegisterForm = ({ onSuccess }: RegisterFormProps) => {
           required
         />
       </div>
-      
+
       <div className="space-y-2">
         <label htmlFor="password" className="block text-sm font-medium text-cybergold-300">
           Passord
@@ -202,7 +202,7 @@ export const RegisterForm = ({ onSuccess }: RegisterFormProps) => {
             {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </button>
         </div>
-        
+
         {/* Passordkrav indikator */}
         {showRequirements && (
           <div className="mt-2 p-3 bg-cyberdark-950 border border-cybergold-500/20 rounded-md shadow-lg text-sm">
@@ -224,7 +224,7 @@ export const RegisterForm = ({ onSuccess }: RegisterFormProps) => {
           </div>
         )}
       </div>
-      
+
       <div className="space-y-2">
         <label htmlFor="confirmPassword" className="block text-sm font-medium text-cybergold-300">
           Bekreft passord
@@ -254,7 +254,7 @@ export const RegisterForm = ({ onSuccess }: RegisterFormProps) => {
           <p className="text-xs text-red-500 mt-1">Passordene er ikke like</p>
         )}
       </div>
-      
+
       <Button
         type="submit"
         className="w-full bg-cybergold-600 hover:bg-cybergold-500 text-black"
@@ -269,7 +269,7 @@ export const RegisterForm = ({ onSuccess }: RegisterFormProps) => {
           "Opprett konto"
         )}
       </Button>
-      
+
       <p className="text-xs text-cybergold-500 text-center mt-4">
         Ved å registrere deg godtar du våre <a href="#" className="underline hover:text-cybergold-400">vilkår og betingelser</a> og <a href="#" className="underline hover:text-cybergold-400">personvernregler</a>.
       </p>
