@@ -113,6 +113,7 @@ export const MessageList = ({
         <UnreadCounter 
           count={newMessageCount} 
           onClick={handleScrollToBottom} 
+          show={true}
         />
       )}
     </ScrollStabilizer>

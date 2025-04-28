@@ -49,5 +49,5 @@ export function useDeleteMessageHandler({ onDeleteMessage }: DeleteMessageHandle
     />
   );
 
-  return { confirmDelete, setConfirmDelete, DialogUI, isDeleting };
+  return { confirmDelete, setConfirmDelete, DialogUI, isDeleting, handleDelete };
 }
