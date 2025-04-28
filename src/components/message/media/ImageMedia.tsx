@@ -27,14 +27,14 @@ export const ImageMedia = ({
   const [loadAttempts, setLoadAttempts] = useState(0);
   const imageRef = useRef<HTMLImageElement>(null);
   const isMobile = useIsMobile();
-  
+
   // Forbedret bildelastingsfunksjon med flere forsøk
   const loadImage = useCallback(() => {
     if (!url) return;
-    
+
     const img = new window.Image();
     let timeoutId: number;
-    
+
     img.onload = () => {
       clearTimeout(timeoutId);
       setIsLoaded(true);
@@ -42,7 +42,7 @@ export const ImageMedia = ({
       setDimensions({ width: img.width, height: img.height });
       console.log(`Image loaded successfully: ${img.width}x${img.height}`);
     };
-    
+
     img.onerror = (e) => {
       console.error("Failed to load image:", e);
       if (loadAttempts < 2) {
@@ -55,7 +55,7 @@ export const ImageMedia = ({
         setIsLoaded(false);
       }
     };
-    
+
     // Timeout for å fange tilfeller hvor bildet tar for lang tid å laste
     timeoutId = window.setTimeout(() => {
       if (!isLoaded) {
@@ -67,10 +67,10 @@ export const ImageMedia = ({
         }
       }
     }, 15000); // 15 sekunder timeout
-    
+
     // Set source after adding event handlers
     img.src = url;
-    
+
     return () => {
       clearTimeout(timeoutId);
       img.onload = null;
@@ -106,7 +106,7 @@ export const ImageMedia = ({
   // Funksjon for å laste ned bildet i full oppløsning
   const handleDownload = () => {
     if (!url) return;
-    
+
     const link = document.createElement('a');
     link.href = url;
     link.download = `encrypted-image-${Date.now()}.jpg`;
@@ -128,7 +128,7 @@ export const ImageMedia = ({
     // Calculate scale ratio
     const widthRatio = defaultMaxWidth / dimensions.width;
     const heightRatio = defaultMaxHeight / dimensions.height;
-    
+
     // Aldri skaler opp små bilder
     const ratio = Math.min(widthRatio, heightRatio, 1);
 
@@ -177,7 +177,7 @@ export const ImageMedia = ({
             <div className="h-6 w-6 border-2 border-t-transparent border-cyberblue-400 rounded-full animate-spin"></div>
           </div>
         )}
-        
+
         {url && (
           <div className="relative overflow-hidden rounded-lg shadow-neon-blue"
             style={{
