@@ -5,6 +5,7 @@ import { MessageMedia } from "@/components/message/MessageMedia";
 import { cn } from "@/lib/utils";
 import { sanitizeHtml, sanitizeText } from "@/utils/sanitize";
 import { useEffect, useState } from "react";
+import { processTextWithLinks } from "@/utils/textProcessor";
 
 export interface MessageBodyContentProps {
   message: DecryptedMessage;
@@ -27,15 +28,21 @@ export const MessageBodyContent = ({
 }: MessageBodyContentProps) => {
   // State for sanitized content
   const [sanitizedContent, setSanitizedContent] = useState<string>("");
+  // State for processed content with links
+  const [processedContent, setProcessedContent] = useState<React.ReactNode[]>([]);
 
   // Sanitize message content when the message changes
   useEffect(() => {
     if (message.content) {
-      // Bruk sanitizeText for full sikkerhet, eller sanitizeHtml hvis HTML er tillatt
+      // Bruk sanitizeText for full sikkerhet
       const sanitized = sanitizeText(message.content);
       setSanitizedContent(sanitized);
+
+      // Prosesser sanitert tekst for å konvertere URL-er til sikre lenker
+      setProcessedContent(processTextWithLinks(sanitized));
     } else {
       setSanitizedContent("");
+      setProcessedContent([]);
     }
   }, [message.content]);
 
@@ -57,8 +64,8 @@ export const MessageBodyContent = ({
           "break-words",
           hasMedia && "mb-2"
         )}>
-          {/* Bruk det saniterte innholdet i stedet for direkte message.content */}
-          {sanitizedContent}
+          {/* Vis prosessert innhold med sikre lenker istedenfor bare tekst */}
+          {processedContent}
           {message.is_edited && (
             <span className="text-[10px] text-cyberdark-400 ml-1">(redigert)</span>
           )}
