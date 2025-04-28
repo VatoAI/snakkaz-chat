@@ -1,17 +1,32 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { DecryptedMessage } from "@/types/message";
 import { decryptMedia } from "@/utils/encryption/media";
-import { GLOBAL_E2EE_KEY, GLOBAL_E2EE_IV } from "@/utils/encryption/global-e2ee";
+import { getGlobalE2EEKey, base64ToArrayBuffer, arrayBufferToBase64 } from "@/utils/encryption/global-e2ee";
 import { useToast } from "@/hooks/use-toast";
-import { arrayBufferToBase64 } from "@/utils/encryption/data-conversion";
 
 export const useMediaDecryption = (mediaUrl: string, encryptionKey?: string) => {
   const [decryptedDataUrl, setDecryptedDataUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [decryptAttempts, setDecryptAttempts] = useState(0);
+  const [globalKey, setGlobalKey] = useState<string | null>(null);
   const { toast } = useToast();
+
+  // Hent global krypteringsnøkkel ved oppstart
+  useEffect(() => {
+    const loadGlobalKey = async () => {
+      if (!encryptionKey) {
+        try {
+          const key = await getGlobalE2EEKey();
+          setGlobalKey(key);
+        } catch (error) {
+          console.error("Kunne ikke laste global krypteringsnøkkel:", error);
+        }
+      }
+    };
+
+    loadGlobalKey();
+  }, [encryptionKey]);
 
   const cleanup = useCallback(() => {
     // Cleanup previous URL to prevent memory leaks
@@ -32,42 +47,32 @@ export const useMediaDecryption = (mediaUrl: string, encryptionKey?: string) => 
       setError("No media URL provided");
       return;
     }
-    
+
     // Clear previous decryption
     cleanup();
     setDecryptedDataUrl(null);
-    
+
     setIsLoading(true);
     setError(null);
 
     try {
       console.log(`Decryption attempt ${decryptAttempts + 1} for ${mediaUrl}`);
-      
+
       // Use provided encryption key or try to get one from global
       let key = encryptionKey;
       let iv: string | undefined;
-      
-      // For global messages, try global key/iv if no message-specific keys
-      if (!key) {
+
+      // For global messages, try global key if no message-specific keys
+      if (!key && globalKey) {
         console.log("Using global E2EE key for media");
-        key = GLOBAL_E2EE_KEY;
-        
-        // Handle IV conversion properly
-        if (GLOBAL_E2EE_IV instanceof ArrayBuffer) {
-          // Convert ArrayBuffer to Base64 string
-          iv = arrayBufferToBase64(GLOBAL_E2EE_IV);
-        } else if (GLOBAL_E2EE_IV) {
-          try {
-            // Handle array-like representation
-            iv = typeof GLOBAL_E2EE_IV === 'string' 
-              ? GLOBAL_E2EE_IV 
-              : Array.from(new Uint8Array(GLOBAL_E2EE_IV))
-                  .join(',');
-          } catch (ivError) {
-            console.error("Error converting IV:", ivError);
-            iv = '';
-          }
-        }
+        key = globalKey;
+
+        // For IV, vi må generere en ny eller hente den fra URL-en/attributtene
+        // Dette er en midlertidig løsning - ideelt sett ville vi lagre IV sammen med hver fil
+        // I framtiden bør vi hente IV fra mediadataene eller filnavnet
+        iv = mediaUrl.includes('iv=')
+          ? mediaUrl.split('iv=')[1].split('&')[0]
+          : "RSwjG+tvWrxMbDch"; // Fallback IV hvis ikke annet er tilgjengelig
       }
 
       if (!key) {
@@ -79,9 +84,9 @@ export const useMediaDecryption = (mediaUrl: string, encryptionKey?: string) => 
       if (!response.ok) {
         throw new Error(`Failed to fetch media: ${response.status}`);
       }
-      
+
       const encryptedData = await response.arrayBuffer();
-      
+
       if (encryptedData.byteLength === 0) {
         throw new Error("Empty media file");
       }
@@ -89,9 +94,9 @@ export const useMediaDecryption = (mediaUrl: string, encryptionKey?: string) => 
       console.log(`Successfully fetched ${encryptedData.byteLength} bytes, attempting decryption`);
 
       // Determine media type from URL or default to octet-stream
-      const mediaType = mediaUrl.endsWith('.webp') ? 'image/webp' : 
-                       mediaUrl.endsWith('.mp4') ? 'video/mp4' : 
-                       'application/octet-stream';
+      const mediaType = mediaUrl.endsWith('.webp') ? 'image/webp' :
+        mediaUrl.endsWith('.mp4') ? 'video/mp4' :
+          'application/octet-stream';
 
       // Decrypt the media
       const decryptedBlob = await decryptMedia({
@@ -100,14 +105,14 @@ export const useMediaDecryption = (mediaUrl: string, encryptionKey?: string) => 
         iv: iv || '',
         mediaType,
       });
-      
+
       const localUrl = URL.createObjectURL(decryptedBlob);
       setDecryptedDataUrl(localUrl);
       console.log("Media successfully decrypted");
     } catch (error) {
       console.error('Media decryption failed:', error);
       setError(error instanceof Error ? error.message : 'Unknown error');
-      
+
       // Show toast only on first attempt to avoid spam
       if (decryptAttempts === 0) {
         toast({
@@ -119,14 +124,14 @@ export const useMediaDecryption = (mediaUrl: string, encryptionKey?: string) => 
     } finally {
       setIsLoading(false);
     }
-  }, [mediaUrl, encryptionKey, decryptAttempts, cleanup, toast]);
+  }, [mediaUrl, encryptionKey, globalKey, decryptAttempts, cleanup, toast]);
 
   // Run decryption when URL or key changes or retry is called
   useEffect(() => {
     if (mediaUrl) {
       decrypt();
     }
-  }, [mediaUrl, encryptionKey, decryptAttempts, decrypt]);
+  }, [mediaUrl, encryptionKey, globalKey, decryptAttempts, decrypt]);
 
   // Clean up the object URL when component unmounts
   useEffect(() => {
