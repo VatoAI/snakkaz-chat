@@ -1,15 +1,14 @@
 // Group Types
-export type GroupRole = 'admin' | 'moderator' | 'member';
+export type GroupRole = "admin" | "moderator" | "member";
 
-export type GroupVisibility = 'public' | 'private';
+export type GroupVisibility = "private" | "public";
 
 export interface GroupMember {
     id: string;
-    userId: string;
-    groupId: string;
+    group_id: string;
+    user_id: string;
     role: GroupRole;
-    joinedAt: Date;
-    invitedBy?: string;
+    createdAt: string;
 }
 
 export interface Group {
@@ -18,20 +17,24 @@ export interface Group {
     description?: string;
     avatarUrl?: string;
     visibility: GroupVisibility;
-    createdAt: Date;
-    createdBy: string;
-    updatedAt: Date;
+    is_premium: boolean;
     memberCount: number;
+    createdAt: string;
+    updatedAt: string;
 }
 
-export interface GroupInvite {
+export interface GroupInvitation {
     id: string;
-    groupId: string;
-    inviterId: string;
-    inviteeEmail?: string;
-    inviteeId?: string;
+    group_id: string;
     code: string;
-    status: 'pending' | 'accepted' | 'rejected' | 'expired';
-    createdAt: Date;
-    expiresAt?: Date;
+    email?: string;
+    expires_at: string;
+    created_by: string;
+    createdAt: string;
+}
+
+export interface CreateGroupData {
+    name: string;
+    description?: string;
+    visibility: GroupVisibility;
 }
