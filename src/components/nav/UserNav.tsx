@@ -7,75 +7,70 @@ import {
     DropdownMenuItem,
     DropdownMenuLabel,
     DropdownMenuSeparator,
+    DropdownMenuShortcut,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuth";
-import { useProfileLoader } from "@/hooks/useProfileLoader";
 import { useNavigate } from "react-router-dom";
-import { Shield, User, Settings, LogOut, CreditCard } from "lucide-react";
-import { useGroups } from "@/hooks/useGroups";
+import { Settings, Shield, LogOut, User } from "lucide-react";
 
 export function UserNav() {
-    const { user, signOut } = useAuth();
-    const { profileData } = useProfileLoader(user?.id);
     const navigate = useNavigate();
-    const { isPremium } = useGroups();
+    const { user, signOut } = useAuth();
 
-    const userInitials = profileData?.display_name
-        ? profileData.display_name.substring(0, 2).toUpperCase()
-        : user?.email?.substring(0, 2).toUpperCase() || "??";
+    // Hent første bokstav i brukerens navn eller e-post
+    const getInitials = () => {
+        if (!user) return "?";
+        if (user.user_metadata?.full_name) {
+            return user.user_metadata.full_name.charAt(0);
+        }
+        if (user.email) {
+            return user.email.charAt(0).toUpperCase();
+        }
+        return "U";
+    };
 
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                    <Avatar className="h-10 w-10 border border-cyberdark-700">
-                        <AvatarImage src={profileData?.avatar_url || ""} alt={profileData?.display_name || "Bruker"} />
-                        <AvatarFallback className="bg-cybergold-500/20 text-cybergold-400">
-                            {userInitials}
-                        </AvatarFallback>
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                    <Avatar className="h-8 w-8 border border-cyberdark-700">
+                        <AvatarImage src={user?.user_metadata?.avatar_url} alt={user?.email || "Bruker"} />
+                        <AvatarFallback className="bg-cybergold-600/20 text-cybergold-400">{getInitials()}</AvatarFallback>
                     </Avatar>
-                    {isPremium && (
-                        <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-cybergold-500 text-[10px] font-bold text-black">
-                            P
-                        </span>
-                    )}
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56" align="end" forceMount>
-                <DropdownMenuLabel>
+                <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
-                        <p className="text-sm font-medium leading-none">{profileData?.display_name || "Bruker"}</p>
-                        <p className="text-xs leading-none text-muted-foreground">
-                            {user?.email}
-                        </p>
+                        <p className="text-sm font-medium leading-none">{user?.user_metadata?.full_name || "Bruker"}</p>
+                        <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
                     </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
                     <DropdownMenuItem onClick={() => navigate("/profile")}>
                         <User className="mr-2 h-4 w-4" />
-                        <span>Min profil</span>
+                        <span>Profil</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => navigate("/settings")}>
                         <Settings className="mr-2 h-4 w-4" />
                         <span>Innstillinger</span>
+                        <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => navigate("/security")}>
                         <Shield className="mr-2 h-4 w-4" />
                         <span>Sikkerhet</span>
                     </DropdownMenuItem>
-                    {!isPremium && (
-                        <DropdownMenuItem onClick={() => navigate("/profile")}>
-                            <CreditCard className="mr-2 h-4 w-4" />
-                            <span>Oppgrader til Premium</span>
-                        </DropdownMenuItem>
-                    )}
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => signOut()}>
+                <DropdownMenuItem
+                    onClick={() => signOut()}
+                    className="text-red-500 focus:text-red-500"
+                >
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Logg ut</span>
+                    <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
                 </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>
