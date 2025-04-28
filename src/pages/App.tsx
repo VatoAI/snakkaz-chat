@@ -21,7 +21,7 @@ import ChatPage from "./chat/ChatPage";
 import SafeChatPage from "./chat/SafeChatPage";
 
 // Auth components
-import { AuthPage } from "./auth/AuthPage";
+import AuthPage from "./auth/AuthPage";
 
 function App() {
   return (
