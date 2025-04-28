@@ -1,4 +1,3 @@
-
 import { ChatTabs } from "@/components/chat/ChatTabs";
 import { ChatHeader } from "@/components/chat/ChatHeader";
 import { MigrationHelper } from "@/components/chat/MigrationHelper";
@@ -82,6 +81,11 @@ export const ChatLayout = ({
             setSelectedFriend={setSelectedFriend}
             userPresence={userPresence}
             friendsList={friendsList}
+
+            // Pagination props
+            loadMoreMessages={chatState.loadMoreMessages}
+            hasMoreMessages={chatState.hasMoreMessages}
+            isLoadingMoreMessages={chatState.isLoadingMore}
           />
         </div>
         <MigrationHelper />
