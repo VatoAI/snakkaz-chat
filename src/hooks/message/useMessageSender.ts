@@ -1,13 +1,11 @@
-
-import { useCallback } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { encryptMessage, importEncryptionKey } from "@/utils/encryption";
-import { GLOBAL_E2EE_KEY, GLOBAL_E2EE_IV } from "@/utils/encryption/global-e2ee";
+import { getGlobalE2EEKey, generateSecureIV, arrayBufferToBase64 } from "@/utils/encryption/global-e2ee";
 import { ensureMessageColumnsExist } from "./utils/message-db-utils";
 import { useMediaHandler } from "./useMessageSender/useMediaHandler";
 import { useP2PDelivery } from "./useMessageSender/useP2PDelivery";
 import { globalEncryptMessage } from "./useMessageSender/globalEncryption";
-import { arrayBufferToBase64 } from "@/utils/encryption/data-conversion";
 
 export const useMessageSender = (
   userId: string | null,
@@ -19,6 +17,21 @@ export const useMessageSender = (
 ) => {
   const { handleMediaUpload } = useMediaHandler();
   const { handleP2PDelivery } = useP2PDelivery();
+  const [globalKey, setGlobalKey] = useState<string | null>(null);
+
+  // Hent den sikre globale krypteringsnøkkelen ved oppstart
+  useEffect(() => {
+    const loadGlobalKey = async () => {
+      try {
+        const key = await getGlobalE2EEKey();
+        setGlobalKey(key);
+      } catch (error) {
+        console.error('Feil ved lasting av global krypteringsnøkkel:', error);
+      }
+    };
+
+    loadGlobalKey();
+  }, []);
 
   const handleSendMessage = useCallback(async (
     webRTCManager: any,
@@ -43,23 +56,23 @@ export const useMessageSender = (
       const isGlobalRoom = !receiverId && !groupId;
       let globalE2eeKey: string | undefined;
       let globalE2eeIv: string | undefined;
+
       if (isGlobalRoom) {
-        globalE2eeKey = GLOBAL_E2EE_KEY;
-        // Convert ArrayBuffer to Base64 string
-        if (GLOBAL_E2EE_IV instanceof ArrayBuffer) {
-          globalE2eeIv = arrayBufferToBase64(GLOBAL_E2EE_IV);
-        } else {
-          globalE2eeIv = btoa(String.fromCharCode.apply(null, new Uint8Array(GLOBAL_E2EE_IV)));
-        }
+        // Bruk den sikre globale nøkkelen
+        globalE2eeKey = globalKey || await getGlobalE2EEKey();
+
+        // Generer en ny sikker IV for hver melding
+        const secureIv = generateSecureIV();
+        globalE2eeIv = arrayBufferToBase64(secureIv.buffer);
       }
 
       // Handle media file upload/encryption if provided
       let mediaUrl = null, mediaType = null, encryptionKey = null, iv = null, mediaMetadata = null;
       if (mediaFile) {
         // Fixed: Pass correct parameters to handleMediaUpload
-        const globalOverride = globalE2eeKey && globalE2eeIv ? 
+        const globalOverride = globalE2eeKey && globalE2eeIv ?
           { encryptionKey: globalE2eeKey, iv: globalE2eeIv } : undefined;
-          
+
         const result = await handleMediaUpload(mediaFile, toast, globalOverride);
         mediaUrl = result.mediaUrl;
         mediaType = result.mediaType;
@@ -136,7 +149,7 @@ export const useMessageSender = (
     } finally {
       setIsLoading(false);
     }
-  }, [newMessage, userId, ttl, setNewMessage, setIsLoading, toast, handleMediaUpload, handleP2PDelivery]);
+  }, [newMessage, userId, ttl, setNewMessage, setIsLoading, toast, handleMediaUpload, handleP2PDelivery, globalKey]);
 
   return { handleSendMessage };
 };
