@@ -3,13 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { LoginForm } from "./LoginForm";
 import { RegisterForm } from "./RegisterForm";
-import { DownloadSection } from "./DownloadSection";
 import { useDeviceDetection } from "@/hooks/useDeviceDetection";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Shield, Download, ArrowRight } from "lucide-react";
+import { Shield } from "lucide-react";
 
 const AuthPage = () => {
-  const [activeTab, setActiveTab] = useState<"login" | "register" | "download">("login");
+  const [activeTab, setActiveTab] = useState<"login" | "register">("login");
   const { user } = useAuth();
   const navigate = useNavigate();
   const { isMobile, isTablet, isIOS, isAndroid } = useDeviceDetection();
@@ -42,19 +41,15 @@ const AuthPage = () => {
           <div className="w-full max-w-md">
             {isMobile || isTablet ? (
               <Tabs defaultValue="login" className="w-full" onValueChange={(v) => setActiveTab(v as any)}>
-                <TabsList className="grid grid-cols-3 mb-4">
+                <TabsList className="grid grid-cols-2 mb-4">
                   <TabsTrigger value="login">Logg inn</TabsTrigger>
                   <TabsTrigger value="register">Registrer</TabsTrigger>
-                  <TabsTrigger value="download">Last ned</TabsTrigger>
                 </TabsList>
                 <TabsContent value="login" className="mt-2">
                   <LoginForm />
                 </TabsContent>
                 <TabsContent value="register" className="mt-2">
                   <RegisterForm onSuccess={() => setActiveTab("login")} />
-                </TabsContent>
-                <TabsContent value="download" className="mt-2">
-                  <DownloadSection />
                 </TabsContent>
               </Tabs>
             ) : (
@@ -80,21 +75,10 @@ const AuthPage = () => {
                   >
                     Registrer
                   </button>
-                  <button
-                    className={`flex-1 py-2 text-center transition-colors ${
-                      activeTab === "download"
-                        ? "text-cybergold-300 border-b-2 border-cybergold-500"
-                        : "text-cybergold-600 hover:text-cybergold-400"
-                    }`}
-                    onClick={() => setActiveTab("download")}
-                  >
-                    Last ned
-                  </button>
                 </div>
                 
                 {activeTab === "login" && <LoginForm />}
                 {activeTab === "register" && <RegisterForm onSuccess={() => setActiveTab("login")} />}
-                {activeTab === "download" && <DownloadSection />}
               </>
             )}
           </div>
@@ -140,15 +124,6 @@ const AuthPage = () => {
                     <p className="text-cybergold-500">Sikker kommunikasjon i grupper</p>
                   </div>
                 </div>
-                
-                <button 
-                  onClick={() => setActiveTab("download")}
-                  className="mt-4 flex items-center gap-2 bg-cybergold-600 hover:bg-cybergold-500 text-cyberdark-950 px-6 py-3 rounded-lg transition-all font-medium"
-                >
-                  <Download className="h-5 w-5" />
-                  <span>Last ned appen</span>
-                  <ArrowRight className="h-4 w-4 ml-2" />
-                </button>
               </div>
             </div>
           </div>

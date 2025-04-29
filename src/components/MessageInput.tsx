@@ -9,7 +9,7 @@ import { cx } from '@/lib/theme';
 interface MessageInputProps {
   onSendMessage: (message: string) => Promise<void>;
   onSendFile?: (file: File) => Promise<void>;
-  onSendEnhancedMedia?: (mediaData: { url: string, thumbnailUrl?: string }) => Promise<void>;
+  onSendEnhancedMedia?: (mediaData: { url: string, thumbnailUrl?: string, ttl?: number, isEncrypted?: boolean }) => Promise<void>;
   placeholder?: string;
   disabled?: boolean;
   securityLevel?: 'p2p_e2ee' | 'server_e2ee' | 'standard';
@@ -32,6 +32,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [showMediaUploader, setShowMediaUploader] = useState<boolean>(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [mediaTtl, setMediaTtl] = useState<number>(0); // TTL for media (0 = never expires)
   
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -145,6 +146,19 @@ const MessageInput: React.FC<MessageInputProps> = ({
     try {
       setIsSubmitting(true);
       
+      // Generer en krypteringsnøkkel hvis TTL er satt
+      const shouldEncrypt = mediaTtl > 0;
+      let encryptionKey;
+      
+      if (shouldEncrypt) {
+        // Generer en sikker tilfeldig krypteringsnøkkel
+        const keys = await getEncryptionKeys();
+        encryptionKey = keys?.encryptionKey || 
+          Array.from(crypto.getRandomValues(new Uint8Array(16)))
+            .map(b => b.toString(16).padStart(2, '0'))
+            .join('');
+      }
+      
       // Use the enhanced media uploader with balanced preset
       await uploadFile(selectedFile, {
         compress: true,
@@ -154,7 +168,9 @@ const MessageInput: React.FC<MessageInputProps> = ({
           mode: 'auto',
           quality: 0.85
         },
-        generateThumbnail: true
+        generateThumbnail: true,
+        encrypt: shouldEncrypt,
+        encryptionKey: encryptionKey
       });
       
     } catch (error) {
@@ -167,7 +183,9 @@ const MessageInput: React.FC<MessageInputProps> = ({
       try {
         await onSendEnhancedMedia({
           url: uploadState.url,
-          thumbnailUrl: uploadState.thumbnailUrl || undefined
+          thumbnailUrl: uploadState.thumbnailUrl || undefined,
+          ttl: mediaTtl > 0 ? mediaTtl : undefined,
+          isEncrypted: uploadState.isEncrypted || mediaTtl > 0
         });
         
         // Clean up
@@ -243,40 +261,71 @@ const MessageInput: React.FC<MessageInputProps> = ({
       
       {/* Image preview and uploader */}
       {showMediaUploader && previewUrl && (
-        <div className="mb-2 rounded-lg overflow-hidden bg-cyberdark-900">
-          <div className="relative">
+        <div className="mb-2 rounded-lg overflow-hidden bg-cyberdark-900 border border-cyberdark-700">
+          <div className="relative max-h-[200px]">
             <img 
               src={previewUrl} 
               alt="Preview" 
-              className="w-full max-h-48 object-contain"
+              className="w-full h-full object-contain max-h-[200px]"
             />
             <button
               onClick={handleCancelMedia}
-              className="absolute top-2 right-2 bg-black/50 rounded-full p-1 hover:bg-black/70"
+              className="absolute top-2 right-2 bg-cyberdark-900/80 rounded-full p-2 hover:bg-cyberdark-800 shadow-lg"
             >
-              <X className="h-4 w-4 text-white" />
+              <X className="h-4 w-4 text-cybergold-400" />
             </button>
           </div>
           
+          {/* TTL selector */}
+          <div className="border-t border-cyberdark-700 bg-cyberdark-900 p-2 flex items-center">
+            <Clock className="h-4 w-4 text-cybergold-500 mr-2" />
+            <span className="text-xs text-cybergold-500 mr-2">Bildet slettes etter:</span>
+            <select
+              value={mediaTtl}
+              onChange={(e) => setMediaTtl(parseInt(e.target.value))}
+              className="text-xs bg-cyberdark-950 border border-cyberdark-700 rounded px-2 py-1 text-cybergold-400"
+            >
+              <option value="0">Aldri</option>
+              <option value="60">1 time</option>
+              <option value="480">8 timer</option>
+              <option value="1440">1 dag</option>
+              <option value="4320">3 dager</option>
+              <option value="10080">1 uke</option>
+            </select>
+
+            {mediaTtl > 0 && (
+              <div className="ml-auto flex items-center text-xs">
+                <Shield className="h-3.5 w-3.5 mr-1 text-cybergold-500" />
+                <span className="text-cybergold-500">Kryptert</span>
+              </div>
+            )}
+          </div>
+          
           {/* Upload controls */}
-          <div className="p-2 flex justify-between items-center bg-cyberdark-950">
-            <div className="text-xs text-gray-400">
+          <div className="p-3 flex justify-between items-center bg-cyberdark-950 border-t border-cyberdark-700">
+            <div className="text-xs text-cybergold-500">
               {selectedFile?.name} ({(selectedFile?.size || 0) / 1024 > 1024 
                 ? `${((selectedFile?.size || 0) / 1024 / 1024).toFixed(1)} MB` 
                 : `${((selectedFile?.size || 0) / 1024).toFixed(0)} KB`})
             </div>
             
             {uploadState.isUploading ? (
-              <div className="text-xs text-blue-400">
-                Laster opp... {Math.round(uploadState.progress)}%
+              <div className="flex items-center gap-2 text-xs text-cybergold-400">
+                <div className="w-24 bg-cyberdark-800 h-1.5 rounded-full overflow-hidden">
+                  <div 
+                    className="bg-cybergold-500 h-full" 
+                    style={{width: `${Math.round(uploadState.progress)}%`}}
+                  ></div>
+                </div>
+                <span>{Math.round(uploadState.progress)}%</span>
               </div>
             ) : (
               <button
                 onClick={handleUpload}
-                className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1 rounded flex items-center gap-1"
+                className="bg-cybergold-600 hover:bg-cybergold-700 text-black text-xs px-3 py-1.5 rounded flex items-center gap-1 font-medium shadow-md"
               >
-                <Image className="h-3 w-3" />
-                <span>Optimaliser og last opp</span>
+                <Image className="h-3.5 w-3.5" />
+                <span>Send bilde</span>
               </button>
             )}
           </div>
@@ -328,8 +377,8 @@ const MessageInput: React.FC<MessageInputProps> = ({
           disabled={!message.trim() || disabled || isSubmitting || showMediaUploader}
           className={`p-3 rounded-full ${
             !message.trim() || disabled || isSubmitting || showMediaUploader
-              ? 'opacity-50'
-              : 'bg-blue-500 hover:bg-blue-600 text-white'
+              ? 'opacity-50 cursor-not-allowed'
+              : 'bg-cybergold-600 hover:bg-cybergold-700 text-black shadow-md'
           } flex items-center justify-center`}
           aria-label="Send melding"
         >
