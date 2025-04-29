@@ -18,7 +18,8 @@ export const GlobalChatHeader = ({
     showOnline,
     setShowOnline
 }: GlobalChatHeaderProps) => {
-    const onlineCount = Object.values(userPresence).filter(p => p.online).length;
+    // Count users with 'online' status
+    const onlineCount = Object.values(userPresence).filter(p => p.status === 'online').length;
 
     return (
         <div className="flex items-center justify-between mb-2 p-2 border-b border-cyberdark-800">
