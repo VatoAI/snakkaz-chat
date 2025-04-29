@@ -1,4 +1,4 @@
-import { Group } from "@/types/groups";
+import { Group } from "@/types/group";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, RefreshCw, Shield, Users, UserPlus, Lock, Layers, Crown, Star, UserCog } from "lucide-react";
@@ -127,9 +127,9 @@ export const GroupChatHeader = ({
                 "h-10 w-10 border-2",
                 isPremium ? "border-cybergold-500/50" : "border-cybergold-500/20"
               )}>
-                {group.avatar_url ? (
+                {group.avatarUrl ? (
                   <AvatarImage 
-                    src={supabase.storage.from('group_avatars').getPublicUrl(group.avatar_url).data.publicUrl} 
+                    src={supabase.storage.from('group_avatars').getPublicUrl(group.avatarUrl).data.publicUrl} 
                     alt={group.name} 
                   />
                 ) : (
@@ -283,7 +283,6 @@ export const GroupChatHeader = ({
               connectionState={connectionState}
               dataChannelState={dataChannelState}
               usingServerFallback={usingServerFallback}
-              isPremiumSecurity={isPremiumMember}
             />
             
             {(isAdmin || isPremiumMember) && onShowInvite && (

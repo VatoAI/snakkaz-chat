@@ -121,7 +121,7 @@ export function PremiumMembershipCard({
         <CardContent className="pt-6">
           <BitcoinPayment
             amount={49}
-            productType="premium_group_membership"
+            productType="premium_group"
             productId={group.id}
             onSuccess={handlePaymentSuccess}
             onError={handlePaymentError}
