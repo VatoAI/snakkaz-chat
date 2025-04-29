@@ -172,8 +172,9 @@ export const DirectMessageForm = ({
       
       <MessageInput 
         onSendMessage={async (msg) => {
-          const event = new FormEvent("submit");
-          await onSendMessage(event, msg);
+          // Create a synthetic event object instead of trying to use FormEvent as a constructor
+          const syntheticEvent = { preventDefault: () => {} } as React.FormEvent;
+          await onSendMessage(syntheticEvent, msg);
           return Promise.resolve();
         }}
         onSendEnhancedMedia={handleSendEnhancedMedia}
