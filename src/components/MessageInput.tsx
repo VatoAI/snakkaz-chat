@@ -172,6 +172,9 @@ const MessageInput: React.FC<MessageInputProps> = ({
             disabled={disabled || isSubmitting}
             className="w-full resize-none bg-transparent outline-none min-h-[40px] max-h-[120px]"
             rows={1}
+            id="messageInput"
+            name="messageInput"
+            autoComplete="off"
           />
         </div>
 
