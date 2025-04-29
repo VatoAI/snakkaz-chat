@@ -1,14 +1,17 @@
 import { useMessageState } from "./message/useMessageState";
 import { useMessageFetch } from "./message/useMessageFetch";
 import { useMessageRealtime } from "./message/useMessageRealtime";
-import { useMessageSend } from "./message/useMessageSend";
+import { useMessageSender } from "./message/useMessageSender"; 
 import { useMessageP2P } from "./message/useMessageP2P";
 import { useMessageExpiry } from "./message/useMessageExpiry";
 import { useMessageActions } from "./message/useMessageActions";
 import { DecryptedMessage } from "@/types/message";
 import { useEffect, useState, useCallback } from 'react';
+import { useToast } from "@/components/ui/use-toast";
 
 export const useMessages = (userId: string | null, receiverId?: string, groupId?: string) => {
+  const { toast } = useToast();
+  
   const {
     messages,
     setMessages,
@@ -19,7 +22,6 @@ export const useMessages = (userId: string | null, receiverId?: string, groupId?
     setIsLoading,
     ttl,
     setTtl,
-    toast
   } = useMessageState();
 
   // Add directMessages state
@@ -44,7 +46,7 @@ export const useMessages = (userId: string | null, receiverId?: string, groupId?
   const { setupRealtimeSubscription } = useMessageRealtime(userId, setMessages, receiverId, groupId);
 
   // Message sending
-  const { handleSendMessage: internalSendMessage } = useMessageSend(
+  const { handleSendMessage: internalSendMessage } = useMessageSender(
     userId, newMessage, setNewMessage, ttl, setIsLoading, toast
   );
 
@@ -77,7 +79,14 @@ export const useMessages = (userId: string | null, receiverId?: string, groupId?
   } = useMessageActions(userId, handleEditMessage, handleDeleteMessageById);
 
   // Handle message submission (new or edit)
-  const handleSubmitMessage = async (content: string, options?: { ttl?: number, mediaFile?: File, webRTCManager?: any, onlineUsers?: Set<string> }) => {
+  const handleSubmitMessage = async (content: string, options?: { 
+    ttl?: number, 
+    mediaFile?: File, 
+    webRTCManager?: any, 
+    onlineUsers?: Set<string>,
+    receiverId?: string,
+    onProgress?: (progress: number) => void
+  }) => {
     if (editingMessage) {
       await handleSubmitEditMessage(content);
     } else {
@@ -86,8 +95,19 @@ export const useMessages = (userId: string | null, receiverId?: string, groupId?
       const mediaFile = options?.mediaFile;
       const webRTCManager = options?.webRTCManager;
       const onlineUsers = options?.onlineUsers || new Set<string>();
+      const messageReceiverId = options?.receiverId || receiverId;
+      const onProgress = options?.onProgress;
 
-      await internalSendMessage(webRTCManager, onlineUsers, mediaFile, receiverId, groupId);
+      await internalSendMessage(
+        webRTCManager, 
+        onlineUsers, 
+        mediaFile, 
+        messageReceiverId, 
+        groupId, 
+        onProgress
+      );
+      
+      return mediaFile ? "success" : "";
     }
   };
 

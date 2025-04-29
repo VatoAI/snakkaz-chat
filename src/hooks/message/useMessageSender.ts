@@ -1,11 +1,21 @@
 import { useCallback, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { encryptMessage, importEncryptionKey } from "@/utils/encryption";
-import { getGlobalE2EEKey, generateSecureIV, arrayBufferToBase64 } from "@/utils/encryption/global-e2ee";
-import { ensureMessageColumnsExist } from "./utils/message-db-utils";
+import { encryptMessage, globalEncryptMessage } from "@/utils/encryption";
+import { generateSecureIV, arrayBufferToBase64 } from "@/utils/encryption/utils";
+import { getGlobalE2EEKey } from "@/utils/encryption/key-management";
 import { useMediaHandler } from "./useMessageSender/useMediaHandler";
 import { useP2PDelivery } from "./useMessageSender/useP2PDelivery";
-import { globalEncryptMessage } from "./useMessageSender/globalEncryption";
+
+// Ensure message columns exist in the database
+const ensureMessageColumnsExist = async () => {
+  try {
+    await supabase.rpc('ensure_message_columns');
+    return true;
+  } catch (error) {
+    console.error('Error ensuring message columns exist:', error);
+    return false;
+  }
+};
 
 export const useMessageSender = (
   userId: string | null,
@@ -19,14 +29,14 @@ export const useMessageSender = (
   const { handleP2PDelivery } = useP2PDelivery();
   const [globalKey, setGlobalKey] = useState<string | null>(null);
 
-  // Hent den sikre globale krypteringsnøkkelen ved oppstart
+  // Fetch the secure global encryption key on startup
   useEffect(() => {
     const loadGlobalKey = async () => {
       try {
         const key = await getGlobalE2EEKey();
         setGlobalKey(key);
       } catch (error) {
-        console.error('Feil ved lasting av global krypteringsnøkkel:', error);
+        console.error('Error loading global encryption key:', error);
       }
     };
 
@@ -38,7 +48,8 @@ export const useMessageSender = (
     onlineUsers: Set<string>,
     mediaFile?: File,
     receiverId?: string,
-    groupId?: string
+    groupId?: string,
+    onProgress?: (progress: number) => void
   ) => {
     if ((!newMessage.trim() && !mediaFile) || !userId) {
       toast({
@@ -58,10 +69,10 @@ export const useMessageSender = (
       let globalE2eeIv: string | undefined;
 
       if (isGlobalRoom) {
-        // Bruk den sikre globale nøkkelen
+        // Use the secure global key
         globalE2eeKey = globalKey || await getGlobalE2EEKey();
 
-        // Generer en ny sikker IV for hver melding
+        // Generate a new secure IV for each message
         const secureIv = generateSecureIV();
         globalE2eeIv = arrayBufferToBase64(secureIv.buffer);
       }
@@ -73,7 +84,7 @@ export const useMessageSender = (
         const globalOverride = globalE2eeKey && globalE2eeIv ?
           { encryptionKey: globalE2eeKey, iv: globalE2eeIv } : undefined;
 
-        const result = await handleMediaUpload(mediaFile, toast, globalOverride);
+        const result = await handleMediaUpload(mediaFile, toast, globalOverride, onProgress);
         mediaUrl = result.mediaUrl;
         mediaType = result.mediaType;
         encryptionKey = result.encryptionKey;
@@ -88,68 +99,81 @@ export const useMessageSender = (
         p2pDeliveryCount = await handleP2PDelivery(webRTCManager, onlineUsers, userId, newMessage);
       }
 
+      // P2P delivery for direct messages
+      if (webRTCManager && receiverId && !groupId) {
+        try {
+          // Only attempt P2P if the other user is online
+          if (onlineUsers.has(receiverId)) {
+            await webRTCManager.sendDirectMessage(receiverId, newMessage);
+            console.log('Direct message sent via P2P successfully');
+          }
+        } catch (p2pError) {
+          console.error('P2P direct message failed, falling back to server:', p2pError);
+        }
+      }
+
       // Encrypt message text (override key/iv for global)
       let encryptedContent, key, messageIv;
       if (isGlobalRoom && globalE2eeKey && globalE2eeIv) {
         const encryptionResult = await globalEncryptMessage(globalE2eeKey, globalE2eeIv, newMessage.trim());
         encryptedContent = encryptionResult.encryptedContent;
         key = encryptionResult.key;
-        messageIv = encryptionResult.messageIv;
+        messageIv = encryptionResult.iv;
       } else {
-        const encRes = await encryptMessage(newMessage.trim());
-        encryptedContent = encRes.encryptedContent;
-        key = encRes.key;
-        messageIv = encRes.iv;
+        const encryptionResult = await encryptMessage(newMessage.trim());
+        encryptedContent = encryptionResult.encryptedContent;
+        key = encryptionResult.key;
+        messageIv = encryptionResult.iv;
       }
 
-      const defaultTtl = 86400;
-      const messageTtl = ttl || defaultTtl;
-
+      // Always store message on server for persistence
+      console.log('Sending encrypted message to server...');
       const { error } = await supabase
         .from('messages')
         .insert({
-          sender_id: userId,
           encrypted_content: encryptedContent,
           encryption_key: key,
           iv: messageIv,
-          ephemeral_ttl: messageTtl,
+          sender_id: userId,
+          ephemeral_ttl: ttl,
           media_url: mediaUrl,
           media_type: mediaType,
-          receiver_id: receiverId,
-          group_id: groupId || null, // Now handling as string
-          is_edited: false,
-          is_deleted: false,
           media_encryption_key: encryptionKey,
           media_iv: iv,
-          media_metadata: mediaMetadata ? JSON.stringify(mediaMetadata) : null
+          media_metadata: mediaMetadata,
+          receiver_id: receiverId,
+          group_id: groupId,
+          p2p_delivery_count: p2pDeliveryCount > 0 ? p2pDeliveryCount : null
         });
 
       if (error) {
-        toast({
-          title: "Feil",
-          description: "Kunne ikke sende melding: " + error.message,
-          variant: "destructive",
-        });
+        console.error('Send message error:', error);
+        throw new Error(`Could not send message: ${error.message}`);
       } else {
+        console.log('Message sent successfully');
+        setNewMessage('');
+        
+        // Close toast notification if media upload was successful
         if (toastId) {
           toast({
             id: toastId,
-            title: "Melding sendt",
-            description: mediaFile ? "Melding med kryptert vedlegg ble sendt" : "Melding ble sendt",
+            title: 'Opplasting fullført',
+            description: 'Mediet ble lastet opp og sendt.',
+            variant: 'success'
           });
         }
-        setNewMessage("");
       }
     } catch (error: any) {
+      console.error('Error sending message:', error);
       toast({
         title: "Feil",
-        description: "Kunne ikke sende melding: " + (error instanceof Error ? error.message : 'Ukjent feil'),
+        description: error.message || "Kunne ikke sende melding. Sjekk nettverksforbindelsen din.",
         variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
-  }, [newMessage, userId, ttl, setNewMessage, setIsLoading, toast, handleMediaUpload, handleP2PDelivery, globalKey]);
+  }, [newMessage, userId, ttl, setNewMessage, setIsLoading, toast, globalKey, handleMediaUpload, handleP2PDelivery]);
 
   return { handleSendMessage };
 };
