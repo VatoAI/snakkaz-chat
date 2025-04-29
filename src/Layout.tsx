@@ -1,4 +1,3 @@
-
 import { Outlet, useNavigate } from "react-router-dom";
 import { MainNav } from "./components/nav/MainNav";
 import { UserNav } from "./components/nav/UserNav";
@@ -6,6 +5,7 @@ import { useAuth } from "./hooks/useAuth";
 import { useIsMobile } from "./hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 const Layout = () => {
   const { user } = useAuth();
@@ -35,6 +35,9 @@ const Layout = () => {
           </div>
 
           <div className="flex items-center gap-4">
+            {/* Tema-velger */}
+            <ThemeToggle />
+            
             <Button
               variant="outline"
               size="sm"
