@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 
 // Interface for AI-chatmelding
@@ -18,6 +18,13 @@ export interface AIChat {
   lastUpdated: string;
 }
 
+// Interface for API configuration
+export interface APIConfig {
+  endpoint: string;
+  apiKey: string;
+  isEnabled: boolean;
+}
+
 // Interface for returverdier fra hook'en
 interface UseAIChatReturn {
   currentChat: AIChat | null;
@@ -25,11 +32,13 @@ interface UseAIChatReturn {
   isLoading: boolean;
   error: string | null;
   selectedChatId: string | null;
+  apiConfig: APIConfig;
   sendMessage: (message: string) => Promise<void>;
   createNewChat: () => void;
   selectChat: (chatId: string) => void;
   deleteChat: (chatId: string) => Promise<void>;
   clearChatHistory: () => Promise<void>;
+  setApiConfig: (config: Partial<APIConfig>) => void;
 }
 
 // AI-chat hook
@@ -40,6 +49,43 @@ export function useAIChat(): UseAIChatReturn {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
+  const [apiConfig, setApiConfigState] = useState<APIConfig>({
+    endpoint: '',
+    apiKey: '',
+    isEnabled: false
+  });
+
+  // Load API configuration from localStorage on init
+  useEffect(() => {
+    if (user) {
+      try {
+        const savedConfig = localStorage.getItem(`ai_api_config_${user.uid}`);
+        if (savedConfig) {
+          setApiConfigState(JSON.parse(savedConfig));
+        }
+      } catch (err) {
+        console.error('Failed to load API configuration:', err);
+      }
+    }
+  }, [user]);
+
+  // Function to update API configuration
+  const setApiConfig = useCallback((config: Partial<APIConfig>) => {
+    setApiConfigState(prev => {
+      const newConfig = { ...prev, ...config };
+      
+      if (user) {
+        // Save to localStorage
+        try {
+          localStorage.setItem(`ai_api_config_${user.uid}`, JSON.stringify(newConfig));
+        } catch (err) {
+          console.error('Failed to save API configuration:', err);
+        }
+      }
+      
+      return newConfig;
+    });
+  }, [user]);
 
   // Funksjon for å laste chat-historikk fra Supabase
   const loadChatHistory = useCallback(async () => {
@@ -102,6 +148,51 @@ export function useAIChat(): UseAIChatReturn {
     // Lagre til database ville normalt skje her
   }, []);
 
+  // Call custom API
+  const callCustomAPI = async (message: string, chatHistory: AIMessage[]): Promise<string> => {
+    if (!apiConfig.endpoint || !apiConfig.apiKey) {
+      throw new Error('API konfigurasjon mangler. Vennligst konfigurer API-endpoint og API-nøkkel.');
+    }
+
+    try {
+      // Format messages for API call
+      const formattedMessages = chatHistory.map(msg => ({
+        role: msg.role,
+        content: msg.content
+      }));
+
+      // Add the new user message
+      formattedMessages.push({
+        role: 'user',
+        content: message
+      });
+
+      const response = await fetch(apiConfig.endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiConfig.apiKey}`
+        },
+        body: JSON.stringify({
+          messages: formattedMessages,
+          max_tokens: 1000
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(`API feil (${response.status}): ${errorData?.error || response.statusText}`);
+      }
+
+      const data = await response.json();
+      // This structure might need to be adjusted based on the actual API response format
+      return data.choices?.[0]?.message?.content || data.response || 'Ingen respons fra API';
+    } catch (err: any) {
+      console.error('API feil:', err);
+      throw new Error(`API feil: ${err.message}`);
+    }
+  };
+
   // Funksjon for å sende en melding til AI
   const sendMessage = useCallback(async (message: string) => {
     if (!user) {
@@ -147,12 +238,20 @@ export function useAIChat(): UseAIChatReturn {
       
       setCurrentChat(updatedChat);
       
-      // Her ville du normalt kalle en AI-tjeneste API
-      // For demo-formål simulerer vi en respons
+      // Get previous messages for context (excluding the temp assistant message)
+      const chatContext = updatedChat.messages.slice(0, -1);
+      
       setTimeout(async () => {
         try {
-          // Simuler API-kall til AI-tjenesten
-          const aiResponse = await simulateAIResponse(message);
+          // Use custom API if enabled, otherwise use the simulated response
+          let aiResponse: string;
+          
+          if (apiConfig.isEnabled && apiConfig.endpoint && apiConfig.apiKey) {
+            aiResponse = await callCustomAPI(message, chatContext);
+          } else {
+            // Simuler API-kall til AI-tjenesten
+            aiResponse = await simulateAIResponse(message);
+          }
           
           // Oppdater assistentmeldingen med faktisk innhold
           const assistantMessage: AIMessage = {
@@ -179,7 +278,16 @@ export function useAIChat(): UseAIChatReturn {
           // await saveChat(finalChat);
         } catch (err: any) {
           console.error('AI response error:', err);
-          setError('Kunne ikke få svar fra AI-assistenten');
+          setError(`Kunne ikke få svar fra AI-assistenten: ${err.message}`);
+          
+          // Remove the loading assistant message on error
+          const errorChat = {
+            ...updatedChat,
+            messages: updatedChat.messages.slice(0, -1),
+            lastUpdated: new Date().toISOString()
+          };
+          
+          setCurrentChat(errorChat);
         }
       }, 1500); // Simuler nettverksforsinkelse
       
@@ -187,7 +295,7 @@ export function useAIChat(): UseAIChatReturn {
       console.error('Feil ved sending av melding:', err);
       setError(err.message || 'Kunne ikke sende melding');
     }
-  }, [user, currentChat, createNewChat]);
+  }, [user, currentChat, createNewChat, apiConfig]);
 
   // Funksjon for å velge en chat fra historikken
   const selectChat = useCallback((chatId: string) => {
@@ -280,10 +388,12 @@ export function useAIChat(): UseAIChatReturn {
     isLoading,
     error,
     selectedChatId,
+    apiConfig,
     sendMessage,
     createNewChat,
     selectChat,
     deleteChat,
-    clearChatHistory
+    clearChatHistory,
+    setApiConfig
   };
 }
