@@ -1,4 +1,3 @@
-
 import { useCallback } from "react";
 import { DecryptedMessage } from "@/types/message";
 
