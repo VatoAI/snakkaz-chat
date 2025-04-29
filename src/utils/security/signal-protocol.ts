@@ -5,6 +5,7 @@
  * Basert på Signal-protokollen for høy sikkerhet med Perfect Forward Secrecy.
  * 
  * Merk: Denne implementasjonen bruker libsignal API (via @privacyresearch/libsignal-protocol-typescript)
+ * og inkluderer forbedringer inspirert av Signal open source og moderne kryptografisk praksis
  */
 
 import {
@@ -17,14 +18,25 @@ import {
 } from '@privacyresearch/libsignal-protocol-typescript';
 import { getRandomBytes } from './crypto-utils';
 
-// Intern minnebasert lagring av nøkler
-class InMemorySignalProtocolStore implements ProtocolStore {
+// Interface for key versioning
+interface KeyVersion {
+  version: number;
+  createdAt: number;
+  expiresAt: number;
+}
+
+// Enhanced protocol store with additional security features inspired by Signal
+class EnhancedSignalProtocolStore implements ProtocolStore {
   private identityKeys: Map<string, any> = new Map();
   private preKeys: Map<string, any> = new Map();
   private signedPreKeys: Map<string, any> = new Map();
   private sessions: Map<string, any> = new Map();
   private identityKeyPair: any = null;
   private registrationId: number = 0;
+  
+  // Key version tracking for better security (Signal-inspired)
+  private keyVersions: Map<string, KeyVersion> = new Map();
+  private currentKeyVersion: number = 1;
 
   // Identity Key
   getIdentityKeyPair(): Promise<any> {
@@ -107,44 +119,134 @@ class InMemorySignalProtocolStore implements ProtocolStore {
     return Promise.resolve();
   }
 
-  // Identity
-  isTrustedIdentity(
+  // Methods for key versioning (Signal-inspired)
+  async getKeyVersion(identifier: string): Promise<KeyVersion | null> {
+    return this.keyVersions.get(identifier) || null;
+  }
+
+  async setKeyVersion(identifier: string, version: KeyVersion): Promise<void> {
+    this.keyVersions.set(identifier, version);
+    return Promise.resolve();
+  }
+
+  async incrementKeyVersion(identifier: string): Promise<number> {
+    const current = this.keyVersions.get(identifier);
+    const newVersion = {
+      version: current ? current.version + 1 : 1,
+      createdAt: Date.now(),
+      expiresAt: Date.now() + (24 * 60 * 60 * 1000) // Default 24h expiry
+    };
+    
+    this.keyVersions.set(identifier, newVersion);
+    return newVersion.version;
+  }
+
+  // Enhanced security method to wipe sensitive key material (Signal-inspired)
+  async securelyWipeKey(keyIdentifier: string): Promise<boolean> {
+    try {
+      // Get the key
+      const key = this.preKeys.get(keyIdentifier) || 
+                  this.signedPreKeys.get(keyIdentifier);
+      
+      if (!key) return false;
+      
+      // Overwrite key material with random data before deletion
+      if (key.privKey && key.privKey.byteLength) {
+        const keySize = key.privKey.byteLength;
+        const randomData = new Uint8Array(keySize);
+        crypto.getRandomValues(randomData);
+        
+        // Overwrite with random bytes
+        const keyView = new Uint8Array(key.privKey);
+        keyView.set(randomData);
+        
+        // Then overwrite with zeros
+        keyView.fill(0);
+      }
+      
+      // Delete the key
+      this.preKeys.delete(keyIdentifier);
+      this.signedPreKeys.delete(keyIdentifier);
+      
+      return true;
+    } catch (error) {
+      console.error('Error securely wiping key:', error);
+      return false;
+    }
+  }
+
+  // Enhanced isTrustedIdentity with safety timeout (Signal-inspired)
+  async isTrustedIdentity(
     identifier: string,
     identityKey: ArrayBuffer,
-    _direction: number
+    direction: number
   ): Promise<boolean> {
     const trusted = this.identityKeys.get(identifier);
+    
+    // No key stored yet - trust on first use (TOFU)
     if (!trusted) {
       return Promise.resolve(true);
     }
-    return Promise.resolve(
-      new Uint8Array(trusted).toString() === new Uint8Array(identityKey).toString()
-    );
+    
+    // Compare with safety timeout to prevent timing attacks
+    const start = performance.now();
+    const result = constantTimeEqual(new Uint8Array(trusted), new Uint8Array(identityKey));
+    
+    // Implement constant-time comparison to prevent timing attacks
+    // Simulate minimum processing time to prevent timing analysis
+    const elapsedTime = performance.now() - start;
+    if (elapsedTime < 5) {
+      await new Promise(resolve => setTimeout(resolve, 5 - elapsedTime));
+    }
+    
+    return Promise.resolve(result);
   }
 
   getIdentity(identifier: string): Promise<any> {
     return Promise.resolve(this.identityKeys.get(identifier));
   }
 
-  saveIdentity(identifier: string, identityKey: ArrayBuffer): Promise<boolean> {
+  // Enhanced saveIdentity with safety notifications and verification (Signal-inspired)
+  async saveIdentity(identifier: string, identityKey: ArrayBuffer): Promise<boolean> {
     const existing = this.identityKeys.get(identifier);
-    const changed = existing && new Uint8Array(existing).toString() !== new Uint8Array(identityKey).toString();
+    let changed = false;
+    
+    if (existing) {
+      changed = !constantTimeEqual(
+        new Uint8Array(existing),
+        new Uint8Array(identityKey)
+      );
+      
+      // If key changed, this might indicate a security issue or MITM
+      if (changed) {
+        console.warn(`Identity key for ${identifier} has changed! This might indicate a security issue.`);
+        // In production, notify user of key change
+      }
+    }
+    
     this.identityKeys.set(identifier, identityKey);
     return Promise.resolve(changed);
   }
 }
 
 /**
- * SignalProtocolEngine for ende-til-ende-krypterte meldinger
+ * SignalProtocolEngine with enhanced security features 
  */
 export class SignalProtocolEngine {
-  private store: InMemorySignalProtocolStore;
+  private store: EnhancedSignalProtocolStore;
   private sessionCiphers: Map<string, SessionCipher> = new Map();
   private isInitialized: boolean = false;
   private currentSessionId: string | null = null;
+  
+  // Track key versions for each conversation (Signal-inspired)
+  private keyVersions: Map<string, number> = new Map();
+  
+  // Prevent session reuse (Signal-inspired)
+  private sessionUsageCounts: Map<string, number> = new Map();
+  private readonly MAX_MESSAGES_PER_SESSION = 100; // Signal uses a similar approach
 
   constructor() {
-    this.store = new InMemorySignalProtocolStore();
+    this.store = new EnhancedSignalProtocolStore();
   }
 
   /**
@@ -228,14 +330,25 @@ export class SignalProtocolEngine {
     }
     
     try {
+      // Check if we need to rotate keys based on usage count (Signal-inspired)
+      await this.checkAndRotateSessionIfNeeded(this.currentSessionId);
+      
       // Krypter meldingen
       const messageBuffer = new TextEncoder().encode(message);
       const ciphertext = await sessionCipher.encrypt(messageBuffer.buffer);
+      
+      // Track message count for this session (Signal-inspired)
+      this.incrementSessionUsageCount(this.currentSessionId);
+      
+      // Add key version to encryption metadata
+      const keyVersion = this.keyVersions.get(this.currentSessionId) || 1;
       
       // Konverter til sendbart format
       return {
         type: ciphertext.type,
         body: arrayBufferToBase64(ciphertext.body),
+        keyVersion: keyVersion,
+        timestamp: Date.now() // Add timestamp for additional security
       };
     } catch (error) {
       console.error('Feil ved kryptering av melding:', error);
@@ -264,6 +377,11 @@ export class SignalProtocolEngine {
         body: base64ToArrayBuffer(encryptedMessage.body)
       };
       
+      // Verify key version if available (Signal-inspired)
+      if (encryptedMessage.keyVersion) {
+        this.verifyKeyVersion(this.currentSessionId!, encryptedMessage.keyVersion);
+      }
+      
       // Dekrypter basert på type
       let decrypted;
       if (ciphertext.type === 1) { // PreKeyWhisperMessage
@@ -271,6 +389,9 @@ export class SignalProtocolEngine {
       } else { // WhisperMessage
         decrypted = await sessionCipher.decryptWhisperMessage(ciphertext.body, 'binary');
       }
+      
+      // Increment session usage (Signal-inspired)
+      this.incrementSessionUsageCount(this.currentSessionId!);
       
       // Konverter fra ArrayBuffer tilbake til tekst
       return new TextDecoder().decode(new Uint8Array(decrypted));
@@ -281,36 +402,82 @@ export class SignalProtocolEngine {
   }
   
   /**
-   * Roterer nøkler for økt sikkerhet
+   * Track current key version for a conversation (Signal-inspired)
+   */
+  async getCurrentKeyVersion(conversationId: string): Promise<number> {
+    return this.keyVersions.get(conversationId) || 1;
+  }
+  
+  /**
+   * Verify that the message was encrypted with a valid key version (Signal-inspired)
+   */
+  private async verifyKeyVersion(conversationId: string, messageKeyVersion: number): Promise<void> {
+    const currentVersion = this.keyVersions.get(conversationId) || 1;
+    
+    // Allow current version and one previous version
+    if (messageKeyVersion < currentVersion - 1) {
+      console.warn(`Message encrypted with outdated key version ${messageKeyVersion}. Current: ${currentVersion}`);
+      // In production, could show a warning to the user
+    }
+  }
+  
+  /**
+   * Track usage count for session to know when to rotate keys (Signal-inspired)
+   */
+  private incrementSessionUsageCount(sessionId: string): void {
+    const currentCount = this.sessionUsageCounts.get(sessionId) || 0;
+    this.sessionUsageCounts.set(sessionId, currentCount + 1);
+  }
+  
+  /**
+   * Check if we need to rotate session keys based on usage (Signal-inspired)
+   */
+  private async checkAndRotateSessionIfNeeded(sessionId: string): Promise<void> {
+    const usageCount = this.sessionUsageCounts.get(sessionId) || 0;
+    
+    // Rotate keys after certain number of messages (Signal-inspired)
+    if (usageCount >= this.MAX_MESSAGES_PER_SESSION) {
+      await this.rotateKeys(sessionId, sessionId);
+      this.sessionUsageCounts.set(sessionId, 0);
+    }
+  }
+  
+  /**
+   * Roterer nøkler for økt sikkerhet - Enhanced with Signal best practices
    * Dette sikrer Perfect Forward Secrecy ved å hyppig rotere nøkler
    * @param userId Brukerens ID
    * @param sessionId Samtalens ID
    */
   async rotateKeys(userId: string, sessionId: string): Promise<boolean> {
     try {
-      // Lag nye pre-nøkkel
-      const preKeyId = Math.floor(Math.random() * 1000000);
+      // Lag nye pre-nøkkel med additional entropy from system (Signal-inspired)
+      const additionalEntropy = await getRandomBytes(32);
+      const entropyView = new Uint32Array(additionalEntropy);
+      const preKeyId = Math.floor(Math.random() * 1000000) ^ entropyView[0];
+      
+      // Generate new prekey with additional entropy
       const preKey = await KeyHelper.generatePreKey(preKeyId);
       await this.store.storePreKey(preKeyId, preKey.keyPair);
       
       // Lag ny signed pre-nøkkel
       const identityKeyPair = await this.store.getIdentityKeyPair();
-      const signedPreKeyId = Math.floor(Math.random() * 1000000);
+      const signedPreKeyId = Math.floor(Math.random() * 1000000) ^ entropyView[1];
       const signedPreKey = await KeyHelper.generateSignedPreKey(
         identityKeyPair, 
         signedPreKeyId
       );
       await this.store.storeSignedPreKey(signedPreKeyId, signedPreKey.keyPair);
       
-      // Enhanced PFS: Implement Wickr-style frequent key rotation
-      // Generate ephemeral keys that expire after use
-      const ephemeralKeyPair = await this.generateKeyPair();
+      // Track key version (Signal-inspired)
+      const currentVersion = this.keyVersions.get(sessionId) || 0;
+      this.keyVersions.set(sessionId, currentVersion + 1);
       
-      // Register the new key with the session
-      await this.store.saveIdentity(sessionId, ephemeralKeyPair.pubKey);
+      // Enhanced PFS: Signal-style key rotation
+      // Save the ephemeral keys for this session
+      await this.store.saveIdentity(sessionId, signedPreKey.keyPair.pubKey);
       
-      // Mark previous keys as expired
-      await this.markPreviousKeysAsExpired(sessionId);
+      // Securely delete old keys (Signal-inspired)
+      await this.securelyDeleteOldKeys(sessionId);
       
       return true;
     } catch (error) {
@@ -320,20 +487,36 @@ export class SignalProtocolEngine {
   }
   
   /**
-   * Mark previous keys as expired to prevent reuse
-   * Wickr-style security: ensure old keys cannot be used again
+   * Generate a new key pair with strong entropy (Signal-inspired)
    */
-  private async markPreviousKeysAsExpired(sessionId: string): Promise<void> {
-    // Implementation for marking keys as expired
-    // This prevents using old keys even if they're compromised
-    const existingKeys = await this.store.getPreKeys(sessionId);
-    if (existingKeys && existingKeys.length > 0) {
-      for (const key of existingKeys) {
-        await this.store.removePreKey(key.keyId);
-      }
+  async generateKeyPair(): Promise<any> {
+    try {
+      return await KeyHelper.generateIdentityKeyPair();
+    } catch (error) {
+      console.error('Error generating key pair:', error);
+      throw error;
     }
   }
   
+  /**
+   * Securely delete old keys to prevent compromise (Signal-inspired)
+   */
+  private async securelyDeleteOldKeys(sessionId: string): Promise<void> {
+    try {
+      // Get all prekeys older than current
+      const oldKeyIds = Array.from(this.store.getAllPreKeyIds())
+        .filter(id => id.toString().includes(sessionId) && 
+               id !== this.store.getCurrentPreKeyId(sessionId));
+      
+      // Securely wipe each key
+      for (const keyId of oldKeyIds) {
+        await this.store.securelyWipeKey(keyId.toString());
+      }
+    } catch (error) {
+      console.error('Error securely deleting old keys:', error);
+    }
+  }
+
   /**
    * Genererer et simulert PreKeyBundle for testing/demo
    * I en ekte implementasjon ville dette kommet fra en server
@@ -408,6 +591,24 @@ export class SignalProtocolEngine {
       console.error('Feil ved opprydding av alle samtaler:', error);
     }
   }
+}
+
+/**
+ * Constant-time comparison function to prevent timing attacks (Signal-inspired)
+ * This is critical for secure identity key verification
+ */
+function constantTimeEqual(a: Uint8Array, b: Uint8Array): boolean {
+  if (a.length !== b.length) {
+    return false;
+  }
+  
+  let result = 0;
+  for (let i = 0; i < a.length; i++) {
+    // XOR the bytes - will be 0 if they're the same
+    result |= a[i] ^ b[i];
+  }
+  
+  return result === 0;
 }
 
 // Hjelpemal: Base64 konvertering
