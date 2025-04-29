@@ -48,7 +48,7 @@ const defaultContext: AppEncryptionContextType = {
 };
 
 // Opprett kontekst
-const AppEncryptionContext = createContext<AppEncryptionContextType>(defaultContext);
+export const AppEncryptionContext = createContext<AppEncryptionContextType>(defaultContext);
 
 // Hook for enkel tilgang til konteksten
 export const useAppEncryption = () => useContext(AppEncryptionContext);
