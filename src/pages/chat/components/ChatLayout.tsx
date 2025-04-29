@@ -4,6 +4,12 @@ import { MigrationHelper } from "@/components/chat/MigrationHelper";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { UserStatus } from "@/types/presence";
 
+interface UploadingMedia {
+  file: File;
+  progress: number;
+  status: 'uploading' | 'error' | 'success';
+}
+
 interface ChatLayoutProps {
   userPresence: Record<string, any>;
   currentUserId: string;
@@ -20,6 +26,9 @@ interface ChatLayoutProps {
   selectedFriend: any;
   setSelectedFriend: (friend: any) => void;
   friendsList: string[];
+  // Nye props for mediaopplasting
+  handleSendMessage?: (text: string, mediaFile?: File) => Promise<void>;
+  uploadingMedia?: UploadingMedia | null;
 }
 
 export const ChatLayout = ({
@@ -37,7 +46,10 @@ export const ChatLayout = ({
   chatState,
   selectedFriend,
   setSelectedFriend,
-  friendsList
+  friendsList,
+  // Nye props for mediaopplasting
+  handleSendMessage,
+  uploadingMedia
 }: ChatLayoutProps) => {
   return (
     <TooltipProvider>
@@ -67,7 +79,7 @@ export const ChatLayout = ({
             ttl={chatState.ttl}
             setTtl={chatState.setTtl}
             onMessageExpired={chatState.handleMessageExpired}
-            onSubmit={chatState.handleSendMessage}
+            onSubmit={handleSendMessage || chatState.handleSendMessage}
             currentUserId={currentUserId}
             editingMessage={chatState.editingMessage}
             onEditMessage={chatState.handleStartEditMessage}
@@ -81,6 +93,8 @@ export const ChatLayout = ({
             setSelectedFriend={setSelectedFriend}
             userPresence={userPresence}
             friendsList={friendsList}
+            // Media opplasting status
+            uploadingMedia={uploadingMedia}
 
             // Pagination props
             loadMoreMessages={chatState.loadMoreMessages}
