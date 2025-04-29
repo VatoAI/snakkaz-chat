@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { MessageCircle, SendHorizonal, Paperclip, Smile, MoreVertical } from 'lucide-react';
+import { MessageCircle, SendHorizonal, Paperclip, Smile, MoreVertical, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/useAuth';
 import { useMessages } from '@/hooks/useMessages';
 import { useMessageSend } from '@/hooks/useMessageSend';
 import { Spinner } from '@/components/ui/spinner';
+import MobileImageHandler from './MobileImageHandler';
+import { useDeviceDetection } from '@/hooks/useDeviceDetection';
 
 interface MobileChatViewProps {
   conversationId: string;
@@ -22,10 +24,13 @@ export const MobileChatView: React.FC<MobileChatViewProps> = ({
   onBackClick
 }) => {
   const isMobile = useIsMobile();
+  const deviceInfo = useDeviceDetection();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [messageText, setMessageText] = useState('');
   const [isAttaching, setIsAttaching] = useState(false);
+  const [showImageHandler, setShowImageHandler] = useState(false);
+  const [showAttachOptions, setShowAttachOptions] = useState(false);
   const { user } = useAuth();
   const { messages, loading } = useMessages(conversationId);
   const { sendMessage, sending } = useMessageSend();
@@ -51,6 +56,18 @@ export const MobileChatView: React.FC<MobileChatViewProps> = ({
       handleSend();
     }
   };
+  
+  const handleImageSelect = (imageUrl: string) => {
+    // Send bilde som melding
+    sendMessage({
+      conversationId,
+      text: '',
+      mediaUrl: imageUrl,
+      mediaType: 'image',
+      ttl: 0
+    });
+    setShowImageHandler(false);
+  };
 
   useEffect(() => {
     // Scroll til bunnen ved nye meldinger
@@ -61,10 +78,10 @@ export const MobileChatView: React.FC<MobileChatViewProps> = ({
 
   // Fokuser på input når komponenten monteres
   useEffect(() => {
-    if (inputRef.current) {
+    if (inputRef.current && !showImageHandler) {
       inputRef.current.focus();
     }
-  }, []);
+  }, [showImageHandler]);
 
   // Hvis ikke mobil, ikke vis denne komponenten
   if (!isMobile) return null;
@@ -129,7 +146,17 @@ export const MobileChatView: React.FC<MobileChatViewProps> = ({
                           : 'bg-muted rounded-tl-none'
                       }`}
                     >
-                      <p>{message.text}</p>
+                      {message.mediaUrl && message.mediaType === 'image' && (
+                        <div className="mb-2">
+                          <img 
+                            src={message.mediaUrl} 
+                            alt="Bilde" 
+                            className="w-full rounded-lg"
+                            loading="lazy"
+                          />
+                        </div>
+                      )}
+                      {message.text && <p>{message.text}</p>}
                       <div className={`text-xs mt-1 ${isOwn ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}>
                         {new Date(message.timestamp || Date.now()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                       </div>
@@ -146,7 +173,12 @@ export const MobileChatView: React.FC<MobileChatViewProps> = ({
       {/* Message Input */}
       <div className="border-t p-2">
         <div className="flex items-center bg-muted rounded-full pr-2">
-          <Button variant="ghost" size="icon" className="rounded-full" onClick={() => setIsAttaching(!isAttaching)}>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="rounded-full" 
+            onClick={() => setShowAttachOptions(!showAttachOptions)}
+          >
             <Paperclip size={20} />
             <span className="sr-only">Legg til vedlegg</span>
           </Button>
@@ -177,7 +209,65 @@ export const MobileChatView: React.FC<MobileChatViewProps> = ({
             <span className="sr-only">Send</span>
           </Button>
         </div>
+        
+        {/* Vedleggsmenyen */}
+        {showAttachOptions && (
+          <div className="bg-muted rounded-lg mt-2 p-3 grid grid-cols-4 gap-4">
+            <div 
+              className="flex flex-col items-center" 
+              onClick={() => {
+                setShowImageHandler(true);
+                setShowAttachOptions(false);
+              }}
+            >
+              <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center mb-1">
+                <ImageIcon size={20} className="text-primary" />
+              </div>
+              <span className="text-xs">Bilde</span>
+            </div>
+            
+            {deviceInfo.isMobile && (
+              <div className="flex flex-col items-center">
+                <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center mb-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary">
+                    <path d="M23 7l-7-5-7 5"></path>
+                    <rect x="1" y="7" width="22" height="16" rx="2" ry="2"></rect>
+                  </svg>
+                </div>
+                <span className="text-xs">Kamera</span>
+              </div>
+            )}
+            
+            <div className="flex flex-col items-center">
+              <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center mb-1">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10z"></path>
+                </svg>
+              </div>
+              <span className="text-xs">Lydmelding</span>
+            </div>
+            
+            <div className="flex flex-col items-center">
+              <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center mb-1">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary">
+                  <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+                  <polyline points="13 2 13 9 20 9"></polyline>
+                </svg>
+              </div>
+              <span className="text-xs">Dokument</span>
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Mobile Image Handler Overlay */}
+      {showImageHandler && (
+        <MobileImageHandler
+          conversationId={conversationId}
+          onImageSelect={handleImageSelect}
+          onCancel={() => setShowImageHandler(false)}
+        />
+      )}
     </div>
   );
 };
