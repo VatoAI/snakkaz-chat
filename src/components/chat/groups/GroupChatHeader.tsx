@@ -1,4 +1,4 @@
-import { Group } from "@/types/group";
+import { Group } from "@/types/groups";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, RefreshCw, Shield, Users, UserPlus, Lock, Layers, Crown, Star, UserCog } from "lucide-react";
@@ -154,7 +154,7 @@ export const GroupChatHeader = ({
               <div className="flex items-center gap-2">
                 <span className="text-xs text-cybergold-400 flex items-center cursor-pointer" onClick={onShowMembers}>
                   <Users className="h-3.5 w-3.5 mr-1" />
-                  {group.members?.length || 0} {group.members?.length === 1 ? 'medlem' : 'medlemmer'}
+                  {group.members?.length || 0} {(group.members?.length || 0) === 1 ? 'medlem' : 'medlemmer'}
                 </span>
                 
                 <span 
@@ -283,6 +283,7 @@ export const GroupChatHeader = ({
               connectionState={connectionState}
               dataChannelState={dataChannelState}
               usingServerFallback={usingServerFallback}
+              isPremium={isPremiumMember} // Endret fra isPremiumSecurity til isPremium
             />
             
             {(isAdmin || isPremiumMember) && onShowInvite && (
