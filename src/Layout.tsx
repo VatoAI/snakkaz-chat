@@ -6,6 +6,7 @@ import { useIsMobile } from "./hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import MobileLayout from "./components/mobile/MobileLayout";
 
 const Layout = () => {
   const { user } = useAuth();
@@ -15,6 +16,15 @@ const Layout = () => {
   const handleDownloadClick = () => {
     navigate('/download');
   };
+
+  // Hvis mobil, bruk mobiloptimalisert layout
+  if (isMobile && user) {
+    return (
+      <MobileLayout>
+        <Outlet />
+      </MobileLayout>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-cyberdark-950 flex flex-col">
