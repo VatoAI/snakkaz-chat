@@ -153,13 +153,16 @@ export const ChatInputField: React.FC<ChatInputFieldProps> = ({
             <button
               type="button"
               className={cx(
-                'p-2 rounded-full',
-                ttl > 0 ? 'bg-amber-900/30 text-amber-300' : theme.colors.button.secondary.bg,
+                'p-2 rounded-full flex items-center justify-center',
+                ttl > 0 ? 'bg-cybergold-900/40 text-cybergold-400 ring-1 ring-cybergold-500/50' : theme.colors.button.secondary.bg,
                 'hover:bg-cyberdark-700'
               )}
               title="Meldingen vil slettes automatisk"
             >
               <Clock className="h-5 w-5" />
+              {ttl > 0 && (
+                <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-cybergold-500 animate-pulse"></span>
+              )}
             </button>
             
             <select
