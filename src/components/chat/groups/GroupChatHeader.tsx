@@ -1,7 +1,7 @@
-import { Group } from "@/types/group";
+import { Group } from "@/types/groups";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, RefreshCw, Shield, Users, UserPlus, Lock, Layers } from "lucide-react";
+import { ArrowLeft, RefreshCw, Shield, Users, UserPlus, Lock, Layers, Crown, Star, UserCog } from "lucide-react";
 import { SecurityLevel } from "@/types/security";
 import { SecurityBadge } from "../security/SecurityBadge";
 import { cn } from "@/lib/utils";
@@ -27,8 +27,12 @@ interface GroupChatHeaderProps {
   setSecurityLevel: (level: SecurityLevel) => void;
   userProfiles?: Record<string, {username: string | null, avatar_url: string | null}>;
   isAdmin?: boolean;
+  isPremium?: boolean;
+  isPremiumMember?: boolean;
   onShowInvite?: () => void;
-  // Nye props for helside-kryptering
+  onShowPremium?: () => void;
+  onShowMembers?: () => void;
+  // Props for helside-kryptering
   isPageEncryptionEnabled?: boolean;
   encryptionStatus?: 'idle' | 'encrypting' | 'decrypting' | 'error';
   onEnablePageEncryption?: () => void;
@@ -47,8 +51,12 @@ export const GroupChatHeader = ({
   setSecurityLevel,
   userProfiles = {},
   isAdmin = false,
+  isPremium = false,
+  isPremiumMember = false,
   onShowInvite,
-  // Nye props for helside-kryptering
+  onShowPremium,
+  onShowMembers,
+  // Helside-krypteringsprops
   isPageEncryptionEnabled = false,
   encryptionStatus = 'idle',
   onEnablePageEncryption,
@@ -67,7 +75,7 @@ export const GroupChatHeader = ({
     if (securityLevel === 'server_e2ee' || securityLevel === 'standard') {
       return {
         status: "ok",
-        message: "Server-kryptert",
+        message: isPremiumMember ? "256-bit kryptering" : "Server-kryptert",
         icon: <Shield className="h-4 w-4 text-green-500" />
       };
     }
@@ -75,7 +83,7 @@ export const GroupChatHeader = ({
     if (connectionState === 'connected' && dataChannelState === 'open') {
       return {
         status: "ok",
-        message: "Tilkoblet P2P",
+        message: isPremiumMember ? "Premium P2P forbindelse" : "Tilkoblet P2P",
         icon: <Shield className="h-4 w-4 text-green-500" />
       };
     }
@@ -98,7 +106,10 @@ export const GroupChatHeader = ({
   const connectionStatus = getConnectionStatus();
   
   return (
-    <header className="bg-cyberdark-900 border-b border-cybergold-500/20 p-3">
+    <header className={cn(
+      "bg-cyberdark-900 border-b p-3",
+      isPremium ? "border-cybergold-500/40" : "border-cybergold-500/20"
+    )}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Button
@@ -111,25 +122,39 @@ export const GroupChatHeader = ({
           </Button>
           
           <div className="flex items-center gap-2">
-            <Avatar className="h-10 w-10 border-2 border-cybergold-500/20">
-              {group.avatar_url ? (
-                <AvatarImage 
-                  src={supabase.storage.from('group_avatars').getPublicUrl(group.avatar_url).data.publicUrl} 
-                  alt={group.name} 
-                />
-              ) : (
-                <AvatarFallback className="bg-cybergold-500/20 text-cybergold-300">
-                  <Users className="h-5 w-5" />
-                </AvatarFallback>
+            <div className="relative">
+              <Avatar className={cn(
+                "h-10 w-10 border-2",
+                isPremium ? "border-cybergold-500/50" : "border-cybergold-500/20"
+              )}>
+                {group.avatar_url ? (
+                  <AvatarImage 
+                    src={supabase.storage.from('group_avatars').getPublicUrl(group.avatar_url).data.publicUrl} 
+                    alt={group.name} 
+                  />
+                ) : (
+                  <AvatarFallback className="bg-cybergold-500/20 text-cybergold-300">
+                    <Users className="h-5 w-5" />
+                  </AvatarFallback>
+                )}
+              </Avatar>
+              
+              {isPremium && (
+                <span className="absolute bottom-0 right-0 h-4 w-4 rounded-full bg-cybergold-500 border border-cyberdark-900 flex items-center justify-center">
+                  <Crown className="h-2.5 w-2.5 text-cyberdark-950" />
+                </span>
               )}
-            </Avatar>
+            </div>
             
             <div>
-              <h3 className="font-medium text-cybergold-200">{group.name}</h3>
+              <h3 className="font-medium text-cybergold-200 flex items-center gap-1">
+                {group.name}
+                {isPremium && <Crown className="h-3.5 w-3.5 text-cybergold-400" />}
+              </h3>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-cybergold-400 flex items-center">
+                <span className="text-xs text-cybergold-400 flex items-center cursor-pointer" onClick={onShowMembers}>
                   <Users className="h-3.5 w-3.5 mr-1" />
-                  {group.members.length} {group.members.length === 1 ? 'medlem' : 'medlemmer'}
+                  {group.members?.length || 0} {group.members?.length === 1 ? 'medlem' : 'medlemmer'}
                 </span>
                 
                 <span 
@@ -148,7 +173,7 @@ export const GroupChatHeader = ({
                 {isPageEncryptionEnabled && (
                   <span className="text-xs px-1.5 py-0.5 rounded-full bg-cybergold-600/20 text-cybergold-400 flex items-center">
                     <Lock className="h-3.5 w-3.5 mr-1" />
-                    <span className="ml-1">Helside-kryptert</span>
+                    <span>{isPremiumMember ? "256-bit kryptert" : "Kryptert"}</span>
                   </span>
                 )}
               </div>
@@ -158,8 +183,46 @@ export const GroupChatHeader = ({
         
         <div className="flex items-center gap-2">
           <TooltipProvider>
-            {/* Helside-krypteringsmeny for administratorer */}
-            {isAdmin && onEnablePageEncryption && (
+            {/* Premium-medlemskap knapp */}
+            {isPremium && onShowPremium && !isPremiumMember && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-cybergold-400 hover:text-cybergold-300 hover:bg-cyberdark-800"
+                    onClick={onShowPremium}
+                  >
+                    <Star className="h-5 w-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Oppgrader til Premium</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+            
+            {/* Medlemsliste-knapp */}
+            {onShowMembers && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-cybergold-400 hover:text-cybergold-300 hover:bg-cyberdark-800"
+                    onClick={onShowMembers}
+                  >
+                    <UserCog className="h-5 w-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Se medlemmer</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+
+            {/* Helside-krypteringsmeny */}
+            {(isAdmin || isPremiumMember) && onEnablePageEncryption && (
               <Tooltip>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -184,7 +247,9 @@ export const GroupChatHeader = ({
                       )}
                     >
                       <Lock className="h-4 w-4 mr-2" />
-                      Aktiver helside-kryptering
+                      {isPremiumMember 
+                        ? "Aktiver 256-bit kryptering" 
+                        : "Aktiver helside-kryptering"}
                     </DropdownMenuItem>
                     
                     <DropdownMenuSeparator className="bg-cybergold-500/20" />
@@ -218,9 +283,10 @@ export const GroupChatHeader = ({
               connectionState={connectionState}
               dataChannelState={dataChannelState}
               usingServerFallback={usingServerFallback}
+              isPremiumSecurity={isPremiumMember}
             />
             
-            {isAdmin && onShowInvite && (
+            {(isAdmin || isPremiumMember) && onShowInvite && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
