@@ -28,6 +28,9 @@ const AuthContext = createContext<AuthContextType>({
   upgradeToPremuim: async () => {}
 });
 
+// Eksporterer AuthContext så det kan importeres direkte
+export { AuthContext, type AuthContextType };
+
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }) => {
