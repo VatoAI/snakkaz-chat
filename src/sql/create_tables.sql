@@ -4,6 +4,8 @@ RETURNS void AS $$
 DECLARE
     col text;
 BEGIN
+    SET search_path = public;
+    
     FOREACH col IN ARRAY column_names
     LOOP
         IF NOT EXISTS (
