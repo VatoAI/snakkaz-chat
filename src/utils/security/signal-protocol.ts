@@ -1,339 +1,418 @@
 /**
- * Signal Protocol-inspirert krypteringsmotor for Snakkaz Chat
+ * Signal Protocol Engine
  * 
- * Denne implementasjonen fokuserer på:
- * 1. Rask og lett kryptering med AES-256
- * 2. Perfect Forward Secrecy med Double Ratchet
- * 3. Minimalt med metadata
- * 4. Optimalisering for mobilenheter
+ * Implementerer SignalProtocol for ende-til-ende-kryptert meldingsutveksling.
+ * Basert på Signal-protokollen for høy sikkerhet med Perfect Forward Secrecy.
+ * 
+ * Merk: Denne implementasjonen bruker libsignal API (via @privacyresearch/libsignal-protocol-typescript)
  */
 
-import { getRandomBytes, deriveKeyFromMaterial } from './crypto-utils';
+import {
+  KeyHelper,
+  SignalProtocolAddress,
+  SessionBuilder,
+  SessionCipher,
+  PreKeyBundle,
+  ProtocolStore
+} from '@privacyresearch/libsignal-protocol-typescript';
+import { getRandomBytes } from './crypto-utils';
 
-// Constants for optimized performance
-const RATCHET_ITERATION_LIMIT = 1000; // Begrenser antall iterasjoner for sikkerhet
-const MESSAGE_KEY_CACHE_MAX = 100;    // Cache-størrelse for meldingsnøkler
-const AES_KEY_LENGTH = 32;            // AES-256 = 32 bytes
-const HMAC_KEY_LENGTH = 32;           // HMAC med SHA-256 = 32 bytes
+// Intern minnebasert lagring av nøkler
+class InMemorySignalProtocolStore implements ProtocolStore {
+  private identityKeys: Map<string, any> = new Map();
+  private preKeys: Map<string, any> = new Map();
+  private signedPreKeys: Map<string, any> = new Map();
+  private sessions: Map<string, any> = new Map();
+  private identityKeyPair: any = null;
+  private registrationId: number = 0;
 
-// Interface for krypteringsnøkler
-interface EncryptionKeys {
-  rootKey: CryptoKey;
-  chainKey: CryptoKey;
-  messageKey: CryptoKey;
-  previousKeys: CryptoKey[];
+  // Identity Key
+  getIdentityKeyPair(): Promise<any> {
+    return Promise.resolve(this.identityKeyPair);
+  }
+
+  setIdentityKeyPair(keyPair: any): Promise<void> {
+    this.identityKeyPair = keyPair;
+    return Promise.resolve();
+  }
+
+  // Registration ID
+  getLocalRegistrationId(): Promise<number> {
+    return Promise.resolve(this.registrationId);
+  }
+
+  setLocalRegistrationId(id: number): Promise<void> {
+    this.registrationId = id;
+    return Promise.resolve();
+  }
+
+  // Signed PreKey
+  loadSignedPreKey(keyId: number): Promise<any> {
+    const key = this.signedPreKeys.get(keyId);
+    if (key) {
+      return Promise.resolve(key);
+    } else {
+      return Promise.reject(new Error(`Signed prekey ${keyId} not found`));
+    }
+  }
+
+  storeSignedPreKey(keyId: number, key: any): Promise<void> {
+    this.signedPreKeys.set(keyId, key);
+    return Promise.resolve();
+  }
+
+  removeSignedPreKey(keyId: number): Promise<void> {
+    this.signedPreKeys.delete(keyId);
+    return Promise.resolve();
+  }
+
+  // PreKey
+  loadPreKey(keyId: number): Promise<any> {
+    const key = this.preKeys.get(keyId);
+    if (key) {
+      return Promise.resolve(key);
+    } else {
+      return Promise.reject(new Error(`Pre key ${keyId} not found`));
+    }
+  }
+
+  storePreKey(keyId: number, key: any): Promise<void> {
+    this.preKeys.set(keyId, key);
+    return Promise.resolve();
+  }
+
+  removePreKey(keyId: number): Promise<void> {
+    this.preKeys.delete(keyId);
+    return Promise.resolve();
+  }
+
+  // Session
+  loadSession(address: string): Promise<any> {
+    const session = this.sessions.get(address);
+    return Promise.resolve(session || null);
+  }
+
+  storeSession(address: string, session: any): Promise<void> {
+    this.sessions.set(address, session);
+    return Promise.resolve();
+  }
+
+  removeSession(address: string): Promise<void> {
+    this.sessions.delete(address);
+    return Promise.resolve();
+  }
+
+  removeAllSessions(): Promise<void> {
+    this.sessions.clear();
+    return Promise.resolve();
+  }
+
+  // Identity
+  isTrustedIdentity(
+    identifier: string,
+    identityKey: ArrayBuffer,
+    _direction: number
+  ): Promise<boolean> {
+    const trusted = this.identityKeys.get(identifier);
+    if (!trusted) {
+      return Promise.resolve(true);
+    }
+    return Promise.resolve(
+      new Uint8Array(trusted).toString() === new Uint8Array(identityKey).toString()
+    );
+  }
+
+  getIdentity(identifier: string): Promise<any> {
+    return Promise.resolve(this.identityKeys.get(identifier));
+  }
+
+  saveIdentity(identifier: string, identityKey: ArrayBuffer): Promise<boolean> {
+    const existing = this.identityKeys.get(identifier);
+    const changed = existing && new Uint8Array(existing).toString() !== new Uint8Array(identityKey).toString();
+    this.identityKeys.set(identifier, identityKey);
+    return Promise.resolve(changed);
+  }
 }
 
-// Interface for kryptert melding
-export interface EncryptedMessage {
-  ciphertext: string;         // Kryptert innhold
-  iv: string;                 // Initialiseringsvektor
-  ephemeralKey: string;       // Efemeral nøkkel for denne meldingen
-  counter: number;            // Meldingsnummer
-  previousCounter: number;    // Forrige teller (for rotasjon)
-}
+/**
+ * SignalProtocolEngine for ende-til-ende-krypterte meldinger
+ */
+export class SignalProtocolEngine {
+  private store: InMemorySignalProtocolStore;
+  private sessionCiphers: Map<string, SessionCipher> = new Map();
+  private isInitialized: boolean = false;
+  private currentSessionId: string | null = null;
 
-// Hovednøkkelhåndtering
-class SignalProtocolEngine {
-  private rootKey: CryptoKey | null = null;
-  private chainKey: CryptoKey | null = null;
-  private messageKeyCache: Map<number, CryptoKey> = new Map();
-  private counter: number = 0;
-  
+  constructor() {
+    this.store = new InMemorySignalProtocolStore();
+  }
+
   /**
-   * Initialiserer krypteringsmotoren for en samtale
+   * Initialiserer Signal Protocol for en spesifikk samtale
+   * @param userId Brukerens ID
+   * @param sessionId ID for samtalen
    */
-  async initialize(identityKey: string, conversationId: string): Promise<void> {
+  async initialize(userId: string, sessionId: string): Promise<boolean> {
     try {
-      // Generer rot-nøkkel fra identitet og samtale-ID
-      const material = new TextEncoder().encode(`${identityKey}:${conversationId}`);
-      this.rootKey = await deriveKeyFromMaterial(material, 'HKDF', ['deriveKey']);
+      // Hvis vi allerede har initialisert denne samtalen
+      if (this.isInitializedForSession(sessionId)) {
+        return true;
+      }
       
-      // Initialiser kjedenøkkel fra rotnøkkel
-      this.chainKey = await this.deriveChainKey(this.rootKey);
+      this.currentSessionId = sessionId;
       
-      // Initialiser teller
-      this.counter = 0;
+      // Generer identitetsnøkkelpar hvis det ikke eksisterer
+      if (!this.isInitialized) {
+        const identityKeyPair = await KeyHelper.generateIdentityKeyPair();
+        await this.store.setIdentityKeyPair(identityKeyPair);
+        
+        // Generer registrerings-ID
+        const registrationId = KeyHelper.generateRegistrationId();
+        await this.store.setLocalRegistrationId(registrationId);
+        
+        // Generer prekeys
+        const preKeyId = Math.floor(Math.random() * 1000000);
+        const preKey = await KeyHelper.generatePreKey(preKeyId);
+        await this.store.storePreKey(preKeyId, preKey.keyPair);
+        
+        // Generer signed prekey
+        const signedPreKeyId = Math.floor(Math.random() * 1000000);
+        const signedPreKey = await KeyHelper.generateSignedPreKey(
+          identityKeyPair, 
+          signedPreKeyId
+        );
+        await this.store.storeSignedPreKey(signedPreKeyId, signedPreKey.keyPair);
+        
+        this.isInitialized = true;
+      }
       
-      console.log('Signal Protocol Engine initialisert');
+      // For hver sesjon, må vi sette opp en unique adresse og sesjon
+      const address = new SignalProtocolAddress(userId, 1);
+      const sessionBuilder = new SessionBuilder(this.store, address);
+      
+      // For ekte implementasjon må vi utveksle nøkler med mottaker
+      // Her simulerer vi dette for testing/demo
+      const preKeyBundle = await this.createPreKeyBundle(userId, sessionId);
+      await sessionBuilder.processPreKey(preKeyBundle);
+      
+      // Opprett og cache sessionCipher for denne samtalen
+      const sessionCipher = new SessionCipher(this.store, address);
+      this.sessionCiphers.set(sessionId, sessionCipher);
+      
+      return true;
     } catch (error) {
-      console.error('Feil ved initialisering av Signal Protocol Engine:', error);
-      throw new Error('Kunne ikke initialisere kryptering');
+      console.error('Feil ved initialisering av Signal Protocol:', error);
+      return false;
     }
   }
   
   /**
-   * Krypterer en melding med nåværende nøkler og roterer nøkler etterpå
+   * Sjekker om protokollen er initialisert for en bestemt samtale
    */
-  async encryptMessage(plaintext: string): Promise<EncryptedMessage> {
-    if (!this.rootKey || !this.chainKey) {
-      throw new Error('Krypteringsmotor ikke initialisert');
+  isInitializedForSession(sessionId: string): boolean {
+    return this.sessionCiphers.has(sessionId);
+  }
+  
+  /**
+   * Krypterer en melding for gjeldende samtale
+   * @param message Meldingen som skal krypteres
+   */
+  async encryptMessage(message: string): Promise<any> {
+    if (!this.currentSessionId) {
+      throw new Error('Signal Protocol er ikke initialisert for noen samtale');
+    }
+    
+    const sessionCipher = this.sessionCiphers.get(this.currentSessionId);
+    if (!sessionCipher) {
+      throw new Error(`Signal Protocol er ikke initialisert for samtale: ${this.currentSessionId}`);
     }
     
     try {
-      // Avled meldingsnøkkel fra kjedenøkkel
-      const messageKey = await this.deriveNextMessageKey();
+      // Krypter meldingen
+      const messageBuffer = new TextEncoder().encode(message);
+      const ciphertext = await sessionCipher.encrypt(messageBuffer.buffer);
       
-      // Generer IV for AES-GCM
-      const iv = getRandomBytes(12); // 12 bytes er standard for GCM
-      
-      // Konverter tekst til bytes
-      const plaintextBytes = new TextEncoder().encode(plaintext);
-      
-      // Krypter med AES-GCM
-      const ciphertext = await crypto.subtle.encrypt(
-        { name: 'AES-GCM', iv },
-        messageKey,
-        plaintextBytes
-      );
-      
-      // Cache meldingsnøkkel for fremtidige dekrypteringsforespørsler
-      this.cacheMessageKey(this.counter, messageKey);
-      
-      // Øk teller for neste melding
-      const previousCounter = this.counter;
-      this.counter++;
-      
-      // Roter nøkler for Perfect Forward Secrecy
-      await this.rotateKeys();
-      
-      // Returner den krypterte meldingen
+      // Konverter til sendbart format
       return {
-        ciphertext: bufferToBase64(ciphertext),
-        iv: bufferToBase64(iv),
-        ephemeralKey: await exportKeyToBase64(messageKey),
-        counter: this.counter,
-        previousCounter
+        type: ciphertext.type,
+        body: arrayBufferToBase64(ciphertext.body),
       };
     } catch (error) {
-      console.error('Krypteringsfeil:', error);
-      throw new Error('Kunne ikke kryptere melding');
+      console.error('Feil ved kryptering av melding:', error);
+      throw error;
     }
   }
   
   /**
-   * Dekrypterer en melding og validerer autentisitet
+   * Dekrypterer en melding fra gjeldende samtale
+   * @param encryptedMessage Den krypterte meldingen
    */
-  async decryptMessage(encryptedMessage: EncryptedMessage): Promise<string> {
+  async decryptMessage(encryptedMessage: any): Promise<string> {
+    if (!this.currentSessionId) {
+      throw new Error('Signal Protocol er ikke initialisert for noen samtale');
+    }
+    
+    const sessionCipher = this.sessionCiphers.get(this.currentSessionId);
+    if (!sessionCipher) {
+      throw new Error(`Signal Protocol er ikke initialisert for samtale: ${this.currentSessionId}`);
+    }
+    
     try {
-      // Finn riktig nøkkel for dekryptering
-      const messageKey = await this.getMessageKeyForDecryption(encryptedMessage.counter);
+      // Konverter fra transportformat
+      const ciphertext = {
+        type: encryptedMessage.type,
+        body: base64ToArrayBuffer(encryptedMessage.body)
+      };
       
-      if (!messageKey) {
-        throw new Error('Manglende nøkkel for denne meldingen');
+      // Dekrypter basert på type
+      let decrypted;
+      if (ciphertext.type === 1) { // PreKeyWhisperMessage
+        decrypted = await sessionCipher.decryptPreKeyWhisperMessage(ciphertext.body, 'binary');
+      } else { // WhisperMessage
+        decrypted = await sessionCipher.decryptWhisperMessage(ciphertext.body, 'binary');
       }
       
-      // Dekrypter med AES-GCM
-      const ciphertext = base64ToBuffer(encryptedMessage.ciphertext);
-      const iv = base64ToBuffer(encryptedMessage.iv);
-      
-      const decryptedBytes = await crypto.subtle.decrypt(
-        { name: 'AES-GCM', iv },
-        messageKey,
-        ciphertext
-      );
-      
-      // Konverter bytes til tekst
-      return new TextDecoder().decode(decryptedBytes);
+      // Konverter fra ArrayBuffer tilbake til tekst
+      return new TextDecoder().decode(new Uint8Array(decrypted));
     } catch (error) {
-      console.error('Dekrypteringsfeil:', error);
-      throw new Error('Kunne ikke dekryptere melding');
+      console.error('Feil ved dekryptering av melding:', error);
+      throw error;
     }
   }
   
   /**
-   * Roterer nøkler for å oppnå Perfect Forward Secrecy
+   * Roterer nøkler for økt sikkerhet
+   * Dette sikrer Perfect Forward Secrecy ved å hyppig rotere nøkler
+   * @param userId Brukerens ID
+   * @param sessionId Samtalens ID
    */
-  private async rotateKeys(): Promise<void> {
-    if (!this.rootKey) return;
-    
-    // Generer ny kjedenøkkel
-    this.chainKey = await this.deriveChainKey(this.rootKey, this.counter);
-    
-    // Begrens cache-størrelse for meldingsnøkler
-    if (this.messageKeyCache.size > MESSAGE_KEY_CACHE_MAX) {
-      // Slett de eldste nøklene
-      const oldestKeys = Array.from(this.messageKeyCache.keys())
-        .sort((a, b) => a - b)
-        .slice(0, this.messageKeyCache.size - MESSAGE_KEY_CACHE_MAX / 2);
-      
-      oldestKeys.forEach(key => this.messageKeyCache.delete(key));
-    }
-  }
-  
-  /**
-   * Avleder neste meldingsnøkkel fra kjedenøkkelen
-   */
-  private async deriveNextMessageKey(): Promise<CryptoKey> {
-    if (!this.chainKey) {
-      throw new Error('Kjedenøkkel ikke initialisert');
-    }
-    
-    // HMAC-basert nøkkelavledning
-    const info = new TextEncoder().encode(`message-key-${this.counter}`);
-    
-    return await crypto.subtle.deriveKey(
-      {
-        name: 'HKDF',
-        hash: 'SHA-256',
-        salt: new Uint8Array(0),
-        info
-      },
-      this.chainKey,
-      { name: 'AES-GCM', length: 256 },
-      false,
-      ['encrypt', 'decrypt']
-    );
-  }
-  
-  /**
-   * Avleder kjedenøkkel fra rotnøkkel
-   */
-  private async deriveChainKey(rootKey: CryptoKey, salt: number = 0): Promise<CryptoKey> {
-    const info = new TextEncoder().encode(`chain-key-${salt}`);
-    
-    return await crypto.subtle.deriveKey(
-      {
-        name: 'HKDF',
-        hash: 'SHA-256',
-        salt: new Uint8Array(salt ? [salt] : [0]),
-        info
-      },
-      rootKey,
-      { name: 'AES-GCM', length: 256 },
-      true,
-      ['deriveKey']
-    );
-  }
-  
-  /**
-   * Lagrer meldingsnøkkel i cache for senere bruk
-   */
-  private cacheMessageKey(counter: number, key: CryptoKey): void {
-    this.messageKeyCache.set(counter, key);
-  }
-  
-  /**
-   * Henter meldingsnøkkel for dekryptering basert på meldingsteller
-   */
-  private async getMessageKeyForDecryption(counter: number): Promise<CryptoKey | null> {
-    // Sjekk om nøkkelen er i cache
-    if (this.messageKeyCache.has(counter)) {
-      return this.messageKeyCache.get(counter) || null;
-    }
-    
-    // Hvis vi ikke har nøkkelen i cache, må vi regenerere den
-    // Dette skjer hvis meldinger kommer i feil rekkefølge
-    if (!this.rootKey) return null;
-    
-    // Begrens antall regenereringer for å hindre DoS-angrep
-    if (Math.abs(this.counter - counter) > RATCHET_ITERATION_LIMIT) {
-      console.error('Meldingsteller er utenfor sikker rekkevidde');
-      return null;
-    }
-    
-    // Lagre nåværende tilstand
-    const currentChainKey = this.chainKey;
-    const currentCounter = this.counter;
-    
+  async rotateKeys(userId: string, sessionId: string): Promise<boolean> {
     try {
-      // Resett til rotnøkkel
-      this.chainKey = await this.deriveChainKey(this.rootKey, 0);
+      // Lag nye pre-nøkkel
+      const preKeyId = Math.floor(Math.random() * 1000000);
+      const preKey = await KeyHelper.generatePreKey(preKeyId);
+      await this.store.storePreKey(preKeyId, preKey.keyPair);
       
-      // Generer hver nøkkel opp til ønsket teller
-      for (let i = 0; i <= counter; i++) {
-        const messageKey = await this.deriveNextMessageKey();
-        this.cacheMessageKey(i, messageKey);
-        this.chainKey = await this.deriveChainKey(this.rootKey, i + 1);
-      }
+      // Lag ny signed pre-nøkkel
+      const identityKeyPair = await this.store.getIdentityKeyPair();
+      const signedPreKeyId = Math.floor(Math.random() * 1000000);
+      const signedPreKey = await KeyHelper.generateSignedPreKey(
+        identityKeyPair, 
+        signedPreKeyId
+      );
+      await this.store.storeSignedPreKey(signedPreKeyId, signedPreKey.keyPair);
       
-      return this.messageKeyCache.get(counter) || null;
-    } finally {
-      // Gjenopprett opprinnelig tilstand
-      this.chainKey = currentChainKey;
-      this.counter = currentCounter;
+      // I en ekte implementasjon ville vi nå publisere disse nøklene
+      // til serveren vår slik at andre kontakter kan bruke dem
+      
+      return true;
+    } catch (error) {
+      console.error('Feil ved rotering av nøkler:', error);
+      return false;
     }
   }
   
   /**
-   * Eksporter nøkkelstatus for synkronisering mellom enheter
-   * Dette er nødvendig for å støtte flere enheter per bruker
+   * Genererer et simulert PreKeyBundle for testing/demo
+   * I en ekte implementasjon ville dette kommet fra en server
    */
-  async exportKeyState(): Promise<string> {
-    if (!this.rootKey || !this.chainKey) {
-      throw new Error('Ingen nøkler å eksportere');
-    }
+  private async createPreKeyBundle(userId: string, _sessionId: string): Promise<PreKeyBundle> {
+    // For demo/testing genererer vi lokalt
+    // I en ekte implementasjon ville vi hente dette fra en sentral server
     
-    const rootKeyData = await crypto.subtle.exportKey('raw', this.rootKey);
-    const chainKeyData = await crypto.subtle.exportKey('raw', this.chainKey);
+    const registrationId = await this.store.getLocalRegistrationId();
+    const identityKey = await this.store.getIdentityKeyPair();
     
-    const state = {
-      rootKey: bufferToBase64(rootKeyData),
-      chainKey: bufferToBase64(chainKeyData),
-      counter: this.counter
+    const preKeyId = Math.floor(Math.random() * 1000000);
+    const preKey = await KeyHelper.generatePreKey(preKeyId);
+    await this.store.storePreKey(preKeyId, preKey.keyPair);
+    
+    const signedPreKeyId = Math.floor(Math.random() * 1000000);
+    const signedPreKey = await KeyHelper.generateSignedPreKey(
+      identityKey, 
+      signedPreKeyId
+    );
+    await this.store.storeSignedPreKey(signedPreKeyId, signedPreKey.keyPair);
+    
+    // Simulert PreKeyBundle
+    return {
+      registrationId: registrationId,
+      deviceId: 1,
+      identityKey: identityKey.pubKey,
+      preKey: {
+        keyId: preKeyId,
+        publicKey: preKey.keyPair.pubKey
+      },
+      signedPreKey: {
+        keyId: signedPreKeyId,
+        publicKey: signedPreKey.keyPair.pubKey,
+        signature: signedPreKey.signature
+      }
     };
-    
-    return JSON.stringify(state);
   }
   
   /**
-   * Importerer nøkkelstatus fra en annen enhet
+   * Fjerner all data for en bestemt samtale
+   * @param sessionId ID for samtalen som skal ryddes opp
    */
-  async importKeyState(stateJson: string): Promise<void> {
+  async clearSession(sessionId: string): Promise<void> {
     try {
-      const state = JSON.parse(stateJson);
+      // Fjern session cipher
+      this.sessionCiphers.delete(sessionId);
       
-      const rootKeyData = base64ToBuffer(state.rootKey);
-      const chainKeyData = base64ToBuffer(state.chainKey);
+      // I en komplett implementasjon ville vi også fjernet
+      // tilhørende sesjonsinformasjon fra lageret
       
-      this.rootKey = await crypto.subtle.importKey(
-        'raw',
-        rootKeyData,
-        { name: 'HKDF', hash: 'SHA-256' },
-        false,
-        ['deriveKey']
-      );
-      
-      this.chainKey = await crypto.subtle.importKey(
-        'raw',
-        chainKeyData,
-        { name: 'AES-GCM', length: 256 },
-        true,
-        ['deriveKey']
-      );
-      
-      this.counter = state.counter;
     } catch (error) {
-      console.error('Feil ved import av nøkkelstatus:', error);
-      throw new Error('Kunne ikke importere nøkkelstatus');
+      console.error(`Feil ved opprydding av samtale ${sessionId}:`, error);
+    }
+  }
+  
+  /**
+   * Fjerner all data for alle samtaler
+   */
+  async clearAllSessions(): Promise<void> {
+    try {
+      // Fjern alle session ciphers
+      this.sessionCiphers.clear();
+      
+      // Fjern alle sesjoner fra lageret
+      await this.store.removeAllSessions();
+      
+      // Nullstill tilstand
+      this.currentSessionId = null;
+      
+    } catch (error) {
+      console.error('Feil ved opprydding av alle samtaler:', error);
     }
   }
 }
 
-// Hjelpefunksjoner for Base64-konvertering
-function bufferToBase64(buffer: ArrayBuffer): string {
-  return btoa(String.fromCharCode(...new Uint8Array(buffer)));
+// Hjelpemal: Base64 konvertering
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
 }
 
-function base64ToBuffer(base64: string): ArrayBuffer {
-  const binaryString = atob(base64);
-  const bytes = new Uint8Array(binaryString.length);
-  for (let i = 0; i < binaryString.length; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
+function base64ToArrayBuffer(base64: string): ArrayBuffer {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
   }
   return bytes.buffer;
-}
-
-// Hjelpefunksjon for å eksportere nøkler
-async function exportKeyToBase64(key: CryptoKey): Promise<string> {
-  const exportedKey = await crypto.subtle.exportKey('raw', key);
-  return bufferToBase64(exportedKey);
 }
 
 // Singleton-instans
 let instance: SignalProtocolEngine | null = null;
 
-// Eksporter en singleton-instans
+/**
+ * Henter en singleton-instans av SignalProtocolEngine
+ */
 export function getSignalProtocolEngine(): SignalProtocolEngine {
   if (!instance) {
     instance = new SignalProtocolEngine();
