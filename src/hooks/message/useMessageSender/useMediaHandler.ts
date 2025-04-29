@@ -1,110 +1,122 @@
-
-import { useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { encryptMedia } from "@/utils/encryption/media";
+import { encryptFile } from "@/utils/encryption";
 
 export const useMediaHandler = () => {
-  const handleMediaUpload = useCallback(async (
+  const handleMediaUpload = async (
     mediaFile: File, 
-    toast: any, 
-    globalOverride?: { encryptionKey: string, iv: string }
+    toast: any,
+    globalEncryptionOverride?: { encryptionKey: string, iv: string },
+    onProgress?: (progress: number) => void
   ) => {
-    if (!mediaFile) {
-      throw new Error("No file provided");
-    }
+    let toastId = null;
     
-    const toastId = Date.now().toString();
-    toast({
-      id: toastId,
-      title: "Uploading media",
-      description: "Encrypting and uploading your file...",
-    });
-
     try {
-      console.log("Starting media encryption process for file:", mediaFile.name);
+      // Display upload toast
+      toastId = toast({
+        title: 'Sender fil...',
+        description: 'Forbereder opplasting',
+        duration: 30000,
+      }).id;
+      
+      // Show initial progress
+      if (onProgress) onProgress(5);
+      
+      // Encrypt file if needed
+      let encryptedFile = mediaFile;
+      let encryptionKey = null;
+      let iv = null;
+      let mediaMetadata = null;
+      
+      // Use override keys or generate new ones
+      if (globalEncryptionOverride) {
+        // Use global encryption key/iv
+        const { encryptedData, key, iv: fileIv, metadata } = await encryptFile(
+          mediaFile, 
+          globalEncryptionOverride.encryptionKey,
+          globalEncryptionOverride.iv
+        );
+        
+        encryptedFile = new File([encryptedData], mediaFile.name, { type: mediaFile.type });
+        encryptionKey = key;
+        iv = fileIv;
+        mediaMetadata = metadata;
+      } else {
+        // Generate new encryption keys
+        const { encryptedData, key, iv: fileIv, metadata } = await encryptFile(mediaFile);
+        
+        encryptedFile = new File([encryptedData], mediaFile.name, { type: mediaFile.type });
+        encryptionKey = key;
+        iv = fileIv;
+        mediaMetadata = metadata;
+      }
 
-      // Encrypt the media file
-      const { encryptedData: encryptedBlob, encryptionKey, iv, mediaType, metadata } = 
-        await encryptMedia(mediaFile);
-
-      console.log("Media encryption successful, preparing to upload");
-      console.log("Media type:", mediaType);
-      console.log("Metadata:", metadata);
-      console.log("IV format:", iv.substring(0, 20) + "...");
-      console.log("Key length:", encryptionKey.length);
-
-      // Upload the encrypted file
+      // Update toast and progress
+      toast({
+        id: toastId,
+        title: 'Sender fil...',
+        description: 'Kryptering fullført, laster opp',
+      });
+      
+      if (onProgress) onProgress(25);
+      
+      // Generate secure filename
       const fileExt = mediaFile.name.split('.').pop();
       const filePath = `${crypto.randomUUID()}.${fileExt}`;
 
-      // Log upload attempt
-      console.log("Uploading encrypted file to storage:", filePath);
-      console.log("Encrypted blob size:", encryptedBlob.size);
-
-      // Check if the bucket exists, create if needed
-      try {
-        const { data: bucketData } = await supabase.storage.getBucket('chat-media');
-        if (!bucketData) {
-          console.log("Creating 'chat-media' bucket");
-          await supabase.storage.createBucket('chat-media', {
-            public: true,
-            fileSizeLimit: 52428800, // 50MB
-          });
-        }
-      } catch (bucketError) {
-        console.log("Bucket may not exist, attempting to create:", bucketError);
-        try {
-          await supabase.storage.createBucket('chat-media', {
-            public: true,
-            fileSizeLimit: 52428800, // 50MB
-          });
-        } catch (createError) {
-          console.error("Failed to create bucket:", createError);
-          // Continue anyway, the bucket might exist already
-        }
-      }
-
+      // Upload to Supabase storage
       const { error: uploadError, data } = await supabase.storage
         .from('chat-media')
-        .upload(filePath, encryptedBlob, {
-          contentType: 'application/octet-stream', // Use generic content type for encrypted data
-          cacheControl: '3600',
-          upsert: false
+        .upload(filePath, encryptedFile, {
+          onUploadProgress: (progress) => {
+            const percentage = Math.round((progress.loaded / progress.total) * 75) + 25;
+            if (onProgress) onProgress(percentage);
+            
+            toast({
+              id: toastId,
+              title: 'Sender fil...',
+              description: `${percentage}% lastet opp`,
+            });
+          },
         });
 
       if (uploadError) {
         console.error("Upload error:", uploadError);
-        throw new Error(`Failed to upload: ${uploadError.message}`);
+        throw new Error(`Feil ved opplasting av fil: ${uploadError.message}`);
       }
 
-      console.log("Upload successful:", data?.path || filePath);
-
-      // Update toast with success message
+      // Update toast with success status
       toast({
         id: toastId,
-        title: "Upload successful",
-        description: "Your encrypted media is ready to send",
+        title: 'Opplasting fullført',
+        description: 'Filen blir vedlagt meldingen',
       });
+      
+      if (onProgress) onProgress(100);
 
       return {
         mediaUrl: filePath,
         mediaType: mediaFile.type,
-        encryptionKey: globalOverride?.encryptionKey || encryptionKey,
-        iv: globalOverride?.iv || iv,
-        mediaMetadata: metadata,
+        encryptionKey,
+        iv,
+        mediaMetadata,
         toastId
       };
-    } catch (error) {
-      console.error("Error uploading media:", error);
-      toast({
-        id: toastId,
-        title: "Upload failed",
-        description: `Failed to upload media: ${error instanceof Error ? error.message : "Unknown error"}`,
-        variant: "destructive",
-      });
-      throw error;
+    } catch (mediaError: any) {
+      console.error("Media upload error:", mediaError);
+      
+      // Update toast with error
+      if (toastId) {
+        toast({
+          id: toastId,
+          title: 'Opplastingsfeil',
+          description: mediaError.message || 'Kunne ikke laste opp filen',
+          variant: 'destructive',
+        });
+      }
+      
+      throw new Error(`Mediafeil: ${mediaError.message}`);
     }
-  }, []);
+  };
 
   return { handleMediaUpload };
 };
