@@ -1,27 +1,36 @@
-
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
-// Enhanced for cyberpunk: black, blue, red, gold
+// Modernisert knappdesign med bedre støtte for lys/mørk-modus
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyberblue-400 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        default: "bg-gradient-to-r from-cyberblue-600 via-cyberdark-950 to-cyberred-600 text-white hover:from-cyberblue-400 hover:to-cyberred-500 shadow-neon-blue border-2 border-cybergold-400/50",
-        destructive: "bg-gradient-to-r from-cyberred-600 via-cyberred-400 to-cyberblue-900 text-white hover:from-cyberred-400 hover:to-cyberblue-700 shadow-neon-red border-2 border-cybergold-400/30",
-        outline: "border-2 border-cyberblue-400/60 bg-cyberdark-950 text-cybergold-100 hover:bg-cyberdark-900 hover:border-cybergold-400 hover:text-cybergold-200 shadow-neon-blue",
-        secondary: "bg-gradient-to-r from-cybergold-500 via-cyberblue-400 to-cyberred-700 text-black hover:from-cybergold-600 hover:to-cyberred-800 shadow-neon-gold border-2 border-cybergold-400/40",
-        ghost: "hover:bg-cyberdark-800 hover:text-cyberblue-400",
-        link: "text-cyberblue-400 underline-offset-4 hover:underline",
+        default: "bg-cyberblue-500 text-white hover:bg-cyberblue-600 dark:bg-cyberblue-600 dark:hover:bg-cyberblue-700 shadow-subtle focus-visible:ring-cyberblue-400",
+        
+        destructive: "bg-cyberred-500 text-white hover:bg-cyberred-600 dark:bg-cyberred-600 dark:hover:bg-cyberred-700 shadow-subtle focus-visible:ring-cyberred-400",
+        
+        outline: "border border-input bg-transparent hover:bg-accent hover:text-accent-foreground dark:border-cyberdark-500 dark:text-white dark:hover:bg-cyberdark-700",
+        
+        secondary: "bg-cybergold-500 text-cyberdark-900 hover:bg-cybergold-600 dark:bg-cybergold-600 dark:hover:bg-cybergold-700 shadow-subtle focus-visible:ring-cybergold-400 dark:text-cyberdark-900",
+        
+        ghost: "hover:bg-accent hover:text-accent-foreground dark:hover:bg-cyberdark-700 dark:text-white dark:hover:text-white",
+        
+        link: "text-primary underline-offset-4 hover:underline dark:text-cyberblue-400",
+        
+        // Nye moderne varianter
+        subtle: "bg-background/80 text-foreground hover:bg-accent dark:text-white dark:bg-cyberdark-800/50 dark:hover:bg-cyberdark-700",
+        
+        glass: "bg-white/10 backdrop-blur-md border border-white/20 text-white hover:bg-white/20 dark:border-cyberdark-600/50 dark:bg-cyberdark-800/30 dark:hover:bg-cyberdark-700/50",
       },
       size: {
         default: "h-10 px-4 py-2",
-        sm: "h-9 rounded-md px-3",
-        lg: "h-11 rounded-md px-8",
-        icon: "h-10 w-10",
+        sm: "h-9 rounded-md px-3 text-xs",
+        lg: "h-11 rounded-md px-6 text-base",
+        icon: "h-10 w-10 rounded-md",
       },
     },
     defaultVariants: {
