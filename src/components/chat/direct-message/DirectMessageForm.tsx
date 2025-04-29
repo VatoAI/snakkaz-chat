@@ -1,6 +1,6 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertTriangle, RefreshCw, X } from "lucide-react";
+import { AlertTriangle, RefreshCw, X, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SecurityLevel } from "@/types/security";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -40,6 +40,7 @@ export const DirectMessageForm = ({
   const [isComposing, setIsComposing] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
   const [networkStatus, setNetworkStatus] = useState<'online' | 'offline'>(navigator.onLine ? 'online' : 'offline');
+  const [showSuccess, setShowSuccess] = useState(false);
   
   // Listen for network status changes
   useEffect(() => {
@@ -54,6 +55,16 @@ export const DirectMessageForm = ({
       window.removeEventListener('offline', handleOffline);
     };
   }, []);
+
+  // Hide success message after a short delay
+  useEffect(() => {
+    if (showSuccess) {
+      const timer = setTimeout(() => {
+        setShowSuccess(false);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showSuccess]);
   
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -71,7 +82,10 @@ export const DirectMessageForm = ({
     try {
       console.log("Attempting to send message...");
       const success = await onSendMessage(e, newMessage);
-      if (!success) {
+      if (success) {
+        console.log("Message sent successfully");
+        setShowSuccess(true);
+      } else {
         console.error("Message sending failed without throwing an error");
         setLocalError("Kunne ikke sende melding. Prøv igjen senere.");
       }
@@ -83,7 +97,14 @@ export const DirectMessageForm = ({
 
   const handleSendEnhancedMedia = async (mediaData: { url: string, thumbnailUrl?: string }) => {
     if (onSendMedia) {
-      await onSendMedia(mediaData);
+      try {
+        await onSendMedia(mediaData);
+        console.log("Media sent successfully");
+        setShowSuccess(true);
+      } catch (error) {
+        console.error("Error sending media:", error);
+        setLocalError("Kunne ikke sende bilde. Prøv igjen senere.");
+      }
     }
   };
   
@@ -137,6 +158,15 @@ export const DirectMessageForm = ({
             </TooltipProvider>
           )}
         </div>
+      )}
+      
+      {showSuccess && (
+        <Alert className="mb-2 mx-4 mt-4 bg-green-600/20 border-green-500/40">
+          <CheckCircle className="h-4 w-4 text-green-400" />
+          <AlertDescription className="text-sm text-green-300">
+            Melding sendt vellykket
+          </AlertDescription>
+        </Alert>
       )}
       
       {(sendError || localError) && (
