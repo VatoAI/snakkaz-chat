@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,38 +15,64 @@ import {
     InfoIcon
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { useSearchParams } from "react-router-dom";
 
 export default function Download() {
     const { toast } = useToast();
-    const [defaultTab, setDefaultTab] = useState("mobile");
+    const [activeTab, setActiveTab] = useState("mobile");
+    const [searchParams] = useSearchParams();
+    
+    // Handle URL parameters for automatic platform selection
+    useEffect(() => {
+        const platform = searchParams.get('platform');
+        if (platform) {
+            switch (platform) {
+                case 'android':
+                case 'ios':
+                    setActiveTab('mobile');
+                    break;
+                case 'windows':
+                case 'macos':
+                case 'linux':
+                    setActiveTab('desktop');
+                    break;
+                case 'ipad':
+                case 'tablet':
+                    setActiveTab('tablet');
+                    break;
+                default:
+                    // Detect device type if platform param doesn't match
+                    detectDeviceType();
+            }
+        } else {
+            // No platform specified, detect device type
+            detectDeviceType();
+        }
+    }, [searchParams]);
     
     // Detect device type
-    useEffect(() => {
-        const detectDeviceType = () => {
-            const userAgent = navigator.userAgent.toLowerCase();
-            
-            // Check for tablet
-            const isTablet = /(ipad|tablet|(android(?!.*mobile))|(windows(?!.*phone)(.*touch))|silk)/.test(userAgent);
-            
-            if (isTablet) {
-                setDefaultTab("tablet");
-                return;
-            }
-            
-            // Check for mobile
-            const isMobile = /android|webos|iphone|ipod|blackberry|iemobile|opera mini/.test(userAgent);
-            
-            if (isMobile) {
-                setDefaultTab("mobile");
-                return;
-            }
-            
-            // Default to desktop
-            setDefaultTab("desktop");
-        };
+    const detectDeviceType = () => {
+        const userAgent = navigator.userAgent.toLowerCase();
         
-        detectDeviceType();
-    }, []);
+        // Check for tablet
+        const isTablet = /(ipad|tablet|(android(?!.*mobile))|(windows(?!.*phone)(.*touch))|silk)/.test(userAgent);
+        
+        if (isTablet) {
+            setActiveTab("tablet");
+            return;
+        }
+        
+        // Check for mobile
+        const isMobile = /android|webos|iphone|ipod|blackberry|iemobile|opera mini/.test(userAgent);
+        
+        if (isMobile) {
+            setActiveTab("mobile");
+            return;
+        }
+        
+        // Default to desktop
+        setActiveTab("desktop");
+    };
 
     // Handle direct download
     const handleDirectDownload = (platform: string) => {
@@ -104,7 +129,7 @@ export default function Download() {
                 </p>
             </div>
 
-            <Tabs defaultValue={defaultTab} className="mx-auto">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="mx-auto">
                 <TabsList className="grid grid-cols-3 max-w-xl mx-auto mb-8">
                     <TabsTrigger value="mobile" className="flex items-center gap-2">
                         <Smartphone className="h-4 w-4" />
