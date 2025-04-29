@@ -7,11 +7,17 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { supabasePinnedFetch } from '@/utils/security/network/certificate-pinning';
-import { toast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 // Hent miljøvariabler
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+
+// Vi kan ikke bruke hooks direkte, så vi oppretter en enkel toast-funksjon
+const showToast = (title: string, description: string, variant: 'default' | 'destructive' = 'default') => {
+  console.error(`${title}: ${description}`);
+  // Toast vil bli håndtert i UI-lag hvor hooks kan brukes
+};
 
 // Oppsett av sikre globale opsjoner
 const secureOptions = {
@@ -55,12 +61,12 @@ export async function secureSignIn(email: string, password: string) {
   } catch (error: any) {
     // Logger feil sikkert (uten å lekke sensitiv informasjon)
     console.error('Secure sign-in error:', error.message);
-    // Viser generisk feilmelding til brukeren for å unngå data-lekkasje
-    toast({
-      title: 'Innloggingsfeil',
-      description: 'Kunne ikke logge inn. Vennligst sjekk innloggingsinformasjonen og prøv igjen.',
-      variant: 'destructive'
-    });
+    // Viser generisk feilmelding til brukeren - håndteres av kaller
+    showToast(
+      'Innloggingsfeil',
+      'Kunne ikke logge inn. Vennligst sjekk innloggingsinformasjonen og prøv igjen.',
+      'destructive'
+    );
     throw error;
   }
 }
