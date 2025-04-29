@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --host --port 3000 --open",
+    "dev": "vite --host --port 5173 --open",
     "dev:network": "vite --host",
     "build": "vite build",
     "build:dev": "vite build --mode development",
