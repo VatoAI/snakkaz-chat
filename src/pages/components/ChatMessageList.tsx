@@ -1,4 +1,5 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
+import { Loader2 } from 'lucide-react';
 import { ChatMessage } from './ChatMessage';
 import { cx, theme } from '../lib/theme';
 
@@ -8,6 +9,10 @@ interface ChatMessageListProps {
   userProfiles: Record<string, any>;
   onEditMessage?: (message: any) => void;
   onDeleteMessage?: (messageId: string) => void;
+  isLoading?: boolean;
+  hasMoreMessages?: boolean;
+  isLoadingMoreMessages?: boolean;
+  onLoadMoreMessages?: () => void;
 }
 
 export const ChatMessageList: React.FC<ChatMessageListProps> = ({
@@ -15,9 +20,14 @@ export const ChatMessageList: React.FC<ChatMessageListProps> = ({
   currentUserId,
   userProfiles,
   onEditMessage,
-  onDeleteMessage
+  onDeleteMessage,
+  isLoading = false,
+  hasMoreMessages = false,
+  isLoadingMoreMessages = false,
+  onLoadMoreMessages
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   
   // Auto-scroll to bottom on new messages
   useEffect(() => {
@@ -26,14 +36,53 @@ export const ChatMessageList: React.FC<ChatMessageListProps> = ({
     }
   }, [messages]);
   
+  // Handle scroll to load more messages
+  const handleScroll = () => {
+    if (!messagesContainerRef.current) return;
+    
+    const { scrollTop } = messagesContainerRef.current;
+    if (scrollTop === 0 && hasMoreMessages && !isLoadingMoreMessages && onLoadMoreMessages) {
+      onLoadMoreMessages();
+    }
+  };
+  
   // Group messages by date
   const groupedMessages = groupMessagesByDate(messages);
   
   return (
-    <div className={cx(
-      'flex-grow overflow-y-auto py-4 px-4',
-      theme.colors.background.primary
-    )}>
+    <div 
+      ref={messagesContainerRef}
+      className={cx(
+        'flex-grow overflow-y-auto py-4 px-4',
+        theme.colors.background.primary
+      )}
+      onScroll={handleScroll}
+    >
+      {/* Loading indicator for more messages */}
+      {isLoadingMoreMessages && (
+        <div className="flex justify-center mb-4">
+          <Loader2 className="h-6 w-6 animate-spin text-cybergold-600" />
+        </div>
+      )}
+      
+      {/* Load more button */}
+      {!isLoadingMoreMessages && hasMoreMessages && (
+        <div className="flex justify-center mb-4">
+          <button
+            onClick={onLoadMoreMessages}
+            className={cx(
+              'px-4 py-1 rounded text-xs',
+              theme.colors.background.tertiary,
+              theme.colors.text.secondary,
+              'hover:bg-cyberdark-800'
+            )}
+          >
+            Last flere meldinger
+          </button>
+        </div>
+      )}
+      
+      {/* Messages grouped by date */}
       {Object.entries(groupedMessages).map(([date, messagesGroup]) => (
         <div key={date}>
           {/* Date header */}
@@ -48,7 +97,7 @@ export const ChatMessageList: React.FC<ChatMessageListProps> = ({
           </div>
           
           {/* Messages for this date */}
-          {messagesGroup.map(message => (
+          {messagesGroup.map((message: any) => (
             <ChatMessage 
               key={message.id}
               message={message}
@@ -62,94 +111,72 @@ export const ChatMessageList: React.FC<ChatMessageListProps> = ({
       ))}
       
       {/* Empty state */}
-      {messages.length === 0 && (
+      {messages.length === 0 && !isLoading && (
         <div className="h-full flex flex-col items-center justify-center">
           <div className={cx(
             'w-16 h-16 rounded-full mb-4 flex items-center justify-center',
             theme.colors.background.tertiary
           )}>
             <svg className="w-8 h-8 text-cybergold-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" 
-      groups[date].push(message);
-    });
-    
-    return groups;
-  };
-  
-  const messageGroups = groupMessagesByDate();
-  
-  return (
-    <div
-      ref={messagesContainerRef}
-      className={cx(
-        'flex flex-col h-full overflow-y-auto p-4 scrollbar-thin scrollbar-thumb-cyberdark-700 scrollbar-track-cyberdark-900',
-        className
-      )}
-      onScroll={handleScroll}
-    >
-      {/* "Load more" loader */}
-      {isLoadingMoreMessages && (
-        <div className="flex justify-center py-2">
-          <Loader2 className="h-5 w-5 text-cybergold-500 animate-spin" />
-        </div>
-      )}
-      
-      {/* "Load more" button hvis det finnes flere meldinger */}
-      {!isLoadingMoreMessages && hasMoreMessages && (
-        <button
-          className={cx(
-            'mx-auto mb-2 py-1 px-3 rounded-full text-xs',
-            theme.colors.button.secondary.bg,
-            theme.colors.button.secondary.text,
-            theme.colors.button.secondary.hover
-          )}
-          onClick={onLoadMore}
-        >
-          Last flere meldinger
-        </button>
-      )}
-      
-      {/* Meldingsgrupper etter dato */}
-      {Object.entries(messageGroups).map(([date, msgs]) => (
-        <div key={date} className="mb-4">
-          <div className="flex items-center justify-center my-3">
-            <div className="h-[1px] flex-grow bg-cyberdark-700"></div>
-            <span className="px-2 text-xs text-cybergold-600">{date}</span>
-            <div className="h-[1px] flex-grow bg-cyberdark-700"></div>
+              strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
           </div>
-          
-          {msgs.map(message => (
-            <ChatMessage
-              key={message.id}
-              message={message}
-              isCurrentUser={message.sender_id === currentUserId}
-              userProfiles={userProfiles}
-              onEdit={onEdit}
-              onDelete={onDelete}
-            />
-          ))}
-        </div>
-      ))}
-      
-      {/* Tom tilstand */}
-      {messages.length === 0 && !isLoading && (
-        <div className="flex flex-col items-center justify-center flex-grow text-center p-6">
-          <div className="text-lg mb-2 text-cybergold-400">Ingen meldinger ennå</div>
-          <p className="text-sm text-cybergold-600">
-            Send en melding for å starte samtalen
+          <h3 className={cx('text-lg font-medium', theme.colors.text.secondary)}>
+            Ingen meldinger ennå
+          </h3>
+          <p className="text-sm text-cyberdark-500 mt-1">
+            Start samtalen ved å sende en melding
           </p>
         </div>
       )}
       
-      {/* Loading tilstand */}
+      {/* Loading state */}
       {isLoading && (
-        <div className="flex flex-col items-center justify-center flex-grow">
-          <Loader2 className="h-8 w-8 text-cybergold-500 animate-spin mb-2" />
-          <span className="text-sm text-cybergold-600">Laster inn meldinger...</span>
+        <div className="h-full flex items-center justify-center">
+          <Loader2 className="h-12 w-12 animate-spin text-cybergold-600" />
         </div>
       )}
       
-      {/* Usynlig element som brukes for å scrolle til bunnen */}
-      <div ref={messagesEndRef} />
+      {/* Auto-scroll anchor */}
+      <div ref={messagesEndRef} className="h-0" />
     </div>
   );
 };
+
+// Helper function to group messages by date
+function groupMessagesByDate(messages: any[]) {
+  const groups: Record<string, any[]> = {};
+  
+  messages.forEach(message => {
+    const date = new Date(message.created_at).toLocaleDateString('nb-NO');
+    if (!groups[date]) {
+      groups[date] = [];
+    }
+    groups[date].push(message);
+  });
+  
+  return groups;
+}
+
+// Helper function to format date header
+function formatDateHeader(dateStr: string): string {
+  const date = new Date(dateStr);
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  
+  // Format for today and yesterday
+  if (dateStr === today.toLocaleDateString('nb-NO')) {
+    return 'I dag';
+  } else if (dateStr === yesterday.toLocaleDateString('nb-NO')) {
+    return 'I går';
+  }
+  
+  // Format for other dates
+  return date.toLocaleDateString('nb-NO', { 
+    day: 'numeric', 
+    month: 'long',
+    year: 'numeric'
+  });
+}
