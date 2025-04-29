@@ -62,7 +62,7 @@ export const useEnhancedMediaUpload = () => {
   const uploaderRef = useRef<EnhancedMediaUploader | null>(null);
   
   const { toast } = useToast();
-  const { session } = useAuth();
+  const { user } = useAuth();
   const { notify } = useNotifications();
 
   /**
@@ -81,7 +81,7 @@ export const useEnhancedMediaUpload = () => {
       return null;
     }
 
-    if (!session?.user?.id) {
+    if (!user?.id) {
       toast({
         title: "Feil",
         description: "Du må være logget inn for å laste opp filer",
@@ -166,7 +166,7 @@ export const useEnhancedMediaUpload = () => {
     } finally {
       uploaderRef.current = null;
     }
-  }, [session, toast, notify]);
+  }, [user, toast, notify]);
 
   /**
    * Cancel an ongoing upload
