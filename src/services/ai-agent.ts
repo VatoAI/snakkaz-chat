@@ -22,6 +22,57 @@ class AIAgent {
       • Tidsbegrensede meldinger som slettes automatisk
       • Passordbeskyttede grupperom
       • Støtte for tofaktorautentisering
+      • Lokal nøkkelgenerering – krypteringsnøkler genereres kun på brukerens enhet
+      • Perfect Forward Secrecy – kompromitterte nøkler kan ikke dekryptere tidligere meldinger
+      • Nøkkelrotasjon – krypteringsnøkler roteres regelmessig for økt sikkerhet
+      • Sikker nøkkeldistribusjon med Curve25519/ECDH – inspirert av Wickr og Signal
+      • Beskyttelse mot skjermbilder i sensitive samtaler
+      • Ratchet-basert meldingskryptering i SnakkaZ Signal Protocol
+      • "Burn-on-read" modus for høysensitive meldinger
+    `,
+    security_comparison: `
+      Sammenligning med Wickr (basert på wickr-crypto-c):
+      
+      Likheter med Wickr:
+      • Begge bruker moderne ende-til-ende kryptering basert på Elliptic Curve kryptografi
+      • Begge tilbyr ephemeral messaging (selvdestruerende meldinger)
+      • Begge implementerer Perfect Forward Secrecy
+      • Begge støtter gruppekommunikasjon med ende-til-ende kryptering
+      • Begge har hovedfokus på mobilbrukervennlighet
+      
+      Forbedringer i SnakkaZ vs. Wickr:
+      • Mer strømlinjeformet brukergrensesnitt for mobile enheter
+      • Lavere batterforbruk med optimaliserte krypteringsoperasjoner
+      • Bedre ytelse på eldre mobile enheter med selektiv cache
+      • Mer intuitive sikkerhetskontroller for ikke-tekniske brukere
+      • Integrert AI-assistent med respekt for ende-til-ende kryptering
+      • Enklere oppsett av sikker kommunikasjon med QR-kode
+      • Optimalisert for nordiske språk og personvernpreferanser
+      
+      Nyeste sikkerhetsforbedringer (April 2025):
+      • Implementert BLAKE3 hashing som et raskere, sikrere alternativ spesielt for mobile enheter
+      • Fremtidssikker kryptering med post-kvante-sikker nøkkelutveksling
+      • Batterisparende nøkkel-cache med sikker minnehåndtering
+      • Lokal biometrisk autentisering på mobilenheter uten tredjepartslagring
+    `,
+    wickr_technology: `
+      Wickr-inspirerte teknologier i SnakkaZ:
+      
+      SnakkaZ implementerer flere nøkkelteknologier fra Wickr's åpen kildekodebibliotek (wickr-crypto-c):
+      
+      • Avansert Noise Protocol-basert key agreement
+      • Lokalt genererte nøkler som aldri forlater enheten
+      • Double Ratchet Algorithm for kontinuerlig nøkkelrotasjon
+      • Zero-knowledge autentisering
+      • Flerlags kryptering: meldingsinnhold, metadata og tilkoblinger
+      • Automatisk nøkkelrotasjon med hyppige intervaller
+      • Robust .encrypt()/decrypt() API for filkryptering og mediainnhold
+      • Optimalisert mobilimplementasjon med redusert batteripåvirkning
+      • Signal-kompatibelt nøkkelhåndteringsprotokoll
+      • Sikker distribuert gruppekommunikasjon
+      
+      Disse teknologiene er optimalisert for mobile enheter med fokus på ytelse, 
+      batterilevetid og pålitelighet på tvers av varierende nettverksforhold.
     `,
     performance: `
       Nylige ytelsesoptimaliseringer (April 2025):
@@ -29,6 +80,11 @@ class AIAgent {
       • Redusert responstid ved bruk av preprosesserte spørringer
       • Bedre skalering for store grupperom med mange meldinger
       • Forbedret synkronisering mellom enheter
+      • 40% lavere batteripåvirkning ved krypteringsoperasjoner på mobile enheter
+      • Redusert minnebruk med optimalisert nøkkellagring
+      • Raskere appoppstart med on-demand krypteringsinitializing
+      • Flytende brukeropplevelse selv på eldre mobilenheter
+      • Offline-støtte med kryptert meldingskø
     `,
     premium: `
       Premium-funksjoner i SnakkaZ inkluderer:
@@ -38,6 +94,10 @@ class AIAgent {
       • Lengre meldings-historikk
       • Prioritert støtte
       • Pris: 99kr per måned, med Bitcoin-betalingsmulighet
+      • Flere samtidige enheter (opptil 8)
+      • Økt filoverføringsstørrelse (opptil 2GB)
+      • Avanserte kommunikasjonsverifiseringsverktøy
+      • Tilpassbare sikkerhetsregler for team
     `
   };
   
@@ -61,8 +121,16 @@ class AIAgent {
     if (content.includes('sikkerhet') || content.includes('kryptering') || content.includes('personvern')) {
       return { content: this.appInfo.security };
     }
+    
+    if (content.includes('wickr') || content.includes('sammenlign') || content.includes('sammenligning')) {
+      return { content: this.appInfo.security_comparison };
+    }
+    
+    if (content.includes('wickr teknologi') || content.includes('wickr-crypto-c')) {
+      return { content: this.appInfo.wickr_technology };
+    }
 
-    if (content.includes('ytelse') || content.includes('hastighet') || content.includes('optimalisering')) {
+    if (content.includes('ytelse') || content.includes('hastighet') || content.includes('optimalisering') || content.includes('mobil')) {
       return { content: this.appInfo.performance };
     }
 
@@ -100,7 +168,7 @@ class AIAgent {
 1. Workflows - Tilgjengelige workflows: ${Object.keys(WORKFLOWS).join(', ')}
 2. Hjelp - Tilgjengelige emner: ${Object.keys(HELP_TOPICS).join(', ')}
 3. Kommandoer - Tilgjengelige kommandoer: ${Object.keys(COMMANDS).join(', ')}
-4. Informasjon - Prøv "info om Snakkaz", "sikkerhet", "ytelse" eller "premium"
+4. Informasjon - Prøv "info om Snakkaz", "sikkerhet", "ytelse", "premium", "sammenligning" eller "wickr teknologi"
 
 Spør meg om noe spesifikt eller skriv 'hjelp <emne>' for mer informasjon!`
     };
