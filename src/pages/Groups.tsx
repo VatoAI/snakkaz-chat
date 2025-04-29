@@ -1,135 +1,480 @@
-import { useState } from 'react';
-import { GroupList } from '@/components/groups/GroupList';
-import { ThemeToggle } from '@/components/theme/ThemeToggle';
-import { Button } from '@/components/ui/button';
-import { useTheme } from '@/contexts/ThemeContext';
-import { Loader2, MessageSquare, Users, UserPlus } from 'lucide-react';
-import { CreateGroupModal } from '@/components/groups/CreateGroupModal';
-import { useGroups } from '@/hooks/useGroups';
+import React, { useState, useEffect } from 'react';
+import { useAuth } from './hooks/useAuth';
+import useEncryption from './hooks/useEncryption';
+import { createClient } from '@supabase/supabase-js';
+import Link from 'next/link';
 
-const GroupsPage = () => {
-    const [showCreateModal, setShowCreateModal] = useState(false);
-    const { theme } = useTheme();
-    const isDark = theme === 'dark';
-    const { activeGroupId, groups } = useGroups();
+// Supabase-konfigurasjon
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://your-project.supabase.co';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'your-anon-key';
 
-    const activeGroup = groups.find(g => g.id === activeGroupId);
+// Type definisjoner
+interface Group {
+  id: string;
+  name: string;
+  description: string;
+  created_by: string;
+  created_at: string;
+  is_private: boolean;
+  member_count: number;
+  is_member: boolean;
+}
 
+interface Member {
+  user_id: string;
+  username: string;
+  role: 'admin' | 'member';
+  joined_at: string;
+}
+
+const Groups: React.FC = () => {
+  const { user } = useAuth();
+  const { hasKeys, encryptForGroup } = useEncryption();
+  const supabase = createClient(supabaseUrl, supabaseAnonKey);
+  
+  const [groups, setGroups] = useState<Group[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  // For å opprette nye grupper
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [newGroupName, setNewGroupName] = useState('');
+  const [newGroupDescription, setNewGroupDescription] = useState('');
+  const [isPrivate, setIsPrivate] = useState(false);
+  const [creatingGroup, setCreatingGroup] = useState(false);
+  
+  // For gruppedetaljer
+  const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
+  const [groupMembers, setGroupMembers] = useState<Member[]>([]);
+  const [loadingDetails, setLoadingDetails] = useState(false);
+  
+  // Last inn grupper
+  useEffect(() => {
+    if (user) {
+      fetchGroups();
+    }
+  }, [user]);
+  
+  const fetchGroups = async () => {
+    if (!user) return;
+    
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Hent brukerens medlemskapsinformasjon
+      const { data: memberships, error: membershipError } = await supabase
+        .from('group_members')
+        .select('group_id')
+        .eq('user_id', user.uid);
+      
+      if (membershipError) throw new Error(`Feil ved henting av gruppemedlemskap: ${membershipError.message}`);
+      
+      // Opprett et sett med gruppe-IDer som brukeren er medlem av
+      const memberGroupIds = new Set(memberships?.map(m => m.group_id) || []);
+      
+      // Hent alle offentlige grupper og private grupper brukeren er medlem av
+      const { data: groupsData, error: groupsError } = await supabase
+        .from('groups')
+        .select('*');
+      
+      if (groupsError) throw new Error(`Feil ved henting av grupper: ${groupsError.message}`);
+      
+      // Legg til informasjon om brukeren er medlem og medlemsantall
+      const groupsWithMemberInfo = await Promise.all((groupsData || []).map(async (group) => {
+        const { count, error: countError } = await supabase
+          .from('group_members')
+          .select('*', { count: 'exact', head: true })
+          .eq('group_id', group.id);
+        
+        const isMember = memberGroupIds.has(group.id);
+        
+        // Filtrer ut private grupper som brukeren ikke er medlem av
+        if (group.is_private && !isMember) return null;
+        
+        return {
+          ...group,
+          member_count: count || 0,
+          is_member: isMember
+        };
+      }));
+      
+      // Fjern null-verdier (private grupper som brukeren ikke er medlem av)
+      const filteredGroups = groupsWithMemberInfo.filter(Boolean) as Group[];
+      
+      setGroups(filteredGroups);
+    } catch (error) {
+      console.error('Feil ved henting av grupper:', error);
+      setError(error instanceof Error ? error.message : 'Ukjent feil ved henting av grupper');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Opprett en ny gruppe
+  const handleCreateGroup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!user) {
+      setError('Du må være logget inn for å opprette en gruppe');
+      return;
+    }
+    
+    if (!newGroupName.trim()) {
+      setError('Gruppenavnet kan ikke være tomt');
+      return;
+    }
+    
+    try {
+      setCreatingGroup(true);
+      setError(null);
+      
+      // Opprett gruppen i databasen
+      const { data: newGroup, error: createError } = await supabase
+        .from('groups')
+        .insert([{
+          name: newGroupName,
+          description: newGroupDescription,
+          is_private: isPrivate,
+          created_by: user.uid
+        }])
+        .select()
+        .single();
+      
+      if (createError) throw new Error(`Feil ved oppretting av gruppe: ${createError.message}`);
+      
+      if (!newGroup) {
+        throw new Error('Kunne ikke opprette gruppe: Ingen data returnert');
+      }
+      
+      // Legg til brukeren som administrator for gruppen
+      const { error: memberError } = await supabase
+        .from('group_members')
+        .insert([{
+          group_id: newGroup.id,
+          user_id: user.uid,
+          role: 'admin',
+          joined_at: new Date().toISOString()
+        }]);
+      
+      if (memberError) throw new Error(`Feil ved tillegging av bruker som admin: ${memberError.message}`);
+      
+      // Opprett en gruppenøkkel for kryptert kommunikasjon
+      // Dette ville normalt gjøres med ekte krypteringslogikk
+      const { error: keyError } = await supabase
+        .from('group_keys')
+        .insert([{
+          group_id: newGroup.id,
+          user_id: user.uid,
+          encrypted_key: 'mock-encrypted-key', // Her ville vi egentlig bruke krypteringslogikk
+          created_at: new Date().toISOString()
+        }]);
+      
+      if (keyError) throw new Error(`Feil ved opprettelse av gruppenøkkel: ${keyError.message}`);
+      
+      // Nullstill skjemaet og skjul det
+      setNewGroupName('');
+      setNewGroupDescription('');
+      setIsPrivate(false);
+      setShowCreateForm(false);
+      
+      // Oppdater gruppelisten
+      await fetchGroups();
+    } catch (error) {
+      console.error('Feil ved oppretting av gruppe:', error);
+      setError(error instanceof Error ? error.message : 'Ukjent feil ved oppretting av gruppe');
+    } finally {
+      setCreatingGroup(false);
+    }
+  };
+  
+  // Bli med i en gruppe
+  const handleJoinGroup = async (groupId: string) => {
+    if (!user) {
+      setError('Du må være logget inn for å bli med i en gruppe');
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Sjekk om brukeren allerede er medlem
+      const { data: existingMember, error: checkError } = await supabase
+        .from('group_members')
+        .select('*')
+        .eq('group_id', groupId)
+        .eq('user_id', user.uid)
+        .single();
+      
+      if (!checkError && existingMember) {
+        setError('Du er allerede medlem av denne gruppen');
+        return;
+      }
+      
+      // Legg til bruker som medlem
+      const { error: joinError } = await supabase
+        .from('group_members')
+        .insert([{
+          group_id: groupId,
+          user_id: user.uid,
+          role: 'member',
+          joined_at: new Date().toISOString()
+        }]);
+      
+      if (joinError) throw new Error(`Feil ved tilmelding til gruppe: ${joinError.message}`);
+      
+      // Oppdater gruppelisten
+      await fetchGroups();
+      
+    } catch (error) {
+      console.error('Feil ved tilmelding til gruppe:', error);
+      setError(error instanceof Error ? error.message : 'Ukjent feil ved tilmelding til gruppe');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Få gruppedetaljer
+  const handleViewGroupDetails = async (group: Group) => {
+    if (!user) return;
+    
+    try {
+      setLoadingDetails(true);
+      setSelectedGroup(group);
+      
+      // Hent medlemmer
+      const { data: members, error: membersError } = await supabase
+        .from('group_members')
+        .select(`
+          user_id,
+          role,
+          joined_at,
+          users:user_id (username)
+        `)
+        .eq('group_id', group.id);
+      
+      if (membersError) throw new Error(`Feil ved henting av gruppemedlemmer: ${membersError.message}`);
+      
+      // Formater medlemslisten
+      const formattedMembers = members?.map(m => ({
+        user_id: m.user_id,
+        username: m.users?.username || 'Ukjent bruker',
+        role: m.role as 'admin' | 'member',
+        joined_at: m.joined_at
+      })) || [];
+      
+      setGroupMembers(formattedMembers);
+    } catch (error) {
+      console.error('Feil ved henting av gruppedetaljer:', error);
+    } finally {
+      setLoadingDetails(false);
+    }
+  };
+  
+  // Lukk gruppedetaljer
+  const handleCloseDetails = () => {
+    setSelectedGroup(null);
+    setGroupMembers([]);
+  };
+  
+  if (!user) {
     return (
-        <div className={`flex flex-col h-screen ${isDark ? 'dark' : ''}`}>
-            <header className={`flex items-center justify-between p-4 border-b 
-        ${isDark
-                    ? 'bg-cyberdark-900 border-cybergold-500/30 text-white'
-                    : 'bg-white border-gray-200 text-gray-800'}`}>
-                <div className="flex items-center">
-                    <h1 className="text-xl font-semibold">SnakkaZ Grupper</h1>
-                </div>
-
-                <div className="flex items-center gap-2">
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        className="hidden md:flex"
-                        onClick={() => setShowCreateModal(true)}
-                    >
-                        <UserPlus className="h-4 w-4 mr-2" />
-                        Opprett gruppe
-                    </Button>
-                    <ThemeToggle />
-                </div>
-            </header>
-
-            <div className={`flex flex-1 overflow-hidden 
-        ${isDark ? 'bg-cyberdark-950' : 'bg-gray-100'}`}>
-                <aside className={`w-64 border-r overflow-hidden flex flex-col
-          ${isDark
-                        ? 'bg-cyberdark-900 border-cybergold-500/30'
-                        : 'bg-white border-gray-200'}`}>
-                    <GroupList />
-                </aside>
-
-                <main className="flex-1 flex flex-col overflow-hidden">
-                    {activeGroupId && activeGroup ? (
-                        <>
-                            <div className={`p-3 border-b flex items-center justify-between
-                ${isDark
-                                    ? 'bg-cyberdark-800 border-cybergold-500/30'
-                                    : 'bg-white border-gray-200'}`}>
-                                <div className="flex items-center">
-                                    <div className={`h-8 w-8 rounded-full flex items-center justify-center mr-2
-                    ${isDark ? 'bg-cyberblue-900 text-cyberblue-300' : 'bg-blue-100 text-blue-600'}`}>
-                                        <Users className="h-4 w-4" />
-                                    </div>
-
-                                    <div>
-                                        <h2 className="font-semibold">{activeGroup.name}</h2>
-                                        <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                                            {activeGroup.memberCount} {activeGroup.memberCount === 1 ? "medlem" : "medlemmer"}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="flex-1 overflow-y-auto p-4">
-                                <div className="flex flex-col items-center justify-center h-full">
-                                    <MessageSquare className={`h-12 w-12 mb-3 ${isDark ? 'text-cybergold-400' : 'text-blue-500'}`} />
-                                    <h3 className="font-medium text-lg mb-1">Ingen meldinger ennå</h3>
-                                    <p className={`text-center max-w-md ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                                        Send den første meldingen i denne gruppen for å starte samtalen.
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className={`p-4 border-t
-                ${isDark
-                                    ? 'bg-cyberdark-800 border-cybergold-500/30'
-                                    : 'bg-white border-gray-200'}`}>
-                                <div className={`flex items-center gap-2 rounded-lg p-2
-                  ${isDark ? 'bg-cyberdark-700' : 'bg-gray-100'}`}>
-                                    <input
-                                        type="text"
-                                        placeholder="Skriv en melding..."
-                                        className={`flex-1 bg-transparent border-none outline-none
-                      ${isDark ? 'placeholder:text-gray-500' : 'placeholder:text-gray-400'}`}
-                                    />
-                                    <Button
-                                        size="sm"
-                                        className={`${isDark
-                                            ? 'bg-gradient-to-r from-cyberblue-600 to-cyberblue-800 text-white'
-                                            : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
-                                    >
-                                        Send
-                                    </Button>
-                                </div>
-                            </div>
-                        </>
-                    ) : (
-                        <div className="flex flex-col items-center justify-center h-full">
-                            <Users className={`h-16 w-16 mb-3 ${isDark ? 'text-cybergold-400' : 'text-blue-500'}`} />
-                            <h2 className="font-semibold text-xl mb-1">Velg eller opprett en gruppe</h2>
-                            <p className={`text-center max-w-md mb-4 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                                Velg en gruppe fra sidepanelet eller opprett en ny for å starte en samtale.
-                            </p>
-                            <Button
-                                onClick={() => setShowCreateModal(true)}
-                                className={`${isDark
-                                    ? 'bg-gradient-to-r from-cyberblue-600 to-cyberblue-800 text-white'
-                                    : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
-                            >
-                                <UserPlus className="h-4 w-4 mr-2" />
-                                Opprett ny gruppe
-                            </Button>
-                        </div>
-                    )}
-                </main>
-            </div>
-
-            <CreateGroupModal
-                isOpen={showCreateModal}
-                onClose={() => setShowCreateModal(false)}
-            />
-        </div>
+      <div className="p-4">
+        <h1 className="text-2xl font-bold mb-4">Grupper</h1>
+        <p>Du må være <Link href="/Login" className="text-blue-500 underline">logget inn</Link> for å se grupper.</p>
+      </div>
     );
+  }
+  
+  if (!hasKeys) {
+    return (
+      <div className="p-4">
+        <h1 className="text-2xl font-bold mb-4">Grupper</h1>
+        <p>Setter opp sikker kryptering...</p>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="p-4">
+      <h1 className="text-2xl font-bold mb-4">Grupper</h1>
+      
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          {error}
+        </div>
+      )}
+      
+      {/* Knapp for å vise/skjule opprettelseskjema */}
+      <div className="mb-4">
+        <button
+          onClick={() => setShowCreateForm(!showCreateForm)}
+          className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded"
+        >
+          {showCreateForm ? 'Avbryt' : 'Opprett ny gruppe'}
+        </button>
+      </div>
+      
+      {/* Skjema for å opprette ny gruppe */}
+      {showCreateForm && (
+        <div className="bg-gray-100 p-4 rounded mb-6">
+          <h2 className="text-lg font-semibold mb-4">Opprett ny gruppe</h2>
+          <form onSubmit={handleCreateGroup}>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Gruppenavn
+              </label>
+              <input
+                type="text"
+                value={newGroupName}
+                onChange={(e) => setNewGroupName(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded"
+                required
+              />
+            </div>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Beskrivelse
+              </label>
+              <textarea
+                value={newGroupDescription}
+                onChange={(e) => setNewGroupDescription(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded"
+                rows={3}
+              />
+            </div>
+            
+            <div className="mb-4">
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={isPrivate}
+                  onChange={(e) => setIsPrivate(e.target.checked)}
+                  className="mr-2"
+                />
+                <span>Privat gruppe (bare synlig for medlemmer)</span>
+              </label>
+            </div>
+            
+            <button
+              type="submit"
+              disabled={creatingGroup}
+              className="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded"
+            >
+              {creatingGroup ? 'Oppretter...' : 'Opprett gruppe'}
+            </button>
+          </form>
+        </div>
+      )}
+      
+      {/* Detaljvisning for valgt gruppe */}
+      {selectedGroup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-lg w-full max-h-[80vh] overflow-y-auto">
+            <div className="flex justify-between items-start mb-4">
+              <h2 className="text-xl font-bold">{selectedGroup.name}</h2>
+              <button 
+                onClick={handleCloseDetails}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <p className="text-gray-700 mb-4">{selectedGroup.description}</p>
+            
+            <div className="mb-4">
+              <p>
+                <span className="font-semibold">Type:</span> {selectedGroup.is_private ? 'Privat' : 'Offentlig'}
+              </p>
+              <p>
+                <span className="font-semibold">Opprettet:</span> {new Date(selectedGroup.created_at).toLocaleDateString()}
+              </p>
+              <p>
+                <span className="font-semibold">Medlemmer:</span> {selectedGroup.member_count}
+              </p>
+            </div>
+            
+            {selectedGroup.is_member && (
+              <div className="mb-4">
+                <Link 
+                  href={`/chat/ChatPage?groupId=${selectedGroup.id}`}
+                  className="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded inline-block"
+                >
+                  Gå til gruppechat
+                </Link>
+              </div>
+            )}
+            
+            <h3 className="font-semibold mb-2">Medlemmer:</h3>
+            {loadingDetails ? (
+              <p>Laster medlemmer...</p>
+            ) : (
+              <ul className="divide-y">
+                {groupMembers.map((member) => (
+                  <li key={member.user_id} className="py-2 flex justify-between">
+                    <span>{member.username}</span>
+                    <span className="text-sm text-gray-500">
+                      {member.role === 'admin' ? 'Administrator' : 'Medlem'}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      )}
+      
+      {/* Liste over grupper */}
+      {loading ? (
+        <p>Laster grupper...</p>
+      ) : groups.length === 0 ? (
+        <p>Ingen grupper funnet.</p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {groups.map((group) => (
+            <div key={group.id} className="border rounded p-4">
+              <h2 className="font-bold text-lg">{group.name}</h2>
+              <p className="text-sm text-gray-600 mb-2">{group.description}</p>
+              <p className="text-sm mb-2">
+                <span className="font-semibold">Type:</span> {group.is_private ? 'Privat' : 'Offentlig'}
+              </p>
+              <p className="text-sm mb-4">
+                <span className="font-semibold">Medlemmer:</span> {group.member_count}
+              </p>
+              
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => handleViewGroupDetails(group)}
+                  className="bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 rounded text-sm"
+                >
+                  Detaljer
+                </button>
+                
+                {group.is_member ? (
+                  <Link 
+                    href={`/chat/ChatPage?groupId=${group.id}`}
+                    className="bg-green-500 hover:bg-green-600 text-white py-1 px-3 rounded text-sm"
+                  >
+                    Chat
+                  </Link>
+                ) : (
+                  <button
+                    onClick={() => handleJoinGroup(group.id)}
+                    className="bg-green-500 hover:bg-green-600 text-white py-1 px-3 rounded text-sm"
+                  >
+                    Bli medlem
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 };
 
-export default GroupsPage;
+export default Groups;

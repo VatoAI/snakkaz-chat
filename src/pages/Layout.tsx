@@ -1,102 +1,66 @@
 import React from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
-import { MainNav } from './components/MainNav';
-import { UserNav } from './components/UserNav';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth';
-import { Navigate, Link } from 'react-router-dom';
-import { Download } from 'lucide-react';
+import MainNav from './components/MainNav';
+import UserNav from './components/UserNav';
 
-export default function Layout() {
+// Import sider
+import Login from './Login';
+import Register from './Register';
+import ChatPage from './chat/ChatPage';
+import AIChatPage from './chat/AIChatPage'; // Legger til AI-chat side
+import Profile from './Profile';
+import Settings from './Settings';
+import Security from './Security';
+import NotFound from './NotFound';
+import Groups from './Groups';
+import Info from './Info';
+// ...andre importer...
+
+const Layout: React.FC = () => {
   const { user, loading } = useAuth();
-  const location = useLocation();
-  
-  // If not loading and no user, redirect to login
-  if (!loading && !user) {
-    return <Navigate to="/login" replace />;
-  }
-  
+
+  // Vis en laster mens autentiseringsstatus sjekkes
   if (loading) {
-    return <div className="flex h-screen items-center justify-center">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
-    </div>;
+    return <div className="h-screen flex items-center justify-center">Laster...</div>;
   }
 
-  // Function to detect device type for downloads
-  const detectDevice = () => {
-    const userAgent = navigator.userAgent;
-    if (/android/i.test(userAgent)) {
-      return 'android';
-    }
-    if (/iPad|iPhone|iPod/.test(userAgent)) {
-      return 'ios';
-    }
-    if (/Windows/.test(userAgent)) {
-      return 'windows';
-    }
-    if (/Mac/.test(userAgent)) {
-      return 'macos';
-    }
-    if (/Linux/.test(userAgent)) {
-      return 'linux';
-    }
-    return 'desktop'; // default to desktop tab
-  };
-
-  const getDownloadLink = () => {
-    const device = detectDevice();
-    return `/download?platform=${device}`;
-  };
-
-  // Determine if we're on a chat page
-  const isChatPage = location.pathname.includes('/chat');
-  
-  return (
-    <div className="flex min-h-screen flex-col bg-cyberdark-950 text-cybergold-200">
-      {/* Bare vis standard header hvis vi ikke er på en chat-side */}
-      {!isChatPage && (
-        <header className="sticky top-0 z-40 border-b border-cyberdark-700 bg-cyberdark-900/95 backdrop-blur">
-          <div className="container flex h-16 items-center justify-between py-4">
-            {/* Logo Section */}
-            <Link to="/" className="flex items-center space-x-2">
-              <span className="text-2xl font-bold text-cybergold-400">Snakkaz</span>
-            </Link>
-            
-            {/* Main Navigation */}
-            <MainNav />
-            
-            {/* Right Side Actions */}
-            <div className="flex items-center gap-4">
-              <Link to={getDownloadLink()} 
-                    className="hidden md:flex items-center px-4 py-2 bg-cybergold-600/20 
-                               text-cybergold-400 rounded-md hover:bg-cybergold-600/30 transition-colors">
-                <Download className="h-4 w-4 mr-2" />
-                <span>Last ned app</span>
-              </Link>
-              <UserNav />
-            </div>
-          </div>
-        </header>
-      )}
-      
-      <main className={`flex-1 ${!isChatPage ? 'container py-6' : 'p-0'}`}>
-        <Outlet />
+  // Struktur for innloggede brukere
+  const AuthenticatedLayout = (
+    <div className="h-screen flex flex-col">
+      <header className="bg-white border-b">
+        <div className="container mx-auto flex justify-between items-center p-4">
+          <MainNav />
+          <UserNav />
+        </div>
+      </header>
+      <main className="flex-1 overflow-hidden">
+        <Routes>
+          <Route path="/" element={<Navigate to="/chat" />} />
+          <Route path="/chat" element={<ChatPage />} />
+          <Route path="/ai-chat" element={<AIChatPage />} /> {/* Ny rute for AI-chat */}
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/groups" element={<Groups />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/security" element={<Security />} />
+          <Route path="/info" element={<Info />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
       </main>
-      
-      {/* Bare vis footer hvis vi ikke er på en chat-side */}
-      {!isChatPage && (
-        <footer className="border-t border-cyberdark-700 py-4">
-          <div className="container flex flex-col items-center justify-between gap-4 md:flex-row">
-            <p className="text-sm text-cybergold-500 text-center md:text-left">
-              &copy; {new Date().getFullYear()} Snakkaz. All rights reserved.
-            </p>
-            <div className="flex items-center gap-4 text-sm text-cybergold-500">
-              <a href="/info" className="hover:text-cybergold-400 transition-colors">About</a>
-              <a href="/info#privacy" className="hover:text-cybergold-400 transition-colors">Privacy</a>
-              <a href="/info#terms" className="hover:text-cybergold-400 transition-colors">Terms</a>
-            </div>
-          </div>
-        </footer>
-      )}
     </div>
   );
-}
+
+  // Struktur for uinnloggede brukere
+  const UnauthenticatedLayout = (
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/info" element={<Info />} />
+      <Route path="*" element={<Navigate to="/login" />} />
+    </Routes>
+  );
+
+  return user ? AuthenticatedLayout : UnauthenticatedLayout;
+};
+
+export default Layout;
