@@ -1,8 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
+import { useSearchParams } from "react-router-dom";
 import {
     Smartphone,
     Laptop,
@@ -14,310 +11,433 @@ import {
     Clock,
     InfoIcon
 } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
-import { useSearchParams } from "react-router-dom";
+
+// Local component implementations to replace missing imports
+const Button = ({ variant = "default", size = "md", className = "", children, onClick = () => {}, ...props }) => {
+  const variantClasses = {
+    default: "bg-cybergold-600 text-black hover:bg-cybergold-500",
+    outline: "border border-cyberdark-700 bg-transparent hover:bg-cyberdark-800 text-cybergold-400",
+    subtle: "bg-cyberdark-800 text-cybergold-400 hover:bg-cyberdark-700",
+    ghost: "bg-transparent hover:bg-cyberdark-800",
+    link: "text-cybergold-400 underline-offset-4 hover:underline bg-transparent"
+  };
+
+  const sizeClasses = {
+    sm: "h-8 px-2 rounded-md text-xs",
+    md: "h-10 px-4 py-2 rounded-md",
+    lg: "h-12 px-8 rounded-md text-lg"
+  };
+
+  const classes = `inline-flex items-center justify-center font-medium transition-colors 
+                  focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cybergold-400
+                  disabled:pointer-events-none disabled:opacity-50 
+                  ${variantClasses[variant] || variantClasses.default} 
+                  ${sizeClasses[size] || sizeClasses.md} 
+                  ${className}`;
+
+  return (
+    <button className={classes} onClick={onClick} {...props}>
+      {children}
+    </button>
+  );
+};
+
+const Card = ({ className, children }) => (
+  <div className={`rounded-lg border bg-card text-card-foreground shadow ${className || ''}`}>
+    {children}
+  </div>
+);
+
+const CardContent = ({ className, children }) => (
+  <div className={`p-6 ${className || ''}`}>
+    {children}
+  </div>
+);
+
+const Badge = ({ variant = "default", className = "", children }) => {
+  const variantClasses = {
+    default: "bg-cybergold-600/20 text-cybergold-400 border border-cybergold-700/30",
+    outline: "bg-transparent text-cybergold-400 border border-cybergold-700/30"
+  };
+
+  return (
+    <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset
+                     ${variantClasses[variant] || variantClasses.default} ${className}`}>
+      {children}
+    </span>
+  );
+};
+
+const Tabs = ({ value, onValueChange, className = "", children }) => {
+  return (
+    <div className={className}>
+      {React.Children.map(children, child => {
+        if (!child) return null;
+        
+        if (child.type === TabsList || child.type === TabsContent) {
+          if (child.type === TabsContent && child.props.value !== value) {
+            return null;
+          }
+          return child;
+        }
+        
+        return React.cloneElement(child, { 
+          value: child.props.value, 
+          isSelected: child.props.value === value,
+          onClick: () => onValueChange && onValueChange(child.props.value)
+        });
+      })}
+    </div>
+  );
+};
+
+const TabsList = ({ className = "", children }) => (
+  <div className={`inline-flex h-9 items-center justify-center rounded-lg bg-cyberdark-800 p-1 ${className}`}>
+    {children}
+  </div>
+);
+
+const TabsTrigger = ({ value, isSelected, onClick, className = "", children }) => (
+  <button
+    className={`inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 
+    ${isSelected 
+      ? "bg-cyberdark-950 text-cybergold-400 shadow" 
+      : "text-muted-foreground hover:text-cybergold-400"} 
+    ${className}`}
+    onClick={onClick}
+  >
+    {children}
+  </button>
+);
+
+const TabsContent = ({ value, className = "", children }) => (
+  <div className={`mt-2 ${className}`}>
+    {children}
+  </div>
+);
+
+// Toast implementation
+const useToast = () => {
+  const [toasts, setToasts] = useState([]);
+
+  const toast = ({ title, description, duration = 3000 }) => {
+    const id = Math.random().toString(36).substring(2, 9);
+    const newToast = { id, title, description };
+    
+    setToasts(prev => [...prev, newToast]);
+    
+    setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id));
+    }, duration);
+    
+    // For browser console feedback during development
+    console.log(`Toast: ${title} - ${description}`);
+  };
+
+  return { toast, toasts };
+};
 
 export default function Download() {
-    const { toast } = useToast();
-    const [activeTab, setActiveTab] = useState("mobile");
-    const [searchParams] = useSearchParams();
+  const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState("mobile");
+  const [searchParams] = useSearchParams();
+  
+  // Handle URL parameters for automatic platform selection
+  useEffect(() => {
+    const platform = searchParams.get('platform');
+    if (platform) {
+      switch (platform) {
+        case 'android':
+        case 'ios':
+          setActiveTab('mobile');
+          break;
+        case 'windows':
+        case 'macos':
+        case 'linux':
+          setActiveTab('desktop');
+          break;
+        case 'ipad':
+        case 'tablet':
+          setActiveTab('tablet');
+          break;
+        default:
+          // Detect device type if platform param doesn't match
+          detectDeviceType();
+      }
+    } else {
+      // No platform specified, detect device type
+      detectDeviceType();
+    }
+  }, [searchParams]);
+  
+  // Detect device type
+  const detectDeviceType = () => {
+    const userAgent = navigator.userAgent.toLowerCase();
     
-    // Handle URL parameters for automatic platform selection
-    useEffect(() => {
-        const platform = searchParams.get('platform');
-        if (platform) {
-            switch (platform) {
-                case 'android':
-                case 'ios':
-                    setActiveTab('mobile');
-                    break;
-                case 'windows':
-                case 'macos':
-                case 'linux':
-                    setActiveTab('desktop');
-                    break;
-                case 'ipad':
-                case 'tablet':
-                    setActiveTab('tablet');
-                    break;
-                default:
-                    // Detect device type if platform param doesn't match
-                    detectDeviceType();
-            }
-        } else {
-            // No platform specified, detect device type
-            detectDeviceType();
-        }
-    }, [searchParams]);
+    // Check for tablet
+    const isTablet = /(ipad|tablet|(android(?!.*mobile))|(windows(?!.*phone)(.*touch))|silk)/.test(userAgent);
     
-    // Detect device type
-    const detectDeviceType = () => {
-        const userAgent = navigator.userAgent.toLowerCase();
-        
-        // Check for tablet
-        const isTablet = /(ipad|tablet|(android(?!.*mobile))|(windows(?!.*phone)(.*touch))|silk)/.test(userAgent);
-        
-        if (isTablet) {
-            setActiveTab("tablet");
-            return;
-        }
-        
-        // Check for mobile
-        const isMobile = /android|webos|iphone|ipod|blackberry|iemobile|opera mini/.test(userAgent);
-        
-        if (isMobile) {
-            setActiveTab("mobile");
-            return;
-        }
-        
-        // Default to desktop
-        setActiveTab("desktop");
-    };
+    if (isTablet) {
+      setActiveTab("tablet");
+      return;
+    }
+    
+    // Check for mobile
+    const isMobile = /android|webos|iphone|ipod|blackberry|iemobile|opera mini/.test(userAgent);
+    
+    if (isMobile) {
+      setActiveTab("mobile");
+      return;
+    }
+    
+    // Default to desktop
+    setActiveTab("desktop");
+  };
 
-    // Handle direct download
-    const handleDirectDownload = (platform: string) => {
-        // This would normally trigger the appropriate download for the platform
-        toast({
-            title: "Starter nedlasting",
-            description: `Nedlasting for ${platform} starter straks...`,
-            duration: 3000
-        });
-    };
+  // Handle direct download
+  const handleDirectDownload = (platform) => {
+    // This would normally trigger the appropriate download for the platform
+    toast({
+      title: "Starter nedlasting",
+      description: `Nedlasting for ${platform} starter straks...`,
+      duration: 3000
+    });
+  };
 
-    const handleCopyQRCode = () => {
-        toast({
-            title: "QR-kode åpnet",
-            description: "QR-kode for nedlasting er klar for skanning",
-            duration: 3000
-        });
-    };
+  const handleCopyQRCode = () => {
+    toast({
+      title: "QR-kode åpnet",
+      description: "QR-kode for nedlasting er klar for skanning",
+      duration: 3000
+    });
+  };
 
-    const handleShareLink = () => {
-        // Share URL if supported by browser
-        if (navigator.share) {
-            navigator.share({
-                title: 'Last ned Snakkaz',
-                text: 'Sikker kommunikasjon med Snakkaz',
-                url: window.location.href,
-            })
-            .catch((error) => console.log('Error sharing', error));
-        } else {
-            // Fallback for browsers that don't support the Share API
-            const dummyInput = document.createElement('input');
-            const downloadUrl = window.location.origin + '/download';
-            
-            document.body.appendChild(dummyInput);
-            dummyInput.value = downloadUrl;
-            dummyInput.select();
-            document.execCommand('copy');
-            document.body.removeChild(dummyInput);
-            
-            toast({
-                title: "Link kopiert",
-                description: "Nedlastingslenken er kopiert til utklippstavlen",
-                duration: 3000
-            });
-        }
-    };
+  const handleShareLink = () => {
+    // Share URL if supported by browser
+    if (navigator.share) {
+      navigator.share({
+        title: 'Last ned Snakkaz',
+        text: 'Sikker kommunikasjon med Snakkaz',
+        url: window.location.href,
+      })
+      .catch((error) => console.log('Error sharing', error));
+    } else {
+      // Fallback for browsers that don't support the Share API
+      const dummyInput = document.createElement('input');
+      const downloadUrl = window.location.origin + '/download';
+      
+      document.body.appendChild(dummyInput);
+      dummyInput.value = downloadUrl;
+      dummyInput.select();
+      document.execCommand('copy');
+      document.body.removeChild(dummyInput);
+      
+      toast({
+        title: "Link kopiert",
+        description: "Nedlastingslenken er kopiert til utklippstavlen",
+        duration: 3000
+      });
+    }
+  };
 
-    return (
-        <div className="container max-w-6xl py-10">
-            <div className="text-center mb-12">
-                <h1 className="text-4xl font-bold text-cybergold-400 mb-4">Last ned Snakkaz</h1>
-                <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                    Få tilgang til Snakkaz på alle dine enheter med våre native apper for optimal sikkerhet og ytelse
-                </p>
-            </div>
+  return (
+    <div className="container max-w-6xl py-10">
+      <div className="text-center mb-12">
+        <h1 className="text-4xl font-bold text-cybergold-400 mb-4">Last ned Snakkaz</h1>
+        <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          Få tilgang til Snakkaz på alle dine enheter med våre native apper for optimal sikkerhet og ytelse
+        </p>
+      </div>
 
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="mx-auto">
-                <TabsList className="grid grid-cols-3 max-w-xl mx-auto mb-8">
-                    <TabsTrigger value="mobile" className="flex items-center gap-2">
-                        <Smartphone className="h-4 w-4" />
-                        <span>Mobil</span>
-                    </TabsTrigger>
-                    <TabsTrigger value="desktop" className="flex items-center gap-2">
-                        <Laptop className="h-4 w-4" />
-                        <span>Desktop</span>
-                    </TabsTrigger>
-                    <TabsTrigger value="tablet" className="flex items-center gap-2">
-                        <TabletSmartphone className="h-4 w-4" />
-                        <span>Nettbrett</span>
-                    </TabsTrigger>
-                </TabsList>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="mx-auto">
+        <TabsList className="grid grid-cols-3 max-w-xl mx-auto mb-8">
+          <TabsTrigger value="mobile" className="flex items-center gap-2">
+            <Smartphone className="h-4 w-4" />
+            <span>Mobil</span>
+          </TabsTrigger>
+          <TabsTrigger value="desktop" className="flex items-center gap-2">
+            <Laptop className="h-4 w-4" />
+            <span>Desktop</span>
+          </TabsTrigger>
+          <TabsTrigger value="tablet" className="flex items-center gap-2">
+            <TabletSmartphone className="h-4 w-4" />
+            <span>Nettbrett</span>
+          </TabsTrigger>
+        </TabsList>
 
-                <TabsContent value="mobile">
-                    <div className="grid md:grid-cols-2 gap-6">
-                        <DownloadCard
-                            title="Android"
-                            description="For Android 10.0 eller nyere"
-                            image="/thumbnails/snakkaz-guardian-chat.png"
-                            badges={["Kryptert", "Offline-støtte"]}
-                            buttonText="Last ned fra Google Play"
-                            onDownload={() => handleDirectDownload("Android")}
-                            onQRCode={handleCopyQRCode}
-                            onShareLink={handleShareLink}
-                            qrEnabled
-                            version="2.4.0"
-                            releaseDate="15. april 2025"
-                        />
+        <TabsContent value="mobile">
+          <div className="grid md:grid-cols-2 gap-6">
+            <DownloadCard
+              title="Android"
+              description="For Android 10.0 eller nyere"
+              image="/thumbnails/snakkaz-guardian-chat.png"
+              badges={["Kryptert", "Offline-støtte"]}
+              buttonText="Last ned fra Google Play"
+              onDownload={() => handleDirectDownload("Android")}
+              onQRCode={handleCopyQRCode}
+              onShareLink={handleShareLink}
+              qrEnabled
+              version="2.4.0"
+              releaseDate="15. april 2025"
+            />
 
-                        <DownloadCard
-                            title="iOS"
-                            description="For iOS 15 eller nyere"
-                            image="/thumbnails/snakkaz-secure-docs.png"
-                            badges={["Face ID", "iCloud-støtte"]}
-                            buttonText="Last ned fra App Store"
-                            onDownload={() => handleDirectDownload("iOS")}
-                            onQRCode={handleCopyQRCode}
-                            onShareLink={handleShareLink}
-                            qrEnabled
-                            version="2.3.8"
-                            releaseDate="20. april 2025"
-                        />
-                    </div>
-                </TabsContent>
+            <DownloadCard
+              title="iOS"
+              description="For iOS 15 eller nyere"
+              image="/thumbnails/snakkaz-secure-docs.png"
+              badges={["Face ID", "iCloud-støtte"]}
+              buttonText="Last ned fra App Store"
+              onDownload={() => handleDirectDownload("iOS")}
+              onQRCode={handleCopyQRCode}
+              onShareLink={handleShareLink}
+              qrEnabled
+              version="2.3.8"
+              releaseDate="20. april 2025"
+            />
+          </div>
+        </TabsContent>
 
-                <TabsContent value="desktop">
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        <DownloadCard
-                            title="Windows"
-                            description="For Windows 10/11"
-                            image="/thumbnails/snakkaz-analytics-hub.png"
-                            badges={["AutoStart", "Notification Center"]}
-                            buttonText="Last ned for Windows"
-                            onDownload={() => handleDirectDownload("Windows")}
-                            version="2.2.1"
-                            releaseDate="10. april 2025"
-                        />
+        <TabsContent value="desktop">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <DownloadCard
+              title="Windows"
+              description="For Windows 10/11"
+              image="/thumbnails/snakkaz-analytics-hub.png"
+              badges={["AutoStart", "Notification Center"]}
+              buttonText="Last ned for Windows"
+              onDownload={() => handleDirectDownload("Windows")}
+              version="2.2.1"
+              releaseDate="10. april 2025"
+            />
 
-                        <DownloadCard
-                            title="macOS"
-                            description="For macOS 12 eller nyere"
-                            image="/thumbnails/snakkaz-business-analyser.png"
-                            badges={["Apple Silicon", "Touch ID"]}
-                            buttonText="Last ned for macOS"
-                            onDownload={() => handleDirectDownload("macOS")}
-                            version="2.2.5"
-                            releaseDate="12. april 2025"
-                        />
+            <DownloadCard
+              title="macOS"
+              description="For macOS 12 eller nyere"
+              image="/thumbnails/snakkaz-business-analyser.png"
+              badges={["Apple Silicon", "Touch ID"]}
+              buttonText="Last ned for macOS"
+              onDownload={() => handleDirectDownload("macOS")}
+              version="2.2.5"
+              releaseDate="12. april 2025"
+            />
 
-                        <DownloadCard
-                            title="Linux"
-                            description="For Ubuntu, Fedora, Debian"
-                            image="/thumbnails/ai-dash-hub.png"
-                            badges={[".deb/.rpm", "Flatpak"]}
-                            buttonText="Last ned for Linux"
-                            onDownload={() => handleDirectDownload("Linux")}
-                            version="2.1.9"
-                            releaseDate="5. april 2025"
-                        />
-                    </div>
-                </TabsContent>
+            <DownloadCard
+              title="Linux"
+              description="For Ubuntu, Fedora, Debian"
+              image="/thumbnails/ai-dash-hub.png"
+              badges={[".deb/.rpm", "Flatpak"]}
+              buttonText="Last ned for Linux"
+              onDownload={() => handleDirectDownload("Linux")}
+              version="2.1.9"
+              releaseDate="5. april 2025"
+            />
+          </div>
+        </TabsContent>
 
-                <TabsContent value="tablet">
-                    <div className="grid md:grid-cols-2 gap-6">
-                        <DownloadCard
-                            title="iPad"
-                            description="For iPadOS 15 eller nyere"
-                            image="/thumbnails/snakkaz-secure-docs.png"
-                            badges={["Split View", "Pencil-støtte"]}
-                            buttonText="Last ned for iPad"
-                            onDownload={() => handleDirectDownload("iPad")}
-                            onQRCode={handleCopyQRCode}
-                            onShareLink={handleShareLink}
-                            qrEnabled
-                            version="2.3.8"
-                            releaseDate="20. april 2025"
-                        />
+        <TabsContent value="tablet">
+          <div className="grid md:grid-cols-2 gap-6">
+            <DownloadCard
+              title="iPad"
+              description="For iPadOS 15 eller nyere"
+              image="/thumbnails/snakkaz-secure-docs.png"
+              badges={["Split View", "Pencil-støtte"]}
+              buttonText="Last ned for iPad"
+              onDownload={() => handleDirectDownload("iPad")}
+              onQRCode={handleCopyQRCode}
+              onShareLink={handleShareLink}
+              qrEnabled
+              version="2.3.8"
+              releaseDate="20. april 2025"
+            />
 
-                        <DownloadCard
-                            title="Android Tablet"
-                            description="For Android 10.0 eller nyere"
-                            image="/thumbnails/snakkaz-guardian-chat.png"
-                            badges={["Flermodus", "DeX-støtte"]}
-                            buttonText="Last ned for Android"
-                            onDownload={() => handleDirectDownload("Android Tablet")}
-                            onQRCode={handleCopyQRCode}
-                            onShareLink={handleShareLink}
-                            qrEnabled
-                            version="2.4.0"
-                            releaseDate="15. april 2025"
-                        />
-                    </div>
-                </TabsContent>
-            </Tabs>
+            <DownloadCard
+              title="Android Tablet"
+              description="For Android 10.0 eller nyere"
+              image="/thumbnails/snakkaz-guardian-chat.png"
+              badges={["Flermodus", "DeX-støtte"]}
+              buttonText="Last ned for Android"
+              onDownload={() => handleDirectDownload("Android Tablet")}
+              onQRCode={handleCopyQRCode}
+              onShareLink={handleShareLink}
+              qrEnabled
+              version="2.4.0"
+              releaseDate="15. april 2025"
+            />
+          </div>
+        </TabsContent>
+      </Tabs>
 
-            <div className="mt-16 bg-cyberdark-900/50 border border-cyberdark-700 rounded-lg p-6 max-w-3xl mx-auto">
-                <h2 className="text-xl font-semibold text-cybergold-400 mb-4">Web-versjon</h2>
-                <p className="text-muted-foreground mb-6">
-                    Du kan også bruke Snakkaz direkte i nettleseren din. Perfekt for når du er på farten eller bruker en offentlig enhet.
-                </p>
+      <div className="mt-16 bg-cyberdark-900/50 border border-cyberdark-700 rounded-lg p-6 max-w-3xl mx-auto">
+        <h2 className="text-xl font-semibold text-cybergold-400 mb-4">Web-versjon</h2>
+        <p className="text-muted-foreground mb-6">
+          Du kan også bruke Snakkaz direkte i nettleseren din. Perfekt for når du er på farten eller bruker en offentlig enhet.
+        </p>
 
-                <div className="flex flex-col sm:flex-row gap-4 items-center">
-                    <Button variant="outline" size="lg" className="w-full sm:w-auto">
-                        Åpne Web-app
-                    </Button>
-                    <p className="text-sm text-cyberdark-400">
-                        <span className="inline-flex items-center mr-2">
-                            <Check className="h-4 w-4 text-cybergold-500 mr-1" /> End-to-end kryptert
-                        </span>
-                        <span className="inline-flex items-center">
-                            <Check className="h-4 w-4 text-cybergold-500 mr-1" /> Krever ingen installasjon
-                        </span>
-                    </p>
-                </div>
-            </div>
-            
-            {/* Mobile PIN note */}
-            <div className="mt-8 bg-cyberdark-900/50 border border-cyberblue-700/30 rounded-lg p-6 max-w-3xl mx-auto">
-                <div className="flex items-start gap-3">
-                    <InfoIcon className="h-5 w-5 text-cyberblue-400 mt-1" />
-                    <div>
-                        <h3 className="text-lg font-medium text-cyberblue-400 mb-2">Sikkerhet på mobile enheter</h3>
-                        <p className="text-sm text-muted-foreground mb-4">
-                            Snakkaz-appen for mobile enheter bruker en PIN-kode for ekstra sikkerhet. 
-                            Dette sikrer at dine samtaler forblir private selv om enheten din kommer på avveie.
-                        </p>
-                        <div className="flex items-center gap-2 text-xs text-cyberdark-400">
-                            <Badge className="bg-cyberblue-900/30 text-cyberblue-400 border-cyberblue-600/30">4-siffer PIN</Badge>
-                            <Badge className="bg-cyberblue-900/30 text-cyberblue-400 border-cyberblue-600/30">Biometrisk støtte</Badge>
-                            <Badge className="bg-cyberblue-900/30 text-cyberblue-400 border-cyberblue-600/30">Auto-lås</Badge>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <div className="flex flex-col sm:flex-row gap-4 items-center">
+          <Button variant="outline" size="lg" className="w-full sm:w-auto">
+            Åpne Web-app
+          </Button>
+          <p className="text-sm text-cyberdark-400">
+            <span className="inline-flex items-center mr-2">
+              <Check className="h-4 w-4 text-cybergold-500 mr-1" /> End-to-end kryptert
+            </span>
+            <span className="inline-flex items-center">
+              <Check className="h-4 w-4 text-cybergold-500 mr-1" /> Krever ingen installasjon
+            </span>
+          </p>
         </div>
-    );
+      </div>
+      
+      {/* Mobile PIN note */}
+      <div className="mt-8 bg-cyberdark-900/50 border border-cyberblue-700/30 rounded-lg p-6 max-w-3xl mx-auto">
+        <div className="flex items-start gap-3">
+          <InfoIcon className="h-5 w-5 text-cyberblue-400 mt-1" />
+          <div>
+            <h3 className="text-lg font-medium text-cyberblue-400 mb-2">Sikkerhet på mobile enheter</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Snakkaz-appen for mobile enheter bruker en PIN-kode for ekstra sikkerhet. 
+              Dette sikrer at dine samtaler forblir private selv om enheten din kommer på avveie.
+            </p>
+            <div className="flex items-center gap-2 text-xs text-cyberdark-400">
+              <Badge className="bg-cyberblue-900/30 text-cyberblue-400 border-cyberblue-600/30">4-siffer PIN</Badge>
+              <Badge className="bg-cyberblue-900/30 text-cyberblue-400 border-cyberblue-600/30">Biometrisk støtte</Badge>
+              <Badge className="bg-cyberblue-900/30 text-cyberblue-400 border-cyberblue-600/30">Auto-lås</Badge>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 interface DownloadCardProps {
-    title: string;
-    description: string;
-    image: string;
-    badges: string[];
-    buttonText: string;
-    onDownload: () => void;
-    onQRCode?: () => void;
-    onShareLink?: () => void;
-    qrEnabled?: boolean;
-    version: string;
-    releaseDate: string;
+  title: string;
+  description: string;
+  image: string;
+  badges: string[];
+  buttonText: string;
+  onDownload: () => void;
+  onQRCode?: () => void;
+  onShareLink?: () => void;
+  qrEnabled?: boolean;
+  version: string;
+  releaseDate: string;
 }
 
 function DownloadCard({
-    title,
-    description,
-    image,
-    badges,
-    buttonText,
-    onDownload,
-    onQRCode,
-    onShareLink,
-    qrEnabled = false,
-    version,
-    releaseDate
+  title,
+  description,
+  image,
+  badges,
+  buttonText,
+  onDownload,
+  onQRCode,
+  onShareLink,
+  qrEnabled = false,
+  version,
+  releaseDate
 }: DownloadCardProps) {
-    return (
+  return (
     <Card className="overflow-hidden border-cyberdark-700 bg-cyberdark-950/50">
       <div className="aspect-video relative overflow-hidden">
         <img 
