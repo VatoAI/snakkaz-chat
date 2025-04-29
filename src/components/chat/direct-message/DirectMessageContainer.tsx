@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Friend } from '../friends/types';
 import { WebRTCManager } from '@/utils/webrtc';
@@ -10,6 +9,7 @@ import { SecurityLevel } from '@/types/security';
 import { useDirectMessage } from '../friends/hooks/useDirectMessage';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { v4 as uuidv4 } from 'uuid';
 
 interface DirectMessageContainerProps {
   friend: Friend;
@@ -117,6 +117,82 @@ export const DirectMessageContainer = ({
       return false;
     }
   };
+  
+  // Handle sending media messages
+  const handleSendMedia = async (mediaData: { url: string, thumbnailUrl?: string }) => {
+    if (!navigator.onLine) {
+      toast({
+        title: "Error",
+        description: "Cannot send media: Device is offline",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      const timestamp = new Date().toISOString();
+      const messageId = uuidv4();
+      
+      // Create a message object with the media URL
+      const mediaMessage = {
+        id: messageId,
+        content: '',
+        media_url: mediaData.url,
+        thumbnail_url: mediaData.thumbnailUrl || null,
+        sender: { id: currentUserId },
+        receiver_id: friend.user_id,
+        created_at: timestamp,
+        is_delivered: false,
+        is_read: false,
+        read_at: null,
+        encryption_key: '',
+        iv: '',
+        is_encrypted: securityLevel !== 'standard',
+        is_deleted: false,
+        deleted_at: null,
+        message_type: 'image'
+      };
+      
+      // Update UI immediately
+      onNewMessage(mediaMessage as any);
+      
+      // Send to server or via WebRTC
+      const { data, error } = await supabase
+        .from('messages')
+        .insert([{
+          id: messageId,
+          sender_id: currentUserId,
+          receiver_id: friend.user_id,
+          content: '',
+          media_url: mediaData.url,
+          thumbnail_url: mediaData.thumbnailUrl || null,
+          created_at: timestamp,
+          is_delivered: usingServerFallback,
+          is_read: false,
+          read_at: null,
+          encryption_key: '',
+          iv: '',
+          is_encrypted: securityLevel !== 'standard',
+          message_type: 'image'
+        }]);
+      
+      if (error) {
+        console.error("Error sending media message:", error);
+        toast({
+          title: "Error",
+          description: "Failed to send media",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error("Error in handleSendMedia:", error);
+      toast({
+        title: "Error",
+        description: "Failed to send media",
+        variant: "destructive"
+      });
+    }
+  };
 
   return (
     <div className="flex flex-col h-full w-full bg-cyberdark-950">
@@ -152,6 +228,7 @@ export const DirectMessageContainer = ({
         sendError={sendError}
         isLoading={isLoading}
         onSendMessage={handleSendMessageWrapper}
+        onSendMedia={handleSendMedia}
         newMessage={newMessage}
         onChangeMessage={setNewMessage}
         connectionState={connectionState}
