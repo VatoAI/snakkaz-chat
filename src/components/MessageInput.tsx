@@ -1,12 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Paperclip, Clock, Shield } from 'lucide-react';
+import { Send, Paperclip, Clock, Shield, Image, X } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useSecureMessageKeys } from '@/hooks/useSecureMessageKeys';
 import { useDeviceDetection } from '@/hooks/useDeviceDetection';
+import { useEnhancedMediaUpload, ResizeMode, UploadOptions } from '@/hooks/useEnhancedMediaUpload';
+import { cx } from '@/lib/theme';
 
 interface MessageInputProps {
   onSendMessage: (message: string) => Promise<void>;
   onSendFile?: (file: File) => Promise<void>;
+  onSendEnhancedMedia?: (mediaData: { url: string, thumbnailUrl?: string }) => Promise<void>;
   placeholder?: string;
   disabled?: boolean;
   securityLevel?: 'p2p_e2ee' | 'server_e2ee' | 'standard';
@@ -17,6 +20,7 @@ interface MessageInputProps {
 const MessageInput: React.FC<MessageInputProps> = ({
   onSendMessage,
   onSendFile,
+  onSendEnhancedMedia,
   placeholder = "Skriv en melding...",
   disabled = false,
   securityLevel = 'standard',
@@ -25,10 +29,17 @@ const MessageInput: React.FC<MessageInputProps> = ({
 }) => {
   const [message, setMessage] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [showMediaUploader, setShowMediaUploader] = useState<boolean>(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
   const { isMobile, isTablet } = useDeviceDetection();
+  
+  // Use our enhanced media upload hook
+  const { uploadFile, cancelUpload, uploadState } = useEnhancedMediaUpload();
   
   // Sikker meldingsnøkkelrotasjon via Double Ratchet
   const conversationId = user?.id || 'default'; // Bør være en faktisk samtale-ID i produksjon
@@ -51,6 +62,22 @@ const MessageInput: React.FC<MessageInputProps> = ({
       inputRef.current.focus();
     }
   }, [autoFocus, isMobile]);
+
+  // Clean up preview URL when component unmounts
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, []);
+  
+  // Handle upload completion
+  useEffect(() => {
+    if (uploadState.url && !isSubmitting) {
+      sendEnhancedMedia();
+    }
+  }, [uploadState.url, isSubmitting]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey && !isMobile) {
@@ -84,19 +111,87 @@ const MessageInput: React.FC<MessageInputProps> = ({
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0] && onSendFile) {
-      try {
-        setIsSubmitting(true);
-        await onSendFile(e.target.files[0]);
-      } catch (error) {
-        console.error('Error uploading file:', error);
-      } finally {
-        setIsSubmitting(false);
-        // Reset file input
-        if (fileInputRef.current) {
-          fileInputRef.current.value = '';
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      
+      // Check if it's an image
+      if (file.type.startsWith('image/')) {
+        // For images, use enhanced uploader
+        setSelectedFile(file);
+        const url = URL.createObjectURL(file);
+        setPreviewUrl(url);
+        setShowMediaUploader(true);
+      } else if (onSendFile) {
+        // For other file types, use regular uploader
+        try {
+          setIsSubmitting(true);
+          await onSendFile(file);
+        } catch (error) {
+          console.error('Error uploading file:', error);
+        } finally {
+          setIsSubmitting(false);
+          // Reset file input
+          if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+          }
         }
       }
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!selectedFile) return;
+    
+    try {
+      setIsSubmitting(true);
+      
+      // Use the enhanced media uploader with balanced preset
+      await uploadFile(selectedFile, {
+        compress: true,
+        resize: {
+          maxWidth: 1280,
+          maxHeight: 1280,
+          mode: 'auto',
+          quality: 0.85
+        },
+        generateThumbnail: true
+      });
+      
+    } catch (error) {
+      console.error('Upload error:', error);
+    }
+  };
+  
+  const sendEnhancedMedia = async () => {
+    if (uploadState.url && onSendEnhancedMedia) {
+      try {
+        await onSendEnhancedMedia({
+          url: uploadState.url,
+          thumbnailUrl: uploadState.thumbnailUrl || undefined
+        });
+        
+        // Clean up
+        cleanupMedia();
+      } catch (error) {
+        console.error('Error sending enhanced media:', error);
+      } finally {
+        setIsSubmitting(false);
+      }
+    }
+  };
+  
+  const cleanupMedia = () => {
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    setShowMediaUploader(false);
+    
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
@@ -104,6 +199,13 @@ const MessageInput: React.FC<MessageInputProps> = ({
     if (fileInputRef.current) {
       fileInputRef.current.click();
     }
+  };
+  
+  const handleCancelMedia = () => {
+    if (uploadState.isUploading) {
+      cancelUpload();
+    }
+    cleanupMedia();
   };
 
   // Bestemmer sikkerhetsindikatorens ikon og tekst basert på sikkerhetsnivå
@@ -138,14 +240,56 @@ const MessageInput: React.FC<MessageInputProps> = ({
           <span className="text-xs">{securityIndicator.text}</span>
         </div>
       )}
+      
+      {/* Image preview and uploader */}
+      {showMediaUploader && previewUrl && (
+        <div className="mb-2 rounded-lg overflow-hidden bg-cyberdark-900">
+          <div className="relative">
+            <img 
+              src={previewUrl} 
+              alt="Preview" 
+              className="w-full max-h-48 object-contain"
+            />
+            <button
+              onClick={handleCancelMedia}
+              className="absolute top-2 right-2 bg-black/50 rounded-full p-1 hover:bg-black/70"
+            >
+              <X className="h-4 w-4 text-white" />
+            </button>
+          </div>
+          
+          {/* Upload controls */}
+          <div className="p-2 flex justify-between items-center bg-cyberdark-950">
+            <div className="text-xs text-gray-400">
+              {selectedFile?.name} ({(selectedFile?.size || 0) / 1024 > 1024 
+                ? `${((selectedFile?.size || 0) / 1024 / 1024).toFixed(1)} MB` 
+                : `${((selectedFile?.size || 0) / 1024).toFixed(0)} KB`})
+            </div>
+            
+            {uploadState.isUploading ? (
+              <div className="text-xs text-blue-400">
+                Laster opp... {Math.round(uploadState.progress)}%
+              </div>
+            ) : (
+              <button
+                onClick={handleUpload}
+                className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1 rounded flex items-center gap-1"
+              >
+                <Image className="h-3 w-3" />
+                <span>Optimaliser og last opp</span>
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="flex items-end gap-2">
         {/* Vedlegg knapp - hvis vedlegg er støttet */}
-        {onSendFile && (
+        {(onSendFile || onSendEnhancedMedia) && (
           <>
             <button 
               onClick={handleAttachClick}
-              disabled={disabled || isSubmitting}
+              disabled={disabled || isSubmitting || showMediaUploader}
               className="p-2 rounded-full hover:bg-opacity-10 hover:bg-white flex items-center justify-center"
               aria-label="Legg ved fil"
             >
@@ -181,9 +325,9 @@ const MessageInput: React.FC<MessageInputProps> = ({
         {/* Send-knapp */}
         <button
           onClick={handleSendMessage}
-          disabled={!message.trim() || disabled || isSubmitting}
+          disabled={!message.trim() || disabled || isSubmitting || showMediaUploader}
           className={`p-3 rounded-full ${
-            !message.trim() || disabled || isSubmitting
+            !message.trim() || disabled || isSubmitting || showMediaUploader
               ? 'opacity-50'
               : 'bg-blue-500 hover:bg-blue-600 text-white'
           } flex items-center justify-center`}
