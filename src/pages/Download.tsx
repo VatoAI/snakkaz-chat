@@ -1,4 +1,5 @@
-import React from "react";
+
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,10 +12,89 @@ import {
     QrCode,
     Share2,
     Check,
-    Clock
+    Clock,
+    InfoIcon
 } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
 export default function Download() {
+    const { toast } = useToast();
+    const [defaultTab, setDefaultTab] = useState("mobile");
+    
+    // Detect device type
+    useEffect(() => {
+        const detectDeviceType = () => {
+            const userAgent = navigator.userAgent.toLowerCase();
+            
+            // Check for tablet
+            const isTablet = /(ipad|tablet|(android(?!.*mobile))|(windows(?!.*phone)(.*touch))|silk)/.test(userAgent);
+            
+            if (isTablet) {
+                setDefaultTab("tablet");
+                return;
+            }
+            
+            // Check for mobile
+            const isMobile = /android|webos|iphone|ipod|blackberry|iemobile|opera mini/.test(userAgent);
+            
+            if (isMobile) {
+                setDefaultTab("mobile");
+                return;
+            }
+            
+            // Default to desktop
+            setDefaultTab("desktop");
+        };
+        
+        detectDeviceType();
+    }, []);
+
+    // Handle direct download
+    const handleDirectDownload = (platform: string) => {
+        // This would normally trigger the appropriate download for the platform
+        toast({
+            title: "Starter nedlasting",
+            description: `Nedlasting for ${platform} starter straks...`,
+            duration: 3000
+        });
+    };
+
+    const handleCopyQRCode = () => {
+        toast({
+            title: "QR-kode åpnet",
+            description: "QR-kode for nedlasting er klar for skanning",
+            duration: 3000
+        });
+    };
+
+    const handleShareLink = () => {
+        // Share URL if supported by browser
+        if (navigator.share) {
+            navigator.share({
+                title: 'Last ned Snakkaz',
+                text: 'Sikker kommunikasjon med Snakkaz',
+                url: window.location.href,
+            })
+            .catch((error) => console.log('Error sharing', error));
+        } else {
+            // Fallback for browsers that don't support the Share API
+            const dummyInput = document.createElement('input');
+            const downloadUrl = window.location.origin + '/download';
+            
+            document.body.appendChild(dummyInput);
+            dummyInput.value = downloadUrl;
+            dummyInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(dummyInput);
+            
+            toast({
+                title: "Link kopiert",
+                description: "Nedlastingslenken er kopiert til utklippstavlen",
+                duration: 3000
+            });
+        }
+    };
+
     return (
         <div className="container max-w-6xl py-10">
             <div className="text-center mb-12">
@@ -24,7 +104,7 @@ export default function Download() {
                 </p>
             </div>
 
-            <Tabs defaultValue="mobile" className="mx-auto">
+            <Tabs defaultValue={defaultTab} className="mx-auto">
                 <TabsList className="grid grid-cols-3 max-w-xl mx-auto mb-8">
                     <TabsTrigger value="mobile" className="flex items-center gap-2">
                         <Smartphone className="h-4 w-4" />
@@ -48,6 +128,9 @@ export default function Download() {
                             image="/thumbnails/snakkaz-guardian-chat.png"
                             badges={["Kryptert", "Offline-støtte"]}
                             buttonText="Last ned fra Google Play"
+                            onDownload={() => handleDirectDownload("Android")}
+                            onQRCode={handleCopyQRCode}
+                            onShareLink={handleShareLink}
                             qrEnabled
                             version="2.4.0"
                             releaseDate="15. april 2025"
@@ -59,6 +142,9 @@ export default function Download() {
                             image="/thumbnails/snakkaz-secure-docs.png"
                             badges={["Face ID", "iCloud-støtte"]}
                             buttonText="Last ned fra App Store"
+                            onDownload={() => handleDirectDownload("iOS")}
+                            onQRCode={handleCopyQRCode}
+                            onShareLink={handleShareLink}
                             qrEnabled
                             version="2.3.8"
                             releaseDate="20. april 2025"
@@ -74,6 +160,7 @@ export default function Download() {
                             image="/thumbnails/snakkaz-analytics-hub.png"
                             badges={["AutoStart", "Notification Center"]}
                             buttonText="Last ned for Windows"
+                            onDownload={() => handleDirectDownload("Windows")}
                             version="2.2.1"
                             releaseDate="10. april 2025"
                         />
@@ -84,6 +171,7 @@ export default function Download() {
                             image="/thumbnails/snakkaz-business-analyser.png"
                             badges={["Apple Silicon", "Touch ID"]}
                             buttonText="Last ned for macOS"
+                            onDownload={() => handleDirectDownload("macOS")}
                             version="2.2.5"
                             releaseDate="12. april 2025"
                         />
@@ -94,6 +182,7 @@ export default function Download() {
                             image="/thumbnails/ai-dash-hub.png"
                             badges={[".deb/.rpm", "Flatpak"]}
                             buttonText="Last ned for Linux"
+                            onDownload={() => handleDirectDownload("Linux")}
                             version="2.1.9"
                             releaseDate="5. april 2025"
                         />
@@ -108,6 +197,9 @@ export default function Download() {
                             image="/thumbnails/snakkaz-secure-docs.png"
                             badges={["Split View", "Pencil-støtte"]}
                             buttonText="Last ned for iPad"
+                            onDownload={() => handleDirectDownload("iPad")}
+                            onQRCode={handleCopyQRCode}
+                            onShareLink={handleShareLink}
                             qrEnabled
                             version="2.3.8"
                             releaseDate="20. april 2025"
@@ -119,6 +211,9 @@ export default function Download() {
                             image="/thumbnails/snakkaz-guardian-chat.png"
                             badges={["Flermodus", "DeX-støtte"]}
                             buttonText="Last ned for Android"
+                            onDownload={() => handleDirectDownload("Android Tablet")}
+                            onQRCode={handleCopyQRCode}
+                            onShareLink={handleShareLink}
                             qrEnabled
                             version="2.4.0"
                             releaseDate="15. april 2025"
@@ -147,6 +242,25 @@ export default function Download() {
                     </p>
                 </div>
             </div>
+            
+            {/* Mobile PIN note */}
+            <div className="mt-8 bg-cyberdark-900/50 border border-cyberblue-700/30 rounded-lg p-6 max-w-3xl mx-auto">
+                <div className="flex items-start gap-3">
+                    <InfoIcon className="h-5 w-5 text-cyberblue-400 mt-1" />
+                    <div>
+                        <h3 className="text-lg font-medium text-cyberblue-400 mb-2">Sikkerhet på mobile enheter</h3>
+                        <p className="text-sm text-muted-foreground mb-4">
+                            Snakkaz-appen for mobile enheter bruker en PIN-kode for ekstra sikkerhet. 
+                            Dette sikrer at dine samtaler forblir private selv om enheten din kommer på avveie.
+                        </p>
+                        <div className="flex items-center gap-2 text-xs text-cyberdark-400">
+                            <Badge className="bg-cyberblue-900/30 text-cyberblue-400 border-cyberblue-600/30">4-siffer PIN</Badge>
+                            <Badge className="bg-cyberblue-900/30 text-cyberblue-400 border-cyberblue-600/30">Biometrisk støtte</Badge>
+                            <Badge className="bg-cyberblue-900/30 text-cyberblue-400 border-cyberblue-600/30">Auto-lås</Badge>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 }
@@ -157,6 +271,9 @@ interface DownloadCardProps {
     image: string;
     badges: string[];
     buttonText: string;
+    onDownload: () => void;
+    onQRCode?: () => void;
+    onShareLink?: () => void;
     qrEnabled?: boolean;
     version: string;
     releaseDate: string;
@@ -168,6 +285,9 @@ function DownloadCard({
     image,
     badges,
     buttonText,
+    onDownload,
+    onQRCode,
+    onShareLink,
     qrEnabled = false,
     version,
     releaseDate
@@ -212,15 +332,25 @@ function DownloadCard({
         </div>
         
         <div className="flex flex-col gap-3">
-          <Button className="w-full">{buttonText}</Button>
+          <Button className="w-full" onClick={onDownload}>{buttonText}</Button>
           
           {qrEnabled && (
             <div className="flex justify-between">
-              <Button variant="outline" size="sm" className="flex-1 mr-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="flex-1 mr-2"
+                onClick={onQRCode}
+              >
                 <QrCode className="h-4 w-4 mr-2" />
                 <span>QR-kode</span>
               </Button>
-              <Button variant="outline" size="sm" className="flex-1">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="flex-1"
+                onClick={onShareLink}
+              >
                 <Share2 className="h-4 w-4 mr-2" />
                 <span>Del lenke</span>
               </Button>

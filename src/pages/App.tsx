@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./hooks/useAuth.tsx";
@@ -19,6 +20,7 @@ import Admin from "./Admin";
 import NotFound from "./NotFound";
 import ChatPage from "./chat/ChatPage";
 import SafeChatPage from "./chat/SafeChatPage";
+import Download from "./pages/Download";
 
 // Auth components
 import AuthPage from "./auth/AuthPage";
@@ -47,6 +49,7 @@ function App() {
             <Route path="security" element={<Security />} />
             <Route path="info" element={<Info />} />
             <Route path="admin" element={<Admin />} />
+            <Route path="download" element={<Download />} />
           </Route>
           
           {/* 404 page */}
