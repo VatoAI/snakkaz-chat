@@ -3,12 +3,13 @@ import { useAuth } from "@/hooks/useAuth";
 import { useMessages } from "@/hooks/useMessages";
 import { useProfiles } from "@/hooks/useProfiles";
 import { usePresence } from "@/hooks/usePresence";
-import { ChatLayout } from "./components/ChatLayout";
 import { useWebRTC } from "@/hooks/useWebRTC";
 import { useFriendships } from "@/hooks/useFriendships";
 import { Friend } from "@/components/chat/friends/types";
 import { DecryptedMessage } from "@/types/message";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+// Importer vår nye ChatInterface-komponent
+import { ChatInterface } from "../components/ChatInterface";
 
 // Ny type for opplastingsstatus
 interface UploadingMedia {
@@ -154,27 +155,49 @@ const ChatPage = () => {
     }
   };
 
+  // Bestem hvilken bruker vi skal vise meldinger for i ChatInterface
+  const recipientInfo = selectedFriend 
+    ? {
+        name: userProfiles[selectedFriend.user_id]?.display_name || 'Ukjent bruker',
+        avatar: userProfiles[selectedFriend.user_id]?.avatar_url,
+        isOnline: userPresence[selectedFriend.user_id]?.online
+      }
+    : undefined;
+
   return (
     <ProtectedRoute>
-      <ChatLayout
-        userPresence={userPresence}
-        currentUserId={user?.id || ""}
-        currentStatus={currentStatus}
-        handleStatusChange={handleStatusChange}
-        webRTCManager={webRTCManager}
-        directMessages={directMessages}
-        handleStartEditMessage={handleStartEditMessage}
-        onStartChat={handleStartChat}
-        userProfiles={userProfiles}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        chatState={chatState}
-        selectedFriend={selectedFriend}
-        setSelectedFriend={setSelectedFriend}
-        friendsList={friendsList}
-        handleSendMessage={handleSendMessage}
-        uploadingMedia={uploadingMedia}
-      />
+      <div className="h-screen w-full flex flex-col">
+        {/* Header kan legges til her hvis ønskelig */}
+        
+        {/* Chat Interface - vår nye komponent */}
+        <div className="flex-1 overflow-hidden">
+          <ChatInterface
+            messages={activeTab === "directMessage" ? directMessages : chatState.messages || []}
+            currentUserId={user?.id || ""}
+            userProfiles={userProfiles}
+            newMessage={chatState.newMessage || ""}
+            onNewMessageChange={chatState.setNewMessage}
+            onSendMessage={handleSendMessage}
+            onEditMessage={handleStartEditMessage}
+            onDeleteMessage={chatState.handleDeleteMessage}
+            isLoading={chatState.isLoading}
+            recipientInfo={recipientInfo}
+            isDirectMessage={activeTab === "directMessage"}
+            onBackToList={activeTab === "directMessage" ? () => {
+              setActiveTab("global");
+              setSelectedFriend(null);
+            } : undefined}
+            ttl={chatState.ttl}
+            onTtlChange={chatState.setTtl}
+            editingMessage={chatState.editingMessage}
+            onCancelEdit={chatState.handleCancelEditMessage}
+            uploadingMedia={uploadingMedia}
+            hasMoreMessages={chatState.hasMoreMessages}
+            isLoadingMoreMessages={chatState.isLoadingMore}
+            onLoadMoreMessages={chatState.loadMoreMessages}
+          />
+        </div>
+      </div>
     </ProtectedRoute>
   );
 };
