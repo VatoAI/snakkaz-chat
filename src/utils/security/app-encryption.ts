@@ -574,6 +574,63 @@ export class AppEncryption {
       console.error('Feil ved forhåndslasting av nøkler:', error);
     }
   }
+  
+  /**
+   * Renser alle krypteringsdata fra minnet
+   * Dette bør kalles ved utlogging eller når appen går i bakgrunnen
+   * for å minimere risikoen for at krypteringsdata blir tilgjengelig
+   * for ondsinnede aktører
+   */
+  clearEncryptionData(): void {
+    // Nullstill masternøkkel
+    this.masterKey = null;
+    
+    // Tøm alle deriverte nøkler
+    this.derivedKeys.clear();
+    
+    // Tøm nøkkelcachen
+    this.keyCache.clear();
+    
+    // Marker som ikke-initialisert
+    this.isInitialized = false;
+    
+    // Kjør garbage collection hvis tilgjengelig (kun for debug)
+    if (typeof global !== 'undefined' && global.gc) {
+      try {
+        global.gc();
+      } catch (e) {
+        console.log('Kunne ikke tvinge fram garbage collection');
+      }
+    }
+  }
+  
+  /**
+   * Verifiserer integriteten til en krypteringsnøkkel ved å utføre en test
+   * av kryptering og dekryptering med den gitte konteksten
+   * 
+   * @param context Konteksten som skal verifiseres
+   * @returns true hvis nøkkelen er intakt og fungerer
+   */
+  async verifyKeyIntegrity(context: string = 'default'): Promise<boolean> {
+    if (!this.isInitialized) {
+      return false;
+    }
+    
+    try {
+      // Generer testdata
+      const testData = "snakkaz-integrity-check";
+      
+      // Forsøk å kryptere og dekryptere
+      const encrypted = await this.encrypt(testData, context);
+      const decrypted = await this.decrypt(encrypted, context, true);
+      
+      // Verifiser at resultatet matcher original
+      return decrypted === testData;
+    } catch (error) {
+      console.error(`Integritetskontroll mislyktes for kontekst '${context}':`, error);
+      return false;
+    }
+  }
 }
 
 // Hjelpefunksjoner for Base64-konvertering
