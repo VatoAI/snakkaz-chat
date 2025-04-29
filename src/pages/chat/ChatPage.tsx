@@ -1,81 +1,22 @@
 import React, { useState, useCallback, useEffect } from "react";
-import { useAuth } from "../../hooks/useAuth";
+import { useAuth } from "@/hooks/useAuth";
 import { ChatInterface } from "../components/ChatInterface";
+import { useMessages } from "@/hooks/useMessages";
+import { useProfiles } from "@/hooks/useProfiles";
+import { usePresence } from "@/hooks/usePresence";
+import { useWebRTC } from "@/hooks/useWebRTC";
+import { useFriendships } from "@/hooks/useFriendships";
+import { useToast } from "@/components/ui/use-toast";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { DecryptedMessage } from "@/types/message";
 
-// Typedefinisjon for User-typen
-interface User {
-  id: string;
-  name?: string;
-  email?: string;
-}
-
-// Mock-implementations for manglende hooks
-// Disse kan erstattes med faktiske implementasjoner senere
-const useMessages = (userId: string | null) => ({
-  messages: [],
-  directMessages: [],
-  fetchMessages: () => Promise.resolve(),
-  setupRealtimeSubscription: () => {},
-  handleSendMessage: (text: string, media?: any) => Promise.resolve(),
-  handleSendDirectMessage: (recipientId: string, text: string, media?: any) => Promise.resolve(),
-  handleDeleteMessage: (messageId: string) => Promise.resolve(),
-  handleStartEditMessage: (message: any) => {},
-  handleCancelEditMessage: () => {},
-  isLoading: false,
-  isLoadingMore: false,
-  hasMoreMessages: false,
-  loadMoreMessages: () => Promise.resolve(),
-  newMessage: "",
-  setNewMessage: (text: string) => {},
-  editingMessage: null,
-  ttl: 0,
-  setTtl: (value: number) => {}
-});
-
-const useProfiles = () => ({
-  userProfiles: {},
-  fetchProfiles: () => Promise.resolve()
-});
-
-const usePresence = (userId: string | null) => ({
-  userPresence: {},
-  currentStatus: "online",
-  handleStatusChange: (status: string) => {}
-});
-
-const useWebRTC = () => ({
-  manager: null,
-  setupWebRTC: (userId: string) => {}
-});
-
-const useFriendships = () => ({
-  friends: [] as Friend[],
-  friendships: [],
-  friendsMap: {} as Record<string, Friend>
-});
-
-// Mock type for Friend
+// Type definition for Friend
 interface Friend {
   user_id: string;
   status: string;
 }
 
-// Mock type for DecryptedMessage
-interface DecryptedMessage {
-  id: string;
-  sender_id: string;
-  content: string;
-  created_at: string;
-  media_url?: string;
-  media_type?: string;
-}
-
-// Mock ProtectedRoute component
-const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <>{children}</>
-);
-
-// Ny type for opplastingsstatus
+// Media upload status type
 interface UploadingMedia {
   file: File;
   progress: number;
@@ -84,33 +25,41 @@ interface UploadingMedia {
 
 const ChatPage = () => {
   const { user } = useAuth();
-  const { manager: webRTCManager, setupWebRTC: initializeWebRTC } = useWebRTC();
+  const { toast } = useToast();
+  const { webRTCManager, setupWebRTC } = useWebRTC();
   const { friends, friendships, friendsMap } = useFriendships();
   const { userProfiles, fetchProfiles } = useProfiles();
   const { userPresence, currentStatus, handleStatusChange } = usePresence(user?.id || null);
   const [selectedFriend, setSelectedFriend] = useState<Friend | null>(null);
   const [activeTab, setActiveTab] = useState("global");
-  const [directMessages, setDirectMessages] = useState<Array<DecryptedMessage>>([]);
+  
+  // State for direct messages
+  const [directMessages, setDirectMessages] = useState<DecryptedMessage[]>([]);
   
   // State for media handling
   const [uploadingMedia, setUploadingMedia] = useState<UploadingMedia | null>(null);
   
-  // Initialize chat state
-  const chatState = useMessages(user?.id || null);
+  // Initialize chat state with the real useMessages hook
+  const chatState = useMessages(user?.id || null, selectedFriend?.user_id);
 
   // Init WebRTC connections
   useEffect(() => {
-    if (user && !webRTCManager) {
-      initializeWebRTC(user.id);
+    if (user && user.id) {
+      setupWebRTC(user.id);
     }
-  }, [user, webRTCManager, initializeWebRTC]);
+  }, [user, setupWebRTC]);
 
   // Load initial data
   useEffect(() => {
     if (user?.id) {
       chatState.fetchMessages();
-      chatState.setupRealtimeSubscription();
+      const cleanup = chatState.setupRealtimeSubscription();
       fetchProfiles();
+      
+      // Cleanup function
+      return () => {
+        if (cleanup) cleanup();
+      };
     }
   }, [user?.id, chatState, fetchProfiles]);
 
@@ -141,38 +90,34 @@ const ChatPage = () => {
         status: 'uploading'
       });
       
-      // Simulate upload progress (i en ekte app ville dette bruke en faktisk filoverføring)
-      await new Promise<void>((resolve) => {
-        let progress = 0;
-        const interval = setInterval(() => {
-          progress += 10;
-          setUploadingMedia(prev => prev ? {
-            ...prev,
-            progress
-          } : null);
-          
-          if (progress >= 100) {
-            clearInterval(interval);
-            resolve();
-          }
-        }, 200);
+      // Simulate upload progress updates
+      const updateProgress = (progress: number) => {
+        setUploadingMedia(prev => prev ? {
+          ...prev,
+          progress
+        } : null);
+      };
+      
+      // In a real app, this would use the actual file upload mechanism
+      // For now, we'll use the useMediaUpload hook from chatState
+      const mediaUrl = await chatState.handleSendMessage("", {
+        mediaFile: file,
+        onProgress: updateProgress,
+        receiverId: selectedFriend?.user_id
       });
       
-      // I en ekte app ville vi ha en server-URL som returneres etter opplasting
-      const mockMediaUrl = `https://snakkaz-media.example.com/${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
-      
-      // Oppdater state til success
+      // Update state to success
       setUploadingMedia(prev => prev ? {
         ...prev,
         status: 'success'
       } : null);
       
-      // Gi brukeren litt tid til å se at opplastingen er ferdig før vi fjerner tilstanden
+      // Give user time to see upload completed
       setTimeout(() => {
         setUploadingMedia(null);
       }, 1000);
       
-      return mockMediaUrl;
+      return mediaUrl || "";
     } catch (error) {
       console.error('Error uploading media:', error);
       setUploadingMedia(prev => prev ? {
@@ -180,46 +125,52 @@ const ChatPage = () => {
         status: 'error'
       } : null);
       
-      // Gi brukeren litt tid til å se feilen før vi fjerner tilstanden
+      // Give user time to see the error
       setTimeout(() => {
         setUploadingMedia(null);
       }, 3000);
+      
+      toast({
+        variant: "destructive",
+        title: "Opplastingsfeil",
+        description: "Kunne ikke laste opp filen. Vennligst prøv igjen."
+      });
       
       throw new Error('Failed to upload media');
     }
   };
 
-  // Utvidet funksjon for å sende meldinger med medieopplasting
+  // Enhanced function to send messages with media upload
   const handleSendMessage = async (text: string, mediaFile?: File) => {
     try {
-      let mediaUrl;
-      
-      if (mediaFile) {
-        // Last opp filen først hvis den finnes
-        mediaUrl = await handleMediaUpload(mediaFile);
-      }
-      
-      // Send meldingen med media-URL hvis tilgjengelig
       if (activeTab === "directMessage" && selectedFriend) {
-        // Send direktemelding
-        await chatState.handleSendDirectMessage(selectedFriend.user_id, text, {
-          mediaUrl,
-          mediaType: mediaFile?.type
+        // Send direct message
+        await chatState.handleSendMessage(text, {
+          mediaFile,
+          receiverId: selectedFriend.user_id,
+          webRTCManager,
+          onlineUsers: new Set(Object.keys(userPresence).filter(id => userPresence[id]?.online))
         });
       } else {
-        // Send global melding
+        // Send global message
         await chatState.handleSendMessage(text, {
-          mediaUrl,
-          mediaType: mediaFile?.type
+          mediaFile,
+          webRTCManager,
+          onlineUsers: new Set(Object.keys(userPresence).filter(id => userPresence[id]?.online))
         });
       }
     } catch (error) {
       console.error('Failed to send message with media:', error);
+      toast({
+        variant: "destructive",
+        title: "Sendingsfeil",
+        description: "Kunne ikke sende meldingen. Vennligst prøv igjen."
+      });
       throw error;
     }
   };
 
-  // Bestem hvilken bruker vi skal vise meldinger for i ChatInterface
+  // Determine which user to show messages for in ChatInterface
   const recipientInfo = selectedFriend 
     ? {
         name: userProfiles[selectedFriend.user_id]?.display_name || 'Ukjent bruker',
@@ -231,9 +182,6 @@ const ChatPage = () => {
   return (
     <ProtectedRoute>
       <div className="h-screen w-full flex flex-col">
-        {/* Header kan legges til her hvis ønskelig */}
-        
-        {/* Chat Interface - vår nye komponent */}
         <div className="flex-1 overflow-hidden">
           <ChatInterface
             messages={activeTab === "directMessage" ? directMessages : chatState.messages || []}

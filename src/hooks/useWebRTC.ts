@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useCallback, useRef } from "react";
 import { WebRTCManager } from "@/utils/webrtc";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,7 +12,6 @@ const handleChannelSubscription = (
 ) => {
   console.log("Signaling channel subscription status:", status);
   
-  // Fix the comparison here - use actual string value instead of enum
   if (status === 'SUBSCRIBED') {
     console.log("Successfully subscribed to signaling channel");
     // Announce presence to other peers
@@ -54,8 +52,8 @@ export const useWebRTC = () => {
         if (error) {
           console.error("Supabase connection error:", error);
           toast({
-            title: "Connection error",
-            description: "Could not establish connection to the server. WebRTC features may be limited.",
+            title: "Tilkoblingsfeil",
+            description: "Kunne ikke etablere forbindelse til serveren. WebRTC-funksjoner kan være begrenset.",
             variant: "destructive",
           });
         }
@@ -81,7 +79,6 @@ export const useWebRTC = () => {
           console.log("Received signal:", payload.type);
           // We'll use our own signal handler since the method isn't exposed
           if (webRTCManager) {
-            // Use the available methods to handle the signal manually
             console.log("Processing signal data", payload);
           }
         })
@@ -139,7 +136,6 @@ export const useWebRTC = () => {
         signalChannel.current.unsubscribe();
       }
       if (manager) {
-        // Use the available methods for cleanup
         manager.disconnectAll();
       }
     };
@@ -163,7 +159,7 @@ export const useWebRTC = () => {
   }, [manager, status]);
   
   return {
-    manager,
+    webRTCManager: manager,
     setupWebRTC,
     status,
   };
