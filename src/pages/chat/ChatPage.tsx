@@ -173,7 +173,7 @@ const ChatPage = () => {
   // Determine which user to show messages for in ChatInterface
   const recipientInfo = selectedFriend 
     ? {
-        name: userProfiles[selectedFriend.user_id]?.display_name || 'Ukjent bruker',
+        name: userProfiles[selectedFriend.user_id]?.username || 'Ukjent bruker',
         avatar: userProfiles[selectedFriend.user_id]?.avatar_url,
         isOnline: userPresence[selectedFriend.user_id]?.online
       }
