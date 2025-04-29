@@ -1,241 +1,176 @@
-const CACHE_NAME = 'snakkaz-cache-v5';
-const urlsToCache = [
+// Snakkaz Chat App Service Worker - Optimalisert for mobilbruk
+const CACHE_NAME = 'snakkaz-cache-v1';
+const OFFLINE_URL = '/offline.html';
+const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
-  '/icons/snakkaz-icon-192.png',
-  '/icons/snakkaz-icon-512.png',
-  '/manifest.json',
+  '/offline.html',
   '/snakkaz-logo.png',
-  '/chat',
-  '/profil',
-  '/register',
-  'https://www.snakkaz.com/thumbnail.png',
-  'https://dash.snakkaz.com/thumbnail.png'
+  '/favicon.ico',
+  '/manifest.json',
+  '/icons/snakkaz-icon-192.png',
+  '/icons/snakkaz-icon-512.png'
 ];
 
-// List of external service domains to bypass caching for
-const EXTERNAL_SERVICE_DOMAINS = [
-  'analyser.snakkaz.com',
-  'docs.snakkaz.com',
-  'ai-dash.snakkaz.com',
-  'analytics.snakkaz.com',
-  'static.cloudflareinsights.com'
-];
-
-// Install Service Worker and cache essential resources
+// Installer service worker og cache nødvendige ressurser
 self.addEventListener('install', (event) => {
-  console.log('Service Worker: Installing...');
-  
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => {
-        console.log('Service Worker: Caching app shell and content');
-        return cache.addAll(urlsToCache);
-      })
-      .then(() => {
-        console.log('Service Worker: Installation completed');
-        return self.skipWaiting();
-      })
-      .catch(error => {
-        console.error('Service Worker: Installation failed:', error);
-      })
+    caches.open(CACHE_NAME).then((cache) => {
+      console.log('Cache åpnet');
+      return cache.addAll(ASSETS_TO_CACHE);
+    })
   );
+  self.skipWaiting();
 });
 
-// Activate Service Worker and clean up old caches
+// Aktiverer service worker og fjerner gamle cacher
 self.addEventListener('activate', (event) => {
-  console.log('Service Worker: Activating...');
-  
-  const cacheWhitelist = [CACHE_NAME];
-  
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (!cacheWhitelist.includes(cacheName)) {
-            console.log('Service Worker: Deleting old cache', cacheName);
+          if (cacheName !== CACHE_NAME) {
+            console.log('Fjerner gammel cache:', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
     })
-    .then(() => {
-      console.log('Service Worker: Now active, controlling all clients');
-      return self.clients.claim();
-    })
-    .catch(error => {
-      console.error('Service Worker: Activation failed:', error);
-    })
   );
+  self.clients.claim();
 });
 
-// Check if a URL belongs to an external service
-function isExternalServiceUrl(url) {
-  try {
-    const urlObj = new URL(url);
-    return EXTERNAL_SERVICE_DOMAINS.some(domain => urlObj.hostname.includes(domain));
-  } catch (e) {
-    return false;
-  }
-}
-
-// Network-first strategy for most requests, falling back to cache
+// Håndterer nettverksforespørsler med cache-first strategi
 self.addEventListener('fetch', (event) => {
-  const url = event.request.url;
-  
-  // Skip cross-origin requests that aren't in our allowed list
-  if (!url.startsWith(self.location.origin) && 
-      !urlsToCache.includes(url) && 
-      !isExternalServiceUrl(url)) {
-    return;
-  }
-  
-  // Skip supabase API requests
-  if (url.includes('supabase')) {
-    return;
-  }
-  
-  // Special handling for external services - don't cache, just pass through
-  if (isExternalServiceUrl(url)) {
-    event.respondWith(
-      fetch(event.request).catch(() => {
-        // For external service URLs, return an empty JSON response instead of failing
-        // This prevents console errors when services are unavailable
-        if (event.request.headers.get('Accept')?.includes('application/json')) {
-          return new Response(JSON.stringify({ status: 'service_unavailable' }), {
-            headers: { 'Content-Type': 'application/json' },
-            status: 200
-          });
-        }
-        // For other resource types (like scripts), return a minimal response
-        return new Response('', { status: 200 });
-      })
-    );
+  // Skip cross-origin requests
+  if (!event.request.url.startsWith(self.location.origin)) {
     return;
   }
 
-  // For HTML files, always try network first
-  if (event.request.headers.get('Accept')?.includes('text/html')) {
+  // API-forespørsler bruker network-first
+  if (event.request.url.includes('/api/') || event.request.url.includes('supabase')) {
     event.respondWith(
       fetch(event.request)
         .then(response => {
-          const responseClone = response.clone();
-          caches.open(CACHE_NAME).then(cache => {
-            cache.put(event.request, responseClone);
-          });
           return response;
         })
         .catch(() => {
+          return caches.match(event.request).then(cachedResponse => {
+            if (cachedResponse) {
+              return cachedResponse;
+            }
+            
+            // Hvis API-forespørselen feiler og det ikke er i cache,
+            // returner en offline-respons som appen kan håndtere
+            return new Response(
+              JSON.stringify({ offline: true, error: 'Du er offline' }),
+              {
+                headers: { 'Content-Type': 'application/json' }
+              }
+            );
+          });
+        })
+    );
+    return;
+  }
+
+  // For HTML-dokumenter, prøv nettverk først, så cache, så offline-side
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .catch(() => {
           return caches.match(event.request)
-            .then(response => {
-              return response || caches.match('/');
+            .then(cachedResponse => {
+              if (cachedResponse) {
+                return cachedResponse;
+              }
+              return caches.match(OFFLINE_URL);
             });
         })
     );
     return;
   }
 
-  // For other requests
+  // For bilder og andre ressurser: cache først, så nettverk
   event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        // Clone the response to store in cache
-        if (event.request.method === 'GET') {
-          const responseToCache = response.clone();
-          caches.open(CACHE_NAME)
-            .then((cache) => {
+    caches.match(event.request)
+      .then(cachedResponse => {
+        if (cachedResponse) {
+          // Returnerer fra cache umiddelbart, men oppdater cache i bakgrunnen
+          const fetchPromise = fetch(event.request)
+            .then(networkResponse => {
+              if (networkResponse && networkResponse.status === 200) {
+                const cloneResponse = networkResponse.clone();
+                caches.open(CACHE_NAME).then(cache => {
+                  cache.put(event.request, cloneResponse);
+                });
+              }
+              return networkResponse;
+            })
+            .catch(() => cachedResponse);
+
+          return cachedResponse;
+        }
+        
+        // Ikke i cache, prøv nettverk
+        return fetch(event.request)
+          .then(response => {
+            if (!response || response.status !== 200) {
+              return response;
+            }
+            
+            // Cache responsen for fremtidig bruk
+            const responseToCache = response.clone();
+            caches.open(CACHE_NAME).then(cache => {
               cache.put(event.request, responseToCache);
             });
-        }
-        return response;
-      })
-      .catch(() => {
-        // If network fetch fails, try to serve from cache
-        return caches.match(event.request);
+            
+            return response;
+          });
       })
   );
 });
 
-// Handle messages from clients
-self.addEventListener('message', (event) => {
-  if (event.data.action === 'skipWaiting') {
-    self.skipWaiting();
-  }
-});
-
-// Push notification handling
+// Lytter etter push-varsler
 self.addEventListener('push', (event) => {
   if (!event.data) return;
   
   try {
     const data = event.data.json();
+    
     const options = {
-      body: data.body || 'Ny melding fra SnakkaZ',
+      body: data.body || 'Ny melding i Snakkaz',
       icon: '/icons/snakkaz-icon-192.png',
       badge: '/icons/snakkaz-icon-192.png',
       vibrate: [100, 50, 100],
       data: {
         url: data.url || '/'
-      },
-      actions: [
-        {
-          action: 'open',
-          title: 'Åpne'
-        }
-      ]
+      }
     };
     
     event.waitUntil(
-      self.registration.showNotification(
-        data.title || 'SnakkaZ', 
-        options
-      )
+      self.registration.showNotification(data.title || 'Snakkaz', options)
     );
-  } catch (error) {
-    console.error('Error showing notification:', error);
+  } catch (err) {
+    console.error('Feil ved behandling av push-varsel:', err);
   }
 });
 
-// Notification click handler
+// Når brukeren klikker på en notifikasjon
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   
-  if (event.action === 'open' || !event.action) {
-    event.waitUntil(
-      clients.matchAll({type: 'window'})
-        .then((clientList) => {
-          const url = event.notification.data.url || '/';
-          
-          // Check if a window is already open
-          for (const client of clientList) {
-            if (client.url === url && 'focus' in client) {
-              return client.focus();
-            }
+  event.waitUntil(
+    clients.matchAll({ type: 'window' })
+      .then(clientList => {
+        for (const client of clientList) {
+          if (client.url === event.notification.data.url && 'focus' in client) {
+            return client.focus();
           }
-          
-          // If no window is open, open a new one
-          if (clients.openWindow) {
-            return clients.openWindow(url);
-          }
-        })
-    );
-  }
-});
-
-// Periodic sync for background updates (if supported)
-self.addEventListener('periodicsync', (event) => {
-  if (event.tag === 'update-messages') {
-    event.waitUntil(
-      fetch('/api/sync-messages')
-        .then(response => {
-          if (!response.ok) {
-            throw new Error('Failed to sync messages');
-          }
-          return response.json();
-        })
-        .catch(error => {
-          console.error('Periodic sync failed:', error);
-        })
-    );
-  }
+        }
+        if (clients.openWindow) {
+          return clients.openWindow(event.notification.data.url || '/');
+        }
+      })
+  );
 });
