@@ -1,72 +1,61 @@
+# SnakkaZ Chat
 
-# Welcome to your Lovable project
+## Hva er SnakkaZ Chat?
 
-[![Netlify Status](https://api.netlify.com/api/v1/badges/afd27fa7-117f-469b-b022-d089d5d67038/deploy-status)](https://app.netlify.com/sites/snakkaz/deploys)
+SnakkaZ Chat er en moderne, sikker og sosial chat-app bygget for fremtiden. Appen kombinerer avansert kryptering, AI-drevne funksjoner og et unikt cyberpunk-inspirert design for å gi brukerne en trygg, morsom og engasjerende kommunikasjonsopplevelse.
 
-## Project info
+### Hovedfunksjoner
+- **Sanntids chat** med støtte for grupper og private meldinger
+- **Ende-til-ende kryptering** for maksimal sikkerhet
+- **AI-assistert chat** og smarte svar
+- **Mediaopplasting** (bilder, video, dokumenter)
+- **Brukerprofiler og tilpasning**
+- **Push-varsler** og tilstedeværelse
+- **PIN- og tofaktorautentisering**
+- **Adminpanel og moderasjonsverktøy**
+- **Responsivt cyberpunk-design** med smooth neon-effekter
 
-**URL**: https://lovable.dev/projects/5fc8dc39-f6ed-4644-a65d-53e99924966a
+### Teknologier
+- **React** + **TypeScript**
+- **Vite**
+- **Tailwind CSS** (med custom cyberpunk-palett og animasjoner)
+- **shadcn/ui**
+- **Supabase** (autentisering, database, lagring)
+- **lovable.dev** (deploy/hosting)
+- **Namecheap** (kun domenehåndtering)
+- **VS Code + Copilot** (utvikling)
 
-## How can I edit this code?
-
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/5fc8dc39-f6ed-4644-a65d-53e99924966a) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+### Hvordan komme i gang
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+# 1. Klon repoet
+ git clone <YOUR_GIT_URL>
+ cd snakkaz-chat
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+# 2. Installer avhengigheter
+ npm install
 
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+# 3. Start utviklingsserver
+ npm run dev
 ```
 
-**Edit a file directly in GitHub**
+### Utviklingsmiljø
+- Kodebasen støtter både lokal utvikling og GitHub Codespaces
+- Miljøvariabler settes i `.env.development`
+- Se `src/config/app-config.ts` for app-innstillinger
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Fremtidsplaner
+- Flere AI-funksjoner (chatbots, analyse, anbefalinger)
+- Videochat og tale
+- Bedre gruppeadministrasjon
+- Integrasjon med eksterne tjenester
+- Mobilapper (PWA og native)
 
-**Use GitHub Codespaces**
+### Lisens
+SnakkaZ Chat er et åpent prosjekt. Se LICENSE for detaljer.
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+---
 
-## What technologies are used for this project?
+**Nettside:** https://snakkaz.com
 
-This project is built with .
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/5fc8dc39-f6ed-4644-a65d-53e99924966a) and click on Share -> Publish.
-
-## I want to use a custom domain - is that possible?
-
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+For spørsmål, kontakt teamet på [kontakt@snakkaz.no](mailto:kontakt@snakkaz.no)
