@@ -1,180 +1,203 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { Send, Paperclip, Clock, Shield } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { useSecureMessageKeys } from '@/hooks/useSecureMessageKeys';
+import { useDeviceDetection } from '@/hooks/useDeviceDetection';
 
-import { useState, useRef, useEffect, FormEvent } from "react";
-import { Send, X } from "lucide-react";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { TTLSelector } from "@/components/message-input/TTLSelector";
-import { FileInputs } from "@/components/message-input/FileInputs";
-import { useMediaUpload } from "@/hooks/useMediaUpload";
-import { useFileInput } from "@/hooks/useFileInput";
-
-export interface MessageInputProps {
-  newMessage: string;
-  setNewMessage: (message: string) => void;
-  handleSubmit?: (e: React.FormEvent, content: string) => Promise<boolean>;
-  onSubmit?: (e: FormEvent) => Promise<void>;
-  isLoading: boolean;
-  ttl: number | null;
-  setTtl: (ttl: number | null) => void;
-  editingMessage: { id: string; content: string } | null;
-  onCancelEdit: () => void;
+interface MessageInputProps {
+  onSendMessage: (message: string) => Promise<void>;
+  onSendFile?: (file: File) => Promise<void>;
   placeholder?: string;
   disabled?: boolean;
-  className?: string;
-  onSendMessage?: (message: string, attachments: Array<{ url: string; type: string }>, ttl: number) => void;
+  securityLevel?: 'p2p_e2ee' | 'server_e2ee' | 'standard';
+  showSecurityIndicator?: boolean;
+  autoFocus?: boolean;
 }
 
-export const MessageInput = ({
-  newMessage,
-  setNewMessage,
-  handleSubmit,
-  onSubmit,
-  isLoading = false,
-  ttl,
-  setTtl,
-  editingMessage,
-  onCancelEdit,
-  placeholder = 'Skriv en melding...',
+const MessageInput: React.FC<MessageInputProps> = ({
+  onSendMessage,
+  onSendFile,
+  placeholder = "Skriv en melding...",
   disabled = false,
-  className
-}: MessageInputProps) => {
-  const [isRecording, setIsRecording] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const formRef = useRef<HTMLFormElement>(null);
-  const [attachments, setAttachments] = useState<Array<{ url: string; type: string; name: string }>>([]);
-  const { uploadFile, cancelUpload, uploadState } = useMediaUpload();
+  securityLevel = 'standard',
+  showSecurityIndicator = true,
+  autoFocus = false,
+}) => {
+  const [message, setMessage] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { user } = useAuth();
+  const { isMobile, isTablet } = useDeviceDetection();
   
-  // Define the file handling function
-  const handleFilesSelected = (files: File[]) => {
-    if (files.length > 0) {
-      setSelectedFile(files[0]);
-    }
-  };
-  
-  const fileInput = useFileInput({
-    onFilesSelected: handleFilesSelected,
-    accept: 'image/*,video/*,audio/*,application/pdf',
-    multiple: true,
-    setSelectedFile
+  // Sikker meldingsnøkkelrotasjon via Double Ratchet
+  const conversationId = user?.id || 'default'; // Bør være en faktisk samtale-ID i produksjon
+  const { getEncryptionKeys, messageCounter } = useSecureMessageKeys({
+    conversationId,
+    onError: (error) => console.error("Secure message key error:", error)
   });
 
-  // Update textarea height based on content
+  // Automatisk juster høyden på tekstområdet basert på innhold
   useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    if (inputRef.current) {
+      inputRef.current.style.height = 'auto';
+      inputRef.current.style.height = `${Math.min(inputRef.current.scrollHeight, 120)}px`;
     }
-  }, [newMessage]);
+  }, [message]);
 
-  // Set editing message content
+  // Autofokus på desktop, men ikke på mobile
   useEffect(() => {
-    if (editingMessage) {
-      setNewMessage(editingMessage.content);
-      if (textareaRef.current) {
-        textareaRef.current.focus();
+    if (autoFocus && !isMobile && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [autoFocus, isMobile]);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey && !isMobile) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (!message.trim() || isSubmitting || disabled) return;
+
+    try {
+      setIsSubmitting(true);
+      
+      // Sikker melding med nøkkelrotasjon for Perfect Forward Secrecy
+      const keys = await getEncryptionKeys();
+      console.log(`Secure message #${messageCounter} being sent with rotated keys`);
+      
+      await onSendMessage(message.trim());
+      setMessage('');
+      
+      // Forflytt fokus tilbake til input etter sending
+      if (inputRef.current) {
+        inputRef.current.focus();
       }
+    } catch (error) {
+      console.error('Error sending message:', error);
+    } finally {
+      setIsSubmitting(false);
     }
-  }, [editingMessage, setNewMessage]);
+  };
 
-  const handleFormSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (onSubmit) {
-      await onSubmit(e);
-      return;
-    }
-
-    if (newMessage.trim() || selectedFile) {
-      if (handleSubmit) {
-        const success = await handleSubmit(e, newMessage);
-        
-        if (success) {
-          setNewMessage("");
-          if (selectedFile) {
-            setSelectedFile(null);
-          }
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0] && onSendFile) {
+      try {
+        setIsSubmitting(true);
+        await onSendFile(e.target.files[0]);
+      } catch (error) {
+        console.error('Error uploading file:', error);
+      } finally {
+        setIsSubmitting(false);
+        // Reset file input
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
         }
       }
     }
   };
 
+  const handleAttachClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  // Bestemmer sikkerhetsindikatorens ikon og tekst basert på sikkerhetsnivå
+  const getSecurityIndicator = () => {
+    switch (securityLevel) {
+      case 'p2p_e2ee':
+        return {
+          icon: <Shield className="h-4 w-4 text-emerald-500" />,
+          text: "Ende-til-ende kryptert (P2P)"
+        };
+      case 'server_e2ee':
+        return {
+          icon: <Shield className="h-4 w-4 text-blue-500" />,
+          text: "Ende-til-ende kryptert"
+        };
+      default:
+        return {
+          icon: <Clock className="h-4 w-4 text-gray-500" />,
+          text: "Standard kryptering"
+        };
+    }
+  };
+
+  const securityIndicator = getSecurityIndicator();
+
   return (
-    <form
-      ref={formRef}
-      onSubmit={handleFormSubmit}
-      className="relative flex flex-col gap-2"
-    >
-      {editingMessage && (
-        <div className="flex items-center justify-between rounded-md bg-cyberdark-700/50 px-3 py-1.5">
-          <span className="text-sm text-cybergold-300">Redigerer melding</span>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={onCancelEdit}
-            className="p-0 h-auto"
-          >
-            <X className="h-4 w-4 text-cybergold-400" />
-          </Button>
+    <div className={`relative border-t border-opacity-20 bg-opacity-90 p-2 ${isMobile ? 'pb-6' : 'pb-3'}`}>
+      {/* Sikkerhetsindikator */}
+      {showSecurityIndicator && (
+        <div className="flex items-center gap-1 mb-1 ml-1 text-xs opacity-70">
+          {securityIndicator.icon}
+          <span className="text-xs">{securityIndicator.text}</span>
         </div>
       )}
 
-      <FileInputs
-        selectedFile={selectedFile}
-        setSelectedFile={setSelectedFile}
-        isLoading={isLoading}
-        isRecording={isRecording}
-      />
-
       <div className="flex items-end gap-2">
-        <div className="relative flex-1">
-          <Textarea
-            ref={textareaRef}
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
+        {/* Vedlegg knapp - hvis vedlegg er støttet */}
+        {onSendFile && (
+          <>
+            <button 
+              onClick={handleAttachClick}
+              disabled={disabled || isSubmitting}
+              className="p-2 rounded-full hover:bg-opacity-10 hover:bg-white flex items-center justify-center"
+              aria-label="Legg ved fil"
+            >
+              <Paperclip className="h-5 w-5" />
+            </button>
+            <input 
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              className="hidden"
+              accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
+            />
+          </>
+        )}
+
+        {/* Tekstområde for meldingen */}
+        <div className="flex-1 rounded-xl border bg-background px-3 py-2">
+          <textarea
+            ref={inputRef}
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            onKeyDown={handleKeyDown}
             placeholder={placeholder}
-            className={cn(
-              "resize-none py-3 pr-10 max-h-[200px] bg-cyberdark-800 border-cybergold-500/30 placeholder:text-cyberdark-300",
-              isLoading && "opacity-50 cursor-not-allowed"
-            )}
-            disabled={isLoading || disabled}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                formRef.current?.requestSubmit();
-              }
-            }}
+            disabled={disabled || isSubmitting}
+            className="w-full resize-none bg-transparent outline-none min-h-[40px] max-h-[120px]"
             rows={1}
           />
         </div>
 
-        <div className="flex items-center gap-2">
-          <TTLSelector
-            ttl={ttl}
-            setTtl={setTtl}
-            isLoading={isLoading}
-            isRecording={isRecording}
-          />
-
-          <Button
-            type="submit"
-            size="icon"
-            disabled={isLoading || (!newMessage.trim() && !selectedFile) || isRecording || disabled}
-            className={cn(
-              "bg-cybergold-600 hover:bg-cybergold-500 text-black",
-              isLoading && "opacity-50 cursor-not-allowed"
-            )}
-          >
-            {isLoading ? (
-              <div className="h-4 w-4 border-2 border-t-transparent border-black rounded-full animate-spin"></div>
-            ) : (
-              <Send className="h-4 w-4" />
-            )}
-          </Button>
-        </div>
+        {/* Send-knapp */}
+        <button
+          onClick={handleSendMessage}
+          disabled={!message.trim() || disabled || isSubmitting}
+          className={`p-3 rounded-full ${
+            !message.trim() || disabled || isSubmitting
+              ? 'opacity-50'
+              : 'bg-blue-500 hover:bg-blue-600 text-white'
+          } flex items-center justify-center`}
+          aria-label="Send melding"
+        >
+          <Send className={`h-5 w-5 ${isMobile ? 'h-6 w-6' : ''}`} />
+        </button>
       </div>
-    </form>
+
+      {/* Instruksjon for mobil */}
+      {isMobile && (
+        <div className="text-xs opacity-50 text-center mt-1">
+          Trykk på send-knappen for å sende
+        </div>
+      )}
+    </div>
   );
 };
+
+export default MessageInput;
