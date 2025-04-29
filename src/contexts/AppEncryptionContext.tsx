@@ -3,6 +3,7 @@ import { getAppEncryption } from '../utils/security/app-encryption';
 import { getSignalProtocolEngine } from '../utils/security/signal-protocol';
 import { getAnonymityManager } from '../utils/security/anonymity-manager';
 import { getRandomBytes } from '../utils/security/crypto-utils';
+import { supabase } from '../integrations/supabase/client';
 
 // App-krypteringstilstand
 interface AppEncryptionState {
@@ -25,6 +26,13 @@ interface AppEncryptionContextType {
   getPrivacySettings: () => any;
   updatePrivacySettings: (settings: any) => void;
   clearAllSecurityData: () => Promise<void>;
+  setMessageExpiration: (messageId: string, ttlSeconds: number) => Promise<void>;
+  secureDeleteMessage: (messageId: string) => Promise<boolean>;
+  rotateKeysForConversation: (conversationId: string) => Promise<boolean>;
+  secureMemoryHandling: {
+    clearSensitiveData: (data: Uint8Array | null) => void;
+    lockMemory: () => Promise<boolean>;
+  };
 }
 
 // Standard kontekstverdi
@@ -44,7 +52,14 @@ const defaultContext: AppEncryptionContextType = {
   getDisplayName: () => 'Anonym',
   getPrivacySettings: () => ({}),
   updatePrivacySettings: () => {},
-  clearAllSecurityData: async () => {}
+  clearAllSecurityData: async () => {},
+  setMessageExpiration: async () => {},
+  secureDeleteMessage: async () => false,
+  rotateKeysForConversation: async () => false,
+  secureMemoryHandling: {
+    clearSensitiveData: () => {},
+    lockMemory: async () => false
+  }
 };
 
 // Opprett kontekst
@@ -118,21 +133,6 @@ export const AppEncryptionProvider: React.FC<{ children: ReactNode }> = ({ child
       // Forbered meldingsinnhold basert på personverninnstillinger
       const { content, metadata } = anonymityManager.prepareOutgoingMessage(message);
       
-      // Krypter meldingen med Signal Protocol
-      const encryptedMsg = await signalProtocol.encryptMessage(content);
-      
-      // Kombiner kryptert melding med metadata
-      return {
-        ...encryptedMsg,
-        metadata
-      };
-    } catch (error: any) {
-      console.error('Feil ved kryptering av melding:', error);
-      throw new Error('Kunne ikke kryptere melding: ' + (error.message || 'Ukjent feil'));
-    }
-  };
-  
-  // Dekrypter en melding med Signal Protocol
   const decryptMessage = async (encryptedMessage: any, conversationId: string): Promise<string> => {
     try {
       // Initialiser for samtalen hvis nødvendig
