@@ -23,7 +23,10 @@ const AvatarImage = ({ src, alt }) => (
     src={src || '/placeholder-avatar.png'} 
     alt={alt} 
     className="aspect-square h-full w-full object-cover" 
-    onError={(e) => { e.target.style.display = 'none' }}
+    onError={(e) => { 
+      const target = e.target as HTMLImageElement;
+      target.style.display = 'none';
+    }}
   />
 );
 
@@ -59,9 +62,10 @@ const DropdownMenuGroup = ({ children }) => (
   <div className="p-2">{children}</div>
 );
 
-const DropdownMenuItem = ({ asChild, className, onClick, children }) => {
+// Updated to make onClick optional
+const DropdownMenuItem = ({ asChild, className, onClick = () => {}, children }) => {
   if (asChild) return (
-    <div className={`rounded-sm px-2 py-1.5 text-sm hover:bg-cyberdark-800 cursor-pointer ${className || ''}`}>
+    <div className={`rounded-sm px-2 py-1.5 text-sm hover:bg-cyberdark-800 cursor-pointer ${className || ''}`} onClick={onClick}>
       {children}
     </div>
   );
