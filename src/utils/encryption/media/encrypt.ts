@@ -85,5 +85,55 @@ export const importEncryptionKey = async (keyString: string): Promise<CryptoKey>
   );
 };
 
-// Export original encryptMedia function (already defined)
-export { encryptMedia };
+/**
+ * Encrypt a Blob/media content with AES-GCM encryption
+ * Legacy function for backward compatibility
+ * @param blob The blob data to encrypt
+ * @returns Object containing encrypted data, key, IV and metadata
+ */
+export const encryptMedia = async (blob: Blob) => {
+  try {
+    // Generate encryption key
+    const key = await window.crypto.subtle.generateKey(
+      { name: "AES-GCM", length: 256 },
+      true,
+      ["encrypt", "decrypt"]
+    );
+    
+    // Generate random IV
+    const iv = window.crypto.getRandomValues(new Uint8Array(12));
+    
+    // Read blob as ArrayBuffer
+    const fileBuffer = await blob.arrayBuffer();
+    
+    // Encrypt the blob
+    const encryptedBuffer = await window.crypto.subtle.encrypt(
+      { name: "AES-GCM", iv },
+      key,
+      fileBuffer
+    );
+    
+    // Export encryption key as a string
+    const exportedKey = await window.crypto.subtle.exportKey("jwk", key);
+    const encryptionKey = JSON.stringify(exportedKey);
+    
+    // Convert IV to base64 string format for storage
+    const ivBase64 = btoa(String.fromCharCode.apply(null, Array.from(iv)));
+    
+    // Extract basic metadata
+    const metadata = {
+      size: blob.size,
+      type: blob.type
+    };
+    
+    return {
+      encryptedData: new Blob([encryptedBuffer]),
+      key: encryptionKey,
+      iv: ivBase64,
+      metadata
+    };
+  } catch (error) {
+    console.error("Blob encryption failed:", error);
+    throw new Error("Failed to encrypt media: " + (error instanceof Error ? error.message : "Unknown error"));
+  }
+};
