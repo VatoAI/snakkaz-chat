@@ -1,25 +1,14 @@
 import React, { useState } from 'react';
-import { formatDistance } from 'date-fns';
-import { nb } from 'date-fns/locale';
+import { MoreVertical, Edit, Trash, X, Download, Copy, Eye } from 'lucide-react';
 import { cx, theme } from '../lib/theme';
-import { Clock, Download, Edit, Trash2, ExternalLink, X } from 'lucide-react';
 
 interface ChatMessageProps {
-  message: {
-    id: string;
-    content: string;
-    sender_id: string;
-    created_at: string;
-    media?: {
-      url: string;
-      type?: string;
-    } | null;
-    ttl?: number | null;
-  };
+  message: any; // Message object with at least id, content, sender_id
   isCurrentUser: boolean;
   userProfiles?: Record<string, any>;
   onEdit?: (message: any) => void;
   onDelete?: (messageId: string) => void;
+  showActions?: boolean;
 }
 
 export const ChatMessage: React.FC<ChatMessageProps> = ({
@@ -27,190 +16,273 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   isCurrentUser,
   userProfiles = {},
   onEdit,
-  onDelete
+  onDelete,
+  showActions = true
 }) => {
-  const [showOptions, setShowOptions] = useState(false);
-  const [showFullImage, setShowFullImage] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  const [showMediaModal, setShowMediaModal] = useState(false);
   
-  const { id, content, sender_id, created_at, media } = message;
-  
-  const timeAgo = formatDistance(new Date(created_at), new Date(), { 
-    addSuffix: true,
-    locale: nb 
-  });
-  
-  const senderProfile = userProfiles[sender_id] || { 
+  // Get user display information
+  const sender = userProfiles[message.sender_id] || { 
     display_name: 'Ukjent bruker',
     avatar_url: null
   };
   
-  const isImage = media?.type?.startsWith('image/');
+  // Format timestamp
+  const formattedTime = new Date(message.created_at).toLocaleTimeString('nb-NO', {
+    hour: '2-digit',
+    minute: '2-digit'
+  });
   
-  // Bestem filtypen basert på medietypen
-  const getFileIcon = () => {
-    if (!media?.type) return null;
+  // Handle media content
+  const hasMedia = message.media_url || message.mediaUrl;
+  const mediaUrl = message.media_url || message.mediaUrl;
+  const mediaType = message.media_type || message.mediaType || (mediaUrl && getMediaTypeFromUrl(mediaUrl));
+  const isImage = mediaType?.startsWith('image/') || (mediaUrl && isImageUrl(mediaUrl));
+  
+  // Toggle action menu
+  const toggleMenu = () => setShowMenu(!showMenu);
+  
+  // Handle edit
+  const handleEdit = () => {
+    setShowMenu(false);
+    if (onEdit) onEdit(message);
+  };
+  
+  // Handle delete
+  const handleDelete = () => {
+    setShowMenu(false);
+    if (onDelete) onDelete(message.id);
+  };
+  
+  // Helper function to get media type from URL
+  function getMediaTypeFromUrl(url: string): string | null {
+    const extension = url.split('.').pop()?.toLowerCase();
+    if (!extension) return null;
     
-    if (media.type.startsWith('image/')) {
-      return null; // Vi viser selve bildet
-    } else if (media.type.startsWith('video/')) {
-      return '🎬';
-    } else if (media.type.startsWith('audio/')) {
-      return '🎵';
-    } else if (media.type.includes('pdf')) {
-      return '📄';
-    } else if (media.type.includes('word') || media.type.includes('document')) {
-      return '📝';
-    } else if (media.type.includes('spreadsheet') || media.type.includes('excel')) {
-      return '📊';
-    } else if (media.type.includes('presentation') || media.type.includes('powerpoint')) {
-      return '📊';
-    } else {
-      return '📎';
-    }
-  };
+    const imageTypes = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+    const documentTypes = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'];
+    
+    if (imageTypes.includes(extension)) return 'image/' + extension;
+    if (documentTypes.includes(extension)) return 'application/' + extension;
+    
+    return null;
+  }
   
-  const fileIcon = getFileIcon();
-  
-  // Handler for å åpne/laste ned filen
-  const handleMediaClick = () => {
-    if (isImage) {
-      setShowFullImage(true);
-    } else if (media?.url) {
-      window.open(media.url, '_blank');
-    }
-  };
+  // Helper function to check if URL points to an image
+  function isImageUrl(url: string): boolean {
+    const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+    const extension = url.split('.').pop()?.toLowerCase();
+    return !!extension && imageExtensions.includes(extension);
+  }
   
   return (
-    <div 
-      className={cx(
-        'group relative max-w-[80%] mb-2 rounded-lg py-2 px-3',
-        isCurrentUser ? 'ml-auto' : 'mr-auto',
-        isCurrentUser ? 'bg-cybergold-900/30' : 'bg-cyberdark-800',
-        message.ttl ? 'border border-amber-700/30' : ''
-      )}
-      onMouseEnter={() => setShowOptions(true)}
-      onMouseLeave={() => setShowOptions(false)}
-    >
-      {/* Sender info (vises kun for meldinger fra andre) */}
-      {!isCurrentUser && (
-        <div className="flex items-center mb-1">
-          <div className="h-5 w-5 rounded-full overflow-hidden bg-cyberdark-700 mr-2">
-            {senderProfile.avatar_url ? (
-              <img 
-                src={senderProfile.avatar_url} 
-                alt={senderProfile.display_name} 
-                className="h-full w-full object-cover"
-              />
+    <div className={cx(
+      'flex mb-3',
+      isCurrentUser ? 'justify-end' : 'justify-start'
+    )}>
+      {/* Message bubble */}
+      <div className={cx(
+        'max-w-[75%] rounded-lg p-3',
+        isCurrentUser 
+          ? 'bg-cybergold-900/20 text-white rounded-tr-none' 
+          : 'bg-cyberdark-800 text-white rounded-tl-none',
+        theme.shadows.sm
+      )}>
+        {/* Sender info */}
+        {!isCurrentUser && (
+          <div className="flex items-center gap-2 mb-1">
+            <div className="w-5 h-5 rounded-full overflow-hidden bg-cyberdark-700">
+              {sender.avatar_url ? (
+                <img 
+                  src={sender.avatar_url} 
+                  alt={sender.display_name} 
+                  className="w-full h-full object-cover" 
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-xs text-cybergold-400">
+                  {sender.display_name.charAt(0)}
+                </div>
+              )}
+            </div>
+            <span className="text-xs font-medium text-cybergold-400">{sender.display_name}</span>
+          </div>
+        )}
+        
+        {/* Message content */}
+        {message.content && (
+          <div className="text-sm whitespace-pre-wrap break-words mb-2">
+            {message.content}
+          </div>
+        )}
+        
+        {/* Media content */}
+        {hasMedia && (
+          <div className={cx(
+            'rounded overflow-hidden mt-1',
+            !message.content && 'mt-0'
+          )}>
+            {isImage ? (
+              // Image preview
+              <div 
+                className="relative cursor-pointer"
+                onClick={() => setShowMediaModal(true)}
+              >
+                <img 
+                  src={mediaUrl} 
+                  alt="Bilde" 
+                  className="max-h-60 w-auto rounded"
+                />
+                <div className={cx(
+                  'absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0',
+                  'hover:opacity-100 transition-opacity flex items-end justify-center pb-2'
+                )}>
+                  <Eye className="w-5 h-5 text-white mr-2" />
+                  <span className="text-xs text-white">Vis bilde</span>
+                </div>
+              </div>
             ) : (
-              <div className="h-full w-full flex items-center justify-center text-xs text-cybergold-400">
-                {senderProfile.display_name[0].toUpperCase()}
+              // Other file types
+              <div className={cx(
+                'flex items-center gap-2 p-2 rounded',
+                theme.colors.background.secondary
+              )}>
+                <div className={cx(
+                  'w-8 h-8 rounded flex items-center justify-center',
+                  theme.colors.background.tertiary
+                )}>
+                  <Download className="w-4 h-4 text-cybergold-400" />
+                </div>
+                <div className="flex-grow overflow-hidden">
+                  <div className="text-xs font-medium truncate">
+                    {getFileNameFromUrl(mediaUrl)}
+                  </div>
+                  <div className="text-xs text-cybergold-600">
+                    {mediaType || 'Ukjent filtype'}
+                  </div>
+                </div>
+                <a 
+                  href={mediaUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={cx(
+                    'p-1.5 rounded-full',
+                    theme.colors.button.secondary.bg,
+                    theme.colors.button.secondary.hover
+                  )}
+                >
+                  <Download className="w-4 h-4 text-cybergold-400" />
+                </a>
               </div>
             )}
           </div>
-          <span className="text-xs font-medium text-cybergold-400">{senderProfile.display_name}</span>
-        </div>
-      )}
-      
-      {/* Media content */}
-      {media?.url && isImage && (
-        <div 
-          className="relative rounded-md overflow-hidden mb-2 cursor-pointer"
-          onClick={handleMediaClick}
-        >
-          <img 
-            src={media.url} 
-            alt="Vedlagt bilde" 
-            className="w-full max-h-60 object-contain bg-cyberdark-900"
-          />
-          <div className="absolute bottom-2 right-2 bg-cyberdark-950/70 rounded-full p-1">
-            <ExternalLink className="h-4 w-4 text-cybergold-400" />
-          </div>
-        </div>
-      )}
-      
-      {/* Andre filtyper enn bilder */}
-      {media?.url && !isImage && (
-        <div 
-          className="flex items-center bg-cyberdark-900 rounded-md p-2 mb-2 cursor-pointer hover:bg-cyberdark-800 transition-colors"
-          onClick={handleMediaClick}
-        >
-          <div className="text-2xl mr-2">{fileIcon}</div>
-          <div className="flex-grow overflow-hidden">
-            <div className="text-sm text-cybergold-300 truncate">
-              {media.url.split('/').pop()}
-            </div>
-            <div className="text-xs text-cybergold-600">
-              {media.type || 'Ukjent filtype'}
-            </div>
-          </div>
-          <Download className="h-4 w-4 text-cybergold-500" />
-        </div>
-      )}
-      
-      {/* Tekst innhold */}
-      <div className="text-sm whitespace-pre-wrap">
-        {content}
-      </div>
-      
-      {/* Footer med tid og TTL info */}
-      <div className="flex justify-end mt-1">
-        {message.ttl && (
-          <div className="flex items-center text-amber-400/80 mr-2 text-[10px]">
-            <Clock className="h-3 w-3 mr-0.5" />
-            <span>Slettes automatisk</span>
-          </div>
         )}
-        <span className="text-[10px] text-cybergold-600">{timeAgo}</span>
-      </div>
-      
-      {/* Handlinger for meldinger (vises ved hover) */}
-      {isCurrentUser && showOptions && (onEdit || onDelete) && (
-        <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          {onEdit && (
-            <button 
-              className="p-1 hover:bg-cyberdark-700 rounded-full"
-              onClick={() => onEdit(message)}
-            >
-              <Edit className="h-3 w-3 text-cybergold-400" />
-            </button>
-          )}
+        
+        {/* Footer with timestamp and actions */}
+        <div className="flex items-center justify-between mt-1">
+          <span className="text-xs text-cybergold-600">{formattedTime}</span>
           
-          {onDelete && (
-            <button 
-              className="p-1 hover:bg-red-500/20 rounded-full"
-              onClick={() => onDelete(id)}
-            >
-              <Trash2 className="h-3 w-3 text-red-400" />
-            </button>
+          {/* Message actions */}
+          {showActions && isCurrentUser && (
+            <div className="relative">
+              <button
+                onClick={toggleMenu}
+                className={cx(
+                  'p-1 rounded-full',
+                  showMenu ? theme.colors.background.tertiary : 'hover:bg-cyberdark-800'
+                )}
+              >
+                <MoreVertical className="w-3 h-3 text-cybergold-600" />
+              </button>
+              
+              {/* Action menu */}
+              {showMenu && (
+                <div className={cx(
+                  'absolute bottom-full right-0 mb-1 w-32 rounded-md overflow-hidden',
+                  theme.colors.background.tertiary,
+                  theme.shadows.md,
+                  'z-10'
+                )}>
+                  {onEdit && (
+                    <button
+                      onClick={handleEdit}
+                      className={cx(
+                        'flex items-center w-full px-3 py-2 text-xs text-left',
+                        'hover:bg-cyberdark-800'
+                      )}
+                    >
+                      <Edit className="w-3 h-3 mr-2 text-cybergold-400" />
+                      <span>Rediger</span>
+                    </button>
+                  )}
+                  {onDelete && (
+                    <button
+                      onClick={handleDelete}
+                      className={cx(
+                        'flex items-center w-full px-3 py-2 text-xs text-left',
+                        'hover:bg-red-900/30 text-red-400'
+                      )}
+                    >
+                      <Trash className="w-3 h-3 mr-2" />
+                      <span>Slett</span>
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
           )}
         </div>
-      )}
+      </div>
       
-      {/* Modal for fullskjermsbilde */}
-      {showFullImage && (
-        <div 
-          className="fixed inset-0 z-50 flex items-center justify-center bg-cyberdark-950/90 p-4"
-          onClick={() => setShowFullImage(false)}
-        >
-          <div className="relative max-w-4xl max-h-[90vh] w-full">
-            <button 
-              className="absolute top-2 right-2 bg-cyberdark-900/80 p-2 rounded-full z-10"
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowFullImage(false);
-              }}
-            >
-              <X className="h-5 w-5 text-white" />
-            </button>
-            
+      {/* Image modal */}
+      {showMediaModal && isImage && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="relative max-w-4xl max-h-[90vh]">
             <img 
-              src={media?.url} 
-              alt="Forstørret bilde"
-              className="w-full h-full object-contain"
+              src={mediaUrl} 
+              alt="Bilde" 
+              className="max-w-full max-h-[90vh] object-contain"
             />
+            <button 
+              onClick={() => setShowMediaModal(false)}
+              className="absolute top-2 right-2 p-2 rounded-full bg-black/50 text-white hover:bg-black/70"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/70 to-transparent">
+              <div className="flex justify-between items-center">
+                <span className="text-white text-sm">{getFileNameFromUrl(mediaUrl)}</span>
+                <a 
+                  href={mediaUrl}
+                  download
+                  className="p-2 rounded-full bg-cyberdark-800 hover:bg-cyberdark-700"
+                >
+                  <Download className="w-5 h-5 text-cybergold-400" />
+                </a>
+              </div>
+            </div>
           </div>
         </div>
       )}
     </div>
   );
 };
+
+// Helper function to get filename from URL
+function getFileNameFromUrl(url: string): string {
+  if (!url) return 'Ukjent fil';
+  const parts = url.split('/');
+  let fileName = parts[parts.length - 1];
+  
+  // Remove query parameters if they exist
+  fileName = fileName.split('?')[0];
+  
+  // Decode URL-encoded characters
+  try {
+    fileName = decodeURIComponent(fileName);
+  } catch (e) {
+    // If decoding fails, use the encoded version
+  }
+  
+  return fileName;
+}

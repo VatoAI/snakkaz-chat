@@ -1,74 +1,74 @@
 import React, { useRef, useEffect } from 'react';
 import { ChatMessage } from './ChatMessage';
 import { cx, theme } from '../lib/theme';
-import { Loader2 } from 'lucide-react';
 
 interface ChatMessageListProps {
-  messages: Array<any>;
+  messages: any[];
   currentUserId: string;
-  userProfiles?: Record<string, any>;
-  onEdit?: (message: any) => void;
-  onDelete?: (messageId: string) => void;
-  isLoading?: boolean;
-  hasMoreMessages?: boolean;
-  isLoadingMoreMessages?: boolean;
-  onLoadMore?: () => void;
-  className?: string;
+  userProfiles: Record<string, any>;
+  onEditMessage?: (message: any) => void;
+  onDeleteMessage?: (messageId: string) => void;
 }
 
 export const ChatMessageList: React.FC<ChatMessageListProps> = ({
   messages,
   currentUserId,
   userProfiles,
-  onEdit,
-  onDelete,
-  isLoading = false,
-  hasMoreMessages = false,
-  isLoadingMoreMessages = false,
-  onLoadMore,
-  className = ''
+  onEditMessage,
+  onDeleteMessage
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const messagesContainerRef = useRef<HTMLDivElement>(null);
-  const prevMessagesLength = useRef<number>(messages.length);
   
-  // Scroll til bunnen når det kommer nye meldinger
+  // Auto-scroll to bottom on new messages
   useEffect(() => {
-    if (messages.length > prevMessagesLength.current) {
-      scrollToBottom();
-    }
-    prevMessagesLength.current = messages.length;
-  }, [messages.length]);
-  
-  // Handle scrolling for "load more" functionality
-  const handleScroll = () => {
-    if (!messagesContainerRef.current || !onLoadMore || isLoadingMoreMessages || !hasMoreMessages) {
-      return;
-    }
-    
-    const { scrollTop } = messagesContainerRef.current;
-    // Hvis bruker har scrollet nesten helt til toppen, last flere meldinger
-    if (scrollTop < 50) {
-      onLoadMore();
-    }
-  };
-  
-  // Scroll til bunnen av meldingslisten
-  const scrollToBottom = () => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  };
+  }, [messages]);
   
-  // Gruppér meldinger etter dato
-  const groupMessagesByDate = () => {
-    const groups: Record<string, any[]> = {};
-    
-    messages.forEach(message => {
-      const date = new Date(message.created_at).toLocaleDateString('nb-NO');
-      if (!groups[date]) {
-        groups[date] = [];
-      }
+  // Group messages by date
+  const groupedMessages = groupMessagesByDate(messages);
+  
+  return (
+    <div className={cx(
+      'flex-grow overflow-y-auto py-4 px-4',
+      theme.colors.background.primary
+    )}>
+      {Object.entries(groupedMessages).map(([date, messagesGroup]) => (
+        <div key={date}>
+          {/* Date header */}
+          <div className="flex items-center justify-center my-3">
+            <div className={cx(
+              'px-3 py-1 rounded text-xs',
+              theme.colors.background.tertiary,
+              theme.colors.text.secondary
+            )}>
+              {formatDateHeader(date)}
+            </div>
+          </div>
+          
+          {/* Messages for this date */}
+          {messagesGroup.map(message => (
+            <ChatMessage 
+              key={message.id}
+              message={message}
+              isCurrentUser={message.sender_id === currentUserId}
+              userProfiles={userProfiles}
+              onEdit={onEditMessage}
+              onDelete={onDeleteMessage}
+            />
+          ))}
+        </div>
+      ))}
+      
+      {/* Empty state */}
+      {messages.length === 0 && (
+        <div className="h-full flex flex-col items-center justify-center">
+          <div className={cx(
+            'w-16 h-16 rounded-full mb-4 flex items-center justify-center',
+            theme.colors.background.tertiary
+          )}>
+            <svg className="w-8 h-8 text-cybergold-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" 
       groups[date].push(message);
     });
     
