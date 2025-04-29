@@ -12,32 +12,16 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <link rel="apple-touch-icon" href="/icons/snakkaz-icon-192.png" />
   <link rel="manifest" href="/manifest.json" />
-  <!-- Content Security Policy for å beskytte mot XSS -->
   <meta http-equiv="Content-Security-Policy"
-    content="default-src 'self' 'unsafe-inline' 'unsafe-eval'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.gpteng.co/ https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://cdn.gpteng.co https://github.dev; img-src 'self' data: https://*.supabase.in https://*.supabase.co blob:; font-src 'self'; media-src 'self' blob:; worker-src 'self' blob:; manifest-src 'self' https://github.dev;">
+    content="default-src 'self' https://github.dev https://*.app.github.dev 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://cdn.gpteng.co https://github.dev https://*.app.github.dev; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.gpteng.co/ https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.supabase.in https://*.supabase.co blob:; font-src 'self'; media-src 'self' blob:; worker-src 'self' blob:; manifest-src 'self' https://github.dev https://*.app.github.dev;">
   <title>SnakkaZ Hub</title>
-  <!-- Cloudflare Web Analytics -->
-  <script defer>
-    // Feilhåndtering for Cloudflare Analytics
-    try {
-      const cfScript = document.createElement('script');
-      cfScript.defer = true;
-      cfScript.src = 'https://static.cloudflareinsights.com/beacon.min.js';
-      cfScript.setAttribute('data-cf-beacon', '{"token": "your-token-here"}');
-      cfScript.onerror = function () {
-        console.log('Cloudflare Analytics kunne ikke lastes, men det påvirker ikke nettsidens funksjonalitet');
-      };
-      document.body.appendChild(cfScript);
-    } catch (e) {
-      console.log('Cloudflare Analytics kunne ikke initialiseres');
-    }
+  <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "your-token-here"}'
+    onerror="console.log('Cloudflare Analytics loading failed - non-critical');">
   </script>
-  <!-- End Cloudflare Web Analytics -->
 </head>
 
 <body>
   <div id="root"></div>
-  <!-- Add Lovable required script before the main app script -->
   <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
   <script type="module" src="/src/main.tsx"></script>
 </body>
