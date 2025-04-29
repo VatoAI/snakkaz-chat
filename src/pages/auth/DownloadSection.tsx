@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Apple, Smartphone, Windows, Globe, Download } from 'lucide-react';
+import { Apple, Smartphone, Computer, Globe, Download } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { useDeviceDetection } from '@/hooks/useDeviceDetection';
 import { Button } from '@/components/ui/button';
@@ -124,7 +124,7 @@ export const DownloadSection = () => {
             <Card className={`p-4 ${isWindows ? 'ring-2 ring-blue-500' : ''} transition-all`}>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-blue-700 flex items-center justify-center">
-                  <Windows className="h-6 w-6 text-white" />
+                  <Computer className="h-6 w-6 text-white" />
                 </div>
                 <div>
                   <h3 className="font-medium">Windows</h3>
