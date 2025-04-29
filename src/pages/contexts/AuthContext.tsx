@@ -1,0 +1,279 @@
+import React, { useState, useEffect, createContext, useContext, ReactNode } from 'react';
+import { createClient, SupabaseClient, User as SupabaseUser } from '@supabase/supabase-js';
+
+// Supabase-konfigurasjon
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://your-project.supabase.co';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'your-anon-key';
+
+// Utvidet brukertype som inkluderer Supabase-brukerdata og E2EE-metainformasjon
+interface User {
+  uid: string;
+  email: string | null;
+  displayName: string | null;
+  photoURL: string | null;
+  isEncryptionEnabled: boolean;
+  isPremium: boolean;
+}
+
+interface AuthContextType {
+  user: User | null;
+  supabase: SupabaseClient;
+  loading: boolean;
+  error: string | null;
+  login: (email: string, password: string) => Promise<void>;
+  register: (email: string, password: string, displayName: string) => Promise<void>;
+  logout: () => Promise<void>;
+  updateProfile: (data: Partial<User>) => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
+  enableEncryption: () => Promise<void>;
+  upgradeToPremuim: () => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextType | null>(null);
+
+interface AuthProviderProps {
+  children: ReactNode;
+}
+
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+  // Konverter Supabase-bruker til vår applikasjons brukertype
+  const formatUser = async (supabaseUser: SupabaseUser | null): Promise<User | null> => {
+    if (!supabaseUser) return null;
+    
+    // Hent tilleggsdata fra bruker-profil tabell
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('display_name, avatar_url, is_encryption_enabled, is_premium')
+      .eq('user_id', supabaseUser.id)
+      .single();
+    
+    return {
+      uid: supabaseUser.id,
+      email: supabaseUser.email,
+      displayName: profile?.display_name || supabaseUser.email?.split('@')[0] || null,
+      photoURL: profile?.avatar_url || null,
+      isEncryptionEnabled: profile?.is_encryption_enabled || false,
+      isPremium: profile?.is_premium || false
+    };
+  };
+
+  // Sjekk innlogging ved oppstart og sett opp lytter for autentiseringstilstand
+  useEffect(() => {
+    // Hent gjeldende logg-inn-status
+    const initAuth = async () => {
+      try {
+        setLoading(true);
+        
+        // Sjekk om vi har en gjeldende sesjon
+        const { data: { session } } = await supabase.auth.getSession();
+        const currentUser = session?.user || null;
+        const formattedUser = await formatUser(currentUser);
+        
+        setUser(formattedUser);
+      } catch (err) {
+        console.error('Autentiseringsinitialisering feilet:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    initAuth();
+    
+    // Lytt etter endringer i autentiseringsstatus
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        const formattedUser = await formatUser(session?.user || null);
+        setUser(formattedUser);
+        setLoading(false);
+      }
+    );
+    
+    // Rengjør lytteren når komponenten avmonteres
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, [supabase]);
+
+  // Logg inn med e-post og passord
+  const login = async (email: string, password: string) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      
+      if (signInError) throw signInError;
+    } catch (err: any) {
+      setError(err.message || 'Innlogging mislyktes');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Registrer ny bruker
+  const register = async (email: string, password: string, displayName: string) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      // Registrering av ny bruker
+      const { data: { user: newUser }, error: signUpError } = await supabase.auth.signUp({
+        email,
+        password
+      });
+      
+      if (signUpError) throw signUpError;
+      if (!newUser) throw new Error('Ingen bruker returnert ved registrering');
+      
+      // Opprett brukerprofil med tilleggsdata
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert([
+          {
+            user_id: newUser.id,
+            display_name: displayName,
+            is_encryption_enabled: true, // Aktiver E2EE som standard for nye brukere
+            is_premium: false
+          }
+        ]);
+      
+      if (profileError) throw profileError;
+    } catch (err: any) {
+      setError(err.message || 'Registrering mislyktes');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Logg ut
+  const logout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+    } catch (err: any) {
+      setError(err.message || 'Utlogging mislyktes');
+      throw err;
+    }
+  };
+
+  // Oppdater brukerprofil
+  const updateProfile = async (data: Partial<User>) => {
+    if (!user) throw new Error('Ingen bruker er innlogget');
+    
+    try {
+      // Hva skal oppdateres i autentisering vs. profil-database
+      const authUpdate: any = {};
+      const profileUpdate: any = {};
+      
+      if (data.email) authUpdate.email = data.email;
+      if (data.displayName) profileUpdate.display_name = data.displayName;
+      if (data.photoURL) profileUpdate.avatar_url = data.photoURL;
+      if (data.isEncryptionEnabled !== undefined) profileUpdate.is_encryption_enabled = data.isEncryptionEnabled;
+      
+      // Oppdater autentiseringsdata hvis nødvendig
+      if (Object.keys(authUpdate).length > 0) {
+        const { error } = await supabase.auth.updateUser(authUpdate);
+        if (error) throw error;
+      }
+      
+      // Oppdater profil hvis nødvendig
+      if (Object.keys(profileUpdate).length > 0) {
+        const { error } = await supabase
+          .from('profiles')
+          .update(profileUpdate)
+          .eq('user_id', user.uid);
+          
+        if (error) throw error;
+      }
+      
+      // Oppdater lokal brukerstate
+      setUser(prev => prev ? { ...prev, ...data } : null);
+    } catch (err: any) {
+      setError(err.message || 'Profiloppdatering mislyktes');
+      throw err;
+    }
+  };
+
+  // Tilbakestill passord
+  const resetPassword = async (email: string) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email);
+      if (error) throw error;
+    } catch (err: any) {
+      setError(err.message || 'Tilbakestilling av passord mislyktes');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Aktiver E2EE for brukeren
+  const enableEncryption = async () => {
+    if (!user) throw new Error('Ingen bruker er innlogget');
+    
+    try {
+      await updateProfile({ isEncryptionEnabled: true });
+      // Her kan du også initiere generering av krypteringsnøkler
+      console.log('E2EE aktivert for bruker:', user.uid);
+    } catch (err: any) {
+      setError(err.message || 'Aktivering av kryptering mislyktes');
+      throw err;
+    }
+  };
+
+  // Oppgrader til premium
+  const upgradeToPremuim = async () => {
+    if (!user) throw new Error('Ingen bruker er innlogget');
+    
+    try {
+      // Her ville du vanligvis håndtere betaling gjennom en betalingsgateway
+      // Dette er bare en simulering for utviklingsformål
+      await updateProfile({ isPremium: true });
+      console.log('Premium aktivert for bruker:', user.uid);
+    } catch (err: any) {
+      setError(err.message || 'Oppgradering til premium mislyktes');
+      throw err;
+    }
+  };
+
+  return (
+    <AuthContext.Provider value={{
+      user,
+      supabase,
+      loading,
+      error,
+      login,
+      register,
+      logout,
+      updateProfile,
+      resetPassword,
+      enableEncryption,
+      upgradeToPremuim
+    }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = (): AuthContextType => {
+  const context = useContext(AuthContext);
+  
+  if (!context) {
+    throw new Error('useAuth må brukes innenfor en AuthProvider');
+  }
+  
+  return context;
+};
