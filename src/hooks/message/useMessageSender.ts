@@ -1,10 +1,10 @@
 import { useCallback, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { encryptMessage, globalEncryptMessage } from "@/utils/encryption";
-import { generateSecureIV, arrayBufferToBase64 } from "@/utils/encryption/utils";
-import { getGlobalE2EEKey } from "@/utils/encryption/key-management";
+import { encryptMessage } from "@/utils/encryption";
 import { useMediaHandler } from "./useMessageSender/useMediaHandler";
 import { useP2PDelivery } from "./useMessageSender/useP2PDelivery";
+import { globalEncryptMessage } from "./useMessageSender/globalEncryption";
+import { getGlobalE2EEKey } from "@/utils/encryption/global-e2ee";
 
 // Ensure message columns exist in the database
 const ensureMessageColumnsExist = async () => {
@@ -73,8 +73,8 @@ export const useMessageSender = (
         globalE2eeKey = globalKey || await getGlobalE2EEKey();
 
         // Generate a new secure IV for each message
-        const secureIv = generateSecureIV();
-        globalE2eeIv = arrayBufferToBase64(secureIv.buffer);
+        const secureIv = window.crypto.getRandomValues(new Uint8Array(12));
+        globalE2eeIv = btoa(String.fromCharCode.apply(null, Array.from(secureIv)));
       }
 
       // Handle media file upload/encryption if provided
