@@ -1,152 +1,234 @@
-import { createContext, useEffect, useState } from "react";
-import { Session, User } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
-import { Profile } from "@/hooks/useProfileLoader";
-import { useToast } from "@/hooks/use-toast";
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { secureSupabase, secureSignIn, secureSignOut } from '../integrations/supabase/secure-client';
+import { User } from '@supabase/supabase-js';
 
-export interface AuthContextType {
+interface AuthContextType {
   user: User | null;
-  session: Session | null;
   isLoading: boolean;
+  error: string | null;
+  signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
-  autoLogoutTime: number | null;
-  setAutoLogoutTime: (minutes: number | null) => void;
-  usePinLock: boolean;
-  setUsePinLock: (usePinLock: boolean) => void;
-  updateUserProfile: (profileData: Partial<Profile>) => Promise<boolean>;
-  pinLocked: boolean;
-  setPinLocked: (locked: boolean) => void;
-  hasPinSetup: boolean;
-  setHasPinSetup: (hasPin: boolean) => void;
+  signUp: (email: string, password: string, fullName: string) => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
+  updateProfile: (updates: any) => Promise<void>;
+  enableEncryption: () => Promise<void>;
+  upgradeToPremuim: () => Promise<void>;
 }
 
-export const AuthContext = createContext<AuthContextType>({
+const AuthContext = createContext<AuthContextType>({
   user: null,
-  session: null,
   isLoading: true,
-  signOut: async () => { },
-  autoLogoutTime: null,
-  setAutoLogoutTime: () => { },
-  usePinLock: false,
-  setUsePinLock: () => { },
-  updateUserProfile: async () => false,
-  pinLocked: false,
-  setPinLocked: () => { },
-  hasPinSetup: false,
-  setHasPinSetup: () => { },
+  error: null,
+  signIn: async () => {},
+  signOut: async () => {},
+  signUp: async () => {},
+  resetPassword: async () => {},
+  updateProfile: async () => {},
+  enableEncryption: async () => {},
+  upgradeToPremuim: async () => {}
 });
 
-interface AuthProviderProps {
-  children: React.ReactNode;
-}
+export const useAuth = () => useContext(AuthContext);
 
-export const AuthProvider = ({ children }: AuthProviderProps) => {
+export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [autoLogoutTime, setAutoLogoutTime] = useState<number | null>(null);
-  const [usePinLock, setUsePinLock] = useState(false);
-  const [pinLocked, setPinLocked] = useState(false);
-  const [hasPinSetup, setHasPinSetup] = useState(false);
-  const toast = useToast ? useToast() : { toast: () => { } };
+  const [isLoading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Handle auth state changes
   useEffect(() => {
-    const setupAuth = async () => {
+    // Sjekk om brukeren er logget inn
+    const checkUser = async () => {
       try {
-        // Get the current session first
-        const { data: sessionData } = await supabase.auth.getSession();
-        setSession(sessionData.session);
-        setUser(sessionData.session?.user ?? null);
-
-        // Set up the listener for auth state changes
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(
-          (_event, newSession) => {
-            setSession(newSession);
-            setUser(newSession?.user ?? null);
-          }
-        );
-
-        setIsLoading(false);
-
-        // Check if PIN is set up
-        const hasPin = localStorage.getItem('snakkaz_pin_setup') === 'true';
-        setHasPinSetup(hasPin);
-        setPinLocked(hasPin); // If PIN is set up, lock by default until PIN is entered
-
-        // Clean up subscription on unmount
-        return () => {
-          subscription.unsubscribe();
-        };
-      } catch (error) {
-        console.error("Auth initialization error:", error);
-        setIsLoading(false);
+        const { data, error } = await secureSupabase.auth.getSession();
+        
+        if (error) {
+          throw error;
+        }
+        
+        if (data?.session?.user) {
+          setUser(data.session.user);
+        }
+      } catch (err: any) {
+        setError(err.message || 'Kunne ikke hente brukerinformasjon');
+        console.error('Auth error:', err);
+      } finally {
+        setLoading(false);
       }
     };
-
-    setupAuth();
+    
+    checkUser();
+    
+    // Lytt til autentiseringsstatus-endringer
+    const { data: authListener } = secureSupabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (session?.user) {
+          setUser(session.user);
+        } else {
+          setUser(null);
+        }
+        setLoading(false);
+      }
+    );
+    
+    return () => {
+      if (authListener?.subscription) {
+        authListener.subscription.unsubscribe();
+      }
+    };
   }, []);
 
-  const signOut = async () => {
+  // Logg inn med e-post og passord
+  const signIn = async (email: string, password: string) => {
     try {
-      await supabase.auth.signOut();
-    } catch (error) {
-      console.error("Sign out error:", error);
+      setLoading(true);
+      setError(null);
+      
+      const data = await secureSignIn(email, password);
+      
+      if (data?.user) {
+        setUser(data.user);
+      }
+    } catch (err: any) {
+      setError(err.message || 'Innlogging mislyktes');
+      throw err;
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Oppdaterer brukerens profil
-  const updateUserProfile = async (profileData: Partial<Profile>): Promise<boolean> => {
-    if (!user) return false;
-
+  // Logg ut
+  const signOut = async () => {
     try {
-      // Fjern null-verdier
-      const cleanedData = Object.fromEntries(
-        Object.entries(profileData).filter(([_, value]) => value !== null)
-      );
+      setLoading(true);
+      setError(null);
+      
+      await secureSignOut();
+      
+      setUser(null);
+    } catch (err: any) {
+      setError(err.message || 'Utlogging mislyktes');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      const { error } = await supabase
-        .from('profiles')
-        .update(cleanedData)
-        .eq('id', user.id);
-
+  // Registrer ny bruker
+  const signUp = async (email: string, password: string, fullName: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const { data, error } = await secureSupabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName
+          }
+        }
+      });
+      
       if (error) throw error;
+      
+      // I Supabase håndteres verifisering via e-post automatisk
+      // så vi behøver ikke å verifisere brukeren her
+    } catch (err: any) {
+      setError(err.message || 'Registrering mislyktes');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      toast.toast?.({
-        title: "Profil oppdatert",
-        description: "Din profil har blitt oppdatert",
-        variant: "default"
+  // Be om tilbakestilling av passord
+  const resetPassword = async (email: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const { error } = await secureSupabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/reset-password`
       });
+      
+      if (error) throw error;
+    } catch (err: any) {
+      setError(err.message || 'Tilbakestilling av passord mislyktes');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      return true;
-    } catch (error) {
-      console.error("Error updating profile:", error);
-
-      toast.toast?.({
-        title: "Feil ved oppdatering",
-        description: "Kunne ikke oppdatere profilen din",
-        variant: "destructive"
+  // Oppdater brukerprofil
+  const updateProfile = async (updates: any) => {
+    if (!user) throw new Error('Ingen bruker er innlogget');
+    
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const { error } = await secureSupabase.auth.updateUser({
+        data: updates
       });
+      
+      if (error) throw error;
+      
+      // Oppdater lokal brukerinfo
+      setUser(prev => prev ? { ...prev, user_metadata: { ...prev.user_metadata, ...updates } } : null);
+    } catch (err: any) {
+      setError(err.message || 'Oppdatering av profil mislyktes');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      return false;
+  // Aktiver E2EE for brukeren
+  const enableEncryption = async () => {
+    if (!user) throw new Error('Ingen bruker er innlogget');
+    
+    try {
+      await updateProfile({ isEncryptionEnabled: true });
+      // Her kan du også initiere generering av krypteringsnøkler
+      console.log('E2EE aktivert for bruker:', user.id);
+    } catch (err: any) {
+      setError(err.message || 'Aktivering av kryptering mislyktes');
+      throw err;
+    }
+  };
+
+  // Oppgrader til premium
+  const upgradeToPremuim = async () => {
+    if (!user) throw new Error('Ingen bruker er innlogget');
+    
+    try {
+      // Her ville du vanligvis håndtere betaling gjennom en betalingsgateway
+      // Dette er bare en forenklet implementasjon
+      await updateProfile({ isPremium: true });
+      console.log('Premium aktivert for bruker:', user.id);
+    } catch (err: any) {
+      setError(err.message || 'Oppgradering til premium mislyktes');
+      throw err;
     }
   };
 
   const value = {
     user,
-    session,
     isLoading,
+    error,
+    signIn,
     signOut,
-    autoLogoutTime,
-    setAutoLogoutTime,
-    usePinLock,
-    setUsePinLock,
-    updateUserProfile,
-    pinLocked,
-    setPinLocked,
-    hasPinSetup,
-    setHasPinSetup
+    signUp,
+    resetPassword,
+    updateProfile,
+    enableEncryption,
+    upgradeToPremuim
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
