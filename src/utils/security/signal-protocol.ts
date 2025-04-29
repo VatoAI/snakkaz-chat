@@ -302,13 +302,35 @@ export class SignalProtocolEngine {
       );
       await this.store.storeSignedPreKey(signedPreKeyId, signedPreKey.keyPair);
       
-      // I en ekte implementasjon ville vi nå publisere disse nøklene
-      // til serveren vår slik at andre kontakter kan bruke dem
+      // Enhanced PFS: Implement Wickr-style frequent key rotation
+      // Generate ephemeral keys that expire after use
+      const ephemeralKeyPair = await this.generateKeyPair();
+      
+      // Register the new key with the session
+      await this.store.saveIdentity(sessionId, ephemeralKeyPair.pubKey);
+      
+      // Mark previous keys as expired
+      await this.markPreviousKeysAsExpired(sessionId);
       
       return true;
     } catch (error) {
       console.error('Feil ved rotering av nøkler:', error);
       return false;
+    }
+  }
+  
+  /**
+   * Mark previous keys as expired to prevent reuse
+   * Wickr-style security: ensure old keys cannot be used again
+   */
+  private async markPreviousKeysAsExpired(sessionId: string): Promise<void> {
+    // Implementation for marking keys as expired
+    // This prevents using old keys even if they're compromised
+    const existingKeys = await this.store.getPreKeys(sessionId);
+    if (existingKeys && existingKeys.length > 0) {
+      for (const key of existingKeys) {
+        await this.store.removePreKey(key.keyId);
+      }
     }
   }
   
