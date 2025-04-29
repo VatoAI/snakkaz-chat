@@ -109,12 +109,12 @@
   /* Kontrollerer input-stil for lys og mørk modus */
   input,
   textarea {
-    @apply dark:bg-cyberdark-800 dark:border-cyberdark-600 dark:text-white 
-           light:bg-white light:border-gray-300 light:text-gray-900;
+    @apply bg-white border-gray-300 text-gray-900 
+           dark:bg-cyberdark-800 dark:border-cyberdark-600 dark:text-white;
   }
 
   ::placeholder {
-    @apply dark:text-cyberdark-500 light:text-gray-400;
+    @apply text-gray-400 dark:text-cyberdark-500;
   }
 
   /* Mobile input and button sizes */
