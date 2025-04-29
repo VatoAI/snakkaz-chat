@@ -22,12 +22,11 @@ export default {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
-        background: "#0a0a0a", // sort
+        background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         primary: {
-          DEFAULT: "#2563eb", // blå
+          DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
-          dark: "#1e40af",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
@@ -44,8 +43,6 @@ export default {
         accent: {
           DEFAULT: "hsl(var(--accent))",
           foreground: "hsl(var(--accent-foreground))",
-          red: "#ef4444", // rød
-          blue: "#2563eb",
         },
         popover: {
           DEFAULT: "hsl(var(--popover))",
@@ -55,73 +52,66 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        theme: {
-          50: "#f6f8fd",
-          100: "#f1f4fc",
-          200: "#e5ebf9",
-          300: "#d1dcf5",
-          400: "#b3c5ef",
-          500: "#8aa5e6",
-          600: "#6684dc",
-          700: "#4a66cd",
-          800: "#3d52b0",
-          900: "#354790",
-          950: "#232d54",
-        },
-        gold: {
-          DEFAULT: "#FFD700",
-          dark: "#B8860B",
-        },
+        // Modernisert fargepalett med et enklere, mer harmonisk utseende
         cyberblue: {
           50: "#e6f7ff",
           100: "#b3e0ff",
           200: "#80caff",
-          300: "#4db3ff",
-          400: "#60a5fa",
-          500: "#2563eb",
-          600: "#006bb3",
-          700: "#1e40af",
-          800: "#172554",
-          900: "#00121a",
+          300: "#4db3ff", 
+          400: "#1a9dff",
+          500: "#0088ff", // Primær merkevarefarge - klar blå
+          600: "#0070d1",
+          700: "#0058a3",
+          800: "#004075",
+          900: "#002847",
+          950: "#001529",
         },
+        // Forenklet mørkere palett
         cyberdark: {
-          950: "#0a0a0a",
-          900: "#0a0a0a",
-          800: "#18181b",
-          700: "#3d3d3d",
-          600: "#4f4f4f",
+          950: "#0a0a0a", // Nesten svart bakgrunn
+          900: "#121212", // Standard bakgrunn
+          800: "#1a1a1a", // Kort og komponenter
+          700: "#242424", // Hover-tilstander
+          600: "#2d2d2d", // Kanter og skillelinjer
+          500: "#363636",
         },
+        // Modernisert gull-palett - mer subtil
         cybergold: {
-          50: "#fff9e6",
-          100: "#ffedb3",
-          200: "#ffe180",
-          300: "#ffd54d",
-          400: "#ffc91a",
-          500: "#e6b300",
-          600: "#b38a00",
-          700: "#806200",
-          800: "#4d3a00",
-          900: "#1a1300",
+          50: "#fdf9e9",
+          100: "#f9efc6", 
+          200: "#f5e4a3",
+          300: "#f0d980",
+          400: "#eccf5d",
+          500: "#e8c43a", // Primær aksent/interaktiv farge
+          600: "#c29e2f",
+          700: "#9b7924",
+          800: "#745419",
+          900: "#4d2f0f",
+          950: "#261705",
         },
+        // Forenklet rødpalett for advarsler/feil
         cyberred: {
-          50: "#ffe6e6",
-          100: "#ffb3b3",
-          200: "#ff8080",
-          300: "#ff4d4d",
-          400: "#f87171",
-          500: "#e60000",
-          600: "#b30000",
-          700: "#800000",
-          800: "#4d0000",
-          900: "#1a0000",
+          50: "#fff1f1",
+          100: "#ffdada",
+          200: "#ffbcbc",
+          300: "#ff8e8e", 
+          400: "#ff5f5f",
+          500: "#ff3030", // Primær alarmfarge
+          600: "#db2020",
+          700: "#b71c1c",
+          800: "#931717",
+          900: "#701313",
+          950: "#390a0a",
         },
       },
       boxShadow: {
-        'neon-blue': '0 0 5px theme(colors.cyberblue.400), 0 0 20px theme(colors.cyberblue.500)',
-        'neon-gold': '0 0 5px theme(colors.cybergold.400), 0 0 20px theme(colors.cybergold.500)',
-        'neon-red': '0 0 5px theme(colors.cyberred.400), 0 0 20px theme(colors.cyberred.500)',
-        'neon-dual': '0 0 10px theme(colors.cyberblue.400), 0 0 20px theme(colors.cyberred.500)',
-        'neon-intense': '0 0 15px theme(colors.cyberblue.400), 0 0 25px theme(colors.cyberred.400), 0 0 35px rgba(255,255,255,0.2)',
+        'neon-blue': '0 0 5px theme(colors.cyberblue.400), 0 0 15px theme(colors.cyberblue.500)',
+        'neon-gold': '0 0 5px theme(colors.cybergold.400), 0 0 15px theme(colors.cybergold.500)',
+        'neon-red': '0 0 5px theme(colors.cyberred.400), 0 0 15px theme(colors.cyberred.500)',
+        'neon-dual': '0 0 8px theme(colors.cyberblue.500), 0 0 12px theme(colors.cyberred.500)',
+        'neon-intense': '0 0 12px theme(colors.cyberblue.400), 0 0 18px theme(colors.cyberred.400), 0 0 24px rgba(255,255,255,0.2)',
+        'subtle': '0 2px 10px rgba(0,0,0,0.1)',
+        'card': '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24)',
       },
       keyframes: {
         "accordion-down": {
@@ -141,13 +131,13 @@ export default {
           '50%': { opacity: '0.5' },
         },
         glow: {
-          '0%, 100%': { boxShadow: '0 0 5px theme(colors.cyberblue.400), 0 0 20px theme(colors.cyberblue.500)' },
-          '50%': { boxShadow: '0 0 10px theme(colors.cyberblue.400), 0 0 30px theme(colors.cyberblue.500)' },
+          '0%, 100%': { boxShadow: '0 0 5px theme(colors.cyberblue.400), 0 0 15px theme(colors.cyberblue.500)' },
+          '50%': { boxShadow: '0 0 10px theme(colors.cyberblue.400), 0 0 20px theme(colors.cyberblue.500)' },
         },
         'dual-glow': {
-          '0%': { boxShadow: '0 0 5px theme(colors.cyberblue.400), 0 0 15px theme(colors.cyberblue.500)' },
-          '50%': { boxShadow: '0 0 5px theme(colors.cyberred.400), 0 0 15px theme(colors.cyberred.500)' },
-          '100%': { boxShadow: '0 0 5px theme(colors.cyberblue.400), 0 0 15px theme(colors.cyberblue.500)' },
+          '0%': { boxShadow: '0 0 5px theme(colors.cyberblue.400), 0 0 10px theme(colors.cyberblue.500)' },
+          '50%': { boxShadow: '0 0 5px theme(colors.cyberred.400), 0 0 10px theme(colors.cyberred.500)' },
+          '100%': { boxShadow: '0 0 5px theme(colors.cyberblue.400), 0 0 10px theme(colors.cyberblue.500)' },
         },
         'spin-slow': {
           '0%': { transform: 'rotate(0deg)' },
@@ -161,14 +151,18 @@ export default {
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
-        fadeIn: "fadeIn 0.5s ease-out forwards",
-        gradient: "gradient 8s ease infinite",
-        'pulse-slow': 'pulse 3s infinite',
-        'glow': 'glow 2s infinite',
-        'dual-glow': 'dual-glow 4s infinite',
-        'spin-slow': 'spin-slow 10s linear infinite',
+        "fadeIn": "fadeIn 0.5s ease-out",
+        "pulse": "pulse 2s ease-in-out infinite",
+        "glow": "glow 1.5s ease-in-out infinite",
+        "dual-glow": "dual-glow 3s ease-in-out infinite",
+        "spin-slow": "spin-slow 3s linear infinite",
+        "gradient": "gradient 3s ease infinite",
+      },
+      borderRadius: {
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
+        sm: "calc(var(--radius) - 4px)",
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
-} satisfies Config;
+};
