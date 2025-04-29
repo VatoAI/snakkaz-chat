@@ -5,17 +5,17 @@
 @layer base {
   :root {
     /* Light Mode */
-    --background: 210 25% 98%;
+    --background: 0 0% 100%;
     --foreground: 240 10% 4%;
 
-    --card: 0 0% 100%;
+    --card: 0 0% 98%;
     --card-foreground: 240 10% 4%;
 
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 4%;
 
-    --primary: 221 83% 53%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 210 100% 50%;
+    --primary-foreground: 0 0% 100%;
 
     --secondary: 210 14% 95.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
@@ -45,41 +45,51 @@
   }
 
   .dark {
-    --background: 240 17% 6%;
-    --foreground: 220 20% 98%;
+    /* Dark Mode - Mer konsistent mørkt tema */
+    --background: 240 10% 8%;
+    --foreground: 210 25% 98%;
 
-    --card: 240 14% 10%;
-    --card-foreground: 220 20% 98%;
+    --card: 240 10% 10%;
+    --card-foreground: 210 25% 98%;
 
-    --popover: 240 16% 10%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 240 10% 10%;
+    --popover-foreground: 210 25% 98%;
 
-    --primary: 222.2 47.4% 11.2%;
+    --primary: 210 100% 50%;
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217 19% 15%;
+    --secondary-foreground: 210 25% 98%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 217 19% 14%;
+    --muted-foreground: 215 16% 70%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 217 19% 15%;
+    --accent-foreground: 210 25% 98%;
 
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 210 25% 98%;
 
-    --border: 222 14% 20%;
-    --input: 214.3 31.8% 17.4%;
-    --ring: 222.2 84% 44.9%;
+    --border: 240 5% 20%;
+    --input: 217 19% 15%;
+    --ring: 224 76% 54%;
 
-    --sidebar: 240 14% 10%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-border: 217.2 32.6% 17.5%;
-    --sidebar-accent: 214.5 100% 40%;
+    --sidebar: 240 10% 10%;
+    --sidebar-foreground: 210 25% 98%;
+    --sidebar-border: 240 5% 20%;
+    --sidebar-accent: 217 91% 60%;
     --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-muted: 217.2 32.6% 17.5%;
-    --sidebar-muted-foreground: 215 20.2% 65.1%;
+    --sidebar-muted: 217 19% 15%;
+    --sidebar-muted-foreground: 215 16% 70%;
+  }
+
+  .light {
+    /* Eksplisitt lysemodus for å sikre at alle komponenter fungerer korrekt */
+    color-scheme: light;
+  }
+
+  .dark {
+    color-scheme: dark;
   }
 
   html {
@@ -96,18 +106,19 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
+  /* Kontrollerer input-stil for lys og mørk modus */
   input,
   textarea {
-    @apply dark:text-white dark:bg-cyberdark-800 dark:border-cybergold-500/30 text-gray-800 bg-gray-100 border-gray-300 border-cyberblue-200/70;
+    @apply dark:bg-cyberdark-800 dark:border-cyberdark-600 dark:text-white 
+           light:bg-white light:border-gray-300 light:text-gray-900;
   }
 
   ::placeholder {
-    @apply text-cybergold-300/50;
+    @apply dark:text-cyberdark-500 light:text-gray-400;
   }
 
   /* Mobile input and button sizes */
   @media (max-width: 640px) {
-
     input,
     select,
     button {
@@ -124,8 +135,15 @@
     .mobile-safe-padding {
       padding-left: max(1rem, env(safe-area-inset-left));
       padding-right: max(1rem, env(safe-area-inset-right));
-      padding-top: max(0.5rem, env(safe-area-inset-top));
-      padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+      padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    }
+
+    .mobile-safe-bottom {
+      padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    }
+
+    .mobile-safe-top {
+      padding-top: max(1rem, env(safe-area-inset-top));
     }
   }
 }
@@ -246,15 +264,15 @@
   }
 
   .cyber-panel {
-    @apply bg-cyberdark-900/80 backdrop-blur-sm border border-cybergold-500/30 rounded-lg shadow-neon-blue/20;
+    @apply bg-cyberdark-800/80 backdrop-blur-sm border border-cyberdark-600 rounded-lg shadow-card;
   }
 
   .cyber-input {
-    @apply bg-cyberdark-800 border-cybergold-500/30 text-white placeholder:text-cybergold-300/50;
+    @apply bg-cyberdark-800 border-cyberdark-600 text-white placeholder:text-cyberdark-500;
   }
 
   .cyber-button {
-    @apply bg-gradient-to-r from-cyberblue-500 to-cyberblue-700 hover:from-cyberblue-600 hover:to-cyberblue-800 text-white shadow-neon-blue transition-all duration-300;
+    @apply bg-cyberblue-500 hover:bg-cyberblue-600 text-white shadow-subtle transition-all duration-300;
   }
 
   /* Logo specific styles */
@@ -263,7 +281,7 @@
   }
 
   .logo-primary {
-    @apply w-16 h-16 rounded-full overflow-hidden border-2 border-l-cyberblue-400 border-t-cyberblue-400 border-r-red-400 border-b-red-400 shadow-neon-dual;
+    @apply w-16 h-16 rounded-full overflow-hidden border-2 border-cyberblue-500 shadow-neon-blue;
   }
 
   .logo-secondary {
@@ -300,7 +318,6 @@
 
 /* Fix for iOS overscroll behavior */
 @supports (-webkit-touch-callout: none) {
-
   .h-screen,
   .h-\[100vh\] {
     height: -webkit-fill-available;
