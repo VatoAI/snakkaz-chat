@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { useAuth } from "../../hooks/useAuth";
-import { ChatInterface } from "../../components/ChatInterface";
+import { ChatInterface } from "../components/ChatInterface";
 
 // Typedefinisjon for User-typen
 interface User {
@@ -49,9 +49,9 @@ const useWebRTC = () => ({
 });
 
 const useFriendships = () => ({
-  friends: [],
+  friends: [] as Friend[],
   friendships: [],
-  friendsMap: {}
+  friendsMap: {} as Record<string, Friend>
 });
 
 // Mock type for Friend
