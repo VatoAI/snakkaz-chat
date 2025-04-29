@@ -89,8 +89,8 @@ export const DownloadSection = () => {
           </div>
           <Button 
             onClick={handleDownload}
-            className="mt-4 w-full"
-            variant={isIOS ? "default" : "outline"}
+            className="mt-4 w-full bg-cybergold-600 hover:bg-cybergold-500 text-cyberdark-950 font-medium"
+            variant="default"
           >
             <Download className="h-4 w-4 mr-2" />
             {isIOS ? 'Last ned nå' : 'Last ned for iOS'}
@@ -110,8 +110,8 @@ export const DownloadSection = () => {
           </div>
           <Button 
             onClick={handleDownload}
-            className="mt-4 w-full"
-            variant={isAndroid ? "default" : "outline"}
+            className="mt-4 w-full bg-cybergold-600 hover:bg-cybergold-500 text-cyberdark-950 font-medium"
+            variant="default"
           >
             <Download className="h-4 w-4 mr-2" />
             {isAndroid ? 'Last ned nå' : 'Last ned for Android'}
@@ -133,8 +133,8 @@ export const DownloadSection = () => {
               </div>
               <Button 
                 onClick={handleDownload}
-                className="mt-4 w-full"
-                variant={isWindows ? "default" : "outline"}
+                className="mt-4 w-full bg-cybergold-600 hover:bg-cybergold-500 text-cyberdark-950 font-medium"
+                variant="default"
               >
                 <Download className="h-4 w-4 mr-2" />
                 {isWindows ? 'Last ned nå' : 'Last ned for Windows'}
@@ -153,8 +153,8 @@ export const DownloadSection = () => {
               </div>
               <Button 
                 onClick={handleDownload}
-                className="mt-4 w-full"
-                variant={isMacOS ? "default" : "outline"}
+                className="mt-4 w-full bg-cybergold-600 hover:bg-cybergold-500 text-cyberdark-950 font-medium"
+                variant="default"
               >
                 <Download className="h-4 w-4 mr-2" />
                 {isMacOS ? 'Last ned nå' : 'Last ned for macOS'}
@@ -171,9 +171,9 @@ export const DownloadSection = () => {
           Foretrekker du å bruke nettleseren? Du kan fortsette å bruke Snakkaz Chat direkte i nettleseren din.
         </p>
         <Button 
-          variant="ghost" 
+          variant="default"
           onClick={() => window.location.href = '/chat'}
-          className="mx-auto"
+          className="mx-auto bg-cybergold-600 hover:bg-cybergold-500 text-cyberdark-950 font-medium"
         >
           <Globe className="h-4 w-4 mr-2" />
           Åpne web-app

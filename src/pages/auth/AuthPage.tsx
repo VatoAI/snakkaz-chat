@@ -143,7 +143,7 @@ const AuthPage = () => {
                 
                 <button 
                   onClick={() => setActiveTab("download")}
-                  className="mt-4 flex items-center gap-2 bg-cybergold-500/20 hover:bg-cybergold-500/30 text-cybergold-300 px-6 py-3 rounded-lg transition-all"
+                  className="mt-4 flex items-center gap-2 bg-cybergold-600 hover:bg-cybergold-500 text-cyberdark-950 px-6 py-3 rounded-lg transition-all font-medium"
                 >
                   <Download className="h-5 w-5" />
                   <span>Last ned appen</span>

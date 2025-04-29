@@ -257,7 +257,7 @@ export const RegisterForm = ({ onSuccess }: RegisterFormProps) => {
 
       <Button
         type="submit"
-        className="w-full bg-cybergold-600 hover:bg-cybergold-500 text-black"
+        className="w-full bg-cybergold-600 hover:bg-cybergold-500 text-cyberdark-950 font-semibold transition-colors duration-200"
         disabled={isLoading}
       >
         {isLoading ? (
