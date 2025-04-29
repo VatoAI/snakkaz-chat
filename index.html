@@ -13,10 +13,17 @@
   <link rel="apple-touch-icon" href="/icons/snakkaz-icon-192.png" />
   <link rel="manifest" href="/manifest.json" />
   <meta http-equiv="Content-Security-Policy"
-    content="default-src 'self' https://github.dev https://*.app.github.dev 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://cdn.gpteng.co https://github.dev https://*.app.github.dev; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.gpteng.co/ https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.supabase.in https://*.supabase.co blob:; font-src 'self'; media-src 'self' blob:; worker-src 'self' blob:; manifest-src 'self' https://github.dev https://*.app.github.dev;">
+    content="default-src 'self' https://*.app.github.dev https://*.github.dev 'unsafe-inline' 'unsafe-eval';
+    connect-src 'self' https://*.supabase.co wss://*.supabase.co https://cdn.gpteng.co https://*.app.github.dev https://*.github.dev;
+    script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.gpteng.co/ https://static.cloudflareinsights.com;
+    style-src 'self' 'unsafe-inline';
+    img-src 'self' data: https://*.supabase.in https://*.supabase.co blob:;
+    font-src 'self'; media-src 'self' blob:;
+    worker-src 'self' blob:;
+    manifest-src 'self' https://*.app.github.dev https://*.github.dev">
   <title>SnakkaZ Hub</title>
   <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "your-token-here"}'
-    onerror="console.log('Cloudflare Analytics loading failed - non-critical');">
+    onerror="console.log('Cloudflare Analytics ikke tilgjengelig - ikke-kritisk');">
   </script>
 </head>
 
