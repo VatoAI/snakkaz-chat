@@ -1,27 +1,20 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Set default values for local development if environment variables are missing
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://localhost';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'placeholder_key';
+// Set Supabase credentials provided by the user
+const supabaseUrl = 'https://wqpoozpbceucynsojmbk.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndxcG9venBiY2V1Y3luc29qbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzk1NjgzMDUsImV4cCI6MjA1NTE0NDMwNX0.vu1s86gQKEPXFleOZ1U2uOjW-kj4k4RAiKTbOuXPUD8';
+
+// Fallback to environment variables if needed (for different environments)
+// const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://wqpoozpbceucynsojmbk.supabase.co';
+// const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndxcG9venBiY2V1Y3luc29qbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzk1NjgzMDUsImV4cCI6MjA1NTE0NDMwNX0.vu1s86gQKEPXFleOZ1U2uOjW-kj4k4RAiKTbOuXPUD8';
 
 // Legg til ekstra logging for debugging
 console.log('Supabase URL:', supabaseUrl);
 console.log('Supabase Key (første 10 tegn):', supabaseAnonKey?.substring(0, 10) + '...');
 
 // Check for placeholder values that were not replaced
-const isPlaceholderUrl = supabaseUrl?.includes('your-project-id') || supabaseUrl === 'https://localhost';
-const isPlaceholderKey = supabaseAnonKey?.includes('your-anon-key') || supabaseAnonKey === 'placeholder_key';
-
-// Validate required environment variables
-if (!supabaseUrl || isPlaceholderUrl) {
-  console.error('ERROR: Supabase URL is missing or using placeholder value.');
-  console.error('Please update your .env file with your actual Supabase URL from your Supabase dashboard (Project Settings > API).');
-}
-
-if (!supabaseAnonKey || isPlaceholderKey) {
-  console.error('ERROR: Supabase Anonymous Key is missing or using placeholder value.');
-  console.error('Please update your .env file with your actual anon/public key from your Supabase dashboard (Project Settings > API).');
-}
+const isPlaceholderUrl = false; // Direct values set, not using placeholders anymore
+const isPlaceholderKey = false;
 
 // Create a mock client to prevent app crashes when credentials are missing
 const createMockClient = () => {
