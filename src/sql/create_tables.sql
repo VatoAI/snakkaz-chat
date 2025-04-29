@@ -33,6 +33,8 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION mark_message_as_deleted(message_id uuid, user_id uuid)
 RETURNS void AS $$
 BEGIN
+    SET search_path = public;
+    
     UPDATE messages
     SET 
         is_deleted = true,
@@ -47,6 +49,8 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION mark_message_as_read(message_id uuid)
 RETURNS void AS $$
 BEGIN
+    SET search_path = public;
+    
     UPDATE messages
     SET 
         read_at = now(),
