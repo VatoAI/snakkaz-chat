@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useAIChat, type AIMessage } from '../hooks/ai/useAIChat';
+import { useAIChat, type AIMessage, type APIConfig } from '../hooks/ai/useAIChat';
 import { useAuth } from '../../contexts/AuthContext';
-import { Button, Input, Avatar, Spinner, Card, Badge } from 'some-ui-library'; // Erstatt med din faktiske UI-bibliotek
+import { Button, Input, Avatar, Spinner, Card, Badge, Switch, Tooltip } from 'some-ui-library'; // Erstatt med din faktiske UI-bibliotek
 
 const AIChatPage: React.FC = () => {
   const {
@@ -12,11 +12,34 @@ const AIChatPage: React.FC = () => {
     sendMessage,
     createNewChat,
     selectChat,
-    deleteChat
+    deleteChat,
+    apiConfig,
+    setApiConfig
   } = useAIChat();
   const { user } = useAuth();
   const [inputValue, setInputValue] = useState('');
+  const [showApiSettings, setShowApiSettings] = useState(false);
+  const [apiEndpoint, setApiEndpoint] = useState('');
+  const [apiKey, setApiKey] = useState('');
+  const [apiEnabled, setApiEnabled] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Initialize API settings from hook state
+  useEffect(() => {
+    setApiEndpoint(apiConfig.endpoint);
+    setApiKey(apiConfig.apiKey);
+    setApiEnabled(apiConfig.isEnabled);
+  }, [apiConfig]);
+
+  // Save API settings
+  const handleSaveApiConfig = () => {
+    setApiConfig({
+      endpoint: apiEndpoint,
+      apiKey: apiKey,
+      isEnabled: apiEnabled
+    });
+    setShowApiSettings(false);
+  };
 
   // Scroll ned når nye meldinger kommer
   useEffect(() => {
@@ -97,8 +120,76 @@ const AIChatPage: React.FC = () => {
     </div>
   );
 
+  // API Settings Modal Component
+  const ApiSettingsModal: React.FC = () => {
+    if (!showApiSettings) return null;
+    
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white p-6 rounded-lg w-full max-w-md">
+          <h3 className="text-xl font-medium mb-4">API Innstillinger</h3>
+          
+          <div className="mb-4">
+            <label className="block text-gray-700 mb-1">Bruk Egendefinert API</label>
+            <Switch 
+              isChecked={apiEnabled}
+              onChange={() => setApiEnabled(!apiEnabled)}
+              size="md"
+            />
+            <p className="text-sm text-gray-500 mt-1">
+              Når aktivert, vil dine egne API-innstillinger brukes for AI-chatting
+            </p>
+          </div>
+          
+          <div className="mb-4">
+            <label className="block text-gray-700 mb-1">API Endepunkt</label>
+            <Input
+              value={apiEndpoint}
+              onChange={(e) => setApiEndpoint(e.target.value)}
+              placeholder="f.eks. https://api.openai.com/v1/chat/completions"
+              disabled={!apiEnabled}
+            />
+          </div>
+          
+          <div className="mb-4">
+            <label className="block text-gray-700 mb-1">API Nøkkel</label>
+            <Input
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              placeholder="Din API-nøkkel"
+              type="password"
+              disabled={!apiEnabled}
+            />
+            <p className="text-sm text-gray-500 mt-1">
+              Din API-nøkkel lagres lokalt på din enhet og sendes kun til endepunktet du angir
+            </p>
+          </div>
+          
+          <div className="flex justify-end mt-6">
+            <Button
+              variant="ghost"
+              mr={3}
+              onClick={() => setShowApiSettings(false)}
+            >
+              Avbryt
+            </Button>
+            <Button
+              colorScheme="blue"
+              onClick={handleSaveApiConfig}
+            >
+              Lagre Innstillinger
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="flex h-full">
+      {/* API Settings Modal */}
+      <ApiSettingsModal />
+      
       {/* Sidekolonne med chat-historikk (desktop-visning) */}
       <div className="hidden md:flex flex-col w-64 bg-gray-50 p-4 border-r">
         <Button 
@@ -160,10 +251,26 @@ const AIChatPage: React.FC = () => {
       <div className="flex-1 flex flex-col h-full">
         {/* Topprad med tittel */}
         <div className="bg-white border-b p-4">
-          <h2 className="text-xl font-medium">
-            {currentChat?.title || 'AI-Assistent'}
-            {isLoading && <Spinner size="sm" className="ml-2" />}
-          </h2>
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-medium">
+              {currentChat?.title || 'AI-Assistent'}
+              {isLoading && <Spinner size="sm" className="ml-2" />}
+            </h2>
+            
+            <Tooltip label="API Innstillinger">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowApiSettings(true)}
+              >
+                {apiConfig.isEnabled ? (
+                  <Badge colorScheme="green">API: Aktiv</Badge>
+                ) : (
+                  <Badge colorScheme="gray">API: Standard</Badge>
+                )}
+              </Button>
+            </Tooltip>
+          </div>
           
           {/* Vis chat-velger for mobilvisning */}
           <ChatSelector />
