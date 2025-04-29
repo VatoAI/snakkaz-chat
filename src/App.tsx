@@ -14,6 +14,9 @@ import { Toaster } from './components/ui/toaster';
 import { secureSupabase } from './integrations/supabase/secure-client';
 import { supabase } from './integrations/supabase/client';
 import { useEffect } from 'react';
+import AIChat from './pages/AIChat'; // Import AI Chat page
+import GroupChatPage from './pages/GroupChatPage'; // Import Group Chat page
+import AdminPanel from './pages/AdminPanel'; // Import Admin Panel
 
 // Erstatt standard Supabase-klient med den sikre
 Object.defineProperty(window, 'supabase', { 
@@ -46,9 +49,24 @@ function App() {
                       <Chat />
                     </ProtectedRoute>
                   } />
+                  <Route path="ai-chat" element={
+                    <ProtectedRoute>
+                      <AIChat />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="group-chat/:id?" element={
+                    <ProtectedRoute>
+                      <GroupChatPage />
+                    </ProtectedRoute>
+                  } />
                   <Route path="profile" element={
                     <ProtectedRoute>
                       <Profile />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="admin" element={
+                    <ProtectedRoute>
+                      <AdminPanel />
                     </ProtectedRoute>
                   } />
                   <Route path="info" element={<InfoPage />} />
