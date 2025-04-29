@@ -27,6 +27,25 @@ function App() {
     if (import.meta.env.DEV) {
       console.log('🔒 Snakkaz Chat Enhanced Security:');
       console.log('- Perfect Forward Secrecy aktivert');
+      console.log('- Argon2 PIN-sikkerhet implementert');
+      console.log('- Sertifikat-pinning aktivert');
+    }
+  }, []);
+
+  return (
+    <ThemeProvider>
+      <AuthProvider>
+        <AppEncryptionProvider>
+          <NotificationProvider>
+            <Router>
+              <Routes>
+                <Route path="/" element={<Layout />}>
+                  <Route index element={<Navigate to="/chat" replace />} />
+                  <Route path="chat" element={
+                    <ProtectedRoute>
+                      <Chat />
+                    </ProtectedRoute>
+                  } />
                   <Route path="profile" element={
                     <ProtectedRoute>
                       <Profile />
