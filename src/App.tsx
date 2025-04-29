@@ -8,7 +8,7 @@ import Chat from './pages/Chat';
 import Profile from './pages/Profile';
 import InfoPage from './pages/Info';
 import DownloadPage from './pages/Download'; 
-import AuthPage from './pages/Auth';
+import AuthPage from './pages/auth/AuthPage';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { Toaster } from './components/ui/toaster';
 import { secureSupabase } from './integrations/supabase/secure-client';
