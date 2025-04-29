@@ -1,7 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 
-type Theme = 'light' | 'dark';
+type Theme = 'light' | 'dark' | 'cyberpunk';
 
 interface ThemeContextType {
     theme: Theme;
@@ -33,8 +33,8 @@ export const ThemeProvider = ({ children }: ThemeProviderProps) => {
 
     // Oppdater dokumentklassen når temaet endres
     useEffect(() => {
-        document.documentElement.classList.toggle('dark', theme === 'dark');
-        document.documentElement.classList.toggle('light', theme === 'light');
+        document.documentElement.classList.remove('light', 'dark', 'cyberpunk');
+        document.documentElement.classList.add(theme);
         setStoredTheme(theme);
     }, [theme, setStoredTheme]);
 
@@ -43,7 +43,11 @@ export const ThemeProvider = ({ children }: ThemeProviderProps) => {
     };
 
     const toggleTheme = () => {
-        setThemeState((prevTheme) => (prevTheme === 'dark' ? 'light' : 'dark'));
+        setThemeState((prevTheme) => {
+            if (prevTheme === 'dark') return 'light';
+            if (prevTheme === 'light') return 'cyberpunk';
+            return 'dark';
+        });
     };
 
     return (
