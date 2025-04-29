@@ -20,7 +20,7 @@ import Admin from "./Admin";
 import NotFound from "./NotFound";
 import ChatPage from "./chat/ChatPage";
 import SafeChatPage from "./chat/SafeChatPage";
-import Download from "./pages/Download";
+import Download from "./Download"; // Fix the import path
 
 // Auth components
 import AuthPage from "./auth/AuthPage";

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from "react-router-dom";
 
@@ -23,9 +24,9 @@ const DropdownMenuContent = ({ className, align, children }) => <div className={
 const DropdownMenuLabel = ({ children }) => <div className="p-2 font-medium">{children}</div>;
 const DropdownMenuSeparator = () => <div className="my-1 h-px bg-gray-200"></div>;
 const DropdownMenuGroup = ({ children }) => <div>{children}</div>;
-// Fix the DropdownMenuItem component to make all props optional
-const DropdownMenuItem = ({ asChild, className, onClick, children }) => {
-  if (asChild) return <div className={className || ""}>{children}</div>;
+// Fix the DropdownMenuItem component to include onClick prop
+const DropdownMenuItem = ({ asChild, className, onClick = () => {}, children }) => {
+  if (asChild) return <div className={className || ""} onClick={onClick}>{children}</div>;
   return <div className={className || ""} onClick={onClick}>{children}</div>;
 };
 // Fix the Button component to make all props optional
@@ -71,19 +72,31 @@ export function UserNav() {
         <DropdownMenuLabel>Min konto</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem asChild className="flex w-full cursor-pointer items-center">
+          <DropdownMenuItem 
+            asChild 
+            className="flex w-full cursor-pointer items-center" 
+            onClick={() => {}}
+          >
             <Link to="/profile" className="flex w-full cursor-pointer items-center">
               <User className="mr-2 h-4 w-4" />
               <span>Profil</span>
             </Link>
           </DropdownMenuItem>
-          <DropdownMenuItem asChild className="flex w-full cursor-pointer items-center">
+          <DropdownMenuItem 
+            asChild 
+            className="flex w-full cursor-pointer items-center" 
+            onClick={() => {}}
+          >
             <Link to="/settings" className="flex w-full cursor-pointer items-center">
               <Settings className="mr-2 h-4 w-4" />
               <span>Innstillinger</span>
             </Link>
           </DropdownMenuItem>
-          <DropdownMenuItem asChild className="flex w-full cursor-pointer items-center">
+          <DropdownMenuItem 
+            asChild 
+            className="flex w-full cursor-pointer items-center" 
+            onClick={() => {}}
+          >
             <Link to="/security" className="flex w-full cursor-pointer items-center">
               <Shield className="mr-2 h-4 w-4" />
               <span>Sikkerhet</span>
@@ -91,8 +104,12 @@ export function UserNav() {
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem asChild className="cursor-pointer">
-          <div onClick={logout} className="flex w-full cursor-pointer items-center">
+        <DropdownMenuItem 
+          asChild 
+          className="cursor-pointer" 
+          onClick={logout}
+        >
+          <div className="flex w-full cursor-pointer items-center">
             <LogOut className="mr-2 h-4 w-4" />
             <span>Logg ut</span>
           </div>
