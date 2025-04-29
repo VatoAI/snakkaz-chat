@@ -14,6 +14,10 @@ export interface AuthContextType {
   usePinLock: boolean;
   setUsePinLock: (usePinLock: boolean) => void;
   updateUserProfile: (profileData: Partial<Profile>) => Promise<boolean>;
+  pinLocked: boolean;
+  setPinLocked: (locked: boolean) => void;
+  hasPinSetup: boolean;
+  setHasPinSetup: (hasPin: boolean) => void;
 }
 
 export const AuthContext = createContext<AuthContextType>({
@@ -26,6 +30,10 @@ export const AuthContext = createContext<AuthContextType>({
   usePinLock: false,
   setUsePinLock: () => { },
   updateUserProfile: async () => false,
+  pinLocked: false,
+  setPinLocked: () => { },
+  hasPinSetup: false,
+  setHasPinSetup: () => { },
 });
 
 interface AuthProviderProps {
@@ -38,6 +46,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [autoLogoutTime, setAutoLogoutTime] = useState<number | null>(null);
   const [usePinLock, setUsePinLock] = useState(false);
+  const [pinLocked, setPinLocked] = useState(false);
+  const [hasPinSetup, setHasPinSetup] = useState(false);
   const toast = useToast ? useToast() : { toast: () => { } };
 
   // Handle auth state changes
@@ -58,6 +68,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         );
 
         setIsLoading(false);
+
+        // Check if PIN is set up
+        const hasPin = localStorage.getItem('snakkaz_pin_setup') === 'true';
+        setHasPinSetup(hasPin);
+        setPinLocked(hasPin); // If PIN is set up, lock by default until PIN is entered
 
         // Clean up subscription on unmount
         return () => {
@@ -126,7 +141,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setAutoLogoutTime,
     usePinLock,
     setUsePinLock,
-    updateUserProfile
+    updateUserProfile,
+    pinLocked,
+    setPinLocked,
+    hasPinSetup,
+    setHasPinSetup
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

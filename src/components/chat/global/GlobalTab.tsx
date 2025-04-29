@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { ChatMessages } from "./ChatMessages";
 import { MessageInput } from "@/components/MessageInput";
@@ -14,7 +15,7 @@ interface GlobalTabProps {
     ttl: number | null;
     setTtl: (ttl: number) => void;
     onMessageExpired: (messageId: string) => void;
-    onSubmit: (e: React.FormEvent) => void;
+    onSubmit: (e: React.FormEvent) => Promise<void>;
     currentUserId: string | null;
     editingMessage: DecryptedMessage | null;
     onEditMessage: (message: DecryptedMessage) => void;
