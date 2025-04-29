@@ -33,9 +33,11 @@ const RESUMABLE_UPLOAD_EXPIRY = 7 * 24 * 60 * 60 * 1000; // 7 days in millisecon
 
 // Compression settings
 const DEFAULT_IMAGE_QUALITY = 0.85; // Reduced to 85% for better compression by default
-//  quality for images
 const MAX_IMAGE_DIMENSION = 1920; // Max width/height for compressed images
 const THUMBNAIL_SIZE = 320; // Thumbnail size for preview
+
+// Image resize modes
+type ResizeMode = 'fit' | 'cover' | 'contain' | 'none' | 'auto';
 
 /**
  * Enhanced media upload with chunk support for large files
@@ -117,11 +119,17 @@ export class EnhancedMediaUploader {
   }
 
   /**
-   * Compress image file before upload to reduce bandwidth
+   * Compress and resize image file before upload to reduce bandwidth while preserving quality
+   * @param file The image file to process
+   * @param options Compression and resizing options
+   * @returns Processed file with adjusted size and quality
    */
   private async compressImage(file: File, options: { 
     quality?: number,
-    maxDimension?: number,
+    maxWidth?: number,
+    maxHeight?: number,
+    resizeMode?: ResizeMode,
+    preserveExif?: boolean
   } = {}): Promise<File> {
     // Skip compression for non-compressible formats
     const compressibleTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
@@ -130,7 +138,10 @@ export class EnhancedMediaUploader {
     }
 
     const quality = options.quality || DEFAULT_IMAGE_QUALITY;
-    const maxDimension = options.maxDimension || MAX_IMAGE_DIMENSION;
+    const maxWidth = options.maxWidth || MAX_IMAGE_DIMENSION;
+    const maxHeight = options.maxHeight || MAX_IMAGE_DIMENSION;
+    const resizeMode = options.resizeMode || 'auto';
+    const preserveExif = options.preserveExif ?? true;
 
     return new Promise((resolve, reject) => {
       const img = new Image();
@@ -139,13 +150,29 @@ export class EnhancedMediaUploader {
         const canvas = document.createElement('canvas');
         let { width, height } = img;
         
-        // Calculate new dimensions while maintaining aspect ratio
-        if (width > height && width > maxDimension) {
-          height *= maxDimension / width;
-          width = maxDimension;
-        } else if (height > maxDimension) {
-          width *= maxDimension / height;
-          height = maxDimension;
+        // Calculate new dimensions based on resize mode
+        if (resizeMode === 'none') {
+          // Use original dimensions
+        } else if (resizeMode === 'fit' || resizeMode === 'auto') {
+          // Scale down to fit within maxWidth and maxHeight while maintaining aspect ratio
+          if (width > maxWidth || height > maxHeight) {
+            const widthRatio = maxWidth / width;
+            const heightRatio = maxHeight / height;
+            const ratio = Math.min(widthRatio, heightRatio);
+            width = Math.floor(width * ratio);
+            height = Math.floor(height * ratio);
+          }
+        } else if (resizeMode === 'cover') {
+          // Fill the entire target dimensions while maintaining aspect ratio (may crop)
+          const widthRatio = maxWidth / width;
+          const heightRatio = maxHeight / height;
+          const ratio = Math.max(widthRatio, heightRatio);
+          width = Math.floor(width * ratio);
+          height = Math.floor(height * ratio);
+        } else if (resizeMode === 'contain') {
+          // Always resize to exact dimensions specified
+          width = maxWidth;
+          height = maxHeight;
         }
         
         canvas.width = width;
@@ -158,40 +185,51 @@ export class EnhancedMediaUploader {
           return;
         }
         
-        ctx.drawImage(img, 0, 0, width, height);
+        // Use better resampling for high quality
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
         
-        // Get output format
-        let outputFormat = file.type;
-        // Convert PNG to WebP for better compression if supported
-        if (outputFormat === 'image/png' && canvas.toBlob !== undefined) {
-          try {
-            canvas.toBlob(
-              (blob) => {
-                if (!blob) {
-                  reject(new Error('Canvas to Blob conversion failed'));
-                  return;
-                }
-                
-                const compressedFile = new File(
-                  [blob], 
-                  file.name.replace(/\.(png|jpg|jpeg)$/i, '.webp'),
-                  { type: 'image/webp' }
-                );
-                
-                console.log(`Compressed image: ${(file.size / 1024).toFixed(2)}KB → ${(compressedFile.size / 1024).toFixed(2)}KB`);
-                resolve(compressedFile);
-              },
-              'image/webp',
-              quality
-            );
-            return;
-          } catch (e) {
-            // Fallback to original format if WebP not supported
-            console.warn('WebP conversion failed, using original format', e);
+        // For cover mode, we need to calculate cropping
+        if (resizeMode === 'cover') {
+          const sourceAspect = img.width / img.height;
+          const targetAspect = maxWidth / maxHeight;
+          let sourceX = 0, sourceY = 0;
+          let sourceWidth = img.width, sourceHeight = img.height;
+          
+          if (sourceAspect > targetAspect) {
+            // Image is wider than target area, crop sides
+            sourceWidth = img.height * targetAspect;
+            sourceX = (img.width - sourceWidth) / 2;
+          } else {
+            // Image is taller than target area, crop top/bottom
+            sourceHeight = img.width / targetAspect;
+            sourceY = (img.height - sourceHeight) / 2;
           }
+          
+          ctx.drawImage(
+            img,
+            sourceX, sourceY, sourceWidth, sourceHeight,
+            0, 0, width, height
+          );
+        } else {
+          ctx.drawImage(img, 0, 0, width, height);
         }
         
-        // Use the original format if WebP conversion failed or wasn't attempted
+        // Get output format based on browser support and original format
+        let outputFormat = file.type;
+        let outputQuality = quality;
+        let outputFilename = file.name;
+        
+        // Convert to WebP if supported for better compression
+        const canUseWebP = true; // Modern browsers all support WebP
+        if (canUseWebP && outputFormat !== 'image/webp') {
+          outputFormat = 'image/webp';
+          outputFilename = file.name.replace(/\.(jpe?g|png|gif)$/i, '.webp');
+          // WebP allows slightly higher quality for same filesize
+          outputQuality = Math.min(quality * 1.1, 0.95);
+        }
+        
+        // Generate blob with appropriate format and quality
         canvas.toBlob(
           (blob) => {
             if (!blob) {
@@ -199,17 +237,27 @@ export class EnhancedMediaUploader {
               return;
             }
             
-            const compressedFile = new File([blob], file.name, { type: file.type });
-            console.log(`Compressed image: ${(file.size / 1024).toFixed(2)}KB → ${(compressedFile.size / 1024).toFixed(2)}KB`);
+            // Create file from blob
+            const compressedFile = new File([blob], outputFilename, { type: outputFormat });
+            console.log(`Processed image: ${(file.size / 1024).toFixed(2)}KB → ${(compressedFile.size / 1024).toFixed(2)}KB (${width}x${height})`);
+            
+            // If size increased after compression, use original file instead
+            if (compressedFile.size > file.size && outputFormat === file.type) {
+              console.log('Compressed file is larger than original, using original file');
+              resolve(file);
+              return;
+            }
+            
             resolve(compressedFile);
           },
           outputFormat,
-          quality
+          outputQuality
         );
       };
       
       img.onerror = () => {
-        reject(new Error('Failed to load image for compression'));
+        console.warn('Failed to load image for processing, using original file');
+        resolve(file);
       };
       
       img.src = URL.createObjectURL(file);
@@ -971,6 +1019,12 @@ export class EnhancedMediaUploader {
     options: {
       onProgress?: (progress: UploadProgress) => void;
       compress?: boolean;
+      resize?: {
+        maxWidth?: number;
+        maxHeight?: number;
+        mode?: ResizeMode;
+        quality?: number;
+      };
       encrypt?: boolean;
       encryptionKey?: string;
       generateThumbnail?: boolean;
@@ -982,7 +1036,19 @@ export class EnhancedMediaUploader {
     thumbnailUrl?: string;
     isEncrypted?: boolean;
   }> {
-    const { onProgress, compress = true, encrypt = false, encryptionKey, generateThumbnail = true } = options;
+    const { 
+      onProgress, 
+      compress = true, 
+      resize = { 
+        maxWidth: MAX_IMAGE_DIMENSION, 
+        maxHeight: MAX_IMAGE_DIMENSION,
+        mode: 'auto',
+        quality: DEFAULT_IMAGE_QUALITY
+      }, 
+      encrypt = false, 
+      encryptionKey, 
+      generateThumbnail = true 
+    } = options;
     
     try {
       // Validate file
@@ -1013,16 +1079,6 @@ export class EnhancedMediaUploader {
       let processedFile = file;
       let isEncrypted = false;
       
-      // Compress image if applicable
-      if (compress && file.type.startsWith('image/')) {
-        try {
-          processedFile = await this.compressImage(file);
-        } catch (error) {
-          console.warn('Image compression failed, using original file:', error);
-          processedFile = file;
-        }
-      }
-      
       // Generate thumbnail if requested (before encryption)
       let thumbnailFile: File | null = null;
       if (generateThumbnail && (file.type.startsWith('image/') || file.type.startsWith('video/'))) {
@@ -1030,6 +1086,21 @@ export class EnhancedMediaUploader {
           thumbnailFile = await this.generateThumbnail(file);
         } catch (error) {
           console.warn('Thumbnail generation failed:', error);
+        }
+      }
+      
+      // Process image if applicable and requested
+      if (compress && file.type.startsWith('image/')) {
+        try {
+          processedFile = await this.compressImage(file, {
+            quality: resize.quality,
+            maxWidth: resize.maxWidth,
+            maxHeight: resize.maxHeight,
+            resizeMode: resize.mode
+          });
+        } catch (error) {
+          console.warn('Image processing failed, using original file:', error);
+          processedFile = file;
         }
       }
       
