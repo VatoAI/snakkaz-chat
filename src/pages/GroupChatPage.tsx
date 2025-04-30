@@ -23,6 +23,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Users,
   UserPlus,
@@ -33,10 +34,85 @@ import {
   Shield,
   Star,
   Loader2,
-  ArrowLeft
+  ArrowLeft,
+  Menu,
+  Clock,
+  Bell,
+  BellOff,
+  Trash2,
+  LogOut,
+  Settings,
+  Download,
+  UserX,
+  Share2,
+  QrCode
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
+import { ChatMessage } from '@/components/chat/ChatMessage';
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Switch } from '@/components/ui/switch';
+import MessageInput from '@/components/MessageInput';
+
+// Definér gruppe roller
+type GroupRole = 'owner' | 'admin' | 'moderator' | 'member' | 'guest';
+
+// Definér en type for gruppemedlemmer
+interface GroupMember {
+  id: string;
+  userId: string;
+  displayName?: string;
+  avatarUrl?: string;
+  role: GroupRole;
+  isOnline?: boolean;
+}
+
+// Definér en type for gruppe
+interface Group {
+  id: string;
+  name: string;
+  description?: string;
+  createdAt: string;
+  createdBy: string;
+  avatarUrl?: string;
+  isPrivate: boolean;
+  password?: string;
+  isEncrypted: boolean;
+  isPremium: boolean;
+  messageCount: number;
+  memberCount: number;
+  members: GroupMember[];
+  lastActive?: string;
+  disappearingMessages?: number; // Tid i sekunder (0 = av)
+}
+
+// Definér en type for gruppemelding
+interface GroupMessage {
+  id: string;
+  groupId: string;
+  senderId: string;
+  content: string;
+  createdAt: string;
+  media?: {
+    url: string;
+    type?: string;
+  } | null;
+  ttl?: number | null;
+  replyTo?: string;
+  status?: 'sent' | 'delivered' | 'read';
+  readBy?: string[];
+  reactions?: {
+    userId: string;
+    emoji: string;
+  }[];
+}
 
 const GroupChatPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -46,11 +122,23 @@ const GroupChatPage = () => {
   const { userProfiles, fetchProfiles } = useProfiles();
   
   // State for active group
-  const [selectedGroup, setSelectedGroup] = useState<any>(null);
+  const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
   const [isCreatingGroup, setIsCreatingGroup] = useState(false);
   const [isJoiningGroup, setIsJoiningGroup] = useState(false);
+  const [isInvitingMembers, setIsInvitingMembers] = useState(false);
+  const [showMembersDialog, setShowMembersDialog] = useState(false);
+  const [showSettingsDialog, setShowSettingsDialog] = useState(false);
   const [groupPassword, setGroupPassword] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [newMessage, setNewMessage] = useState('');
+  const [newGroupName, setNewGroupName] = useState('');
+  const [newGroupDesc, setNewGroupDesc] = useState('');
+  const [newGroupPrivate, setNewGroupPrivate] = useState(false);
+  const [newGroupPassword, setNewGroupPassword] = useState('');
+  const [newGroupEncrypted, setNewGroupEncrypted] = useState(true);
+  const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
+  const [disappearingTime, setDisappearingTime] = useState(0);
+  const [inviteLink, setInviteLink] = useState('');
   
   // Get groups
   const { 
@@ -58,6 +146,8 @@ const GroupChatPage = () => {
     loadGroups, 
     createGroup, 
     joinGroup,
+    leaveGroup,
+    generateInviteLink,
     loading: groupsLoading 
   } = useGroups({
     userId: user?.id || ''
@@ -72,7 +162,9 @@ const GroupChatPage = () => {
   const {
     messages: groupMessages,
     sendMessage,
-    loading: messagesLoading
+    loading: messagesLoading,
+    markAsRead,
+    deleteMessage
   } = useGroupChat(selectedGroup?.id);
   
   useEffect(() => {
@@ -92,23 +184,48 @@ const GroupChatPage = () => {
     }
   }, [id, groups]);
 
-  const handleCreateGroup = async (data: any) => {
+  // Mark messages as read when viewing a group
+  useEffect(() => {
+    if (selectedGroup?.id && markAsRead && groupMessages.length > 0) {
+      markAsRead(selectedGroup.id);
+    }
+  }, [selectedGroup?.id, groupMessages]);
+
+  // Handle creating a new group
+  const handleCreateGroup = async () => {
     try {
+      if (!newGroupName.trim()) {
+        toast({
+          variant: "destructive",
+          title: "Gruppenavn mangler",
+          description: "Du må angi et navn for gruppen",
+        });
+        return;
+      }
+      
       const newGroup = await createGroup({
-        name: data.name,
-        description: data.description,
-        isPrivate: data.isPrivate,
-        password: data.password,
-        members: data.members
+        name: newGroupName.trim(),
+        description: newGroupDesc.trim(),
+        isPrivate: newGroupPrivate,
+        password: newGroupPrivate ? newGroupPassword : undefined,
+        isEncrypted: newGroupEncrypted,
+        members: selectedMembers
       });
       
       toast({
         title: "Gruppe opprettet",
-        description: `Gruppen "${data.name}" er opprettet`,
+        description: `Gruppen "${newGroupName}" er opprettet`,
       });
       
       setSelectedGroup(newGroup);
       setIsCreatingGroup(false);
+      
+      // Reset form
+      setNewGroupName('');
+      setNewGroupDesc('');
+      setNewGroupPrivate(false);
+      setNewGroupPassword('');
+      setSelectedMembers([]);
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -141,16 +258,42 @@ const GroupChatPage = () => {
       });
     }
   };
-  
-  const handleSendMessage = async (text: string, file?: File) => {
+
+  // Handle leaving a group
+  const handleLeaveGroup = async () => {
     if (!selectedGroup) return;
     
     try {
-      await sendMessage({
-        text,
-        mediaFile: file,
-        groupId: selectedGroup.id
+      await leaveGroup(selectedGroup.id);
+      
+      toast({
+        title: "Forlatt gruppe",
+        description: `Du har forlatt "${selectedGroup.name}"`,
       });
+      
+      setSelectedGroup(null);
+      navigate('/group-chat');
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Feil ved utmelding",
+        description: error.message || "Kunne ikke forlate gruppen",
+      });
+    }
+  };
+  
+  const handleSendMessage = async (text: string, options?: { mediaFile?: File }) => {
+    if (!selectedGroup || (!text.trim() && !options?.mediaFile)) return;
+    
+    try {
+      await sendMessage({
+        text: text.trim(),
+        mediaFile: options?.mediaFile,
+        groupId: selectedGroup.id,
+        ttl: disappearingTime > 0 ? disappearingTime : undefined
+      });
+      
+      setNewMessage('');
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -158,6 +301,50 @@ const GroupChatPage = () => {
         description: error.message || "Kunne ikke sende meldingen",
       });
     }
+  };
+
+  // Generate invite link for a group
+  const handleGenerateInviteLink = async () => {
+    if (!selectedGroup) return;
+    
+    try {
+      const link = await generateInviteLink(selectedGroup.id);
+      setInviteLink(link);
+      
+      toast({
+        title: "Invitasjonslink generert",
+        description: "Lenken er kopiert til utklippstavlen",
+      });
+      
+      // Copy to clipboard
+      navigator.clipboard.writeText(link);
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Feil ved generering av invitasjonslenke",
+        description: error.message || "Kunne ikke generere invitasjonslenke",
+      });
+    }
+  };
+  
+  // Toggle disappearing messages
+  const toggleDisappearingMessages = (value: number) => {
+    setDisappearingTime(value);
+    
+    toast({
+      title: value > 0 ? "Selvslettende meldinger aktivert" : "Selvslettende meldinger deaktivert",
+      description: value > 0 
+        ? `Meldinger vil slettes etter ${getDisappearingMessageLabel(value)}`
+        : "Meldinger vil ikke slettes automatisk",
+    });
+  };
+  
+  // Helper to get label for disappearing messages
+  const getDisappearingMessageLabel = (seconds: number) => {
+    if (seconds < 60) return `${seconds} sekunder`;
+    if (seconds < 3600) return `${Math.floor(seconds / 60)} minutter`;
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)} timer`;
+    return `${Math.floor(seconds / 86400)} dager`;
   };
   
   // Render group list if no group is selected
@@ -236,15 +423,36 @@ const GroupChatPage = () => {
               >
                 <CardHeader className="pb-2">
                   <div className="flex justify-between items-start">
-                    <CardTitle className="text-cybergold-300">{group.name}</CardTitle>
-                    {group.isPrivate && <Lock className="h-4 w-4 text-cybergold-500" />}
+                    <div className="flex items-center gap-3">
+                      {group.avatarUrl ? (
+                        <div className="w-10 h-10 rounded-full overflow-hidden">
+                          <img 
+                            src={group.avatarUrl} 
+                            alt={group.name} 
+                            className="w-full h-full object-cover" 
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-cybergold-900/30 flex items-center justify-center text-lg font-medium text-cybergold-400">
+                          {group.name.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                      <div>
+                        <CardTitle className="text-cybergold-300">{group.name}</CardTitle>
+                        <CardDescription className="text-cybergold-500">
+                          {group.memberCount || group.members?.length || 0} medlemmer
+                        </CardDescription>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      {group.isPrivate && <Lock className="h-4 w-4 text-cybergold-500" />}
+                      {group.isEncrypted && <Shield className="h-4 w-4 text-green-500" />}
+                      {group.isPremium && <Star className="h-4 w-4 text-cybergold-400" />}
+                    </div>
                   </div>
-                  <CardDescription className="text-cybergold-500">
-                    {group.memberCount || group.members?.length || 0} medlemmer
-                  </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-cybergold-400">
+                  <p className="text-sm text-cybergold-400 line-clamp-2">
                     {group.description || "Ingen beskrivelse"}
                   </p>
                 </CardContent>
@@ -256,9 +464,17 @@ const GroupChatPage = () => {
                         +{group.memberCount || group.members?.length || 0}
                       </div>
                     </div>
-                    <div className="flex items-center text-xs text-cybergold-500">
-                      <MessageSquare className="h-3.5 w-3.5 mr-1" />
-                      {group.messageCount || 0} meldinger
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center text-xs text-cybergold-500">
+                        <MessageSquare className="h-3.5 w-3.5 mr-1" />
+                        {group.messageCount || 0}
+                      </div>
+                      {group.lastActive && (
+                        <div className="flex items-center text-xs text-cybergold-600">
+                          <Clock className="h-3.5 w-3.5 mr-1" />
+                          {new Date(group.lastActive).toLocaleDateString()}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </CardFooter>
@@ -269,7 +485,7 @@ const GroupChatPage = () => {
         
         {/* Create Group Dialog */}
         <Dialog open={isCreatingGroup} onOpenChange={setIsCreatingGroup}>
-          <DialogContent className="bg-cyberdark-900 border-cybergold-500/30">
+          <DialogContent className="bg-cyberdark-900 border-cybergold-500/30 max-w-xl">
             <DialogHeader>
               <DialogTitle className="text-cybergold-300">Opprett ny gruppe</DialogTitle>
               <DialogDescription className="text-cybergold-500">
@@ -277,16 +493,17 @@ const GroupChatPage = () => {
               </DialogDescription>
             </DialogHeader>
             
-            {/* Group creation form would go here */}
             <div className="space-y-4 py-2">
               <div className="space-y-2">
                 <label htmlFor="group-name" className="text-sm font-medium text-cybergold-300">
-                  Gruppenavn
+                  Gruppenavn *
                 </label>
                 <Input
                   id="group-name"
                   placeholder="Skriv et navn for gruppen"
                   className="bg-cyberdark-800 border-cybergold-500/30 text-cybergold-300"
+                  value={newGroupName}
+                  onChange={(e) => setNewGroupName(e.target.value)}
                 />
               </div>
               
@@ -294,18 +511,76 @@ const GroupChatPage = () => {
                 <label htmlFor="group-description" className="text-sm font-medium text-cybergold-300">
                   Beskrivelse (valgfri)
                 </label>
-                <Input
+                <Textarea
                   id="group-description"
                   placeholder="Beskriv hva gruppen handler om"
-                  className="bg-cyberdark-800 border-cybergold-500/30 text-cybergold-300"
+                  className="bg-cyberdark-800 border-cybergold-500/30 text-cybergold-300 min-h-[80px] resize-none"
+                  value={newGroupDesc}
+                  onChange={(e) => setNewGroupDesc(e.target.value)}
                 />
               </div>
               
-              <div className="flex items-center space-x-2">
-                <input type="checkbox" id="is-private" className="rounded text-cybergold-600" />
-                <label htmlFor="is-private" className="text-sm font-medium text-cybergold-300">
-                  Privat gruppe (krever passord for å bli med)
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label htmlFor="is-private" className="text-sm font-medium text-cybergold-300">
+                      Privat gruppe
+                    </label>
+                    <Switch 
+                      id="is-private"
+                      checked={newGroupPrivate}
+                      onCheckedChange={setNewGroupPrivate}
+                    />
+                  </div>
+                  <p className="text-xs text-cybergold-600">
+                    Krever passord for å bli med
+                  </p>
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label htmlFor="is-encrypted" className="text-sm font-medium text-cybergold-300">
+                      Ende-til-ende kryptering
+                    </label>
+                    <Switch 
+                      id="is-encrypted"
+                      checked={newGroupEncrypted}
+                      onCheckedChange={setNewGroupEncrypted}
+                    />
+                  </div>
+                  <p className="text-xs text-cybergold-600">
+                    Alle meldinger krypteres
+                  </p>
+                </div>
+              </div>
+              
+              {newGroupPrivate && (
+                <div className="space-y-2">
+                  <label htmlFor="group-password" className="text-sm font-medium text-cybergold-300">
+                    Gruppepassord *
+                  </label>
+                  <Input
+                    id="group-password"
+                    type="password"
+                    placeholder="Velg et sterkt passord"
+                    className="bg-cyberdark-800 border-cybergold-500/30 text-cybergold-300"
+                    value={newGroupPassword}
+                    onChange={(e) => setNewGroupPassword(e.target.value)}
+                  />
+                </div>
+              )}
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-cybergold-300">
+                  Legg til medlemmer
                 </label>
+                <div className="max-h-[120px] overflow-y-auto bg-cyberdark-800 rounded border border-cybergold-500/30 p-2">
+                  {/* Her ville vi normalt vise en liste over venner som kan legges til */}
+                  {/* For demo-formål viser vi bare en enkel melding */}
+                  <p className="text-sm text-cybergold-500 text-center py-4">
+                    Her vil du kunne velge fra din venneliste.
+                  </p>
+                </div>
               </div>
             </div>
             
@@ -319,14 +594,8 @@ const GroupChatPage = () => {
               </Button>
               <Button 
                 className="bg-cybergold-600 text-black hover:bg-cybergold-700"
-                onClick={() => {
-                  // Simplified for demo purposes
-                  handleCreateGroup({
-                    name: "Ny Gruppe", 
-                    description: "Gruppe opprettet", 
-                    isPrivate: false 
-                  });
-                }}
+                onClick={handleCreateGroup}
+                disabled={!newGroupName.trim() || (newGroupPrivate && !newGroupPassword.trim())}
               >
                 Opprett gruppe
               </Button>
@@ -369,6 +638,29 @@ const GroupChatPage = () => {
                   onChange={(e) => setGroupPassword(e.target.value)}
                 />
               </div>
+              
+              <div className="flex items-center gap-2 mt-4">
+                <div className="w-full border-t border-cyberdark-700"></div>
+                <span className="text-xs text-cybergold-500">ELLER</span>
+                <div className="w-full border-t border-cyberdark-700"></div>
+              </div>
+              
+              <div className="text-center">
+                <Button 
+                  variant="outline"
+                  className="border-cybergold-500/30 text-cybergold-400"
+                  onClick={() => {
+                    // Her ville vi normalt åpne QR-kode skanner
+                    toast({
+                      title: "QR-kode skanner",
+                      description: "Skann en gruppe QR-kode for å bli med",
+                    });
+                  }}
+                >
+                  <QrCode className="h-4 w-4 mr-2" />
+                  Skann QR-kode
+                </Button>
+              </div>
             </div>
             
             <DialogFooter>
@@ -382,7 +674,7 @@ const GroupChatPage = () => {
               <Button 
                 className="bg-cybergold-600 text-black hover:bg-cybergold-700"
                 onClick={() => {
-                  // This is simplified for demo
+                  // Dette er forenklet for demo-formål
                   handleJoinGroup("demo-group-id", groupPassword);
                 }}
               >
@@ -414,21 +706,115 @@ const GroupChatPage = () => {
               <ArrowLeft className="h-5 w-5" />
             </Button>
             
-            <div>
-              <h2 className="text-lg font-medium text-cybergold-300">{selectedGroup.name}</h2>
-              <p className="text-xs text-cybergold-500">
-                {selectedGroup.memberCount || selectedGroup.members?.length || 0} medlemmer
-              </p>
+            <div className="flex items-center">
+              {selectedGroup.avatarUrl ? (
+                <div className="w-10 h-10 rounded-full overflow-hidden mr-3">
+                  <img 
+                    src={selectedGroup.avatarUrl} 
+                    alt={selectedGroup.name} 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-cybergold-900/30 flex items-center justify-center mr-3 text-lg font-medium text-cybergold-400">
+                  {selectedGroup.name.charAt(0).toUpperCase()}
+                </div>
+              )}
+              
+              <div>
+                <h2 className="text-lg font-medium text-cybergold-300">{selectedGroup.name}</h2>
+                <p className="text-xs text-cybergold-500">
+                  {selectedGroup.memberCount || selectedGroup.members?.length || 0} medlemmer 
+                  {disappearingTime > 0 && (
+                    <span className="ml-2 flex items-center">
+                      • <Clock className="h-3 w-3 inline mr-1 ml-1 text-amber-400" />
+                      {getDisappearingMessageLabel(disappearingTime)}
+                    </span>
+                  )}
+                </p>
+              </div>
             </div>
           </div>
           
-          <div className="flex items-center space-x-2">
-            {selectedGroup.isPrivate && (
-              <Lock className="h-4 w-4 text-cybergold-500" />
-            )}
-            {selectedGroup.isPremium && (
-              <Star className="h-4 w-4 text-cybergold-400" />
-            )}
+          <div className="flex items-center">
+            {/* Security indicators */}
+            <div className="flex items-center gap-1 mr-3">
+              {selectedGroup.isPrivate && (
+                <div className="p-1 rounded-full bg-cyberdark-800" title="Privat gruppe">
+                  <Lock className="h-4 w-4 text-cybergold-500" />
+                </div>
+              )}
+              {selectedGroup.isEncrypted && (
+                <div className="p-1 rounded-full bg-cyberdark-800" title="Ende-til-ende kryptert">
+                  <Shield className="h-4 w-4 text-green-500" />
+                </div>
+              )}
+              {selectedGroup.isPremium && (
+                <div className="p-1 rounded-full bg-cyberdark-800" title="Premium gruppe">
+                  <Star className="h-4 w-4 text-cybergold-400" />
+                </div>
+              )}
+            </div>
+            
+            {/* Group actions menu */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="bg-cyberdark-800 border-cyberdark-700">
+                <DropdownMenuLabel className="text-cybergold-300">Gruppe handlinger</DropdownMenuLabel>
+                <DropdownMenuSeparator className="bg-cyberdark-700" />
+                <DropdownMenuItem 
+                  className="text-cybergold-400 focus:text-cybergold-300 focus:bg-cyberdark-700"
+                  onClick={() => setShowMembersDialog(true)}
+                >
+                  <Users className="h-4 w-4 mr-2" />
+                  Vis medlemmer
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  className="text-cybergold-400 focus:text-cybergold-300 focus:bg-cyberdark-700"
+                  onClick={() => setIsInvitingMembers(true)}
+                >
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Inviter medlemmer
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  className="text-cybergold-400 focus:text-cybergold-300 focus:bg-cyberdark-700"
+                  onClick={() => setShowSettingsDialog(true)}
+                >
+                  <Settings className="h-4 w-4 mr-2" />
+                  Gruppeinnstillinger
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="bg-cyberdark-700" />
+                <DropdownMenuItem 
+                  className="text-amber-400 focus:text-amber-300 focus:bg-cyberdark-700"
+                  onClick={() => {
+                    // Toggle meny for selvslettende meldinger
+                    setDisappearingTime(disappearingTime === 0 ? 86400 : 0);
+                  }}
+                >
+                  <Clock className="h-4 w-4 mr-2" />
+                  {disappearingTime > 0 ? 'Deaktiver selvslettende meldinger' : 'Aktiver selvslettende meldinger'}
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  className="text-cybergold-400 focus:text-cybergold-300 focus:bg-cyberdark-700"
+                  onClick={handleGenerateInviteLink}
+                >
+                  <Share2 className="h-4 w-4 mr-2" />
+                  Del invitasjonslenke
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="bg-cyberdark-700" />
+                <DropdownMenuItem 
+                  className="text-red-400 focus:text-red-300 focus:bg-cyberdark-700"
+                  onClick={handleLeaveGroup}
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Forlat gruppe
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>
@@ -444,7 +830,7 @@ const GroupChatPage = () => {
       {/* Encryption indicator */}
       {selectedGroup.isEncrypted && (
         <div className="bg-cyberdark-900 px-4 py-2 border-b border-cybergold-500/30 flex items-center">
-          <Shield className="h-4 w-4 text-cybergold-500 mr-2" />
+          <Shield className="h-4 w-4 text-green-500 mr-2" />
           <span className="text-sm text-cybergold-300">
             Denne gruppesamtalen er beskyttet med ende-til-ende kryptering
           </span>
@@ -466,6 +852,19 @@ const GroupChatPage = () => {
             <p className="text-cybergold-500 mb-6">
               Send den første meldingen for å starte samtalen!
             </p>
+            {selectedGroup.isEncrypted && (
+              <div className="bg-green-900/20 border border-green-900/30 rounded-lg p-3 mb-4 max-w-md">
+                <div className="flex items-start">
+                  <Shield className="h-5 w-5 text-green-500 mr-2 mt-0.5" />
+                  <div>
+                    <p className="text-sm text-green-400 font-medium">Sikker gruppesamtale</p>
+                    <p className="text-xs text-green-500">
+                      Denne samtalen er Ende-til-Ende kryptert. Ingen utenfor gruppen, ikke engang serveren, kan lese meldingene.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
             <Button
               className="bg-cybergold-600 text-black hover:bg-cybergold-700"
               onClick={() => {
@@ -477,49 +876,251 @@ const GroupChatPage = () => {
           </div>
         ) : (
           <div className="space-y-4">
-            {/* Messages would be displayed here */}
-            <div className="flex justify-start">
-              <div className="bg-cyberdark-800 rounded-lg p-3 max-w-[80%]">
-                <div className="flex items-center mb-1">
-                  <div className="h-6 w-6 rounded-full bg-cyberdark-700 mr-2"></div>
-                  <span className="text-xs text-cybergold-500">Bruker • 10:30</span>
-                </div>
-                <p className="text-cybergold-300">Hei, velkommen til gruppesamtalen!</p>
-              </div>
-            </div>
-            
-            <div className="flex justify-end">
-              <div className="bg-cybergold-600 text-black rounded-lg p-3 max-w-[80%]">
-                <div className="flex items-center justify-end mb-1">
-                  <span className="text-xs opacity-70">Deg • 10:32</span>
-                </div>
-                <p>Takk! Hyggelig å være her.</p>
-              </div>
-            </div>
+            {groupMessages.map(message => (
+              <ChatMessage 
+                key={message.id}
+                message={message}
+                isCurrentUser={message.senderId === user?.id}
+                userProfiles={userProfiles}
+                onEdit={() => {}} // Handle edit
+                onDelete={() => deleteMessage(message.id)}
+                isEncrypted={selectedGroup.isEncrypted}
+              />
+            ))}
           </div>
         )}
       </div>
       
       {/* Input area */}
-      <div className="border-t border-cyberdark-700 bg-cyberdark-900 p-4">
-        <form className="flex gap-2" onSubmit={(e) => {
-          e.preventDefault();
-          const input = e.currentTarget.querySelector('input') as HTMLInputElement;
-          handleSendMessage(input.value);
-          input.value = '';
-        }}>
-          <Input
-            placeholder="Skriv en melding..."
-            className="flex-1 bg-cyberdark-800 border-cyberdark-700 text-cybergold-300"
-          />
-          <Button 
-            type="submit"
-            className="bg-cybergold-600 hover:bg-cybergold-700 text-black"
-          >
-            Send
-          </Button>
-        </form>
+      <div className="border-t border-cyberdark-700 bg-cyberdark-900">
+        <MessageInput
+          onSendMessage={handleSendMessage}
+          placeholder="Skriv en melding..."
+          securityLevel={selectedGroup.isEncrypted ? 'server_e2ee' : 'standard'}
+          showSecurityIndicator={true}
+        />
       </div>
+      
+      {/* Members Dialog */}
+      <Dialog open={showMembersDialog} onOpenChange={setShowMembersDialog}>
+        <DialogContent className="bg-cyberdark-900 border-cybergold-500/30 max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-cybergold-300">Gruppemedlemmer</DialogTitle>
+            <DialogDescription className="text-cybergold-500">
+              {selectedGroup.memberCount || selectedGroup.members?.length || 0} medlemmer i {selectedGroup.name}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="max-h-[60vh] overflow-y-auto">
+            <div className="space-y-3 py-2">
+              {/* Medlemslisten ville normalt komme fra selectedGroup.members */}
+              {/* For demo-formål viser vi bare noen eksempler */}
+              <div className="flex items-center justify-between p-2 hover:bg-cyberdark-800 rounded">
+                <div className="flex items-center">
+                  <div className="h-8 w-8 rounded-full bg-cyberdark-700 mr-3"></div>
+                  <div>
+                    <p className="text-sm text-cybergold-300">Brukernavn</p>
+                    <p className="text-xs text-cybergold-600">Gruppeadmin</p>
+                  </div>
+                </div>
+                <div className="h-2.5 w-2.5 rounded-full bg-green-500" title="Online"></div>
+              </div>
+              
+              <div className="flex items-center justify-between p-2 hover:bg-cyberdark-800 rounded">
+                <div className="flex items-center">
+                  <div className="h-8 w-8 rounded-full bg-cyberdark-700 mr-3"></div>
+                  <div>
+                    <p className="text-sm text-cybergold-300">Bruker 2</p>
+                    <p className="text-xs text-cybergold-600">Medlem</p>
+                  </div>
+                </div>
+                <div className="h-2.5 w-2.5 rounded-full bg-gray-500" title="Offline"></div>
+              </div>
+              
+              {/* Og noen duplikater for å vise scrollfunksjonalitet */}
+              <div className="flex items-center justify-between p-2 hover:bg-cyberdark-800 rounded">
+                <div className="flex items-center">
+                  <div className="h-8 w-8 rounded-full bg-cyberdark-700 mr-3"></div>
+                  <div>
+                    <p className="text-sm text-cybergold-300">Bruker 3</p>
+                    <p className="text-xs text-cybergold-600">Medlem</p>
+                  </div>
+                </div>
+                <div className="h-2.5 w-2.5 rounded-full bg-green-500" title="Online"></div>
+              </div>
+              
+              <div className="flex items-center justify-between p-2 hover:bg-cyberdark-800 rounded">
+                <div className="flex items-center">
+                  <div className="h-8 w-8 rounded-full bg-cyberdark-700 mr-3"></div>
+                  <div>
+                    <p className="text-sm text-cybergold-300">Bruker 4</p>
+                    <p className="text-xs text-cybergold-600">Medlem</p>
+                  </div>
+                </div>
+                <div className="h-2.5 w-2.5 rounded-full bg-amber-500" title="Idle"></div>
+              </div>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button onClick={() => setShowMembersDialog(false)}>
+              Lukk
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Settings Dialog */}
+      <Dialog open={showSettingsDialog} onOpenChange={setShowSettingsDialog}>
+        <DialogContent className="bg-cyberdark-900 border-cybergold-500/30 max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-cybergold-300">Gruppeinnstillinger</DialogTitle>
+            <DialogDescription className="text-cybergold-500">
+              Juster innstillinger for {selectedGroup.name}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-cybergold-300">
+                Selvslettende meldinger
+              </label>
+              <select
+                value={disappearingTime}
+                onChange={(e) => toggleDisappearingMessages(Number(e.target.value))}
+                className="w-full bg-cyberdark-800 border-cyberdark-700 text-cybergold-300 rounded-md p-2"
+              >
+                <option value="0">Av</option>
+                <option value="300">5 minutter</option>
+                <option value="3600">1 time</option>
+                <option value="86400">1 dag</option>
+                <option value="604800">7 dager</option>
+              </select>
+              <p className="text-xs text-cybergold-600">
+                Når aktivert vil meldinger forsvinne hos alle etter den angitte tiden
+              </p>
+            </div>
+            
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-cybergold-300">
+                  Lydløs varsling
+                </label>
+                <Switch />
+              </div>
+              <p className="text-xs text-cybergold-600">
+                Motta varsler uten lyd for denne gruppen
+              </p>
+            </div>
+            
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-cybergold-300">
+                  Ikke forstyrr
+                </label>
+                <Switch />
+              </div>
+              <p className="text-xs text-cybergold-600">
+                Ikke vis varsler for denne gruppen i det hele tatt
+              </p>
+            </div>
+          </div>
+          
+          <DialogFooter className="flex justify-between items-center">
+            {/* Admin actions would go here if the user is an admin */}
+            {true && (
+              <Button 
+                variant="destructive" 
+                size="sm"
+                onClick={() => {
+                  toast({
+                    variant: "destructive",
+                    title: "Advarsel",
+                    description: "Denne handlingen kan ikke angres",
+                  });
+                }}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Slett gruppe
+              </Button>
+            )}
+            <Button onClick={() => setShowSettingsDialog(false)}>
+              Lukk
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Invite Members Dialog */}
+      <Dialog open={isInvitingMembers} onOpenChange={setIsInvitingMembers}>
+        <DialogContent className="bg-cyberdark-900 border-cybergold-500/30">
+          <DialogHeader>
+            <DialogTitle className="text-cybergold-300">Inviter til gruppen</DialogTitle>
+            <DialogDescription className="text-cybergold-500">
+              Del denne linken eller QR-koden for å invitere andre
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-2">
+            <div className="bg-cyberdark-800 p-4 rounded-lg flex flex-col items-center">
+              {/* QR code would go here */}
+              <div className="w-40 h-40 bg-white p-2 rounded-lg mb-4">
+                <div className="bg-cyberdark-900 w-full h-full flex items-center justify-center">
+                  <QrCode className="h-16 w-16 text-white" />
+                </div>
+              </div>
+              
+              <p className="text-center text-xs text-cybergold-600 mb-2">
+                Skann denne QR-koden med kameraet i Snakkaz-appen
+              </p>
+              
+              <Button
+                className="bg-cybergold-600 text-black hover:bg-cybergold-700 text-sm"
+                onClick={handleGenerateInviteLink}
+              >
+                <Share2 className="h-3.5 w-3.5 mr-1.5" />
+                Generer ny invitasjonslenke
+              </Button>
+            </div>
+            
+            {inviteLink && (
+              <div className="flex gap-2">
+                <Input
+                  readOnly
+                  value={inviteLink}
+                  className="bg-cyberdark-800 border-cyberdark-700 text-cybergold-300"
+                  onClick={(e) => {
+                    (e.target as HTMLInputElement).select();
+                    navigator.clipboard.writeText(inviteLink);
+                    toast({
+                      title: "Kopiert",
+                      description: "Invitasjonslenke kopiert til utklippstavlen",
+                    });
+                  }}
+                />
+                <Button
+                  className="bg-cybergold-600 text-black hover:bg-cybergold-700"
+                  onClick={() => {
+                    navigator.clipboard.writeText(inviteLink);
+                    toast({
+                      title: "Kopiert",
+                      description: "Invitasjonslenke kopiert til utklippstavlen",
+                    });
+                  }}
+                >
+                  Kopier
+                </Button>
+              </div>
+            )}
+          </div>
+          
+          <DialogFooter>
+            <Button onClick={() => setIsInvitingMembers(false)}>
+              Lukk
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

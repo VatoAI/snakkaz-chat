@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { formatDistance } from 'date-fns';
 import { nb } from 'date-fns/locale';
 import { cx, theme } from '../lib/theme';
-import { Clock, Download, Edit, Trash2, ExternalLink, X } from 'lucide-react';
+import { Clock, Download, Edit, Trash2, ExternalLink, X, CheckCheck, Check } from 'lucide-react';
 
 interface ChatMessageProps {
   message: {
@@ -15,11 +15,14 @@ interface ChatMessageProps {
       type?: string;
     } | null;
     ttl?: number | null;
+    status?: 'sent' | 'delivered' | 'read';
+    readBy?: string[];
   };
   isCurrentUser: boolean;
   userProfiles?: Record<string, any>;
   onEdit?: (message: any) => void;
   onDelete?: (messageId: string) => void;
+  isEncrypted?: boolean;
 }
 
 export const ChatMessage: React.FC<ChatMessageProps> = ({
@@ -27,12 +30,13 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   isCurrentUser,
   userProfiles = {},
   onEdit,
-  onDelete
+  onDelete,
+  isEncrypted = false,
 }) => {
   const [showOptions, setShowOptions] = useState(false);
   const [showFullImage, setShowFullImage] = useState(false);
   
-  const { id, content, sender_id, created_at, media } = message;
+  const { id, content, sender_id, created_at, media, status, readBy } = message;
   
   const timeAgo = formatDistance(new Date(created_at), new Date(), { 
     addSuffix: true,
@@ -79,6 +83,33 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
       window.open(media.url, '_blank');
     }
   };
+
+  // Viser meldingsstatus-ikon for brukerens egne meldinger
+  const renderMessageStatus = () => {
+    if (!isCurrentUser) return null;
+    
+    switch (status) {
+      case 'read':
+        return (
+          <div className="flex items-center text-cyberblue-400" title="Lest">
+            <CheckCheck className="h-3 w-3" />
+          </div>
+        );
+      case 'delivered':
+        return (
+          <div className="flex items-center text-cybergold-400" title="Levert">
+            <CheckCheck className="h-3 w-3" />
+          </div>
+        );
+      case 'sent':
+      default:
+        return (
+          <div className="flex items-center text-cybergold-600" title="Sendt">
+            <Check className="h-3 w-3" />
+          </div>
+        );
+    }
+  };
   
   return (
     <div 
@@ -86,7 +117,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
         'group relative max-w-[80%] mb-2 rounded-lg py-2 px-3',
         isCurrentUser ? 'ml-auto' : 'mr-auto',
         isCurrentUser ? 'bg-cybergold-900/30' : 'bg-cyberdark-800',
-        message.ttl ? 'border border-amber-700/30' : ''
+        message.ttl ? 'border border-amber-700/30' : '',
+        isEncrypted ? 'border-l-2 border-l-green-500/50' : ''
       )}
       onMouseEnter={() => setShowOptions(true)}
       onMouseLeave={() => setShowOptions(false)}
@@ -153,14 +185,23 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
       </div>
       
       {/* Footer med tid og TTL info */}
-      <div className="flex justify-end mt-1">
+      <div className="flex justify-end items-center mt-1 gap-1.5">
+        {isEncrypted && (
+          <div className="flex items-center text-green-400/80 text-[10px]">
+            <span>🔒</span>
+          </div>
+        )}
+        
         {message.ttl && (
-          <div className="flex items-center text-amber-400/80 mr-2 text-[10px]">
+          <div className="flex items-center text-amber-400/80 text-[10px]">
             <Clock className="h-3 w-3 mr-0.5" />
             <span>Slettes automatisk</span>
           </div>
         )}
+        
         <span className="text-[10px] text-cybergold-600">{timeAgo}</span>
+        
+        {renderMessageStatus()}
       </div>
       
       {/* Handlinger for meldinger (vises ved hover) */}
