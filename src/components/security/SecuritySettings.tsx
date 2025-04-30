@@ -1,152 +1,77 @@
-import { Card } from "@/components/ui/card";
-import { usePinPreferences } from "@/hooks/usePinPreferences";
-import { Shield, Lock, Key, Clock, RefreshCcw } from "lucide-react";
-import { PreferenceItem } from "../profile/PreferenceItem";
-import { PinManagement } from "../pin/PinManagement";
-import { Separator } from "../ui/separator";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
-import { Label } from "../ui/label";
-import { useAuth } from "@/hooks/useAuth";
+import React from 'react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { PasswordSettings } from './PasswordSettings';
+import { ScreenProtection } from './ScreenProtection';
+import { BiometricsSettings } from './BiometricsSettings';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Shield, Lock, Fingerprint, KeyRound } from 'lucide-react';
 
-interface SecuritySettingsProps {
-  userId: string | null;
-}
-
-export const SecuritySettings = ({ userId }: SecuritySettingsProps) => {
-  const { preferences, loading, updatePreferences } = usePinPreferences(userId);
-  const { autoLogoutTime, setAutoLogoutTime, usePinLock, setUsePinLock } = useAuth();
-
-  // Auto logout time options in minutes
-  const autoLogoutOptions = [
-    { value: null, label: 'Aldri' },
-    { value: 5, label: '5 minutter' },
-    { value: 15, label: '15 minutter' },
-    { value: 30, label: '30 minutter' },
-    { value: 60, label: '1 time' },
-    { value: 120, label: '2 timer' },
-  ];
-
+/**
+ * Sikkerhetsinnstillinger-komponent
+ * Samler alle sikkerhetsrelaterte innstillinger på ett sted
+ */
+export const SecuritySettings: React.FC = () => {
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-2">
-        <Shield className="h-5 w-5 text-cybergold-400" />
-        <h2 className="text-lg font-semibold text-cybergold-300">Sikkerhetsinnstillinger</h2>
+    <div className="container mx-auto py-6">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold tracking-tight">Sikkerhetsinnstillinger</h1>
+        <p className="text-muted-foreground mt-1">
+          Administrer sikkerhetsinnstillinger for å beskytte kontoen og meldingene dine
+        </p>
       </div>
-
-      {/* Auto-utlogging og sesjons-innstillinger */}
-      <Card className="p-6 bg-cyberdark-800/90 border-cybergold-400/50">
-        <div className="flex items-center gap-2 mb-4">
-          <Clock className="h-4 w-4 text-cybergold-400" />
-          <h3 className="text-md font-semibold text-cybergold-200">Automatisk utlogging</h3>
-        </div>
+      
+      <Tabs defaultValue="general" className="space-y-4">
+        <TabsList className="grid grid-cols-4 md:w-2/3">
+          <TabsTrigger value="general">Generelt</TabsTrigger>
+          <TabsTrigger value="privacy">Personvern</TabsTrigger>
+          <TabsTrigger value="password">Passord</TabsTrigger>
+          <TabsTrigger value="biometrics">Biometri</TabsTrigger>
+        </TabsList>
         
-        <div className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="auto-logout" className="text-cybergold-200">Logg meg ut etter inaktivitet</Label>
-            <Select 
-              value={autoLogoutTime === null ? 'null' : autoLogoutTime.toString()}
-              onValueChange={(value) => {
-                const minutes = value === 'null' ? null : parseInt(value, 10);
-                setAutoLogoutTime(minutes);
-              }}
-            >
-              <SelectTrigger className="w-full bg-cyberdark-900 border-cybergold-500/20 text-white">
-                <SelectValue placeholder="Velg tid for auto-utlogging" />
-              </SelectTrigger>
-              <SelectContent className="bg-cyberdark-900 border-cybergold-500/20 text-white">
-                {autoLogoutOptions.map(option => (
-                  <SelectItem 
-                    key={option.value === null ? 'null' : option.value} 
-                    value={option.value === null ? 'null' : option.value.toString()}
-                    className="hover:bg-cyberdark-800"
-                  >
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-cybergold-400/60 mt-1">
-              Setter en tidsfrist for inaktivitet før automatisk utlogging av sikkerhetshensyn
-            </p>
-          </div>
-
-          <PreferenceItem
-            title="Bruk PIN-lås istedenfor full utlogging"
-            description="Vis PIN-skjerm istedenfor å logge helt ut ved inaktivitet"
-            checked={usePinLock}
-            onCheckedChange={(checked) => setUsePinLock(checked)}
-            loading={loading}
-          />
-        </div>
+        <TabsContent value="general" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Shield className="mr-2 h-5 w-5" /> Generell sikkerhet
+              </CardTitle>
+              <CardDescription>
+                Grunnleggende sikkerhetsinnstillinger for Snakkaz
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Generelle sikkerhetsinnstillinger kommer her */}
+              <p>Generelle sikkerhetsinnstillinger er under utvikling.</p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <KeyRound className="mr-2 h-5 w-5" /> Kryptering
+              </CardTitle>
+              <CardDescription>
+                Administrer krypteringsinnstillinger for meldinger
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Krypteringsinnstillinger kommer her */}
+              <p>Krypteringsinnstillinger er under utvikling.</p>
+            </CardContent>
+          </Card>
+        </TabsContent>
         
-        <Separator className="my-6 bg-cybergold-500/20" />
-
-        <div className="flex items-center gap-2 mb-4">
-          <RefreshCcw className="h-4 w-4 text-cybergold-400" />
-          <h3 className="text-md font-semibold text-cybergold-200">Sesjons-innstillinger</h3>
-        </div>
+        <TabsContent value="privacy" className="space-y-4">
+          <ScreenProtection />
+        </TabsContent>
         
-        <div className="space-y-6">
-          <PreferenceItem
-            title="Hold meg pålogget mellom besøk"
-            description="Forbli pålogget når du lukker nettleseren (anbefales ikke på delte enheter)"
-            checked={preferences.stayLoggedIn || false}
-            onCheckedChange={(checked) => 
-              updatePreferences({ stayLoggedIn: checked })
-            }
-            loading={loading}
-          />
-        </div>
-      </Card>
-
-      {/* PIN-kode håndtering */}
-      <Card className="p-6 bg-cyberdark-800/90 border-cybergold-400/50">
-        <div className="flex items-center gap-2 mb-4">
-          <Lock className="h-4 w-4 text-cybergold-400" />
-          <h3 className="text-md font-semibold text-cybergold-200">PIN-kode sikkerhet</h3>
-        </div>
+        <TabsContent value="password" className="space-y-4">
+          <PasswordSettings />
+        </TabsContent>
         
-        <PinManagement />
-        
-        <Separator className="my-6 bg-cybergold-500/20" />
-        
-        <div className="flex items-center gap-2 mb-4">
-          <Key className="h-4 w-4 text-cybergold-400" />
-          <h3 className="text-md font-semibold text-cybergold-200">PIN-kode innstillinger</h3>
-        </div>
-        
-        <div className="space-y-6">
-          <PreferenceItem
-            title="Krev PIN for å slette meldinger"
-            description="Økt sikkerhet for sletting av meldinger"
-            checked={preferences.requirePinForDelete}
-            onCheckedChange={(checked) => 
-              updatePreferences({ requirePinForDelete: checked })
-            }
-            loading={loading}
-          />
-
-          <PreferenceItem
-            title="Krev PIN for å redigere meldinger"
-            description="Ekstra beskyttelse for redigering"
-            checked={preferences.requirePinForEdit}
-            onCheckedChange={(checked) => 
-              updatePreferences({ requirePinForEdit: checked })
-            }
-            loading={loading}
-          />
-
-          <PreferenceItem
-            title="Krev PIN for sensitive handlinger"
-            description="Generell PIN-beskyttelse for viktige handlinger"
-            checked={preferences.requirePinForSensitive}
-            onCheckedChange={(checked) => 
-              updatePreferences({ requirePinForSensitive: checked })
-            }
-            loading={loading}
-          />
-        </div>
-      </Card>
+        <TabsContent value="biometrics" className="space-y-4">
+          <BiometricsSettings />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
