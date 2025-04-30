@@ -100,7 +100,7 @@ function App() {
         <button 
           onClick={() => window.location.reload()} 
           className="px-4 py-2 bg-cybergold-600 text-black rounded hover:bg-cybergold-500 transition"
-        ></button>
+        >
           Prøv igjen
         </button>
       </div>
