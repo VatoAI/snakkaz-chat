@@ -31,14 +31,14 @@ const Layout = () => {
       <header className="sticky top-0 z-50 w-full border-b border-cyberdark-800 bg-cyberdark-900/95 backdrop-blur supports-[backdrop-filter]:bg-cyberdark-900/75">
         <div className="container flex h-16 items-center justify-between">
           <div className="flex items-center gap-4">
-            {/* Single logo element */}
+            {/* Updated logo element */}
             <div className="flex items-center gap-2 mr-4" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
               <img
                 src="/snakkaz-logo.png"
-                alt="Snakkaz Logo"
+                alt="SnakkaZ Logo"
                 className="h-8 w-auto"
               />
-              <span className="text-xl font-bold text-cybergold-400">Snakkaz</span>
+              <span className="text-xl font-bold text-cybergold-400">SnakkaZ</span>
             </div>
             
             <MainNav />
@@ -69,7 +69,7 @@ const Layout = () => {
 
       <footer className="border-t border-cyberdark-800 bg-cyberdark-900 py-4">
         <div className="container text-center text-xs text-cyberdark-400">
-          © {new Date().getFullYear()} Snakkaz — Sikker kommunikasjon
+          © {new Date().getFullYear()} SnakkaZ — Sikker kommunikasjon
         </div>
       </footer>
     </div>

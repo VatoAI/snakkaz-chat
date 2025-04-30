@@ -17,7 +17,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [title, setTitle] = useState('Snakkaz');
+  const [title, setTitle] = useState('SnakkaZ');
   const { isLocked, verifyPin } = useMobilePinSecurity();
   const [pinInput, setPinInput] = useState('');
   
@@ -32,7 +32,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({ children }) => {
     } else if (location.pathname.includes('/chat/')) {
       setTitle('Chat');
     } else {
-      setTitle('Snakkaz');
+      setTitle('SnakkaZ');
     }
   }, [location]);
 
@@ -74,7 +74,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({ children }) => {
   if (isLocked) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-background p-6">
-        <h1 className="text-2xl font-bold mb-8">Lås opp Snakkaz</h1>
+        <h1 className="text-2xl font-bold mb-8">Lås opp SnakkaZ</h1>
         
         <div className="flex gap-3 mb-8">
           {[0, 1, 2, 3].map(i => (
