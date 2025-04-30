@@ -167,7 +167,7 @@ export const useBusiness = (userId: string | null) => {
     if (!businessConfig.businessHours) return true;
     
     const now = new Date();
-    const dayOfWeek = now.toLocaleDateString('en-US', { weekday: 'lowercase' });
+    const dayOfWeek = now.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
     const currentHours = now.getHours();
     const currentMinutes = now.getMinutes();
     const currentTime = `${currentHours}:${currentMinutes}`;

@@ -10,7 +10,7 @@ import { useBusiness } from '@/hooks/useBusiness';
 import { BusinessConfig, BusinessHours, BusinessLocation } from '@/config/business-config';
 import { Clock, MapPin, MessageSquare, Bot, Inbox } from 'lucide-react';
 import { TimeInput } from '@/components/ui/time-input';
-import { toast } from '@/components/ui/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface BusinessSettingsProps {
@@ -31,10 +31,13 @@ export const BusinessSettings: React.FC<BusinessSettingsProps> = ({ userId }) =>
       const parts = path.split('.');
       if (parts.length > 1) {
         const [parent, child] = parts;
+        const parentKey = parent as keyof typeof prev;
+        const parentValue = (prev[parentKey] || {}) as Record<string, any>;
+        
         return {
           ...prev,
           [parent]: {
-            ...prev[parent as keyof typeof prev],
+            ...parentValue,
             [child]: value
           }
         };
@@ -46,6 +49,8 @@ export const BusinessSettings: React.FC<BusinessSettingsProps> = ({ userId }) =>
       };
     });
   };
+  
+  const { toast } = useToast();
   
   const handleSave = async () => {
     try {
