@@ -1,4 +1,3 @@
-// filepath: /workspaces/snakkaz-chat/src/components/marketplace/GroupMarketplace.tsx
 import React, { useState, useEffect } from 'react';
 import { Plus, PackageSearch, RefreshCcw, Loader2, ShoppingBag, MapPin, GiftIcon, PinIcon, Star, BadgeCheck, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -32,6 +31,61 @@ export interface ExtendedProductData extends ProductData {
   ratingCount?: number;
   gifUrl?: string;
   sellerVerified?: boolean;
+  // Nye felt for Telegram Business-lignende funksjoner
+  businessProfile?: BusinessProfile;
+  openingHours?: OpeningHours[];
+  quickReplies?: QuickReply[];
+  paymentOptions?: PaymentOption[];
+  analytics?: ProductAnalytics;
+}
+
+// Nye interfaces for Business-funksjoner
+interface BusinessProfile {
+  name: string;
+  description: string;
+  logoUrl: string;
+  coverImageUrl?: string;
+  isVerified: boolean;
+  website?: string;
+  contactEmail?: string;
+  phoneNumber?: string;
+  socialLinks?: {
+    instagram?: string;
+    facebook?: string;
+    twitter?: string;
+    linkedin?: string;
+  };
+  categoriesIds: string[];
+}
+
+interface OpeningHours {
+  day: 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
+  isOpen: boolean;
+  openTime?: string;
+  closeTime?: string;
+}
+
+interface QuickReply {
+  id: string;
+  triggerText: string;
+  responseText: string;
+  isActive: boolean;
+}
+
+interface PaymentOption {
+  id: string;
+  provider: 'vipps' | 'stripe' | 'paypal' | 'bank' | 'cash' | 'other';
+  isEnabled: boolean;
+  accountDetails?: string;
+  fees?: number; // i prosent
+}
+
+interface ProductAnalytics {
+  views: number;
+  inquiries: number;
+  sales: number;
+  conversionRate?: number;
+  lastUpdated: string;
 }
 
 // Ny interface for abonnenter
