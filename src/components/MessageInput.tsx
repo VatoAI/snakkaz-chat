@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Paperclip, Shield, Image, X, Mic, Camera, Smile } from 'lucide-react';
+import { Send, Paperclip, Shield, Image, X, Mic, Camera, Smile, ShoppingBag } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useSecureMessageKeys } from '@/hooks/useSecureMessageKeys';
 import { useDeviceDetection } from '@/hooks/useDeviceDetection';
@@ -11,11 +11,27 @@ interface MessageInputProps {
   onSendFile?: (file: File) => Promise<void>;
   onSendEnhancedMedia?: (mediaData: { url: string, thumbnailUrl?: string, ttl?: number, isEncrypted?: boolean }) => Promise<void>;
   onSendAudio?: (blob: Blob) => Promise<void>;
+  onSendProduct?: (productData: ProductData) => Promise<void>;
   placeholder?: string;
   disabled?: boolean;
   securityLevel?: 'p2p_e2ee' | 'server_e2ee' | 'standard';
   showSecurityIndicator?: boolean;
   autoFocus?: boolean;
+  isPremiumGroup?: boolean;
+  allowMarketplace?: boolean;
+}
+
+// Nytt produkt-datagrensesnitt for markedsplass-funksjonalitet
+interface ProductData {
+  title: string;
+  description: string;
+  price: number;
+  currency?: string;
+  imageUrl?: string;
+  thumbnailUrl?: string;
+  inStock?: boolean;
+  quantity?: number;
+  contactInfo?: string;
 }
 
 const MessageInput: React.FC<MessageInputProps> = ({
