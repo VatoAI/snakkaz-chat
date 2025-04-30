@@ -2,6 +2,11 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { secureSupabase, secureSignIn, secureSignOut } from '../integrations/supabase/secure-client';
 import { User } from '@supabase/supabase-js';
 
+// Definere process hvis det ikke finnes i nettlesermiljøet
+if (typeof window !== 'undefined' && typeof process === 'undefined') {
+  window.process = { env: {} };
+}
+
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
