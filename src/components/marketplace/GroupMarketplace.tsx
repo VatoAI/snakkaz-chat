@@ -108,6 +108,102 @@ interface GroupMarketplaceProps {
   className?: string;
 }
 
+const BusinessProfileSection = ({ product }: { product: ExtendedProductData }) => {
+  if (!product.businessProfile) return null;
+  
+  const { name, description, logoUrl, coverImageUrl, isVerified, website, contactEmail, phoneNumber, socialLinks } = product.businessProfile;
+  
+  return (
+    <div className="bg-card rounded-lg p-4 mb-4 shadow-sm">
+      <div className="relative">
+        {coverImageUrl && (
+          <div className="h-32 overflow-hidden rounded-t-lg">
+            <img src={coverImageUrl} alt={`${name} cover`} className="w-full object-cover" />
+          </div>
+        )}
+        <div className="flex items-center mt-2">
+          <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-primary">
+            <img src={logoUrl || '/placeholder.svg'} alt={name} className="w-full h-full object-cover" />
+          </div>
+          <div className="ml-3 flex-1">
+            <div className="flex items-center">
+              <h3 className="text-lg font-bold">{name}</h3>
+              {isVerified && (
+                <span className="ml-1 text-blue-500" title="Verifisert bedrift">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                    <path fillRule="evenodd" d="M8.603 3.799A4.49 4.49 0 0112 2.25c1.357 0 2.573.6 3.397 1.549a4.49 4.49 0 013.498 1.307 4.491 4.491 0 011.307 3.497A4.49 4.49 0 0121.75 12a4.49 4.49 0 01-1.549 3.397 4.491 4.491 0 01-1.307 3.497 4.491 4.491 0 01-3.497 1.307A4.49 4.49 0 0112 21.75a4.49 4.49 0 01-3.397-1.549 4.49 4.49 0 01-3.498-1.306 4.491 4.491 0 01-1.307-3.498A4.49 4.49 0 012.25 12c0-1.357.6-2.573 1.549-3.397a4.49 4.49 0 011.307-3.497 4.49 4.49 0 013.497-1.307zm7.007 6.387a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clipRule="evenodd" />
+                  </svg>
+                </span>
+              )}
+            </div>
+            <p className="text-sm text-muted-foreground">{description}</p>
+          </div>
+        </div>
+      </div>
+      
+      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-2">
+        {website && (
+          <a href={website} target="_blank" rel="noopener noreferrer" className="flex items-center text-sm text-primary hover:underline">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 mr-2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
+            </svg>
+            {website.replace(/^https?:\/\//, '')}
+          </a>
+        )}
+        {contactEmail && (
+          <a href={`mailto:${contactEmail}`} className="flex items-center text-sm text-primary hover:underline">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 mr-2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+            </svg>
+            {contactEmail}
+          </a>
+        )}
+        {phoneNumber && (
+          <a href={`tel:${phoneNumber}`} className="flex items-center text-sm text-primary hover:underline">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 mr-2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
+            </svg>
+            {phoneNumber}
+          </a>
+        )}
+      </div>
+      
+      {socialLinks && Object.keys(socialLinks).length > 0 && (
+        <div className="mt-3 flex space-x-4">
+          {socialLinks.facebook && (
+            <a href={socialLinks.facebook} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/80">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                <path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3v3h-3v6.95c5.05-.5 9-4.76 9-9.95z" />
+              </svg>
+            </a>
+          )}
+          {socialLinks.instagram && (
+            <a href={socialLinks.instagram} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/80">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                <path d="M12 2c2.717 0 3.056.01 4.122.06 1.065.05 1.79.217 2.428.465.66.254 1.216.598 1.772 1.153.509.5.902 1.105 1.153 1.772.247.637.415 1.363.465 2.428.047 1.066.06 1.405.06 4.122 0 2.717-.01 3.056-.06 4.122-.05 1.065-.218 1.79-.465 2.428a4.883 4.883 0 01-1.153 1.772c-.5.508-1.105.902-1.772 1.153-.637.247-1.363.415-2.428.465-1.066.047-1.405.06-4.122.06-2.717 0-3.056-.01-4.122-.06-1.065-.05-1.79-.218-2.428-.465a4.89 4.89 0 01-1.772-1.153 4.904 4.904 0 01-1.153-1.772c-.247-.637-.415-1.363-.465-2.428C2.013 15.056 2 14.717 2 12c0-2.717.01-3.056.06-4.122.05-1.066.217-1.79.465-2.428.247-.67.657-1.28 1.153-1.772a4.887 4.887 0 011.772-1.153c.637-.247 1.362-.415 2.428-.465C8.944 2.013 9.283 2 12 2zm0 1.8c-2.67 0-2.986.01-4.04.06-.976.045-1.505.207-1.858.344-.466.181-.8.398-1.15.748-.35.35-.566.683-.748 1.15-.137.353-.3.882-.344 1.857-.047 1.055-.06 1.37-.06 4.04 0 2.668.01 2.985.06 4.04.046.976.207 1.504.344 1.857.181.466.399.8.748 1.15.35.35.683.565 1.15.747.353.137.882.3 1.857.345 1.054.046 1.37.06 4.04.06 2.67 0 2.987-.01 4.04-.06.976-.046 1.505-.208 1.858-.345.466-.182.8-.398 1.15-.748.35-.35.566-.683.748-1.15.137-.352.3-.88.344-1.857.047-1.054.06-1.37.06-4.04 0-2.667-.01-2.984-.06-4.04-.045-.975-.207-1.503-.344-1.856a3.09 3.09 0 00-.748-1.15 3.09 3.09 0 00-1.15-.748c-.353-.137-.882-.3-1.857-.345-1.054-.047-1.37-.06-4.04-.06zm0 3.064A5.139 5.139 0 0017.14 12 5.139 5.139 0 0012 17.14 5.139 5.139 0 006.86 12 5.139 5.139 0 0012 6.86zm0 8.476a3.335 3.335 0 110-6.67 3.335 3.335 0 010 6.67zm6.538-8.686a1.2 1.2 0 11-2.4 0 1.2 1.2 0 012.4 0z" />
+              </svg>
+            </a>
+          )}
+          {socialLinks.twitter && (
+            <a href={socialLinks.twitter} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/80">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                <path d="M22.162 5.656a8.384 8.384 0 01-2.402.658A4.196 4.196 0 0021.6 4c-.82.488-1.719.83-2.656 1.015a4.182 4.182 0 00-7.126 3.814 11.874 11.874 0 01-8.62-4.37 4.168 4.168 0 00-.566 2.103c0 1.45.738 2.731 1.86 3.481a4.168 4.168 0 01-1.894-.523v.052a4.185 4.185 0 003.355 4.101 4.21 4.21 0 01-1.89.072A4.185 4.185 0 007.97 16.65a8.394 8.394 0 01-6.191 1.732 11.83 11.83 0 006.41 1.88c7.693 0 11.9-6.373 11.9-11.9 0-.18-.005-.362-.013-.54a8.496 8.496 0 002.087-2.165z" />
+              </svg>
+            </a>
+          )}
+          {socialLinks.linkedin && (
+            <a href={socialLinks.linkedin} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/80">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                <path d="M20.5 2h-17A1.5 1.5 0 002 3.5v17A1.5 1.5 0 003.5 22h17a1.5 1.5 0 001.5-1.5v-17A1.5 1.5 0 0020.5 2zM8 19H5v-9h3zM6.5 8.25A1.75 1.75 0 118.3 6.5a1.78 1.78 0 01-1.8 1.75zM19 19h-3v-4.74c0-1.42-.6-1.93-1.38-1.93A1.74 1.74 0 0013 14.19V19h-3v-9h2.9v1.3a3.11 3.11 0 012.7-1.4c1.55 0 3.36.86 3.36 3.66z" />
+              </svg>
+            </a>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export const GroupMarketplace: React.FC<GroupMarketplaceProps> = ({
   groupId,
   isGroupAdmin = false,
@@ -747,6 +843,9 @@ export const GroupMarketplace: React.FC<GroupMarketplaceProps> = ({
                 }
                 readOnly={product.createdBy !== user?.id}
               />
+              
+              {/* Business Profile Section */}
+              <BusinessProfileSection product={product} />
               
               {/* Ekstra funksjoner for produktet */}
               <div className="mt-2 flex justify-between items-center">
