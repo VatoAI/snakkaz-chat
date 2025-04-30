@@ -5,7 +5,7 @@ import { useSecureMessageKeys } from '@/hooks/useSecureMessageKeys';
 import { useDeviceDetection } from '@/hooks/useDeviceDetection';
 import { useEnhancedMediaUpload, ResizeMode, UploadOptions } from '@/hooks/useEnhancedMediaUpload';
 import { cx } from '@/lib/theme';
-import { AudioRecorder } from '@/components/message-input/AudioRecorder';
+import { EnhancedAudioRecorder } from '@/components/message-input/EnhancedAudioRecorder';
 
 interface MessageInputProps {
   onSendMessage: (message: string) => Promise<void>;
@@ -336,7 +336,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
 
       <div className="flex items-end gap-2">
         {/* Lydopptak-knapp */}
-        <AudioRecorder
+        <EnhancedAudioRecorder
           isLoading={isSubmitting}
           isRecording={isRecording}
           setIsRecording={setIsRecording}
