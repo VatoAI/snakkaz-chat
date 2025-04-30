@@ -112,3 +112,28 @@ export const hashPassword = async (password: string): Promise<string> => {
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.map(byte => byte.toString(16).padStart(2, "0")).join("");
 };
+
+/**
+ * Konverterer en ArrayBuffer til en Base64-streng
+ */
+export const arrayBufferToBase64 = (buffer: ArrayBuffer | Uint8Array): string => {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return window.btoa(binary);
+};
+
+/**
+ * Konverterer en Base64-streng til ArrayBuffer
+ */
+export const base64ToArrayBuffer = (base64: string): ArrayBuffer => {
+  const binary_string = window.atob(base64);
+  const len = binary_string.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binary_string.charCodeAt(i);
+  }
+  return bytes.buffer;
+};
