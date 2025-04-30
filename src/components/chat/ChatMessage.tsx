@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { formatDistance } from 'date-fns';
 import { nb } from 'date-fns/locale';
-import { cx, theme } from '../lib/theme';
+import { cx, theme } from '@/lib/theme';
 import { Clock, Download, Edit, Trash2, ExternalLink, X, CheckCheck, Check } from 'lucide-react';
 
 interface ChatMessageProps {
