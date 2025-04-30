@@ -68,7 +68,7 @@ const ChatList = () => {
               read: lastMsg.read || false
             } : undefined,
             unreadCount: Math.floor(Math.random() * 5), // Placeholder - replace with actual count
-            securityLevel: 'standard' // Default to standard security level
+            securityLevel: 'standard' as const // Default to standard security level
           };
         }));
         
@@ -76,15 +76,17 @@ const ChatList = () => {
         const groupConversations = (groups || []).map(group => {
           // Safely convert Group securityLevel to ConversationItem securityLevel
           let securityLevel: 'standard' | 'high' | 'maximum' = 'standard';
-          if (group.security_level === 'high' || group.security_level === 'maximum') {
-            securityLevel = group.security_level;
+          if (group.securityLevel === 'high' || group.securityLevel === 'maximum') {
+            securityLevel = group.securityLevel;
+          } else if (group.securityLevel === 'low') {
+            securityLevel = 'standard';
           }
           
           return {
             id: group.id,
             type: 'group' as const,
             name: group.name,
-            avatarUrl: group.avatar_url,
+            avatarUrl: group.avatarUrl,
             lastMessage: undefined, // Groups don't have lastMessage property, so we set to undefined
             unreadCount: group.unreadCount || 0,
             securityLevel
