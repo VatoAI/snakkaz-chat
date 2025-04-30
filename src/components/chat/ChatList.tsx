@@ -44,32 +44,36 @@ const ChatList = () => {
           return {
             id: friend.id,
             type: 'direct' as const,
-            name: friend.username,
-            avatarUrl: friend.avatarUrl,
+            name: friend.profile?.username || 'Unknown user',
+            avatarUrl: friend.profile?.avatar_url,
             lastMessage: lastMsg ? {
               content: lastMsg.encryptedContent ? '🔒 Kryptert melding' : lastMsg.content,
               timestamp: new Date(lastMsg.createdAt),
               read: lastMsg.read || false
             } : undefined,
             unreadCount: Math.floor(Math.random() * 5), // Placeholder - replace with actual count
-            securityLevel: friend.securityPreference || 'standard'
+            securityLevel: 'standard' // Default to standard security level
           };
         }));
         
         // Process groups
-        const groupConversations = (groups || []).map(group => ({
-          id: group.id,
-          type: 'group' as const,
-          name: group.name,
-          avatarUrl: group.avatarUrl,
-          lastMessage: group.lastMessage ? {
-            content: group.lastMessage.content,
-            timestamp: new Date(group.lastMessage.timestamp),
-            read: group.lastMessage.read || false
-          } : undefined,
-          unreadCount: group.unreadCount || 0,
-          securityLevel: group.securityLevel || 'standard'
-        }));
+        const groupConversations = (groups || []).map(group => {
+          // Safely convert Group securityLevel to ConversationItem securityLevel
+          let securityLevel: 'standard' | 'high' | 'maximum' = 'standard';
+          if (group.security_level === 'high' || group.security_level === 'maximum') {
+            securityLevel = group.security_level;
+          }
+          
+          return {
+            id: group.id,
+            type: 'group' as const,
+            name: group.name,
+            avatarUrl: group.avatar_url,
+            lastMessage: undefined, // Groups don't have lastMessage property, so we set to undefined
+            unreadCount: group.unreadCount || 0,
+            securityLevel
+          };
+        });
         
         // Combine and sort by latest message
         const allConversations = [...directConversations, ...groupConversations]
