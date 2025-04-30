@@ -4,6 +4,7 @@ import { AppEncryptionProvider } from './contexts/AppEncryptionContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './Layout';
+import Home from './pages/Home';
 import Chat from './pages/Chat';
 import Profile from './pages/Profile';
 import InfoPage from './pages/Info';
@@ -43,7 +44,11 @@ function App() {
             <Router>
               <Routes>
                 <Route path="/" element={<Layout />}>
-                  <Route index element={<Navigate to="/chat" replace />} />
+                  <Route index element={
+                    <ProtectedRoute>
+                      <Home />
+                    </ProtectedRoute>
+                  } />
                   <Route path="chat" element={
                     <ProtectedRoute>
                       <Chat />
