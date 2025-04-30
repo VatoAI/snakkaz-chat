@@ -320,9 +320,9 @@ const GroupChatPage = () => {
       media: message.mediaUrl ? {
         url: message.mediaUrl,
         type: message.mediaType
-      } : null,
+      } : undefined,
       ttl: message.ttl,
-      status: isCurrentUser ? 'delivered' : undefined,
+      status: isCurrentUser ? 'delivered' as const : undefined,
       readBy: message.readBy
     };
   };
