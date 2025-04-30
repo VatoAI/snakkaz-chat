@@ -26,10 +26,26 @@ const ChatList = () => {
   const navigate = useNavigate();
   const { friends, isLoading: loadingFriends } = useFriendships();
   const { groups, loading: loadingGroups } = useGroups();
-  const { getLatestMessages } = useMessages();
-  
+  const { messages } = useMessages(null); // Get the messages from the hook
+
   const [conversations, setConversations] = useState<ConversationItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Mock function for getLatestMessages since it's not available in useMessages
+  const getLatestMessages = async (friendId: string, limit: number) => {
+    // Filter messages for this friend
+    const friendMessages = messages.filter(msg => 
+      msg.sender.id === friendId || msg.receiver_id === friendId
+    ).slice(0, limit);
+    
+    return friendMessages.map(msg => ({
+      id: msg.id,
+      content: msg.content,
+      encryptedContent: msg.is_encrypted ? msg.content : undefined,
+      createdAt: msg.created_at,
+      read: true // Assume all messages are read
+    }));
+  };
 
   useEffect(() => {
     const loadConversations = async () => {
