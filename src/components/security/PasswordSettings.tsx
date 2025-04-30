@@ -47,7 +47,7 @@ export const PasswordSettings: React.FC = () => {
       toast({
         title: "Passordet er oppdatert",
         description: "Passordet ditt er endret. Husk å bruke det nye passordet neste gang du logger inn.",
-        variant: "success"
+        variant: "default"
       });
     } catch (error) {
       console.error('Passordoppdatering feilet:', error);

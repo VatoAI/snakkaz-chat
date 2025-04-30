@@ -51,7 +51,7 @@ export const BiometricsSettings: React.FC = () => {
         description: enabled 
           ? 'Du kan nå logge inn med fingeravtrykk eller ansiktsgjenkjenning'
           : 'Biometrisk autentisering er deaktivert',
-        variant: 'success'
+        variant: 'default'
       });
     } catch (error) {
       console.error('Feil ved endring av biometriinnstillinger:', error);

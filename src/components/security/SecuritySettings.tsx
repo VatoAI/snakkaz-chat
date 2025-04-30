@@ -1,8 +1,8 @@
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PasswordSettings } from './PasswordSettings';
+import { PasswordSettings } from '@/components/security/PasswordSettings';
 import { ScreenProtection } from './ScreenProtection';
-import { BiometricsSettings } from './BiometricsSettings';
+import { BiometricsSettings } from '@/components/security/BiometricsSettings';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Shield, Lock, Fingerprint, KeyRound } from 'lucide-react';
 

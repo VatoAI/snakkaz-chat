@@ -4,6 +4,7 @@ import { User } from '@supabase/supabase-js';
 
 // Definere process hvis det ikke finnes i nettlesermiljøet
 if (typeof window !== 'undefined' && typeof process === 'undefined') {
+  // @ts-ignore - We're only using process.env in browser context
   window.process = { env: {} };
 }
 
