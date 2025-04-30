@@ -46,6 +46,9 @@ export interface BusinessConfig {
   
   /** Logo eller profilbilde for virksomheten */
   logoUrl?: string;
+
+  /** Om virksomheten er verifisert */
+  verified?: boolean;
   
   /** Åpningstider */
   businessHours?: BusinessHours;

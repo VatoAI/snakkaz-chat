@@ -4,6 +4,7 @@ import { useBusiness } from '@/hooks/useBusiness';
 import { useFirstInteractionCheck, AutoMessages } from './AutoMessages';
 import { useEmptyChatCheck, StartPage } from './StartPage';
 import { QuickReplies, useQuickReplyTrigger } from './QuickReplies';
+import { BusinessIndicator } from './BusinessIndicator'; // Importer den nye komponenten
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { DecryptedMessage } from '@/types/message';
@@ -84,11 +85,17 @@ export const BusinessChatContainer: React.FC<BusinessChatContainerProps> = ({
             }`}
           >
             {!isOwnMessage && showAvatar && (
-              <div className="font-semibold text-xs mb-1">
+              <div className="font-semibold text-xs mb-1 flex items-center gap-1">
                 {message.sender.username || message.sender.id}
+                
+                {/* Legg til forretningskonto-indikator */}
+                <BusinessIndicator 
+                  userId={message.sender.id} 
+                  size="sm"
+                />
               </div>
             )}
-            <div>{message.content}</div>
+            <div className="sensitive-content">{message.content}</div>
             <div className="text-xs opacity-70 text-right mt-1">
               {new Date(message.created_at).toLocaleTimeString([], { 
                 hour: '2-digit', 
@@ -117,7 +124,16 @@ export const BusinessChatContainer: React.FC<BusinessChatContainerProps> = ({
               </div>
             )}
             <div>
-              <h2 className="font-medium text-lg">{businessConfig.businessName}</h2>
+              <div className="flex items-center gap-2">
+                <h2 className="font-medium text-lg">{businessConfig.businessName}</h2>
+                
+                {/* Legg til forretningskonto-indikator i headeren */}
+                <BusinessIndicator 
+                  userId={friendId} 
+                  verified={false} 
+                />
+              </div>
+              
               {businessConfig.description && (
                 <p className="text-sm text-muted-foreground">
                   {businessConfig.description}

@@ -16,6 +16,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, fullName: string) => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   updateProfile: (updates: any) => Promise<void>;
+  updatePassword: (oldPassword: string, newPassword: string) => Promise<void>;
   enableEncryption: () => Promise<void>;
   upgradeToPremuim: () => Promise<void>;
 }
@@ -29,6 +30,7 @@ const AuthContext = createContext<AuthContextType>({
   signUp: async () => {},
   resetPassword: async () => {},
   updateProfile: async () => {},
+  updatePassword: async () => {},
   enableEncryption: async () => {},
   upgradeToPremuim: async () => {}
 });
@@ -192,6 +194,27 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
     }
   };
 
+  // Oppdater passord
+  const updatePassword = async (oldPassword: string, newPassword: string) => {
+    if (!user) throw new Error('Ingen bruker er innlogget');
+    
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const { error } = await secureSupabase.auth.updateUser({
+        password: newPassword
+      });
+      
+      if (error) throw error;
+    } catch (err: any) {
+      setError(err.message || 'Oppdatering av passord mislyktes');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Aktiver E2EE for brukeren
   const enableEncryption = async () => {
     if (!user) throw new Error('Ingen bruker er innlogget');
@@ -230,6 +253,7 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
     signUp,
     resetPassword,
     updateProfile,
+    updatePassword,
     enableEncryption,
     upgradeToPremuim
   };
