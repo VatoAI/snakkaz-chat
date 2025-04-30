@@ -24,7 +24,7 @@ type ConversationItem = {
 
 const ChatList = () => {
   const navigate = useNavigate();
-  const { friends, loading: loadingFriends } = useFriendships();
+  const { friends, isLoading: loadingFriends } = useFriendships();
   const { groups, loading: loadingGroups } = useGroups();
   const { getLatestMessages } = useMessages();
   
@@ -44,7 +44,7 @@ const ChatList = () => {
           return {
             id: friend.id,
             type: 'direct' as const,
-            name: friend.displayName || friend.username,
+            name: friend.username,
             avatarUrl: friend.avatarUrl,
             lastMessage: lastMsg ? {
               content: lastMsg.encryptedContent ? '🔒 Kryptert melding' : lastMsg.content,
