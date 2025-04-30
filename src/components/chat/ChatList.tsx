@@ -25,7 +25,7 @@ type ConversationItem = {
 const ChatList = () => {
   const navigate = useNavigate();
   const { friends, isLoading: loadingFriends } = useFriendships();
-  const { groups, loading: loadingGroups } = useGroups();
+  const { groups, isLoading: loadingGroups } = useGroups(); // Fixed property name from loading to isLoading
   const { messages } = useMessages(null); // Get the messages from the hook
 
   const [conversations, setConversations] = useState<ConversationItem[]>([]);
