@@ -67,10 +67,11 @@ export const BitcoinPayment = ({
       // Start nedtelling
       startCountdown();
       
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error generating payment details:', err);
-      setError(err.message || 'Kunne ikke generere betalingsinformasjon');
-      if (onError) onError(err.message);
+      const errorMessage = err instanceof Error ? err.message : 'Kunne ikke generere betalingsinformasjon';
+      setError(errorMessage);
+      if (onError) onError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -111,11 +112,12 @@ export const BitcoinPayment = ({
         // Betaling ikke registrert ennå
         setRefreshCounter(refreshCounter + 1);
       }
-      
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error checking payment status:', err);
-      setError(err.message || 'Kunne ikke verifisere betaling');
-      if (onError) onError(err.message);
+      const errorMessage = err instanceof Error ? err.message : 'Kunne ikke verifisere betaling';
+      setError(errorMessage);
+      if (onError) onError(errorMessage);
+      // Removed redundant call to onError as we're already handling it above
     } finally {
       setIsPending(false);
     }
