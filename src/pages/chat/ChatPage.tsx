@@ -9,6 +9,9 @@ import { useFriendships } from "@/hooks/useFriendships";
 import { useToast } from "@/components/ui/use-toast";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { DecryptedMessage } from "@/types/message";
+import { FriendsList } from "@/components/chat/friends/FriendsList";
+import { TabsContent, Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Globe, Users } from "lucide-react";
 
 // Type definition for Friend
 interface Friend {
@@ -41,7 +44,7 @@ const ChatPage = () => {
   
   // Initialize chat state with the real useMessages hook
   const chatState = useMessages(user?.id || null, selectedFriend?.user_id);
-
+  
   // Init WebRTC connections
   useEffect(() => {
     if (user && user.id) {
@@ -62,6 +65,40 @@ const ChatPage = () => {
       };
     }
   }, [user?.id, chatState, fetchProfiles]);
+  
+  // Effect to load direct messages when a friend is selected
+  useEffect(() => {
+    const fetchDirectMessages = async () => {
+      if (user?.id && selectedFriend?.user_id) {
+        try {
+          const messages = await chatState.fetchDirectMessages(selectedFriend.user_id);
+          setDirectMessages(messages || []);
+        } catch (error) {
+          console.error("Failed to fetch direct messages:", error);
+          toast({
+            variant: "destructive",
+            title: "Feil ved lasting",
+            description: "Kunne ikke laste meldingene. Vennligst prøv igjen."
+          });
+        }
+      }
+    };
+
+    if (selectedFriend) {
+      fetchDirectMessages();
+    }
+  }, [selectedFriend, user?.id, chatState, toast]);
+
+  // Subscribe to direct messages for the selected friend
+  useEffect(() => {
+    if (user?.id && selectedFriend?.user_id) {
+      const cleanup = chatState.setupDirectMessageSubscription(selectedFriend.user_id, (newMessage) => {
+        setDirectMessages(prev => [...prev, newMessage]);
+      });
+      
+      return cleanup;
+    }
+  }, [user?.id, selectedFriend?.user_id, chatState]);
 
   // Get available friend IDs for WebRTC connections
   const friendsList = friends.map(friend => friend.user_id);
@@ -74,6 +111,17 @@ const ChatPage = () => {
       setActiveTab("directMessage");
     }
   }, [friendsMap]);
+
+  // Handle switching back to friends list
+  const handleBackToFriendsList = useCallback(() => {
+    setSelectedFriend(null);
+    setActiveTab("friends");
+  }, []);
+
+  // Handle when a new direct message is received
+  const handleNewDirectMessage = useCallback((message: DecryptedMessage) => {
+    setDirectMessages(prev => [...prev, message]);
+  }, []);
 
   // Handle edit message action
   const handleStartEditMessage = useCallback((message: DecryptedMessage) => {
@@ -151,6 +199,27 @@ const ChatPage = () => {
           webRTCManager,
           onlineUsers: new Set(Object.keys(userPresence).filter(id => userPresence[id]?.online))
         });
+        
+        // Add the message to our local state for immediate feedback
+        const newMessage: DecryptedMessage = {
+          id: Date.now().toString(),
+          content: text,
+          sender: {
+            id: user?.id || "",
+            username: user?.user_metadata?.name || "You",
+            full_name: user?.user_metadata?.full_name || user?.user_metadata?.name || "You",
+            avatar_url: userProfiles[user?.id || ""]?.avatar_url
+          },
+          receiver_id: selectedFriend.user_id,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          room_id: null,
+          ttl: null,
+          media_url: null,
+          media_type: null
+        };
+        
+        setDirectMessages(prev => [...prev, newMessage]);
       } else {
         // Send global message
         await chatState.handleSendMessage(text, {
@@ -183,31 +252,77 @@ const ChatPage = () => {
     <ProtectedRoute>
       <div className="h-screen w-full flex flex-col">
         <div className="flex-1 overflow-hidden">
-          <ChatInterface
-            messages={activeTab === "directMessage" ? directMessages : chatState.messages || []}
-            currentUserId={user?.id || ""}
-            userProfiles={userProfiles}
-            newMessage={chatState.newMessage || ""}
-            onNewMessageChange={chatState.setNewMessage}
-            onSendMessage={handleSendMessage}
-            onEditMessage={handleStartEditMessage}
-            onDeleteMessage={chatState.handleDeleteMessage}
-            isLoading={chatState.isLoading}
-            recipientInfo={recipientInfo}
-            isDirectMessage={activeTab === "directMessage"}
-            onBackToList={activeTab === "directMessage" ? () => {
-              setActiveTab("global");
-              setSelectedFriend(null);
-            } : undefined}
-            ttl={chatState.ttl}
-            onTtlChange={chatState.setTtl}
-            editingMessage={chatState.editingMessage}
-            onCancelEdit={chatState.handleCancelEditMessage}
-            uploadingMedia={uploadingMedia}
-            hasMoreMessages={chatState.hasMoreMessages}
-            isLoadingMoreMessages={chatState.isLoadingMore}
-            onLoadMoreMessages={chatState.loadMoreMessages}
-          />
+          <Tabs defaultValue="global" value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
+            <TabsList className="grid grid-cols-2 mb-4">
+              <TabsTrigger value="global" className="flex items-center gap-2">
+                <Globe className="h-4 w-4" />
+                Global Chat
+              </TabsTrigger>
+              <TabsTrigger value="friends" className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Friends
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="global" className="flex-1 overflow-hidden">
+              <ChatInterface
+                messages={chatState.messages || []}
+                currentUserId={user?.id || ""}
+                userProfiles={userProfiles}
+                newMessage={chatState.newMessage || ""}
+                onNewMessageChange={chatState.setNewMessage}
+                onSendMessage={handleSendMessage}
+                onEditMessage={handleStartEditMessage}
+                onDeleteMessage={chatState.handleDeleteMessage}
+                isLoading={chatState.isLoading}
+                ttl={chatState.ttl}
+                onTtlChange={chatState.setTtl}
+                editingMessage={chatState.editingMessage}
+                onCancelEdit={chatState.handleCancelEditMessage}
+                uploadingMedia={uploadingMedia}
+                hasMoreMessages={chatState.hasMoreMessages}
+                isLoadingMoreMessages={chatState.isLoadingMore}
+                onLoadMoreMessages={chatState.loadMoreMessages}
+              />
+            </TabsContent>
+            
+            <TabsContent value="friends" className="flex-1 p-4 overflow-auto">
+              <FriendsList
+                friends={friends}
+                currentUserId={user?.id || ""}
+                webRTCManager={webRTCManager}
+                directMessages={directMessages}
+                onNewMessage={handleNewDirectMessage}
+                onStartChat={handleStartChat}
+                userProfiles={userProfiles}
+              />
+            </TabsContent>
+            
+            <TabsContent value="directMessage" className="flex-1 overflow-hidden">
+              <ChatInterface
+                messages={directMessages}
+                currentUserId={user?.id || ""}
+                userProfiles={userProfiles}
+                newMessage={chatState.newMessage || ""}
+                onNewMessageChange={chatState.setNewMessage}
+                onSendMessage={handleSendMessage}
+                onEditMessage={handleStartEditMessage}
+                onDeleteMessage={chatState.handleDeleteMessage}
+                isLoading={chatState.isLoading}
+                recipientInfo={recipientInfo}
+                isDirectMessage={true}
+                onBackToList={handleBackToFriendsList}
+                ttl={chatState.ttl}
+                onTtlChange={chatState.setTtl}
+                editingMessage={chatState.editingMessage}
+                onCancelEdit={chatState.handleCancelEditMessage}
+                uploadingMedia={uploadingMedia}
+                hasMoreMessages={chatState.hasMoreMessages}
+                isLoadingMoreMessages={chatState.isLoadingMore}
+                onLoadMoreMessages={chatState.loadMoreMessages}
+              />
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </ProtectedRoute>

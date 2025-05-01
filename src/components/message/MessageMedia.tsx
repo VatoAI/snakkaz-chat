@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { IconFile, IconFileText, IconLock, IconShieldLock, IconClockHour4 } from "@tabler/icons-react";
 import { useToast } from "@/hooks/use-toast";
 import { useMediaDecryption } from "./media/useMediaDecryption";
@@ -27,6 +27,7 @@ interface MessageMediaProps {
   onShowDeleteConfirm?: () => void;
   message?: DecryptedMessage;
   onMediaExpired?: () => void;
+  preventScreenshot?: boolean;
 }
 
 export const MessageMedia = ({ 
@@ -38,7 +39,8 @@ export const MessageMedia = ({
   onDelete,
   onShowDeleteConfirm,
   message,
-  onMediaExpired
+  onMediaExpired,
+  preventScreenshot = false
 }: MessageMediaProps) => {
   const [decryptFailed, setDecryptFailed] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
@@ -51,11 +53,8 @@ export const MessageMedia = ({
   const mediaType = message?.media_type || fileType || '';
   const mediaTtl = message?.ephemeral_ttl || ttl;
   const messageIdToUse = message?.id || messageId;
-  const preventScreenshot = message?.prevent_screenshot || false;
-  // Calculate expiresAt based on message timestamp and ephemeral_ttl if it exists
-  const expiresAt = message?.timestamp && message?.ephemeral_ttl 
-    ? new Date(new Date(message.timestamp).getTime() + message.ephemeral_ttl * 1000).toISOString()
-    : null;
+  // Use the prop directly instead of accessing from message
+  const expiresAt = message?.created_at ? new Date(new Date(message.created_at).getTime() + (mediaTtl || 0) * 1000).toISOString() : null;
   
   // Use our media decryption hook
   const {
@@ -66,7 +65,7 @@ export const MessageMedia = ({
   } = useMediaDecryption(mediaUrl, mediaKey, message?.media_iv || '', mediaType);
 
   // Handle media expiration
-  const handleMediaExpired = () => {
+  const handleMediaExpired = useCallback(() => {
     if (onDelete) {
       onDelete();
       toast({
@@ -77,7 +76,7 @@ export const MessageMedia = ({
     } else if (onMediaExpired) {
       onMediaExpired();
     }
-  };
+  }, [onDelete, onMediaExpired, toast]);
 
   // Calculate time left until expiration
   const [timeLeft, setTimeLeft] = useState<string | null>(null);
@@ -114,7 +113,7 @@ export const MessageMedia = ({
     const interval = setInterval(updateTimeLeft, 60000); // Update every minute
     
     return () => clearInterval(interval);
-  }, [expiresAt, decryptedURL]);
+  }, [expiresAt, decryptedURL, handleMediaExpired]);
 
   // Effect to check for decryption failures
   useEffect(() => {

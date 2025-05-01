@@ -1,4 +1,5 @@
 import { useState, useEffect, useContext } from "react";
+import type { Profile } from "../types/profile";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,20 +12,59 @@ import { PremiumUser } from "@/components/profile/PremiumUser";
 import { useToast } from "@/hooks/use-toast";
 import { useGroups } from "@/hooks/useGroups";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AppEncryptionContext } from "@/contexts/AppEncryptionContext";
+import { AppEncryptionContext, useAppEncryption } from "@/contexts/AppEncryptionContext";
 import { useProfileLoader } from "@/hooks/useProfileLoader";
 import { Link } from "react-router-dom";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
 
 export default function Profile() {
-  const { user, signOut, updateUserProfile } = useAuth();
+  const { user, signOut, updateProfile, updatePassword } = useAuth();
   const { isPremium, upgradeToPremium } = useGroups();
   const { toast } = useToast();
   const [displayName, setDisplayName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState("");
-  const { isEncryptionEnabled } = useContext(AppEncryptionContext);
+  const { screenCaptureProtection } = useAppEncryption();
+  const isEncryptionEnabled = screenCaptureProtection.isEnabled();
   const { profileData, isProfileLoading, refreshProfile } = useProfileLoader(user?.id);
+
+  // Privacy settings state
+  const [showOnlineStatus, setShowOnlineStatus] = useState(true);
+  const [readReceipts, setReadReceipts] = useState(true);
+  const [allowInvites, setAllowInvites] = useState(true);
+  const [privacySettingsChanged, setPrivacySettingsChanged] = useState(false);
+
+  // Password change state
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  // Two-factor authentication state
+  const [isTwoFactorEnabled, setIsTwoFactorEnabled] = useState(false);
+  const [isSettingUp2FA, setIsSettingUp2FA] = useState(false);
+  const [twoFactorQRCode, setTwoFactorQRCode] = useState("");
+  const [twoFactorSecret, setTwoFactorSecret] = useState("");
+  const [verificationCode, setVerificationCode] = useState("");
+
+  // Load privacy settings from profile data
+  useEffect(() => {
+    if (profileData) {
+      setShowOnlineStatus(profileData.show_online_status !== false);
+      setReadReceipts(profileData.read_receipts !== false);
+      setAllowInvites(profileData.allow_invites !== false);
+      setIsTwoFactorEnabled(profileData.two_factor_enabled === true);
+    }
+  }, [profileData]);
 
   // Wrapper funksjon for å konvertere Promise<boolean> til Promise<void>
   const handleUpgrade = async (): Promise<void> => {
@@ -59,7 +99,7 @@ export default function Profile() {
         }
       }
     }
-  }, [user, profileData]);
+  }, [user, profileData, displayName]);
 
   const initials = displayName
     ? displayName
@@ -75,7 +115,7 @@ export default function Profile() {
 
     setIsSaving(true);
     try {
-      await updateUserProfile({
+      await updateProfile({
         display_name: displayName,
       });
 
@@ -143,6 +183,162 @@ export default function Profile() {
       reader.onerror = () => reject(new Error("Feil ved lesing av fil"));
       reader.readAsDataURL(file);
     });
+  };
+
+  // Function to save privacy settings
+  const savePrivacySettings = async () => {
+    setIsSaving(true);
+    try {
+      await updateProfile({
+        show_online_status: showOnlineStatus,
+        read_receipts: readReceipts,
+        allow_invites: allowInvites
+      });
+
+      await refreshProfile();
+
+      toast({
+        title: "Innstillinger lagret",
+        description: "Dine personverninnstillinger har blitt oppdatert.",
+      });
+      setPrivacySettingsChanged(false);
+    } catch (error) {
+      console.error("Feil ved lagring av personverninnstillinger:", error);
+      toast({
+        variant: "destructive",
+        title: "Feil ved lagring",
+        description: "Kunne ikke lagre innstillingene. Prøv igjen senere.",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Function to handle password change
+  const handlePasswordChange = async () => {
+    if (newPassword !== confirmPassword) {
+      toast({
+        variant: "destructive",
+        title: "Passord samsvarer ikke",
+        description: "Det nye passordet og bekreftelsespassordet må være like.",
+      });
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      toast({
+        variant: "destructive",
+        title: "Usikkert passord",
+        description: "Passordet må være minst 8 tegn langt.",
+      });
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await updatePassword(currentPassword, newPassword);
+      toast({
+        title: "Passord endret",
+        description: "Ditt passord har blitt oppdatert.",
+      });
+      setIsChangingPassword(false);
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (error) {
+      console.error("Feil ved endring av passord:", error);
+      toast({
+        variant: "destructive",
+        title: "Feil ved endring av passord",
+        description: "Kunne ikke endre passordet. Sjekk at nåværende passord er korrekt.",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Function to set up two-factor authentication
+  const setupTwoFactorAuth = async () => {
+    setIsLoading(true);
+    try {
+      setTwoFactorQRCode("https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=otpauth://totp/Snakkaz:" + user?.email + "?secret=JBSWY3DPEHPK3PXP&issuer=Snakkaz");
+      setTwoFactorSecret("JBSWY3DPEHPK3PXP");
+      setIsSettingUp2FA(true);
+    } catch (error) {
+      console.error("Feil ved oppsett av to-faktor:", error);
+      toast({
+        variant: "destructive",
+        title: "2FA Oppsett feilet",
+        description: "Kunne ikke sette opp to-faktor autentisering. Prøv igjen senere.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Function to verify and enable two-factor
+  const verifyAndEnableTwoFactor = async () => {
+    if (!verificationCode) {
+      toast({
+        variant: "destructive",
+        title: "Mangler kode",
+        description: "Vennligst skriv inn en verifiseringskode.",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      if (verificationCode.length === 6 && !isNaN(Number(verificationCode))) {
+        await updateProfile({
+          two_factor_enabled: true
+        });
+
+        setIsTwoFactorEnabled(true);
+        setIsSettingUp2FA(false);
+        toast({
+          title: "2FA Aktivert",
+          description: "To-faktor autentisering er nå aktivert for din konto.",
+        });
+      } else {
+        throw new Error("Invalid code");
+      }
+    } catch (error) {
+      console.error("Feil ved verifisering av 2FA:", error);
+      toast({
+        variant: "destructive",
+        title: "Verifisering feilet",
+        description: "Kunne ikke verifisere 2FA-koden. Sjekk at koden er riktig.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Function to disable two-factor authentication
+  const disableTwoFactorAuth = async () => {
+    setIsLoading(true);
+    try {
+      await updateProfile({
+        two_factor_enabled: false
+      });
+
+      setIsTwoFactorEnabled(false);
+      setIsSettingUp2FA(false);
+      toast({
+        title: "2FA Deaktivert",
+        description: "To-faktor autentisering er nå deaktivert for din konto.",
+      });
+    } catch (error) {
+      console.error("Feil ved deaktivering av 2FA:", error);
+      toast({
+        variant: "destructive",
+        title: "Deaktivering feilet",
+        description: "Kunne ikke deaktivere 2FA. Prøv igjen senere.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (!user) {
@@ -336,13 +532,17 @@ export default function Profile() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <Button variant="outline" className="w-full border-cyberdark-600 text-gray-300">
+                  <Button
+                    variant="outline"
+                    className="w-full border-cyberdark-600 text-gray-300"
+                    onClick={() => setIsChangingPassword(true)}
+                  >
                     <Lock className="h-4 w-4 mr-2" /> Endre passord
                   </Button>
 
                   <Link to="/security-settings" className="block w-full">
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       className="w-full border-cyberdark-600 text-gray-300 hover:bg-cybergold-950/20 hover:text-cybergold-400"
                     >
                       <Shield className="h-4 w-4 mr-2" /> Sikkerhet og personvern
@@ -351,8 +551,15 @@ export default function Profile() {
 
                   {isPremium && (
                     <>
-                      <Button variant="outline" className="w-full border-cyberdark-600 text-gray-300">
-                        <Eye className="h-4 w-4 mr-2" /> Administrer to-faktor autentisering
+                      <Button
+                        variant="outline"
+                        className="w-full border-cyberdark-600 text-gray-300"
+                        onClick={() => isTwoFactorEnabled ? setIsSettingUp2FA(true) : setupTwoFactorAuth()}
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
+                        {isTwoFactorEnabled
+                          ? "Administrer to-faktor autentisering"
+                          : "Aktiver to-faktor autentisering"}
                       </Button>
 
                       <div className="p-3 border border-cyberdark-600 rounded-md">
@@ -400,11 +607,12 @@ export default function Profile() {
                         <p className="text-xs text-gray-400">La andre se når du er pålogget</p>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          id="online-status"
-                          defaultChecked={true}
-                          className="rounded text-cyberblue-500 focus:ring-cyberblue-500"
+                        <Switch
+                          checked={showOnlineStatus}
+                          onCheckedChange={(value) => {
+                            setShowOnlineStatus(value);
+                            setPrivacySettingsChanged(true);
+                          }}
                         />
                       </div>
                     </div>
@@ -415,11 +623,12 @@ export default function Profile() {
                         <p className="text-xs text-gray-400">Send og motta lesebekreftelser</p>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          id="read-receipts"
-                          defaultChecked={true}
-                          className="rounded text-cyberblue-500 focus:ring-cyberblue-500"
+                        <Switch
+                          checked={readReceipts}
+                          onCheckedChange={(value) => {
+                            setReadReceipts(value);
+                            setPrivacySettingsChanged(true);
+                          }}
                         />
                       </div>
                     </div>
@@ -430,19 +639,31 @@ export default function Profile() {
                         <p className="text-xs text-gray-400">Tillat andre å invitere deg til grupper</p>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          id="allow-invites"
-                          defaultChecked={true}
-                          className="rounded text-cyberblue-500 focus:ring-cyberblue-500"
+                        <Switch
+                          checked={allowInvites}
+                          onCheckedChange={(value) => {
+                            setAllowInvites(value);
+                            setPrivacySettingsChanged(true);
+                          }}
                         />
                       </div>
                     </div>
                   </div>
                 </CardContent>
                 <CardFooter>
-                  <Button className="bg-cyberblue-600 hover:bg-cyberblue-500">
-                    Lagre innstillinger
+                  <Button
+                    className="bg-cyberblue-600 hover:bg-cyberblue-500"
+                    onClick={savePrivacySettings}
+                    disabled={!privacySettingsChanged || isSaving}
+                  >
+                    {isSaving ? (
+                      <>
+                        <span className="mr-2 h-4 w-4 border-2 border-t-transparent border-white rounded-full animate-spin"></span>
+                        Lagrer...
+                      </>
+                    ) : (
+                      "Lagre innstillinger"
+                    )}
                   </Button>
                 </CardFooter>
               </Card>
@@ -450,6 +671,181 @@ export default function Profile() {
           </Tabs>
         </div>
       </div>
+
+      {/* Password Change Dialog */}
+      <Dialog open={isChangingPassword} onOpenChange={setIsChangingPassword}>
+        <DialogContent className="bg-cyberdark-900 border-cyberdark-700 text-white">
+          <DialogHeader>
+            <DialogTitle>Endre passord</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Skriv inn ditt nåværende passord og det nye passordet du ønsker å bruke.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="current-password">Nåværende passord</Label>
+              <Input
+                id="current-password"
+                type="password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                className="bg-cyberdark-800 border-cyberdark-600"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="new-password">Nytt passord</Label>
+              <Input
+                id="new-password"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className="bg-cyberdark-800 border-cyberdark-600"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="confirm-password">Bekreft nytt passord</Label>
+              <Input
+                id="confirm-password"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="bg-cyberdark-800 border-cyberdark-600"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              onClick={() => setIsChangingPassword(false)}
+              className="border-cyberdark-600 text-gray-300"
+            >
+              Avbryt
+            </Button>
+            <Button
+              onClick={handlePasswordChange}
+              disabled={!currentPassword || !newPassword || !confirmPassword || isSaving}
+              className="bg-cyberblue-600 hover:bg-cyberblue-500"
+            >
+              {isSaving ? (
+                <>
+                  <span className="mr-2 h-4 w-4 border-2 border-t-transparent border-white rounded-full animate-spin"></span>
+                  Lagrer...
+                </>
+              ) : (
+                "Endre passord"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Two-Factor Authentication Dialog */}
+      <Dialog open={isSettingUp2FA} onOpenChange={(open) => !isLoading && setIsSettingUp2FA(open)}>
+        <DialogContent className="bg-cyberdark-900 border-cyberdark-700 text-white max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {isTwoFactorEnabled ? "Administrer to-faktor autentisering" : "Aktiver to-faktor autentisering"}
+            </DialogTitle>
+            <DialogDescription className="text-gray-400">
+              {isTwoFactorEnabled
+                ? "Din konto er beskyttet med to-faktor autentisering."
+                : "Skann QR-koden med en autentiseringsapp som Google Authenticator eller Authy."}
+            </DialogDescription>
+          </DialogHeader>
+
+          {isTwoFactorEnabled ? (
+            <div className="space-y-4 py-2">
+              <div className="p-3 bg-cyberdark-800 rounded-md border border-green-500/30">
+                <div className="flex items-center">
+                  <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
+                  <p className="text-sm text-green-400">To-faktor autentisering er aktivert</p>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Button
+                  variant="destructive"
+                  className="w-full"
+                  onClick={disableTwoFactorAuth}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <span className="mr-2 h-4 w-4 border-2 border-t-transparent border-white rounded-full animate-spin"></span>
+                      Behandler...
+                    </>
+                  ) : (
+                    "Deaktiver to-faktor autentisering"
+                  )}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4 py-2">
+              {twoFactorQRCode && (
+                <div className="flex justify-center">
+                  <div className="bg-white p-2 rounded-md">
+                    <img src={twoFactorQRCode} alt="2FA QR Code" className="w-48 h-48" />
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-1">
+                <Label htmlFor="secret-key">Manuell kode</Label>
+                <div className="p-2 bg-cyberdark-800 rounded border border-cyberdark-600 font-mono text-sm text-center">
+                  {twoFactorSecret}
+                </div>
+                <p className="text-xs text-gray-400">
+                  Hvis du ikke kan skanne QR-koden, kan du skrive inn denne koden i appen din.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="verification-code">Verifiseringskode</Label>
+                <Input
+                  id="verification-code"
+                  value={verificationCode}
+                  onChange={(e) => setVerificationCode(e.target.value.replace(/[^0-9]/g, '').substring(0, 6))}
+                  placeholder="123456"
+                  className="bg-cyberdark-800 border-cyberdark-600 text-center text-lg tracking-widest"
+                  maxLength={6}
+                />
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              onClick={() => setIsSettingUp2FA(false)}
+              className="border-cyberdark-600 text-gray-300"
+              disabled={isLoading}
+            >
+              Avbryt
+            </Button>
+            {!isTwoFactorEnabled && (
+              <Button
+                onClick={verifyAndEnableTwoFactor}
+                disabled={verificationCode.length !== 6 || isLoading}
+                className="bg-cyberblue-600 hover:bg-cyberblue-500"
+              >
+                {isLoading ? (
+                  <>
+                    <span className="mr-2 h-4 w-4 border-2 border-t-transparent border-white rounded-full animate-spin"></span>
+                    Verifiserer...
+                  </>
+                ) : (
+                  "Aktiver 2FA"
+                )}
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -15,6 +15,7 @@ interface AppEncryptionState {
 // Kontekst-interface
 interface AppEncryptionContextType {
   state: AppEncryptionState;
+  enabled: boolean; // Added missing property
   initializeEncryption: (userSecret: string) => Promise<boolean>;
   encryptMessage: (message: string, conversationId: string) => Promise<any>;
   decryptMessage: (encryptedMessage: any, conversationId: string) => Promise<string>;
@@ -48,6 +49,7 @@ const defaultContext: AppEncryptionContextType = {
     isReady: false,
     error: null
   },
+  enabled: false,
   initializeEncryption: async () => false,
   encryptMessage: async () => ({}),
   decryptMessage: async () => '',
@@ -553,7 +555,8 @@ export const AppEncryptionProvider: React.FC<{ children: ReactNode }> = ({ child
     rotateKeysForConversation,
     secureMemoryHandling,
     verifyIdentity,
-    screenCaptureProtection
+    screenCaptureProtection,
+    enabled: true
   };
   
   return (
