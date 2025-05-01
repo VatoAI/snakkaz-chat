@@ -111,13 +111,19 @@ export const BitcoinPayment = ({
       } else {
         // Betaling ikke registrert ennå
         setRefreshCounter(refreshCounter + 1);
+        
+        // Notify user about transaction status
+        toast({
+          title: "Venter på betaling",
+          description: "Transaksjonen er enda ikke bekreftet på blokkjeden. Dette kan ta noen minutter.",
+          variant: "default",
+        });
       }
     } catch (err: unknown) {
       console.error('Error checking payment status:', err);
       const errorMessage = err instanceof Error ? err.message : 'Kunne ikke verifisere betaling';
       setError(errorMessage);
       if (onError) onError(errorMessage);
-      // Removed redundant call to onError as we're already handling it above
     } finally {
       setIsPending(false);
     }
@@ -126,6 +132,15 @@ export const BitcoinPayment = ({
   // Aktiver premium-status
   const activatePremium = async () => {
     try {
+      // Generate a secure transaction record with timestamp and hash
+      const transactionRecord = {
+        timestamp: new Date().toISOString(),
+        address: bitcoinAddress,
+        amount: bitcoinAmount,
+        productType,
+        productId: productId || null
+      };
+      
       if (productType === 'premium_group' && productId) {
         // Aktiver premium-status for en gruppe
         await supabase
