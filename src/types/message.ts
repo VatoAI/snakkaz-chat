@@ -1,4 +1,3 @@
-
 export interface DecryptedMessage {
   id: string;
   content: string;
@@ -10,6 +9,7 @@ export interface DecryptedMessage {
   };
   receiver_id?: string | null;
   created_at: string;
+  updated_at: string; // Added missing updated_at field
   encryption_key: string;
   iv: string;
   is_encrypted?: boolean;

@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { encryptMessage } from "@/utils/encryption";
 import { DecryptedMessage } from "@/types/message";
@@ -14,8 +14,10 @@ export const useDirectMessageSender = (
 ) => {
   const [isLoading, setIsLoading] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
+  const [isTyping, setIsTyping] = useState(false);
   const { toast } = useToast();
   const errorResetTimeout = useRef<NodeJS.Timeout | null>(null);
+  const typingTimeout = useRef<NodeJS.Timeout | null>(null);
 
   const clearSendError = useCallback(() => {
     setSendError(null);
@@ -24,6 +26,71 @@ export const useDirectMessageSender = (
       errorResetTimeout.current = null;
     }
   }, []);
+
+  // Clean up typing timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (typingTimeout.current) {
+        clearTimeout(typingTimeout.current);
+      }
+    };
+  }, []);
+
+  // Handle user typing state and send typing indicators
+  const handleTyping = useCallback(async () => {
+    if (!friendId || !currentUserId) return;
+    
+    // Set local typing state
+    setIsTyping(true);
+    
+    // Clear any existing timeout
+    if (typingTimeout.current) {
+      clearTimeout(typingTimeout.current);
+    }
+    
+    // Send typing indicator
+    try {
+      // Try P2P first if enabled
+      const useP2P = isP2PEnabled() && webRTCManager && webRTCManager.isPeerReady(friendId);
+      
+      if (useP2P) {
+        await webRTCManager!.sendTypingIndicator(friendId, true);
+      } else {
+        // Fall back to server
+        await supabase.from('typing_indicators').upsert(
+          {
+            user_id: currentUserId,
+            recipient_id: friendId,
+            is_typing: true,
+            updated_at: new Date().toISOString()
+          },
+          { onConflict: 'user_id,recipient_id' }
+        );
+      }
+      
+      // Set timeout to clear typing state
+      typingTimeout.current = setTimeout(async () => {
+        setIsTyping(false);
+        
+        // Send stopped typing indicator
+        if (useP2P) {
+          await webRTCManager!.sendTypingIndicator(friendId, false);
+        } else {
+          await supabase.from('typing_indicators').upsert(
+            {
+              user_id: currentUserId,
+              recipient_id: friendId,
+              is_typing: false,
+              updated_at: new Date().toISOString()
+            },
+            { onConflict: 'user_id,recipient_id' }
+          );
+        }
+      }, 3000);
+    } catch (error) {
+      console.error('Error sending typing indicator:', error);
+    }
+  }, [currentUserId, friendId, webRTCManager]);
 
   /**
    * Send en melding til en venn
@@ -41,6 +108,13 @@ export const useDirectMessageSender = (
 
     setIsLoading(true);
     clearSendError();
+    
+    // Clear typing state when sending a message
+    setIsTyping(false);
+    if (typingTimeout.current) {
+      clearTimeout(typingTimeout.current);
+      typingTimeout.current = null;
+    }
     
     try {
       const useP2P = isP2PEnabled() && webRTCManager && webRTCManager.isPeerReady(friendId);
@@ -67,7 +141,7 @@ export const useDirectMessageSender = (
         const { encryptedContent, key, iv } = await encryptMessage(message.trim());
         
         // Send til Supabase
-        const { error } = await supabase.from('messages').insert({
+        const { error, data } = await supabase.from('messages').insert({
           sender_id: currentUserId,
           receiver_id: friendId,
           encrypted_content: encryptedContent,
@@ -75,7 +149,7 @@ export const useDirectMessageSender = (
           iv: iv,
           is_encrypted: true,
           created_at: new Date().toISOString()
-        });
+        }).select();
 
         if (error) {
           console.error('Server sending feilet:', error);
@@ -101,11 +175,27 @@ export const useDirectMessageSender = (
         iv: '',
         is_encrypted: true,
         is_deleted: false,
-        deleted_at: null
+        deleted_at: null,
+        read_at: null
       };
       
       // Oppdater UI med den lokale meldingen
       onNewMessage(localMessage);
+      
+      // Clear typing indicator after sending message
+      if (useP2P && webRTCManager) {
+        await webRTCManager.sendTypingIndicator(friendId, false);
+      } else {
+        await supabase.from('typing_indicators').upsert(
+          {
+            user_id: currentUserId,
+            recipient_id: friendId,
+            is_typing: false,
+            updated_at: new Date().toISOString()
+          },
+          { onConflict: 'user_id,recipient_id' }
+        );
+      }
       
       return true;
     } catch (error) {
@@ -125,8 +215,10 @@ export const useDirectMessageSender = (
 
   return {
     isLoading,
+    isTyping,
     sendError,
     handleSendMessage,
+    handleTyping,
     clearSendError
   };
 };
