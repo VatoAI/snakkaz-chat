@@ -4,6 +4,8 @@
 
 SnakkaZ Chat er en moderne, sikker og sosial chat-app bygget for fremtiden. Appen kombinerer avansert kryptering, AI-drevne funksjoner og et unikt cyberpunk-inspirert design for å gi brukerne en trygg, morsom og engasjerende kommunikasjonsopplevelse.
 
+> Sist oppdatert: 1. mai 2025 - Oppdatert gruppechat-funksjonalitet og forbedret AI-assistent
+
 ### Hovedfunksjoner
 - **Sanntids chat** med støtte for grupper og private meldinger
 - **Ende-til-ende kryptering** for maksimal sikkerhet
