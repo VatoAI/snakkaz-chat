@@ -12,6 +12,9 @@ interface MessageInputProps {
   onSendEnhancedMedia?: (mediaData: { url: string, thumbnailUrl?: string, ttl?: number, isEncrypted?: boolean }) => Promise<void>;
   onSendAudio?: (blob: Blob) => Promise<void>;
   onSendProduct?: (productData: ProductData) => Promise<void>;
+  onUpdateMessage?: (messageId: string, newContent: string) => Promise<void>;
+  onCancelEdit?: () => void;
+  editingMessage?: { id: string; content: string } | null;
   placeholder?: string;
   disabled?: boolean;
   securityLevel?: 'p2p_e2ee' | 'server_e2ee' | 'standard';
@@ -39,6 +42,9 @@ const MessageInput: React.FC<MessageInputProps> = ({
   onSendFile,
   onSendEnhancedMedia,
   onSendAudio,
+  onUpdateMessage,
+  onCancelEdit,
+  editingMessage,
   placeholder = "Skriv en melding...",
   disabled = false,
   securityLevel = 'standard',
@@ -70,6 +76,23 @@ const MessageInput: React.FC<MessageInputProps> = ({
     onError: (error) => console.error("Secure message key error:", error)
   });
 
+  // Populate message input when entering edit mode
+  useEffect(() => {
+    if (editingMessage) {
+      setMessage(editingMessage.content);
+      
+      // Focus on the input when editing starts
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+    } else {
+      // Reset message when exiting edit mode without submitting
+      if (!isSubmitting) {
+        setMessage('');
+      }
+    }
+  }, [editingMessage]);
+
   // Automatisk juster høyden på tekstområdet basert på innhold
   useEffect(() => {
     if (inputRef.current) {
@@ -80,10 +103,10 @@ const MessageInput: React.FC<MessageInputProps> = ({
 
   // Autofokus på desktop, men ikke på mobile
   useEffect(() => {
-    if (autoFocus && !isMobile && inputRef.current) {
+    if (autoFocus && !isMobile && inputRef.current && !editingMessage) {
       inputRef.current.focus();
     }
-  }, [autoFocus, isMobile]);
+  }, [autoFocus, isMobile, editingMessage]);
 
   // Clean up preview URL when component unmounts
   useEffect(() => {
@@ -105,6 +128,9 @@ const MessageInput: React.FC<MessageInputProps> = ({
     if (e.key === 'Enter' && !e.shiftKey && !isMobile) {
       e.preventDefault();
       handleSendMessage();
+    } else if (e.key === 'Escape' && editingMessage && onCancelEdit) {
+      e.preventDefault();
+      onCancelEdit();
     }
   };
 
@@ -114,11 +140,19 @@ const MessageInput: React.FC<MessageInputProps> = ({
     try {
       setIsSubmitting(true);
 
-      // Sikker melding med nøkkelrotasjon for Perfect Forward Secrecy
-      const keys = await getEncryptionKeys();
-      console.log(`Secure message #${messageCounter} being sent with rotated keys`);
+      // Check if we're editing an existing message or sending a new one
+      if (editingMessage && onUpdateMessage) {
+        // Update existing message
+        await onUpdateMessage(editingMessage.id, message.trim());
+      } else {
+        // Send new message
+        // Sikker melding med nøkkelrotasjon for Perfect Forward Secrecy
+        const keys = await getEncryptionKeys();
+        console.log(`Secure message #${messageCounter} being sent with rotated keys`);
 
-      await onSendMessage(message.trim());
+        await onSendMessage(message.trim());
+      }
+      
       setMessage('');
 
       // Forflytt fokus tilbake til input etter sending
@@ -126,9 +160,15 @@ const MessageInput: React.FC<MessageInputProps> = ({
         inputRef.current.focus();
       }
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.error('Error sending/updating message:', error);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    if (onCancelEdit) {
+      onCancelEdit();
     }
   };
 
@@ -302,203 +342,189 @@ const MessageInput: React.FC<MessageInputProps> = ({
   const securityIndicator = getSecurityIndicator();
 
   return (
-    <div className={`relative border-t border-opacity-10 p-2 ${isMobile ? 'pb-4' : 'pb-3'} backdrop-blur-md`}>
-      {/* Sikkerhetsindikator - nå diskret i hjørnet */}
-      {showSecurityIndicator && (
-        <div className="absolute top-1 right-2 flex items-center gap-1 text-xs opacity-70">
-          <span className="text-xs">{securityIndicator.text}</span>
-          {securityIndicator.icon}
+    <div className={`flex flex-col w-full bg-background border-t ${!isMobile ? 'rounded-lg' : ''}`}>
+      {/* Show editing message indicator when in edit mode */}
+      {editingMessage && (
+        <div className="px-4 pt-2">
+          <EditingMessage 
+            content={editingMessage.content}
+            onCancel={handleCancelEdit}
+          />
         </div>
       )}
 
-      {/* Image preview and uploader */}
-      {showMediaUploader && previewUrl && (
-        <div className="mb-2 rounded-lg overflow-hidden bg-card border shadow-lg">
-          <div className="relative max-h-[200px]">
-            <img
-              src={previewUrl}
-              alt="Preview"
-              className="w-full h-full object-contain max-h-[200px]"
-            />
-            <button
-              onClick={handleCancelMedia}
-              className="absolute top-2 right-2 bg-black/50 rounded-full p-1.5 hover:bg-black/80 shadow-lg"
-              aria-label="Avbryt"
-            >
-              <X className="h-4 w-4 text-white" />
-            </button>
-          </div>
-
-          {/* TTL selector */}
-          <div className="border-t p-2 flex items-center">
-            <span className="text-xs text-muted-foreground mr-2">Levetid:</span>
-            <select
-              value={mediaTtl}
-              onChange={(e) => setMediaTtl(parseInt(e.target.value))}
-              className="text-xs bg-card border rounded px-2 py-1"
-            >
-              <option value="0">Permanent</option>
-              <option value="60">1 time</option>
-              <option value="480">8 timer</option>
-              <option value="1440">1 dag</option>
-              <option value="4320">3 dager</option>
-              <option value="10080">1 uke</option>
-            </select>
-
-            {mediaTtl > 0 && (
-              <div className="ml-auto flex items-center text-xs">
-                <Shield className="h-3.5 w-3.5 mr-1 text-emerald-500" />
-                <span className="text-muted-foreground">Kryptert</span>
-              </div>
-            )}
-          </div>
-
-          {/* Upload controls */}
-          <div className="p-2 flex justify-between items-center bg-muted/50 border-t">
-            <div className="text-xs text-muted-foreground">
-              {selectedFile?.name} ({(selectedFile?.size || 0) / 1024 > 1024
-                ? `${((selectedFile?.size || 0) / 1024 / 1024).toFixed(1)} MB`
-                : `${((selectedFile?.size || 0) / 1024).toFixed(0)} KB`})
+      {/* Media handling UI */}
+      {selectedFile && previewUrl && (
+        <div className="relative p-2 bg-muted/20 mx-4 mt-2 rounded-md">
+          {selectedFile.type.startsWith('image/') && (
+            <img src={previewUrl} alt="Preview" className="max-h-48 rounded object-contain mx-auto" />
+          )}
+          {selectedFile.type.startsWith('video/') && (
+            <video src={previewUrl} className="max-h-48 rounded w-full" controls />
+          )}
+          {!selectedFile.type.startsWith('image/') && !selectedFile.type.startsWith('video/') && (
+            <div className="flex items-center justify-between p-2 border rounded-md bg-muted/10">
+              <span className="truncate max-w-[200px]">{selectedFile.name}</span>
+              <span className="text-xs text-muted-foreground">{Math.round(selectedFile.size / 1024)}KB</span>
             </div>
+          )}
+          
+          <button 
+            onClick={() => {
+              setSelectedFile(null);
+              setPreviewUrl(null);
+              cancelUpload();
+            }} 
+            className="absolute top-4 right-4 bg-background/80 rounded-full p-1 hover:bg-muted transition"
+          >
+            <X size={18} />
+          </button>
+          
+          {/* TTL selector for media */}
+          <div className="flex items-center mt-2 text-sm">
+            <span className="mr-2 text-muted-foreground">Selvdestruerende:</span>
+            <select 
+              value={mediaTtl} 
+              onChange={(e) => setMediaTtl(Number(e.target.value))}
+              className="bg-background border rounded p-1 text-sm"
+            >
+              <option value="0">Aldri</option>
+              <option value="300">5 minutter</option>
+              <option value="3600">1 time</option>
+              <option value="86400">24 timer</option>
+              <option value="604800">7 dager</option>
+            </select>
+          </div>
 
-            {uploadState.isUploading ? (
-              <div className="flex items-center gap-2 text-xs">
-                <div className="w-24 bg-muted h-1.5 rounded-full overflow-hidden">
-                  <div
-                    className="bg-primary h-full"
-                    style={{ width: `${Math.round(uploadState.progress)}%` }}
-                  ></div>
-                </div>
-                <span>{Math.round(uploadState.progress)}%</span>
-              </div>
-            ) : (
-              <button
-                onClick={handleUpload}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs px-3 py-1.5 rounded flex items-center gap-1 font-medium shadow-md"
-                disabled={isSubmitting}
-              >
-                <Send className="h-3.5 w-3.5" />
-                <span>Send</span>
-              </button>
-            )}
+          <div className="flex justify-end mt-2">
+            <button
+              onClick={() => uploadMedia()}
+              disabled={uploadState.isUploading}
+              className="bg-primary text-primary-foreground rounded-full px-4 py-1 text-sm font-medium hover:bg-primary/90 transition disabled:opacity-50"
+            >
+              {uploadState.isUploading ? 'Laster opp...' : 'Send'}
+            </button>
           </div>
         </div>
       )}
-
-      {/* Audio recorder component */}
+      
+      {/* Audio recorder */}
       {showAudioRecorder && (
-        <div className="mb-2">
-          <EnhancedAudioRecorder
-            onAudioReady={handleAudioReady}
+        <div className="p-4">
+          <EnhancedAudioRecorder 
+            onSave={handleAudioSave}
             onCancel={() => setShowAudioRecorder(false)}
-            className="p-1"
           />
         </div>
       )}
 
-      {/* Message input bar */}
-      <div className="flex items-center gap-2 mt-1">
-        {/* Emoji picker button */}
-        <button
-          onClick={toggleEmojiPicker}
-          disabled={disabled || isSubmitting}
-          className="p-2 rounded-full hover:bg-muted flex items-center justify-center text-muted-foreground"
-          aria-label="Legg til emoji"
-        >
-          <Smile className="h-5 w-5" />
-        </button>
+      {/* File input fields - hidden */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        style={{ display: 'none' }}
+        accept="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"
+      />
+      <input
+        type="file"
+        ref={imageInputRef}
+        onChange={handleFileChange}
+        style={{ display: 'none' }}
+        accept="image/*,video/*"
+      />
 
-        {/* Medieknapper */}
-        <div className="flex">
-          {/* Vedlegg knapp */}
-          {(onSendFile || onSendEnhancedMedia) && (
-            <>
-              <button
-                onClick={handleAttachClick}
-                disabled={disabled || isSubmitting || showMediaUploader}
-                className="p-2 rounded-full hover:bg-muted flex items-center justify-center text-muted-foreground"
-                aria-label="Legg ved fil"
-              >
-                <Paperclip className="h-5 w-5" />
-              </button>
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                className="hidden"
-                accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
-              />
-            </>
-          )}
+      {/* Main message input area */}
+      <div className="flex items-end p-2 relative">
+        {/* Media action buttons */}
+        <div className="flex space-x-1 mb-1 mr-2">
+          <button
+            type="button"
+            onClick={() => imageInputRef.current?.click()}
+            disabled={disabled}
+            className="p-2 rounded-full hover:bg-muted transition text-muted-foreground hover:text-foreground focus:outline-none focus:ring-1"
+            title="Send bilde eller video"
+          >
+            <Image size={20} />
+          </button>
 
-          {/* Kameraknapp */}
-          {(onSendFile || onSendEnhancedMedia) && (
-            <>
-              <button
-                onClick={handleCameraClick}
-                disabled={disabled || isSubmitting || showMediaUploader}
-                className="p-2 rounded-full hover:bg-muted flex items-center justify-center text-muted-foreground"
-                aria-label="Ta bilde"
-              >
-                <Camera className="h-5 w-5" />
-              </button>
-              <input
-                type="file"
-                ref={imageInputRef}
-                onChange={handleFileChange}
-                className="hidden"
-                accept="image/*"
-                capture="environment"
-              />
-            </>
-          )}
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={disabled}
+            className="p-2 rounded-full hover:bg-muted transition text-muted-foreground hover:text-foreground focus:outline-none focus:ring-1"
+            title="Send fil"
+          >
+            <Paperclip size={20} />
+          </button>
 
-          {/* Lydopptakerknapp */}
-          {onSendAudio && (
-            <button
-              onClick={toggleAudioRecorder}
-              disabled={disabled || isSubmitting || showMediaUploader}
-              className={`p-2 rounded-full ${showAudioRecorder ? 'bg-red-500 text-white' : 'hover:bg-muted text-muted-foreground'} flex items-center justify-center`}
-              aria-label="Ta opp lyd"
-            >
-              <Mic className="h-5 w-5" />
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => setShowAudioRecorder(true)}
+            disabled={disabled || showAudioRecorder}
+            className="p-2 rounded-full hover:bg-muted transition text-muted-foreground hover:text-foreground focus:outline-none focus:ring-1"
+            title="Spill inn lydmelding"
+          >
+            <Mic size={20} />
+          </button>
+          
+          {/* Emoji picker button */}
+          <button
+            type="button"
+            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+            className="p-2 rounded-full hover:bg-muted transition text-muted-foreground hover:text-foreground focus:outline-none focus:ring-1"
+            title="Legg til emoji"
+          >
+            <Smile size={20} />
+          </button>
         </div>
 
-        {/* Tekstområde for meldingen */}
-        <div className="flex-1 rounded-full border bg-background px-4 py-2">
-          <textarea
-            ref={inputRef}
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder={placeholder}
-            disabled={disabled || isSubmitting || showAudioRecorder}
-            className="w-full resize-none bg-transparent outline-none min-h-[24px] max-h-[100px] text-base"
-            rows={1}
-            id="messageInput"
-            name="messageInput"
-            autoComplete="off"
-          />
-        </div>
+        {/* Message text input */}
+        <textarea
+          ref={inputRef}
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder={editingMessage ? "Rediger melding..." : placeholder}
+          disabled={disabled || showAudioRecorder}
+          className="flex-1 bg-background resize-none max-h-[120px] p-2 focus:outline-none focus:ring-0 text-sm rounded-md"
+          style={{ height: '40px' }}
+        />
 
-        {/* Send-knapp */}
+        {/* Send/Save button - Change text based on edit mode */}
         <button
           onClick={handleSendMessage}
-          disabled={(!message.trim()) || disabled || isSubmitting || showMediaUploader || showAudioRecorder}
-          className={`p-2.5 rounded-full ${
-            (!message.trim()) || disabled || isSubmitting || showMediaUploader || showAudioRecorder
-              ? 'bg-muted text-muted-foreground'
-              : 'bg-primary hover:bg-primary/90 text-primary-foreground'
-          } flex items-center justify-center shadow-sm`}
-          aria-label="Send melding"
+          disabled={!message.trim() || isSubmitting || disabled || showAudioRecorder}
+          className={`ml-2 p-2 ${message.trim() ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'} rounded-full transition-colors focus:outline-none`}
+          title={editingMessage ? "Lagre endringer" : "Send melding"}
         >
-          <Send className={`h-5 w-5`} />
+          <Send size={20} className={message.trim() ? '' : 'opacity-50'} />
         </button>
+
+        {/* Add security indicator */}
+        {showSecurityIndicator && (
+          <div className="absolute -top-6 right-3 flex items-center text-xs text-muted-foreground">
+            <Shield size={12} className={`mr-1 ${securityLevel === 'p2p_e2ee' ? 'text-green-500' : securityLevel === 'server_e2ee' ? 'text-amber-500' : 'text-muted-foreground'}`} />
+            <span>
+              {securityLevel === 'p2p_e2ee' ? 'E2EE' : 
+               securityLevel === 'server_e2ee' ? 'Server kryptert' : 
+               'Standard'}
+            </span>
+          </div>
+        )}
       </div>
+      
+      {/* Emoji picker (would be implemented here) */}
+      {showEmojiPicker && (
+        <div className="p-2 border-t">
+          {/* EmojiPicker component would go here */}
+          <div className="text-xs text-center text-muted-foreground py-2">
+            Emoji velger - Kommer snart
+          </div>
+        </div>
+      )}
     </div>
   );
-};
+}
 
 export default MessageInput;

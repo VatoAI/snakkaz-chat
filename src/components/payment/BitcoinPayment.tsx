@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Loader2, Copy, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
+import { Loader2, Copy, CheckCircle, AlertCircle, RefreshCw, ExternalLink, Clock } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { v4 as uuidv4 } from 'uuid';
+import axios from 'axios';
 
 interface BitcoinPaymentProps {
   amount: number; // i NOK
@@ -10,6 +12,17 @@ interface BitcoinPaymentProps {
   onError?: (error: string) => void;
   productType: 'premium_group' | 'premium_account';
   productId?: string; // Gruppe-ID hvis det er relevant
+}
+
+interface TransactionRecord {
+  id: string;
+  timestamp: string;
+  address: string;
+  amount: string;
+  amountNok: number;
+  productType: string;
+  productId: string | null;
+  status: 'pending' | 'completed' | 'expired' | 'failed';
 }
 
 export const BitcoinPayment = ({ 
@@ -27,17 +40,31 @@ export const BitcoinPayment = ({
   const [error, setError] = useState('');
   const [refreshCounter, setRefreshCounter] = useState(0);
   const [remainingTime, setRemainingTime] = useState(900); // 15 minutter i sekunder
+  const [transactionId, setTransactionId] = useState('');
+  const [retryCount, setRetryCount] = useState(0);
+  const [exchangeRate, setExchangeRate] = useState(0);
   const { toast } = useToast();
 
-  // Simulerer Bitcoin-kurs (i virkeligheten ville dette hentes fra en API)
+  // Hent gjeldende Bitcoin-kurs fra en ekstern API
   const getBitcoinRate = async () => {
-    return 450000; // NOK per BTC (simulert verdi)
+    try {
+      // Bruk coindesk API for gjeldende BTC-kurs
+      const response = await axios.get('https://api.coindesk.com/v1/bpi/currentprice/NOK.json');
+      const rateNOK = response.data.bpi.NOK.rate_float;
+      setExchangeRate(rateNOK);
+      return rateNOK;
+    } catch (error) {
+      console.error('Feil ved henting av Bitcoin-kurs:', error);
+      // Fallback til en sikker verdi hvis API feiler
+      return 450000; // Fallback-verdi
+    }
   };
 
   const generatePaymentDetails = async () => {
     try {
       setIsLoading(true);
       setError('');
+      setRetryCount(0);
       
       // Hent Bitcoin-kurs
       const btcRate = await getBitcoinRate();
@@ -46,13 +73,16 @@ export const BitcoinPayment = ({
       const btcAmount = (amount / btcRate).toFixed(8);
       setBitcoinAmount(btcAmount);
 
-      // I en reell implementasjon: Generer en unik Bitcoin-adresse per betaling
-      // via en tjenesteleverandør som BTCPay Server, BitGo, eller ved å bruke xpub key
+      // Generer en unik transaksjon-ID
+      const txId = uuidv4();
+      setTransactionId(txId);
       
-      // For demo: Simulerer en kall til backend som returnerer en Bitcoin-adresse
+      // Kall til backend for å generere Bitcoin-adresse
       const { data, error } = await supabase.functions.invoke('generate-bitcoin-address', {
         body: {
+          transactionId: txId,
           amountNok: amount,
+          amountBtc: btcAmount,
           productType,
           productId
         }
@@ -60,9 +90,11 @@ export const BitcoinPayment = ({
 
       if (error) throw new Error(error.message);
       
-      // Normalt ville du få en ekte adresse fra backenden
-      // For demo: Bruker en fast adresse
-      setBitcoinAddress(data?.address || '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa');
+      // Sett Bitcoin-adresse fra backend-responsen
+      setBitcoinAddress(data?.address || '');
+      
+      // Lagre transaksjonsdetaljer i databasen
+      await storeTransactionRecord(txId, btcAmount, data?.address);
       
       // Start nedtelling
       startCountdown();
@@ -77,15 +109,45 @@ export const BitcoinPayment = ({
     }
   };
 
-  // Sjekk betalingsstatus
+  // Lagre transaksjonsdetaljer i databasen
+  const storeTransactionRecord = async (txId: string, btcAmount: string, address: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Bruker ikke autentisert');
+      
+      const transactionRecord: Omit<TransactionRecord, 'id'> = {
+        timestamp: new Date().toISOString(),
+        address: address,
+        amount: btcAmount,
+        amountNok: amount,
+        productType,
+        productId: productId || null,
+        status: 'pending'
+      };
+      
+      await supabase
+        .from('bitcoin_transactions')
+        .upsert({ 
+          id: txId,
+          user_id: user.id,
+          ...transactionRecord
+        });
+        
+    } catch (err) {
+      console.error('Feil ved lagring av transaksjonsdata:', err);
+    }
+  };
+
+  // Sjekk betalingsstatus med eksponentielt økende ventetid
   const checkPaymentStatus = async () => {
     try {
+      if (isVerified) return;
       setIsPending(true);
       
-      // I en reell implementasjon: Sjekk om betalingen er mottatt via API
-      // For demo: Simulerer en kall til backend som sjekker status
+      // Sjekk betalingsstatus via backend API
       const { data, error } = await supabase.functions.invoke('check-bitcoin-payment', {
         body: {
+          transactionId,
           address: bitcoinAddress,
           expectedAmount: bitcoinAmount
         }
@@ -93,54 +155,79 @@ export const BitcoinPayment = ({
 
       if (error) throw new Error(error.message);
       
-      // For demo: 10% sjanse for at betalingen simuleres som gjennomført
-      const isPaymentComplete = data?.status === 'completed' || Math.random() < 0.1;
-      
-      if (isPaymentComplete) {
+      if (data?.status === 'completed') {
         setIsVerified(true);
         if (onSuccess) onSuccess();
         
-        // For demo: Aktiver premium-status i databasen
+        // Oppdater transaksjonsstatus i databasen
+        await updateTransactionStatus('completed');
+        
+        // Aktiver premium-status
         await activatePremium();
         
         toast({
           title: "Betaling bekreftet!",
           description: "Din premium-tilgang er nå aktivert.",
-          variant: "default",
+          variant: "success",
         });
-      } else {
+      } else if (data?.status === 'pending') {
         // Betaling ikke registrert ennå
         setRefreshCounter(refreshCounter + 1);
         
-        // Notify user about transaction status
-        toast({
-          title: "Venter på betaling",
-          description: "Transaksjonen er enda ikke bekreftet på blokkjeden. Dette kan ta noen minutter.",
-          variant: "default",
-        });
+        // Notifiser brukeren om transaksjonsstatus
+        if (refreshCounter % 3 === 0) { // Vis toast hver tredje sjekk
+          toast({
+            title: "Venter på betaling",
+            description: "Transaksjonen er enda ikke bekreftet på blokkjeden. Dette kan ta noen minutter.",
+            variant: "default",
+          });
+        }
+        
+        // Planlegg neste sjekk med eksponentiell backoff
+        const nextRetryDelay = Math.min(2000 * Math.pow(1.5, retryCount), 30000); // Max 30 sekunder
+        setRetryCount(retryCount + 1);
+        setTimeout(checkPaymentStatus, nextRetryDelay);
       }
     } catch (err: unknown) {
       console.error('Error checking payment status:', err);
       const errorMessage = err instanceof Error ? err.message : 'Kunne ikke verifisere betaling';
-      setError(errorMessage);
-      if (onError) onError(errorMessage);
+      
+      // Ikke vis feil direkte til brukeren ved midlertidige nettverksproblemer
+      if (retryCount < 5) {
+        // Retry med exponential backoff
+        const nextRetryDelay = Math.min(2000 * Math.pow(2, retryCount), 30000);
+        setRetryCount(retryCount + 1);
+        setTimeout(checkPaymentStatus, nextRetryDelay);
+      } else {
+        setError(errorMessage);
+        await updateTransactionStatus('failed');
+        if (onError) onError(errorMessage);
+      }
     } finally {
       setIsPending(false);
+    }
+  };
+  
+  // Oppdater transaksjonsstatus i databasen
+  const updateTransactionStatus = async (status: 'pending' | 'completed' | 'expired' | 'failed') => {
+    try {
+      if (!transactionId) return;
+      
+      await supabase
+        .from('bitcoin_transactions')
+        .update({ 
+          status,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', transactionId);
+    } catch (err) {
+      console.error('Feil ved oppdatering av transaksjonsstatus:', err);
     }
   };
   
   // Aktiver premium-status
   const activatePremium = async () => {
     try {
-      // Generate a secure transaction record with timestamp and hash
-      const transactionRecord = {
-        timestamp: new Date().toISOString(),
-        address: bitcoinAddress,
-        amount: bitcoinAmount,
-        productType,
-        productId: productId || null
-      };
-      
       if (productType === 'premium_group' && productId) {
         // Aktiver premium-status for en gruppe
         await supabase
@@ -161,7 +248,8 @@ export const BitcoinPayment = ({
               subscription_type: 'premium',
               active_until: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
               payment_method: 'bitcoin',
-              payment_address: bitcoinAddress
+              payment_address: bitcoinAddress,
+              transaction_id: transactionId
             });
         }
       }
@@ -170,18 +258,23 @@ export const BitcoinPayment = ({
     }
   };
   
-  // Start nedtelling
+  // Start nedtelling og betalingsovervåking
   const startCountdown = () => {
     setRemainingTime(900); // 15 minutter
     const timer = setInterval(() => {
       setRemainingTime(prev => {
         if (prev <= 1) {
           clearInterval(timer);
+          // Merk transaksjonen som utløpt
+          updateTransactionStatus('expired');
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
+    
+    // Start betalingsovervåking
+    setTimeout(checkPaymentStatus, 10000); // Første sjekk etter 10 sekunder
     
     // Cleanup
     return () => clearInterval(timer);
@@ -207,6 +300,24 @@ export const BitcoinPayment = ({
   // Generer QR-kode for Bitcoin-adresse
   const getBitcoinQR = () => {
     return `https://chart.googleapis.com/chart?chs=250x250&cht=qr&chl=bitcoin:${bitcoinAddress}?amount=${bitcoinAmount}`;
+  };
+  
+  // Manuelt sjekk betalingsstatus
+  const manualCheckStatus = () => {
+    if (!isPending) {
+      checkPaymentStatus();
+      
+      toast({
+        title: "Sjekker betaling",
+        description: "Verifiserer betalingsstatus...",
+        variant: "default",
+      });
+    }
+  };
+  
+  // Vis transaksjonen i en blockchain explorer
+  const viewTransaction = () => {
+    window.open(`https://www.blockchain.com/btc/address/${bitcoinAddress}`, '_blank');
   };
   
   // Initialiserer Bitcoin-betalingsdetaljer ved oppstart
@@ -285,6 +396,11 @@ export const BitcoinPayment = ({
             <p className="text-sm text-cyberdark-300">
               ≈ {amount} NOK
             </p>
+            {exchangeRate > 0 && (
+              <p className="text-xs text-cyberdark-400 mt-1">
+                Kurs: 1 BTC = {exchangeRate.toLocaleString('nb-NO')} NOK
+              </p>
+            )}
           </div>
           
           <div className="bg-white p-4 rounded-lg mb-5 max-w-full w-64 h-64 flex items-center justify-center">
@@ -316,34 +432,40 @@ export const BitcoinPayment = ({
             </div>
             <div className="h-2 w-full bg-cyberdark-800 rounded-full overflow-hidden">
               <div 
-                className="h-full bg-gradient-to-r from-cybergold-600 to-cybergold-400 animate-pulse"
+                className="h-full bg-gradient-to-r from-cybergold-500 to-cybergold-300"
                 style={{ width: `${(remainingTime / 900) * 100}%` }}
-              ></div>
+              />
             </div>
           </div>
           
-          <Button
-            onClick={checkPaymentStatus}
-            className="w-full bg-cyberblue-600 hover:bg-cyberblue-700 text-white"
-            disabled={isPending}
-          >
-            {isPending ? (
-              <div className="flex items-center justify-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Verifiserer...
-              </div>
-            ) : (
-              <div className="flex items-center justify-center gap-2">
-                <RefreshCw className="h-4 w-4" />
-                {refreshCounter > 0 ? "Sjekk igjen" : "Verifiser betaling"}
-              </div>
-            )}
-          </Button>
+          <div className="flex flex-col w-full mb-3 space-y-2">
+            <p className="text-xs text-cyberdark-300">
+              Betalingen vil bli bekreftet automatisk så snart den registreres på blokkjeden.
+            </p>
+          </div>
           
-          <p className="text-xs text-center text-cyberdark-300 mt-5">
-            Etter betaling, klikk på "Verifiser betaling" for å aktivere din premium-tilgang.
-            <br />Det kan ta noen minutter før betalingen bekreftes på Bitcoin-nettverket.
-          </p>
+          <div className="flex w-full gap-2">
+            <Button
+              variant="outline" 
+              size="sm"
+              className="flex-1 border-cybergold-700/50 text-cybergold-400 hover:bg-cybergold-900/20"
+              onClick={manualCheckStatus}
+              disabled={isPending}
+            >
+              {isPending ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-1" />}
+              Sjekk status
+            </Button>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1 border-cyberblue-700/50 text-cyberblue-400 hover:bg-cyberblue-900/20"
+              onClick={viewTransaction}
+            >
+              <ExternalLink className="h-4 w-4 mr-1" />
+              Se detaljer
+            </Button>
+          </div>
         </>
       )}
     </div>

@@ -201,6 +201,7 @@ export const DirectMessageContainer = ({
         },
         receiver_id: friend.user_id,
         created_at: timestamp,
+        updated_at: timestamp,
         is_delivered: false,
         is_read: false,
         read_at: null,
