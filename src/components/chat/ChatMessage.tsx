@@ -6,27 +6,44 @@ import { Clock, Download, Edit, Trash2, ExternalLink, X, CheckCheck, Check, Shie
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
+interface ReplyToMessage {
+  content: string;
+  sender_id: string;
+}
+
+interface MediaInfo {
+  url: string;
+  type?: string;
+}
+
+interface Message {
+  id: string;
+  content: string;
+  sender_id: string;
+  created_at: string;
+  media?: MediaInfo | null;
+  ttl?: number | null;
+  status?: 'sent' | 'delivered' | 'read';
+  readBy?: string[];
+  replyTo?: string;
+  replyToMessage?: ReplyToMessage;
+}
+
+interface UserProfile {
+  displayName?: string;
+  photoURL?: string;
+  avatar_url?: string;
+  display_name?: string;
+  [key: string]: unknown;
+}
+
 interface ChatMessageProps {
-  message: {
-    id: string;
-    content: string;
-    sender_id: string;
-    created_at: string;
-    media?: {
-      url: string;
-      type?: string;
-    } | null;
-    ttl?: number | null;
-    status?: 'sent' | 'delivered' | 'read';
-    readBy?: string[];
-    replyTo?: string;
-    replyToMessage?: any;
-  };
+  message: Message;
   isCurrentUser: boolean;
-  userProfiles?: Record<string, any>;
-  onEdit?: (message: any) => void;
+  userProfiles?: Record<string, UserProfile>;
+  onEdit?: (message: Message) => void;
   onDelete?: (messageId: string) => void;
-  onReply?: (message: any) => void;
+  onReply?: (message: Message) => void;
   isEncrypted?: boolean;
 }
 

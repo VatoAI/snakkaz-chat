@@ -13,7 +13,11 @@ import { useInView } from 'react-intersection-observer';
 interface GroupMessageListProps {
   messages: GroupMessage[];
   isLoading: boolean;
-  userProfiles?: Record<string, any>;
+  userProfiles?: Record<string, {
+    displayName?: string;
+    photoURL?: string;
+    [key: string]: any;
+  }>;
   onMessageEdit?: (message: GroupMessage) => void;
   onMessageDelete?: (messageId: string) => void;
   onMessageReply?: (message: GroupMessage) => void;
@@ -44,8 +48,8 @@ export const GroupMessageList: React.FC<GroupMessageListProps> = ({
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
   const [replyTargetMessages, setReplyTargetMessages] = useState<Record<string, GroupMessage>>({});
   
-  // Bruk custom hook for å gruppere meldinger etter tid
-  const { groupedMessages, getDateSeparatorText } = useMessageGrouping(messages);
+  // Bruk custom hook for å gruppere meldinger etter tid - pass messages as an object property
+  const { groupedMessages, getDateSeparatorText } = useMessageGrouping({ messages });
   
   // IntersectionObserver for å laste flere meldinger når vi scroller til toppen
   const { ref: topLoadingRef } = useInView({
@@ -99,7 +103,7 @@ export const GroupMessageList: React.FC<GroupMessageListProps> = ({
       });
       setReplyTargetMessages(newReplyTargets);
     }
-  }, [messages]);
+  }, [messages, replyTargetMessages]);
 
   // Funksjon for å scrolle til bunnen av listen
   const scrollToBottom = () => {
@@ -139,7 +143,7 @@ export const GroupMessageList: React.FC<GroupMessageListProps> = ({
           </div>
           
           {/* Meldinger for denne datoen */}
-          {messagesForDate.map(message => {
+          {(messagesForDate as GroupMessage[]).map(message => {
             const isCurrentUser = message.senderId === user.id;
             
             // Finn reply-meldingen hvis denne meldingen er et svar
@@ -155,17 +159,17 @@ export const GroupMessageList: React.FC<GroupMessageListProps> = ({
                   id: message.id,
                   content: message.text || '',
                   sender_id: message.senderId,
-                  created_at: message.createdAt.toISOString(),
+                  created_at: message.createdAt instanceof Date ? message.createdAt.toISOString() : message.createdAt,
                   media: message.mediaUrl ? {
                     url: message.mediaUrl,
-                    type: message.mediaType
+                    type: message.mediaType || 'image'
                   } : null,
                   ttl: message.ttl,
                   status: 'sent',
                   readBy: message.readBy,
                   replyTo: message.replyToId,
                   replyToMessage: replyToMessage ? {
-                    content: replyToMessage.text,
+                    content: replyToMessage.text || '',
                     sender_id: replyToMessage.senderId
                   } : undefined
                 }}
@@ -174,7 +178,7 @@ export const GroupMessageList: React.FC<GroupMessageListProps> = ({
                 onEdit={onMessageEdit ? () => onMessageEdit(message) : undefined}
                 onDelete={onMessageDelete ? () => onMessageDelete(message.id) : undefined}
                 onReply={onMessageReply ? () => onMessageReply(message) : undefined}
-                isEncrypted={isEncryptedGroup || message.isEncrypted}
+                isEncrypted={isEncryptedGroup || (message.isEncrypted || false)}
               />
             );
           })}
