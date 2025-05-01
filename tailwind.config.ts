@@ -75,19 +75,19 @@ export default {
           600: "#2d2d2d", // Kanter og skillelinjer
           500: "#363636",
         },
-        // Modernisert gull-palett - mer subtil
+        // Modernisert gull-palett - justert til å matche den nye logoen
         cybergold: {
           50: "#fdf9e9",
-          100: "#f9efc6", 
-          200: "#f5e4a3",
-          300: "#f0d980",
-          400: "#eccf5d",
-          500: "#e8c43a", // Primær aksent/interaktiv farge
-          600: "#c29e2f",
-          700: "#9b7924",
-          800: "#745419",
-          900: "#4d2f0f",
-          950: "#261705",
+          100: "#f9f0c8", 
+          200: "#f5e6a5",
+          300: "#f0dc82",
+          400: "#e9d068",
+          500: "#dabc45", // Justert primær gull-farge for å matche logoen
+          600: "#c9a930",
+          700: "#a88d25",
+          800: "#856e1c",
+          900: "#624e12",
+          950: "#342908",
         },
         // Forenklet rødpalett for advarsler/feil
         cyberred: {

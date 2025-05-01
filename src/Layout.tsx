@@ -28,17 +28,23 @@ const Layout = () => {
 
   return (
     <div className="min-h-screen bg-cyberdark-950 flex flex-col">
-      <header className="sticky top-0 z-50 w-full border-b border-cyberdark-800 bg-cyberdark-900/95 backdrop-blur supports-[backdrop-filter]:bg-cyberdark-900/75">
+      <header className="sticky top-0 z-50 w-full border-b border-cyberdark-800 bg-cyberdark-950/95 backdrop-blur supports-[backdrop-filter]:bg-cyberdark-950/90">
         <div className="container flex h-16 items-center justify-between">
           <div className="flex items-center gap-4">
-            {/* Updated logo element */}
-            <div className="flex items-center gap-2 mr-4" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
+            {/* Logo med ny design og stil */}
+            <div 
+              className="flex items-center gap-3 mr-6 group" 
+              onClick={() => navigate('/')} 
+              style={{ cursor: 'pointer' }}
+            >
               <img
-                src="/snakkaz-logo.png"
+                src="/logos/snakkaz-gold.svg"
                 alt="SnakkaZ Logo"
-                className="h-8 w-auto"
+                className="h-10 w-auto transition-transform duration-300 group-hover:scale-105"
               />
-              <span className="text-xl font-bold text-cybergold-400">SnakkaZ</span>
+              <span className="text-xl font-bold text-cybergold-500 tracking-wide transition-colors duration-200 group-hover:text-cybergold-400">
+                SnakkaZ
+              </span>
             </div>
             
             <MainNav />

@@ -1,0 +1,21 @@
+<svg width="300" height="300" viewBox="0 0 300 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Avrundet bakgrunn -->
+  <rect x="35" y="35" width="230" height="230" rx="40" fill="black" stroke="#dabc45" stroke-width="5"/>
+  
+  <!-- Blomst av livet symbol (forenklet) -->
+  <g transform="translate(150, 135)" stroke="#dabc45" stroke-width="4" fill="none">
+    <!-- Sentral sirkel -->
+    <circle cx="0" cy="0" r="50"/>
+    
+    <!-- Sirkelmønsteret -->
+    <circle cx="-25" cy="-43.3" r="50"/>
+    <circle cx="25" cy="-43.3" r="50"/>
+    <circle cx="50" cy="0" r="50"/>
+    <circle cx="25" cy="43.3" r="50"/>
+    <circle cx="-25" cy="43.3" r="50"/>
+    <circle cx="-50" cy="0" r="50"/>
+  </g>
+  
+  <!-- Tekst "SnakkaZ" -->
+  <text x="150" y="260" font-family="Arial, sans-serif" font-size="36" font-weight="bold" fill="#dabc45" text-anchor="middle">SnakkaZ</text>
+</svg>
