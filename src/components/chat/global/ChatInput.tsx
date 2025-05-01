@@ -1,5 +1,4 @@
-
-import { MessageInput } from "@/components/MessageInput";
+import { MessageInput } from "@/components/message-input";
 
 interface ChatInputProps {
   newMessage: string;

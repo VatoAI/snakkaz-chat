@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import WelcomeDashboard from '@/components/WelcomeDashboard';
+import WelcomeDashboard from '@/components/dashboard/WelcomeDashboard';
 import FirstTimeUserWelcome from '@/components/FirstTimeUserWelcome';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { useAuth } from '@/hooks/useAuth';

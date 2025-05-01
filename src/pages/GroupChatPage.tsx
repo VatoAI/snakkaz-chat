@@ -58,7 +58,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Switch } from '@/components/ui/switch';
-import MessageInput from '@/components/MessageInput';
+import MessageInput from '@/components/message-input/MessageInput';
 import { Group, GroupVisibility, SecurityLevel } from '@/types/groups';
 
 const GroupChatPage = () => {
