@@ -68,10 +68,10 @@ export const useMessageGrouping = <T extends MessageType>(props: UseMessageGroup
       } 
       else if ('created_at' in message && message.created_at) {
         messageDate = typeof message.created_at === 'string' 
-          ? new Date(message.created_at)
-          : message.created_at instanceof Date
-            ? message.created_at
-            : new Date();
+            ? new Date(message.created_at)
+            : message.created_at instanceof Date
+              ? message.created_at
+              : new Date();
       } 
       // Fallback til nåværende tid
       else {
@@ -159,7 +159,7 @@ export const useMessageGrouping = <T extends MessageType>(props: UseMessageGroup
     else if ('created_at' in current && current.created_at) {
       currentDate = typeof current.created_at === 'string' 
         ? new Date(current.created_at)
-        : typeof current.created_at === 'object' && current.created_at instanceof Date
+        : current.created_at instanceof Date
           ? current.created_at
           : new Date();
     }
