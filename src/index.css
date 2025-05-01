@@ -82,14 +82,127 @@
     --sidebar-muted: 217 19% 15%;
     --sidebar-muted-foreground: 215 16% 70%;
   }
+  
+  /* Cyberpunk tema - nytt futuristisk tema */
+  .cyberpunk {
+    --background: 222 47% 5%;
+    --foreground: 210 40% 98%;
+    
+    --card: 222 47% 8%;
+    --card-foreground: 210 40% 98%;
+    
+    --popover: 222 47% 8%;
+    --popover-foreground: 210 40% 98%;
+    
+    --primary: 217 91% 60%;
+    --primary-foreground: 210 40% 98%;
+    
+    --secondary: 217 32% 18%;
+    --secondary-foreground: 210 40% 98%;
+    
+    --muted: 217 32% 12%;
+    --muted-foreground: 215 20% 70%;
+    
+    --accent: 190 75% 58%;
+    --accent-foreground: 210 40% 98%;
+    
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+    
+    --border: 215 27% 30%;
+    --input: 217 32% 18%;
+    --ring: 224 76% 54%;
+    
+    --sidebar: 222 47% 8%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-border: 215 27% 30%;
+    --sidebar-accent: 190 75% 58%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-muted: 217 32% 18%;
+    --sidebar-muted-foreground: 215 20% 70%;
+  }
+  
+  /* Midnight tema - ekstra mørkt tema */
+  .midnight {
+    --background: 228 34% 3%;
+    --foreground: 210 40% 98%;
+    
+    --card: 228 34% 5%;
+    --card-foreground: 210 40% 98%;
+    
+    --popover: 228 34% 5%;
+    --popover-foreground: 210 40% 98%;
+    
+    --primary: 230 92% 47%;
+    --primary-foreground: 210 40% 98%;
+    
+    --secondary: 220 25% 10%;
+    --secondary-foreground: 210 40% 98%;
+    
+    --muted: 220 25% 7%;
+    --muted-foreground: 215 20% 65%;
+    
+    --accent: 260 60% 55%;
+    --accent-foreground: 210 40% 98%;
+    
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+    
+    --border: 228 17% 15%;
+    --input: 220 25% 10%;
+    --ring: 230 92% 47%;
+    
+    --sidebar: 228 34% 5%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-border: 228 17% 15%;
+    --sidebar-accent: 260 60% 55%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-muted: 220 25% 10%;
+    --sidebar-muted-foreground: 215 20% 65%;
+  }
+  
+  /* Fargeaksent-variasjoner */
+  :root.accent-blue {
+    --accent: 217 91% 60%;
+    --sidebar-accent: 217 91% 60%;
+  }
+  
+  :root.accent-gold {
+    --accent: 43 96% 56%;
+    --sidebar-accent: 43 96% 56%;
+  }
+  
+  :root.accent-green {
+    --accent: 142 71% 45%;
+    --sidebar-accent: 142 71% 45%;
+  }
+  
+  :root.accent-purple {
+    --accent: 270 76% 60%;
+    --sidebar-accent: 270 76% 60%;
+  }
+  
+  :root.accent-red {
+    --accent: 0 84% 60%;
+    --sidebar-accent: 0 84% 60%;
+  }
 
   .light {
     /* Eksplisitt lysemodus for å sikre at alle komponenter fungerer korrekt */
     color-scheme: light;
   }
 
-  .dark {
+  .dark, .cyberpunk, .midnight {
     color-scheme: dark;
+  }
+  
+  /* Jevnere temaoverganger */
+  .theme-transition,
+  .theme-transition *,
+  .theme-transition *:before,
+  .theme-transition *:after {
+    transition: all 0.3s ease-out !important;
+    transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter !important;
   }
 
   html {
@@ -110,11 +223,24 @@
   input,
   textarea {
     @apply bg-white border-gray-300 text-gray-900 
-           dark:bg-cyberdark-800 dark:border-cyberdark-600 dark:text-white;
+           dark:bg-cyberdark-800 dark:border-cyberdark-600 dark:text-white
+           cyberpunk:bg-[#0c1630] cyberpunk:border-[#214377] cyberpunk:text-[#e2edff]
+           midnight:bg-[#050914] midnight:border-[#14182f] midnight:text-[#e9ecfd];
   }
 
   ::placeholder {
-    @apply text-gray-400 dark:text-cyberdark-500;
+    @apply text-gray-400 dark:text-cyberdark-500 
+           cyberpunk:text-[#556998] midnight:text-[#373d59];
+  }
+  
+  /* Reduserte animasjoner for brukere som foretrekker det */
+  :root.reduced-motion *,
+  :root.reduced-motion *:before,
+  :root.reduced-motion *:after {
+    animation-duration: 0.001ms !important;
+    animation-delay: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+    transition-delay: 0.001ms !important;
   }
 
   /* Mobile input and button sizes */
@@ -307,6 +433,51 @@
   .ios-shadow {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
   }
+  
+  /* Nye temaspesifikke komponenter */
+  .theme-card {
+    @apply bg-card rounded-lg border shadow-sm 
+           dark:shadow-none cyberpunk:shadow-[0_0_15px_rgba(26,157,255,0.2)]
+           cyberpunk:border-[#214377] midnight:border-[#14182f]
+           midnight:shadow-none;
+  }
+  
+  .theme-button {
+    @apply rounded-md shadow-sm hover:shadow transition-all duration-200
+           dark:shadow-[0_0_0_1px_rgba(255,255,255,0.1)] dark:hover:shadow-[0_0_0_1px_rgba(255,255,255,0.2)]
+           cyberpunk:shadow-[0_0_5px_rgba(26,157,255,0.4)] cyberpunk:hover:shadow-[0_0_10px_rgba(26,157,255,0.6)]
+           midnight:shadow-[0_0_8px_rgba(111,76,255,0.2)] midnight:hover:shadow-[0_0_12px_rgba(111,76,255,0.4)];
+  }
+  
+  .accent-highlight {
+    @apply text-blue-600 dark:text-blue-400 cyberpunk:text-cyan-400 midnight:text-purple-400
+           accent-blue:text-blue-600 accent-blue:dark:text-blue-400
+           accent-gold:text-amber-600 accent-gold:dark:text-amber-400
+           accent-green:text-emerald-600 accent-green:dark:text-emerald-400
+           accent-purple:text-violet-600 accent-purple:dark:text-violet-400
+           accent-red:text-rose-600 accent-red:dark:text-rose-400;
+  }
+  
+  .accent-border {
+    @apply border-blue-500/50 dark:border-blue-500/50 
+           cyberpunk:border-cyan-500/50 midnight:border-purple-500/50
+           accent-blue:border-blue-500/50
+           accent-gold:border-amber-500/50
+           accent-green:border-emerald-500/50
+           accent-purple:border-violet-500/50
+           accent-red:border-rose-500/50;
+  }
+  
+  .accent-button {
+    @apply bg-blue-600 hover:bg-blue-700 text-white
+           cyberpunk:bg-cyan-600 cyberpunk:hover:bg-cyan-700
+           midnight:bg-purple-600 midnight:hover:bg-purple-700
+           accent-blue:bg-blue-600 accent-blue:hover:bg-blue-700
+           accent-gold:bg-amber-600 accent-gold:hover:bg-amber-700
+           accent-green:bg-emerald-600 accent-green:hover:bg-emerald-700
+           accent-purple:bg-violet-600 accent-purple:hover:bg-violet-700
+           accent-red:bg-rose-600 accent-red:hover:bg-rose-700;
+  }
 }
 
 /* Responsive dialog adjustments */
@@ -357,4 +528,16 @@
 .bubble-gradient {
   background: linear-gradient(115deg, #00121a 0%, #0088ff 65%, #e6b300 90%, #e60000 100%);
   color: #fff;
+}
+
+/* Spesialiserte tema-effekter */
+.cyberpunk-grid {
+  background-image: linear-gradient(rgba(13, 26, 56, 0.8) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(13, 26, 56, 0.8) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.midnight-stars {
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.2) 1px, transparent 1px);
+  background-size: 20px 20px;
 }
