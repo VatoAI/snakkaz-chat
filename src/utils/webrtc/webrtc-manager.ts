@@ -1,4 +1,3 @@
-
 import { generateKeyPair } from '../encryption';
 import { PeerManager } from './peer-manager';
 import { ConnectionManager } from './connection-manager';
@@ -213,5 +212,28 @@ export class WebRTCManager implements IWebRTCManager {
   // Try to ensure a peer is ready, reconnecting if necessary
   public async ensurePeerReady(peerId: string): Promise<boolean> {
     return await this.connectionStateManager.ensurePeerReady(peerId, this.attemptReconnect.bind(this));
+  }
+  
+  // Send typing indicator to peer
+  public async sendTypingIndicator(peerId: string, isTyping: boolean): Promise<boolean> {
+    try {
+      if (!this.isPeerReady(peerId)) {
+        // Hvis peeren ikke er klar, prøv å koble til først
+        await this.ensurePeerReady(peerId);
+      }
+      
+      // Send et spesielt formattert typing-indikator melding
+      const typingMessage = JSON.stringify({
+        type: 'typing_indicator',
+        isTyping,
+        timestamp: new Date().toISOString()
+      });
+      
+      await this.messageHandler.sendMessage(peerId, typingMessage, true);
+      return true;
+    } catch (error) {
+      console.error(`Error sending typing indicator to ${peerId}:`, error);
+      return false;
+    }
   }
 }

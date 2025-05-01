@@ -171,6 +171,7 @@ export const useDirectMessageSender = (
         },
         receiver_id: friendId,
         created_at: timestamp,
+        updated_at: timestamp,  // Legger til manglende updated_at felt
         encryption_key: '',  // Ikke lagre krypteringsnøkler i minnet
         iv: '',
         is_encrypted: true,

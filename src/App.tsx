@@ -10,15 +10,14 @@ import Profile from './pages/Profile';
 import InfoPage from './pages/Info';
 import DownloadPage from './pages/Download'; 
 import AuthPage from './pages/auth/AuthPage';
-import { SecuritySettingsPage } from './components/security/SecuritySettingsPage'; // Import the Security Settings Page
+import { SecuritySettingsPage } from './components/security/SecuritySettingsPage';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { Toaster } from './components/ui/toaster';
 import { secureSupabase } from './integrations/supabase/secure-client';
 import { supabase } from './integrations/supabase/client';
 import { useEffect, useState } from 'react';
-import AIChat from './pages/AIChat'; // Import AI Chat page
-import GroupChatPage from './pages/GroupChatPage'; // Import Group Chat page
-import AdminPanel from './pages/AdminPanel'; // Import Admin Panel
+import GroupChatPage from './pages/GroupChatPage';
+import AdminPanel from './pages/AdminPanel';
 
 function App() {
   const [isInitialized, setIsInitialized] = useState(false);
@@ -221,11 +220,6 @@ function App() {
                       <Chat />
                     </ProtectedRoute>
                   } />
-                  <Route path="ai-chat" element={
-                    <ProtectedRoute>
-                      <AIChat />
-                    </ProtectedRoute>
-                  } />
                   <Route path="group-chat/:id?" element={
                     <ProtectedRoute>
                       <GroupChatPage />
@@ -236,7 +230,7 @@ function App() {
                       <Profile />
                     </ProtectedRoute>
                   } />
-                  <Route path="security-settings" element={ // Add new route for security settings
+                  <Route path="security-settings" element={
                     <ProtectedRoute>
                       <SecuritySettingsPage />
                     </ProtectedRoute>
