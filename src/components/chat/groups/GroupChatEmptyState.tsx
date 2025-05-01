@@ -1,80 +1,91 @@
-import { Button } from "@/components/ui/button";
-import { MessageSquare, Shield, UserPlus, Lock } from "lucide-react";
-import { SecurityLevel } from "@/types/security";
 
-interface GroupChatEmptyStateProps {
+import React from 'react';
+import { Button } from '@/components/ui/button';
+import { UserPlus, Lock, ShieldAlert } from 'lucide-react';
+import { SecurityLevel } from '@/types/security';
+
+export interface GroupChatEmptyStateProps {
   usingServerFallback: boolean;
   securityLevel: SecurityLevel;
-  isAdmin?: boolean;
-  memberCount?: number;
-  onShowInvite?: () => void;
-  isPageEncryptionEnabled?: boolean;
+  isAdmin: boolean;
+  isPremium?: boolean; // Add missing props
+  isPremiumMember: boolean;
+  memberCount: number;
+  onShowInvite: () => void;
+  onShowPremium: () => void;
+  isPageEncryptionEnabled: boolean;
   onEnablePageEncryption?: () => Promise<void>;
 }
 
-export const GroupChatEmptyState = ({ 
-  usingServerFallback, 
+export const GroupChatEmptyState: React.FC<GroupChatEmptyStateProps> = ({
+  usingServerFallback,
   securityLevel,
-  isAdmin = false,
-  memberCount = 0,
+  isAdmin,
+  isPremium = false,
+  isPremiumMember,
+  memberCount,
   onShowInvite,
-  isPageEncryptionEnabled = false,
+  onShowPremium,
+  isPageEncryptionEnabled,
   onEnablePageEncryption
-}: GroupChatEmptyStateProps) => {
-  let securityText = "End-to-end kryptert";
-  
-  if (usingServerFallback) {
-    securityText = "Faller tilbake til server-kryptering";
-  } else if (securityLevel === 'server_e2ee') {
-    securityText = "Server-kryptert (e2ee)";
-  } else if (securityLevel === 'standard') {
-    securityText = "Standard kryptering";
-  }
-  
-  const showInviteButton = isAdmin && memberCount <= 1 && onShowInvite;
-  const showEncryptionButton = isAdmin && !isPageEncryptionEnabled && onEnablePageEncryption;
-
+}) => {
   return (
-    <div className="flex flex-col items-center justify-center h-full p-6 text-center">
-      <MessageSquare className="h-16 w-16 mb-4 text-cybergold-500/30" />
-      
-      <h3 className="text-xl font-medium text-cybergold-300 mb-2">
-        Ingen meldinger ennå
-      </h3>
-      
-      <p className="text-cybergold-400 max-w-sm mb-4">
-        {memberCount <= 1 ? (
-          <>Denne gruppen har kun deg som medlem. Inviter venner for å starte en samtale.</>
-        ) : (
-          <>Start samtalen ved å skrive en melding nedenfor.</>
-        )}
-      </p>
-      
-      <div className="flex items-center justify-center mb-6 text-sm">
-        <Shield className="h-4 w-4 mr-1.5 text-green-500" />
-        <span className="text-green-500">{securityText}</span>
-      </div>
-      
-      <div className="flex gap-3 flex-wrap justify-center">
-        {showInviteButton && (
-          <Button 
-            onClick={onShowInvite} 
-            className="bg-cybergold-600 hover:bg-cybergold-700 text-black flex gap-2"
-          >
-            <UserPlus className="h-4 w-4" />
-            <span>Inviter venner</span>
-          </Button>
-        )}
+    <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+      <div className="w-full max-w-md space-y-6">
+        <h3 className="text-xl font-semibold text-cybergold-300">
+          Start en ny samtale
+        </h3>
         
-        {showEncryptionButton && (
+        <p className="text-cybergold-400 text-sm">
+          Det er ingen meldinger i denne gruppen enda. Vær den første til å si hei!
+        </p>
+        
+        <div className="flex flex-col gap-3 mt-4">
           <Button 
-            onClick={onEnablePageEncryption} 
-            className="bg-cyberblue-600 hover:bg-cyberblue-700 text-black flex gap-2"
+            onClick={onShowInvite}
+            variant="outline" 
+            className="bg-cyberdark-800 border-cybergold-500/30 text-cybergold-300 hover:bg-cyberdark-700"
           >
-            <Lock className="h-4 w-4" />
-            <span>Aktiver helside-kryptering</span>
+            <UserPlus className="mr-2 h-4 w-4" />
+            Inviter flere medlemmer
           </Button>
-        )}
+          
+          {!isPageEncryptionEnabled && (isAdmin || isPremiumMember) && onEnablePageEncryption && (
+            <Button 
+              onClick={onEnablePageEncryption}
+              variant="outline" 
+              className="bg-cyberdark-800 border-cybergold-500/30 text-cybergold-300 hover:bg-cyberdark-700"
+            >
+              <Lock className="mr-2 h-4 w-4" />
+              Aktiver helside-kryptering
+            </Button>
+          )}
+          
+          {!isPremiumMember && (
+            <Button 
+              onClick={onShowPremium}
+              variant="outline"
+              className="bg-cybergold-900/30 border-cybergold-500/30 text-cybergold-300 hover:bg-cybergold-900/50"
+            >
+              <ShieldAlert className="mr-2 h-4 w-4" />
+              Oppgrader til premium
+            </Button>
+          )}
+        </div>
+        
+        <div className="pt-4 text-xs text-cybergold-500">
+          {securityLevel === 'p2p_e2ee' ? (
+            <p>Denne gruppen bruker ende-til-ende kryptering for maksimal sikkerhet.</p>
+          ) : securityLevel === 'server_e2ee' ? (
+            <p>Denne gruppen bruker serverkryptering for å beskytte meldingene dine.</p>
+          ) : (
+            <p>Denne gruppen bruker standardkryptering for meldinger.</p>
+          )}
+          
+          <p className="mt-2">
+            Antall medlemmer i gruppen: {memberCount}
+          </p>
+        </div>
       </div>
     </div>
   );

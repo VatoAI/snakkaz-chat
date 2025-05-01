@@ -91,6 +91,7 @@ export const useDirectMessageSender = (
             },
             receiver_id: friendId,
             created_at: timestamp,
+            updated_at: timestamp,
             encryption_key: '',
             iv: '',
             is_encrypted: true,

@@ -1,3 +1,4 @@
+
 import { useRef, useEffect } from "react";
 import { DecryptedMessage } from "@/types/message";
 import { MessageGroup } from "@/components/message/MessageGroup";
@@ -14,7 +15,8 @@ interface DirectMessageListProps {
   onEditMessage?: (message: DecryptedMessage) => void;
   onDeleteMessage?: (messageId: string) => void;
   securityLevel?: SecurityLevel;
-  isPageEncrypted?: boolean; // Add the missing prop
+  isPageEncrypted?: boolean;
+  isPremiumMember?: boolean;
 }
 
 export const DirectMessageList = ({
@@ -28,7 +30,8 @@ export const DirectMessageList = ({
   onEditMessage,
   onDeleteMessage,
   securityLevel = 'server_e2ee',
-  isPageEncrypted = false // Add default value
+  isPageEncrypted = false,
+  isPremiumMember = false
 }: DirectMessageListProps) => {
   const bottomRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);

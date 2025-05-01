@@ -1,13 +1,13 @@
+
 import { useState, useRef, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { encryptMessage } from "@/utils/encryption";
-import { generateEncryptionKey } from "@/utils/encryption/key-management";
 import { DecryptedMessage } from "@/types/message";
 import { useToast } from "@/components/ui/use-toast";
 
 export const useGroupMessageSender = (
   currentUserId: string,
-  groupId: string,
+  groupId: string | undefined,
   memberIds: string[],
   onNewMessage: (message: DecryptedMessage) => void
 ) => {
@@ -17,80 +17,7 @@ export const useGroupMessageSender = (
   const errorResetTimeout = useRef<NodeJS.Timeout | null>(null);
   const messageQueue = useRef<string[]>([]);
   const processingQueue = useRef<boolean>(false);
-  const groupSessionKey = useRef<string | null>(null);
-
-  // Vår egen funksjon for å generere krypteringsnøkler
-  const generateNewEncryptionKey = useCallback(async (): Promise<string> => {
-    try {
-      // Bruk WebCrypto API direkte
-      const key = await window.crypto.subtle.generateKey(
-        {
-          name: "AES-GCM",
-          length: 256, // Fikset fra 'the256' til 256
-        },
-        true,
-        ["encrypt", "decrypt"]
-      );
-      
-      const exportedKey = await window.crypto.subtle.exportKey("jwk", key);
-      return JSON.stringify(exportedKey);
-    } catch (error) {
-      console.error("Encryption key generation failed:", error);
-      // Fallback: Bruk en pseudotilfeldig nøkkel
-      const randomKey = Array.from(
-        window.crypto.getRandomValues(new Uint8Array(32)),
-        byte => byte.toString(16).padStart(2, "0")
-      ).join("");
-      return randomKey;
-    }
-  }, []);
-
-  // Initialiser eller hent gruppens sesjonsnøkkel
-  const getOrCreateGroupSessionKey = useCallback(async (): Promise<string> => {
-    // Hvis vi allerede har en sesjonsnøkkel, bruk den
-    if (groupSessionKey.current) {
-      return groupSessionKey.current;
-    }
-
-    try {
-      // Forsøk å hente eksisterende gruppe-krypteringsnøkkel
-      const { data } = await supabase
-        .from('group_encryption')
-        .select('session_key')
-        .eq('group_id', groupId)
-        .single();
-      
-      if (data?.session_key) {
-        // Lagre nøkkelen i minnet for raskere tilgang
-        groupSessionKey.current = data.session_key;
-        return data.session_key;
-      }
-
-      // Hvis ingen nøkkel finnes, oppretter vi en ny
-      const newKey = await generateNewEncryptionKey(); // Bruker vår egen funksjon her
-      
-      // Lagre den nye nøkkelen i databasen
-      await supabase
-        .from('group_encryption')
-        .insert({
-          group_id: groupId,
-          session_key: newKey,
-          created_by: currentUserId,
-          created_at: new Date().toISOString()
-        });
-      
-      // Lagre i minnet
-      groupSessionKey.current = newKey;
-      return newKey;
-    } catch (error) {
-      console.error('Feil ved henting/opprettelse av gruppesessjonsnøkkel:', error);
-      // Fallback til å generere en lokal nøkkel som ikke lagres
-      const fallbackKey = await generateNewEncryptionKey(); // Bruker vår egen funksjon her også
-      groupSessionKey.current = fallbackKey;
-      return fallbackKey;
-    }
-  }, [groupId, currentUserId, generateNewEncryptionKey]);
-
+  
   const clearSendError = useCallback(() => {
     setSendError(null);
     if (errorResetTimeout.current) {
@@ -99,37 +26,30 @@ export const useGroupMessageSender = (
     }
   }, []);
 
-  const sendGroupMessage = useCallback(async (message: string): Promise<boolean> => {
+  // Handle sending messages to the server
+  const sendMessageViaServer = useCallback(async (message: string): Promise<boolean> => {
     if (!currentUserId || !groupId) {
       console.log('Group message failed: Missing currentUserId or groupId', { currentUserId, groupId });
       return false;
     }
     
     try {
-      // Få gruppens sesjonsnøkkel
-      const sessionKey = await getOrCreateGroupSessionKey();
-      
-      console.log('Krypterer gruppemelding med sesjonsnøkkel...');
-      // Krypter meldingen med standard metode, men med gruppens sesjonsnøkkel
+      console.log('Encrypting group message...');
       const { encryptedContent, key, iv } = await encryptMessage(message.trim());
       
-      console.log('Sender melding til gruppe...');
+      console.log('Sending group message to server...');
       const { error } = await supabase
         .from('messages')
         .insert({
           sender_id: currentUserId,
           group_id: groupId,
+          receiver_id: null, // Group messages don't have a specific receiver
           encrypted_content: encryptedContent,
           encryption_key: key,
           iv: iv,
           is_encrypted: true,
           read_at: null,
           is_deleted: false,
-          // Legg til metadata for gruppemeldinger
-          metadata: JSON.stringify({
-            type: 'group_message',
-            session_key_id: sessionKey.substring(0, 8) // Trunkert for logging
-          })
         });
       
       if (error) {
@@ -137,13 +57,13 @@ export const useGroupMessageSender = (
         throw error;
       }
       
-      console.log('Melding sendt til gruppe med ende-til-ende-kryptering');
+      console.log('Group message sent successfully with encryption');
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Group message failed:', error);
-      throw error;
+      throw new Error(error.message || 'Ukjent feil ved sending av gruppemelding');
     }
-  }, [currentUserId, groupId, getOrCreateGroupSessionKey]);
+  }, [currentUserId, groupId]);
 
   // Process the message queue
   const processMessageQueue = useCallback(async () => {
@@ -156,7 +76,7 @@ export const useGroupMessageSender = (
     try {
       while (messageQueue.current.length > 0) {
         const message = messageQueue.current[0];
-        const success = await sendGroupMessage(message);
+        const success = await sendMessageViaServer(message);
         
         if (success) {
           // Remove the message from the queue if sent successfully
@@ -175,6 +95,7 @@ export const useGroupMessageSender = (
             receiver_id: null,
             group_id: groupId,
             created_at: timestamp,
+            updated_at: timestamp,
             encryption_key: '',
             iv: '',
             is_encrypted: true,
@@ -189,15 +110,23 @@ export const useGroupMessageSender = (
           break;
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error processing group message queue:', error);
+      throw new Error(error.message || 'Feil ved behandling av gruppemeldingskø');
     } finally {
       processingQueue.current = false;
     }
-  }, [currentUserId, groupId, sendGroupMessage, onNewMessage]);
+  }, [currentUserId, groupId, sendMessageViaServer, onNewMessage]);
 
-  const handleSendMessage = useCallback(async (e: React.FormEvent, message: string) => {
+  // Main function for sending messages
+  const handleSendMessage = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Extract message from form event
+    const form = e.target as HTMLFormElement;
+    const messageInput = form.querySelector('textarea, input[type="text"]') as HTMLTextAreaElement | HTMLInputElement | null;
+    const message = messageInput?.value || '';
+    
     if (!message.trim() || !groupId || !currentUserId) {
       console.log('Group message sending aborted: empty message or missing IDs', { 
         messageEmpty: !message.trim(), 
@@ -218,14 +147,22 @@ export const useGroupMessageSender = (
       // Start processing the queue if not already processing
       await processMessageQueue();
       
+      // Clear the input field after successful send
+      if (messageInput) {
+        messageInput.value = '';
+      }
+      
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error sending group message:', error);
-      setSendError('Kunne ikke sende melding til gruppen. Prøv igjen senere.');
+      
+      // Provide a specific error message
+      const errorMessage = error.message || 'Kunne ikke sende gruppemelding. Sjekk nettverksforbindelsen din.';
+      setSendError(errorMessage);
       
       toast({
-        title: "Feil",
-        description: "Kunne ikke sende gruppemelding. Prøv igjen senere.",
+        title: "Feil ved sending av gruppemelding",
+        description: errorMessage,
         variant: "destructive",
       });
       
