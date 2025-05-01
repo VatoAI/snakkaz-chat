@@ -21,23 +21,24 @@ export const ChatInput = ({
   editingMessage,
   onCancelEdit
 }: ChatInputProps) => {
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await onSubmit(e);
-    return true;
+  const handleSendMessage = async (message: string) => {
+    // Update the newMessage state through the parent component
+    setNewMessage(message);
+    // Create a synthetic form event to maintain compatibility with onSubmit
+    const syntheticEvent = { preventDefault: () => {} } as React.FormEvent;
+    await onSubmit(syntheticEvent);
+    return;
   };
 
   return (
     <div className="p-2 sm:p-4 border-t border-cybergold-500/30">
       <MessageInput
-        newMessage={newMessage}
-        setNewMessage={setNewMessage}
-        handleSubmit={handleSubmit}
-        isLoading={isLoading}
-        ttl={ttl}
-        setTtl={setTtl}
+        onSendMessage={handleSendMessage}
+        placeholder="Skriv en melding..."
+        disabled={isLoading}
         editingMessage={editingMessage}
         onCancelEdit={onCancelEdit}
+        autoFocus={true}
       />
     </div>
   );

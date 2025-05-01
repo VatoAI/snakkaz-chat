@@ -167,7 +167,8 @@ export default {
   },
   plugins: [
     function({ addVariant }) {
-      addVariant('cyberpunk', '.cyberpunk &')
+      addVariant('cyberpunk', '.cyberpunk &');
+      addVariant('midnight', '.midnight &');
     }
   ],
 };
