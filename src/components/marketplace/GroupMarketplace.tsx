@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Plus, PackageSearch, RefreshCcw, Loader2, ShoppingBag, MapPin, GiftIcon, PinIcon, Star, BadgeCheck, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -631,7 +632,7 @@ export const GroupMarketplace: React.FC<GroupMarketplaceProps> = ({
                   variant="outline"
                   size="sm"
                   onClick={() => setShowSubscribers(!showSubscribers)}
-                ></Button>
+                >
                   <Users className="h-4 w-4" />
                   <span className="ml-1">{subscribers.length}</span>
                 </Button>
@@ -738,7 +739,7 @@ export const GroupMarketplace: React.FC<GroupMarketplaceProps> = ({
       </div>
       
       {/* Tabs for filtering */}
-      <Tabs defaultValue="active" value={activeTab} onValueChange={setActiveTab} className="mb-4"></Tabs>
+      <Tabs defaultValue="active" value={activeTab} onValueChange={setActiveTab} className="mb-4">
         <TabsList>
           <TabsTrigger value="active">Tilgjengelige</TabsTrigger>
           <TabsTrigger value="all">Alle produkter</TabsTrigger>
@@ -772,7 +773,7 @@ export const GroupMarketplace: React.FC<GroupMarketplaceProps> = ({
       )}
       
       {/* Lokasjonpicker modalt vindu */}
-      <Dialog open={isLocationPickerOpen} onOpenChange={setIsLocationPickerOpen}></Dialog>
+      <Dialog open={isLocationPickerOpen} onOpenChange={setIsLocationPickerOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Velg lokasjon for produktet</DialogTitle>
@@ -808,7 +809,7 @@ export const GroupMarketplace: React.FC<GroupMarketplaceProps> = ({
       
       {/* Produktliste */}
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-12"></div>
+        <div className="flex flex-col items-center justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           <p className="mt-2 text-muted-foreground">Laster inn produkter...</p>
         </div>
@@ -825,7 +826,7 @@ export const GroupMarketplace: React.FC<GroupMarketplaceProps> = ({
               )}
               
               {product.sellerVerified && (
-                <div className="absolute top-2 left-2 z-10"></div>
+                <div className="absolute top-2 left-2 z-10">
                   <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-600">
                     <BadgeCheck className="h-3 w-3 mr-1" /> Verifisert selger
                   </Badge>
@@ -951,7 +952,7 @@ export const GroupMarketplace: React.FC<GroupMarketplaceProps> = ({
           ))}
         </div>
       ) : (
-        <div className="text-center py-12 border-2 border-dashed rounded-lg"></div>
+        <div className="text-center py-12 border-2 border-dashed rounded-lg">
           <ShoppingBag className="h-12 w-12 mx-auto text-muted-foreground opacity-30" />
           <h3 className="mt-2 text-lg font-medium">Ingen produkter ennå</h3>
           <p className="text-muted-foreground">
