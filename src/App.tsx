@@ -10,6 +10,7 @@ import Profile from './pages/Profile';
 import InfoPage from './pages/Info';
 import DownloadPage from './pages/Download'; 
 import AuthPage from './pages/auth/AuthPage';
+import { SecuritySettingsPage } from './components/security/SecuritySettingsPage'; // Import the Security Settings Page
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { Toaster } from './components/ui/toaster';
 import { secureSupabase } from './integrations/supabase/secure-client';
@@ -233,6 +234,11 @@ function App() {
                   <Route path="profile" element={
                     <ProtectedRoute>
                       <Profile />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="security-settings" element={ // Add new route for security settings
+                    <ProtectedRoute>
+                      <SecuritySettingsPage />
                     </ProtectedRoute>
                   } />
                   <Route path="admin" element={

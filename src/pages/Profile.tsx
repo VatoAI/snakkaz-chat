@@ -6,13 +6,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Edit, Eye, Key, Lock, LogOut, ShieldCheck, Upload, User } from "lucide-react";
+import { Edit, Eye, Key, Lock, LogOut, ShieldCheck, Upload, User, Shield } from "lucide-react";
 import { PremiumUser } from "@/components/profile/PremiumUser";
 import { useToast } from "@/hooks/use-toast";
 import { useGroups } from "@/hooks/useGroups";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AppEncryptionContext } from "@/contexts/AppEncryptionContext";
 import { useProfileLoader } from "@/hooks/useProfileLoader";
+import { Link } from "react-router-dom";
 
 export default function Profile() {
   const { user, signOut, updateUserProfile } = useAuth();
@@ -338,6 +339,15 @@ export default function Profile() {
                   <Button variant="outline" className="w-full border-cyberdark-600 text-gray-300">
                     <Lock className="h-4 w-4 mr-2" /> Endre passord
                   </Button>
+
+                  <Link to="/security-settings" className="block w-full">
+                    <Button 
+                      variant="outline" 
+                      className="w-full border-cyberdark-600 text-gray-300 hover:bg-cybergold-950/20 hover:text-cybergold-400"
+                    >
+                      <Shield className="h-4 w-4 mr-2" /> Sikkerhet og personvern
+                    </Button>
+                  </Link>
 
                   {isPremium && (
                     <>
