@@ -1,36 +1,88 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="no">
 
 <head>
-  <!-- Last updated: May 1, 2025 - Fixed group chat persistence and optimized AI assistant -->
+  <!-- Last updated: May 1, 2025 - Production optimizations for www.snakkaz.com launch -->
   <meta charset="UTF-8" />
   <link rel="icon" type="image/svg+xml" href="/snakkaz-logo.png" />
+  <link rel="canonical" href="https://www.snakkaz.com" />
   <meta name="viewport"
     content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="theme-color" content="#0a0a0a" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  
+  <!-- Icons -->
   <link rel="apple-touch-icon" href="/icons/snakkaz-icon-192.png" />
+  <link rel="apple-touch-icon" sizes="512x512" href="/icons/snakkaz-icon-512.png" />
   <link rel="manifest" href="/manifest.json" />
+  <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+  
+  <!-- PWA splash screens for iOS -->
+  <link rel="apple-touch-startup-image" media="screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)" href="/splash/iPhone_14_Pro_Max_landscape.png">
+  <link rel="apple-touch-startup-image" media="screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)" href="/splash/iPhone_14_Pro_landscape.png">
+  <link rel="apple-touch-startup-image" media="screen and (device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)" href="/splash/iPhone_14_Plus__iPhone_13_Pro_Max__iPhone_12_Pro_Max_landscape.png">
+
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="Snakkaz - Den sikreste og mest moderne chat-appen med ende-til-ende kryptering, AI-funksjoner og cyberpunk-design. Chat trygt, hvor som helst." />
+  <meta name="keywords" content="snakkaz, chat, kryptert, sikker, messenger, ende-til-ende, cyberpunk, AI" />
+  <meta name="author" content="Snakkaz Team" />
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://www.snakkaz.com/" />
+  <meta property="og:title" content="SnakkaZ - Den Sikreste Chatten i Verden" />
+  <meta property="og:description" content="Snakkaz Chat kombinerer moderne design, ende-til-ende kryptering og AI-drevne funksjoner i en trygg og engasjerende opplevelse." />
+  <meta property="og:image" content="https://www.snakkaz.com/og-image.png" />
+  
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image" />
+  <meta property="twitter:url" content="https://www.snakkaz.com/" />
+  <meta property="twitter:title" content="SnakkaZ - Den Sikreste Chatten i Verden" />
+  <meta property="twitter:description" content="Snakkaz Chat kombinerer moderne design, ende-til-ende kryptering og AI-drevne funksjoner i en trygg og engasjerende opplevelse." />
+  <meta property="twitter:image" content="https://www.snakkaz.com/og-image.png" />
+  
+  <!-- Security -->
   <meta http-equiv="Content-Security-Policy"
     content="default-src 'self';
-    connect-src 'self' https://*.supabase.co wss://*.supabase.co https://cdn.gpteng.co https://*.github.dev https://*.app.github.dev https://static.cloudflareinsights.com https://cloudflareinsights.com;
+    connect-src 'self' https://*.supabase.co wss://*.supabase.co https://cdn.gpteng.co https://*.snakkaz.com https://*.app.github.dev https://static.cloudflareinsights.com https://cloudflareinsights.com https://*.sentry.io;
     script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.gpteng.co https://static.cloudflareinsights.com;
     style-src 'self' 'unsafe-inline';
-    img-src 'self' data: https://*.supabase.in https://*.supabase.co blob:;
+    img-src 'self' data: https://*.supabase.in https://*.supabase.co https://*.snakkaz.com blob:;
     font-src 'self';
     media-src 'self' blob:;
     worker-src 'self' blob:;
     manifest-src 'self' https://*.github.dev https://*.app.github.dev https://github.dev">
-  <title>SnakkaZ</title>
+  
+  <!-- Cache control -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  
+  <title>SnakkaZ - Den Sikreste Chatten i Verden</title>
+  
+  <!-- Preconnect for performance -->
+  <link rel="preconnect" href="https://wqpoozpbceucynsojmbk.supabase.co">
+  <link rel="preload" href="/assets/index.css" as="style">
+  <link rel="preload" href="/assets/index.js" as="script">
+
+  <!-- Analytics (kun i produksjon) -->
   <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "your-token-here"}'
     onerror="console.log('Cloudflare Analytics ikke tilgjengelig - ikke-kritisk');">
   </script>
 </head>
 
 <body>
+  <noscript>
+    <div style="padding: 20px; max-width: 600px; margin: 0 auto; text-align: center; font-family: system-ui, sans-serif;">
+      <img src="/snakkaz-logo.png" alt="SnakkaZ Logo" style="width: 120px;">
+      <h1>JavaScript er påkrevd</h1>
+      <p>SnakkaZ Chat krever JavaScript for å fungere. Vennligst aktiver JavaScript i nettleseren din og last siden på nytt.</p>
+    </div>
+  </noscript>
+  
   <div id="root"></div>
+  
+  <!-- Skip script hvis ikke i dev -->
   <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
   <script type="module" src="/src/main.tsx"></script>
 </body>

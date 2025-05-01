@@ -3,7 +3,6 @@
  * Provides graceful fallbacks when services are unavailable
  */
 import * as Sentry from '@sentry/react';
-import { BrowserTracing } from '@sentry/browser';
 import { getConfig } from '../config/app-config';
 
 // Define ServiceName type
@@ -174,15 +173,15 @@ export function initializeSentry(): void {
     const sentryDsn = config.sentryDsn;
 
     if (isProd && sentryDsn) {
+        try {
             Sentry.init({
                 dsn: sentryDsn,
                 integrations: [
-                    new BrowserTracing({
+                    new Sentry.BrowserTracing({
                         // Set sampling rate for performance monitoring
                         tracePropagationTargets: ['localhost', 'snakkaz.com'],
                     }),
                     new Sentry.Replay()
-                ],
                 ],
                 // Set tracesSampleRate to 1.0 to capture 100% of transactions for performance monitoring
                 // We recommend adjusting this value in production
