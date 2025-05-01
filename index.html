@@ -66,8 +66,20 @@
   <link rel="preload" href="/assets/index.js" as="script">
 
   <!-- Analytics (kun i produksjon) -->
-  <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "your-token-here"}'
-    onerror="console.log('Cloudflare Analytics ikke tilgjengelig - ikke-kritisk');">
+  <script>
+    // Sjekk om vi er i produksjonsmiljø før vi laster Cloudflare Analytics
+    if (window.location.hostname !== 'localhost' && 
+        !window.location.hostname.includes('127.0.0.1') && 
+        !window.location.hostname.includes('.app.github.dev')) {
+      const script = document.createElement('script');
+      script.defer = true;
+      script.src = "https://static.cloudflareinsights.com/beacon.min.js";
+      script.setAttribute('data-cf-beacon', '{"token": "your-token-here"}');
+      script.onerror = function() {
+        console.log('Cloudflare Analytics ikke tilgjengelig - ikke-kritisk');
+      };
+      document.head.appendChild(script);
+    }
   </script>
 </head>
 
