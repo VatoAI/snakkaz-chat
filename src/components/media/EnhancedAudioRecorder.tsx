@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Button } from "./ui/button";
+import { Button } from "../ui/button";
 import { Mic, Square, Trash, Send, Pause, Play } from "lucide-react";
-import { cn } from "../lib/utils";
+import { cn } from "../../lib/utils";
 
 interface EnhancedAudioRecorderProps {
   onAudioReady: (audioBlob: Blob) => void;

@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Upload, X, Settings, Paperclip, Image as ImageIcon } from 'lucide-react';
-import { cx, theme } from '../lib/theme';
-import { useEnhancedMediaUpload, ResizeMode, UploadOptions } from '../hooks/useEnhancedMediaUpload';
+import { cx, theme } from '../../lib/theme';
+import { useEnhancedMediaUpload, ResizeMode, UploadOptions } from '../../hooks/useEnhancedMediaUpload';
 
 // Image resize preset options
 interface ResizePreset {

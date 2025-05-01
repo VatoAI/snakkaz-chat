@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Upload, X, Image as ImageIcon, Paperclip } from 'lucide-react';
-import { cx, theme } from '../lib/theme';
+import { cx, theme } from '../../lib/theme';
 
 interface MediaUploaderProps {
   onFileSelect: (file: File) => void;

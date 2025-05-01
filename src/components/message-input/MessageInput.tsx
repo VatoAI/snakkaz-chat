@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useSecureMessageKeys } from '@/hooks/useSecureMessageKeys';
 import { useDeviceDetection } from '@/hooks/useDeviceDetection';
 import { useEnhancedMediaUpload } from '@/hooks/useEnhancedMediaUpload';
-import { EnhancedAudioRecorder } from '@/components/EnhancedAudioRecorder';
+import { EnhancedAudioRecorder } from '@/components/media/EnhancedAudioRecorder';
 
 interface MessageInputProps {
   onSendMessage: (message: string) => Promise<void>;
