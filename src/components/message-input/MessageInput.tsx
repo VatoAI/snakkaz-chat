@@ -132,7 +132,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
   const dropAreaRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
   const { isMobile, isTablet } = useDeviceDetection();
-  const { replyingTo, clearReply } = useMessageReply();
+  const { replyToMessage, clearReply } = useMessageReply();  // Endrer fra replyingTo til replyToMessage for å matche konteksten
 
   // Use our enhanced media upload hook
   const { uploadFile, cancelUpload, uploadState } = useEnhancedMediaUpload();
@@ -261,7 +261,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
         await onSendMessage(trimmedMessage);
         
         // Clear reply after sending
-        if (replyingTo) {
+        if (replyToMessage) {
           clearReply();
         }
       }
@@ -314,11 +314,13 @@ const MessageInput: React.FC<MessageInputProps> = ({
     }
   };
 
-  // Fiks TypeScript-feil i uploadOptions ved å definere ResizeMode type
+  // Fiks TypeScript-feil i uploadOptions ved å bruke den importerte ResizeMode
+  import { ResizeMode } from '@/hooks/useEnhancedMediaUpload';
+  
   interface ResizeOptions {
     maxWidth: number;
     maxHeight: number;
-    mode: 'auto' | 'contain' | 'cover' | 'stretch';
+    mode: ResizeMode; // Bruker den importerte typen i stedet
     quality: number;
   }
 
@@ -519,10 +521,10 @@ const MessageInput: React.FC<MessageInputProps> = ({
       )}
 
       {/* Show reply preview */}
-      {replyingTo && !editingMessage && (
+      {replyToMessage && !editingMessage && (
         <div className="px-4 pt-2">
           <ReplyPreview 
-            message={replyingTo}
+            message={replyToMessage}
             onCancel={clearReply}
           />
         </div>

@@ -4,11 +4,15 @@
  */
 
 import { SecurityLevel } from './security';
-import { User } from './user';
+// Fjerner import av User som ikke finnes
+// import { User } from './user';
 
 export type GroupWritePermission = 'all' | 'admin' | 'selected';
 // Fjernet null som et alternativ siden alle meldinger skal slettes 
 export type MessageTTLOption = 300 | 1800 | 3600 | 86400 | 604800; // 5min, 30min, 1h, 24h, 7d
+
+// Legger til manglende typer
+export type GroupVisibility = 'public' | 'private' | 'secret';
 
 export enum GroupType {
   STANDARD = 'standard', // Vanlig gruppe
@@ -87,6 +91,12 @@ export interface Group {
   lastActivity?: Date | number;
   isArchived?: boolean;
   parentGroupId?: string; // For grupper/underkanaler i større grupper (Telegram-folders)
+  
+  // Legger til manglende egenskaper som brukes i GroupChatPage
+  securityLevel?: SecurityLevel;
+  visibility?: GroupVisibility;
+  is_premium?: boolean;
+  thumbnailUrl?: string;
 }
 
 export interface GroupMessage {
@@ -96,6 +106,7 @@ export interface GroupMessage {
   text?: string;
   mediaUrl?: string;
   mediaType?: string;
+  thumbnailUrl?: string; // Legger til støtte for miniatyrbilder
   replyToId?: string;
   forwardedFrom?: string;
   editedAt?: Date | number;
@@ -108,6 +119,8 @@ export interface GroupMessage {
   isServiceMessage?: boolean; // Systemmelding ("User joined", etc.)
   ttl?: number; // Time to live (for selvdestruerende meldinger)
   pollData?: GroupPoll; // Meningsmåling (poll) data
+  isEncrypted?: boolean; // Indikerer om meldingen er kryptert
+  caption?: string; // Støtte for bildetekst
 }
 
 export interface GroupInvite {

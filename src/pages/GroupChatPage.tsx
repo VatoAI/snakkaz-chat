@@ -60,8 +60,23 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Switch } from '@/components/ui/switch';
 import MessageInput from '@/components/message-input/MessageInput';
-import { Group, GroupVisibility, SecurityLevel } from '@/types/group';
+// Fikser importen av SecurityLevel og GroupVisibility
+import { GroupVisibility } from '@/types/group';
+import { SecurityLevel } from '@/types/security';
 import { usePresence } from '@/hooks/usePresence';
+import { UserStatus } from '@/types/presence';
+import { Group as GroupType } from '@/types/groups';
+
+// Typeerklæring for å håndtere meldinger
+interface Message {
+  id: string;
+  text?: string;
+  sender?: {
+    id: string;
+    displayName?: string;
+    avatar?: string;
+  };
+}
 
 const GroupChatPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -69,13 +84,35 @@ const GroupChatPage = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { userProfiles, fetchProfiles } = useProfiles();
-  const { updatePresence, presenceData } = usePresence();
+  
+  // Oppdaterer bruken av usePresence - siden hooken forventer userId som første parameter
+  const { currentStatus, handleStatusChange, userPresence } = usePresence(
+    user?.id || null,
+    'online',
+    undefined,
+    false
+  );
+  
+  // Implementerer updatePresence-funksjonen manuelt siden den ikke finnes i usePresence
+  const updatePresence = (data: { 
+    status?: UserStatus, 
+    currentGroupId?: string | null, 
+    lastActive?: Date 
+  }) => {
+    // Oppdaterer status hvis den er angitt
+    if (data.status && data.status !== currentStatus) {
+      handleStatusChange(data.status);
+    }
+    
+    // I en reell implementasjon ville vi håndtert currentGroupId og lastActive,
+    // men vi bruker bare handleStatusChange siden det er det hooken tilbyr
+  };
   
   // Refs
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   // State for active group
-  const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
+  const [selectedGroup, setSelectedGroup] = useState<GroupType | null>(null);
   const [isCreatingGroup, setIsCreatingGroup] = useState(false);
   const [isJoiningGroup, setIsJoiningGroup] = useState(false);
   const [isInvitingMembers, setIsInvitingMembers] = useState(false);
@@ -96,7 +133,7 @@ const GroupChatPage = () => {
   const [muteNotifications, setMuteNotifications] = useState(false);
   const [initialDisappearingTime, setInitialDisappearingTime] = useState(0);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
-  const [replyToMessage, setReplyToMessage] = useState<any | null>(null);
+  const [replyToMessage, setReplyToMessage] = useState<Message | null>(null);
   const [hasMoreMessages, setHasMoreMessages] = useState(false);
   
   // Get groups
@@ -193,6 +230,23 @@ const GroupChatPage = () => {
     }
   }, [selectedGroup?.id, loadGroup]);
 
+  // Funksjon for å konvertere GroupType.SecurityLevel til MessageInput.securityLevel
+  const mapSecurityLevelToMessageInput = (level?: SecurityLevel): 'p2p_e2ee' | 'server_e2ee' | 'standard' => {
+    // SecurityLevel kan være: 'p2p_e2ee' | 'server_e2ee' | 'standard' fra security.ts
+    // eller 'low' | 'standard' | 'high' | 'maximum' fra groups.ts
+    if (!level) return 'standard';
+    
+    // Konverter verdier mellom de forskjellige typedefinisjonene
+    if (level === 'high' || level === 'maximum') return 'server_e2ee';
+    if (level === 'p2p_e2ee') return 'p2p_e2ee';
+    return 'standard';
+  };
+  
+  // Hjelper-funksjon for å sjekke om gruppen har høyt sikkerhetsnivå
+  const isHighSecurityGroup = (level?: SecurityLevel): boolean => {
+    return level === 'high' || level === 'maximum' || level === 'p2p_e2ee' || level === 'server_e2ee';
+  };
+
   // Handle creating a new group
   const handleCreateGroup = async () => {
     try {
@@ -209,7 +263,7 @@ const GroupChatPage = () => {
         name: newGroupName.trim(),
         description: newGroupDesc.trim(),
         visibility: newGroupVisibility,
-        securityLevel: newGroupEncrypted ? "high" : "standard"
+        securityLevel: newGroupEncrypted ? "server_e2ee" : "standard"
       });
       
       toast({
@@ -443,7 +497,7 @@ const GroupChatPage = () => {
   };
   
   // Håndter redigering av melding
-  const handleEditMessage = (message: any) => {
+  const handleEditMessage = (message: Message) => {
     setEditingMessageId(message.id);
     // Setter meldingsteksten i input-feltet
     // Dette må gjøres i MessageInput komponenten
@@ -467,7 +521,7 @@ const GroupChatPage = () => {
   };
   
   // Håndter svar på melding
-  const handleReplyToMessage = (message: any) => {
+  const handleReplyToMessage = (message: Message) => {
     setReplyToMessage(message);
   };
   
@@ -761,7 +815,7 @@ const GroupChatPage = () => {
             replyToMessage ? "Skriv et svar..." : 
             "Skriv en melding..."
           }
-          securityLevel={selectedGroup.securityLevel === "high" ? 'server_e2ee' : 'standard'}
+          securityLevel={mapSecurityLevelToMessageInput(selectedGroup.securityLevel)}
           showSecurityIndicator={true}
           editingMessage={editingMessageId ? {
             id: editingMessageId,
