@@ -1,6 +1,6 @@
 
 import { useCallback } from 'react';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '../useAuth';
 import { markMessageAsRead, markMessagesAsRead } from '../../utils/message-utils';
 
 export const useMessageReadStatus = () => {
