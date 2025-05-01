@@ -44,7 +44,8 @@ import {
   Download,
   UserX,
   Share2,
-  QrCode
+  QrCode,
+  Check
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
@@ -86,6 +87,10 @@ const GroupChatPage = () => {
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [disappearingTime, setDisappearingTime] = useState(0);
   const [inviteLink, setInviteLink] = useState('');
+  const [groupAvatarPreview, setGroupAvatarPreview] = useState('');
+  const [groupAvatarFile, setGroupAvatarFile] = useState<File | null>(null);
+  const [muteNotifications, setMuteNotifications] = useState(false);
+  const [initialDisappearingTime, setInitialDisappearingTime] = useState(0);
   
   // Get groups
   const { 
@@ -326,6 +331,24 @@ const GroupChatPage = () => {
       readBy: message.readBy
     };
   };
+
+  const handleGroupAvatarUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setGroupAvatarFile(file);
+      const reader = new FileReader();
+      reader.onload = () => {
+        setGroupAvatarPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const toggleSelectedMember = (memberId: string) => {
+    setSelectedMembers(prev =>
+      prev.includes(memberId) ? prev.filter(id => id !== memberId) : [...prev, memberId]
+    );
+  };
   
   // Render group list if no group is selected
   if (!selectedGroup) {
@@ -499,6 +522,62 @@ const GroupChatPage = () => {
                   onChange={(e) => setNewGroupDesc(e.target.value)}
                 />
               </div>
+
+              <div className="space-y-2">
+                <label htmlFor="group-avatar" className="text-sm font-medium text-cybergold-300">
+                  Gruppebilde (valgfri)
+                </label>
+                <div className="flex items-center gap-3 mt-1">
+                  <div className={`w-14 h-14 rounded-full flex items-center justify-center overflow-hidden 
+                    ${groupAvatarPreview ? '' : 'border-2 border-dashed border-cybergold-500/30'}`}>
+                    {groupAvatarPreview ? (
+                      <img 
+                        src={groupAvatarPreview} 
+                        alt="Gruppeprofilbilde" 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="text-lg font-medium text-cybergold-400">
+                        {newGroupName ? newGroupName.charAt(0).toUpperCase() : 'G'}
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="flex flex-col gap-1.5">
+                    <Button 
+                      type="button" 
+                      variant="outline"
+                      size="sm"
+                      className="border-cybergold-500/30 text-cybergold-400"
+                      onClick={() => document.getElementById('group-avatar-upload')?.click()}
+                    >
+                      <input
+                        type="file"
+                        id="group-avatar-upload"
+                        className="hidden"
+                        accept="image/*"
+                        onChange={handleGroupAvatarUpload}
+                      />
+                      Last opp bilde
+                    </Button>
+                    
+                    {groupAvatarPreview && (
+                      <Button 
+                        type="button" 
+                        variant="ghost"
+                        size="sm"
+                        className="text-red-400 hover:text-red-300"
+                        onClick={() => {
+                          setGroupAvatarPreview('');
+                          setGroupAvatarFile(null);
+                        }}
+                      >
+                        Fjern bilde
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
               
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -513,7 +592,7 @@ const GroupChatPage = () => {
                     />
                   </div>
                   <p className="text-xs text-cybergold-600">
-                    Krever passord for å bli med
+                    Krever invitasjon for å bli med
                   </p>
                 </div>
                 
@@ -534,32 +613,92 @@ const GroupChatPage = () => {
                 </div>
               </div>
               
-              {newGroupVisibility === 'private' && (
-                <div className="space-y-2">
-                  <label htmlFor="group-password" className="text-sm font-medium text-cybergold-300">
-                    Gruppepassord *
-                  </label>
-                  <Input
-                    id="group-password"
-                    type="password"
-                    placeholder="Velg et sterkt passord"
-                    className="bg-cyberdark-800 border-cybergold-500/30 text-cybergold-300"
-                    value={newGroupPassword}
-                    onChange={(e) => setNewGroupPassword(e.target.value)}
-                  />
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-cybergold-300">
+                  Gruppeinnstillinger
+                </label>
+                <div className="bg-cyberdark-800 rounded border border-cybergold-500/30 p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <BellOff className="h-4 w-4 text-cybergold-500" />
+                      <span className="text-sm text-cybergold-300">Dempe varslinger</span>
+                    </div>
+                    <Switch 
+                      id="mute-notifications"
+                      checked={muteNotifications}
+                      onCheckedChange={setMuteNotifications}
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-cybergold-500" />
+                      <span className="text-sm text-cybergold-300">Selvslettende meldinger</span>
+                    </div>
+                    <select
+                      value={initialDisappearingTime.toString()}
+                      onChange={(e) => setInitialDisappearingTime(Number(e.target.value))}
+                      className="bg-cyberdark-900 border-cyberdark-700 text-cybergold-300 rounded text-xs p-1"
+                    >
+                      <option value="0">Av</option>
+                      <option value="300">5 minutter</option>
+                      <option value="3600">1 time</option>
+                      <option value="86400">1 dag</option>
+                      <option value="604800">1 uke</option>
+                    </select>
+                  </div>
                 </div>
-              )}
+              </div>
               
               <div className="space-y-2">
                 <label className="text-sm font-medium text-cybergold-300">
                   Legg til medlemmer
                 </label>
-                <div className="max-h-[120px] overflow-y-auto bg-cyberdark-800 rounded border border-cybergold-500/30 p-2">
-                  {/* Her ville vi normalt vise en liste over venner som kan legges til */}
-                  {/* For demo-formål viser vi bare en enkel melding */}
-                  <p className="text-sm text-cybergold-500 text-center py-4">
-                    Her vil du kunne velge fra din venneliste.
-                  </p>
+                <div className="max-h-[150px] overflow-y-auto bg-cyberdark-800 rounded border border-cybergold-500/30 p-2">
+                  {false ? (
+                    <div className="flex justify-center items-center py-4">
+                      <Loader2 className="h-5 w-5 animate-spin text-cybergold-400" />
+                    </div>
+                  ) : [] && [].length > 0 ? (
+                    <div className="space-y-1">
+                      {[].map(friend => (
+                        <div 
+                          key={friend.id} 
+                          className={`flex items-center justify-between p-1.5 rounded hover:bg-cyberdark-700 cursor-pointer ${
+                            selectedMembers.includes(friend.id) ? 'bg-cybergold-900/20 border border-cybergold-500/30' : ''
+                          }`}
+                          onClick={() => toggleSelectedMember(friend.id)}
+                        >
+                          <div className="flex items-center gap-2">
+                            {friend.avatar_url ? (
+                              <div className="w-8 h-8 rounded-full overflow-hidden">
+                                <img 
+                                  src={friend.avatar_url} 
+                                  alt={friend.username || friend.id} 
+                                  className="w-full h-full object-cover" 
+                                />
+                              </div>
+                            ) : (
+                              <div className="w-8 h-8 rounded-full bg-cybergold-900/30 flex items-center justify-center">
+                                {friend.username ? friend.username.charAt(0).toUpperCase() : 'U'}
+                              </div>
+                            )}
+                            <span className="text-sm text-cybergold-300">
+                              {friend.username || friend.id}
+                            </span>
+                          </div>
+                          
+                          {selectedMembers.includes(friend.id) && (
+                            <Check className="h-4 w-4 text-cybergold-400" />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-cybergold-500 text-center py-4">
+                      Ingen venner å legge til. Legg til venner først.
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
