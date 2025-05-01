@@ -2,6 +2,7 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { AppEncryptionProvider } from './contexts/AppEncryptionContext';
 import { NotificationProvider } from './contexts/NotificationContext';
+import { MessageReplyProvider } from './contexts/MessageReplyContext';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Layout from './Layout';
 import Home from './pages/Home';
@@ -207,46 +208,48 @@ function App() {
       <AuthProvider>
         <AppEncryptionProvider>
           <NotificationProvider>
-            <Router>
-              <Routes>
-                <Route path="/" element={<Layout />}>
-                  <Route index element={
-                    <ProtectedRoute>
-                      <Home />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="chat" element={
-                    <ProtectedRoute>
-                      <Chat />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="group-chat/:id?" element={
-                    <ProtectedRoute>
-                      <GroupChatPage />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="profile" element={
-                    <ProtectedRoute>
-                      <Profile />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="security-settings" element={
-                    <ProtectedRoute>
-                      <SecuritySettingsPage />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="admin" element={
-                    <ProtectedRoute>
-                      <AdminPanel />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="info" element={<InfoPage />} />
-                  <Route path="download" element={<DownloadPage />} />
-                </Route>
-                <Route path="/auth" element={<AuthPage />} />
-              </Routes>
-              <Toaster />
-            </Router>
+            <MessageReplyProvider>
+              <Router>
+                <Routes>
+                  <Route path="/" element={<Layout />}>
+                    <Route index element={
+                      <ProtectedRoute>
+                        <Home />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="chat" element={
+                      <ProtectedRoute>
+                        <Chat />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="group-chat/:id?" element={
+                      <ProtectedRoute>
+                        <GroupChatPage />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="profile" element={
+                      <ProtectedRoute>
+                        <Profile />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="security-settings" element={
+                      <ProtectedRoute>
+                        <SecuritySettingsPage />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="admin" element={
+                      <ProtectedRoute>
+                        <AdminPanel />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="info" element={<InfoPage />} />
+                    <Route path="download" element={<DownloadPage />} />
+                  </Route>
+                  <Route path="/auth" element={<AuthPage />} />
+                </Routes>
+                <Toaster />
+              </Router>
+            </MessageReplyProvider>
           </NotificationProvider>
         </AppEncryptionProvider>
       </AuthProvider>

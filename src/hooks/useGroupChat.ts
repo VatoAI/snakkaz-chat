@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/services/supabase';
 import { useAuth } from '@/hooks/useAuth';
-import { Group, GroupMessage, GroupType, GroupRole, GroupPermission, GroupMember } from '@/types/group';
+import { Group, GroupMessage, GroupType, GroupRole, GroupPermission, GroupMember, GroupMemberStatus } from '@/types/group';
 import { useSignalProtocol } from '@/hooks/useSignalProtocol';
 
 /**
@@ -104,7 +104,7 @@ export const useGroupChat = (groupId?: string) => {
     }
   }, [groupId, user]);
 
-  // Henter meldinger med real-time oppdateringer som i Telegram
+  // Forbedret loadMessages funksjon for å dekryptere captions og håndtere miniatyrbilder
   const loadMessages = useCallback(async (limit = 50) => {
     if (!groupId || !user) return;
 
@@ -128,6 +128,7 @@ export const useGroupChat = (groupId?: string) => {
           text: m.text,
           mediaUrl: m.media_url,
           mediaType: m.media_type,
+          thumbnailUrl: m.thumbnail_url, // Støtte for miniatyrbilder
           replyToId: m.reply_to_id,
           forwardedFrom: m.forwarded_from,
           editedAt: m.edited_at ? new Date(m.edited_at) : undefined,
@@ -137,20 +138,41 @@ export const useGroupChat = (groupId?: string) => {
           isPinned: m.is_pinned,
           isServiceMessage: m.is_service_message,
           ttl: m.ttl,
-          pollData: m.poll_data
+          pollData: m.poll_data,
+          isEncrypted: m.is_encrypted,
+          caption: m.caption // Støtte for caption
         };
 
-        // Dekrypter meldingen hvis gruppen er kryptert (som i Signal)
-        if (group?.settings.isEncrypted && message.text) {
-          try {
-            message.text = await signalProtocol.decryptGroupMessage(
-              message.text,
-              groupId,
-              message.senderId
-            );
-          } catch (err) {
-            console.error('Kunne ikke dekryptere melding:', err);
-            message.text = '[Kryptert melding]';
+        // Dekrypter meldingen hvis den er kryptert
+        const shouldDecrypt = message.isEncrypted || group?.settings.isEncrypted;
+        
+        if (shouldDecrypt) {
+          // Dekrypter meldingstekst
+          if (message.text) {
+            try {
+              message.text = await signalProtocol.decryptGroupMessage(
+                message.text,
+                groupId,
+                message.senderId
+              );
+            } catch (err) {
+              console.error('Kunne ikke dekryptere melding:', err);
+              message.text = '[Kryptert melding]';
+            }
+          }
+          
+          // Dekrypter caption
+          if (message.caption) {
+            try {
+              message.caption = await signalProtocol.decryptGroupMessage(
+                message.caption,
+                groupId,
+                message.senderId
+              );
+            } catch (err) {
+              console.error('Kunne ikke dekryptere caption:', err);
+              message.caption = '[Kryptert bildetekst]';
+            }
           }
         }
 
@@ -168,102 +190,27 @@ export const useGroupChat = (groupId?: string) => {
     }
   }, [groupId, user, group, signalProtocol]);
 
-  // Abonner på realtime oppdateringer for nye meldinger (Telegram-lignende)
-  useEffect(() => {
-    if (!groupId || !user) return;
-
-    const subscription = supabase
-      .channel(`group-${groupId}`)
-      .on('postgres_changes', { 
-        event: 'INSERT', 
-        schema: 'public', 
-        table: 'group_messages', 
-        filter: `group_id=eq.${groupId}` 
-      }, async (payload) => {
-        const newMessage = payload.new as any;
-        
-        // Formater og dekrypter om nødvendig
-        let message: GroupMessage = {
-          id: newMessage.id,
-          groupId: newMessage.group_id,
-          senderId: newMessage.sender_id,
-          text: newMessage.text,
-          mediaUrl: newMessage.media_url,
-          mediaType: newMessage.media_type,
-          replyToId: newMessage.reply_to_id,
-          forwardedFrom: newMessage.forwarded_from,
-          editedAt: newMessage.edited_at ? new Date(newMessage.edited_at) : undefined,
-          createdAt: new Date(newMessage.created_at),
-          readBy: newMessage.read_by || [],
-          reactions: newMessage.reactions || {},
-          isPinned: newMessage.is_pinned,
-          isServiceMessage: newMessage.is_service_message,
-          ttl: newMessage.ttl,
-          pollData: newMessage.poll_data
-        };
-
-        // Dekrypter hvis gruppen er kryptert
-        if (group?.settings.isEncrypted && message.text) {
-          try {
-            message.text = await signalProtocol.decryptGroupMessage(
-              message.text,
-              groupId,
-              message.senderId
-            );
-          } catch (err) {
-            console.error('Kunne ikke dekryptere melding:', err);
-            message.text = '[Kryptert melding]';
-          }
-        }
-
-        // Legg til den nye meldingen i listen
-        setMessages(prev => [...prev, message]);
-
-        // Marker som lest
-        markMessageAsRead(message.id);
-      })
-      .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'group_messages',
-        filter: `group_id=eq.${groupId}`
-      }, async (payload) => {
-        const updatedMessage = payload.new as any;
-        
-        setMessages(prev => prev.map(m => 
-          m.id === updatedMessage.id ? {
-            ...m,
-            text: updatedMessage.text,
-            editedAt: updatedMessage.edited_at ? new Date(updatedMessage.edited_at) : m.editedAt,
-            reactions: updatedMessage.reactions || m.reactions,
-            isPinned: updatedMessage.is_pinned
-          } : m
-        ));
-      })
-      .on('postgres_changes', {
-        event: 'DELETE',
-        schema: 'public',
-        table: 'group_messages',
-        filter: `group_id=eq.${groupId}`
-      }, (payload) => {
-        const deletedMessageId = payload.old.id;
-        setMessages(prev => prev.filter(m => m.id !== deletedMessageId));
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(subscription);
-    };
-  }, [groupId, user, group, signalProtocol]);
-
-  // Send en melding til gruppen
-  const sendMessage = useCallback(async ({ text, mediaUrl, mediaType, replyToId, pollData, ttl }: {
+  // Oppdatert sendMessage funksjon for å håndtere caption og forbedret mediahåndtering
+  const sendMessage = useCallback(async ({ 
+    text, 
+    mediaUrl, 
+    mediaType, 
+    replyToId, 
+    pollData, 
+    ttl,
+    thumbnailUrl,  // Ny parameter for miniatyrbilder
+    isEncrypted,   // Ny parameter for eksplisitt kryptering
+    caption        // Ny parameter for bildetekster
+  }: {
     text?: string;
     mediaUrl?: string;
     mediaType?: string;
     replyToId?: string;
     pollData?: any;
     ttl?: number;
+    thumbnailUrl?: string;
+    isEncrypted?: boolean;
+    caption?: string;
   }) => {
     if (!groupId || !user) {
       throw new Error('Bruker må være logget inn for å sende meldinger');
@@ -275,15 +222,30 @@ export const useGroupChat = (groupId?: string) => {
 
     try {
       let encryptedText = text;
+      let encryptedCaption = caption;
+
+      // Bestem om meldingen skal krypteres
+      const shouldEncrypt = isEncrypted || group?.settings.isEncrypted;
 
       // Krypter meldinger i krypterte grupper (Signal-inspirert)
-      if (group?.settings.isEncrypted && text) {
-        // Krypter meldingen for hver mottaker i gruppen
-        encryptedText = await signalProtocol.encryptGroupMessage(
-          text,
-          groupId,
-          group.members.map(m => m.userId).filter(id => id !== user.id)
-        );
+      if (shouldEncrypt) {
+        // Krypter meldingstekst hvis den finnes
+        if (text) {
+          encryptedText = await signalProtocol.encryptGroupMessage(
+            text,
+            groupId,
+            group?.members.map(m => m.userId).filter(id => id !== user.id) || []
+          );
+        }
+        
+        // Krypter også caption hvis den finnes
+        if (caption) {
+          encryptedCaption = await signalProtocol.encryptGroupMessage(
+            caption,
+            groupId,
+            group?.members.map(m => m.userId).filter(id => id !== user.id) || []
+          );
+        }
       }
 
       // Bruk TTL fra gruppeinnstillinger hvis ikke annet er angitt
@@ -298,12 +260,15 @@ export const useGroupChat = (groupId?: string) => {
           text: encryptedText,
           media_url: mediaUrl,
           media_type: mediaType,
+          thumbnail_url: thumbnailUrl, // Lagre miniatyrbilde URL
           reply_to_id: replyToId,
           read_by: [user.id], // Marker som lest av senderen
           is_service_message: false,
           created_at: new Date().toISOString(),
           poll_data: pollData,
-          ttl: messageTimeout
+          ttl: messageTimeout,
+          is_encrypted: shouldEncrypt,
+          caption: encryptedCaption // Lagre caption separat
         })
         .select()
         .single();
@@ -313,7 +278,10 @@ export const useGroupChat = (groupId?: string) => {
       // Oppdater aktivitetstidspunktet for gruppen
       await supabase
         .from('groups')
-        .update({ last_activity: new Date().toISOString() })
+        .update({ 
+          last_activity: new Date().toISOString(),
+          last_message_preview: mediaUrl ? (caption || '[Media]') : (text?.substring(0, 50) || '')
+        })
         .eq('id', groupId);
 
       // Om slow mode er aktivert, legg til en timestamp for brukerens siste melding
@@ -331,45 +299,6 @@ export const useGroupChat = (groupId?: string) => {
       throw err;
     }
   }, [groupId, user, group, signalProtocol]);
-
-  // Mariker en melding som lest
-  const markMessageAsRead = useCallback(async (messageId: string) => {
-    if (!groupId || !user) return;
-
-    try {
-      // Hent eksisterende readBy array først
-      const { data: messageData, error: fetchError } = await supabase
-        .from('group_messages')
-        .select('read_by')
-        .eq('id', messageId)
-        .single();
-
-      if (fetchError) throw fetchError;
-
-      // Legg til bruker-ID hvis den ikke allerede er i listen
-      let readBy = messageData.read_by || [];
-      if (!readBy.includes(user.id)) {
-        readBy.push(user.id);
-
-        const { error: updateError } = await supabase
-          .from('group_messages')
-          .update({ read_by: readBy })
-          .eq('id', messageId);
-
-        if (updateError) throw updateError;
-      }
-
-      // Oppdater også brukerens siste leste melding-ID for gruppen
-      await supabase
-        .from('group_members')
-        .update({ last_read_message_id: messageId })
-        .eq('group_id', groupId)
-        .eq('user_id', user.id);
-
-    } catch (err: any) {
-      console.error('Feil ved markering av melding som lest:', err);
-    }
-  }, [groupId, user]);
 
   // Telegram-inspirert reaksjoner på meldinger
   const reactToMessage = useCallback(async (messageId: string, emoji: string) => {
@@ -413,234 +342,153 @@ export const useGroupChat = (groupId?: string) => {
     }
   }, [groupId, user]);
 
-  // Legg til en ny bruker i gruppen (Telegram-lignende invitasjonshåndtering)
-  const addUserToGroup = useCallback(async (userId: string, role: GroupRole = GroupRole.MEMBER) => {
+  // Ny funksjon for å slette meldinger
+  const deleteMessage = useCallback(async (messageId: string) => {
     if (!groupId || !user) return;
     
     try {
-      // Sjekk at brukeren har rettigheter til å legge til medlemmer
-      if (
-        userRole !== GroupRole.OWNER && 
-        userRole !== GroupRole.ADMIN &&
-        userRole !== GroupRole.MODERATOR
-      ) {
-        throw new Error('Du har ikke rettigheter til å legge til medlemmer');
-      }
-
-      // Sjekk om brukeren allerede er medlem
-      const { data: existingMember, error: checkError } = await supabase
-        .from('group_members')
-        .select('*')
-        .eq('group_id', groupId)
-        .eq('user_id', userId)
-        .maybeSingle();
-
-      if (checkError) throw checkError;
-
-      if (existingMember) {
-        // Hvis de er tidligere bannet eller har forlatt, aktiver dem igjen
-        if (
-          existingMember.status === GroupMemberStatus.BANNED ||
-          existingMember.status === GroupMemberStatus.LEFT ||
-          existingMember.status === GroupMemberStatus.KICKED
-        ) {
-          const { error: updateError } = await supabase
-            .from('group_members')
-            .update({
-              status: GroupMemberStatus.ACTIVE,
-              role,
-              added_by: user.id,
-              added_at: new Date().toISOString()
-            })
-            .eq('group_id', groupId)
-            .eq('user_id', userId);
-
-          if (updateError) throw updateError;
-        } else {
-          throw new Error('Brukeren er allerede medlem av gruppen');
-        }
-      } else {
-        // Legg til nytt medlem
-        const { error: addError } = await supabase
-          .from('group_members')
-          .insert({
-            group_id: groupId,
-            user_id: userId,
-            role,
-            status: GroupMemberStatus.ACTIVE,
-            added_by: user.id,
-            added_at: new Date().toISOString(),
-            permissions: getDefaultPermissions(role)
-          });
-
-        if (addError) throw addError;
-
-        // Oppdater medlemsantall
-        await supabase
-          .from('groups')
-          .update({ 
-            member_count: group?.memberCount ? group.memberCount + 1 : 1,
-            updated_at: new Date().toISOString() 
-          })
-          .eq('id', groupId);
-
-        // Legg til servicemelding om at brukeren ble lagt til
-        await supabase
-          .from('group_messages')
-          .insert({
-            group_id: groupId,
-            sender_id: null, // System message
-            text: `${user.display_name || user.email} har lagt til en ny bruker i gruppen.`,
-            is_service_message: true,
-            created_at: new Date().toISOString(),
-          });
-      }
-
-      // Last inn gruppen på nytt for å få oppdatert medlemsliste
-      await loadGroup();
-
-    } catch (err: any) {
-      console.error('Feil ved tillegging av bruker til gruppe:', err);
-      throw err;
-    }
-  }, [groupId, user, userRole, group, loadGroup]);
-
-  // Standardrettigheter basert på rolle
-  const getDefaultPermissions = (role: GroupRole): GroupPermission[] => {
-    switch (role) {
-      case GroupRole.OWNER:
-      case GroupRole.ADMIN:
-        return [
-          GroupPermission.SEND_MESSAGES,
-          GroupPermission.SEND_MEDIA,
-          GroupPermission.INVITE_USERS,
-          GroupPermission.PIN_MESSAGES,
-          GroupPermission.CHANGE_INFO,
-          GroupPermission.DELETE_MESSAGES,
-          GroupPermission.BAN_USERS,
-          GroupPermission.ADD_ADMINS,
-        ];
-      case GroupRole.MODERATOR:
-        return [
-          GroupPermission.SEND_MESSAGES,
-          GroupPermission.SEND_MEDIA,
-          GroupPermission.INVITE_USERS,
-          GroupPermission.PIN_MESSAGES,
-          GroupPermission.DELETE_MESSAGES,
-        ];
-      case GroupRole.MEMBER:
-        return [
-          GroupPermission.SEND_MESSAGES,
-          GroupPermission.SEND_MEDIA,
-        ];
-      case GroupRole.RESTRICTED:
-        return [];
-      default:
-        return [];
-    }
-  };
-
-  // Fjern bruker fra gruppe
-  const removeUserFromGroup = useCallback(async (userId: string, ban: boolean = false) => {
-    if (!groupId || !user) return;
-    
-    try {
-      // Sjekk rettigheter
-      if (
-        userRole !== GroupRole.OWNER && 
-        userRole !== GroupRole.ADMIN &&
-        userRole !== GroupRole.MODERATOR
-      ) {
-        throw new Error('Du har ikke rettigheter til å fjerne medlemmer');
-      }
-
-      // Sjekk at brukeren ikke er gruppeeieren
-      const { data: memberData, error: memberError } = await supabase
-        .from('group_members')
-        .select('role')
-        .eq('group_id', groupId)
-        .eq('user_id', userId)
+      // Hent meldingsinformasjon for å sjekke rettigheter
+      const { data: messageData, error: fetchError } = await supabase
+        .from('group_messages')
+        .select('sender_id')
+        .eq('id', messageId)
         .single();
-
-      if (memberError) throw memberError;
-
-      if (memberData.role === GroupRole.OWNER) {
-        throw new Error('Gruppeeieren kan ikke fjernes');
+        
+      if (fetchError) throw fetchError;
+      
+      // Sjekk om brukeren har rettighet til å slette denne meldingen
+      const canDelete = 
+        messageData.sender_id === user.id || // Brukerens egen melding
+        userRole === GroupRole.OWNER || 
+        userRole === GroupRole.ADMIN ||
+        (userRole === GroupRole.MODERATOR && group?.members.find(m => m.userId === user.id)?.permissions?.includes(GroupPermission.DELETE_MESSAGES));
+        
+      if (!canDelete) {
+        throw new Error('Du har ikke tillatelse til å slette denne meldingen');
       }
-
-      // Sjekk at en admin ikke prøver å fjerne en annen admin
-      if (
-        userRole === GroupRole.ADMIN && 
-        memberData.role === GroupRole.ADMIN
-      ) {
-        throw new Error('En administrator kan ikke fjerne en annen administrator');
-      }
-
-      if (ban) {
-        // Ban bruker
-        const { error: banError } = await supabase
-          .from('group_members')
-          .update({
-            status: GroupMemberStatus.BANNED,
-            updated_at: new Date().toISOString()
-          })
-          .eq('group_id', groupId)
-          .eq('user_id', userId);
-
-        if (banError) throw banError;
-
-        // Legg til servicemelding
-        await supabase
-          .from('group_messages')
-          .insert({
-            group_id: groupId,
-            sender_id: null, // System message
-            text: `${userId} har blitt utestengt fra gruppen.`,
-            is_service_message: true,
-            created_at: new Date().toISOString(),
-          });
-      } else {
-        // Merk som fjernet
-        const { error: kickError } = await supabase
-          .from('group_members')
-          .update({
-            status: GroupMemberStatus.KICKED,
-            updated_at: new Date().toISOString()
-          })
-          .eq('group_id', groupId)
-          .eq('user_id', userId);
-
-        if (kickError) throw kickError;
-
-        // Legg til servicemelding
-        await supabase
-          .from('group_messages')
-          .insert({
-            group_id: groupId,
-            sender_id: null, // System message
-            text: `${userId} har blitt fjernet fra gruppen.`,
-            is_service_message: true,
-            created_at: new Date().toISOString(),
-          });
-      }
-
-      // Oppdater medlemsantall
-      await supabase
-        .from('groups')
-        .update({ 
-          member_count: group?.memberCount ? group.memberCount - 1 : 0,
-          updated_at: new Date().toISOString() 
-        })
-        .eq('id', groupId);
-
-      // Last inn gruppen på nytt
-      await loadGroup();
-
+      
+      // Slett meldingen
+      const { error: deleteError } = await supabase
+        .from('group_messages')
+        .delete()
+        .eq('id', messageId);
+        
+      if (deleteError) throw deleteError;
+      
     } catch (err: any) {
-      console.error('Feil ved fjerning av bruker fra gruppe:', err);
+      console.error('Feil ved sletting av melding:', err);
       throw err;
     }
-  }, [groupId, user, userRole, group, loadGroup]);
+  }, [groupId, user, userRole, group]);
+  
+  // Ny funksjon for å redigere en melding
+  const editMessage = useCallback(async (messageId: string, newText: string) => {
+    if (!groupId || !user || !newText.trim()) return;
+    
+    try {
+      // Sjekk at det er brukerens egen melding
+      const { data: messageData, error: fetchError } = await supabase
+        .from('group_messages')
+        .select('sender_id, is_service_message')
+        .eq('id', messageId)
+        .single();
+        
+      if (fetchError) throw fetchError;
+      
+      if (messageData.sender_id !== user.id || messageData.is_service_message) {
+        throw new Error('Du kan bare redigere dine egne meldinger');
+      }
+      
+      // Krypter den nye teksten hvis gruppen er kryptert
+      let encryptedText = newText;
+      if (group?.settings.isEncrypted) {
+        encryptedText = await signalProtocol.encryptGroupMessage(
+          newText,
+          groupId,
+          group.members.map(m => m.userId).filter(id => id !== user.id)
+        );
+      }
+      
+      // Oppdater meldingen
+      const { error: updateError } = await supabase
+        .from('group_messages')
+        .update({ 
+          text: encryptedText,
+          edited_at: new Date().toISOString()
+        })
+        .eq('id', messageId);
+        
+      if (updateError) throw updateError;
+      
+    } catch (err: any) {
+      console.error('Feil ved redigering av melding:', err);
+      throw err;
+    }
+  }, [groupId, user, group, signalProtocol]);
+  
+  // Ny funksjon for å svare på en melding
+  const replyToMessage = useCallback(async (replyToId: string, text: string, options?: {
+    mediaUrl?: string;
+    mediaType?: string;
+    thumbnailUrl?: string;
+    ttl?: number;
+  }) => {
+    if (!groupId || !user) return;
+    
+    return sendMessage({
+      text,
+      replyToId,
+      ...options
+    });
+  }, [groupId, user, sendMessage]);
+  
+  // Ny funksjon for å hente detaljinformasjon om en enkelt melding (f.eks. for svar)
+  const getMessageById = useCallback(async (messageId: string) => {
+    if (!groupId || !user || !messageId) return null;
+    
+    try {
+      const { data, error } = await supabase
+        .from('group_messages')
+        .select('*, user:users(id, display_name, avatar_url)')
+        .eq('id', messageId)
+        .single();
+        
+      if (error) throw error;
+      
+      // Formater og dekrypter meldingen om nødvendig
+      let message = {
+        id: data.id,
+        groupId: data.group_id,
+        senderId: data.sender_id,
+        text: data.text,
+        mediaUrl: data.media_url,
+        mediaType: data.media_type,
+        thumbnailUrl: data.thumbnail_url,
+        replyToId: data.reply_to_id,
+        createdAt: new Date(data.created_at),
+        caption: data.caption
+      };
+      
+      if (group?.settings.isEncrypted && message.text) {
+        try {
+          message.text = await signalProtocol.decryptGroupMessage(
+            message.text,
+            groupId,
+            message.senderId
+          );
+        } catch (err) {
+          console.error('Kunne ikke dekryptere melding:', err);
+          message.text = '[Kryptert melding]';
+        }
+      }
+      
+      return message;
+      
+    } catch (err: any) {
+      console.error('Feil ved henting av melding:', err);
+      return null;
+    }
+  }, [groupId, user, group, signalProtocol]);
 
   // Last inn gruppen når hook initialiseres
   useEffect(() => {
@@ -662,7 +510,11 @@ export const useGroupChat = (groupId?: string) => {
     addUserToGroup,
     removeUserFromGroup,
     loadMessages,
-    loadGroup
+    loadGroup,
+    deleteMessage, // Ny funksjon
+    editMessage,   // Ny funksjon
+    replyToMessage, // Ny funksjon
+    getMessageById  // Ny funksjon
   };
 };
 

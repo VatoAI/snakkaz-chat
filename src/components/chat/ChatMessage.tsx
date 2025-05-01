@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
-import { formatDistance } from 'date-fns';
+import React, { useState, useEffect } from 'react';
+import { formatDistance, format } from 'date-fns';
 import { nb } from 'date-fns/locale';
 import { cx, theme } from '@/lib/theme';
-import { Clock, Download, Edit, Trash2, ExternalLink, X, CheckCheck, Check } from 'lucide-react';
+import { Clock, Download, Edit, Trash2, ExternalLink, X, CheckCheck, Check, Shield, Reply } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 
 interface ChatMessageProps {
   message: {
@@ -17,11 +19,14 @@ interface ChatMessageProps {
     ttl?: number | null;
     status?: 'sent' | 'delivered' | 'read';
     readBy?: string[];
+    replyTo?: string;
+    replyToMessage?: any;
   };
   isCurrentUser: boolean;
   userProfiles?: Record<string, any>;
   onEdit?: (message: any) => void;
   onDelete?: (messageId: string) => void;
+  onReply?: (message: any) => void;
   isEncrypted?: boolean;
 }
 
@@ -31,31 +36,78 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   userProfiles = {},
   onEdit,
   onDelete,
+  onReply,
   isEncrypted = false,
 }) => {
   const [showOptions, setShowOptions] = useState(false);
   const [showFullImage, setShowFullImage] = useState(false);
-  
-  const { id, content, sender_id, created_at, media, status, readBy } = message;
-  
+  const [timeDisplay, setTimeDisplay] = useState<'relative' | 'absolute'>('relative');
+  const [isExpiring, setIsExpiring] = useState(false);
+  const [remainingTime, setRemainingTime] = useState<string | null>(null);
+
+  const { id, content, sender_id, created_at, media, status, readBy, replyTo, replyToMessage } = message;
+
   const timeAgo = formatDistance(new Date(created_at), new Date(), { 
     addSuffix: true,
     locale: nb 
   });
-  
+
+  const absoluteTime = format(new Date(created_at), 'HH:mm - d. MMM yyyy', {
+    locale: nb
+  });
+
   const senderProfile = userProfiles[sender_id] || { 
     display_name: 'Ukjent bruker',
     avatar_url: null
   };
-  
+
   const isImage = media?.type?.startsWith('image/');
-  
-  // Bestem filtypen basert på medietypen
+
+  useEffect(() => {
+    if (!message.ttl) return;
+
+    const expirationTime = new Date(created_at).getTime() + message.ttl * 1000;
+    const now = Date.now();
+    const timeLeft = expirationTime - now;
+
+    if (timeLeft <= 0) {
+      setRemainingTime('Utløpt');
+      return;
+    }
+
+    if (timeLeft < 30000) {
+      setIsExpiring(true);
+    }
+
+    const updateRemainingTime = () => {
+      const now = Date.now();
+      const timeLeft = expirationTime - now;
+
+      if (timeLeft <= 0) {
+        setRemainingTime('Utløpt');
+        return;
+      }
+
+      if (timeLeft < 60000) {
+        setRemainingTime(`${Math.floor(timeLeft / 1000)}s`);
+      } else if (timeLeft < 3600000) {
+        setRemainingTime(`${Math.floor(timeLeft / 60000)}m`);
+      } else {
+        setRemainingTime(`${Math.floor(timeLeft / 3600000)}t`);
+      }
+    };
+
+    updateRemainingTime();
+    const interval = setInterval(updateRemainingTime, 1000);
+
+    return () => clearInterval(interval);
+  }, [message.ttl, created_at]);
+
   const getFileIcon = () => {
     if (!media?.type) return null;
-    
+
     if (media.type.startsWith('image/')) {
-      return null; // Vi viser selve bildet
+      return null;
     } else if (media.type.startsWith('video/')) {
       return '🎬';
     } else if (media.type.startsWith('audio/')) {
@@ -72,10 +124,9 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
       return '📎';
     }
   };
-  
+
   const fileIcon = getFileIcon();
-  
-  // Handler for å åpne/laste ned filen
+
   const handleMediaClick = () => {
     if (isImage) {
       setShowFullImage(true);
@@ -84,10 +135,34 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
     }
   };
 
-  // Viser meldingsstatus-ikon for brukerens egne meldinger
+  const toggleTimeDisplay = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setTimeDisplay(prev => prev === 'relative' ? 'absolute' : 'relative');
+  };
+
   const renderMessageStatus = () => {
     if (!isCurrentUser) return null;
-    
+
+    if (status === 'read' && readBy && readBy.length > 0) {
+      return (
+        <TooltipProvider>
+          <Tooltip delayDuration={300}>
+            <TooltipTrigger asChild>
+              <div className="flex items-center text-cyberblue-400" title="Lest">
+                <CheckCheck className="h-3 w-3" />
+                {readBy.length > 1 && (
+                  <span className="text-[10px] ml-0.5">{readBy.length}</span>
+                )}
+              </div>
+            </TooltipTrigger>
+            <TooltipContent className="bg-cyberdark-800 border-cyberdark-700 text-xs py-1 px-2">
+              <p>Lest av {readBy.length} {readBy.length === 1 ? 'person' : 'personer'}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    }
+
     switch (status) {
       case 'read':
         return (
@@ -110,23 +185,40 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
         );
     }
   };
-  
+
   return (
-    <div 
-      className={cx(
-        'group relative max-w-[80%] mb-2 rounded-lg py-2 px-3',
-        isCurrentUser ? 'ml-auto' : 'mr-auto',
-        isCurrentUser ? 'bg-cybergold-900/30' : 'bg-cyberdark-800',
-        message.ttl ? 'border border-amber-700/30' : '',
-        isEncrypted ? 'border-l-2 border-l-green-500/50' : ''
+    <div className={cn(
+      'relative py-1',
+      replyToMessage ? 'mt-6' : 'mt-1'
+    )}>
+      {replyToMessage && (
+        <div className={cn(
+          'absolute top-0 transform -translate-y-full',
+          isCurrentUser ? 'right-4' : 'left-11',
+          'max-w-[80%] opacity-80 hover:opacity-100 transition-opacity'
+        )}>
+          <div className={cn(
+            'flex items-center gap-1 p-1 px-2 rounded-t-md text-xs',
+            'bg-cyberdark-800/80 border-l-2 border-cybergold-500',
+            'max-w-full overflow-hidden'
+          )}>
+            <Reply className="h-3 w-3 text-cybergold-400" />
+            <span className="font-medium text-cybergold-400 truncate">
+              {userProfiles[replyToMessage.sender_id]?.display_name || 'Ukjent bruker'}:
+            </span>
+            <span className="text-cybergold-500 truncate">
+              {replyToMessage.content || '[media]'}
+            </span>
+          </div>
+        </div>
       )}
-      onMouseEnter={() => setShowOptions(true)}
-      onMouseLeave={() => setShowOptions(false)}
-    >
-      {/* Sender info (vises kun for meldinger fra andre) */}
-      {!isCurrentUser && (
-        <div className="flex items-center mb-1">
-          <div className="h-5 w-5 rounded-full overflow-hidden bg-cyberdark-700 mr-2">
+
+      <div className={cn(
+        'flex items-end gap-2',
+        isCurrentUser && 'flex-row-reverse'
+      )}>
+        {!isCurrentUser && (
+          <div className="h-8 w-8 rounded-full overflow-hidden bg-cyberdark-700 flex-shrink-0 border border-cyberdark-800">
             {senderProfile.avatar_url ? (
               <img 
                 src={senderProfile.avatar_url} 
@@ -139,98 +231,152 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
               </div>
             )}
           </div>
-          <span className="text-xs font-medium text-cybergold-400">{senderProfile.display_name}</span>
-        </div>
-      )}
-      
-      {/* Media content */}
-      {media?.url && isImage && (
-        <div 
-          className="relative rounded-md overflow-hidden mb-2 cursor-pointer"
-          onClick={handleMediaClick}
-        >
-          <img 
-            src={media.url} 
-            alt="Vedlagt bilde" 
-            className="w-full max-h-60 object-contain bg-cyberdark-900"
-          />
-          <div className="absolute bottom-2 right-2 bg-cyberdark-950/70 rounded-full p-1">
-            <ExternalLink className="h-4 w-4 text-cybergold-400" />
-          </div>
-        </div>
-      )}
-      
-      {/* Andre filtyper enn bilder */}
-      {media?.url && !isImage && (
-        <div 
-          className="flex items-center bg-cyberdark-900 rounded-md p-2 mb-2 cursor-pointer hover:bg-cyberdark-800 transition-colors"
-          onClick={handleMediaClick}
-        >
-          <div className="text-2xl mr-2">{fileIcon}</div>
-          <div className="flex-grow overflow-hidden">
-            <div className="text-sm text-cybergold-300 truncate">
-              {media.url.split('/').pop()}
-            </div>
-            <div className="text-xs text-cybergold-600">
-              {media.type || 'Ukjent filtype'}
-            </div>
-          </div>
-          <Download className="h-4 w-4 text-cybergold-500" />
-        </div>
-      )}
-      
-      {/* Tekst innhold */}
-      <div className="text-sm whitespace-pre-wrap">
-        {content}
-      </div>
-      
-      {/* Footer med tid og TTL info */}
-      <div className="flex justify-end items-center mt-1 gap-1.5">
-        {isEncrypted && (
-          <div className="flex items-center text-green-400/80 text-[10px]">
-            <span>🔒</span>
-          </div>
         )}
-        
-        {message.ttl && (
-          <div className="flex items-center text-amber-400/80 text-[10px]">
-            <Clock className="h-3 w-3 mr-0.5" />
-            <span>Slettes automatisk</span>
-          </div>
-        )}
-        
-        <span className="text-[10px] text-cybergold-600">{timeAgo}</span>
-        
-        {renderMessageStatus()}
-      </div>
-      
-      {/* Handlinger for meldinger (vises ved hover) */}
-      {isCurrentUser && showOptions && (onEdit || onDelete) && (
-        <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          {onEdit && (
-            <button 
-              className="p-1 hover:bg-cyberdark-700 rounded-full"
-              onClick={() => onEdit(message)}
-            >
-              <Edit className="h-3 w-3 text-cybergold-400" />
-            </button>
+
+        <div 
+          className={cn(
+            'group relative max-w-[85%] rounded-xl py-2 px-3',
+            isCurrentUser ? 'rounded-tr-sm bg-gradient-to-br from-cybergold-900/40 to-cybergold-900/30' : 
+                          'rounded-tl-sm bg-cyberdark-800/90',
+            message.ttl ? 'border border-amber-700/30' : '',
+            isEncrypted ? 'border-l-2 border-l-green-500/50' : '',
+            isExpiring && 'animate-pulse'
           )}
-          
-          {onDelete && (
-            <button 
-              className="p-1 hover:bg-red-500/20 rounded-full"
-              onClick={() => onDelete(id)}
+          onMouseEnter={() => setShowOptions(true)}
+          onMouseLeave={() => setShowOptions(false)}
+        >
+          {!isCurrentUser && (
+            <div className="flex items-center mb-1">
+              <span className="text-xs font-medium text-cybergold-400">{senderProfile.display_name}</span>
+            </div>
+          )}
+
+          {media?.url && isImage && (
+            <div 
+              className="relative rounded-md overflow-hidden mb-2 cursor-pointer"
+              onClick={handleMediaClick}
             >
-              <Trash2 className="h-3 w-3 text-red-400" />
-            </button>
+              <img 
+                src={media.url} 
+                alt="Vedlagt bilde" 
+                className="w-full max-h-60 object-contain bg-cyberdark-900"
+                loading="lazy"
+              />
+              <div className="absolute bottom-2 right-2 bg-cyberdark-950/70 rounded-full p-1">
+                <ExternalLink className="h-4 w-4 text-cybergold-400" />
+              </div>
+              
+              {isEncrypted && (
+                <div className="absolute top-2 left-2 bg-green-900/60 rounded-full p-1">
+                  <Shield className="h-3 w-3 text-green-400" />
+                </div>
+              )}
+            </div>
+          )}
+
+          {media?.url && !isImage && (
+            <div 
+              className="flex items-center bg-cyberdark-900 rounded-md p-2 mb-2 cursor-pointer hover:bg-cyberdark-800 transition-colors"
+              onClick={handleMediaClick}
+            >
+              <div className="text-2xl mr-2">{fileIcon}</div>
+              <div className="flex-grow overflow-hidden">
+                <div className="text-sm text-cybergold-300 truncate">
+                  {media.url.split('/').pop()}
+                </div>
+                <div className="text-xs text-cybergold-600">
+                  {media.type || 'Ukjent filtype'}
+                </div>
+              </div>
+              <div className="flex-shrink-0 flex items-center">
+                {isEncrypted && <Shield className="h-3 w-3 text-green-400 mr-1.5" />}
+                <Download className="h-4 w-4 text-cybergold-500" />
+              </div>
+            </div>
+          )}
+
+          {content && (
+            <div className={cn(
+              'text-sm whitespace-pre-wrap',
+              isCurrentUser ? 'text-cybergold-200' : 'text-cybergold-300'
+            )}>
+              {content}
+            </div>
+          )}
+
+          <div className={cn(
+            'flex items-center mt-1 gap-1.5 text-[10px]',
+            isCurrentUser ? 'justify-start flex-row-reverse' : 'justify-end'
+          )}>
+            {renderMessageStatus()}
+
+            <span 
+              className="text-cybergold-600 cursor-pointer hover:text-cybergold-500"
+              onClick={toggleTimeDisplay}
+              title="Klikk for å endre tidsformat"
+            >
+              {timeDisplay === 'relative' ? timeAgo : absoluteTime}
+            </span>
+
+            {message.ttl && remainingTime && (
+              <div className={cn(
+                'flex items-center',
+                isExpiring ? 'text-red-400' : 'text-amber-400/80'
+              )}>
+                <Clock className="h-3 w-3 mr-0.5" />
+                <span>{remainingTime}</span>
+              </div>
+            )}
+
+            {isEncrypted && (
+              <div className="flex items-center text-green-400/80">
+                <Shield className="h-3 w-3" />
+              </div>
+            )}
+          </div>
+
+          {showOptions && (
+            <div className={cn(
+              'absolute top-1 flex gap-1 bg-cyberdark-950/70 rounded-full p-0.5',
+              isCurrentUser ? 'left-1' : 'right-1'
+            )}>
+              {onReply && (
+                <button 
+                  className="p-1 hover:bg-cyberdark-700 rounded-full"
+                  onClick={() => onReply(message)}
+                  title="Svar på melding"
+                >
+                  <Reply className="h-3 w-3 text-cybergold-400" />
+                </button>
+              )}
+
+              {onEdit && isCurrentUser && (
+                <button 
+                  className="p-1 hover:bg-cyberdark-700 rounded-full"
+                  onClick={() => onEdit(message)}
+                  title="Rediger melding"
+                >
+                  <Edit className="h-3 w-3 text-cybergold-400" />
+                </button>
+              )}
+
+              {onDelete && isCurrentUser && (
+                <button 
+                  className="p-1 hover:bg-red-500/20 rounded-full"
+                  onClick={() => onDelete(id)}
+                  title="Slett melding"
+                >
+                  <Trash2 className="h-3 w-3 text-red-400" />
+                </button>
+              )}
+            </div>
           )}
         </div>
-      )}
-      
-      {/* Modal for fullskjermsbilde */}
+      </div>
+
       {showFullImage && (
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center bg-cyberdark-950/90 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-cyberdark-950/95 p-4"
           onClick={() => setShowFullImage(false)}
         >
           <div className="relative max-w-4xl max-h-[90vh] w-full">
@@ -243,12 +389,31 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
             >
               <X className="h-5 w-5 text-white" />
             </button>
-            
+
             <img 
               src={media?.url} 
               alt="Forstørret bilde"
               className="w-full h-full object-contain"
             />
+
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-cyberdark-900/80 rounded-lg px-4 py-2 text-sm">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center">
+                  <span className="text-cybergold-400 mr-1">Fra:</span>
+                  <span className="text-cybergold-300">{senderProfile.display_name}</span>
+                </div>
+                <div className="flex items-center">
+                  <span className="text-cybergold-400 mr-1">Dato:</span>
+                  <span className="text-cybergold-300">{absoluteTime}</span>
+                </div>
+                {isEncrypted && (
+                  <div className="flex items-center text-green-400">
+                    <Shield className="h-4 w-4 mr-1" />
+                    <span>Kryptert</span>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       )}
