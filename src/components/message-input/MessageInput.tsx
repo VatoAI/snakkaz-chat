@@ -144,6 +144,16 @@ const MessageInput: React.FC<MessageInputProps> = ({
     onError: (error) => console.error("Secure message key error:", error)
   });
 
+  // Legger til manglende handleCancelMedia funksjon
+  const handleCancelMedia = () => {
+    // Avbryt opplasting hvis den pågår
+    if (uploadState.isUploading) {
+      cancelUpload();
+    }
+    // Rengjør media ressurser
+    cleanupMedia();
+  };
+
   // Populate message input when entering edit mode
   useEffect(() => {
     if (editingMessage) {
@@ -304,6 +314,22 @@ const MessageInput: React.FC<MessageInputProps> = ({
     }
   };
 
+  // Fiks TypeScript-feil i uploadOptions ved å definere ResizeMode type
+  interface ResizeOptions {
+    maxWidth: number;
+    maxHeight: number;
+    mode: 'auto' | 'contain' | 'cover' | 'stretch';
+    quality: number;
+  }
+
+  interface UploadOptions {
+    compress: boolean;
+    resize?: ResizeOptions;
+    generateThumbnail: boolean;
+    encrypt: boolean;
+    encryptionKey?: string;
+  }
+
   const handleUpload = async () => {
     if (!selectedFile) return;
 
@@ -324,7 +350,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
       }
 
       // Build compression options based on media quality setting
-      const compressionOptions = {
+      const compressionOptions: UploadOptions = {
         compress: mediaQuality !== 'raw',
         resize: mediaQuality === 'standard' ? {
           maxWidth: 1280,
@@ -380,16 +406,6 @@ const MessageInput: React.FC<MessageInputProps> = ({
         setIsSubmitting(false);
       }
     }
-  };
-
-  const handleCancelMedia = () => {
-    // Cancel any ongoing upload
-    if (uploadState.isUploading) {
-      cancelUpload();
-    }
-    
-    // Clean up resources
-    cleanupMedia();
   };
 
   const cleanupMedia = () => {
