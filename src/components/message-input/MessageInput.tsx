@@ -382,6 +382,16 @@ const MessageInput: React.FC<MessageInputProps> = ({
     }
   };
 
+  const handleCancelMedia = () => {
+    // Cancel any ongoing upload
+    if (uploadState.isUploading) {
+      cancelUpload();
+    }
+    
+    // Clean up resources
+    cleanupMedia();
+  };
+
   const cleanupMedia = () => {
     if (previewUrl) {
       URL.revokeObjectURL(previewUrl);
