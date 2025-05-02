@@ -50,4 +50,3 @@ export interface CreateGroupData {
   securityLevel?: SecurityLevel;
   is_premium?: boolean;
 }
-

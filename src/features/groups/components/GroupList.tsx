@@ -1,90 +1,68 @@
 
 import React from 'react';
-import { Group } from '@/types/group';
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { DecryptedMessage } from '@/types/message';
-
-const defaultGroupAvatar = "/icons/snakkaz-icon-512.png";
+import { Group } from '@/features/groups/types';
 
 interface GroupListProps {
   groups: Group[];
-  onSelectGroup?: (group: Group) => void;
-  onJoinGroup?: (groupId: string, password?: string) => Promise<boolean>;
-  onOpenPasswordDialog?: (group: Group) => void;
-  searchQuery?: string;
   currentUserId: string;
-  onOpenCreateGroupModal?: () => void;
-  groupConversations?: Record<string, DecryptedMessage[]>;
-  setSelectedGroup?: (group: Group) => void;
+  setSelectedGroup: (group: Group) => void;
+  searchQuery?: string;
   userProfiles?: Record<string, { username: string | null; avatar_url: string | null }>;
 }
 
 export const GroupList: React.FC<GroupListProps> = ({
-  groups,
-  onSelectGroup,
-  onJoinGroup,
-  onOpenPasswordDialog,
+  groups, 
+  currentUserId, 
+  setSelectedGroup, 
   searchQuery = "",
-  currentUserId,
-  onOpenCreateGroupModal,
-  groupConversations,
-  setSelectedGroup,
-  userProfiles
+  userProfiles = {}
 }) => {
-  const handleSelectGroup = (group: Group) => {
-    if (onSelectGroup) {
-      onSelectGroup(group);
-    } else if (setSelectedGroup) {
-      setSelectedGroup(group);
-    }
-  };
-
-  const filteredGroups = groups.filter(group =>
-    group.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-  
-  const renderGroupItem = (group: Group) => {
-    // Get avatar URL safely with fallback, supporting both camelCase and snake_case
-    const avatarUrl = group.avatarUrl || group.avatar_url || defaultGroupAvatar;
+  // Filter groups by search query
+  const filteredGroups = searchQuery ? 
+    groups.filter(group => 
+      group.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      group.description?.toLowerCase().includes(searchQuery.toLowerCase())
+    ) : 
+    groups;
     
-    return (
-      <Button
-        key={group.id}
-        variant="ghost"
-        className="flex items-center space-x-4 py-3 w-full justify-start rounded-md hover:bg-secondary"
-        onClick={() => handleSelectGroup(group)}
-      >
-        <Avatar>
-          <AvatarImage src={avatarUrl} alt={group.name} />
-          <AvatarFallback>{group.name.charAt(0)}</AvatarFallback>
-        </Avatar>
-        <div className="flex flex-col space-y-1 leading-none">
-          <p className="text-sm font-medium">{group.name}</p>
-          <p className="text-sm text-muted-foreground">
-            {group.memberCount || group.member_count || group.members?.length} members
-          </p>
-        </div>
-        {(group.password !== undefined) && (
-          <div className="password-protected">Password Protected</div>
-        )}
-      </Button>
-    );
-  };
-
   return (
-    <div className="flex flex-col h-full">
-      {onOpenCreateGroupModal && (
-        <div className="p-4">
-          <Button variant="outline" className="w-full" onClick={onOpenCreateGroupModal}>
-            Create new group
-          </Button>
+    <div className="space-y-2">
+      {filteredGroups.length === 0 ? (
+        <div className="p-4 text-center">
+          <p className="text-gray-500">No groups found</p>
         </div>
+      ) : (
+        filteredGroups.map(group => (
+          <div 
+            key={group.id}
+            className="p-3 border rounded-md cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
+            onClick={() => setSelectedGroup(group)}
+          >
+            <div className="flex items-center">
+              <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mr-3">
+                {group.avatarUrl ? (
+                  <img 
+                    src={group.avatarUrl || group.avatar_url} 
+                    alt={group.name} 
+                    className="w-10 h-10 rounded-full object-cover"
+                  />
+                ) : (
+                  <span className="text-blue-500 font-bold">{group.name.charAt(0)}</span>
+                )}
+              </div>
+              <div className="flex-1">
+                <h3 className="font-medium">{group.name}</h3>
+                {group.description && (
+                  <p className="text-sm text-gray-500 truncate">{group.description}</p>
+                )}
+                <p className="text-xs text-gray-400">
+                  {group.memberCount || group.members?.length || 0} members
+                </p>
+              </div>
+            </div>
+          </div>
+        ))
       )}
-      <ScrollArea className="flex-1 p-4 space-y-2">
-        {filteredGroups.map((group) => renderGroupItem(group))}
-      </ScrollArea>
     </div>
   );
 };

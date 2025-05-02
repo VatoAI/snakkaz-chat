@@ -6,4 +6,3 @@ export * from './GroupList';
 export * from './CreateGroup';
 export * from './CreateGroupModal';
 export * from './CreateGroupComponent';
-
