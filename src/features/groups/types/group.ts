@@ -30,6 +30,7 @@ export interface Group {
   password?: string;
   write_permissions?: string;
   default_message_ttl?: number;
+  unreadCount?: number; // For ChatList component
 }
 
 export interface PremiumFeatures {

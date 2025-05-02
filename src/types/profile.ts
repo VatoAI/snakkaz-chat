@@ -20,7 +20,7 @@ export interface Profile {
   two_factor_enabled?: boolean;
   
   // Verification
-  is_verified?: boolean; // Add missing field for FriendListItem
+  is_verified?: boolean; 
   
   // Additional fields
   created_at?: string;

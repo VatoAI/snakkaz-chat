@@ -1,5 +1,7 @@
+
 import { useState, useEffect } from "react";
-import { Group, SecurityLevel } from "@/types/group";
+import { Group } from "@/types/group";
+import { SecurityLevel } from "@/types/security";
 import { useGroupFetching } from "./useGroupFetching";
 import { useGroupCreation } from "./useGroupCreation";
 import { useGroupJoin } from "./useGroupJoin";
@@ -14,7 +16,7 @@ export function useGroups({ currentUserId, userProfiles = {} }: UseGroupsProps) 
   const [groups, setGroups] = useState<Group[]>([]);
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
 
-  const { fetchGroups } = useGroupFetching(currentUserId);
+  const { fetchGroups, isLoading } = useGroupFetching(currentUserId);
 
   const { inviteToGroup } = useGroupInvites(currentUserId);
 
@@ -43,5 +45,6 @@ export function useGroups({ currentUserId, userProfiles = {} }: UseGroupsProps) 
     handleJoinGroup,
     refreshGroups,
     inviteToGroup,
+    loading: isLoading
   };
 }

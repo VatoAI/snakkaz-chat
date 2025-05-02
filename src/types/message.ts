@@ -15,10 +15,10 @@ export interface DecryptedMessage {
   iv: string;
   is_encrypted?: boolean;
   ephemeral_ttl?: number;
-  ttl?: number; // Add ttl property for FriendListItem
+  ttl?: number;
   media_url?: string;
   media_type?: string;
-  media?: { // Add media property for FriendListItem
+  media?: {
     url: string;
     type: string;
   };
