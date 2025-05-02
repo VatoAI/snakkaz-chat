@@ -46,9 +46,9 @@ export const GroupList = ({
                 <div className="flex items-center gap-3">
                   <div className="relative">
                     <Avatar className="w-10 h-10 border-2 border-cybergold-500/20 bg-cyberdark-700">
-                      {group.avatar_url ? (
+                      {(group.avatarUrl || group.avatar_url) ? (
                         <AvatarImage
-                          src={supabase.storage.from('group_avatars').getPublicUrl(group.avatar_url).data.publicUrl}
+                          src={supabase.storage.from('group_avatars').getPublicUrl(group.avatarUrl || group.avatar_url || '').data.publicUrl}
                           alt={group.name}
                         />
                       ) : (

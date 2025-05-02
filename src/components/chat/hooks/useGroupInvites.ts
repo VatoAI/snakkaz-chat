@@ -146,6 +146,9 @@ export const useGroupInvites = (userId: string | null) => {
     setShowInviteDialog,
     fetchInvites,
     acceptInvite,
-    declineInvite
+    declineInvite,
+    // Add these properties to fix the errors
+    groupInvites: invites,
+    setGroupInvites: setInvites
   };
 };

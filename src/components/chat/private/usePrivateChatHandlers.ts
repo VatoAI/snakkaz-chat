@@ -95,4 +95,3 @@ export function usePrivateChatHandlers({
 
   return { handleAcceptInvite, handleDeclineInvite };
 }
-

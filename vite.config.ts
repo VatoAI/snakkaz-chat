@@ -119,5 +119,14 @@ export default defineConfig(({ mode }) => {
     },
     // Add special handling for wasm files
     assetsInclude: ['**/*.wasm'],
+    // Add WebAssembly configuration
+    optimizeDeps: {
+      exclude: ['argon2-browser'],
+      esbuildOptions: {
+        supported: {
+          bigint: true, // Enable BigInt support for ESBuild
+        },
+      },
+    },
   }
 });

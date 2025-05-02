@@ -50,12 +50,14 @@ export const PrivateChatsContainer = ({
     handleCreateGroup,
     handleJoinGroup,
     refreshGroups,
-  } = useGroups({ currentUserId, userProfiles });
+  } = useGroups(currentUserId);
 
   const {
-    groupInvites,
+    invites: groupInvites,
     setGroupInvites,
-  } = useGroupInvites({ currentUserId, userProfiles });
+    acceptInvite,
+    declineInvite,
+  } = useGroupInvites(currentUserId);
 
   const { handleAcceptInvite, handleDeclineInvite } = usePrivateChatHandlers({
     currentUserId,
