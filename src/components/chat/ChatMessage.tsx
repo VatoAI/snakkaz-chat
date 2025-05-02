@@ -205,7 +205,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
 
   return (
     <div className={cn(
-      'relative py-1',
+      'relative py-1 animate-slide-up',
       replyToMessage ? 'mt-6' : 'mt-1'
     )}>
       {replyToMessage && (
@@ -235,7 +235,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
         isCurrentUser && 'flex-row-reverse'
       )}>
         {!isCurrentUser && (
-          <div className="h-8 w-8 rounded-full overflow-hidden bg-cyberdark-700 flex-shrink-0 border border-cyberdark-800">
+          <div className="h-8 w-8 rounded-full overflow-hidden bg-cyberdark-700 flex-shrink-0 border border-cyberdark-600 shadow-sm">
             {senderProfile.avatar_url ? (
               <img 
                 src={senderProfile.avatar_url} 
@@ -243,8 +243,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                 className="h-full w-full object-cover"
               />
             ) : (
-              <div className="h-full w-full flex items-center justify-center text-xs text-cybergold-400">
-                {senderProfile.display_name[0].toUpperCase()}
+              <div className="h-full w-full flex items-center justify-center text-xs font-medium text-cybergold-400 bg-gradient-to-br from-cyberdark-700 to-cyberdark-800">
+                {senderProfile.display_name?.[0]?.toUpperCase() || 'U'}
               </div>
             )}
           </div>
@@ -252,10 +252,12 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
 
         <div 
           className={cn(
-            'group relative max-w-[85%] rounded-xl py-2 px-3',
-            isCurrentUser ? 'rounded-tr-sm bg-gradient-to-br from-cybergold-900/40 to-cybergold-900/30' : 
-                          'rounded-tl-sm bg-cyberdark-800/90',
-            message.ttl ? 'border border-amber-700/30' : '',
+            'group relative max-w-[85%] rounded-xl py-2 px-3 transition-all duration-200',
+            'shadow-sm hover:shadow-md',
+            isCurrentUser ? 
+              'rounded-tr-sm bg-gradient-to-br from-cybergold-900/50 to-cyberdark-900 border-b border-r border-cybergold-700/30' : 
+              'rounded-tl-sm bg-gradient-to-br from-cyberdark-800 to-cyberdark-900 border-b border-l border-cyberdark-700',
+            message.ttl ? 'border border-amber-700/40' : '',
             isEncrypted ? 'border-l-2 border-l-green-500/50' : '',
             isExpiring && 'animate-pulse'
           )}
@@ -270,22 +272,23 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
 
           {media?.url && isImage && (
             <div 
-              className="relative rounded-md overflow-hidden mb-2 cursor-pointer"
+              className="relative rounded-md overflow-hidden mb-2 cursor-pointer group/image"
               onClick={handleMediaClick}
             >
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover/image:opacity-100 transition-opacity duration-200 pointer-events-none"></div>
               <img 
                 src={media.url} 
                 alt="Vedlagt bilde" 
-                className="w-full max-h-60 object-contain bg-cyberdark-900"
+                className="w-full max-h-60 object-contain bg-cyberdark-900 transition-transform duration-300 group-hover/image:scale-[1.02]"
                 loading="lazy"
               />
-              <div className="absolute bottom-2 right-2 bg-cyberdark-950/70 rounded-full p-1">
+              <div className="absolute bottom-2 right-2 bg-cyberdark-950/80 rounded-full p-1 transition-opacity duration-200 opacity-50 group-hover/image:opacity-100">
                 <ExternalLink className="h-4 w-4 text-cybergold-400" />
               </div>
               
               {isEncrypted && (
-                <div className="absolute top-2 left-2 bg-green-900/60 rounded-full p-1">
-                  <Shield className="h-3 w-3 text-green-400" />
+                <div className="absolute top-2 left-2 bg-green-900/70 rounded-full p-1.5 shadow-sm">
+                  <Shield className="h-3 w-3 text-green-300" />
                 </div>
               )}
             </div>
@@ -293,7 +296,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
 
           {media?.url && !isImage && (
             <div 
-              className="flex items-center bg-cyberdark-900 rounded-md p-2 mb-2 cursor-pointer hover:bg-cyberdark-800 transition-colors"
+              className="flex items-center bg-gradient-to-r from-cyberdark-900 to-cyberdark-850 rounded-md p-2 mb-2 cursor-pointer hover:bg-cyberdark-800 transition-all duration-200 border border-cyberdark-700 hover:border-cybergold-900/30"
               onClick={handleMediaClick}
             >
               <div className="text-2xl mr-2">{fileIcon}</div>
@@ -307,7 +310,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
               </div>
               <div className="flex-shrink-0 flex items-center">
                 {isEncrypted && <Shield className="h-3 w-3 text-green-400 mr-1.5" />}
-                <Download className="h-4 w-4 text-cybergold-500" />
+                <Download className="h-4 w-4 text-cybergold-500 transition-transform duration-200 hover:scale-110 hover:text-cybergold-400" />
               </div>
             </div>
           )}
@@ -315,20 +318,20 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
           {content && (
             <div className={cn(
               'text-sm whitespace-pre-wrap',
-              isCurrentUser ? 'text-cybergold-200' : 'text-cybergold-300'
+              isCurrentUser ? 'text-cybergold-100' : 'text-cybergold-200'
             )}>
               {content}
             </div>
           )}
 
           <div className={cn(
-            'flex items-center mt-1 gap-1.5 text-[10px]',
+            'flex items-center mt-1.5 gap-1.5 text-[10px]',
             isCurrentUser ? 'justify-start flex-row-reverse' : 'justify-end'
           )}>
             {renderMessageStatus()}
 
             <span 
-              className="text-cybergold-600 cursor-pointer hover:text-cybergold-500"
+              className="text-cybergold-600 cursor-pointer hover:text-cybergold-500 transition-colors"
               onClick={toggleTimeDisplay}
               title="Klikk for å endre tidsformat"
             >
@@ -346,7 +349,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
             )}
 
             {isEncrypted && (
-              <div className="flex items-center text-green-400/80">
+              <div className="flex items-center text-green-400/90">
                 <Shield className="h-3 w-3" />
               </div>
             )}
@@ -354,12 +357,13 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
 
           {showOptions && (
             <div className={cn(
-              'absolute top-1 flex gap-1 bg-cyberdark-950/70 rounded-full p-0.5',
+              'absolute top-1 flex gap-1 bg-cyberdark-950/85 backdrop-blur-sm rounded-full p-0.5 shadow-md border border-cyberdark-800',
+              'opacity-0 animate-fade-in',
               isCurrentUser ? 'left-1' : 'right-1'
             )}>
               {onReply && (
                 <button 
-                  className="p-1 hover:bg-cyberdark-700 rounded-full"
+                  className="p-1.5 hover:bg-cybergold-500/20 rounded-full transition-colors"
                   onClick={() => onReply(message)}
                   title="Svar på melding"
                 >
@@ -369,7 +373,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
 
               {onEdit && isCurrentUser && (
                 <button 
-                  className="p-1 hover:bg-cyberdark-700 rounded-full"
+                  className="p-1.5 hover:bg-cybergold-500/20 rounded-full transition-colors"
                   onClick={() => onEdit(message)}
                   title="Rediger melding"
                 >
@@ -379,7 +383,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
 
               {onDelete && isCurrentUser && (
                 <button 
-                  className="p-1 hover:bg-red-500/20 rounded-full"
+                  className="p-1.5 hover:bg-red-500/20 rounded-full transition-colors"
                   onClick={() => onDelete(id)}
                   title="Slett melding"
                 >
@@ -393,12 +397,12 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
 
       {showFullImage && (
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center bg-cyberdark-950/95 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-cyberdark-950/95 p-4 animate-fade-in"
           onClick={() => setShowFullImage(false)}
         >
           <div className="relative max-w-4xl max-h-[90vh] w-full">
             <button 
-              className="absolute top-2 right-2 bg-cyberdark-900/80 p-2 rounded-full z-10"
+              className="absolute top-2 right-2 bg-cyberdark-900/90 p-2 rounded-full z-10 hover:bg-cyberdark-800 transition-colors shadow-lg"
               onClick={(e) => {
                 e.stopPropagation();
                 setShowFullImage(false);
@@ -410,21 +414,21 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
             <img 
               src={media?.url} 
               alt="Forstørret bilde"
-              className="w-full h-full object-contain"
+              className="w-full h-full object-contain rounded-md shadow-xl"
             />
 
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-cyberdark-900/80 rounded-lg px-4 py-2 text-sm">
-              <div className="flex items-center gap-3">
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-cyberdark-900/90 backdrop-blur-sm rounded-lg px-4 py-2 text-sm border border-cyberdark-700 shadow-lg">
+              <div className="flex items-center gap-4">
                 <div className="flex items-center">
-                  <span className="text-cybergold-400 mr-1">Fra:</span>
-                  <span className="text-cybergold-300">{senderProfile.display_name}</span>
+                  <span className="text-cybergold-500 mr-1">Fra:</span>
+                  <span className="text-cybergold-300 font-medium">{senderProfile.display_name}</span>
                 </div>
                 <div className="flex items-center">
-                  <span className="text-cybergold-400 mr-1">Dato:</span>
+                  <span className="text-cybergold-500 mr-1">Dato:</span>
                   <span className="text-cybergold-300">{absoluteTime}</span>
                 </div>
                 {isEncrypted && (
-                  <div className="flex items-center text-green-400">
+                  <div className="flex items-center text-green-400 bg-green-900/20 rounded-full px-2 py-0.5">
                     <Shield className="h-4 w-4 mr-1" />
                     <span>Kryptert</span>
                   </div>
