@@ -93,8 +93,8 @@ export const GroupMessageList: React.FC<GroupMessageListProps> = ({
   // Fetch reply messages
   useEffect(() => {
     const replyIds = messages
-      .filter(m => m.replyToId && !replyTargetMessages[m.replyToId])
-      .map(m => m.replyToId as string);
+      .filter(m => (m.replyToId || m.reply_to_id) && !replyTargetMessages[m.replyToId || m.reply_to_id])
+      .map(m => (m.replyToId || m.reply_to_id) as string);
       
     if (replyIds.length === 0) return;
     
@@ -120,6 +120,21 @@ export const GroupMessageList: React.FC<GroupMessageListProps> = ({
 
   const userId = currentUserId || user?.id;
   if (!userId) return null;
+
+  // Helper function to handle date safely
+  const getIsoString = (date: string | Date | undefined): string => {
+    if (!date) return new Date().toISOString();
+    
+    if (typeof date === 'string') {
+      return date;
+    }
+    
+    if (date instanceof Date) {
+      return date.toISOString();
+    }
+    
+    return new Date().toISOString();
+  };
 
   return (
     <div 
@@ -159,28 +174,14 @@ export const GroupMessageList: React.FC<GroupMessageListProps> = ({
               replyToMessage = replyId ? replyTargetMessages[replyId] : null;
             }
             
-            // Handle date conversion safely
-            const createdAtString = (): string => {
-              if (typeof message.createdAt === 'string') {
-                return message.createdAt;
-              } else if (message.createdAt instanceof Date) {
-                return message.createdAt.toISOString();
-              } else if (typeof message.created_at === 'string') {
-                return message.created_at;
-              } else if (message.created_at instanceof Date) {
-                return message.created_at.toISOString();
-              }
-              return new Date().toISOString(); // Fallback
-            };
-            
             return (
               <ChatMessage
                 key={message.id}
                 message={{
                   id: message.id,
-                  content: message.text || message.content || '',
+                  content: message.content || message.text || '',
                   sender_id: message.senderId || message.sender_id || '',
-                  created_at: createdAtString(),
+                  created_at: getIsoString(message.createdAt || message.created_at),
                   media: (message.mediaUrl || message.media_url) ? {
                     url: message.mediaUrl || message.media_url || '',
                     type: message.mediaType || message.media_type || 'image'
@@ -190,7 +191,7 @@ export const GroupMessageList: React.FC<GroupMessageListProps> = ({
                   readBy: message.readBy || message.read_by,
                   replyTo: message.replyToId || message.reply_to_id,
                   replyToMessage: replyToMessage ? {
-                    content: replyToMessage.text || replyToMessage.content || '',
+                    content: replyToMessage.content || replyToMessage.text || '',
                     sender_id: replyToMessage.senderId || replyToMessage.sender_id || ''
                   } : undefined
                 }}
