@@ -1,56 +1,40 @@
-import { createContext, useContext, useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { Session } from '@supabase/supabase-js';
 
-export interface User {
-  id: string;
-  email?: string;
-  user_metadata?: {
-    name?: string;
-    full_name?: string;
-    avatar_url?: string;
-  };
-}
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '../integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
-export interface AuthContextType {
-  user: User | null;
-  session: Session | null; // Add session property
-  loading: boolean;
+export type AuthContextType = {
+  user: any;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, metadata?: any) => Promise<void>;
   signOut: () => Promise<void>;
-  resetPassword: (email: string) => Promise<void>;
-}
+  signUp: (email: string, password: string, metadata?: any) => Promise<void>;
+  loading: boolean;
+  error: string | null;
+};
 
-const AuthContext = createContext<AuthContextType>({
-  user: null,
-  session: null,
-  loading: true,
-  signIn: async () => {},
-  signUp: async () => {},
-  signOut: async () => {},
-  resetPassword: async () => {},
-});
+export const useAuth = () => {
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
-export const useAuth = () => useContext(AuthContext);
-
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
-
+  // Check for existing session on component mount
   useEffect(() => {
     const getSession = async () => {
       try {
-        setLoading(true);
-        const { data: { session } } = await supabase.auth.getSession();
-
-        if (session) {
-          setUser(session.user as User);
-          setSession(session);
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Error getting session:', error);
+          setError(error.message);
+        } else if (data?.session) {
+          setUser(data.session.user);
         }
-      } catch (error) {
-        console.error("Error getting session:", error);
+      } catch (err) {
+        console.error('Unexpected error during session check:', err);
+        setError('Failed to retrieve authentication session');
       } finally {
         setLoading(false);
       }
@@ -58,38 +42,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     getSession();
 
-    supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session) {
-        setUser(session.user as User);
-        setSession(session);
-      } else {
-        setUser(null);
-        setSession(null);
+    // Set up auth state change listener
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === 'SIGNED_IN' && session) {
+          setUser(session.user);
+        } else if (event === 'SIGNED_OUT') {
+          setUser(null);
+        }
       }
-    });
-  }, []);
+    );
 
-  const signIn = async (email: string, password: string) => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (error) throw error;
-      setUser(data.user as User);
-      setSession(data.session);
-    } catch (error: any) {
-      console.error("Error signing in:", error.message);
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
+    // Cleanup function to remove listener
+    return () => {
+      if (authListener && authListener.subscription) {
+        authListener.subscription.unsubscribe();
+      }
+    };
+  }, []);
 
   const signUp = async (email: string, password: string, metadata?: any) => {
     try {
       setLoading(true);
+      setError(null);
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -97,12 +73,69 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           data: metadata,
         },
       });
-      if (error) throw error;
-      setUser(data.user as User);
-      setSession(data.session);
-    } catch (error: any) {
-      console.error("Error signing up:", error.message);
-      throw error;
+
+      if (error) {
+        setError(error.message);
+        toast({
+          variant: "destructive",
+          title: "Registrering mislyktes",
+          description: error.message,
+        });
+        return;
+      }
+
+      toast({
+        title: "Registrering vellykket",
+        description: "Sjekk e-posten din for bekreftelseslink.",
+      });
+
+      navigate('/login');
+    } catch (err: any) {
+      setError(err.message || 'Det oppstod en feil under registreringen');
+      toast({
+        variant: "destructive",
+        title: "Registrering mislyktes",
+        description: err.message || 'Det oppstod en feil under registreringen',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const signIn = async (email: string, password: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        setError(error.message);
+        toast({
+          variant: "destructive",
+          title: "Pålogging mislyktes",
+          description: error.message,
+        });
+        return;
+      }
+
+      setUser(data.user);
+      toast({
+        title: "Pålogging vellykket",
+        description: "Du er nå logget inn.",
+      });
+
+      navigate('/chat');
+    } catch (err: any) {
+      setError(err.message || 'Det oppstod en feil under pålogging');
+      toast({
+        variant: "destructive",
+        title: "Pålogging mislyktes",
+        description: err.message || 'Det oppstod en feil under pålogging',
+      });
     } finally {
       setLoading(false);
     }
@@ -111,47 +144,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signOut = async () => {
     try {
       setLoading(true);
-      await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        setError(error.message);
+        return;
+      }
+      
       setUser(null);
-      setSession(null);
-    } catch (error: any) {
-      console.error("Error signing out:", error.message);
-      throw error;
+      navigate('/login');
+    } catch (err: any) {
+      setError(err.message || 'Det oppstod en feil under utlogging');
     } finally {
       setLoading(false);
     }
   };
 
-  const resetPassword = async (email: string) => {
-    try {
-      setLoading(true);
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/update-password`,
-      });
-      if (error) throw error;
-    } catch (error: any) {
-      console.error("Error resetting password:", error.message);
-      throw error;
-    } finally {
-      setLoading(false);
-    }
+  return {
+    user,
+    session: user ? { user } : null,
+    signIn,
+    signUp,
+    signOut,
+    loading,
+    error,
   };
-
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        session,
-        loading,
-        signIn,
-        signUp,
-        signOut,
-        resetPassword,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
 };
-
-export default useAuth;

@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -52,7 +53,16 @@ export function PremiumUser({ isPremium, onUpgrade }: PremiumUserProps) {
                         Du har tilgang til alle premium-funksjoner
                     </CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="space-y-4">
+                    <div className="flex justify-center">
+                        <div className="w-32 h-32 relative">
+                            <img 
+                                src="/lovable-uploads/4402f982-40f7-49ac-8d9a-bb8bb64fc2bf.png" 
+                                alt="SnakkaZ Premium" 
+                                className="w-full h-full object-contain" 
+                            />
+                        </div>
+                    </div>
                     <ul className="space-y-2 text-sm">
                         <li className="flex items-center gap-2">
                             <CheckCircle className="h-4 w-4 text-cybergold-400" />
@@ -70,11 +80,19 @@ export function PremiumUser({ isPremium, onUpgrade }: PremiumUserProps) {
                             <CheckCircle className="h-4 w-4 text-cybergold-400" />
                             <span>Sikker fildeling opptil 1GB</span>
                         </li>
+                        <li className="flex items-center gap-2">
+                            <CheckCircle className="h-4 w-4 text-cybergold-400" />
+                            <span>Tilgang til Electrum-lommebok</span>
+                        </li>
                     </ul>
                 </CardContent>
                 <CardFooter>
-                    <Button variant="outline" className="w-full border-cybergold-500/30 text-cybergold-400">
-                        Premium aktiv
+                    <Button 
+                        variant="outline" 
+                        className="w-full border-cybergold-500/30 text-cybergold-400"
+                        onClick={() => window.open('https://electrum.org/', '_blank')}
+                    >
+                        Åpne Electrum-lommebok
                     </Button>
                 </CardFooter>
             </Card>
@@ -127,6 +145,10 @@ export function PremiumUser({ isPremium, onUpgrade }: PremiumUserProps) {
                             <li className="flex items-center gap-2">
                                 <Star className="h-4 w-4 text-cyberblue-400" />
                                 <span>Ubegrenset meldingshistorikk</span>
+                            </li>
+                            <li className="flex items-center gap-2">
+                                <Star className="h-4 w-4 text-cyberblue-400" />
+                                <span>Tilgang til Electrum-lommebok</span>
                             </li>
                         </ul>
                     </CardContent>
