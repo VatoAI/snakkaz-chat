@@ -3,7 +3,7 @@ import { Send, Paperclip, Shield, Image, X, Mic, Camera, Smile, ShoppingBag, Loa
 import { useAuth } from '@/hooks/useAuth';
 import { useSecureMessageKeys } from '@/hooks/useSecureMessageKeys';
 import { useDeviceDetection } from '@/hooks/useDeviceDetection';
-import { useEnhancedMediaUpload } from '@/hooks/useEnhancedMediaUpload';
+import { useEnhancedMediaUpload, ResizeMode } from '@/hooks/useEnhancedMediaUpload';
 import { useMessageReply } from '@/hooks/useMessageReply';
 import { EnhancedAudioRecorder } from '@/components/media/EnhancedAudioRecorder';
 import { cn } from '@/lib/utils';
@@ -169,7 +169,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
         setMessage('');
       }
     }
-  }, [editingMessage]);
+  }, [editingMessage, isSubmitting]);
 
   // Automatisk juster høyden på tekstområdet basert på innhold
   useEffect(() => {
@@ -200,12 +200,39 @@ const MessageInput: React.FC<MessageInputProps> = ({
     };
   }, []);
 
+  // Define sendEnhancedMedia function before using it in useEffect
+  const sendEnhancedMedia = async () => {
+    if (uploadState.url && onSendEnhancedMedia) {
+      try {
+        await onSendEnhancedMedia({
+          url: uploadState.url,
+          thumbnailUrl: uploadState.thumbnailUrl || undefined,
+          ttl: mediaTtl > 0 ? mediaTtl : undefined,
+          isEncrypted: uploadState.isEncrypted || mediaTtl > 0
+        });
+
+        // Send the caption as a follow-up message if provided
+        if (captionText.trim() && onSendMessage) {
+          await onSendMessage(captionText.trim());
+          setCaptionText('');
+        }
+
+        // Clean up
+        cleanupMedia();
+      } catch (error) {
+        console.error('Error sending enhanced media:', error);
+      } finally {
+        setIsSubmitting(false);
+      }
+    }
+  };
+
   // Handle upload completion
   useEffect(() => {
     if (uploadState.url && !isSubmitting) {
       sendEnhancedMedia();
     }
-  }, [uploadState.url, isSubmitting]);
+  }, [uploadState.url, isSubmitting, sendEnhancedMedia]);
 
   // Typing indicator handling
   const handleTypingStart = useCallback(() => {
@@ -314,9 +341,6 @@ const MessageInput: React.FC<MessageInputProps> = ({
     }
   };
 
-  // Fiks TypeScript-feil i uploadOptions ved å bruke den importerte ResizeMode
-  import { ResizeMode } from '@/hooks/useEnhancedMediaUpload';
-  
   interface ResizeOptions {
     maxWidth: number;
     maxHeight: number;
@@ -357,31 +381,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
         resize: mediaQuality === 'standard' ? {
           maxWidth: 1280,
           maxHeight: 1280,
-          mode: 'auto',
-          quality: 0.85
-        } : mediaQuality === 'high' ? {
-          maxWidth: 1920,
-          maxHeight: 1920,
-          mode: 'auto',
-          quality: 0.92
-        } : undefined,
-        generateThumbnail: true,
-        encrypt: shouldEncrypt,
-        encryptionKey: encryptionKey
-      };
-
-      // Use the enhanced media uploader with selected preset
-      await uploadFile(selectedFile, compressionOptions);
-
-      // If user has added a caption, send it with the image
-      if (captionText.trim()) {
-        // Will be sent after the media is uploaded and sent
-        setMessage(captionText);
-      }
-
-    } catch (error) {
-      console.error('Upload error:', error);
-    }
+  // Function already moved up above the useEffect
   };
 
   const sendEnhancedMedia = async () => {
@@ -524,7 +524,13 @@ const MessageInput: React.FC<MessageInputProps> = ({
       {replyToMessage && !editingMessage && (
         <div className="px-4 pt-2">
           <ReplyPreview 
-            message={replyToMessage}
+            message={{
+              id: replyToMessage.id,
+              content: replyToMessage.content,
+              sender: {
+                displayName: replyToMessage.sender.full_name || replyToMessage.sender.username
+              }
+            }}
             onCancel={clearReply}
           />
         </div>
@@ -618,7 +624,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
                   </label>
                   <select 
                     value={mediaQuality} 
-                    onChange={(e) => setMediaQuality(e.target.value as any)}
+                    onChange={(e) => setMediaQuality(e.target.value as 'standard' | 'high' | 'raw')}
                     className="w-full bg-cyberdark-950 border border-cyberdark-700 rounded p-2 text-sm text-cybergold-300"
                   >
                     <option value="standard">Standard</option>
@@ -716,7 +722,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
             type="button"
             onClick={() => imageInputRef.current?.click()}
             disabled={disabled}
-            className="p-2 rounded-full hover:bg-cyberdark-800 transition text-cybergold-500 hover:text-cybergold-300"
+            className="p-2 rounded-full hover:bg-cyberdark-800 transition-all duration-200 text-cybergold-500 hover:text-cybergold-400 hover:shadow-[0_0_8px_rgba(218,188,69,0.3)] active:scale-95"
             title="Send bilde eller video"
           >
             <Image size={20} />
@@ -726,7 +732,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={disabled}
-            className="p-2 rounded-full hover:bg-cyberdark-800 transition text-cybergold-500 hover:text-cybergold-300"
+            className="p-2 rounded-full hover:bg-cyberdark-800 transition-all duration-200 text-cybergold-500 hover:text-cybergold-400 hover:shadow-[0_0_8px_rgba(218,188,69,0.3)] active:scale-95"
             title="Send fil"
           >
             <Paperclip size={20} />
@@ -736,7 +742,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
             type="button"
             onClick={() => setShowAudioRecorder(true)}
             disabled={disabled || showAudioRecorder}
-            className="p-2 rounded-full hover:bg-cyberdark-800 transition text-cybergold-500 hover:text-cybergold-300"
+            className="p-2 rounded-full hover:bg-cyberdark-800 transition-all duration-200 text-cybergold-500 hover:text-cybergold-400 hover:shadow-[0_0_8px_rgba(218,188,69,0.3)] active:scale-95"
             title="Spill inn lydmelding"
           >
             <Mic size={20} />
@@ -746,7 +752,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
           <button
             type="button"
             onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-            className="p-2 rounded-full hover:bg-cyberdark-800 transition text-cybergold-500 hover:text-cybergold-300"
+            className="p-2 rounded-full hover:bg-cyberdark-800 transition-all duration-200 text-cybergold-500 hover:text-cybergold-400 hover:shadow-[0_0_8px_rgba(218,188,69,0.3)] active:scale-95"
             title="Legg til emoji"
           >
             <Smile size={20} />
@@ -764,7 +770,9 @@ const MessageInput: React.FC<MessageInputProps> = ({
           onKeyDown={handleKeyDown}
           placeholder={editingMessage ? "Rediger melding..." : placeholder}
           disabled={disabled || showAudioRecorder}
-          className="flex-1 bg-cyberdark-800 border border-cyberdark-700 resize-none max-h-[120px] p-2 focus:outline-none focus:ring-0 rounded-md text-sm text-cybergold-300 placeholder:text-cybergold-600"
+          className="flex-1 bg-gradient-to-r from-cyberdark-850 to-cyberdark-800 border border-cyberdark-700 focus:border-cybergold-600/50 
+                   resize-none max-h-[120px] p-3 focus:outline-none focus:ring-0 rounded-lg text-sm text-cybergold-200 
+                   placeholder:text-cybergold-600 transition-all duration-200 shadow-inner"
           style={{ height: '40px' }}
         />
 
@@ -773,8 +781,10 @@ const MessageInput: React.FC<MessageInputProps> = ({
           onClick={handleSendMessage}
           disabled={(!message.trim() && !selectedFile) || isSubmitting || disabled || showAudioRecorder}
           className={cn(
-            "ml-2 p-2 rounded-full transition-colors", 
-            message.trim() ? "bg-cybergold-600 text-black hover:bg-cybergold-700" : "bg-cyberdark-800 text-cybergold-600"
+            "ml-2 p-2.5 rounded-full transition-all duration-300", 
+            message.trim() ? 
+              "bg-gradient-to-br from-cybergold-500 to-cybergold-600 text-black hover:from-cybergold-400 hover:to-cybergold-500 shadow-md hover:shadow-[0_0_10px_rgba(218,188,69,0.4)] active:scale-95" : 
+              "bg-cyberdark-800 text-cybergold-600"
           )}
           title={editingMessage ? "Lagre endringer" : "Send melding"}
         >
@@ -783,14 +793,18 @@ const MessageInput: React.FC<MessageInputProps> = ({
 
         {/* Add security indicator */}
         {showSecurityIndicator && (
-          <div className="absolute -top-6 right-3 flex items-center text-xs text-cybergold-600">
+          <div className="absolute -top-6 right-3 flex items-center text-xs bg-cyberdark-850/80 px-2 py-0.5 rounded-full border border-cyberdark-700">
             <Shield size={12} className={cn(
               "mr-1",
-              securityLevel === 'p2p_e2ee' ? "text-green-500" : 
+              securityLevel === 'p2p_e2ee' ? "text-green-400" : 
               securityLevel === 'server_e2ee' ? "text-cybergold-400" : 
               "text-cybergold-600"
             )} />
-            <span>
+            <span className={cn(
+              securityLevel === 'p2p_e2ee' ? "text-green-400" : 
+              securityLevel === 'server_e2ee' ? "text-cybergold-400" : 
+              "text-cybergold-600"
+            )}>
               {securityLevel === 'p2p_e2ee' ? 'E2EE' : 
                securityLevel === 'server_e2ee' ? 'Server kryptert' : 
                'Standard'}
@@ -801,8 +815,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
       
       {/* Emoji picker */}
       {showEmojiPicker && (
-        <div className="p-2 border-t border-cyberdark-700 bg-cyberdark-800">
-          {/* Emoji picker would be implemented here */}
+        <div className="p-2 border-t border-cyberdark-700 bg-gradient-to-b from-cyberdark-850 to-cyberdark-900 animate-fade-in">
           <div className="grid grid-cols-8 gap-2 p-2">
             {['😀', '😂', '❤️', '👍', '🎉', '🔥', '⚡', '✨', '🙏', '👀', '💯', '🤷‍♂️', '🤔', '😊', '🥰', '😎'].map((emoji) => (
               <button
@@ -814,13 +827,13 @@ const MessageInput: React.FC<MessageInputProps> = ({
                     inputRef.current.focus();
                   }
                 }}
-                className="text-xl p-2 hover:bg-cyberdark-700 rounded"
+                className="text-xl p-2 hover:bg-cyberdark-700/80 hover:shadow-[0_0_5px_rgba(218,188,69,0.2)] rounded-lg transition-all duration-200"
               >
                 {emoji}
               </button>
             ))}
           </div>
-          <div className="text-center text-xs text-cybergold-600 pt-1">
+          <div className="text-center text-xs text-cybergold-500 pt-1 font-medium">
             Flere emojier kommer snart
           </div>
         </div>

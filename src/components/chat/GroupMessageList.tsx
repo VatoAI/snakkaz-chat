@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { ChatMessage } from './ChatMessage';
 import { GroupMessage } from '@/types/group';
 import { useAuth } from '@/hooks/useAuth';
-import { Loader2, ChevronDown } from 'lucide-react';
+import { Loader2, ChevronDown, MessageSquare } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { nb } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
@@ -16,7 +16,7 @@ interface GroupMessageListProps {
   userProfiles?: Record<string, {
     displayName?: string;
     photoURL?: string;
-    [key: string]: any;
+    [key: string]: string | number | boolean | undefined;
   }>;
   onMessageEdit?: (message: GroupMessage) => void;
   onMessageDelete?: (messageId: string) => void;
@@ -118,16 +118,19 @@ export const GroupMessageList: React.FC<GroupMessageListProps> = ({
   return (
     <div 
       ref={containerRef}
-      className="flex flex-col h-full overflow-y-auto px-2 md:px-4 pt-2 pb-2 bg-cyberdark-950"
+      className="flex flex-col h-full overflow-y-auto px-2 md:px-4 pt-2 pb-2 bg-gradient-to-b from-cyberdark-950 to-cyberdark-900"
     >
       {/* Lasting flere meldinger indikator */}
       {hasMoreMessages && (
         <div 
           ref={topLoadingRef} 
-          className="flex justify-center py-4"
+          className="flex justify-center py-4 opacity-80"
         >
           {isLoading && (
-            <Loader2 className="h-6 w-6 text-cybergold-500 animate-spin" />
+            <div className="flex flex-col items-center">
+              <Loader2 className="h-6 w-6 text-cybergold-500 animate-spin mb-1" />
+              <span className="text-xs text-cybergold-600">Laster tidligere meldinger...</span>
+            </div>
           )}
         </div>
       )}
@@ -135,9 +138,10 @@ export const GroupMessageList: React.FC<GroupMessageListProps> = ({
       {/* Grupperte meldinger med datoseparatorer */}
       {Object.entries(groupedMessages).map(([dateKey, messagesForDate]) => (
         <div key={dateKey} className="space-y-1">
-          {/* Dato-separator */}
+          {/* Dato-separator med forbedret design */}
           <div className="flex items-center justify-center my-4">
-            <div className="bg-cyberdark-800 text-cybergold-500 px-3 py-1 rounded-full text-xs">
+            <div className="bg-gradient-to-r from-cyberdark-950 via-cyberdark-800 to-cyberdark-950 text-cybergold-500 
+                           px-4 py-1.5 rounded-full text-xs shadow-sm border-t border-b border-cybergold-800/20">
               {getDateSeparatorText(dateKey)}
             </div>
           </div>
@@ -159,7 +163,7 @@ export const GroupMessageList: React.FC<GroupMessageListProps> = ({
                   id: message.id,
                   content: message.text || '',
                   sender_id: message.senderId,
-                  created_at: message.createdAt instanceof Date ? message.createdAt.toISOString() : message.createdAt,
+                  created_at: message.createdAt instanceof Date ? message.createdAt.toISOString() : String(message.createdAt),
                   media: message.mediaUrl ? {
                     url: message.mediaUrl,
                     type: message.mediaType || 'image'
@@ -185,34 +189,45 @@ export const GroupMessageList: React.FC<GroupMessageListProps> = ({
         </div>
       ))}
       
-      {/* Melding når chatten er tom */}
+      {/* Melding når chatten er tom med forbedret design */}
       {!isLoading && messages.length === 0 && (
-        <div className="flex flex-col items-center justify-center h-full text-cybergold-600">
-          <p>Ingen meldinger enda.</p>
-          <p className="text-sm mt-1">Start en samtale!</p>
+        <div className="flex flex-col items-center justify-center h-full text-center p-6 animate-fade-in">
+          <div className="p-4 rounded-xl bg-cyberdark-800/50 border border-cyberdark-700 mb-3 w-16 h-16 
+                         flex items-center justify-center shadow-lg">
+            <MessageSquare className="h-8 w-8 text-cybergold-500 opacity-70" />
+          </div>
+          <p className="text-cybergold-400 font-medium mb-1">Ingen meldinger enda</p>
+          <p className="text-sm text-cybergold-600">
+            Send den første meldingen for å starte samtalen!
+          </p>
         </div>
       )}
       
-      {/* Laster-indikator */}
+      {/* Laster-indikator med forbedret design */}
       {isLoading && messages.length === 0 && (
-        <div className="flex flex-col items-center justify-center h-full">
-          <Loader2 className="h-8 w-8 text-cybergold-500 animate-spin mb-2" />
-          <p className="text-cybergold-600">Laster meldinger...</p>
+        <div className="flex flex-col items-center justify-center h-full animate-fade-in">
+          <div className="p-5 rounded-xl bg-cyberdark-800/60 border border-cyberdark-700 mb-4">
+            <Loader2 className="h-10 w-10 text-cybergold-500 animate-spin" />
+          </div>
+          <p className="text-cybergold-400 font-medium">Laster samtale</p>
+          <p className="text-sm text-cybergold-600 mt-1">Henter meldinger...</p>
         </div>
       )}
       
       {/* Referanse til bunnen av listen for auto-scroll */}
       <div ref={messagesEndRef} />
       
-      {/* Scroll til bunnen knapp */}
+      {/* Scroll til bunnen knapp med forbedret design */}
       {showScrollToBottom && (
         <Button
           variant="outline"
           size="icon"
           onClick={scrollToBottom}
-          className="fixed bottom-24 right-6 rounded-full h-10 w-10 border border-cybergold-600 bg-cyberdark-900 hover:bg-cyberdark-800 shadow-md"
+          className="fixed bottom-24 right-6 rounded-full h-11 w-11 border border-cybergold-700/30 
+                    bg-gradient-to-br from-cyberdark-800 to-cyberdark-900 hover:bg-cyberdark-800 
+                    shadow-md hover:shadow-lg hover:border-cybergold-500/40 transition-all duration-300 z-10"
         >
-          <ChevronDown className="h-5 w-5 text-cybergold-400" />
+          <ChevronDown className="h-5 w-5 text-cybergold-500" />
         </Button>
       )}
     </div>
