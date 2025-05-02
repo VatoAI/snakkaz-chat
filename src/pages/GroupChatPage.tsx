@@ -63,6 +63,30 @@ import MessageInput from '@/components/message-input/MessageInput';
 import { Group, GroupVisibility, SecurityLevel, GroupMember } from '@/types/groups';
 import { usePresence } from '@/hooks/usePresence';
 import { UserStatus } from '@/types/presence';
+import { GroupMessage } from '@/types/groups';
+
+// Define message interfaces to fix 'any' types
+interface MessageContent {
+  text?: string;
+  mediaUrl?: string;
+  mediaType?: string;
+  thumbnailUrl?: string;
+  ttl?: number;
+  isEncrypted?: boolean;
+}
+
+// Define the message object interface
+interface Message {
+  id: string;
+  content: string;
+  sender_id: string;
+  groupId?: string;
+  group_id?: string;
+  createdAt: string;
+  created_at?: string;
+  mediaUrl?: string;
+  media_url?: string;
+}
 
 // Define getGroupMemberById function properly
 const getGroupMemberById = (members: GroupMember[] | undefined, userId: string): GroupMember | null => {
