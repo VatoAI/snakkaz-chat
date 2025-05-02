@@ -1,6 +1,6 @@
 
 /**
- * Utility functions for data conversion in encryption contexts
+ * Utilities for data format conversion related to encryption
  */
 
 // Convert string to ArrayBuffer
@@ -18,12 +18,13 @@ export function ab2str(buf: ArrayBuffer): string {
   return String.fromCharCode.apply(null, Array.from(new Uint8Array(buf)));
 }
 
-// Convert ArrayBuffer to base64
+// Convert ArrayBuffer to base64 string
 export function arrayBufferToBase64(buffer: ArrayBuffer): string {
-  return btoa(ab2str(buffer));
+  const binary = ab2str(buffer);
+  return btoa(binary);
 }
 
-// Convert base64 to ArrayBuffer
+// Convert base64 string to ArrayBuffer
 export function base64ToArrayBuffer(base64: string): ArrayBuffer {
   const binaryString = atob(base64);
   const bytes = new Uint8Array(binaryString.length);
@@ -34,27 +35,18 @@ export function base64ToArrayBuffer(base64: string): ArrayBuffer {
 }
 
 // Convert hex string to ArrayBuffer
-export function hexToArrayBuffer(hexString: string): ArrayBuffer {
-  // Remove any non-hex characters (like spaces)
-  const cleanHexString = hexString.replace(/[^0-9A-Fa-f]/g, '');
-  
-  // Ensure we have an even number of characters
-  const paddedHexString = cleanHexString.length % 2 ? '0' + cleanHexString : cleanHexString;
-  
-  const bytes = new Uint8Array(paddedHexString.length / 2);
-  
-  for (let i = 0; i < bytes.length; i++) {
-    const byteHex = paddedHexString.substring(i * 2, i * 2 + 2);
-    bytes[i] = parseInt(byteHex, 16);
+export function hexToArrayBuffer(hex: string): ArrayBuffer {
+  const bytes = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < hex.length; i += 2) {
+    bytes[i / 2] = parseInt(hex.substring(i, i + 2), 16);
   }
-  
   return bytes.buffer;
 }
 
 // Convert ArrayBuffer to hex string
 export function arrayBufferToHex(buffer: ArrayBuffer): string {
-  return Array.from(new Uint8Array(buffer))
-    .map(b => b.toString(16).padStart(2, '0'))
+  const bytes = new Uint8Array(buffer);
+  return Array.from(bytes)
+    .map(byte => byte.toString(16).padStart(2, '0'))
     .join('');
 }
-

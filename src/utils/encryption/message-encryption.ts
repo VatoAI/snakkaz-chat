@@ -1,113 +1,94 @@
 
 /**
- * Message encryption and decryption utilities
+ * Encryption utilities for messages
  */
 
-import { EncryptedMessage } from './types';
-import { str2ab, ab2str, arrayBufferToBase64, base64ToArrayBuffer } from './data-conversion';
+import { 
+  arrayBufferToBase64, 
+  base64ToArrayBuffer, 
+  hexToArrayBuffer, 
+  arrayBufferToHex 
+} from './data-conversion';
 
-// Krypter melding
-export const encryptMessage = async (message: string): Promise<{ encryptedContent: string, key: string, iv: string }> => {
-  try {
-    // Generer tilfeldig krypteringsnøkkel
-    const key = await window.crypto.subtle.generateKey(
-      {
-        name: "AES-GCM",
-        length: 256,
-      },
-      true,
-      ["encrypt", "decrypt"]
-    );
-
-    // Generer tilfeldig IV
-    const iv = window.crypto.getRandomValues(new Uint8Array(12));
-    
-    // Krypter meldingen
-    const encryptedBuffer = await window.crypto.subtle.encrypt(
-      {
-        name: "AES-GCM",
-        iv: iv,
-      },
-      key,
-      str2ab(message)
-    );
-    
-    // Eksporter nøkkelen for lagring
-    const exportedKey = await window.crypto.subtle.exportKey("jwk", key);
-    
-    return {
-      encryptedContent: arrayBufferToBase64(encryptedBuffer),
-      key: JSON.stringify(exportedKey),
-      iv: arrayBufferToBase64(iv)
-    };
-  } catch (error) {
-    console.error("Message encryption failed:", error);
-    throw new Error("Failed to encrypt message");
-  }
+// Generate a unique encryption key for a message
+export const generateMessageKey = (): string => {
+  const array = new Uint8Array(32);
+  window.crypto.getRandomValues(array);
+  return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
 };
 
-// Dekrypter melding
-export const decryptMessage = async (
-  encryptedContent: string | EncryptedMessage,
-  encryptionKey?: string,
-  ivValue?: string
-): Promise<string> => {
-  try {
-    // Case 1: Når vi får et EncryptedMessage-objekt
-    if (typeof encryptedContent !== 'string') {
-      const { encrypted_content, encryption_key, iv } = encryptedContent;
-      return await innerDecrypt(encrypted_content, encryption_key, iv);
-    } 
-    // Case 2: Når vi får separate parametre
-    else if (encryptionKey && ivValue) {
-      return await innerDecrypt(encryptedContent, encryptionKey, ivValue);
-    } 
-    // Ugyldig argumentkombinasjon
-    else {
-      throw new Error("Invalid arguments for decryptMessage");
-    }
-  } catch (error) {
-    console.error("Message decryption failed:", error);
-    throw new Error("Failed to decrypt message");
-  }
-};
-
-// Intern hjelpefunksjon for dekryptering
-const innerDecrypt = async (
-  encryptedContent: string,
-  encryptionKey: string,
-  iv: string
-): Promise<string> => {
-  // Konverter base64 til ArrayBuffer
-  const encryptedBuffer = base64ToArrayBuffer(encryptedContent);
-  const ivBuffer = base64ToArrayBuffer(iv);
+// Encrypt a message with a new random key
+export const encryptMessage = async (content: string): Promise<{
+  encryptedContent: string;
+  key: string;
+  iv: string;
+}> => {
+  // Generate a random encryption key
+  const key = generateMessageKey();
   
-  // Importer krypteringsnøkkel
-  const key = await importEncryptionKey(encryptionKey);
+  // Generate initialization vector
+  const ivArray = window.crypto.getRandomValues(new Uint8Array(12));
+  const iv = arrayBufferToHex(ivArray.buffer);
   
-  // Dekrypter meldingen
-  const decryptedBuffer = await window.crypto.subtle.decrypt(
-    {
-      name: "AES-GCM",
-      iv: new Uint8Array(ivBuffer),
-    },
-    key,
-    encryptedBuffer
+  // Import the key for encryption
+  const cryptoKey = await importEncryptionKey(key);
+  
+  // Encrypt the content
+  const encoder = new TextEncoder();
+  const data = encoder.encode(content);
+  
+  const encryptedBuffer = await window.crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv: ivArray },
+    cryptoKey,
+    data
   );
   
-  return ab2str(decryptedBuffer);
+  // Convert to base64 for storage/transmission
+  const encryptedContent = arrayBufferToBase64(encryptedBuffer);
+  
+  return { encryptedContent, key, iv };
 };
 
-// Export the importEncryptionKey function so it can be used elsewhere
-export const importEncryptionKey = async (keyString: string): Promise<CryptoKey> => {
+// Decrypt a message with the provided key and IV
+export const decryptMessage = async (
+  encryptedContent: string,
+  key: string,
+  iv: string
+): Promise<string> => {
+  try {
+    // Import the key for decryption
+    const cryptoKey = await importEncryptionKey(key);
+    
+    // Convert IV from hex to ArrayBuffer
+    const ivArray = new Uint8Array(hexToArrayBuffer(iv));
+    
+    // Convert encrypted content from base64 to ArrayBuffer
+    const encryptedBuffer = base64ToArrayBuffer(encryptedContent);
+    
+    // Decrypt the content
+    const decryptedBuffer = await window.crypto.subtle.decrypt(
+      { name: 'AES-GCM', iv: ivArray },
+      cryptoKey,
+      encryptedBuffer
+    );
+    
+    // Convert decrypted content to string
+    const decoder = new TextDecoder();
+    return decoder.decode(decryptedBuffer);
+  } catch (error) {
+    console.error('Error decrypting message:', error);
+    throw new Error('Failed to decrypt message');
+  }
+};
+
+// Import a hex string key for crypto operations
+export const importEncryptionKey = async (hexKey: string): Promise<CryptoKey> => {
+  const keyBuffer = hexToArrayBuffer(hexKey);
   return window.crypto.subtle.importKey(
-    "jwk",
-    JSON.parse(keyString),
-    {
-      name: "AES-GCM",
-      length: 256,
-    },
+    'raw',
+    keyBuffer,
+    { name: 'AES-GCM', length: 256 },
     false,
-    ["decrypt", "encrypt"] // Add encrypt permission to be safe
+    ['encrypt', 'decrypt']
   );
 };

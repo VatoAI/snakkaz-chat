@@ -1,40 +1,28 @@
 
-import { supabase } from "@/integrations/supabase/client";
-import { generateEncryptionKey } from "./key-management";
+/**
+ * Encryption utilities for group communications
+ */
 
-export const createGroupEncryptionKey = async (groupId: string, userId: string) => {
-  try {
-    const sessionKey = await generateEncryptionKey();
-    
-    const { error } = await supabase
-      .from('group_encryption')
-      .insert({
-        group_id: groupId,
-        session_key: sessionKey,
-        created_by: userId
-      });
+import { generateMessageKey } from './message-encryption';
 
-    if (error) throw error;
-    
-    return sessionKey;
-  } catch (error) {
-    console.error('Error creating group encryption key:', error);
-    throw error;
-  }
+// Create a new encryption key for a group
+export const createGroupEncryptionKey = async (): Promise<string> => {
+  return generateMessageKey();
 };
 
-export const getGroupEncryptionKey = async (groupId: string) => {
-  try {
-    const { data, error } = await supabase
-      .from('group_encryption')
-      .select('session_key')
-      .eq('group_id', groupId)
-      .single();
-
-    if (error) throw error;
-    return data?.session_key;
-  } catch (error) {
-    console.error('Error getting group encryption key:', error);
-    throw error;
+// Get or retrieve an encryption key for a group
+export const getGroupEncryptionKey = async (groupId: string): Promise<string | null> => {
+  // Try to retrieve from local storage
+  const storedKey = localStorage.getItem(`group_key_${groupId}`);
+  if (storedKey) {
+    return storedKey;
   }
+  
+  // If no stored key, return null (key will need to be requested or shared)
+  return null;
+};
+
+// Store a group encryption key securely
+export const storeGroupEncryptionKey = (groupId: string, key: string): void => {
+  localStorage.setItem(`group_key_${groupId}`, key);
 };
