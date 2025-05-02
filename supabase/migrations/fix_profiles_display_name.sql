@@ -1,1 +1,1 @@
-ALTER TABLE profiles ADD COLUMN IF NOT EXISTS display_name TEXT;
+ALTER TABLE profiles ADD display_name TEXT;

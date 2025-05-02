@@ -1,1 +1,1 @@
-ALTER TABLE profiles ADD COLUMN IF NOT EXISTS is_premium BOOLEAN DEFAULT false;
+ALTER TABLE profiles ADD is_premium BOOLEAN DEFAULT false;
