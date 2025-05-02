@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -64,13 +63,14 @@ import MessageInput from '@/components/message-input/MessageInput';
 import { Group, GroupVisibility, SecurityLevel } from '@/types/group';
 import { usePresence } from '@/hooks/usePresence';
 
-// Define missing function that's being used as "_"
+// Define getGroupMemberById function properly
 const getGroupMemberById = (members, userId) => {
   if (!members || !Array.isArray(members)) return null;
   return members.find(member => member.userId === userId || member.user_id === userId);
 };
 
 const GroupChatPage = () => {
+  
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -246,8 +246,6 @@ const GroupChatPage = () => {
   };
   
   const handleJoinGroup = async (code: string, password?: string) => {
-    // Denne metoden finnes ikke direkte i useGroups, 
-    // men vi kan simulere det ved å bruke acceptInvite
     try {
       await codeToJoin(code);
       
@@ -275,16 +273,17 @@ const GroupChatPage = () => {
     }
   };
 
-  // Hjelpefunksjon for å simulere tiltredelse i en gruppe via kode
+  // Helper function for simulating joining a group via code
   const codeToJoin = async (code: string) => {
     return new Promise<void>((resolve, reject) => {
-      // Simulerer en API-forespørsel
+      // Simulates an API request
       setTimeout(() => {
         resolve();
       }, 1000);
     });
   };
 
+  
   // Handle leaving a group
   const handleLeaveGroup = async () => {
     if (!selectedGroup) return;
@@ -419,7 +418,7 @@ const GroupChatPage = () => {
     return `${Math.floor(seconds / 86400)} dager`;
   };
 
-  // Håndter bilde/mediaopplastning via fil-input
+  // Handle file uploads via file input
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (!event.target.files || event.target.files.length === 0) return;
     
@@ -449,14 +448,14 @@ const GroupChatPage = () => {
     }
   };
   
-  // Håndter redigering av melding
+  // Handle message editing
   const handleEditMessage = (message: any) => {
     setEditingMessageId(message.id);
     // Setter meldingsteksten i input-feltet
     // Dette må gjøres i MessageInput komponenten
   };
   
-  // Håndter sletting av melding
+  // Handle message deletion
   const handleDeleteMessage = async (messageId: string) => {
     try {
       await deleteMessage(messageId);
@@ -473,12 +472,12 @@ const GroupChatPage = () => {
     }
   };
   
-  // Håndter svar på melding
+  // Handle reply to message
   const handleReplyToMessage = (message: any) => {
     setReplyToMessage(message);
   };
   
-  // Håndter reaksjoner på melding
+  // Handle reactions to messages
   const handleReactionAdd = async (messageId: string, emoji: string) => {
     try {
       await reactToMessage(messageId, emoji);
@@ -491,7 +490,7 @@ const GroupChatPage = () => {
     }
   };
   
-  // Laster flere meldinger (eldre)
+  // Load more messages (older)
   const handleLoadMoreMessages = async () => {
     if (!group) return;
     
@@ -524,6 +523,7 @@ const GroupChatPage = () => {
     );
   };
   
+  // Render the UI
   // Render group list if no group is selected
   if (!selectedGroup) {
     return (
@@ -864,31 +864,4 @@ const GroupChatPage = () => {
       
       {/* Message input */}
       <div className="p-4 border-t border-cyberdark-700">
-        <MessageInput
-          onSendMessage={handleSendMessage}
-          editingMessageId={editingMessageId}
-          editingContent={editingMessageId ? 
-            groupMessages?.find(m => m.id === editingMessageId)?.content : ''
-          }
-          onCancelEdit={() => setEditingMessageId(null)}
-          replyToMessage={replyToMessage}
-          onCancelReply={() => setReplyToMessage(null)}
-          ttl={disappearingTime}
-          onChangeTtl={toggleDisappearingMessages}
-          isEncrypted={selectedGroup.securityLevel === "high"}
-        />
-      </div>
-      
-      {/* Hidden file input for image uploads */}
-      <input 
-        type="file" 
-        ref={fileInputRef} 
-        accept="image/*,video/*" 
-        onChange={handleFileUpload} 
-        className="hidden" 
-      />
-    </div>
-  );
-};
-
-export default GroupChatPage;
+        <Message
