@@ -1,215 +1,217 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Button } from "../ui/button";
-import { Mic, Square, Trash, Send, Pause, Play } from "lucide-react";
-import { cn } from "../../lib/utils";
+import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Mic, Stop, Loader2, Play, Pause } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
+import { formatDuration } from '@/utils/formatting/time';
 
 interface EnhancedAudioRecorderProps {
-  onAudioReady: (audioBlob: Blob) => void;
-  onCancel: () => void;
-  className?: string;
+  onUpload: (file: File) => Promise<void>;
 }
 
-export const EnhancedAudioRecorder: React.FC<EnhancedAudioRecorderProps> = ({
-  onAudioReady,
-  onCancel,
-  className
-}) => {
+export function EnhancedAudioRecorder({ onUpload }: EnhancedAudioRecorderProps) {
   const [isRecording, setIsRecording] = useState(false);
-  const [recordingTime, setRecordingTime] = useState(0);
-  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [audioURL, setAudioURL] = useState<string | null>(null);
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+  const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
   const [isPlaying, setIsPlaying] = useState(false);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<BlobPart[]>([]);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const audioUrlRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-      if (mediaRecorderRef.current && isRecording) {
-        mediaRecorderRef.current.stop();
-      }
-      if (audioUrlRef.current) {
-        URL.revokeObjectURL(audioUrlRef.current);
-      }
-    };
-  }, [isRecording]);
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const startRecording = async () => {
+  const [recordedDuration, setRecordedDuration] = useState(0);
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const timerRef = useRef<number>(0);
+  const { toast } = useToast();
+  
+  // Function to start recording
+  const handleStartRecording = useCallback(async () => {
     try {
-      audioChunksRef.current = [];
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
+      const recorder = new MediaRecorder(stream);
       
-      mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) {
-          audioChunksRef.current.push(e.data);
-        }
-      };
-
-      mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
-        setAudioBlob(audioBlob);
-        
-        // Opprett en forhåndsvisningslenke for avspilling
-        if (audioUrlRef.current) {
-          URL.revokeObjectURL(audioUrlRef.current);
-        }
-        audioUrlRef.current = URL.createObjectURL(audioBlob);
-        
-        // Stopp alle spor i strømmen
-        stream.getTracks().forEach(track => track.stop());
-        
-        if (timerRef.current) {
-          clearInterval(timerRef.current);
-        }
-      };
-
-      mediaRecorderRef.current = mediaRecorder;
-      mediaRecorder.start();
+      setMediaRecorder(recorder);
+      setAudioChunks([]);
+      setAudioURL(null);
       setIsRecording(true);
-      setRecordingTime(0);
+      setIsPlaying(false);
+      setRecordedDuration(0);
       
-      timerRef.current = setInterval(() => {
-        setRecordingTime(prev => prev + 1);
+      recorder.ondataavailable = (event) => {
+        setAudioChunks(prev => [...prev, event.data]);
+      };
+      
+      recorder.onstop = () => {
+        stream.getTracks().forEach(track => track.stop());
+        setIsRecording(false);
+        setIsProcessing(true);
+        clearInterval(timerRef.current);
+        
+        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+        const url = URL.createObjectURL(audioBlob);
+        setAudioURL(url);
+        setIsProcessing(false);
+      };
+      
+      recorder.start();
+      
+      // Start timer
+      timerRef.current = window.setInterval(() => {
+        setRecordedDuration(prev => prev + 1);
       }, 1000);
-      
-    } catch (err) {
-      console.error("Error accessing microphone:", err);
-      alert("Kunne ikke få tilgang til mikrofonen. Vennligst gi tillatelse og prøv igjen.");
-    }
-  };
-
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
+    } catch (error) {
+      console.error("Error starting recording:", error);
+      toast({
+        title: "Kunne ikke starte opptak",
+        description: "Vennligst sjekk mikrofontillatelsene dine.",
+        variant: "destructive",
+      });
       setIsRecording(false);
     }
-  };
-
-  const toggleRecording = () => {
-    if (isRecording) {
-      stopRecording();
-    } else {
-      startRecording();
+  }, [toast, setMediaRecorder, setAudioChunks, setIsRecording, setAudioURL, setIsProcessing, setRecordedDuration]);
+  
+  // Function to stop recording
+  const handleStopRecording = useCallback(() => {
+    if (mediaRecorder && mediaRecorder.state === "recording") {
+      mediaRecorder.stop();
     }
-  };
-
-  const handleSendAudio = () => {
-    if (audioBlob) {
-      onAudioReady(audioBlob);
-      setAudioBlob(null);
-      setRecordingTime(0);
-      if (audioUrlRef.current) {
-        URL.revokeObjectURL(audioUrlRef.current);
-        audioUrlRef.current = null;
+  }, [mediaRecorder]);
+  
+  // Function to toggle playback
+  const handleTogglePlayback = useCallback(() => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause();
+      } else {
+        audioRef.current.play();
       }
+      setIsPlaying(prev => !prev);
     }
-  };
-
-  const handleCancelAudio = () => {
-    setAudioBlob(null);
-    setRecordingTime(0);
-    if (audioUrlRef.current) {
-      URL.revokeObjectURL(audioUrlRef.current);
-      audioUrlRef.current = null;
+  }, [isPlaying]);
+  
+  // Function to handle audio upload
+  const handleUpload = useCallback(async () => {
+    if (!audioURL) {
+      toast({
+        title: "Ingen lyd å laste opp",
+        description: "Vennligst ta opp lyd først.",
+        variant: "destructive",
+      });
+      return;
     }
-    onCancel();
-  };
-
-  const togglePlayAudio = () => {
-    if (!audioUrlRef.current) return;
     
-    if (!audioRef.current) {
-      audioRef.current = new Audio(audioUrlRef.current);
+    setIsProcessing(true);
+    
+    try {
+      const response = await fetch(audioURL);
+      const blob = await response.blob();
+      const file = new File([blob], "audio.webm", { type: "audio/webm" });
+      
+      await onUpload(file);
+      setAudioURL(null);
+      setAudioChunks([]);
+      setIsPlaying(false);
+      setRecordedDuration(0);
+      
+      toast({
+        title: "Lyd lastet opp",
+        description: "Lydklippet er lastet opp.",
+      });
+    } catch (error) {
+      console.error("Error uploading audio:", error);
+      toast({
+        title: "Kunne ikke laste opp lyd",
+        description: "En feil oppstod under opplastingen.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [audioURL, onUpload, toast]);
+  
+  useEffect(() => {
+    if (audioRef.current) {
       audioRef.current.addEventListener('ended', () => {
         setIsPlaying(false);
       });
     }
     
-    if (isPlaying) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-      setIsPlaying(false);
-    } else {
-      audioRef.current.play();
-      setIsPlaying(true);
-    }
-  };
-
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.removeEventListener('ended', () => {
+          setIsPlaying(false);
+        });
+      }
+    };
+  }, []);
+  
   return (
-    <div className={cn("flex items-center gap-2", className)}>
-      {!audioBlob ? (
-        <>
-          <Button 
-            type="button"
-            onClick={toggleRecording}
-            variant={isRecording ? "destructive" : "secondary"}
-            size="icon"
-            className={cn(
-              "rounded-full transition-all duration-200 flex items-center justify-center",
-              isRecording ? "h-12 w-12 bg-red-500 hover:bg-red-600" : "h-12 w-12"
+    <div className="flex flex-col items-center space-y-4">
+      <div className="text-sm text-cybergold-400">
+        {isRecording
+          ? `Recording... ${formatDuration(recordedDuration)}`
+          : audioURL
+            ? `Recorded: ${formatDuration(recordedDuration)}`
+            : "Press the mic to start recording"}
+      </div>
+      
+      <div className="flex space-x-4">
+        {!audioURL ? (
+          <Button
+            onClick={handleStartRecording}
+            variant="default" // Changed from "primary" to "default"
+            disabled={isRecording || isProcessing}
+          >
+            <Mic className="mr-2 h-4 w-4" />
+            Start Recording
+          </Button>
+        ) : (
+          <Button
+            onClick={handleTogglePlayback}
+            variant="outline"
+            disabled={isProcessing}
+          >
+            {isPlaying ? (
+              <>
+                <Pause className="mr-2 h-4 w-4" />
+                Pause
+              </>
+            ) : (
+              <>
+                <Play className="mr-2 h-4 w-4" />
+                Play
+              </>
             )}
-          >
-            {isRecording ? <Square className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
           </Button>
-          
-          {isRecording && (
-            <div className="flex items-center gap-2 bg-muted/50 px-3 py-1 rounded-full">
-              <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse"></div>
-              <span className="text-sm font-medium">{formatTime(recordingTime)}</span>
-            </div>
-          )}
-        </>
-      ) : (
-        <div className="flex items-center gap-2 w-full">
+        )}
+        
+        {isRecording ? (
           <Button
-            type="button"
-            onClick={togglePlayAudio}
-            variant="secondary"
-            size="icon"
-            className="rounded-full h-10 w-10"
+            onClick={handleStopRecording}
+            variant="destructive"
+            disabled={isProcessing}
           >
-            {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+            <Stop className="mr-2 h-4 w-4" />
+            Stop Recording
           </Button>
-          
-          <div className="flex-1 px-3 py-1.5 bg-muted/50 rounded-full text-sm">
-            <div className="flex items-center justify-between">
-              <span>Lydopptak</span>
-              <span>{formatTime(recordingTime)}</span>
-            </div>
-          </div>
-          
-          <Button
-            type="button"
-            onClick={handleCancelAudio}
-            variant="ghost"
-            size="icon"
-            className="rounded-full h-10 w-10 text-muted-foreground hover:text-destructive"
-          >
-            <Trash className="h-4 w-4" />
-          </Button>
-          
-          <Button
-            type="button"
-            onClick={handleSendAudio}
-            variant="primary"
-            size="icon"
-            className="rounded-full h-10 w-10 bg-primary text-primary-foreground"
-          >
-            <Send className="h-4 w-4" />
-          </Button>
-        </div>
+        ) : (
+          audioURL && (
+            <Button
+              onClick={handleUpload}
+              disabled={isProcessing}
+            >
+              {isProcessing ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Uploading...
+                </>
+              ) : (
+                "Upload Audio"
+              )}
+            </Button>
+          )
+        )}
+      </div>
+      
+      {audioURL && (
+        <audio ref={audioRef} src={audioURL} controls className="w-full" />
       )}
     </div>
   );
-};
+}

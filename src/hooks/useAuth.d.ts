@@ -1,15 +1,15 @@
 
-import { User } from '@supabase/supabase-js';
+import { User, Session } from '@supabase/supabase-js';
 
 export interface AuthContextType {
   user: User | null;
-  session: any; // Add session property to fix type errors
+  session: Session | null; // Add the session property
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, userData: any) => Promise<void>;
+  error: Error | null;
+  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, options?: any) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
-  resetPassword: (email: string) => Promise<void>;
-  updateUserProfile: (data: any) => Promise<void>;
-  error: string | null;
-  isAuthenticated: boolean;
+  resetPassword: (email: string) => Promise<{ error: Error | null }>;
+  updatePassword: (password: string) => Promise<{ error: Error | null }>;
+  refreshSession: () => Promise<void>;
 }

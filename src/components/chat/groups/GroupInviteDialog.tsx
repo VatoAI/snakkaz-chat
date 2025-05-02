@@ -1,15 +1,11 @@
-
-import React from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { GroupInvite } from '@/types/group';
-import { Button } from '@/components/ui/button';
-import { Loader2, UserCheck, UserX } from 'lucide-react';
+import React from "react";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UserCheck, UserX } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+import { nb } from "date-fns/locale";
+import { GroupInvite } from "@/types/group";
 
 interface GroupInviteDialogProps {
   isOpen: boolean;

@@ -3,7 +3,7 @@ export interface Group {
   id: string;
   name: string;
   createdAt: string;
-  createdBy: string;
+  createdBy: string; // Make sure this is required
   creator_id?: string; // For backward compatibility
   avatarUrl?: string;
   avatar_url?: string; // For backward compatibility
@@ -15,12 +15,12 @@ export interface Group {
   memberCount?: number;
   member_count?: number; // For backward compatibility
   description?: string;
-  visibility?: GroupVisibility;
+  visibility: GroupVisibility; // Make this required
   securityLevel?: SecurityLevel;
   security_level?: SecurityLevel; // For backward compatibility
-  is_premium?: boolean;
+  is_premium: boolean; // Make this required
   isPremium?: boolean;
-  updatedAt?: string;
+  updatedAt: string; // Make this required
   updated_at?: string; // For backward compatibility
   password?: string;
   write_permissions?: string;

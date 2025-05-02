@@ -11,7 +11,7 @@ import { PrivateChatsMainContent } from "./PrivateChatsMainContent";
 import { PrivateChatsEmptyState } from "./PrivateChatsEmptyState";
 import { DecryptedMessage } from "@/types/message";
 import { Friend } from "../friends/types";
-import { Group } from "@/types/group";
+import { Group, GroupInvite } from "@/types/group";
 import { WebRTCManager } from "@/utils/webrtc";
 import { GroupChatCreatorLoader } from "./GroupChatCreatorLoader";
 import { usePrivateChatHandlers } from "./usePrivateChatHandlers";
@@ -50,7 +50,7 @@ export const PrivateChatsContainer = ({
     handleCreateGroup,
     handleJoinGroup,
     refreshGroups,
-  } = useGroups(currentUserId);
+  } = useGroups({ currentUserId, userProfiles });
 
   const {
     invites: groupInvites,

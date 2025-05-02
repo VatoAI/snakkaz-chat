@@ -1,5 +1,5 @@
 // filepath: /workspaces/snakkaz-chat/src/components/marketplace/ProductEntry.tsx
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,7 +16,7 @@ import {
   DollarSign,
   Eye
 } from 'lucide-react';
-import { EnhancedMediaUploader } from '../EnhancedMediaUploader';
+import EnhancedMediaUploader from '../media/EnhancedMediaUploader';
 
 export interface ProductData {
   id?: string;

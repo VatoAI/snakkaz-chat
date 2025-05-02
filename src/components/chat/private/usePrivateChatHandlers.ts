@@ -30,7 +30,7 @@ export function usePrivateChatHandlers({
         .from("group_members")
         .insert({
           user_id: currentUserId,
-          group_id: invite.group_id,
+          group_id: invite.groupId || invite.group_id,
           role: "member",
         });
 
@@ -46,7 +46,7 @@ export function usePrivateChatHandlers({
       await refreshGroups();
       setGroupInvites((invites) => invites.filter((inv) => inv.id !== invite.id));
 
-      const joinedGroup = groups.find((g) => g.id === invite.group_id);
+      const joinedGroup = groups.find((g) => g.id === (invite.groupId || invite.group_id));
       if (joinedGroup) {
         setSelectedGroup(joinedGroup);
       }
@@ -62,7 +62,6 @@ export function usePrivateChatHandlers({
         description: "Kunne ikke akseptere invitasjon.",
         variant: "destructive",
       });
-      throw error;
     }
   }, [currentUserId, groups, refreshGroups, setGroupInvites, setSelectedGroup, toast]);
 
@@ -89,7 +88,6 @@ export function usePrivateChatHandlers({
         description: "Kunne ikke avslå invitasjon.",
         variant: "destructive",
       });
-      throw error;
     }
   }, [setGroupInvites, toast]);
 
