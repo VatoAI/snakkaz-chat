@@ -14,6 +14,7 @@ interface MessageInputProps {
   onSendMessage: (text: string) => Promise<void> | void;
   editingMessageId?: string | null;
   editingContent?: string;
+  editingMessage?: { id: string; content: string } | null; // For backward compatibility
   onCancelEdit?: () => void;
   replyToMessage?: any;
   onCancelReply?: () => void;
@@ -23,12 +24,14 @@ interface MessageInputProps {
   placeholder?: string;
   disabled?: boolean;
   maxLength?: number;
+  autoFocus?: boolean;
 }
 
 const MessageInput: React.FC<MessageInputProps> = ({
   onSendMessage,
   editingMessageId,
   editingContent,
+  editingMessage, // For backward compatibility
   onCancelEdit,
   replyToMessage,
   onCancelReply,
@@ -38,18 +41,30 @@ const MessageInput: React.FC<MessageInputProps> = ({
   placeholder = "Skriv en melding...",
   disabled = false,
   maxLength = 2000,
+  autoFocus = false,
 }) => {
-  const [text, setText] = useState(editingContent || '');
+  // Handle backward compatibility for editingMessage
+  const effectiveEditingMessageId = editingMessageId || editingMessage?.id;
+  const effectiveEditingContent = editingContent || editingMessage?.content;
+
+  const [text, setText] = useState(effectiveEditingContent || '');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Set initial value when editing
   useEffect(() => {
-    if (editingContent) {
-      setText(editingContent);
+    if (effectiveEditingContent) {
+      setText(effectiveEditingContent);
       textareaRef.current?.focus();
     }
-  }, [editingContent, editingMessageId]);
+  }, [effectiveEditingContent, effectiveEditingMessageId]);
+
+  // Handle autoFocus
+  useEffect(() => {
+    if (autoFocus) {
+      textareaRef.current?.focus();
+    }
+  }, [autoFocus]);
 
   // Reset input after sending
   const resetInput = () => {
@@ -60,7 +75,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
   const handleSendMessage = async (e?: React.FormEvent) => {
     e?.preventDefault();
     
-    if (!text.trim() && !editingMessageId) return;
+    if (!text.trim() && !effectiveEditingMessageId) return;
     
     try {
       await onSendMessage(text);
@@ -132,7 +147,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
       )}
       
       {/* Edit mode info */}
-      {editingMessageId && (
+      {effectiveEditingMessageId && (
         <div className="flex items-center bg-cyberdark-800 p-2 mb-2 rounded border-l-2 border-cyberblue-600">
           <div className="flex-1 overflow-hidden">
             <div className="text-xs text-cyberblue-500">Redigerer melding</div>
@@ -219,7 +234,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
             type="submit"
             variant="default"
             size="icon"
-            disabled={(!text.trim() && !editingMessageId) || disabled}
+            disabled={(!text.trim() && !effectiveEditingMessageId) || disabled}
             className="h-10 w-10 rounded-full bg-cybergold-600 hover:bg-cybergold-500"
           >
             <Send className="h-5 w-5" />

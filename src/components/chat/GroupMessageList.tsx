@@ -100,7 +100,7 @@ export const GroupMessageList: React.FC<GroupMessageListProps> = ({
     
     // Here we would normally fetch replyTo messages from API
     // This is a simplified version that just finds them from current messages array
-    const foundMessages = messages.filter(m => m.replyToId && replyIds.includes(m.id));
+    const foundMessages = messages.filter(m => m.id && replyIds.includes(m.id));
     if (foundMessages.length > 0) {
       const newReplyTargets = {...replyTargetMessages};
       foundMessages.forEach(m => {
@@ -150,13 +150,28 @@ export const GroupMessageList: React.FC<GroupMessageListProps> = ({
           
           {/* Messages for this date */}
           {(messagesForDate as GroupMessage[]).map(message => {
-            const isCurrentUser = message.senderId === userId;
+            const isCurrentUser = message.senderId === userId || message.sender_id === userId;
             
             // Find reply message if this message is a reply
             let replyToMessage = null;
-            if (message.replyToId) {
-              replyToMessage = replyTargetMessages[message.replyToId] || null;
+            if (message.replyToId || message.reply_to_id) {
+              const replyId = message.replyToId || message.reply_to_id;
+              replyToMessage = replyId ? replyTargetMessages[replyId] : null;
             }
+            
+            // Handle date conversion safely
+            const createdAtString = (): string => {
+              if (typeof message.createdAt === 'string') {
+                return message.createdAt;
+              } else if (message.createdAt instanceof Date) {
+                return message.createdAt.toISOString();
+              } else if (typeof message.created_at === 'string') {
+                return message.created_at;
+              } else if (message.created_at instanceof Date) {
+                return message.created_at.toISOString();
+              }
+              return new Date().toISOString(); // Fallback
+            };
             
             return (
               <ChatMessage
@@ -164,19 +179,19 @@ export const GroupMessageList: React.FC<GroupMessageListProps> = ({
                 message={{
                   id: message.id,
                   content: message.text || message.content || '',
-                  sender_id: message.senderId,
-                  created_at: typeof message.createdAt === 'string' ? message.createdAt : message.createdAt.toISOString(),
-                  media: message.mediaUrl ? {
-                    url: message.mediaUrl,
-                    type: message.mediaType || 'image'
+                  sender_id: message.senderId || message.sender_id || '',
+                  created_at: createdAtString(),
+                  media: (message.mediaUrl || message.media_url) ? {
+                    url: message.mediaUrl || message.media_url || '',
+                    type: message.mediaType || message.media_type || 'image'
                   } : undefined,
                   ttl: message.ttl,
                   status: 'sent',
-                  readBy: message.readBy,
-                  replyTo: message.replyToId,
+                  readBy: message.readBy || message.read_by,
+                  replyTo: message.replyToId || message.reply_to_id,
                   replyToMessage: replyToMessage ? {
                     content: replyToMessage.text || replyToMessage.content || '',
-                    sender_id: replyToMessage.senderId
+                    sender_id: replyToMessage.senderId || replyToMessage.sender_id || ''
                   } : undefined
                 }}
                 isCurrentUser={isCurrentUser}
@@ -184,7 +199,7 @@ export const GroupMessageList: React.FC<GroupMessageListProps> = ({
                 onEdit={onMessageEdit ? () => onMessageEdit(message) : undefined}
                 onDelete={onMessageDelete ? () => onMessageDelete(message.id) : undefined}
                 onReply={onMessageReply ? () => onMessageReply(message) : undefined}
-                isEncrypted={isEncryptedGroup || (message.isEncrypted || false)}
+                isEncrypted={isEncryptedGroup || (message.isEncrypted || message.is_encrypted || false)}
               />
             );
           })}
