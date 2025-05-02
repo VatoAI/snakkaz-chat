@@ -1,4 +1,3 @@
-
 /**
  * Utility functions for encryption and decryption
  */
@@ -87,8 +86,8 @@ export const decryptWithKey = async (encryptedContent: string, key: string, ivHe
 };
 
 // Re-export all necessary functions from the encryption directory
-export { encryptMessage, decryptMessage, importEncryptionKey } from './utils/encryption/message-encryption';
-export { encryptMedia, decryptMedia, encryptFile } from './utils/encryption/media';
+export { encryptMessage, decryptMessage, importEncryptionKey } from './encryption/message-encryption';
+export { encryptMedia, decryptMedia, encryptFile } from './encryption/media';
 export { 
   str2ab, 
   ab2str, 
@@ -96,5 +95,5 @@ export {
   base64ToArrayBuffer, 
   hexToArrayBuffer, 
   arrayBufferToHex 
-} from './utils/encryption/data-conversion';
-export { createGroupEncryptionKey, getGroupEncryptionKey } from './utils/encryption/group';
+} from './encryption/data-conversion';
+export { createGroupEncryptionKey, getGroupEncryptionKey } from './encryption/group';
