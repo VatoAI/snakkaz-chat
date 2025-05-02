@@ -7,8 +7,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Edit, Eye, Key, Lock, LogOut, ShieldCheck, Upload, User, Shield } from "lucide-react";
+import { Edit, Eye, Key, Lock, LogOut, ShieldCheck, Upload, User, Shield, Bitcoin } from "lucide-react";
 import { PremiumUser } from "@/components/profile/PremiumUser";
+import { BitcoinWallet } from "@/components/profile/BitcoinWallet";
 import { useToast } from "@/hooks/use-toast";
 import { useGroups } from "@/hooks/useGroups";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -510,10 +511,13 @@ export default function Profile() {
 
         <div className="md:col-span-2">
           <Tabs defaultValue="profile" className="w-full">
-            <TabsList className="w-full grid grid-cols-3 bg-cyberdark-800">
+            <TabsList className="w-full grid grid-cols-4 bg-cyberdark-800">
               <TabsTrigger value="profile">Profil</TabsTrigger>
               <TabsTrigger value="security">Sikkerhet</TabsTrigger>
               <TabsTrigger value="privacy">Personvern</TabsTrigger>
+              <TabsTrigger value="crypto" className="flex items-center gap-1.5">
+                <Bitcoin className="h-3.5 w-3.5" /> Krypto
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="profile" className="mt-4">
@@ -719,6 +723,30 @@ export default function Profile() {
                   </Button>
                 </CardFooter>
               </Card>
+            </TabsContent>
+
+            <TabsContent value="crypto" className="mt-4">
+              <BitcoinWallet userId={user?.id || ''} isPremium={isPremium} />
+              
+              {!isPremium && (
+                <Card className="bg-cyberdark-900 border-cyberdark-700 mt-4 border-dashed">
+                  <CardContent className="pt-6">
+                    <div className="flex flex-col items-center text-center p-4">
+                      <Bitcoin className="h-10 w-10 text-gray-500 mb-4" />
+                      <h3 className="text-lg font-medium text-white mb-2">Oppgrader til Premium</h3>
+                      <p className="text-sm text-gray-400 mb-6">
+                        Med Premium får du utvidede funksjoner for kryptohåndtering, inkludert multi-wallet støtte, enhetssynkronisering og mer sikkerhet.
+                      </p>
+                      <Button 
+                        className="bg-cybergold-600 hover:bg-cybergold-500 text-black"
+                        onClick={handleUpgrade}
+                      >
+                        Oppgrader til Premium
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </TabsContent>
           </Tabs>
         </div>
