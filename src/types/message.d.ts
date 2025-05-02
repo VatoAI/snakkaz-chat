@@ -1,39 +1,30 @@
 
-export interface MessageSender {
-  id: string;
-  username: string | null;
-  full_name: string | null;
-}
-
 export interface DecryptedMessage {
   id: string;
   content: string;
-  sender: MessageSender;
-  sender_id?: string;
-  receiver_id?: string;
-  group_id?: string;
+  sender: {
+    id: string;
+    username: string | null;
+    full_name: string | null;
+    avatar_url: string | null;
+  };
   created_at: string;
-  updated_at: string;
-  encryption_key?: string;
-  iv?: string;
-  is_encrypted?: boolean;
+  encryption_key: string;
+  iv: string;
+  ephemeral_ttl?: number;
+  ttl?: number;  // Adding ttl prop
+  media_url?: string;
+  media_type?: string;
+  media?: {  // Adding media prop
+    url: string;
+    type: string;
+  };
+  is_edited?: boolean;
+  edited_at?: string | null;
   is_deleted?: boolean;
   deleted_at?: string | null;
-  ttl?: number;
-  expires_at?: string;
-  media?: {
-    url: string;
-    type: 'image' | 'video' | 'audio';
-    thumbnail?: string;
-  };
-  readBy?: string[];
-  replyTo?: string;
-  replyToMessage?: {
-    content: string;
-    sender_id: string;
-  };
-  replyToId?: string; // Added for compatibility with GroupMessage
-  mediaUrl?: string; // Added for compatibility with GroupMessage
-  mediaType?: string; // Added for compatibility with GroupMessage
-  isEncrypted?: boolean; // Added for compatibility with GroupMessage
+  receiver_id?: string | null;
+  group_id?: string | null;
+  read_at?: string | null;
+  is_delivered?: boolean;
 }

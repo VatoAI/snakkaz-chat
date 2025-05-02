@@ -86,6 +86,15 @@ export const decryptWithKey = async (encryptedContent: string, key: string, ivHe
   }
 };
 
-// Re-export the necessary functions from message-encryption
-export { encryptMessage, decryptMessage } from './utils/encryption/message-encryption';
-
+// Re-export all necessary functions from the encryption directory
+export { encryptMessage, decryptMessage, importEncryptionKey } from './utils/encryption/message-encryption';
+export { encryptMedia, decryptMedia, encryptFile } from './utils/encryption/media';
+export { 
+  str2ab, 
+  ab2str, 
+  arrayBufferToBase64, 
+  base64ToArrayBuffer, 
+  hexToArrayBuffer, 
+  arrayBufferToHex 
+} from './utils/encryption/data-conversion';
+export { createGroupEncryptionKey, getGroupEncryptionKey } from './utils/encryption/group';

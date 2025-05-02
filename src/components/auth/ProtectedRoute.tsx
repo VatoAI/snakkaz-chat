@@ -13,16 +13,16 @@ export const ProtectedRoute = ({
   children, 
   redirectTo = "/auth" 
 }: ProtectedRouteProps) => {
-  const { user, isLoading } = useAuth();
+  const { user, loading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!isLoading && !user) {
+    if (!loading && !user) {
       navigate(redirectTo, { replace: true });
     }
-  }, [user, isLoading, navigate, redirectTo]);
+  }, [user, loading, navigate, redirectTo]);
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="h-screen w-full flex items-center justify-center bg-cyberdark-950">
         <div className="flex flex-col items-center gap-4">

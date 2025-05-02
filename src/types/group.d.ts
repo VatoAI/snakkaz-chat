@@ -57,6 +57,7 @@ export interface GroupMember {
   lastActive?: string;
   last_active?: string;
   can_write?: boolean;
+  permissions?: any; // Add missing field reported in error
 }
 
 export type GroupRole = 'owner' | 'admin' | 'moderator' | 'member' | 'guest' | 'premium';
