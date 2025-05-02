@@ -1,6 +1,6 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { MessageSquare, Info, Download, User, Home, Bot, Users, ShieldCheck } from "lucide-react";
+import { MessageSquare, Info, Download, User, Home, Bot, Users, ShieldCheck, UserPlus } from "lucide-react";
 import { useAuth } from '@/hooks/useAuth';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useIsAdmin } from '@/hooks/useIsAdmin';
@@ -66,6 +66,20 @@ export const MainNav = () => {
         >
           <Users className="w-4 h-4 mr-2" />
           <span className="hidden sm:inline">Grupper</span>
+        </Button>
+      )}
+
+      {user && (
+        <Button
+          variant={isActive('/create-group') ? "default" : "ghost"}
+          size="sm"
+          className={`${isActive('/create-group')
+            ? "bg-cybergold-600/20 text-cybergold-400"
+            : "text-cybergold-400 hover:text-cybergold-300"}`}
+          onClick={() => navigate('/create-group')}
+        >
+          <UserPlus className="w-4 h-4 mr-2" />
+          <span className="hidden sm:inline">Opprett gruppe</span>
         </Button>
       )}
 
