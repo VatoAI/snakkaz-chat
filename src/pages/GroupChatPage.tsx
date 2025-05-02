@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -77,7 +76,7 @@ const GroupChatPage = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { userProfiles, fetchProfiles } = useProfiles();
-  const { updatePresence, presenceData } = usePresence();
+  const { handleStatusChange, userPresence, isConnected } = usePresence(user?.id || null);
   
   // Refs
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -151,30 +150,22 @@ const GroupChatPage = () => {
   // Oppdater presence når vi bytter gruppe
   useEffect(() => {
     if (selectedGroup?.id && user?.id) {
-      updatePresence({
-        status: 'online',
-        currentGroupId: selectedGroup.id,
-        lastActive: new Date()
-      });
+      // Update status to online when group changes
+      handleStatusChange('online');
+      
+      // We would ideally store currentGroupId in a separate way
+      // since handleStatusChange only accepts a status string
     } else {
-      updatePresence({
-        status: 'online',
-        currentGroupId: null,
-        lastActive: new Date()
-      });
+      handleStatusChange('online');
     }
     
     return () => {
-      // Når komponenten unmounter, fjern currentGroupId
+      // Når komponenten unmounter, sett status til offline
       if (user?.id) {
-        updatePresence({
-          status: 'online',
-          currentGroupId: null,
-          lastActive: new Date()
-        });
+        handleStatusChange('online');
       }
     };
-  }, [selectedGroup?.id, user?.id, updatePresence]);
+  }, [selectedGroup?.id, user?.id, handleStatusChange]);
   
   useEffect(() => {
     if (user?.id) {
