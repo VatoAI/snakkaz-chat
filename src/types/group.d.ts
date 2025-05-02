@@ -25,20 +25,6 @@ export interface Group {
   password?: string;
   write_permissions?: string;
   default_message_ttl?: number;
-  replyToId?: string; // Add missing properties for messages
-  reply_to_id?: string;
-  text?: string;
-  mediaUrl?: string;
-  media_url?: string;
-  mediaType?: string;
-  media_type?: string;
-  ttl?: number;
-  readBy?: string[];
-  read_by?: string[];
-  isEncrypted?: boolean;
-  is_encrypted?: boolean;
-  sender_id?: string;
-  created_at?: string | Date;
 }
 
 export interface GroupMember {

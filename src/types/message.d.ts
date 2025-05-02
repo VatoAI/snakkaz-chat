@@ -9,13 +9,14 @@ export interface DecryptedMessage {
     avatar_url: string | null;
   };
   created_at: string;
+  updated_at?: string;
   encryption_key: string;
   iv: string;
   ephemeral_ttl?: number;
-  ttl?: number;  // Adding ttl prop
+  ttl?: number;
   media_url?: string;
   media_type?: string;
-  media?: {  // Adding media prop
+  media?: {
     url: string;
     type: string;
   };
@@ -27,4 +28,10 @@ export interface DecryptedMessage {
   group_id?: string | null;
   read_at?: string | null;
   is_delivered?: boolean;
+  is_encrypted?: boolean;
+  replyTo?: string;
+  replyToMessage?: {
+    content: string;
+    sender_id: string;
+  };
 }

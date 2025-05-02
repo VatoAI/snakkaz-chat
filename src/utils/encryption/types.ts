@@ -1,29 +1,31 @@
 
 /**
- * Type definitions for encryption modules
+ * Types for encryption functionality
  */
 
-export interface EncryptedMessage {
-  encrypted_content: string;
-  encryption_key: string;
+export interface EncryptedContent {
+  encryptedContent: string;
+  key: string;
   iv: string;
-  created_at: string;
-  sender_id: string;
-  receiver_id?: string;
-  group_id?: string;
-}
-
-export interface MediaEncryptionMetadata {
-  name?: string;
-  type?: string;
-  size?: number;
-  lastModified?: number;
-  thumbnail?: string;
 }
 
 export interface EncryptedMedia {
-  url: string;
-  encryption_key: string;
+  encryptedData: string;
+  key: string;
   iv: string;
-  metadata?: MediaEncryptionMetadata | string;
+  mimeType?: string;
+}
+
+export interface DecryptedMedia {
+  mediaBlob: Blob;
+  mimeType: string;
+  url: string;
+}
+
+export interface GroupEncryptionKey {
+  id: string;
+  groupId: string;
+  sessionKey: string;
+  createdBy: string;
+  createdAt: string;
 }

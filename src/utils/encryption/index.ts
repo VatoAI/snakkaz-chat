@@ -7,7 +7,7 @@
  */
 
 // Re-export functions from message-encryption module
-export { encryptMessage, decryptMessage, importEncryptionKey } from './message-encryption';
+export { encryptMessage, decryptMessage, importEncryptionKey, generateMessageEncryptionKey } from './message-encryption';
 
 // Re-export from media encryption module
 export { encryptMedia, decryptMedia, encryptFile } from './media';
