@@ -98,3 +98,4 @@ export {
 } from './encryption/data-conversion';
 export { createGroupEncryptionKey, getGroupEncryptionKey } from './encryption/group';
 export { establishSecureConnection } from './encryption/secure-connection';
+export { generateKeyPair } from './encryption/key-management';
