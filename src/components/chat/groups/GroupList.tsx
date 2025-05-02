@@ -1,21 +1,23 @@
 
-// Fix the specific lines with avatar_url and password issues
 import React from 'react';
 import { Group } from '@/types/group';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { DecryptedMessage } from '@/types/message';
 
 const defaultGroupAvatar = "/icons/snakkaz-icon-512.png";
 
 interface GroupListProps {
   groups: Group[];
-  onSelectGroup: (group: Group) => void;
-  onJoinGroup: (groupId: string, password?: string) => Promise<boolean>;
-  onOpenPasswordDialog: (group: Group) => void;
-  searchQuery: string;
+  onSelectGroup?: (group: Group) => void;
+  onJoinGroup?: (groupId: string, password?: string) => Promise<boolean>;
+  onOpenPasswordDialog?: (group: Group) => void;
+  searchQuery?: string;
   currentUserId: string;
-  onOpenCreateGroupModal: () => void;
+  onOpenCreateGroupModal?: () => void;
+  groupConversations?: Record<string, DecryptedMessage[]>;
+  setSelectedGroup?: (group: Group) => void;
 }
 
 export const GroupList: React.FC<GroupListProps> = ({
@@ -23,10 +25,20 @@ export const GroupList: React.FC<GroupListProps> = ({
   onSelectGroup,
   onJoinGroup,
   onOpenPasswordDialog,
-  searchQuery,
+  searchQuery = "",
   currentUserId,
-  onOpenCreateGroupModal
+  onOpenCreateGroupModal,
+  groupConversations,
+  setSelectedGroup
 }) => {
+  const handleSelectGroup = (group: Group) => {
+    if (onSelectGroup) {
+      onSelectGroup(group);
+    } else if (setSelectedGroup) {
+      setSelectedGroup(group);
+    }
+  };
+
   const filteredGroups = groups.filter(group =>
     group.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -37,9 +49,10 @@ export const GroupList: React.FC<GroupListProps> = ({
     
     return (
       <Button
+        key={group.id}
         variant="ghost"
         className="flex items-center space-x-4 py-3 w-full justify-start rounded-md hover:bg-secondary"
-        onClick={() => onSelectGroup(group)}
+        onClick={() => handleSelectGroup(group)}
       >
         <Avatar>
           <AvatarImage src={avatarUrl} alt={group.name} />
@@ -51,7 +64,7 @@ export const GroupList: React.FC<GroupListProps> = ({
             {group.memberCount || group.members?.length} members
           </p>
         </div>
-        {(group.password !== undefined) && (
+        {group.password !== undefined && (
           <div className="password-protected">Password Protected</div>
         )}
       </Button>
@@ -60,11 +73,13 @@ export const GroupList: React.FC<GroupListProps> = ({
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-4">
-        <Button variant="outline" className="w-full" onClick={onOpenCreateGroupModal}>
-          Lag ny gruppe
-        </Button>
-      </div>
+      {onOpenCreateGroupModal && (
+        <div className="p-4">
+          <Button variant="outline" className="w-full" onClick={onOpenCreateGroupModal}>
+            Lag ny gruppe
+          </Button>
+        </div>
+      )}
       <ScrollArea className="flex-1 p-4 space-y-2">
         {filteredGroups.map((group) => renderGroupItem(group))}
       </ScrollArea>

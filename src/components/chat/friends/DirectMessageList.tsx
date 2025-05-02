@@ -3,6 +3,7 @@ import { useRef, useEffect } from "react";
 import { DecryptedMessage } from "@/types/message";
 import { MessageGroup } from "@/components/message/MessageGroup";
 import { SecurityLevel } from "@/types/security";
+import { UserStatus } from "@/types/presence";
 
 interface DirectMessageListProps {
   messages: DecryptedMessage[];
@@ -41,6 +42,23 @@ export const DirectMessageList = ({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages.length, peerIsTyping]);
 
+  const getDateSeparatorText = (dateKey: string) => {
+    return dateKey; // This would be replaced with actual date formatting logic
+  };
+
+  const getUserStatus = (userId: string): UserStatus => {
+    return 'online'; // This would be replaced with actual status logic
+  };
+
+  const groupedMessages: Record<string, DecryptedMessage[]> = {};
+  messages.forEach(message => {
+    const date = new Date(message.created_at).toDateString();
+    if (!groupedMessages[date]) {
+      groupedMessages[date] = [];
+    }
+    groupedMessages[date].push(message);
+  });
+
   return (
     <div className="flex-1 overflow-y-auto p-4 space-y-4" ref={bottomRef}>
       {isPageEncrypted && (
@@ -49,19 +67,14 @@ export const DirectMessageList = ({
         </div>
       )}
       
-      {messages.map((message) => (
-        <MessageGroup
-          key={message.id}
-          messages={[message]}
-          isUserMessage={(msg) => msg.sender.id === currentUserId}
-          onMessageExpired={(messageId) => {
-            console.log('Message expired:', messageId);
-          }}
-          onEditMessage={onEditMessage}
-          onDeleteMessage={onDeleteMessage}
-          securityLevel={securityLevel}
-        />
-      ))}
+      <MessageGroup
+        groupedMessages={groupedMessages}
+        getDateSeparatorText={getDateSeparatorText}
+        getUserStatus={getUserStatus}
+        onEditMessage={onEditMessage}
+        onDeleteMessage={onDeleteMessage}
+        securityLevel={securityLevel}
+      />
       
       {peerIsTyping && (
         <div className="flex items-center space-x-2 text-sm text-cybergold-400 animate-pulse">

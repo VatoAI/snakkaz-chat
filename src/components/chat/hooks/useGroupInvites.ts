@@ -1,136 +1,113 @@
 
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/components/ui/use-toast';
-import { GroupInvite } from '@/types/group';
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { GroupInvite } from "@/types/group";
 
-export function useGroupInvites(currentUserId: string) {
+export const useGroupInvites = (userId: string) => {
   const [invites, setInvites] = useState<GroupInvite[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [showInviteDialog, setShowInviteDialog] = useState(false);
-  const { toast } = useToast();
 
   const fetchInvites = async () => {
-    if (!currentUserId) return;
-
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .from('group_invites')
+        .from("group_invites")
         .select(`
-          id,
-          groupId:group_id,
-          invitedById:invited_by,
-          invitedUserId:invited_user_id,
+          id, 
+          group_id,
+          invited_by,
+          invited_user_id,
           status,
-          createdAt:created_at,
-          expiresAt:expires_at,
-          groups:group_id (
-            name
-          ),
-          profiles:invited_by (
-            username
-          )
+          created_at,
+          expires_at,
+          groups:group_id(name)
         `)
-        .eq('invited_user_id', currentUserId)
-        .eq('status', 'pending');
+        .eq("invited_user_id", userId)
+        .eq("status", "pending");
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
 
-      const formattedInvites = data.map(invite => ({
-        ...invite,
-        group_name: invite.groups?.name,
-        sender_username: invite.profiles?.username
+      // Transform the data to match GroupInvite interface
+      const formattedInvites = (data || []).map((invite) => ({
+        id: invite.id,
+        groupId: invite.group_id,
+        group_id: invite.group_id,
+        invitedById: invite.invited_by,
+        invited_by: invite.invited_by,
+        invitedUserId: invite.invited_user_id,
+        invited_user_id: invite.invited_user_id,
+        status: invite.status,
+        createdAt: invite.created_at,
+        created_at: invite.created_at,
+        expiresAt: invite.expires_at,
+        expires_at: invite.expires_at,
+        group_name: invite.groups?.name || "Unknown Group"
       }));
 
       setInvites(formattedInvites);
     } catch (error) {
-      console.error('Error fetching group invites:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load group invitations',
-        variant: 'destructive'
-      });
+      console.error("Error fetching invites:", error);
     } finally {
       setLoading(false);
     }
   };
 
+  useEffect(() => {
+    if (userId) {
+      fetchInvites();
+    }
+  }, [userId]);
+
   const acceptInvite = async (invite: GroupInvite) => {
     try {
       // Update invite status
-      const { error: updateError } = await supabase
-        .from('group_invites')
-        .update({ status: 'accepted' })
-        .eq('id', invite.id);
+      const { error } = await supabase
+        .from("group_invites")
+        .update({ status: "accepted" })
+        .eq("id", invite.id);
 
-      if (updateError) throw updateError;
+      if (error) throw error;
 
       // Add user to group members
-      const { error: memberError } = await supabase
-        .from('group_members')
-        .insert({
-          group_id: invite.groupId || invite.group_id,
-          user_id: currentUserId,
-          role: 'member'
-        });
+      const { error: memberError } = await supabase.from("group_members").insert({
+        user_id: userId,
+        group_id: invite.groupId || invite.group_id,
+        role: "member"
+      });
 
       if (memberError) throw memberError;
 
       // Update local state
-      setInvites(prev => prev.filter(i => i.id !== invite.id));
+      setInvites((prev) => prev.filter((i) => i.id !== invite.id));
 
-      toast({
-        title: 'Success',
-        description: `You have joined the group: ${invite.group_name || 'Unknown group'}`,
-      });
-
-      return Promise.resolve();
+      return true;
     } catch (error) {
-      console.error('Error accepting invite:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to accept invitation',
-        variant: 'destructive'
-      });
-      return Promise.reject(error);
+      console.error("Error accepting invite:", error);
+      throw error;
     }
   };
 
   const declineInvite = async (invite: GroupInvite) => {
     try {
       const { error } = await supabase
-        .from('group_invites')
-        .update({ status: 'rejected' })
-        .eq('id', invite.id);
+        .from("group_invites")
+        .update({ status: "rejected" })
+        .eq("id", invite.id);
 
       if (error) throw error;
 
-      setInvites(prev => prev.filter(i => i.id !== invite.id));
+      // Update local state
+      setInvites((prev) => prev.filter((i) => i.id !== invite.id));
 
-      toast({
-        title: 'Invitation declined',
-        description: `You have declined the invitation to join ${invite.group_name || 'the group'}`,
-      });
-
-      return Promise.resolve();
+      return true;
     } catch (error) {
-      console.error('Error declining invite:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to decline invitation',
-        variant: 'destructive'
-      });
-      return Promise.reject(error);
+      console.error("Error declining invite:", error);
+      throw error;
     }
   };
-
-  useEffect(() => {
-    if (currentUserId) {
-      fetchInvites();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUserId]);
 
   return {
     invites,
@@ -139,6 +116,6 @@ export function useGroupInvites(currentUserId: string) {
     setShowInviteDialog,
     fetchInvites,
     acceptInvite,
-    declineInvite
+    declineInvite,
   };
-}
+};

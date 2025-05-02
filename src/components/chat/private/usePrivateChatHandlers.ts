@@ -1,3 +1,4 @@
+
 import { useToast } from "@/components/ui/use-toast";
 import { Group, GroupInvite } from "@/types/group";
 import { useEffect, useState } from "react";
@@ -8,7 +9,6 @@ interface UsePrivateChatHandlersProps {
   groups: Group[];
   refreshGroups: () => Promise<void>;
   setSelectedGroup: (group: Group) => void;
-  setGroupInvites?: (invites: GroupInvite[]) => void;
 }
 
 export const usePrivateChatHandlers = ({
@@ -16,8 +16,7 @@ export const usePrivateChatHandlers = ({
   userProfiles,
   groups,
   refreshGroups,
-  setSelectedGroup,
-  setGroupInvites
+  setSelectedGroup
 }: UsePrivateChatHandlersProps) => {
   const { toast } = useToast();
 
@@ -30,13 +29,6 @@ export const usePrivateChatHandlers = ({
       const acceptedGroup = groups.find(g => g.id === (invite.groupId || invite.group_id));
       if (acceptedGroup) {
         setSelectedGroup(acceptedGroup);
-      }
-      
-      // Update invites list if handler provided
-      if (setGroupInvites) {
-        setGroupInvites(prevInvites => 
-          prevInvites.filter(i => i.id !== invite.id)
-        );
       }
       
       toast({
@@ -56,13 +48,6 @@ export const usePrivateChatHandlers = ({
   const handleDeclineInvite = async (invite: GroupInvite) => {
     try {
       // Implement decline logic
-      
-      // Update invites list if handler provided
-      if (setGroupInvites) {
-        setGroupInvites(prevInvites => 
-          prevInvites.filter(i => i.id !== invite.id)
-        );
-      }
       
       toast({
         title: "Group Invitation Declined",

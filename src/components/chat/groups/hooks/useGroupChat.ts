@@ -41,8 +41,16 @@ export const useGroupChat = (
   const { handleReconnect } = useDirectMessageConnection(
     webRTCManager,
     // For groups, we connect to all members
-    group.members.find(m => m.userId || m.user_id !== currentUserId)?.userId || 
-    group.members.find(m => m.userId || m.user_id !== currentUserId)?.user_id,
+    group.members.find(m => {
+      // Support both camelCase and snake_case
+      const memberId = m.userId || m.user_id;
+      return memberId !== currentUserId;
+    })?.userId || 
+    group.members.find(m => {
+      // Support both camelCase and snake_case
+      const memberId = m.userId || m.user_id;
+      return memberId !== currentUserId;
+    })?.user_id,
     connectionState,
     setConnectionState,
     dataChannelState,
@@ -73,7 +81,7 @@ export const useGroupChat = (
   } = useGroupMessageSender(
     currentUserId, 
     group.id,
-    group.members.map(m => m.userId || m.user_id),
+    group.members.map(m => m.userId || m.user_id || ""),
     onNewMessage
   );
 

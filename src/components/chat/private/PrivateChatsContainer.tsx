@@ -50,7 +50,10 @@ export const PrivateChatsContainer = ({
     handleCreateGroup,
     handleJoinGroup,
     refreshGroups,
-  } = useGroups({ currentUserId, userProfiles });
+  } = useGroups({ 
+    currentUserId, 
+    userProfiles 
+  });
 
   const {
     invites,
@@ -63,7 +66,7 @@ export const PrivateChatsContainer = ({
     userProfiles,
     groups,
     refreshGroups,
-    setSelectedGroup,
+    setSelectedGroup
   });
 
   const conversations = reduceConversations(directMessages, currentUserId);
