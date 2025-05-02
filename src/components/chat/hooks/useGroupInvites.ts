@@ -73,8 +73,8 @@ export const useGroupInvites = (userId: string) => {
 
       // Add user to group members
       const { error: memberError } = await supabase.from("group_members").insert({
-        user_id: userId,
-        group_id: invite.groupId || invite.group_id,
+        userId: userId,
+        groupId: invite.groupId || invite.group_id,
         role: "member"
       });
 

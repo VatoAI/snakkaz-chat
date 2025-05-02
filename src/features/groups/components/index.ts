@@ -1,3 +1,5 @@
-export { CreateGroup } from './CreateGroup';
-export { CreateGroupModal } from './CreateGroupModal';
-export { CreateGroupComponent } from './CreateGroupComponent';
+
+// Export all group components 
+export * from './GroupCreateModal';
+export * from './GroupInviteDialog';
+export * from './GroupList';

@@ -1,7 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Group } from "@/types/group";
-import { SecurityLevel } from "@/types/group";
+import { Group, SecurityLevel } from "@/types/group";
 import { useGroupFetching } from "./useGroupFetching";
 import { useGroupCreation } from "./useGroupCreation";
 import { useGroupJoin } from "./useGroupJoin";

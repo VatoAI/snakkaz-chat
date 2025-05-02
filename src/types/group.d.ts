@@ -3,15 +3,16 @@ export interface Group {
   id: string;
   name: string;
   createdAt: string;
+  updatedAt: string;
   createdBy: string; 
   creator_id?: string; // For backward compatibility
   avatarUrl?: string;
   avatar_url?: string; // For backward compatibility
-  type: string;
-  isPublic: boolean;
+  type?: string;
+  isPublic?: boolean;
   is_public?: boolean; // For backward compatibility
-  settings: any;
-  members: GroupMember[];
+  settings?: any;
+  members?: GroupMember[];
   memberCount?: number;
   member_count?: number; // For backward compatibility
   description?: string;
@@ -19,9 +20,7 @@ export interface Group {
   securityLevel?: SecurityLevel;
   security_level?: SecurityLevel; // For backward compatibility
   is_premium: boolean; // Make this required
-  isPremium?: boolean;
-  updatedAt: string; // Make this required
-  updated_at?: string; // For backward compatibility
+  isPremium?: boolean; // For backward compatibility
   password?: string;
   write_permissions?: string;
   default_message_ttl?: number;
@@ -80,7 +79,7 @@ export interface GroupMessage {
 }
 
 export type GroupVisibility = 'private' | 'public' | 'hidden';
-export type SecurityLevel = 'low' | 'standard' | 'high' | 'maximum' | 'premium';
+export type SecurityLevel = 'low' | 'standard' | 'high' | 'maximum' | 'premium' | 'server_e2ee' | 'p2p_e2ee';
 
 export interface GroupInvite {
   id: string;
