@@ -91,7 +91,7 @@ interface Message {
 // Define chat message type to avoid 'any'
 interface ChatMessage {
   id: string;
-  content: string;
+  content: string; // Make content required to match GroupMessage
   sender_id?: string;
   senderId?: string;
   group_id?: string;
@@ -884,7 +884,7 @@ const GroupChatPage = () => {
       {/* Messages area */}
       <div className="flex-1 overflow-hidden">
         <GroupMessageList 
-          messages={groupMessages || []}
+          messages={(groupMessages || []) as GroupMessage[]}
           isLoading={messagesLoading}
           userProfiles={userProfiles}
           onMessageEdit={handleEditMessage}

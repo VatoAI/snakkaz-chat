@@ -138,7 +138,7 @@ export const useGroupChat = (groupId: string | undefined) => {
     if (!groupId || !user) return;
     
     // Convert the content object to a format compatible with the database
-    const newMessage: any = {
+    const newMessage: Omit<ChatMessage, 'id'> = {
       sender_id: user.id,
       group_id: groupId,
       created_at: new Date().toISOString(),
@@ -349,7 +349,7 @@ export const useGroupChat = (groupId: string | undefined) => {
             filter: `group_id=eq.${groupId}`,
           },
           async (payload) => {
-            const newMessage = payload.new;
+            const newMessage = payload.new as ChatMessage;
             setMessages(prev => [...prev, newMessage]);
             
             // Mark new messages from others as read
