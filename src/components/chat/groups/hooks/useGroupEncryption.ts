@@ -1,272 +1,89 @@
-/**
- * Hook for helside kryptering av gruppechat
- */
-
-import { useCallback, useState, useEffect } from 'react';
-import { useWholePageEncryption } from '@/hooks/useWholePageEncryption';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/components/ui/use-toast';
+import { useState, useEffect, useCallback } from 'react';
 import { Group } from '@/types/group';
-import { DecryptedMessage } from '@/types/message';
+import { supabase } from '@/integrations/supabase/client';
+import { generateEncryptionKey, encryptWithKey, decryptWithKey } from '@/utils/encryption';
 
-export interface GroupPageData {
-  messages: DecryptedMessage[];
-  metadata: {
-    group_id: string;
-    encryptionTimestamp: number;
-    messageCount: number;
-  };
-  settings: {
-    encryptionEnabled: boolean;
-  };
-}
-
-export function useGroupEncryption(
-  group: Group,
-  currentUserId: string,
-  groupMessages: DecryptedMessage[] = []
-) {
-  const { toast } = useToast();
-  const [encryptionKey, setEncryptionKey] = useState<string | null>(null);
-  const [encryptionStatus, setEncryptionStatus] = useState<'idle' | 'encrypting' | 'decrypting' | 'error'>('idle');
-  const [isEncryptionEnabled, setIsEncryptionEnabled] = useState(false);
+export const useGroupEncryption = (group: Group, currentUserId: string) => {
+  const [groupKey, setGroupKey] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
-  const { 
-    encryptPage, 
-    decryptPage, 
-    generateNewGroupKey,
-    isProcessing,
-    error
-  } = useWholePageEncryption({
-    onError: (err) => {
-      toast({
-        title: 'Krypteringsfeil',
-        description: err.message || 'Det oppstod en feil med krypteringen',
-        variant: 'destructive'
-      });
-    }
-  });
-
-  // Hent gruppens krypteringsnøkkel fra databasen
-  const fetchGroupEncryptionKey = useCallback(async () => {
+  const fetchGroupKey = useCallback(async () => {
+    setLoading(true);
+    setError(null);
     try {
-      if (!group?.id) return;
-
-      // Use group_encryption table with session_key instead of encryption_key
+      // Fetch the group encryption key from the database
       const { data, error } = await supabase
         .from('group_encryption')
         .select('session_key')
         .eq('group_id', group.id)
         .single();
-
+      
       if (error) {
-        console.error('Feil ved henting av krypteringsnøkkel:', error);
-        return;
-      }
-
-      if (data?.session_key) {
-        setEncryptionKey(data.session_key);
-        setIsEncryptionEnabled(true);
-      }
-    } catch (err) {
-      console.error('Uventet feil ved henting av krypteringsnøkkel:', err);
-    }
-  }, [group?.id]);
-
-  // Last nøkkel ved oppstart
-  useEffect(() => {
-    fetchGroupEncryptionKey();
-  }, [fetchGroupEncryptionKey]);
-
-  // Aktiver helside-kryptering for gruppen
-  const enableEncryption = useCallback(async () => {
-    try {
-      if (!group?.id || !currentUserId) return;
-      
-      // Sjekk om brukeren har rettigheter til å aktivere kryptering
-      const isAdmin = group.creator_id === currentUserId || 
-                       group.members.some(member => member.user_id === currentUserId && member.role === 'admin');
-      
-      if (!isAdmin) {
-        toast({
-          title: 'Manglende tillatelse',
-          description: 'Bare administratorer kan aktivere helside-kryptering',
-          variant: 'destructive'
-        });
-        return;
-      }
-
-      setEncryptionStatus('encrypting');
-      
-      // Generer ny krypteringsnøkkel
-      const keyPair = await generateNewGroupKey();
-      
-      if (!keyPair) {
-        throw new Error('Kunne ikke generere krypteringsnøkkel');
+        throw new Error(`Error fetching group key: ${error.message}`);
       }
       
-      // Lagre nøkkelen i databasen - using group_encryption table with session_key
-      const { error: saveError } = await supabase
-        .from('group_encryption')
-        .upsert({
-          group_id: group.id,
-          session_key: keyPair.key,
-          created_by: currentUserId,
-          created_at: new Date().toISOString()
-        });
-        
-      if (saveError) {
-        throw new Error('Kunne ikke lagre krypteringsnøkkel');
-      }
-      
-      // Oppdater lokal status
-      setEncryptionKey(keyPair.key);
-      setIsEncryptionEnabled(true);
-      
-      toast({
-        title: 'Kryptering aktivert',
-        description: 'Helside-kryptering er nå aktivert for denne gruppen'
-      });
-      
-      return keyPair.key;
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : 'Ukjent feil ved aktivering av kryptering';
-      toast({
-        title: 'Krypteringsfeil',
-        description: errorMsg,
-        variant: 'destructive'
-      });
-      return null;
-    } finally {
-      setEncryptionStatus('idle');
-    }
-  }, [group?.id, currentUserId, generateNewGroupKey, toast]);
-
-  // Krypter gruppemeldinger
-  const encryptGroupMessages = useCallback(async () => {
-    try {
-      if (!encryptionKey || !group?.id) {
-        toast({
-          title: 'Kan ikke kryptere',
-          description: 'Ingen krypteringsnøkkel funnet for denne gruppen',
-          variant: 'destructive'
-        });
-        return null;
-      }
-      
-      setEncryptionStatus('encrypting');
-      
-      // Forbered data for kryptering
-      const pageData: GroupPageData = {
-        messages: groupMessages,
-        metadata: {
-          group_id: group.id,
-          encryptionTimestamp: Date.now(),
-          messageCount: groupMessages.length
-        },
-        settings: {
-          encryptionEnabled: true
+      if (data) {
+        setGroupKey(data.session_key);
+      } else {
+        // If no key exists, and the current user is the creator, generate and store a new key
+        const isCreator = (group.createdBy || group.creator_id) === currentUserId;
+        if (isCreator) {
+          const newKey = generateEncryptionKey();
+          const { error: insertError } = await supabase
+            .from('group_encryption')
+            .insert([{ group_id: group.id, created_by: currentUserId, session_key: newKey }]);
+          
+          if (insertError) {
+            throw new Error(`Error creating group key: ${insertError.message}`);
+          }
+          
+          setGroupKey(newKey);
+        } else {
+          setError("No encryption key found and user is not the creator.");
         }
-      };
-      
-      // Krypter dataene
-      const encryptedData = await encryptPage(pageData, encryptionKey);
-      
-      if (!encryptedData) {
-        throw new Error('Kryptering feilet');
       }
-      
-      // Use the existing messages table to store encrypted data with encrypted_content
-      const { error: updateError } = await supabase
-        .from('messages')
-        .insert({
-          group_id: group.id,
-          encrypted_content: encryptedData, // Store encrypted data in encrypted_content field
-          sender_id: currentUserId,
-          type: 'encrypted_group_data',
-          created_at: new Date().toISOString()
-        });
-        
-      if (updateError) {
-        throw new Error('Kunne ikke lagre kryptert data');
-      }
-      
-      toast({
-        title: 'Kryptering fullført',
-        description: `${groupMessages.length} meldinger er nå kryptert`
-      });
-      
-      return encryptedData;
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : 'Ukjent feil ved kryptering';
-      toast({
-        title: 'Krypteringsfeil',
-        description: errorMsg,
-        variant: 'destructive'
-      });
-      return null;
+    } catch (err: any) {
+      setError(err.message || "Failed to fetch or create group key.");
     } finally {
-      setEncryptionStatus('idle');
+      setLoading(false);
     }
-  }, [encryptionKey, group?.id, groupMessages, encryptPage, currentUserId, toast]);
+  }, [group.id, currentUserId, group.createdBy, group.creator_id]);
+  
+  useEffect(() => {
+    if (group?.id) {
+      fetchGroupKey();
+    }
+  }, [group, fetchGroupKey]);
 
-  // Dekrypter gruppemeldinger
-  const decryptGroupMessages = useCallback(async () => {
+  const isCreator = (group.createdBy || group.creator_id) === currentUserId;
+  const isMember = group.members.some(member => (member.userId || member.user_id) === currentUserId);
+  
+  const encryptGroupMessage = useCallback(async (message: string) => {
+    if (!groupKey) {
+      throw new Error("Encryption key is not available.");
+    }
+    
+    const { encryptedContent, iv } = await encryptWithKey(message, groupKey);
+    return { encryptedContent, encryptionKey: groupKey, iv };
+  }, [groupKey]);
+  
+  const decryptGroupMessage = useCallback(async (encryptedContent: string, key: string, iv: string) => {
     try {
-      if (!encryptionKey || !group?.id) {
-        return null;
-      }
-      
-      setEncryptionStatus('decrypting');
-      
-      // Hent kryptert data fra messages tabellen, using encrypted_content field
-      const { data, error: fetchError } = await supabase
-        .from('messages')
-        .select('encrypted_content')
-        .eq('group_id', group.id)
-        .eq('type', 'encrypted_group_data')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
-        
-      if (fetchError || !data?.encrypted_content) {
-        throw new Error('Kunne ikke hente kryptert data');
-      }
-      
-      // Dekryptere dataen
-      const decryptedData = await decryptPage(data.encrypted_content, encryptionKey);
-      
-      if (!decryptedData) {
-        throw new Error('Dekryptering feilet');
-      }
-      
-      toast({
-        title: 'Dekryptering fullført',
-        description: `${(decryptedData as GroupPageData).messages.length} meldinger er dekryptert`
-      });
-      
-      return decryptedData as GroupPageData;
+      return await decryptWithKey(encryptedContent, key, iv);
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : 'Ukjent feil ved dekryptering';
-      toast({
-        title: 'Dekrypteringsfeil',
-        description: errorMsg,
-        variant: 'destructive'
-      });
-      return null;
-    } finally {
-      setEncryptionStatus('idle');
+      console.error("Decryption error:", err);
+      throw new Error("Failed to decrypt message.");
     }
-  }, [encryptionKey, group?.id, decryptPage, toast]);
-
+  }, []);
+  
   return {
-    encryptionKey,
-    isEncryptionEnabled,
-    encryptionStatus,
-    isProcessing,
+    groupKey,
+    loading,
     error,
-    enableEncryption,
-    encryptGroupMessages,
-    decryptGroupMessages
+    encryptGroupMessage,
+    decryptGroupMessage
   };
-}
+};
+
+export default useGroupEncryption;

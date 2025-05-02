@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { DecryptedMessage } from '@/types/message';
 import { UserStatus } from '@/types/presence';
@@ -7,13 +8,23 @@ interface MessageGroupProps {
   getDateSeparatorText: (dateKey: string) => string;
   getUserStatus: (userId: string) => UserStatus;
   messages?: DecryptedMessage[]; // Add this to fix the error
+  isUserMessage?: (message: any) => boolean; // Add this for compatibility
+  onMessageExpired?: (messageId: any) => void; // Add this for compatibility
+  onEditMessage?: (message: DecryptedMessage) => void; // Add this for compatibility
+  onDeleteMessage?: (messageId: string) => void; // Add this for compatibility
+  securityLevel?: string; // Add this for compatibility
 }
 
 export const MessageGroup: React.FC<MessageGroupProps> = ({
   groupedMessages,
   getDateSeparatorText,
   getUserStatus,
-  messages = [] // Provide a default value
+  messages = [], // Provide a default value
+  isUserMessage = () => false, // Default implementation
+  onMessageExpired = () => {}, // Default implementation
+  onEditMessage,
+  onDeleteMessage,
+  securityLevel
 }) => {
   return (
     <div className="message-groups">

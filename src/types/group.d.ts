@@ -3,7 +3,7 @@ export interface Group {
   id: string;
   name: string;
   createdAt: string;
-  createdBy: string; // Make sure this is required
+  createdBy: string; 
   creator_id?: string; // For backward compatibility
   avatarUrl?: string;
   avatar_url?: string; // For backward compatibility

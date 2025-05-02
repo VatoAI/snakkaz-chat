@@ -1,11 +1,17 @@
-import React from "react";
+
+import React from 'react';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle,
+  DialogDescription,
+  DialogFooter 
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { UserCheck, UserX } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
-import { nb } from "date-fns/locale";
 import { GroupInvite } from "@/types/group";
+import { Loader2 } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface GroupInviteDialogProps {
   isOpen: boolean;
@@ -13,110 +19,111 @@ interface GroupInviteDialogProps {
   invites: GroupInvite[];
   onAccept: (invite: GroupInvite) => Promise<void>;
   onDecline: (invite: GroupInvite) => Promise<void>;
-  userProfiles: Record<string, { username: string | null; avatar_url: string | null }>;
+  userProfiles: Record<string, { username: string | null; avatar_url: string | null; }>;
 }
 
-export const GroupInviteDialog: React.FC<GroupInviteDialogProps> = ({
+export function GroupInviteDialog({
   isOpen,
   onClose,
   invites,
   onAccept,
   onDecline,
   userProfiles
-}) => {
-  const [loadingInviteId, setLoadingInviteId] = React.useState<string | null>(null);
-  
+}: GroupInviteDialogProps) {
+  const [processingInvite, setProcessingInvite] = React.useState<string | null>(null);
+  const [processingAction, setProcessingAction] = React.useState<'accept' | 'decline' | null>(null);
+
   const handleAccept = async (invite: GroupInvite) => {
-    setLoadingInviteId(invite.id);
     try {
+      setProcessingInvite(invite.id);
+      setProcessingAction('accept');
       await onAccept(invite);
     } finally {
-      setLoadingInviteId(null);
+      setProcessingInvite(null);
+      setProcessingAction(null);
     }
   };
-  
+
   const handleDecline = async (invite: GroupInvite) => {
-    setLoadingInviteId(invite.id);
     try {
+      setProcessingInvite(invite.id);
+      setProcessingAction('decline');
       await onDecline(invite);
     } finally {
-      setLoadingInviteId(null);
+      setProcessingInvite(null);
+      setProcessingAction(null);
     }
   };
-  
-  const getSenderName = (invite: GroupInvite) => {
-    const senderId = invite.invitedById || invite.invited_by;
-    if (!senderId) return 'Unknown user';
-    
-    const profile = userProfiles[senderId];
-    return profile?.username || 'Unknown user';
-  };
-  
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-cyberdark-900 border-cybergold-500/30">
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle className="text-cybergold-300">Group Invitations</DialogTitle>
-          <DialogDescription className="text-cybergold-500">
-            You have received invitations to join the following groups
+          <DialogTitle>Group Invitations</DialogTitle>
+          <DialogDescription>
+            You have {invites.length} pending group {invites.length === 1 ? 'invitation' : 'invitations'}.
           </DialogDescription>
         </DialogHeader>
+
+        <div className="max-h-[300px] overflow-y-auto py-2">
+          {invites.length === 0 ? (
+            <div className="text-center py-4 text-muted-foreground">
+              No pending invitations
+            </div>
+          ) : (
+            invites.map(invite => {
+              const senderProfile = invite.invitedById ? userProfiles[invite.invitedById] : null;
+              const isProcessing = processingInvite === invite.id;
+              
+              return (
+                <div key={invite.id} className="flex items-center justify-between py-3 border-b last:border-0">
+                  <div className="flex items-center gap-3">
+                    <Avatar>
+                      <AvatarImage src={senderProfile?.avatar_url || ''} />
+                      <AvatarFallback>
+                        {senderProfile?.username?.charAt(0) || 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-medium">{invite.group_name || 'Unknown Group'}</p>
+                      <p className="text-sm text-muted-foreground">
+                        From: {senderProfile?.username || 'Unknown user'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      onClick={() => handleAccept(invite)}
+                      disabled={isProcessing}
+                    >
+                      {isProcessing && processingAction === 'accept' ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                      ) : 'Accept'}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleDecline(invite)}
+                      disabled={isProcessing}
+                    >
+                      {isProcessing && processingAction === 'decline' ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                      ) : 'Decline'}
+                    </Button>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
         
-        {invites.length === 0 ? (
-          <div className="py-6 text-center text-cybergold-400">
-            No pending invitations
-          </div>
-        ) : (
-          <div className="space-y-4 max-h-96 overflow-y-auto">
-            {invites.map((invite) => (
-              <div 
-                key={invite.id} 
-                className="p-4 border border-cyberdark-700 rounded-md bg-cyberdark-800"
-              >
-                <div className="mb-2">
-                  <h3 className="text-cybergold-200 font-semibold">
-                    {invite.group_name || 'Unnamed Group'}
-                  </h3>
-                  <p className="text-sm text-cybergold-500">
-                    Invited by {getSenderName(invite)}
-                  </p>
-                </div>
-                
-                <div className="flex space-x-2">
-                  <Button
-                    variant="outline" 
-                    size="sm"
-                    className="bg-cyberdark-700 hover:bg-cyberdark-600 border-cybergold-700"
-                    onClick={() => handleAccept(invite)}
-                    disabled={loadingInviteId === invite.id}
-                  >
-                    {loadingInviteId === invite.id ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      <UserCheck className="h-4 w-4 mr-2 text-green-500" />
-                    )}
-                    Accept
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="border-cyberdark-700 hover:bg-cyberdark-700"
-                    onClick={() => handleDecline(invite)}
-                    disabled={loadingInviteId === invite.id}
-                  >
-                    {loadingInviteId === invite.id ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      <UserX className="h-4 w-4 mr-2 text-red-500" />
-                    )}
-                    Decline
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+        <DialogFooter>
+          <Button variant="secondary" onClick={onClose}>
+            Close
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
-};
+}

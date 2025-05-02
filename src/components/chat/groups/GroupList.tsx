@@ -1,3 +1,4 @@
+
 // Fix the specific lines with avatar_url and password issues
 import React from 'react';
 import { Group } from '@/types/group';

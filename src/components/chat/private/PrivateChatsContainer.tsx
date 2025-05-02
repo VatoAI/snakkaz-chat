@@ -53,8 +53,7 @@ export const PrivateChatsContainer = ({
   } = useGroups({ currentUserId, userProfiles });
 
   const {
-    invites: groupInvites,
-    setGroupInvites,
+    invites,
     acceptInvite,
     declineInvite,
   } = useGroupInvites(currentUserId);
@@ -63,7 +62,6 @@ export const PrivateChatsContainer = ({
     currentUserId,
     userProfiles,
     groups,
-    setGroupInvites,
     refreshGroups,
     setSelectedGroup,
   });
@@ -119,7 +117,7 @@ export const PrivateChatsContainer = ({
   return (
     <div className="h-full flex flex-col">
       <PrivateChatActions
-        groupInvites={groupInvites}
+        groupInvites={invites}
         setIsInviteDialogOpen={setIsInviteDialogOpen}
         setIsGroupCreatorOpen={setIsGroupCreatorOpen}
         searchQuery={searchQuery}
@@ -154,7 +152,7 @@ export const PrivateChatsContainer = ({
         isPasswordDialogOpen={isPasswordDialogOpen}
         isInviteDialogOpen={isInviteDialogOpen}
         selectedPasswordGroup={selectedPasswordGroup}
-        groupInvites={groupInvites}
+        groupInvites={invites}
         onClosePassword={() => {
           setIsPasswordDialogOpen(false);
           setSelectedPasswordGroup(null);
