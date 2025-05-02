@@ -91,8 +91,12 @@ export const GroupMessageList: React.FC<GroupMessageListProps> = ({
   // Fetch reply messages
   useEffect(() => {
     const replyIds = messages
-      .filter(m => (m.replyToId || m.reply_to_id) && !replyTargetMessages[m.replyToId || m.reply_to_id || ''])
-      .map(m => (m.replyToId || m.reply_to_id) as string).filter(Boolean);
+      .filter(m => {
+        const replyId = m.replyToId || m.reply_to_id;
+        return replyId && !replyTargetMessages[replyId];
+      })
+      .map(m => (m.replyToId || m.reply_to_id) as string)
+      .filter(Boolean);
       
     if (replyIds.length === 0) return;
     

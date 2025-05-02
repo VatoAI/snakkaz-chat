@@ -72,9 +72,8 @@ export default defineConfig(({ mode }) => {
         '@': path.resolve(__dirname, './src'),
       },
     },
-    server: {
-      port: 8080, // Updated to match specified port
-      host: "::" // Kept from the local version
+    optimizeDeps: {
+      exclude: ['argon2-browser'], // Exclude argon2-browser from optimization
     },
     build: {
       sourcemap: mode !== 'production',
@@ -98,8 +97,7 @@ export default defineConfig(({ mode }) => {
             ],
             encryption: [
               '@privacyresearch/libsignal-protocol-typescript',
-              'crypto-js',
-              'argon2-browser'
+              'crypto-js'
             ]
           }
         },
@@ -114,6 +112,12 @@ export default defineConfig(({ mode }) => {
             }) as any]
           : []
       }
-    }
+    },
+    server: {
+      port: 8080, // Updated to match specified port
+      host: "::" // Kept from the local version
+    },
+    // Add special handling for wasm files
+    assetsInclude: ['**/*.wasm'],
   }
 });
