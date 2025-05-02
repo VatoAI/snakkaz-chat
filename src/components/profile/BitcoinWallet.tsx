@@ -1,588 +1,551 @@
-import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
-import { Bitcoin, Wallet, Download, ExternalLink, Copy, RefreshCcw, Share2, QrCode } from 'lucide-react';
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle
-} from '@/components/ui/dialog';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { Bitcoin, Copy, Download, RefreshCw, Shield } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
+import { ElectrumService } from "@/services/electrumService";
 
-type WalletProps = {
+interface BitcoinWalletProps {
   userId: string;
   isPremium: boolean;
-};
+}
 
-type WalletData = {
-  walletId: string;
+interface WalletData {
+  id: string;
   address: string;
   balance: number;
-  createdAt: string;
-  lastSynced: string;
-};
+  wallet_name: string;
+  last_synced: string;
+}
 
-export const BitcoinWallet = ({ userId, isPremium }: WalletProps) => {
+export function BitcoinWallet({ userId, isPremium }: BitcoinWalletProps) {
   const { toast } = useToast();
   const [walletData, setWalletData] = useState<WalletData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [showDownloadDialog, setShowDownloadDialog] = useState(false);
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [downloadFormat, setDownloadFormat] = useState<'electrum' | 'json' | 'paper'>('electrum');
+  const [walletPassword, setWalletPassword] = useState("");
+  const [walletConfirmPassword, setWalletConfirmPassword] = useState("");
+  const [creatingWallet, setCreatingWallet] = useState(false);
+  const [displaySeed, setDisplaySeed] = useState<string | null>(null);
+  const [copiedAddress, setCopiedAddress] = useState(false);
+
+  // Use useMemo to ensure electrumService is only created once
+  const electrumService = useMemo(() => new ElectrumService(), []);
+
+  // Fetch wallet data from the database
+  const fetchWalletData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("bitcoin_wallets")
+        .select("*")
+        .eq("user_id", userId)
+        .eq("is_active", true)
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      if (data) {
+        setWalletData(data as WalletData);
+      }
+    } catch (error) {
+      console.error("Error fetching wallet data:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [userId]);
 
   // Fetch wallet data on component mount
   useEffect(() => {
     if (userId) {
       fetchWalletData();
     }
-  }, [userId]);
+  }, [userId, fetchWalletData]);
 
-  const fetchWalletData = async () => {
-    setIsLoading(true);
+  // Connect to Electrum server when wallet data is available
+  useEffect(() => {
+    if (walletData?.address) {
+      electrumService.connect(walletData.address)
+        .then(() => {
+          console.log("Connected to Electrum server");
+        })
+        .catch((error) => {
+          console.error("Failed to connect to Electrum server:", error);
+        });
+    }
+
+    return () => {
+      electrumService.disconnect();
+    };
+  }, [walletData?.address, electrumService]);
+
+  // Create a new Bitcoin wallet
+  const createWallet = async () => {
+    if (walletPassword !== walletConfirmPassword) {
+      toast({
+        variant: "destructive",
+        title: "Passord-feil",
+        description: "Passordene stemmer ikke overens.",
+      });
+      return;
+    }
+
+    if (walletPassword.length < 8) {
+      toast({
+        variant: "destructive",
+        title: "Svakt passord",
+        description: "Passordet må være minst 8 tegn.",
+      });
+      return;
+    }
+
+    setCreatingWallet(true);
     try {
-      // In a real implementation, this would call an API endpoint to fetch the wallet
-      // For now, we'll simulate fetching data from Supabase
-      const { data, error } = await supabase
-        .from('bitcoin_wallets')
-        .select('*')
-        .eq('user_id', userId)
-        .single();
+      // Generate a new wallet using Electrum's key derivation method
+      const walletDetails = await electrumService.createWallet(walletPassword);
+      
+      // Store wallet info in the database
+      const { data, error } = await supabase.from("bitcoin_wallets").insert([
+        {
+          user_id: userId,
+          address: walletDetails.address,
+          balance: 0,
+          wallet_name: "Primær lommebok",
+          wallet_type: "electrum",
+          encrypted_data: walletDetails.encryptedData,
+        },
+      ]).select();
 
       if (error) {
-        console.error('Error fetching wallet:', error);
-        setWalletData(null);
-      } else if (data) {
-        setWalletData({
-          walletId: data.id,
-          address: data.address,
-          balance: data.balance || 0,
-          createdAt: data.created_at,
-          lastSynced: data.last_synced || data.created_at,
+        throw error;
+      }
+
+      if (data && data[0]) {
+        setWalletData(data[0] as WalletData);
+        setDisplaySeed(walletDetails.seed);
+        
+        toast({
+          title: "Lommebok opprettet",
+          description: "Din Bitcoin-lommebok er klar til bruk!",
         });
       }
     } catch (error) {
-      console.error('Error:', error);
-      setWalletData(null);
+      console.error("Error creating wallet:", error);
+      toast({
+        variant: "destructive",
+        title: "Feil ved opprettelse",
+        description: "Kunne ikke opprette lommebok. Prøv igjen senere.",
+      });
     } finally {
-      setIsLoading(false);
+      setCreatingWallet(false);
     }
   };
 
-  const handleCreateWallet = async () => {
-    if (password !== confirmPassword) {
-      toast({
-        variant: "destructive",
-        title: "Passordene samsvarer ikke",
-        description: "Vennligst sikre at passordene matcher.",
-      });
-      return;
-    }
+  // Sync wallet balance with the blockchain
+  const syncWalletBalance = async () => {
+    if (!walletData) return;
 
-    if (password.length < 8) {
-      toast({
-        variant: "destructive",
-        title: "For svakt passord",
-        description: "Passordet må være minst 8 tegn langt.",
-      });
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      // In a real implementation, this would call an API to create a wallet
-      // For demonstration, we'll simulate wallet creation
-      
-      // 1. Generate a new Electrum wallet (simulated)
-      const mockWalletAddress = `bc1${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`;
-      
-      // 2. Store wallet reference in database
-      const { data, error } = await supabase
-        .from('bitcoin_wallets')
-        .insert({
-          user_id: userId,
-          address: mockWalletAddress,
-          balance: 0,
-          is_active: true,
-        })
-        .select()
-        .single();
-
-      if (error) {
-        throw error;
-      }
-
-      // 3. Update local state
-      setWalletData({
-        walletId: data.id,
-        address: data.address,
-        balance: 0,
-        createdAt: data.created_at,
-        lastSynced: data.created_at,
-      });
-
-      toast({
-        title: "Lommebok opprettet",
-        description: "Din Bitcoin lommebok er nå klar til bruk.",
-      });
-      
-      // Close dialog
-      setShowCreateDialog(false);
-      
-    } catch (error) {
-      console.error('Error creating wallet:', error);
-      toast({
-        variant: "destructive",
-        title: "Kunne ikke opprette lommebok",
-        description: "Det oppstod en feil. Vennligst prøv igjen senere.",
-      });
-    } finally {
-      setIsLoading(false);
-      setPassword('');
-      setConfirmPassword('');
-    }
-  };
-
-  const handleSyncWallet = async () => {
     setIsSyncing(true);
     try {
-      // In a real implementation, this would sync with the blockchain
-      // For demonstration, we'll just simulate a sync by updating the lastSynced time
+      // Get updated balance from Electrum server
+      const balance = await electrumService.getBalance(walletData.address);
       
-      await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate delay
-      
-      const { error } = await supabase
-        .from('bitcoin_wallets')
-        .update({
-          last_synced: new Date().toISOString(),
-          balance: walletData?.balance || 0, // In reality, this would fetch the actual balance
-        })
-        .eq('id', walletData?.walletId);
+      // Update balance in the database
+      const { data, error } = await supabase.rpc("update_wallet_balance", {
+        wallet_id: walletData.id,
+        new_balance: balance
+      });
 
       if (error) {
         throw error;
       }
 
-      // Refresh wallet data
-      await fetchWalletData();
-      
-      toast({
-        title: "Synkronisert",
-        description: "Lommeboken er synkronisert med blokkjeden.",
-      });
+      if (data) {
+        setWalletData({
+          ...walletData,
+          balance: balance,
+          last_synced: new Date().toISOString()
+        });
+        
+        toast({
+          title: "Synkronisert",
+          description: "Lommebok-saldo er oppdatert.",
+        });
+      }
     } catch (error) {
-      console.error('Error syncing wallet:', error);
+      console.error("Error syncing wallet:", error);
       toast({
         variant: "destructive",
         title: "Synkroniseringsfeil",
-        description: "Kunne ikke synkronisere med blokkjeden. Prøv igjen senere.",
+        description: "Kunne ikke synkronisere lommebok-saldo.",
       });
     } finally {
       setIsSyncing(false);
     }
   };
 
-  const handleCopyAddress = () => {
-    if (walletData?.address) {
-      navigator.clipboard.writeText(walletData.address);
+  // Download the wallet file for use with Electrum
+  const downloadWallet = (format: string) => {
+    if (!walletData) return;
+
+    try {
+      let content = "";
+      let filename = "";
+      let contentType = "application/json";
+
+      switch (format) {
+        case "electrum":
+          content = electrumService.generateElectrumExport(walletData.address);
+          filename = `electrum_wallet_${walletData.address.substring(0, 8)}.json`;
+          break;
+        case "json":
+          content = JSON.stringify({
+            address: walletData.address,
+            wallet_name: walletData.wallet_name,
+            created_at: walletData.last_synced,
+          }, null, 2);
+          filename = `wallet_${walletData.address.substring(0, 8)}.json`;
+          break;
+        case "paper":
+          content = electrumService.generatePaperWallet(walletData.address);
+          filename = `paper_wallet_${walletData.address.substring(0, 8)}.html`;
+          contentType = "text/html";
+          break;
+        default:
+          throw new Error("Unknown format");
+      }
+
+      const blob = new Blob([content], { type: contentType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
       toast({
-        title: "Kopiert",
-        description: "Bitcoin-adressen er kopiert til utklippstavlen.",
+        title: "Nedlasting fullført",
+        description: `${format}-lommebok er lastet ned.`,
+      });
+    } catch (error) {
+      console.error("Error downloading wallet:", error);
+      toast({
+        variant: "destructive",
+        title: "Nedlastingsfeil",
+        description: "Kunne ikke laste ned lommeboken.",
       });
     }
   };
 
-  const prepareDownload = () => {
-    setShowDownloadDialog(true);
+  // Copy wallet address to clipboard
+  const copyAddress = () => {
+    if (!walletData?.address) return;
+
+    navigator.clipboard.writeText(walletData.address)
+      .then(() => {
+        setCopiedAddress(true);
+        toast({
+          title: "Adresse kopiert",
+          description: "Bitcoin-adresse er kopiert til utklippstavlen.",
+        });
+
+        setTimeout(() => setCopiedAddress(false), 2000);
+      })
+      .catch((error) => {
+        console.error("Error copying to clipboard:", error);
+      });
   };
 
-  const handleDownload = () => {
-    if (!walletData) return;
-    
-    // In a real implementation, this would generate the wallet file in the specified format
-    // For demonstration, we'll simulate a download
-    
-    let filename = '';
-    let fileContent = '';
-    
-    switch (downloadFormat) {
-      case 'electrum':
-        filename = `electrum-wallet-${new Date().getTime()}.json`;
-        fileContent = JSON.stringify({
-          type: 'electrum',
-          wallet_id: walletData.walletId,
-          address: walletData.address,
-          created_at: walletData.createdAt,
-          // In a real implementation, this would contain encrypted wallet data
-        }, null, 2);
-        break;
-      case 'json':
-        filename = `bitcoin-wallet-${new Date().getTime()}.json`;
-        fileContent = JSON.stringify({
-          wallet_id: walletData.walletId,
-          address: walletData.address,
-          created_at: walletData.createdAt,
-        }, null, 2);
-        break;
-      case 'paper':
-        // In a real implementation, this would generate a PDF or image
-        filename = `paper-wallet-${new Date().getTime()}.txt`;
-        fileContent = `BITCOIN PAPER WALLET\n\nAddress: ${walletData.address}\nCreated: ${new Date(walletData.createdAt).toLocaleDateString()}\n\nKEEP THIS SAFE AND OFFLINE`;
-        break;
-    }
-    
-    const blob = new Blob([fileContent], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    
-    setShowDownloadDialog(false);
-    
-    toast({
-      title: "Nedlastet",
-      description: "Lommebokfilen er nedlastet. Oppbevar den trygt!",
+  // Format BTC balance with proper decimal places
+  const formatBtcBalance = (balance: number): string => {
+    return balance.toLocaleString("nb-NO", { 
+      minimumFractionDigits: 8,
+      maximumFractionDigits: 8
     });
   };
 
-  if (isLoading && !walletData) {
+  // Convert BTC to NOK (example rate)
+  const btcToNok = (btcAmount: number): string => {
+    const btcToNokRate = 350000; // Example rate, should be fetched from an API
+    return (btcAmount * btcToNokRate).toLocaleString("nb-NO", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  };
+
+  // If loading, show skeleton UI
+  if (isLoading) {
     return (
       <Card className="bg-cyberdark-900 border-cyberdark-700">
         <CardHeader>
           <CardTitle className="text-xl flex items-center gap-2 text-white">
-            <Bitcoin className="h-5 w-5" /> Bitcoin Lommebok
+            <Bitcoin className="h-5 w-5" /> Bitcoin-lommebok
           </CardTitle>
           <CardDescription>
-            Administrer din Bitcoin lommebok
+            Administrer din Bitcoin-lommebok
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4 flex justify-center">
-          <div className="w-full space-y-4 py-8">
-            <Skeleton className="h-8 w-full" />
-            <Skeleton className="h-12 w-3/4 mx-auto" />
-            <Skeleton className="h-10 w-1/2 mx-auto" />
+        <CardContent>
+          <div className="space-y-4">
+            <Skeleton className="h-10 w-full bg-cyberdark-700" />
+            <Skeleton className="h-32 w-full bg-cyberdark-700" />
           </div>
         </CardContent>
       </Card>
     );
   }
 
+  // If no wallet exists yet, show creation form
   if (!walletData) {
     return (
       <Card className="bg-cyberdark-900 border-cyberdark-700">
         <CardHeader>
           <CardTitle className="text-xl flex items-center gap-2 text-white">
-            <Bitcoin className="h-5 w-5" /> Bitcoin Lommebok
+            <Bitcoin className="h-5 w-5" /> Bitcoin-lommebok
           </CardTitle>
           <CardDescription>
-            Opprett din personlige Bitcoin lommebok
+            Opprett din egen Bitcoin-lommebok koblet til Electrum
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex flex-col items-center justify-center py-8">
-            <Wallet className="h-16 w-16 text-cybergold-500 mb-4" />
-            <h3 className="text-lg font-medium text-white mb-2">Ingen lommebok funnet</h3>
-            <p className="text-sm text-gray-400 text-center mb-6">
-              Du har ikke opprettet en Bitcoin lommebok ennå. Opprett en for å komme i gang med kryptovaluta.
-            </p>
-            <Button 
-              className="bg-cybergold-600 hover:bg-cybergold-500 text-black font-medium"
-              onClick={() => setShowCreateDialog(true)}
-            >
-              <Bitcoin className="h-4 w-4 mr-2" />
-              Opprett Bitcoin lommebok
-            </Button>
-          </div>
+        <CardContent>
+          {displaySeed ? (
+            <div className="space-y-4">
+              <div className="p-4 bg-cyberdark-800 border border-yellow-600/50 rounded-md">
+                <h3 className="text-yellow-500 font-semibold mb-2">Viktig: Behold din gjenopprettingsfrase trygt</h3>
+                <p className="text-sm text-gray-300 mb-3">
+                  Dette er din unike gjenopprettingsfrase. Skriv den ned og oppbevar den på et sikkert sted. 
+                  Du trenger den for å gjenopprette lommeboken din hvis du mister tilgang.
+                </p>
+                <div className="p-3 bg-cyberdark-900 rounded-md font-mono text-sm text-center break-all">
+                  {displaySeed}
+                </div>
+                <p className="text-xs text-gray-400 mt-2">
+                  <Shield className="inline h-3 w-3 mr-1" />
+                  Denne frasen vises kun én gang
+                </p>
+              </div>
+              <Button
+                className="w-full bg-cybergold-600 hover:bg-cybergold-500 text-black font-medium"
+                onClick={() => setDisplaySeed(null)}
+              >
+                Jeg har lagret frasen trygt
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="wallet-password">Passord for lommebok</Label>
+                <Input
+                  id="wallet-password"
+                  type="password"
+                  placeholder="Velg et sterkt passord"
+                  value={walletPassword}
+                  onChange={(e) => setWalletPassword(e.target.value)}
+                  className="bg-cyberdark-800 border-cyberdark-600"
+                />
+                <p className="text-xs text-gray-400">
+                  Dette passordet brukes for å kryptere din private nøkkel
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="wallet-confirm-password">Bekreft passord</Label>
+                <Input
+                  id="wallet-confirm-password"
+                  type="password"
+                  placeholder="Gjenta passord"
+                  value={walletConfirmPassword}
+                  onChange={(e) => setWalletConfirmPassword(e.target.value)}
+                  className="bg-cyberdark-800 border-cyberdark-600"
+                />
+              </div>
+
+              <Button
+                className="w-full bg-cybergold-600 hover:bg-cybergold-500 text-black font-medium"
+                onClick={createWallet}
+                disabled={creatingWallet || !walletPassword || !walletConfirmPassword}
+              >
+                {creatingWallet ? (
+                  <>
+                    <span className="mr-2 h-4 w-4 border-2 border-t-transparent border-black rounded-full animate-spin"></span>
+                    Oppretter lommebok...
+                  </>
+                ) : (
+                  "Opprett Bitcoin-lommebok"
+                )}
+              </Button>
+
+              <div className="p-3 bg-cyberdark-800 rounded-md">
+                <h3 className="text-sm font-medium text-white mb-2 flex items-center">
+                  <Shield className="h-4 w-4 mr-1 text-cyberblue-400" />
+                  Hvorfor integrere med Electrum?
+                </h3>
+                <p className="text-xs text-gray-400">
+                  Electrum er en populær og sikker Bitcoin-lommebok som gir deg full kontroll over dine 
+                  private nøkler. Ved å integrere med Electrum kan du bruke lommeboken din både i Snakkaz 
+                  og i Electrum-applikasjonen.
+                </p>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     );
   }
 
+  // Wallet exists, show wallet interface
   return (
-    <>
-      <Card className="bg-cyberdark-900 border-cyberdark-700">
-        <CardHeader>
-          <CardTitle className="text-xl flex items-center justify-between text-white">
-            <div className="flex items-center gap-2">
-              <Bitcoin className="h-5 w-5 text-cybergold-500" /> Bitcoin Lommebok
+    <Card className="bg-cyberdark-900 border-cyberdark-700">
+      <CardHeader>
+        <CardTitle className="text-xl flex items-center gap-2 text-white">
+          <Bitcoin className="h-5 w-5" /> Bitcoin-lommebok
+        </CardTitle>
+        <CardDescription>
+          Administrer din Bitcoin-lommebok
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-6">
+          {/* Wallet Balance */}
+          <div className="p-4 bg-cyberdark-800 rounded-md">
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="text-sm font-medium text-gray-400">Saldo</h3>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-8 px-2 text-xs" 
+                onClick={syncWalletBalance}
+                disabled={isSyncing}
+              >
+                <RefreshCw className={`h-3.5 w-3.5 mr-1 ${isSyncing ? 'animate-spin' : ''}`} />
+                {isSyncing ? 'Synkroniserer...' : 'Synkroniser'}
+              </Button>
             </div>
-            <Button 
-              size="sm" 
-              variant="outline" 
-              className="h-8 border-cyberdark-600 text-cybergold-400"
-              onClick={handleSyncWallet}
-              disabled={isSyncing}
-            >
-              <RefreshCcw className={`h-3.5 w-3.5 mr-1.5 ${isSyncing ? 'animate-spin' : ''}`} />
-              Synkroniser
-            </Button>
-          </CardTitle>
-          <CardDescription>
-            Administrer din Bitcoin lommebok via Electrum
-          </CardDescription>
-        </CardHeader>
-        
-        <CardContent className="space-y-6">
-          <div className="flex flex-col items-center justify-center p-4 border border-cyberdark-700 rounded-lg bg-cyberdark-800/50">
-            <div className="text-xs text-gray-400 mb-1">Saldo</div>
-            <div className="text-2xl font-bold text-cybergold-400 flex items-center gap-1.5">
-              <Bitcoin className="h-5 w-5" />
-              {walletData.balance.toFixed(8)} BTC
+            <div className="flex flex-col">
+              <span className="text-2xl font-bold text-cybergold-400">
+                {formatBtcBalance(walletData.balance)} BTC
+              </span>
+              <span className="text-sm text-gray-400">
+                ≈ {btcToNok(walletData.balance)} NOK
+              </span>
             </div>
-            <div className="text-xs text-gray-500 mt-1">
-              Sist synkronisert: {new Date(walletData.lastSynced).toLocaleString()}
+            <div className="mt-2 text-xs text-gray-500">
+              Sist oppdatert: {new Date(walletData.last_synced).toLocaleString('nb-NO')}
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="walletAddress" className="text-gray-400 text-xs">Bitcoin-adresse</Label>
-            <div className="flex">
+          {/* Wallet Address with QR Code */}
+          <div className="p-4 bg-cyberdark-800 rounded-md flex flex-col items-center">
+            <h3 className="text-sm font-medium text-gray-400 self-start mb-3">Din Bitcoin-adresse</h3>
+            
+            <div className="bg-white p-3 rounded-md mb-3">
+              <QRCodeSVG value={walletData.address} size={150} />
+            </div>
+            
+            <div className="relative w-full">
               <Input
-                id="walletAddress"
                 value={walletData.address}
                 readOnly
-                className="bg-cyberdark-800 border-cyberdark-600 font-mono text-sm flex-1"
+                className="bg-cyberdark-900 border-cyberdark-600 pr-10 font-mono text-sm"
               />
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="ml-2 h-10 w-10 p-0 text-gray-400 hover:text-white"
-                      onClick={handleCopyAddress}
-                    >
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top">
-                    <p className="text-xs">Kopier adresse</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="ml-1 h-10 w-10 p-0 text-gray-400 hover:text-white"
-                    >
-                      <QrCode className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top">
-                    <p className="text-xs">Vis QR-kode</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-          </div>
-
-          <div className="pt-2">
-            <h3 className="text-sm font-medium text-white mb-3">Handlinger</h3>
-            <div className="grid grid-cols-2 gap-3">
               <Button
-                variant="outline"
-                className="border-cyberdark-600 text-gray-300 flex-1"
-                onClick={prepareDownload}
+                variant="ghost"
+                size="sm"
+                className="absolute right-0 top-0 h-full px-3"
+                onClick={copyAddress}
               >
-                <Download className="h-4 w-4 mr-2" />
-                Last ned lommebok
+                <Copy className="h-4 w-4" />
               </Button>
-              
-              <a 
-                href="https://electrum.org/" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="w-full"
-              >
-                <Button
-                  variant="outline"
-                  className="border-cyberdark-600 text-gray-300 w-full"
+            </div>
+            {copiedAddress && (
+              <span className="text-xs text-green-500 mt-1">Adresse kopiert!</span>
+            )}
+          </div>
+
+          {/* Wallet Actions / Downloads */}
+          <Tabs defaultValue="download" className="w-full">
+            <TabsList className="w-full grid grid-cols-2 bg-cyberdark-800">
+              <TabsTrigger value="download">Last ned</TabsTrigger>
+              <TabsTrigger value="electrum">Electrum</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="download" className="mt-2">
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-2">
+                  <Button 
+                    variant="outline" 
+                    className="border-cyberdark-600 text-gray-300" 
+                    onClick={() => downloadWallet('json')}
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    JSON-format
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="border-cyberdark-600 text-gray-300" 
+                    onClick={() => downloadWallet('paper')}
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Papir-lommebok
+                  </Button>
+                </div>
+                
+                <p className="text-xs text-gray-400">
+                  Last ned din lommebok for sikker offline oppbevaring eller utskrift.
+                </p>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="electrum" className="mt-2">
+              <div className="space-y-3">
+                <Button 
+                  variant="outline" 
+                  className="w-full border-cyberdark-600 text-gray-300" 
+                  onClick={() => downloadWallet('electrum')}
                 >
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  Åpne i Electrum
+                  <Download className="h-4 w-4 mr-2" />
+                  Last ned for Electrum
                 </Button>
-              </a>
-            </div>
-          </div>
-        </CardContent>
-        
-        <CardFooter className="flex flex-col items-start">
-          <p className="text-xs text-cybergold-700 mb-1 flex items-center">
-            <Bitcoin className="h-3 w-3 mr-1" /> Opprettet {new Date(walletData.createdAt).toLocaleDateString()}
-          </p>
-          <p className="text-xs text-gray-500">
-            For avanserte funksjoner, last ned lommeboken og åpne den i Electrum
-          </p>
-        </CardFooter>
-      </Card>
-
-      {/* Create Wallet Dialog */}
-      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent className="bg-cyberdark-900 border-cyberdark-700 text-white">
-          <DialogHeader>
-            <DialogTitle>Opprett Bitcoin lommebok</DialogTitle>
-            <DialogDescription className="text-gray-400">
-              Skriv inn et sterkt passord for å beskytte din Bitcoin lommebok.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label htmlFor="wallet-password">Lommebok-passord</Label>
-              <Input
-                id="wallet-password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="bg-cyberdark-800 border-cyberdark-600"
-                placeholder="Minimum 8 tegn"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="wallet-confirm-password">Bekreft passord</Label>
-              <Input
-                id="wallet-confirm-password"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="bg-cyberdark-800 border-cyberdark-600"
-              />
-            </div>
-
-            <div className="bg-cyberdark-800/50 p-3 rounded border border-cybergold-800/20 mt-2">
-              <p className="text-xs text-cybergold-400">
-                <strong>Viktig:</strong> Passordet ditt kan ikke gjenopprettes. Hvis du mister det, mister du tilgang til dine bitcoins.
-              </p>
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button
-              variant="ghost"
-              onClick={() => setShowCreateDialog(false)}
-              className="border-cyberdark-600 text-gray-300"
-              disabled={isLoading}
-            >
-              Avbryt
-            </Button>
-            <Button
-              onClick={handleCreateWallet}
-              disabled={!password || !confirmPassword || isLoading}
-              className="bg-cybergold-600 hover:bg-cybergold-500 text-black"
-            >
-              {isLoading ? (
-                <>
-                  <span className="mr-2 h-4 w-4 border-2 border-t-transparent border-black rounded-full animate-spin"></span>
-                  Oppretter...
-                </>
-              ) : (
-                "Opprett lommebok"
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Download Wallet Dialog */}
-      <Dialog open={showDownloadDialog} onOpenChange={setShowDownloadDialog}>
-        <DialogContent className="bg-cyberdark-900 border-cyberdark-700 text-white">
-          <DialogHeader>
-            <DialogTitle>Last ned lommebok</DialogTitle>
-            <DialogDescription className="text-gray-400">
-              Velg formatet du vil laste ned lommeboken i.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 py-2">
-            <div className="space-y-4">
-              <div className="flex items-center space-x-2">
-                <input
-                  type="radio"
-                  id="format-electrum"
-                  value="electrum"
-                  checked={downloadFormat === 'electrum'}
-                  onChange={() => setDownloadFormat('electrum')}
-                  className="text-cybergold-500 focus:ring-cybergold-500"
-                />
-                <Label htmlFor="format-electrum" className="text-white">
-                  Electrum format (anbefalt)
-                </Label>
+                
+                <div className="p-3 bg-cyberdark-900 rounded-md border border-cyberdark-700">
+                  <h4 className="text-xs font-medium text-white mb-1">Slik bruker du med Electrum:</h4>
+                  <ol className="text-xs text-gray-400 list-decimal list-inside space-y-1">
+                    <li>Last ned Electrum fra <a href="https://electrum.org/" target="_blank" rel="noopener noreferrer" className="text-cyberblue-400 hover:underline">electrum.org</a></li>
+                    <li>Start Electrum og velg "Restore a wallet from file"</li>
+                    <li>Velg filen du lastet ned herfra</li>
+                    <li>Skriv inn passordet du opprettet lommeboken med</li>
+                  </ol>
+                </div>
               </div>
-              
-              <div className="flex items-center space-x-2">
-                <input
-                  type="radio"
-                  id="format-json"
-                  value="json"
-                  checked={downloadFormat === 'json'}
-                  onChange={() => setDownloadFormat('json')}
-                  className="text-cybergold-500 focus:ring-cybergold-500"
-                />
-                <Label htmlFor="format-json" className="text-white">
-                  JSON (for sikkerhetskopi)
-                </Label>
-              </div>
-              
-              <div className="flex items-center space-x-2">
-                <input
-                  type="radio"
-                  id="format-paper"
-                  value="paper"
-                  checked={downloadFormat === 'paper'}
-                  onChange={() => setDownloadFormat('paper')}
-                  className="text-cybergold-500 focus:ring-cybergold-500"
-                />
-                <Label htmlFor="format-paper" className="text-white">
-                  Papir-lommebok (offline oppbevaring)
-                </Label>
-              </div>
-            </div>
-
-            <div className="bg-cyberdark-800/50 p-3 rounded border border-cybergold-800/20">
-              <p className="text-xs text-cybergold-400">
-                <strong>Sikkerhetstips:</strong> Oppbevar lommeboken offline på en sikker USB-enhet for optimal sikkerhet.
-              </p>
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button
-              variant="ghost"
-              onClick={() => setShowDownloadDialog(false)}
-              className="border-cyberdark-600 text-gray-300"
-            >
-              Avbryt
-            </Button>
-            <Button
-              onClick={handleDownload}
-              className="bg-cybergold-600 hover:bg-cybergold-500 text-black"
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Last ned
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
+            </TabsContent>
+          </Tabs>
+        </div>
+      </CardContent>
+      <CardFooter className="border-t border-cyberdark-700 pt-4">
+        <p className="text-xs text-gray-500 italic">
+          Hold private nøkler sikkert. Snakkaz tar ikke ansvar for tap av midler.
+          <a href="https://electrum.org/documentation" target="_blank" rel="noopener noreferrer" className="ml-1 text-cyberblue-400 hover:underline">
+            Lær mer om sikker Bitcoin-håndtering
+          </a>
+        </p>
+      </CardFooter>
+    </Card>
   );
-};
+}
