@@ -7,17 +7,19 @@ import { DirectMessageList } from "../friends/DirectMessageList";
 import { DirectMessageForm } from "../friends/DirectMessageForm";
 import { useGroupChat } from "./hooks/useGroupChat";
 import { ChatGlassPanel } from "../ChatGlassPanel";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { GroupInviteButton } from "./GroupInviteButton";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useGroupEncryption } from "./hooks/useGroupEncryption";
 import { Button } from "@/components/ui/button";
-import { Shield, Lock, AlertTriangle, Crown, Star, ArrowRight } from "lucide-react";
+import { Shield, Lock, AlertTriangle, Crown, Star, ArrowRight, Users } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { PremiumMembershipCard } from "./PremiumMembershipCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { GroupMembersList } from "./GroupMembersList";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { Badge } from "@/components/ui/badge";
 
 interface GroupChatProps {
   group: Group;
@@ -26,41 +28,40 @@ interface GroupChatProps {
   onBack: () => void;
   messages: DecryptedMessage[];
   onNewMessage: (message: DecryptedMessage) => void;
-  userProfiles?: Record<string, {username: string | null, avatar_url: string | null}>;
+  userProfiles?: Record<string, { username: string | null; avatar_url: string | null; status?: string }>;
 }
 
-export const GroupChat = ({ 
-  group, 
+export const GroupChat = ({
+  group,
   currentUserId,
   webRTCManager,
   onBack,
   messages,
   onNewMessage,
-  userProfiles = {}
+  userProfiles = {},
 }: GroupChatProps) => {
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [showPremiumDialog, setShowPremiumDialog] = useState(false);
   const [showMembersDialog, setShowMembersDialog] = useState(false);
   const { toast } = useToast();
+  const isMobile = useMediaQuery("(max-width: 640px)");
 
-  const groupMessages = messages.filter(msg => 
-    msg.group_id === group.id
-  );
-  
+  const groupMessages = messages.filter((msg) => msg.group_id === group.id);
+
   const currentMembership = useMemo(() => {
-    return group.members?.find(member => member.user_id === currentUserId);
+    return group.members?.find((member) => member.user_id === currentUserId);
   }, [group.members, currentUserId]);
 
-  const isPremiumMember = currentMembership?.role === 'premium';
+  const isPremiumMember = currentMembership?.role === "premium";
   const isPremiumGroup = group.is_premium === true;
-  
+
   const {
     isEncryptionEnabled,
     encryptionStatus,
     isProcessing,
     enableEncryption,
     encryptGroupMessages,
-    decryptGroupMessages
+    decryptGroupMessages,
   } = useGroupEncryption(group, currentUserId, groupMessages);
 
   const {
@@ -81,24 +82,40 @@ export const GroupChat = ({
     editingMessage,
     handleStartEditMessage,
     handleCancelEditMessage,
-    handleDeleteMessage
+    handleDeleteMessage,
   } = useGroupChat(group, currentUserId, webRTCManager, onNewMessage, groupMessages);
 
-  const isSecureConnection = (securityLevel === 'p2p_e2ee' && connectionState === 'connected' && dataChannelState === 'open') || 
-                            securityLevel === 'server_e2ee' || 
-                            securityLevel === 'standard';
-                            
-  const isAdmin = group.creator_id === currentUserId || 
-                 group.members?.some(member => member.user_id === currentUserId && member.role === 'admin');
+  const isSecureConnection =
+    (securityLevel === "p2p_e2ee" && connectionState === "connected" && dataChannelState === "open") ||
+    securityLevel === "server_e2ee" ||
+    securityLevel === "standard";
 
-  const handleFormSubmit = (e: React.FormEvent, text: string) => {
-    handleSendMessage(e);
-    return Promise.resolve(true);
+  const isAdmin =
+    group.creator_id === currentUserId ||
+    group.members?.some((member) => member.user_id === currentUserId && member.role === "admin");
+
+  useEffect(() => {
+    if (isMobile) {
+      if (showMembersDialog) setShowMembersDialog(false);
+      if (showInviteDialog) setShowInviteDialog(false);
+    }
+  }, [isMobile]);
+
+  const handleFormSubmit = (message: string, files?: File[]) => {
+    if (isMobile && files && files.length > 0) {
+      toast({
+        title: "Laster opp filer",
+        description: `Sender ${files.length} ${files.length === 1 ? "fil" : "filer"}`,
+        duration: 3000,
+      });
+    }
+
+    handleSendMessage(message, files);
   };
-  
+
   const handleInviteUser = async (userId: string) => {
     try {
-      const isMember = group.members?.some(member => member.user_id === userId);
+      const isMember = group.members?.some((member) => member.user_id === userId);
       if (isMember) {
         toast({
           title: "Brukeren er allerede medlem",
@@ -107,14 +124,14 @@ export const GroupChat = ({
         });
         return;
       }
-      
+
       const { data: existingInvite, error: checkError } = await supabase
-        .from('group_invites')
-        .select('id')
-        .eq('group_id', group.id)
-        .eq('invited_user_id', userId)
+        .from("group_invites")
+        .select("id")
+        .eq("group_id", group.id)
+        .eq("invited_user_id", userId)
         .single();
-        
+
       if (!checkError && existingInvite) {
         toast({
           title: "Invitasjon finnes allerede",
@@ -123,17 +140,15 @@ export const GroupChat = ({
         });
         return;
       }
-      
-      const { error } = await supabase
-        .from('group_invites')
-        .insert({
-          group_id: group.id,
-          invited_by: currentUserId,
-          invited_user_id: userId
-        });
-        
+
+      const { error } = await supabase.from("group_invites").insert({
+        group_id: group.id,
+        invited_by: currentUserId,
+        invited_user_id: userId,
+      });
+
       if (error) throw error;
-      
+
       toast({
         title: "Invitasjon sendt",
         description: "Brukeren har blitt invitert til gruppen",
@@ -147,7 +162,7 @@ export const GroupChat = ({
       });
     }
   };
-  
+
   const handleEnablePageEncryption = async () => {
     if (!isAdmin && !isPremiumMember) {
       toast({
@@ -157,10 +172,10 @@ export const GroupChat = ({
       });
       return;
     }
-    
+
     await enableEncryption();
   };
-  
+
   const handleEncryptAllMessages = async () => {
     if (!isEncryptionEnabled) {
       toast({
@@ -170,12 +185,11 @@ export const GroupChat = ({
       });
       return;
     }
-    
+
     await encryptGroupMessages();
   };
 
   const handleRefreshMembers = async () => {
-    // Her ville vi normalt hente oppdatert medlemsliste fra server
     toast({
       title: "Medlemsliste oppdatert",
       description: "Medlemslisten er nå oppdatert",
@@ -183,89 +197,104 @@ export const GroupChat = ({
   };
 
   return (
-    <div className="flex flex-col h-full bg-cyberdark-950">
-      <GroupChatHeader 
-        group={group}
-        connectionState={connectionState}
-        dataChannelState={dataChannelState}
-        usingServerFallback={usingServerFallback}
-        connectionAttempts={connectionAttempts}
-        onBack={onBack}
-        onReconnect={handleReconnect}
-        securityLevel={securityLevel}
-        setSecurityLevel={setSecurityLevel}
-        userProfiles={userProfiles}
-        isAdmin={isAdmin}
-        isPremium={isPremiumGroup}
-        isPremiumMember={isPremiumMember}
-        onShowInvite={() => setShowInviteDialog(true)}
-        onShowPremium={() => setShowPremiumDialog(true)}
-        onShowMembers={() => setShowMembersDialog(true)}
-        isPageEncryptionEnabled={isEncryptionEnabled}
-        onEnablePageEncryption={handleEnablePageEncryption}
-        onEncryptAllMessages={handleEncryptAllMessages}
-        encryptionStatus={encryptionStatus}
-      />
-      
-      {/* Premium Badge */}
-      {isPremiumGroup && (
-        <div className="px-4 py-1.5 bg-gradient-to-r from-cybergold-900 to-cybergold-800 border-b border-cybergold-500/30 flex items-center">
-          <Crown className="h-3.5 w-3.5 text-cybergold-400 mr-1.5" />
-          <span className="text-xs text-cybergold-300">Premium-gruppe med forbedret sikkerhet og ytelse</span>
-          {!isPremiumMember && (
-            <Button 
-              variant="link" 
-              size="sm" 
-              onClick={() => setShowPremiumDialog(true)}
-              className="ml-auto text-xs text-cybergold-400 hover:text-cybergold-300 p-0 h-auto"
+    <div className="flex flex-col h-full w-full">
+      <div className="flex-1 flex flex-col h-full overflow-hidden">
+        <ChatGlassPanel className="rounded-b-none shadow-neon-gold/10" noPadding>
+          <GroupChatHeader
+            group={group}
+            connectionState={connectionState}
+            dataChannelState={dataChannelState}
+            usingServerFallback={usingServerFallback}
+            connectionAttempts={connectionAttempts}
+            onBack={onBack}
+            onReconnect={handleReconnect}
+            securityLevel={securityLevel}
+            setSecurityLevel={setSecurityLevel}
+            userProfiles={userProfiles}
+            isAdmin={isAdmin}
+            isPremium={isPremiumGroup}
+            isPremiumMember={isPremiumMember}
+            onShowInvite={() => setShowInviteDialog(true)}
+            onShowPremium={() => setShowPremiumDialog(true)}
+            onShowMembers={() => setShowMembersDialog(true)}
+            isPageEncryptionEnabled={isEncryptionEnabled}
+            onEnablePageEncryption={handleEnablePageEncryption}
+            onEncryptAllMessages={handleEncryptAllMessages}
+            encryptionStatus={encryptionStatus}
+            isMobile={isMobile}
+          />
+
+          {isPremiumGroup && (
+            <div
+              className={`flex items-center justify-center ${
+                isMobile ? "px-2 py-1" : "px-3 py-1.5"
+              } bg-gradient-to-r from-cybergold-900 to-cybergold-800 border-b border-cybergold-500/30`}
             >
-              Oppgrader <ArrowRight className="h-3 w-3 ml-1" />
-            </Button>
+              <Star className="h-4 w-4 mr-1.5 text-cybergold-400" />
+              <span className="text-cybergold-300 text-sm font-medium">Premium Gruppe</span>
+              {!isPremiumMember && (
+                <Button
+                  variant="link"
+                  onClick={() => setShowPremiumDialog(true)}
+                  className="ml-2 text-cybergold-400 text-xs p-0 h-auto"
+                >
+                  Oppgrader {isMobile ? "" : "medlemskap"}
+                  <ArrowRight className="ml-1 h-3 w-3" />
+                </Button>
+              )}
+            </div>
           )}
-        </div>
-      )}
-      
-      {/* Encryption Status */}
-      {isEncryptionEnabled && (
-        <div className="px-4 py-2 bg-cyberdark-900 border-b border-cybergold-500/30 flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Shield className="h-4 w-4 text-cybergold-500" />
-            <span className="text-sm text-cybergold-300">
-              {isPremiumMember 
-                ? "Gruppesamtalen er beskyttet med forsterket 256-bit kryptering" 
-                : "Gruppesamtalen er beskyttet med helside-kryptering"}
-            </span>
+
+          <div
+            className={`flex items-center overflow-x-auto ${
+              isMobile ? "px-2 py-1" : "px-3 py-1.5"
+            } bg-cyberdark-800/70 border-b border-cyberdark-700`}
+          >
+            <Users className="h-4 w-4 mr-1.5 text-cybergold-500/70" />
+            <span className="text-cybergold-500/70 text-xs font-medium mr-2">Aktive:</span>
+            <div className="flex items-center gap-1 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-cybergold-600/20">
+              {group.members
+                ?.filter((member) => userProfiles[member.user_id]?.status === "online")
+                .slice(0, isMobile ? 3 : 5)
+                .map((member) => (
+                  <Badge
+                    key={member.user_id}
+                    variant="outline"
+                    className="bg-cybergold-900/30 text-cybergold-400 border-cybergold-700 text-xs px-1.5 py-0 h-5"
+                  >
+                    {userProfiles[member.user_id]?.username || "Bruker"}
+                  </Badge>
+                ))}
+              {group.members &&
+                group.members.filter((member) => userProfiles[member.user_id]?.status === "online").length >
+                  (isMobile ? 3 : 5) && (
+                  <Badge
+                    variant="outline"
+                    className="bg-cybergold-900/30 text-cybergold-400 border-cybergold-700 text-xs px-1.5 py-0 h-5 cursor-pointer"
+                    onClick={() => setShowMembersDialog(true)}
+                  >
+                    +
+                    {group.members.filter((member) => userProfiles[member.user_id]?.status === "online").length -
+                      (isMobile ? 3 : 5)}{" "}
+                    flere
+                  </Badge>
+                )}
+            </div>
+            <Button
+              variant="ghost"
+              onClick={() => setShowMembersDialog(true)}
+              className="ml-auto text-cybergold-500/70 p-0 h-auto"
+              size="sm"
+            >
+              <Users className="h-4 w-4" />
+              <span className={`${isMobile ? "sr-only" : "ml-1 text-xs"}`}>Vis alle</span>
+            </Button>
           </div>
-          {(isAdmin || isPremiumMember) && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleEncryptAllMessages}
-              disabled={isProcessing || encryptionStatus !== 'idle'}
-              className="h-7 text-xs bg-cyberdark-800 border-cybergold-500/30 hover:bg-cyberdark-700"
-            >
-              <Lock className="h-3 w-3 mr-1" />
-              Krypter alle meldinger
-            </Button>
-          )}
-        </div>
-      )}
-      
-      {/* Encryption Progress */}
-      {encryptionStatus !== 'idle' && (
-        <div className="px-4 py-2 bg-cyberyellow-800/20 border-b border-cyberyellow-500/30 flex items-center">
-          <AlertTriangle className="h-4 w-4 text-cyberyellow-500 mr-2" />
-          <span className="text-sm text-cyberyellow-300">
-            {encryptionStatus === 'encrypting' ? 'Krypterer meldinger...' : 'Dekrypterer meldinger...'}
-          </span>
-        </div>
-      )}
-      
-      <div className="flex-1 flex flex-col min-h-0">
-        <ChatGlassPanel className="flex-1 flex flex-col min-h-0">
-          {groupMessages.length === 0 && isSecureConnection ? (
-            <GroupChatEmptyState 
-              usingServerFallback={usingServerFallback} 
+
+          {groupMessages.length === 0 ? (
+            <GroupChatEmptyState
+              groupName={group.name}
+              connectionState={connectionState}
               securityLevel={securityLevel}
               isAdmin={isAdmin}
               isPremium={isPremiumGroup}
@@ -277,8 +306,8 @@ export const GroupChat = ({
               onEnablePageEncryption={isAdmin || isPremiumMember ? handleEnablePageEncryption : undefined}
             />
           ) : (
-            <DirectMessageList 
-              messages={groupMessages} 
+            <DirectMessageList
+              messages={groupMessages}
               currentUserId={currentUserId}
               peerIsTyping={peerIsTyping}
               isMessageRead={isMessageRead}
@@ -290,13 +319,14 @@ export const GroupChat = ({
               securityLevel={securityLevel}
               isPageEncrypted={isEncryptionEnabled}
               isPremiumMember={isPremiumMember}
+              isMobile={isMobile}
             />
           )}
         </ChatGlassPanel>
       </div>
       <div className="w-full">
         <ChatGlassPanel className="rounded-b-2xl rounded-t-none shadow-neon-gold/10" noPadding>
-          <DirectMessageForm 
+          <DirectMessageForm
             usingServerFallback={usingServerFallback}
             sendError={sendError}
             isLoading={isLoading}
@@ -310,12 +340,12 @@ export const GroupChat = ({
             securityLevel={securityLevel}
             isPageEncrypted={isEncryptionEnabled}
             isPremiumMember={isPremiumMember}
-            maxFileSize={isPremiumMember ? 1024 * 1024 * 1024 : 50 * 1024 * 1024} // 1GB for premium, 50MB for standard
+            maxFileSize={isPremiumMember ? 1024 * 1024 * 1024 : 50 * 1024 * 1024}
+            isMobile={isMobile}
           />
         </ChatGlassPanel>
       </div>
-      
-      {/* Invite Dialog */}
+
       <GroupInviteButton
         isOpen={showInviteDialog}
         onClose={() => setShowInviteDialog(false)}
@@ -323,10 +353,10 @@ export const GroupChat = ({
         friendsList={Object.keys(userProfiles)}
         currentUserId={currentUserId}
         onInvite={handleInviteUser}
-        groupMembers={group.members?.map(member => member.user_id) || []}
+        groupMembers={group.members?.map((member) => member.user_id) || []}
+        isMobile={isMobile}
       />
-      
-      {/* Premium Membership Dialog */}
+
       <Dialog open={showPremiumDialog} onOpenChange={setShowPremiumDialog}>
         <DialogContent className="bg-cyberdark-900 border-cybergold-500/30 text-cybergold-200 max-w-md">
           <DialogHeader>
@@ -338,88 +368,124 @@ export const GroupChat = ({
               Få tilgang til eksklusive premium-funksjoner i denne gruppen
             </DialogDescription>
           </DialogHeader>
-          
+
           <PremiumMembershipCard
             group={group}
             currentUserId={currentUserId}
             currentMembership={currentMembership}
             onUpgradeComplete={() => {
               setShowPremiumDialog(false);
-              // Her ville vi normalt hente oppdatert gruppedata fra server
+              toast({
+                title: "Medlemskap oppgradert",
+                description: "Du er nå premium-medlem i denne gruppen",
+                variant: "success",
+              });
             }}
+            isMobile={isMobile}
           />
         </DialogContent>
       </Dialog>
-      
-      {/* Group Members Dialog */}
+
       <Dialog open={showMembersDialog} onOpenChange={setShowMembersDialog}>
-        <DialogContent className="bg-cyberdark-900 border-cybergold-500/30 text-cybergold-200 sm:max-w-[600px]">
+        <DialogContent
+          className={`bg-cyberdark-900 border-cybergold-500/30 text-cybergold-200 ${
+            isMobile ? "max-w-[95%] p-4" : "max-w-md"
+          }`}
+        >
           <DialogHeader>
-            <DialogTitle>Gruppemedlemmer</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5 text-cybergold-400" />
+              Gruppemedlemmer
+            </DialogTitle>
             <DialogDescription className="text-cybergold-500/70">
-              {group.memberCount || group.members?.length || 0} medlemmer
+              {group.members?.length || 0} medlemmer i denne gruppen
             </DialogDescription>
           </DialogHeader>
-          
-          <Tabs defaultValue="members" className="w-full">
-            <TabsList className="bg-cyberdark-800 grid grid-cols-2 mb-4">
-              <TabsTrigger value="members">Medlemmer</TabsTrigger>
-              <TabsTrigger value="roles">Roller og tilgang</TabsTrigger>
+
+          <Tabs defaultValue="all" className="w-full">
+            <TabsList className="w-full bg-cyberdark-800">
+              <TabsTrigger
+                value="all"
+                className="flex-1 data-[state=active]:bg-cybergold-900/30 data-[state=active]:text-cybergold-300"
+              >
+                Alle ({group.members?.length || 0})
+              </TabsTrigger>
+              <TabsTrigger
+                value="online"
+                className="flex-1 data-[state=active]:bg-cybergold-900/30 data-[state=active]:text-cybergold-300"
+              >
+                Online ({group.members?.filter((member) => userProfiles[member.user_id]?.status === "online").length || 0})
+              </TabsTrigger>
+              <TabsTrigger
+                value="admins"
+                className="flex-1 data-[state=active]:bg-cybergold-900/30 data-[state=active]:text-cybergold-300"
+              >
+                Admins ({group.members?.filter((member) => member.role === "admin").length || 0})
+              </TabsTrigger>
             </TabsList>
-            
-            <TabsContent value="members">
-              {group.members && (
-                <GroupMembersList 
-                  members={group.members} 
-                  userProfiles={userProfiles} 
-                  currentUserId={currentUserId} 
-                  isAdmin={isAdmin}
-                  isPremiumMember={isPremiumMember}
-                  groupId={group.id}
-                  onRefresh={handleRefreshMembers}
-                />
-              )}
+            <TabsContent value="all" className="mt-2">
+              <GroupMembersList
+                members={group.members || []}
+                currentUserId={currentUserId}
+                userProfiles={userProfiles}
+                isAdmin={isAdmin}
+                groupId={group.id}
+                onMemberUpdated={() => {
+                  toast({
+                    title: "Medlemsstatus oppdatert",
+                    description: "Endringene har blitt lagret",
+                    variant: "success",
+                  });
+                }}
+                isMobile={isMobile}
+              />
             </TabsContent>
-            
-            <TabsContent value="roles">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <h3 className="font-medium text-cybergold-300">Admin</h3>
-                  <p className="text-sm text-cybergold-500/70">Har full tilgang til å administrere gruppen, invitere medlemmer og slette meldinger.</p>
-                </div>
-                
-                <div className="space-y-2">
-                  <h3 className="font-medium text-cybergold-300 flex items-center gap-2">
-                    <Crown className="h-4 w-4 text-cybergold-400" />
-                    Premium-medlem
-                  </h3>
-                  <p className="text-sm text-cybergold-500/70">Har tilgang til avanserte sikkerhetsfunksjoner, større lagringskapasitet og ende-til-ende kryptering.</p>
-                </div>
-                
-                <div className="space-y-2">
-                  <h3 className="font-medium text-cybergold-300">Moderator</h3>
-                  <p className="text-sm text-cybergold-500/70">Kan moderere samtaler og slette upassende meldinger.</p>
-                </div>
-                
-                <div className="space-y-2">
-                  <h3 className="font-medium text-cybergold-300">Medlem</h3>
-                  <p className="text-sm text-cybergold-500/70">Kan delta i gruppechatter, sende meldinger og se medlemslisten.</p>
-                </div>
-              </div>
+            <TabsContent value="online" className="mt-2">
+              <GroupMembersList
+                members={(group.members || []).filter((member) => userProfiles[member.user_id]?.status === "online")}
+                currentUserId={currentUserId}
+                userProfiles={userProfiles}
+                isAdmin={isAdmin}
+                groupId={group.id}
+                onMemberUpdated={() => {
+                  toast({
+                    title: "Medlemsstatus oppdatert",
+                    description: "Endringene har blitt lagret",
+                    variant: "success",
+                  });
+                }}
+                isMobile={isMobile}
+              />
+            </TabsContent>
+            <TabsContent value="admins" className="mt-2">
+              <GroupMembersList
+                members={(group.members || []).filter((member) => member.role === "admin")}
+                currentUserId={currentUserId}
+                userProfiles={userProfiles}
+                isAdmin={isAdmin}
+                groupId={group.id}
+                onMemberUpdated={() => {
+                  toast({
+                    title: "Medlemsstatus oppdatert",
+                    description: "Endringene har blitt lagret",
+                    variant: "success",
+                  });
+                }}
+                isMobile={isMobile}
+              />
             </TabsContent>
           </Tabs>
-          
-          <DialogFooter>
-            {(isAdmin || isPremiumMember) && (
-              <Button 
-                variant="outline" 
-                className="bg-cyberdark-800 border-cybergold-500/30 text-cybergold-400 hover:bg-cyberdark-700"
-                onClick={handleRefreshMembers}
+
+          {isAdmin && (
+            <DialogFooter>
+              <Button
+                onClick={() => setShowInviteDialog(true)}
+                className="w-full bg-cybergold-900/50 text-cybergold-300 hover:bg-cybergold-800/60 border border-cybergold-700"
               >
-                Oppdater medlemsliste
+                Inviter nye medlemmer
               </Button>
-            )}
-          </DialogFooter>
+            </DialogFooter>
+          )}
         </DialogContent>
       </Dialog>
     </div>

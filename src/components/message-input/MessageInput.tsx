@@ -125,6 +125,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
   const [captionText, setCaptionText] = useState<string>('');
   const [activeMediaTab, setActiveMediaTab] = useState<'recent' | 'camera' | 'gallery'>('recent');
   const [mediaQuality, setMediaQuality] = useState<'standard' | 'high' | 'raw'>('standard');
+  const [showDragHelp, setShowDragHelp] = useState<boolean>(false);
 
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -433,28 +434,42 @@ const MessageInput: React.FC<MessageInputProps> = ({
     e.preventDefault();
     e.stopPropagation();
     setDragActive(true);
+    setShowDragHelp(true);
   };
 
   const handleDragLeave = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
+    setShowDragHelp(false);
   };
 
   const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
+    setShowDragHelp(false);
     
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       const file = e.dataTransfer.files[0];
       
-      // Only accept images and videos
-      if (file.type.startsWith('image/') || file.type.startsWith('video/')) {
+      // Støtte for flere filtyper
+      if (file.type.startsWith('image/') || file.type.startsWith('video/') || 
+          file.type.startsWith('audio/') || file.type === 'application/pdf') {
         setSelectedFile(file);
         const url = URL.createObjectURL(file);
         setPreviewUrl(url);
         setShowMediaUploader(true);
+      } else if (onSendFile) {
+        // For andre filtyper, bruk vanlig opplaster
+        try {
+          setIsSubmitting(true);
+          await onSendFile(file);
+        } catch (error) {
+          console.error('Error uploading file:', error);
+        } finally {
+          setIsSubmitting(false);
+        }
       }
     }
   };
@@ -502,13 +517,25 @@ const MessageInput: React.FC<MessageInputProps> = ({
         "flex flex-col w-full bg-cyberdark-900 border-t border-cyberdark-700",
         showMediaUploader && "pb-2",
         !isMobile && "rounded-lg",
-        dragActive && "border-2 border-dashed border-cybergold-500"
+        dragActive && "border-2 border-dashed border-cybergold-500 bg-cyberdark-800/50"
       )}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       ref={dropAreaRef}
     >
+      {/* Vis drag-and-drop instruksjoner når aktiv */}
+      {showDragHelp && (
+        <div className="absolute inset-0 flex items-center justify-center bg-cyberdark-900/80 z-10 rounded-lg pointer-events-none">
+          <div className="text-center">
+            <div className="bg-cybergold-600/20 p-6 rounded-full mb-4 mx-auto">
+              <Image className="h-10 w-10 text-cybergold-400" />
+            </div>
+            <p className="text-cybergold-400 font-medium">Slipp fil for å laste opp</p>
+          </div>
+        </div>
+      )}
+
       {/* Show editing message indicator when in edit mode */}
       {editingMessage && (
         <div className="px-4 pt-2">
@@ -537,13 +564,19 @@ const MessageInput: React.FC<MessageInputProps> = ({
 
       {/* Media upload UI */}
       {showMediaUploader && selectedFile && previewUrl && (
-        <div className="px-4 pt-3 pb-2">
+        <div className={cn(
+          "px-4 pt-3 pb-2",
+          isMobile && "fixed inset-x-0 bottom-0 z-50 bg-cyberdark-950 pb-6"
+        )}>
           <div className="bg-cyberdark-800 rounded-lg overflow-hidden border border-cyberdark-700">
             {/* Media preview header */}
             <div className="flex items-center justify-between bg-cyberdark-950 p-2 border-b border-cyberdark-700">
               <div className="flex items-center text-sm text-cybergold-300">
                 <span className="font-medium">
-                  {selectedFile.type.startsWith('image/') ? 'Bildeopplasting' : 'Videoopplasting'}
+                  {selectedFile.type.startsWith('image/') ? 'Bildeopplasting' : 
+                   selectedFile.type.startsWith('video/') ? 'Videoopplasting' : 
+                   selectedFile.type.startsWith('audio/') ? 'Lydopplasting' : 
+                   'Filopplasting'}
                 </span>
                 <span className="ml-2 text-xs text-cybergold-600">
                   {Math.round(selectedFile.size / 1024)} KB
@@ -569,6 +602,18 @@ const MessageInput: React.FC<MessageInputProps> = ({
                 )}
                 {selectedFile.type.startsWith('video/') && (
                   <video src={previewUrl} className="max-h-64 w-full" controls />
+                )}
+                {selectedFile.type.startsWith('audio/') && (
+                  <audio src={previewUrl} className="w-full mt-2" controls />
+                )}
+                {selectedFile.type === 'application/pdf' && (
+                  <div className="flex flex-col items-center justify-center p-4">
+                    <svg className="h-10 w-10 text-red-500 mb-2" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/>
+                      <path d="M14 2v6h6"/>
+                    </svg>
+                    <span className="text-sm text-cybergold-300">{selectedFile.name}</span>
+                  </div>
                 )}
                 
                 {/* Upload progress overlay */}

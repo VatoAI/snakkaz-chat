@@ -27,7 +27,7 @@ import { Switch } from "@/components/ui/switch";
 
 export default function Profile() {
   const { user, signOut, updateProfile, updatePassword } = useAuth();
-  const { isPremium, upgradeToPremium } = useGroups();
+  const { isPremium } = useGroups();
   const { toast } = useToast();
   const [displayName, setDisplayName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -69,14 +69,13 @@ export default function Profile() {
   // Wrapper funksjon for å konvertere Promise<boolean> til Promise<void>
   const handleUpgrade = async (): Promise<void> => {
     try {
-      const result = await upgradeToPremium();
-      if (!result) {
-        toast({
-          variant: "destructive",
-          title: "Oppgradering feilet",
-          description: "Kunne ikke oppgradere til premium. Vennligst prøv igjen senere."
-        });
-      }
+      // Implement premium upgrade logic
+      // Since upgradeToPremium is not available in useGroups, you'll need to implement this differently
+      // For now, just show a notification that this feature is not implemented
+      toast({
+        title: "Premium oppgradering",
+        description: "Premium oppgradering er ikke implementert ennå."
+      });
     } catch (error) {
       console.error("Feil ved oppgradering til premium:", error);
       toast({
