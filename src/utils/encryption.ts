@@ -85,3 +85,7 @@ export const decryptWithKey = async (encryptedContent: string, key: string, ivHe
     throw new Error('Failed to decrypt content');
   }
 };
+
+// Re-export the necessary functions from message-encryption
+export { encryptMessage, decryptMessage } from './utils/encryption/message-encryption';
+

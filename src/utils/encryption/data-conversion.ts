@@ -1,34 +1,60 @@
 
 /**
- * Data conversion utilities for encryption
+ * Utility functions for data conversion in encryption contexts
  */
 
-// Convert string to Uint8Array
-export const str2ab = (str: string): Uint8Array => {
-  const encoder = new TextEncoder();
-  return encoder.encode(str);
-};
+// Convert string to ArrayBuffer
+export function str2ab(str: string): ArrayBuffer {
+  const buf = new ArrayBuffer(str.length);
+  const bufView = new Uint8Array(buf);
+  for (let i = 0, strLen = str.length; i < strLen; i++) {
+    bufView[i] = str.charCodeAt(i);
+  }
+  return buf;
+}
 
-// Convert Uint8Array to string
-export const ab2str = (buf: ArrayBuffer): string => {
-  const decoder = new TextDecoder();
-  return decoder.decode(buf);
-};
+// Convert ArrayBuffer to string
+export function ab2str(buf: ArrayBuffer): string {
+  return String.fromCharCode.apply(null, Array.from(new Uint8Array(buf)));
+}
 
-// Convert Uint8Array to Base64-string
-export const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
-  const bytes = new Uint8Array(buffer);
-  let binary = '';
-  bytes.forEach(byte => binary += String.fromCharCode(byte));
-  return window.btoa(binary);
-};
+// Convert ArrayBuffer to base64
+export function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  return btoa(ab2str(buffer));
+}
 
-// Convert Base64-string to Uint8Array
-export const base64ToArrayBuffer = (base64: string): ArrayBuffer => {
-  const binaryString = window.atob(base64);
+// Convert base64 to ArrayBuffer
+export function base64ToArrayBuffer(base64: string): ArrayBuffer {
+  const binaryString = atob(base64);
   const bytes = new Uint8Array(binaryString.length);
   for (let i = 0; i < binaryString.length; i++) {
     bytes[i] = binaryString.charCodeAt(i);
   }
   return bytes.buffer;
-};
+}
+
+// Convert hex string to ArrayBuffer
+export function hexToArrayBuffer(hexString: string): ArrayBuffer {
+  // Remove any non-hex characters (like spaces)
+  const cleanHexString = hexString.replace(/[^0-9A-Fa-f]/g, '');
+  
+  // Ensure we have an even number of characters
+  const paddedHexString = cleanHexString.length % 2 ? '0' + cleanHexString : cleanHexString;
+  
+  const bytes = new Uint8Array(paddedHexString.length / 2);
+  
+  for (let i = 0; i < bytes.length; i++) {
+    const byteHex = paddedHexString.substring(i * 2, i * 2 + 2);
+    bytes[i] = parseInt(byteHex, 16);
+  }
+  
+  return bytes.buffer;
+}
+
+// Convert ArrayBuffer to hex string
+export function arrayBufferToHex(buffer: ArrayBuffer): string {
+  return Array.from(new Uint8Array(buffer))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
