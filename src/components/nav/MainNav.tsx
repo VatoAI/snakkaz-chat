@@ -21,8 +21,8 @@ export const MainNav = () => {
         variant={isActive('/') ? "default" : "ghost"}
         size="sm"
         className={`${isActive('/')
-          ? "bg-cybergold-600/20 text-cybergold-400"
-          : "text-cybergold-400 hover:text-cybergold-300"}`}
+          ? "bg-cybergold-500/20 text-cybergold-500 border-b border-cybergold-500"
+          : "text-cybergold-400 hover:text-cybergold-500 hover:bg-cyberdark-800"}`}
         onClick={() => navigate('/')}
       >
         <Home className="w-4 h-4 mr-2" />
@@ -33,8 +33,8 @@ export const MainNav = () => {
         variant={isActive('/chat') ? "default" : "ghost"}
         size="sm"
         className={`${isActive('/chat')
-          ? "bg-cybergold-600/20 text-cybergold-400"
-          : "text-cybergold-400 hover:text-cybergold-300"}`}
+          ? "bg-cybergold-500/20 text-cybergold-500 border-b border-cybergold-500"
+          : "text-cybergold-400 hover:text-cybergold-500 hover:bg-cyberdark-800"}`}
         onClick={() => navigate('/chat')}
       >
         <MessageSquare className="w-4 h-4 mr-2" />
@@ -46,8 +46,8 @@ export const MainNav = () => {
           variant={isActive('/ai-chat') ? "default" : "ghost"}
           size="sm"
           className={`${isActive('/ai-chat')
-            ? "bg-cybergold-600/20 text-cybergold-400"
-            : "text-cybergold-400 hover:text-cybergold-300"}`}
+            ? "bg-cybergold-500/20 text-cybergold-500 border-b border-cybergold-500"
+            : "text-cybergold-400 hover:text-cybergold-500 hover:bg-cyberdark-800"}`}
           onClick={() => navigate('/ai-chat')}
         >
           <Bot className="w-4 h-4 mr-2" />
@@ -60,8 +60,8 @@ export const MainNav = () => {
           variant={location.pathname.includes('/group-chat') ? "default" : "ghost"}
           size="sm"
           className={`${location.pathname.includes('/group-chat')
-            ? "bg-cybergold-600/20 text-cybergold-400"
-            : "text-cybergold-400 hover:text-cybergold-300"}`}
+            ? "bg-cybergold-500/20 text-cybergold-500 border-b border-cybergold-500"
+            : "text-cybergold-400 hover:text-cybergold-500 hover:bg-cyberdark-800"}`}
           onClick={() => navigate('/group-chat')}
         >
           <Users className="w-4 h-4 mr-2" />
@@ -73,8 +73,8 @@ export const MainNav = () => {
         variant={isActive('/info') ? "default" : "ghost"}
         size="sm"
         className={`${isActive('/info')
-          ? "bg-cybergold-600/20 text-cybergold-400"
-          : "text-cybergold-400 hover:text-cybergold-300"}`}
+          ? "bg-cybergold-500/20 text-cybergold-500 border-b border-cybergold-500"
+          : "text-cybergold-400 hover:text-cybergold-500 hover:bg-cyberdark-800"}`}
         onClick={() => navigate('/info')}
       >
         <Info className="w-4 h-4 mr-2" />
@@ -86,8 +86,8 @@ export const MainNav = () => {
           variant={isActive('/profile') ? "default" : "ghost"}
           size="sm"
           className={`${isActive('/profile')
-            ? "bg-cybergold-600/20 text-cybergold-400"
-            : "text-cybergold-400 hover:text-cybergold-300"}`}
+            ? "bg-cybergold-500/20 text-cybergold-500 border-b border-cybergold-500"
+            : "text-cybergold-400 hover:text-cybergold-500 hover:bg-cyberdark-800"}`}
           onClick={() => navigate('/profile')}
         >
           <User className="w-4 h-4 mr-2" />
@@ -100,8 +100,8 @@ export const MainNav = () => {
           variant={isActive('/admin') ? "default" : "ghost"}
           size="sm"
           className={`${isActive('/admin')
-            ? "bg-cybergold-600/20 text-cybergold-400"
-            : "text-cybergold-400 hover:text-cybergold-300"}`}
+            ? "bg-cybergold-500/20 text-cybergold-500 border-b border-cybergold-500"
+            : "text-cybergold-400 hover:text-cybergold-500 hover:bg-cyberdark-800"}`}
           onClick={() => navigate('/admin')}
         >
           <ShieldCheck className="w-4 h-4 mr-2" />

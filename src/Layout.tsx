@@ -31,14 +31,14 @@ const Layout = () => {
       <header className="sticky top-0 z-50 w-full border-b border-cyberdark-800 bg-cyberdark-950/95 backdrop-blur supports-[backdrop-filter]:bg-cyberdark-950/90">
         <div className="container flex h-16 items-center justify-between">
           <div className="flex items-center gap-4">
-            {/* Logo med ny design og stil */}
+            {/* Logo med oppdatert sti til den eksisterende logoen */}
             <div 
               className="flex items-center gap-3 mr-6 group" 
               onClick={() => navigate('/')} 
               style={{ cursor: 'pointer' }}
             >
               <img
-                src="/logos/snakkaz-gold.svg"
+                src="/icons/snakkaz-gold.png"
                 alt="SnakkaZ Logo"
                 className="h-10 w-auto transition-transform duration-300 group-hover:scale-105"
               />
@@ -57,7 +57,7 @@ const Layout = () => {
             <Button
               variant="outline"
               size="sm"
-              className="bg-cybergold-500/10 border-cybergold-500/30 text-cybergold-400 hover:text-cybergold-300"
+              className="bg-cybergold-500 border-cybergold-600 text-black font-medium hover:bg-cybergold-400 hover:text-black transition-colors"
               onClick={handleDownloadClick}
             >
               <Download className="w-4 h-4 mr-2" />
