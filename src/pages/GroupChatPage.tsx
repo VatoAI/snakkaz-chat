@@ -61,9 +61,9 @@ import {
 import { Switch } from '@/components/ui/switch';
 import MessageInput from '@/components/message-input/MessageInput';
 import { Group, GroupVisibility, SecurityLevel, GroupMember } from '@/types/groups';
+import { GroupMessage } from '@/types/group.d';
 import { usePresence } from '@/hooks/usePresence';
 import { UserStatus } from '@/types/presence';
-import { GroupMessage } from '@/types/groups';
 
 // Define message interfaces to fix 'any' types
 interface MessageContent {
@@ -86,6 +86,24 @@ interface Message {
   created_at?: string;
   mediaUrl?: string;
   media_url?: string;
+}
+
+// Define chat message type to avoid 'any'
+interface ChatMessage {
+  id: string;
+  content: string;
+  sender_id?: string;
+  senderId?: string;
+  group_id?: string;
+  groupId?: string;
+  created_at?: string;
+  createdAt?: string;
+  is_edited?: boolean;
+  isEdited?: boolean;
+  mediaUrl?: string;
+  media_url?: string;
+  reply_to_id?: string;
+  replyToId?: string;
 }
 
 // Define getGroupMemberById function properly
@@ -128,7 +146,7 @@ const GroupChatPage = () => {
   const [muteNotifications, setMuteNotifications] = useState(false);
   const [initialDisappearingTime, setInitialDisappearingTime] = useState(0);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
-  const [replyToMessage, setReplyToMessage] = useState<any | null>(null);
+  const [replyToMessage, setReplyToMessage] = useState<ChatMessage | null>(null);
   const [hasMoreMessages, setHasMoreMessages] = useState(false);
   
   // Get groups
@@ -466,7 +484,7 @@ const GroupChatPage = () => {
   };
   
   // Handle message editing
-  const handleEditMessage = (message: any) => {
+  const handleEditMessage = (message: ChatMessage) => {
     setEditingMessageId(message.id);
     // Setter meldingsteksten i input-feltet
     // Dette må gjøres i MessageInput komponenten
@@ -490,7 +508,7 @@ const GroupChatPage = () => {
   };
   
   // Handle reply to message
-  const handleReplyToMessage = (message: any) => {
+  const handleReplyToMessage = (message: ChatMessage) => {
     setReplyToMessage(message);
   };
   
