@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { secureSupabase, secureSignIn, secureSignOut } from '../integrations/supabase/secure-client';
+import { secureSupabase, secureSignIn, secureSignOut } from '../../integrations/supabase/secure-client';
 import { User } from '@supabase/supabase-js';
 
 // Definere process hvis det ikke finnes i nettlesermiljøet
