@@ -1,40 +1,84 @@
 
-import { SecurityLevel } from "./security";
+import { UserID } from './user';
 
-export type GroupWritePermission = 'all' | 'admin' | 'selected';
-export type MessageTTLOption = 300 | 1800 | 3600 | 86400 | 604800 | null;
+export type GroupID = string;
+export type GroupRole = 'owner' | 'admin' | 'moderator' | 'member';
+export type GroupVisibility = 'public' | 'private' | 'hidden';
+export type SecurityLevel = 'standard' | 'high' | 'premium';
+
+// Define missing types for GroupInvite
+export interface GroupInvite {
+  id: string;
+  groupId: string; 
+  invitedById: string;
+  invitedUserId: string;
+  status: 'pending' | 'accepted' | 'rejected';
+  createdAt: string;
+  expiresAt?: string;
+  // Computed properties for display
+  group_name?: string; // For backward compatibility 
+  sender_username?: string; // For backward compatibility
+  group_id?: string; // For backward compatibility
+  invited_by?: string; // For backward compatibility
+  expires_at?: string; // For backward compatibility
+}
+
+// Group member interface
+export interface GroupMember {
+  id: string;
+  userId: string; // New property
+  user_id?: string; // For backward compatibility
+  groupId: string;
+  role: GroupRole;
+  joinedAt: string;
+  isActive: boolean;
+  lastActive?: string;
+}
+
+// For dropdown selection in group creation
+export interface GroupWritePermission {
+  value: string;
+  label: string;
+}
+
+// For dropdown selection in disappearing messages
+export interface MessageTTLOption {
+  value: number;
+  label: string;
+}
+
+// Group message interface
+export interface GroupMessage {
+  id: string;
+  senderId: string;
+  groupId: string;
+  createdAt: string | Date;
+  text?: string;
+  mediaUrl?: string;
+  mediaType?: 'image' | 'video' | 'audio';
+  ttl?: number;
+  readBy?: string[];
+  replyToId?: string;
+  isEncrypted?: boolean;
+}
 
 export interface Group {
   id: string;
   name: string;
-  description: string | null;
-  created_at: string;
-  creator_id: string;
-  security_level: SecurityLevel;
-  write_permissions: GroupWritePermission;
-  default_message_ttl: MessageTTLOption;
-  password?: string | null;
-  avatar_url?: string | null;
-  members: GroupMember[];
-  is_premium: boolean;
-}
-
-export interface GroupMember {
-  id: string;
-  user_id: string;
-  group_id: string;
-  role: 'admin' | 'member';
-  joined_at: string;
-  can_write: boolean;
-  username?: string;
-  avatar_url?: string;
-}
-
-export interface GroupInvite {
-  id: string;
-  group_id: string;
-  invited_user_id: string;
-  invited_by: string;
-  created_at: string;
-  expires_at: string;
+  description?: string;
+  createdAt: string;
+  updatedAt?: string;
+  createdBy: string;
+  visibility: GroupVisibility;
+  securityLevel: SecurityLevel;
+  avatarUrl?: string;
+  avatar_url?: string; // For backward compatibility
+  memberCount?: number;
+  members?: GroupMember[];
+  is_premium?: boolean;
+  type?: string;
+  isPublic?: boolean;
+  settings?: any;
+  password?: string; // For backward compatibility
+  creator_id?: string; // For backward compatibility
 }

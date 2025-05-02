@@ -63,6 +63,12 @@ import MessageInput from '@/components/message-input/MessageInput';
 import { Group, GroupVisibility, SecurityLevel } from '@/types/group';
 import { usePresence } from '@/hooks/usePresence';
 
+// Define missing function that's being used as "_"
+const getGroupMemberById = (members, userId) => {
+  if (!members || !Array.isArray(members)) return null;
+  return members.find(member => member.userId === userId || member.user_id === userId);
+};
+
 const GroupChatPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -519,10 +525,172 @@ const GroupChatPage = () => {
   
   // Render group list if no group is selected
   if (!selectedGroup) {
-    // ... existing group list code ...
     return (
       <div className="container max-w-6xl mx-auto py-6">
-        {/* ... existing code ... */}
+        <div className="flex justify-between items-center mb-4">
+          <h1 className="text-2xl font-semibold text-cybergold-300">Grupper</h1>
+          <Button onClick={() => setIsCreatingGroup(true)} className="bg-cybergold-600 text-black hover:bg-cybergold-500">
+            <Plus className="h-4 w-4 mr-2" />
+            Lag ny gruppe
+          </Button>
+        </div>
+        
+        <div className="mb-4">
+          <Input
+            type="text"
+            placeholder="Søk etter grupper..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="bg-cyberdark-800 text-cybergold-200 border-cyberdark-700 focus:border-cybergold-500"
+          />
+        </div>
+        
+        {groupsLoading ? (
+          <div className="flex justify-center">
+            <Loader2 className="h-6 w-6 text-cybergold-500 animate-spin" />
+          </div>
+        ) : filteredGroups.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredGroups.map(group => (
+              <Card key={group.id} className="bg-cyberdark-900 border-cyberdark-700">
+                <CardHeader>
+                  <CardTitle className="text-cybergold-300">{group.name}</CardTitle>
+                  <CardDescription className="text-cybergold-500">{group.description}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-cybergold-400">
+                    {group.memberCount} medlemmer
+                  </p>
+                </CardContent>
+                <CardFooter className="flex justify-between">
+                  <Button variant="secondary" onClick={() => setSelectedGroup(group)}>
+                    Vis chat
+                  </Button>
+                  <div className="flex items-center gap-1">
+                    {group.visibility === 'private' && (
+                      <Lock className="h-4 w-4 text-cybergold-500" />
+                    )}
+                    {group.securityLevel === "high" && (
+                      <Shield className="h-4 w-4 text-green-500" />
+                    )}
+                    {group.is_premium && (
+                      <Star className="h-4 w-4 text-cybergold-400" />
+                    )}
+                  </div>
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center text-cybergold-500">
+            Ingen grupper funnet.
+          </div>
+        )}
+        
+        {/* Create Group Dialog */}
+        <Dialog open={isCreatingGroup} onOpenChange={setIsCreatingGroup}>
+          <DialogContent className="bg-cyberdark-900 border-cybergold-500/30 max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-cybergold-300">Lag ny gruppe</DialogTitle>
+              <DialogDescription className="text-cybergold-500">
+                Fyll ut skjemaet nedenfor for å opprette en ny gruppe.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <label htmlFor="name" className="text-right text-cybergold-300">
+                  Navn
+                </label>
+                <Input
+                  type="text"
+                  id="name"
+                  value={newGroupName}
+                  onChange={(e) => setNewGroupName(e.target.value)}
+                  className="col-span-3 bg-cyberdark-800 text-cybergold-200 border-cyberdark-700 focus:border-cybergold-500"
+                />
+              </div>
+              
+              <div className="grid grid-cols-4 items-center gap-4">
+                <label htmlFor="description" className="text-right text-cybergold-300">
+                  Beskrivelse
+                </label>
+                <Textarea
+                  id="description"
+                  value={newGroupDesc}
+                  onChange={(e) => setNewGroupDesc(e.target.value)}
+                  className="col-span-3 bg-cyberdark-800 text-cybergold-200 border-cyberdark-700 focus:border-cybergold-500"
+                />
+              </div>
+              
+              <div className="grid grid-cols-4 items-center gap-4">
+                <label htmlFor="visibility" className="text-right text-cybergold-300">
+                  Synlighet
+                </label>
+                <select
+                  id="visibility"
+                  value={newGroupVisibility}
+                  onChange={(e) => setNewGroupVisibility(e.target.value as GroupVisibility)}
+                  className="col-span-3 bg-cyberdark-800 text-cybergold-200 border-cyberdark-700 focus:border-cybergold-500"
+                >
+                  <option value="private">Privat</option>
+                  <option value="public">Offentlig</option>
+                  <option value="hidden">Skjult</option>
+                </select>
+              </div>
+              
+              <div className="grid grid-cols-4 items-center gap-4">
+                <label htmlFor="encrypted" className="text-right text-cybergold-300">
+                  Kryptert
+                </label>
+                <Switch
+                  id="encrypted"
+                  checked={newGroupEncrypted}
+                  onCheckedChange={(checked) => setNewGroupEncrypted(checked)}
+                />
+              </div>
+            </div>
+            
+            <DialogFooter>
+              <Button type="submit" onClick={handleCreateGroup} className="bg-cybergold-600 text-black hover:bg-cybergold-500">
+                Opprett gruppe
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        
+        {/* Join Group Dialog */}
+        <Dialog open={isJoiningGroup} onOpenChange={setIsJoiningGroup}>
+          <DialogContent className="bg-cyberdark-900 border-cybergold-500/30 max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-cybergold-300">Bli med i gruppe</DialogTitle>
+              <DialogDescription className="text-cybergold-500">
+                Skriv inn gruppekoden for å bli med.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <label htmlFor="code" className="text-right text-cybergold-300">
+                  Kode
+                </label>
+                <Input
+                  type="text"
+                  id="code"
+                  value={groupPassword}
+                  onChange={(e) => setGroupPassword(e.target.value)}
+                  className="col-span-3 bg-cyberdark-800 text-cybergold-200 border-cyberdark-700 focus:border-cybergold-500"
+                />
+              </div>
+            </div>
+            
+            <DialogFooter>
+              <Button type="submit" onClick={() => handleJoinGroup(groupPassword)} className="bg-cybergold-600 text-black hover:bg-cybergold-500">
+                Bli med
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     );
   }
@@ -686,135 +854,4 @@ const GroupChatPage = () => {
           onMessageEdit={handleEditMessage}
           onMessageDelete={handleDeleteMessage}
           onMessageReply={handleReplyToMessage}
-          onReactionAdd={handleReactionAdd}
-          onLoadMore={handleLoadMoreMessages}
-          hasMoreMessages={hasMoreMessages}
-          isEncryptedGroup={selectedGroup.securityLevel === "high"}
-        />
-      </div>
-      
-      {/* Hidden file input for media uploads */}
-      <input
-        type="file"
-        ref={fileInputRef}
-        className="hidden"
-        accept="image/*,video/*"
-        onChange={handleFileUpload}
-      />
-      
-      {/* Bottom menu bar with camera/gallery shortcuts */}
-      <div className="bg-cyberdark-900 border-t border-b border-cyberdark-700 px-4 py-2 flex justify-between">
-        <div className="flex gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-9 w-9 rounded-full text-cybergold-500"
-            onClick={() => fileInputRef.current?.click()}
-            title="Send bilde eller video"
-          >
-            <Image className="h-5 w-5" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-9 w-9 rounded-full text-cybergold-500"
-            onClick={() => {
-              // Ta bilde med kamera
-              // For demo-formål viser vi bare en toast
-              toast({
-                title: "Kamera",
-                description: "Kamera-funksjonalitet vil være tilgjengelig snart"
-              });
-            }}
-            title="Ta bilde med kamera"
-          >
-            <Camera className="h-5 w-5" />
-          </Button>
-        </div>
-        
-        {/* Disappearing messages selector */}
-        {disappearingTime > 0 && (
-          <div className="flex items-center">
-            <Clock className="h-3.5 w-3.5 text-amber-400 mr-1.5" />
-            <select 
-              value={disappearingTime}
-              onChange={(e) => toggleDisappearingMessages(Number(e.target.value))}
-              className="text-xs bg-cyberdark-800 border-none text-amber-400 rounded py-1"
-            >
-              <option value="300">5 minutter</option>
-              <option value="3600">1 time</option>
-              <option value="86400">1 dag</option>
-              <option value="604800">7 dager</option>
-              <option value="0">Deaktiver</option>
-            </select>
-          </div>
-        )}
-      </div>
-      
-      {/* Input area - Using our improved MessageInput component */}
-      <div className="bg-cyberdark-900">
-        <MessageInput
-          onSendMessage={handleSendMessage}
-          onSendMedia={handleSendMedia}
-          placeholder={
-            editingMessageId ? "Rediger melding..." : 
-            replyToMessage ? "Skriv et svar..." : 
-            "Skriv en melding..."
-          }
-          securityLevel={selectedGroup.securityLevel === "high" ? 'server_e2ee' : 'standard'}
-          showSecurityIndicator={true}
-          editingMessage={editingMessageId ? {
-            id: editingMessageId,
-            content: groupMessages?.find(m => m.id === editingMessageId)?.text || ''
-          } : null}
-          onCancelEdit={() => setEditingMessageId(null)}
-          autoFocus={!!editingMessageId}
-        />
-      </div>
-      
-      {/* Members Dialog */}
-      <Dialog open={showMembersDialog} onOpenChange={setShowMembersDialog}>
-        <DialogContent className="bg-cyberdark-900 border-cybergold-500/30 max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-cybergold-300">Gruppemedlemmer</DialogTitle>
-            <DialogDescription className="text-cybergold-500">
-              {selectedGroup.memberCount} medlemmer i {selectedGroup.name}
-            </DialogDescription>
-          </DialogHeader>
-          
-          {/* ...dialog content... */}
-        </DialogContent>
-      </Dialog>
-      
-      {/* Settings Dialog */}
-      <Dialog open={showSettingsDialog} onOpenChange={setShowSettingsDialog}>
-        <DialogContent className="bg-cyberdark-900 border-cybergold-500/30 max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-cybergold-300">Gruppeinnstillinger</DialogTitle>
-            <DialogDescription className="text-cybergold-500">
-              Juster innstillinger for {selectedGroup.name}
-            </DialogDescription>
-          </DialogHeader>
-          
-          {/* ...dialog content... */}
-        </DialogContent>
-      </Dialog>
-      
-      {/* Invite Members Dialog */}
-      <Dialog open={isInvitingMembers} onOpenChange={setIsInvitingMembers}>
-        <DialogContent className="bg-cyberdark-900 border-cybergold-500/30">
-          <DialogHeader>
-            <DialogTitle className="text-cybergold-300">Inviter til gruppen</DialogTitle>
-            <DialogDescription className="text-cybergold-500">
-              Del denne linken eller QR-koden for å invitere andre
-            </DialogDescription>
-          </DialogHeader>
-          
-          {/* ...dialog content... */}
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
-};
-
-export default GroupChatPage;
+          onReactionAdd
