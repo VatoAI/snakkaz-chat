@@ -32,4 +32,8 @@ export interface DecryptedMessage {
     content: string;
     sender_id: string;
   };
+  replyToId?: string; // Added for compatibility with GroupMessage
+  mediaUrl?: string; // Added for compatibility with GroupMessage
+  mediaType?: string; // Added for compatibility with GroupMessage
+  isEncrypted?: boolean; // Added for compatibility with GroupMessage
 }

@@ -60,6 +60,7 @@ export interface GroupMessage {
   readBy?: string[];
   replyToId?: string;
   isEncrypted?: boolean;
+  content?: string; // Added for compatibility with DecryptedMessage
 }
 
 export interface Group {
@@ -69,6 +70,7 @@ export interface Group {
   createdAt: string;
   updatedAt?: string;
   createdBy: string;
+  creator_id?: string; // For backward compatibility
   visibility: GroupVisibility;
   securityLevel: SecurityLevel;
   avatarUrl?: string;
@@ -76,9 +78,8 @@ export interface Group {
   memberCount?: number;
   members?: GroupMember[];
   is_premium?: boolean;
-  type?: string;
   isPublic?: boolean;
+  type?: string;
   settings?: any;
   password?: string; // For backward compatibility
-  creator_id?: string; // For backward compatibility
 }

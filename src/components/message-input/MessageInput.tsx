@@ -1,189 +1,259 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { SendHorizontal, Paperclip, Smile, X } from 'lucide-react';
-import { SecurityLevel } from '@/types/group';
+import { Textarea } from '@/components/ui/textarea';
+import { Send, X, Clock, Shield, PaperclipIcon } from 'lucide-react';
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface MessageInputProps {
-  placeholder?: string;
-  onSendMessage: (text: string) => Promise<void>;
-  onSendMedia?: (media: {
-    url: string;
-    thumbnailUrl?: string;
-    ttl?: number;
-    isEncrypted?: boolean;
-  }) => Promise<void>;
-  securityLevel?: SecurityLevel;
-  showSecurityIndicator?: boolean;
-  editingMessage?: {
-    id: string;
-    content: string;
-  } | null;
+  onSendMessage: (text: string) => Promise<void> | void;
+  editingMessageId?: string | null;
+  editingContent?: string;
   onCancelEdit?: () => void;
-  autoFocus?: boolean;
-  isLoading?: boolean;
+  replyToMessage?: any;
+  onCancelReply?: () => void;
+  ttl?: number;
+  onChangeTtl?: (ttl: number) => void;
+  isEncrypted?: boolean;
+  placeholder?: string;
   disabled?: boolean;
+  maxLength?: number;
 }
 
 const MessageInput: React.FC<MessageInputProps> = ({
-  placeholder = 'Skriv en melding...',
   onSendMessage,
-  onSendMedia,
-  securityLevel = 'standard',
-  showSecurityIndicator = false,
-  editingMessage = null,
+  editingMessageId,
+  editingContent,
   onCancelEdit,
-  autoFocus = false,
-  isLoading = false,
+  replyToMessage,
+  onCancelReply,
+  ttl = 0,
+  onChangeTtl,
+  isEncrypted = false,
+  placeholder = "Skriv en melding...",
   disabled = false,
+  maxLength = 2000,
 }) => {
-  const [message, setMessage] = useState('');
-  const inputRef = useRef<HTMLTextAreaElement>(null);
-  
-  // Set initial message content if editing
-  useEffect(() => {
-    if (editingMessage && editingMessage.content) {
-      setMessage(editingMessage.content);
-      if (inputRef.current) {
-        inputRef.current.focus();
-      }
-    }
-  }, [editingMessage]);
-  
-  // Auto-focus setup
-  useEffect(() => {
-    if (autoFocus && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [autoFocus]);
+  const [text, setText] = useState(editingContent || '');
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setMessage(e.target.value);
-    
-    // Auto-resize textarea
-    if (inputRef.current) {
-      inputRef.current.style.height = 'auto';
-      inputRef.current.style.height = `${inputRef.current.scrollHeight}px`;
+  // Set initial value when editing
+  useEffect(() => {
+    if (editingContent) {
+      setText(editingContent);
+      textareaRef.current?.focus();
     }
+  }, [editingContent, editingMessageId]);
+
+  // Reset input after sending
+  const resetInput = () => {
+    setText('');
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Handle send message
+  const handleSendMessage = async (e?: React.FormEvent) => {
+    e?.preventDefault();
     
-    const trimmedMessage = message.trim();
-    if (!trimmedMessage || isLoading || disabled) return;
+    if (!text.trim() && !editingMessageId) return;
     
     try {
-      await onSendMessage(trimmedMessage);
-      setMessage('');
-      
-      // Reset textarea height
-      if (inputRef.current) {
-        inputRef.current.style.height = 'auto';
-      }
+      await onSendMessage(text);
+      resetInput();
     } catch (error) {
-      console.error('Failed to send message:', error);
+      console.error("Failed to send message:", error);
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+  // Handle key press (Ctrl+Enter or Enter to send)
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if ((e.key === 'Enter' && !e.shiftKey) || (e.key === 'Enter' && e.ctrlKey)) {
       e.preventDefault();
-      handleSubmit(e);
+      handleSendMessage();
     }
+  };
+
+  // Handle text change
+  const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    if (value.length <= maxLength) {
+      setText(value);
+    }
+  };
+
+  // Handle TTL change
+  const handleTtlChange = (newTtl: number) => {
+    if (onChangeTtl) {
+      onChangeTtl(newTtl);
+    }
+  };
+
+  // Handle file selection
+  const handleFileSelect = () => {
+    fileInputRef.current?.click();
+  };
+
+  // Render TTL options
+  const getTtlLabel = (seconds: number): string => {
+    if (seconds === 0) return "Aldri";
+    if (seconds < 60) return `${seconds} sekunder`;
+    if (seconds < 3600) return `${Math.floor(seconds / 60)} minutter`;
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)} timer`;
+    return `${Math.floor(seconds / 86400)} dager`;
   };
 
   return (
-    <form onSubmit={handleSubmit} className="p-2 border-t border-cyberdark-700">
-      <div className="relative flex items-end bg-cyberdark-800 rounded-lg overflow-hidden">
-        {/* Editing indicator */}
-        {editingMessage && (
-          <div className="absolute top-0 left-0 right-0 bg-amber-900/30 text-amber-300 text-xs py-1 px-3 flex items-center justify-between">
-            <span>Redigerer melding</span>
-            {onCancelEdit && (
-              <Button 
-                type="button" 
-                variant="ghost" 
-                size="sm" 
-                className="h-5 w-5 p-0 text-amber-300 hover:text-amber-100 hover:bg-transparent"
-                onClick={onCancelEdit}
-              >
-                <X className="h-3.5 w-3.5" />
-              </Button>
-            )}
+    <div className="bg-cyberdark-900 border-t border-cyberdark-700 p-3">
+      {/* Reply info if replying to a message */}
+      {replyToMessage && (
+        <div className="flex items-center bg-cyberdark-800 p-2 mb-2 rounded border-l-2 border-cybergold-600">
+          <div className="flex-1 overflow-hidden">
+            <div className="text-xs text-cybergold-500">Svar til</div>
+            <div className="text-sm text-cybergold-300 truncate">
+              {replyToMessage.content || replyToMessage.text || ""}
+            </div>
           </div>
-        )}
-        
-        {/* Input container */}
-        <div className="flex-1 flex items-end">
-          <textarea
-            ref={inputRef}
-            value={message}
-            onChange={handleChange}
-            onKeyDown={handleKeyDown}
-            placeholder={placeholder}
-            className={`w-full resize-none max-h-32 bg-transparent border-0 py-3 px-4 text-cybergold-100 outline-none focus:ring-0 ${editingMessage ? 'pt-6' : ''}`}
-            rows={1}
-            disabled={isLoading || disabled}
-          />
-        </div>
-        
-        {/* Action buttons */}
-        <div className="flex items-center pr-2 pb-2">
-          {onSendMedia && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 rounded-full text-cybergold-500 hover:text-cybergold-300"
-              onClick={() => {
-                // This would normally open media selection
-                // For simplicity, we're not implementing full functionality
-                console.log('Media button clicked');
-              }}
-              disabled={isLoading || disabled}
+          {onCancelReply && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-6 w-6 p-0" 
+              onClick={onCancelReply}
             >
-              <Paperclip className="h-4.5 w-4.5" />
+              <X className="h-4 w-4" />
             </Button>
           )}
+        </div>
+      )}
+      
+      {/* Edit mode info */}
+      {editingMessageId && (
+        <div className="flex items-center bg-cyberdark-800 p-2 mb-2 rounded border-l-2 border-cyberblue-600">
+          <div className="flex-1 overflow-hidden">
+            <div className="text-xs text-cyberblue-500">Redigerer melding</div>
+          </div>
+          {onCancelEdit && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-6 w-6 p-0" 
+              onClick={onCancelEdit}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+      )}
+      
+      <form onSubmit={handleSendMessage} className="flex items-end gap-2">
+        <div className="relative flex-1">
+          <Textarea
+            ref={textareaRef}
+            value={text}
+            onChange={handleTextChange}
+            onKeyDown={handleKeyDown}
+            placeholder={placeholder}
+            disabled={disabled}
+            className="min-h-[60px] max-h-[200px] bg-cyberdark-800 border-cyberdark-700 text-cybergold-100 resize-none"
+            rows={1}
+          />
+          <div className="absolute bottom-2 right-2 flex items-center gap-1 text-xs text-cybergold-600">
+            {text.length > 0 && maxLength && (
+              <span>{text.length}/{maxLength}</span>
+            )}
+          </div>
+        </div>
+        
+        <div className="flex gap-1 pb-1">
+          {/* TTL dropdown */}
+          {onChangeTtl && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  type="button" 
+                  variant={ttl > 0 ? "secondary" : "ghost"} 
+                  size="icon"
+                  className="h-10 w-10 rounded-full"
+                >
+                  <Clock className={`h-5 w-5 ${ttl > 0 ? 'text-cybergold-400' : 'text-cybergold-600'}`} />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-cyberdark-800 border-cyberdark-700">
+                <DropdownMenuItem onClick={() => handleTtlChange(0)}>
+                  Ikke selvslettende
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleTtlChange(300)}>
+                  5 minutter
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleTtlChange(3600)}>
+                  1 time
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleTtlChange(86400)}>
+                  24 timer
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleTtlChange(604800)}>
+                  7 dager
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
           
+          {/* Media upload button */}
           <Button
             type="button"
             variant="ghost"
             size="icon"
-            className="h-8 w-8 rounded-full text-cybergold-500 hover:text-cybergold-300"
-            disabled={isLoading || disabled}
+            onClick={handleFileSelect}
+            className="h-10 w-10 rounded-full"
           >
-            <Smile className="h-4.5 w-4.5" />
+            <PaperclipIcon className="h-5 w-5 text-cybergold-600" />
           </Button>
           
+          {/* Send button */}
           <Button
             type="submit"
-            variant={message.trim() ? "default" : "ghost"}
+            variant="default"
             size="icon"
-            className={`h-8 w-8 rounded-full ${
-              message.trim() 
-                ? 'bg-cybergold-600 hover:bg-cybergold-500 text-black' 
-                : 'text-cybergold-500 hover:text-cybergold-300'
-            }`}
-            disabled={!message.trim() || isLoading || disabled}
+            disabled={(!text.trim() && !editingMessageId) || disabled}
+            className="h-10 w-10 rounded-full bg-cybergold-600 hover:bg-cybergold-500"
           >
-            <SendHorizontal className="h-4.5 w-4.5" />
+            <Send className="h-5 w-5" />
           </Button>
         </div>
-      </div>
+      </form>
       
-      {/* Security indicator */}
-      {showSecurityIndicator && (
-        <div className="mt-1 px-1 flex justify-end">
-          <span className="text-xs text-cybergold-600">
-            {securityLevel === 'high' || securityLevel === 'premium' 
-              ? 'Ende-til-ende kryptert' 
-              : 'Standard sikkerhet'}
-          </span>
-        </div>
-      )}
-    </form>
+      {/* Hidden file input */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        className="hidden"
+        accept="image/*,video/*,audio/*"
+      />
+      
+      {/* Status indicators */}
+      <div className="flex items-center mt-1 pl-1 gap-2">
+        {/* TTL indicator */}
+        {ttl > 0 && (
+          <div className="flex items-center text-xs text-cybergold-500">
+            <Clock className="h-3 w-3 mr-1" />
+            {getTtlLabel(ttl)}
+          </div>
+        )}
+        
+        {/* Encryption indicator */}
+        {isEncrypted && (
+          <div className="flex items-center text-xs text-green-500">
+            <Shield className="h-3 w-3 mr-1" />
+            Kryptert
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 
