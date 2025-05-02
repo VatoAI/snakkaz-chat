@@ -34,4 +34,6 @@ export interface DecryptedMessage {
     content: string;
     sender_id: string;
   };
+  status?: string;
+  readBy?: string[];
 }
