@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { CreateGroup } from "@/components/groups/CreateGroup";
+import { CreateGroup } from "@/features/groups/components";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";

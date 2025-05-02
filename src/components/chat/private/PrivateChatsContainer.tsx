@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useGroups } from "../hooks/useGroups";
 import { useGroupInvites } from "../hooks/useGroupInvites";
@@ -13,7 +12,7 @@ import { DecryptedMessage } from "@/types/message";
 import { Friend } from "../friends/types";
 import { Group, GroupInvite } from "@/types/group";
 import { WebRTCManager } from "@/utils/webrtc";
-import { GroupChatCreatorLoader } from "./GroupChatCreatorLoader";
+import { CreateGroupModal } from "@/features/groups/components";
 import { usePrivateChatHandlers } from "./usePrivateChatHandlers";
 
 interface PrivateChatsContainerProps {
@@ -143,13 +142,14 @@ export const PrivateChatsContainer = ({
           <PrivateChatsEmptyState />
         )}
       </div>
-      <GroupChatCreatorLoader
+      <CreateGroupModal
         isOpen={isGroupCreatorOpen}
         onClose={() => setIsGroupCreatorOpen(false)}
-        onCreateGroup={handleCreateGroup}
-        currentUserId={currentUserId}
-        userProfiles={userProfiles}
-        friendsList={friendsList}
+        onSuccess={(groupId) => {
+          refreshGroups();
+          const group = groups.find(g => g.id === groupId);
+          if (group) setSelectedGroup(group);
+        }}
       />
       <ChatDialogs
         isPasswordDialogOpen={isPasswordDialogOpen}
