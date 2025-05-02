@@ -132,7 +132,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
   const dropAreaRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
   const { isMobile, isTablet } = useDeviceDetection();
-  const { replyToMessage, clearReply } = useMessageReply();  // Endrer fra replyingTo til replyToMessage for å matche konteksten
+  const { replyToMessage, clearReply } = useMessageReply();
 
   // Use our enhanced media upload hook
   const { uploadFile, cancelUpload, uploadState } = useEnhancedMediaUpload();
@@ -144,6 +144,26 @@ const MessageInput: React.FC<MessageInputProps> = ({
     onError: (error) => console.error("Secure message key error:", error)
   });
 
+  // Rengjør media ressurser
+  const cleanupMedia = useCallback(() => {
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    setShowMediaUploader(false);
+    setCaptionText('');
+
+    // Reset file inputs
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+    if (imageInputRef.current) {
+      imageInputRef.current.value = '';
+    }
+  }, [previewUrl]);
+
   // Legger til manglende handleCancelMedia funksjon
   const handleCancelMedia = () => {
     // Avbryt opplasting hvis den pågår
@@ -153,6 +173,33 @@ const MessageInput: React.FC<MessageInputProps> = ({
     // Rengjør media ressurser
     cleanupMedia();
   };
+
+  // Send enhanced media function wrapped in useCallback to prevent recreation on every render
+  const sendEnhancedMedia = useCallback(async () => {
+    if (uploadState.url && onSendEnhancedMedia) {
+      try {
+        await onSendEnhancedMedia({
+          url: uploadState.url,
+          thumbnailUrl: uploadState.thumbnailUrl || undefined,
+          ttl: mediaTtl > 0 ? mediaTtl : undefined,
+          isEncrypted: uploadState.isEncrypted || mediaTtl > 0
+        });
+
+        // Send the caption as a follow-up message if provided
+        if (captionText.trim() && onSendMessage) {
+          await onSendMessage(captionText.trim());
+          setCaptionText('');
+        }
+
+        // Clean up
+        cleanupMedia();
+      } catch (error) {
+        console.error('Error sending enhanced media:', error);
+      } finally {
+        setIsSubmitting(false);
+      }
+    }
+  }, [uploadState.url, uploadState.thumbnailUrl, uploadState.isEncrypted, onSendEnhancedMedia, mediaTtl, captionText, onSendMessage, cleanupMedia]);
 
   // Populate message input when entering edit mode
   useEffect(() => {
@@ -198,41 +245,14 @@ const MessageInput: React.FC<MessageInputProps> = ({
         clearTimeout(typingTimeoutId);
       }
     };
-  }, []);
-
-  // Define sendEnhancedMedia function before using it in useEffect
-  const sendEnhancedMedia = async () => {
-    if (uploadState.url && onSendEnhancedMedia) {
-      try {
-        await onSendEnhancedMedia({
-          url: uploadState.url,
-          thumbnailUrl: uploadState.thumbnailUrl || undefined,
-          ttl: mediaTtl > 0 ? mediaTtl : undefined,
-          isEncrypted: uploadState.isEncrypted || mediaTtl > 0
-        });
-
-        // Send the caption as a follow-up message if provided
-        if (captionText.trim() && onSendMessage) {
-          await onSendMessage(captionText.trim());
-          setCaptionText('');
-        }
-
-        // Clean up
-        cleanupMedia();
-      } catch (error) {
-        console.error('Error sending enhanced media:', error);
-      } finally {
-        setIsSubmitting(false);
-      }
-    }
-  };
+  }, [previewUrl, typingTimeoutId]);
 
   // Handle upload completion
   useEffect(() => {
     if (uploadState.url && !isSubmitting) {
       sendEnhancedMedia();
     }
-  }, [uploadState.url, isSubmitting, sendEnhancedMedia]);
+  }, [uploadState.url, isSubmitting, sendEnhancedMedia, onSendEnhancedMedia, mediaTtl]);
 
   // Typing indicator handling
   const handleTypingStart = useCallback(() => {
@@ -344,7 +364,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
   interface ResizeOptions {
     maxWidth: number;
     maxHeight: number;
-    mode: ResizeMode; // Bruker den importerte typen i stedet
+    mode: ResizeMode;
     quality: number;
   }
 
@@ -381,51 +401,30 @@ const MessageInput: React.FC<MessageInputProps> = ({
         resize: mediaQuality === 'standard' ? {
           maxWidth: 1280,
           maxHeight: 1280,
-  // Function already moved up above the useEffect
-  };
+          mode: 'auto',
+          quality: 0.85
+        } : mediaQuality === 'high' ? {
+          maxWidth: 1920,
+          maxHeight: 1920,
+          mode: 'auto',
+          quality: 0.92
+        } : undefined,
+        generateThumbnail: true,
+        encrypt: shouldEncrypt,
+        encryptionKey: encryptionKey
+      };
 
-  const sendEnhancedMedia = async () => {
-    if (uploadState.url && onSendEnhancedMedia) {
-      try {
-        await onSendEnhancedMedia({
-          url: uploadState.url,
-          thumbnailUrl: uploadState.thumbnailUrl || undefined,
-          ttl: mediaTtl > 0 ? mediaTtl : undefined,
-          isEncrypted: uploadState.isEncrypted || mediaTtl > 0
-        });
+      // Use the enhanced media uploader with selected preset
+      await uploadFile(selectedFile, compressionOptions);
 
-        // Send the caption as a follow-up message if provided
-        if (captionText.trim() && onSendMessage) {
-          await onSendMessage(captionText.trim());
-          setCaptionText('');
-        }
-
-        // Clean up
-        cleanupMedia();
-      } catch (error) {
-        console.error('Error sending enhanced media:', error);
-      } finally {
-        setIsSubmitting(false);
+      // If user has added a caption, send it with the image
+      if (captionText.trim()) {
+        // Will be sent after the media is uploaded and sent
+        setMessage(captionText);
       }
-    }
-  };
 
-  const cleanupMedia = () => {
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-    }
-
-    setSelectedFile(null);
-    setPreviewUrl(null);
-    setShowMediaUploader(false);
-    setCaptionText('');
-
-    // Reset file inputs
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-    if (imageInputRef.current) {
-      imageInputRef.current.value = '';
+    } catch (error) {
+      console.error('Upload error:', error);
     }
   };
 
@@ -528,7 +527,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
               id: replyToMessage.id,
               content: replyToMessage.content,
               sender: {
-                displayName: replyToMessage.sender.full_name || replyToMessage.sender.username
+                displayName: replyToMessage.sender.full_name || replyToMessage.sender.username || 'Ukjent'
               }
             }}
             onCancel={clearReply}
@@ -840,6 +839,6 @@ const MessageInput: React.FC<MessageInputProps> = ({
       )}
     </div>
   );
-}
+};
 
 export default MessageInput;
