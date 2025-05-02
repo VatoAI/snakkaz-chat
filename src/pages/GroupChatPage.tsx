@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -845,7 +846,7 @@ const GroupChatPage = () => {
         </div>
       )}
       
-      {/* Messages area - Now using our new GroupMessageList component */}
+      {/* Messages area */}
       <div className="flex-1 overflow-hidden">
         <GroupMessageList 
           messages={groupMessages || []}
@@ -854,4 +855,40 @@ const GroupChatPage = () => {
           onMessageEdit={handleEditMessage}
           onMessageDelete={handleDeleteMessage}
           onMessageReply={handleReplyToMessage}
-          onReactionAdd
+          onReactionAdd={handleReactionAdd}
+          hasMoreMessages={hasMoreMessages}
+          loadMoreMessages={handleLoadMoreMessages}
+          currentUserId={user?.id}
+        />
+      </div>
+      
+      {/* Message input */}
+      <div className="p-4 border-t border-cyberdark-700">
+        <MessageInput
+          onSendMessage={handleSendMessage}
+          editingMessageId={editingMessageId}
+          editingContent={editingMessageId ? 
+            groupMessages?.find(m => m.id === editingMessageId)?.content : ''
+          }
+          onCancelEdit={() => setEditingMessageId(null)}
+          replyToMessage={replyToMessage}
+          onCancelReply={() => setReplyToMessage(null)}
+          ttl={disappearingTime}
+          onChangeTtl={toggleDisappearingMessages}
+          isEncrypted={selectedGroup.securityLevel === "high"}
+        />
+      </div>
+      
+      {/* Hidden file input for image uploads */}
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        accept="image/*,video/*" 
+        onChange={handleFileUpload} 
+        className="hidden" 
+      />
+    </div>
+  );
+};
+
+export default GroupChatPage;
