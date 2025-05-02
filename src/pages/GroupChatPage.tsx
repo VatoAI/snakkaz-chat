@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -864,4 +865,31 @@ const GroupChatPage = () => {
       
       {/* Message input */}
       <div className="p-4 border-t border-cyberdark-700">
-        <Message
+        <MessageInput
+          onSendMessage={handleSendMessage}
+          editingMessageId={editingMessageId}
+          editingContent={editingMessageId ? 
+            groupMessages?.find(m => m.id === editingMessageId)?.content : ''
+          }
+          onCancelEdit={() => setEditingMessageId(null)}
+          replyToMessage={replyToMessage}
+          onCancelReply={() => setReplyToMessage(null)}
+          ttl={disappearingTime}
+          onChangeTtl={toggleDisappearingMessages}
+          isEncrypted={selectedGroup.securityLevel === "high"}
+        />
+      </div>
+      
+      {/* Hidden file input for image uploads */}
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        accept="image/*,video/*" 
+        onChange={handleFileUpload} 
+        className="hidden" 
+      />
+    </div>
+  );
+};
+
+export default GroupChatPage;
