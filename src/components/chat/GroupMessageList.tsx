@@ -30,8 +30,6 @@ interface GroupMessageListProps {
   loadMoreMessages?: () => void;
 }
 
-const LOAD_MORE_THRESHOLD = 200; // px from top when we should load more messages
-
 export const GroupMessageList: React.FC<GroupMessageListProps> = ({
   messages,
   isLoading,
@@ -93,8 +91,8 @@ export const GroupMessageList: React.FC<GroupMessageListProps> = ({
   // Fetch reply messages
   useEffect(() => {
     const replyIds = messages
-      .filter(m => (m.replyToId || m.reply_to_id) && !replyTargetMessages[m.replyToId || m.reply_to_id])
-      .map(m => (m.replyToId || m.reply_to_id) as string);
+      .filter(m => (m.replyToId || m.reply_to_id) && !replyTargetMessages[m.replyToId || m.reply_to_id || ''])
+      .map(m => (m.replyToId || m.reply_to_id) as string).filter(Boolean);
       
     if (replyIds.length === 0) return;
     
@@ -122,15 +120,15 @@ export const GroupMessageList: React.FC<GroupMessageListProps> = ({
   if (!userId) return null;
 
   // Helper function to handle date safely
-  const getIsoString = (date: string | Date | undefined): string => {
-    if (!date) return new Date().toISOString();
+  const getIsoString = (dateInput: string | Date | undefined): string => {
+    if (!dateInput) return new Date().toISOString();
     
-    if (typeof date === 'string') {
-      return date;
+    if (typeof dateInput === 'string') {
+      return new Date(dateInput).toISOString();
     }
     
-    if (date instanceof Date) {
-      return date.toISOString();
+    if (dateInput instanceof Date) {
+      return dateInput.toISOString();
     }
     
     return new Date().toISOString();
@@ -165,13 +163,13 @@ export const GroupMessageList: React.FC<GroupMessageListProps> = ({
           
           {/* Messages for this date */}
           {(messagesForDate as GroupMessage[]).map(message => {
-            const isCurrentUser = message.senderId === userId || message.sender_id === userId;
+            const isCurrentUser = (message.senderId || message.sender_id) === userId;
             
             // Find reply message if this message is a reply
             let replyToMessage = null;
-            if (message.replyToId || message.reply_to_id) {
-              const replyId = message.replyToId || message.reply_to_id;
-              replyToMessage = replyId ? replyTargetMessages[replyId] : null;
+            const replyId = message.replyToId || message.reply_to_id;
+            if (replyId) {
+              replyToMessage = replyTargetMessages[replyId];
             }
             
             return (
