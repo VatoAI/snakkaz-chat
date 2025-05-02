@@ -60,13 +60,14 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Switch } from '@/components/ui/switch';
 import MessageInput from '@/components/message-input/MessageInput';
-import { Group, GroupVisibility, SecurityLevel } from '@/types/groups';
+import { Group, GroupVisibility, SecurityLevel, GroupMember } from '@/types/groups';
 import { usePresence } from '@/hooks/usePresence';
+import { UserStatus } from '@/types/presence';
 
 // Define getGroupMemberById function properly
-const getGroupMemberById = (members, userId) => {
+const getGroupMemberById = (members: GroupMember[] | undefined, userId: string): GroupMember | null => {
   if (!members || !Array.isArray(members)) return null;
-  return members.find(member => member.userId === userId || member.user_id === userId);
+  return members.find(member => member.userId === userId || member.user_id === userId) || null;
 };
 
 const GroupChatPage = () => {
