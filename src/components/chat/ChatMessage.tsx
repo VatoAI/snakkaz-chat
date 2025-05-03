@@ -25,7 +25,7 @@ import {
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
+import { Button, ButtonProps } from '@/components/ui/button';
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -37,43 +37,35 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-// Add MessageOptionButton component
+// MessageOptionButton component
 interface MessageOptionButtonProps extends ButtonProps {
-  icon: React.ReactNode;
   tooltip?: string;
-  onClick?: () => void;
+  icon?: React.ReactNode;
 }
 
-const MessageOptionButton: React.FC<MessageOptionButtonProps> = ({
-  icon,
-  tooltip,
-  onClick,
-  className,
-  ...props
-}) => {
-  return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className={cn(
-              "h-7 w-7 rounded-full p-0 text-muted-foreground hover:bg-muted hover:text-foreground",
-              className
-            )}
-            onClick={onClick}
-            {...props}
-          >
-            {icon}
-            <span className="sr-only">{tooltip}</span>
-          </Button>
-        </TooltipTrigger>
-        {tooltip && <TooltipContent>{tooltip}</TooltipContent>}
-      </Tooltip>
-    </TooltipProvider>
-  );
-};
+const MessageOptionButton = React.forwardRef<HTMLButtonElement, MessageOptionButtonProps>(
+  ({ children, className, tooltip, icon, ...props }, ref) => {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              ref={ref}
+              variant="ghost"
+              size="icon"
+              className={cn("h-7 w-7", className)}
+              {...props}
+            >
+              {icon || children}
+            </Button>
+          </TooltipTrigger>
+          {tooltip && <TooltipContent>{tooltip}</TooltipContent>}
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+);
+MessageOptionButton.displayName = 'MessageOptionButton';
 
 interface ReplyToMessage {
   content: string;
@@ -98,7 +90,7 @@ interface Message {
   readBy?: string[];
   replyTo?: string;
   replyToMessage?: ReplyToMessage;
-  isPending?: boolean; // Added missing property
+  isPending?: boolean;
 }
 
 interface UserProfile {
@@ -120,7 +112,7 @@ interface ChatMessageProps {
   isEncrypted?: boolean;
   onDownload?: (url: string, filename: string) => Promise<void>;
   securityLevel?: 'standard' | 'server_e2ee' | 'p2p_e2ee';
-  onCancelCode?: () => void; // Added missing prop
+  onCancelCode?: () => void;
 }
 
 export const ChatMessage: React.FC<ChatMessageProps> = ({
@@ -146,7 +138,6 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   const [downloadError, setDownloadError] = useState<string | null>(null);
   const [isCopied, setIsCopied] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
-  const [isPending, setIsPending] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showTtlSelector, setShowTtlSelector] = useState(false);
   
@@ -163,12 +154,6 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
       console.error('Failed to copy text: ', err);
     }
   }, []);
-
-  // Add onCancelCode function
-  const onCancelCode = () => {
-    console.log("Code snippet editing cancelled");
-    // Add any additional logic needed
-  };
 
   // Toggle hovering state for message options
   const handleMouseEnter = useCallback(() => {
@@ -829,7 +814,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
             <Button 
               onClick={onCancelCode} 
               variant="destructive" 
-              size="xs" 
+              size="sm" 
               className="absolute -top-8 right-0 h-7 text-xs"
             >
               Avbryt
@@ -887,7 +872,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
           className="fixed inset-0 z-50 flex items-center justify-center bg-cyberdark-950/95 p-4 animate-fade-in backdrop-blur-sm"
           onClick={() => setShowFullImage(false)}
         >
-          <div className="relative max-w-4xl max-h-[90vh] w-full">
+          <div className="relative max-w-4xl max-height-[90vh] w-full">
             <button 
               className="absolute top-2 right-2 bg-cyberdark-900/90 p-2 rounded-full z-10 hover:bg-cyberdark-800 transition-colors shadow-lg"
               onClick={(e) => {

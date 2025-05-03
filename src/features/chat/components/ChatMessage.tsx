@@ -82,6 +82,44 @@ interface ChatMessageProps {
   securityLevel?: 'standard' | 'server_e2ee' | 'p2p_e2ee';
 }
 
+// Define the MessageOptionButton component
+interface MessageOptionButtonProps {
+  onClick: () => void;
+  icon: React.ReactNode;
+  title: string;
+  variant?: 'default' | 'danger';
+  disabled?: boolean;
+  size?: 'sm' | 'md';
+}
+
+const MessageOptionButton: React.FC<MessageOptionButtonProps> = ({ 
+  onClick, 
+  icon, 
+  title, 
+  variant = 'default', 
+  disabled = false,
+  size = 'md'
+}) => {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={title}
+      disabled={disabled}
+      className={cn(
+        'rounded-full flex items-center justify-center transition-colors',
+        size === 'sm' ? 'p-1 h-6 w-6' : 'p-1.5 h-8 w-8',
+        variant === 'danger' 
+          ? 'hover:bg-red-500/20 text-red-400' 
+          : 'hover:bg-cyberdark-700 text-cybergold-400',
+        disabled && 'opacity-50 cursor-not-allowed'
+      )}
+    >
+      {icon}
+    </button>
+  );
+};
+
 export const ChatMessage: React.FC<ChatMessageProps> = ({
   message,
   isCurrentUser,
@@ -721,47 +759,36 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
               isCurrentUser ? 'left-1' : 'right-1'
             )}>
               {content && (
-                <button 
-                  className="p-1 hover:bg-cyberdark-700 rounded-full"
+                <MessageOptionButton 
                   onClick={copyMessageContent}
+                  icon={isCopied ? <CheckCircle className="h-3 w-3 text-green-400" /> : <Copy className="h-3 w-3 text-cybergold-400" />}
                   title="Kopier tekst"
-                >
-                  {isCopied ? (
-                    <CheckCircle className="h-3 w-3 text-green-400" />
-                  ) : (
-                    <Copy className="h-3 w-3 text-cybergold-400" />
-                  )}
-                </button>
+                />
               )}
               
               {onReply && (
-                <button 
-                  className="p-1 hover:bg-cyberdark-700 rounded-full"
+                <MessageOptionButton 
                   onClick={() => onReply(message)}
+                  icon={<Reply className="h-3 w-3 text-cybergold-400" />}
                   title="Svar på melding"
-                >
-                  <Reply className="h-3 w-3 text-cybergold-400" />
-                </button>
+                />
               )}
 
               {onEdit && isCurrentUser && !message.ttl && (
-                <button 
-                  className="p-1 hover:bg-cyberdark-700 rounded-full"
+                <MessageOptionButton 
                   onClick={() => onEdit(message)}
+                  icon={<Edit className="h-3 w-3 text-cybergold-400" />}
                   title="Rediger melding"
-                >
-                  <Edit className="h-3 w-3 text-cybergold-400" />
-                </button>
+                />
               )}
 
               {onDelete && isCurrentUser && (
-                <button 
-                  className="p-1 hover:bg-red-500/20 rounded-full"
+                <MessageOptionButton 
                   onClick={handleDeleteClick}
+                  icon={<Trash2 className="h-3 w-3 text-red-400" />}
                   title="Slett melding"
-                >
-                  <Trash2 className="h-3 w-3 text-red-400" />
-                </button>
+                  variant="danger"
+                />
               )}
             </div>
           )}

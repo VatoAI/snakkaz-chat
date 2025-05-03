@@ -50,8 +50,16 @@ export const GroupMessageList: React.FC<GroupMessageListProps> = ({
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
   const [replyTargetMessages, setReplyTargetMessages] = useState<Record<string, GroupMessage>>({});
   
-  // Use custom hook to group messages by time - pass messages as an object property
-  const { groupedMessages, getDateSeparatorText } = useMessageGrouping({ messages });
+  // Use custom hook to group messages by time
+  const [groupedMessages, getDateSeparatorText] = useMessageGrouping(
+    messages.map(msg => ({
+      ...msg,
+      senderId: msg.senderId || msg.sender_id || '',
+      createdAt: typeof (msg.createdAt || msg.created_at) === 'number' 
+        ? new Date(msg.createdAt || msg.created_at || 0) 
+        : (msg.createdAt || msg.created_at || new Date())
+    }))
+  );
   
   // IntersectionObserver to load more messages when scrolling to top
   const { ref: topLoadingRef } = useInView({
