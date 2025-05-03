@@ -6,13 +6,19 @@ import { useGroupFetching } from "./useGroupFetching";
 import { useGroupCreation } from "./useGroupCreation";
 import { useGroupJoin } from "./useGroupJoin";
 import { useGroupInvites } from "@/features/groups/hooks/useGroupInvites";
+import { useAuth } from "@/hooks/useAuth";
 
 interface UseGroupsProps {
-  currentUserId: string;
+  currentUserId?: string;
   userProfiles?: Record<string, { username: string | null, avatar_url: string | null }>;
 }
 
-export function useGroups({ currentUserId, userProfiles = {} }: UseGroupsProps) {
+export function useGroups(props?: UseGroupsProps) {
+  // Get currentUserId from props or from auth context
+  const { user } = useAuth();
+  const currentUserId = props?.currentUserId || user?.id || '';
+  const userProfiles = props?.userProfiles || {};
+  
   const [groups, setGroups] = useState<Group[]>([]);
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
 
