@@ -852,9 +852,12 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
             
             {message.content && (
               <MessageOptionButton 
-                icon={<Copy className="h-3.5 w-3.5" />} 
+                icon={isCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />} 
                 tooltip="Kopier tekst" 
-                onClick={copyToClipboard}
+                onClick={() => copyToClipboard(message.content)}
+                size="icon"
+                variant="ghost"
+                className="hover:bg-muted/30"
               />
             )}
 
