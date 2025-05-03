@@ -4,31 +4,34 @@
  */
 
 import { SecurityLevel } from './security';
-// Fjerner import av User som ikke finnes
-// import { User } from './user';
 
 export type GroupWritePermission = 'all' | 'admin' | 'selected';
-// Fjernet null som et alternativ siden alle meldinger skal slettes 
 export type MessageTTLOption = 300 | 1800 | 3600 | 86400 | 604800; // 5min, 30min, 1h, 24h, 7d
 
-// Legger til manglende typer
-export type GroupVisibility = 'public' | 'private' | 'secret';
+// Visibility types
+export type GroupVisibility = 'public' | 'private' | 'hidden' | 'secret';
 
-export enum GroupType {
+// Group type enum
+export enum GroupTypeEnum {
   STANDARD = 'standard', // Vanlig gruppe
   SECRET = 'secret',    // E2E kryptert gruppe, à la Secret Chats i Telegram
   SELF_DESTRUCT = 'self_destruct', // Alle meldinger slettes automatisk etter gitt tid (Telegram + Signal)
   BROADCAST = 'broadcast' // Kringkastingsgruppe hvor kun admin kan sende meldinger (som Telegram-kanaler)
 }
 
-export enum GroupRole {
+// Group role enum
+export enum GroupRoleEnum {
   OWNER = 'owner',
   ADMIN = 'admin',
   MODERATOR = 'moderator',
   MEMBER = 'member',
   RESTRICTED = 'restricted',
-  BANNED = 'banned'
+  BANNED = 'banned',
+  GUEST = 'guest'
 }
+
+// Group role type for compatibility
+export type GroupRole = 'owner' | 'admin' | 'moderator' | 'member' | 'guest' | 'restricted' | 'banned';
 
 export enum GroupPermission {
   SEND_MESSAGES = 'send_messages',
@@ -61,112 +64,105 @@ export interface GroupSettings {
   slowMode?: number; // Antall sekunder mellom meldinger per bruker (Telegram-funksjon)
 }
 
-export interface GroupMember {
-  userId: string;
-  addedAt: Date | number;
-  addedBy?: string;
-  role: GroupRole;
-  permissions: GroupPermission[];
-  status: GroupMemberStatus;
-  displayName?: string; // Tilpasset visningsnavn for denne brukeren i gruppen (som i Telegram)
-  lastReadMessageId?: string;
-}
-
 export interface Group {
   id: string;
   name: string;
-  createdAt: string;
-  createdBy: string;
+  createdAt?: string | Date;
+  created_at?: string | Date;
+  createdBy?: string;
+  created_by?: string;
   avatarUrl?: string;
-  type: string;
-  isPublic: boolean;
-  settings: any;
-  members: GroupMember[];
-  settings: GroupSettings;
+  avatar_url?: string;
+  type?: string;
+  isPublic?: boolean;
+  members?: GroupMember[];
+  settings?: GroupSettings | any;
   inviteLink?: string;
   pinnedMessageIds?: string[];
   isVerified?: boolean; // For kanaler/grupper fra verifiserte utgivere
   reactionAllowed?: boolean; // Tillate reaksjoner på meldinger
-  lastActivity?: Date | number;
+  lastActivity?: Date | number | string;
+  last_activity?: Date | number | string;
   isArchived?: boolean;
   parentGroupId?: string; // For grupper/underkanaler i større grupper (Telegram-folders)
+  updatedAt?: string | Date;
   
-  // Legger til manglende egenskaper som brukes i GroupChatPage
+  // Properties from both branches
   securityLevel?: SecurityLevel;
   visibility?: GroupVisibility;
   is_premium?: boolean;
-  thumbnailUrl?: string;
-}
   memberCount?: number;
   description?: string;
+  thumbnailUrl?: string;
+  thumbnail_url?: string;
 }
 
 export interface GroupMember {
-  id: string;
-  userId: string;
-  groupId: string;
-  role: GroupRole;
-  joinedAt: string;
+  id?: string;
+  userId?: string;
+  user_id?: string;
+  groupId?: string;
+  group_id?: string;
+  role?: GroupRole | string;
+  joinedAt?: string;
+  joined_at?: string;
+  addedAt?: Date | number | string;
+  addedBy?: string;
+  permissions?: GroupPermission[] | string[];
+  status?: GroupMemberStatus | string;
+  displayName?: string;
+  last_read_message_id?: string;
+  lastReadMessageId?: string;
   isPremium?: boolean;
 }
 
-export type GroupRole = 'owner' | 'admin' | 'moderator' | 'member' | 'guest';
-
 export interface GroupMessage {
   id: string;
-  content: string;
-  groupId: string;
-  senderId: string;
+  content?: string;
   text?: string;
+  groupId?: string;
+  group_id?: string;
+  senderId?: string;
+  sender_id?: string;
   mediaUrl?: string;
+  media_url?: string;
   mediaType?: string;
-  thumbnailUrl?: string; // Legger til støtte for miniatyrbilder
+  media_type?: string;
+  thumbnailUrl?: string;
+  thumbnail_url?: string;
   replyToId?: string;
+  reply_to_id?: string;
   forwardedFrom?: string;
-  editedAt?: Date | number;
-  createdAt: Date | number;
+  forwarded_from?: string;
+  editedAt?: Date | number | string;
+  edited_at?: Date | number | string;
+  createdAt?: Date | number | string;
+  created_at?: Date | number | string;
+  updatedAt?: string | Date;
+  updated_at?: string | Date;
   readBy?: string[];
+  read_by?: string[];
   reactions?: {
     [emoji: string]: string[]; // emoji -> array av bruker-IDs
   };
   isPinned?: boolean;
-  isServiceMessage?: boolean; // Systemmelding ("User joined", etc.)
-  ttl?: number; // Time to live (for selvdestruerende meldinger)
-  pollData?: GroupPoll; // Meningsmåling (poll) data
-  isEncrypted?: boolean; // Indikerer om meldingen er kryptert
-  caption?: string; // Støtte for bildetekst
-}
-
-export interface GroupInvite {
-  id: string;
-  groupId: string;
-  createdBy: string;
-  createdAt: Date | number;
-  expiresAt?: Date | number;
-  maxUses?: number;
-  useCount: number;
-  inviteLink: string;
-  isRevoked: boolean;
-}
-
-export interface GroupPoll {
-  id: string;
-  question: string;
-  options: {
+  is_pinned?: boolean;
+  isEdited?: boolean;
+  is_edited?: boolean;
+  isDeleted?: boolean;
+  is_deleted?: boolean;
+  isServiceMessage?: boolean;
+  is_service_message?: boolean;
+  ttl?: number;
+  pollData?: any; // Meningsmåling (poll) data
+  isEncrypted?: boolean;
+  is_encrypted?: boolean;
+  caption?: string;
+  sender?: {
     id: string;
-    text: string;
-    voters?: string[]; // Array av bruker-IDs som har stemt
-    voteCount: number;
-  }[];
-  createdBy: string;
-  createdAt: Date | number;
-  closesAt?: Date | number;
-  isAnonymous: boolean;
-  isMultiSelect: boolean;
-  isClosed: boolean;
-  createdAt: string;
-  updatedAt: string;
-  isEdited: boolean;
-  isDeleted: boolean;
-  isPinned: boolean;
+    displayName?: string;
+    username?: string;
+    avatar_url?: string;
+    [key: string]: any;
+  };
 }

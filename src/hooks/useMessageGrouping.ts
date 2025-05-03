@@ -1,257 +1,141 @@
-
-import { useState, useMemo } from 'react';
-import { formatDistanceToNow, format, isToday, isYesterday, isThisWeek, isThisYear, parseISO } from 'date-fns';
+import { useMemo } from 'react';
+import { formatDistanceToNow, isSameDay, parseISO, format } from 'date-fns';
 import { nb } from 'date-fns/locale';
-import { UserPresence, UserStatus } from '@/types/presence';
+import { GroupMessage } from '@/types/group';
 
-interface UseMessageGroupingProps<T> {
-// Definer en union-type som inkluderer alle meldingstyper
-type MessageType = GroupMessage | DecryptedMessage;
-
-// Definerer sender-typen for å gjøre typene kompatible
-type SenderType = {
+// Define a generic message type that can handle both formats
+interface BaseMessage {
   id: string;
-  username?: string | null;
-  full_name?: string | null;
-  avatar_url?: string | null;
-};
-
-// Utvidet grensesnitt som er kompatibelt med begge meldingstypene
-interface ExtendedMessageBase {
-  id: string;
-  createdAt?: Date;
-  created_at?: string | Date;
-  sent_at?: string | Date;
+  createdAt?: Date | number | string;
+  created_at?: Date | number | string;
+  sender?: {
+    id: string;
+    [key: string]: any;
+  };
+  sender_id?: string;
   senderId?: string;
-  sender?: SenderType | string; // Kan være enten et objekt eller en string
-  text?: string;
-  content?: string;
 }
 
-// Generisk props-type for useMessageGrouping
-interface UseMessageGroupingProps<T extends MessageType> {
-  messages: T[];
-  userPresence?: Record<string, UserPresence>;
+// Return type for the hook
+interface MessageGroupingResult<T extends BaseMessage> {
+  groupedMessages: Record<string, T[]>;
+  getDateSeparatorText: (date: string) => string;
+  shouldGroupWithPrevious: (current: T, previous?: T) => boolean;
 }
 
-export function useMessageGrouping<T extends { createdAt?: string | Date; created_at?: string | Date; senderId?: string; sender_id?: string }>({ 
-  messages,
-  userPresence = {}
-}: UseMessageGroupingProps<T>) {
-  // Safely determine the created time from different field formats
-  const getCreatedTime = (message: T): Date => {
-    if (message.createdAt) {
-      return message.createdAt instanceof Date 
-        ? message.createdAt 
-        : parseISO(message.createdAt as string);
+// Helper function to safely parse dates from various formats
+const parseDate = (dateValue: Date | string | number | undefined): Date => {
+  if (!dateValue) return new Date();
+  
+  if (dateValue instanceof Date) return dateValue;
+  
+  if (typeof dateValue === 'string') {
+    try {
+      // Try to parse ISO format first
+      return parseISO(dateValue);
+    } catch (e) {
+      console.error("Error parsing date string:", e);
+      return new Date(dateValue);
     }
-    if (message.created_at) {
-      return message.created_at instanceof Date 
-        ? message.created_at 
-        : parseISO(message.created_at as string);
-    }
-    return new Date();
-  };
-
-type GroupedMessages<T> = {
-  [key: string]: T[];
+  }
+  
+  if (typeof dateValue === 'number') {
+    // Assume timestamp in milliseconds
+    return new Date(dateValue);
+  }
+  
+  return new Date();
 };
 
-export const useMessageGrouping = <T extends MessageType>(props: UseMessageGroupingProps<T>) => {
-  const { messages = [], userPresence = {} } = props;
-  
-  // Filter out any invalid messages and ensure they're safe to use
-  const safeMessages = useMemo(() => {
-    return messages.filter(msg => !!msg);
-  }, [messages]);
-  
-  // Group messages by date
+// Get the created date from any message format
+const getMessageDate = (message: BaseMessage): Date => {
+  return parseDate(message.createdAt || message.created_at);
+};
+
+// Format date key for grouping
+const formatDateKey = (date: Date): string => {
+  return format(date, 'yyyy-MM-dd');
+};
+
+export function useMessageGrouping<T extends BaseMessage>(messages: T[]): MessageGroupingResult<T> {
   const groupedMessages = useMemo(() => {
-    const groups: Record<string, T[]> = {};
+    // Group messages by date
+    const grouped: Record<string, T[]> = {};
     
-    if (!Array.isArray(messages)) {
-      console.error('Expected messages to be an array, but got:', messages);
-      return {};
-    }
-    
-    messages.forEach(message => {
+    messages.forEach((message) => {
       try {
-        const date = getCreatedTime(message);
-        const dateKey = format(date, 'yyyy-MM-dd');
+        const date = getMessageDate(message);
+        const dateKey = formatDateKey(date);
         
-        if (!groups[dateKey]) {
-          groups[dateKey] = [];
+        if (!grouped[dateKey]) {
+          grouped[dateKey] = [];
         }
-        groups[dateKey].push(message);
-      } catch (error) {
-        console.error('Error processing message for grouping:', error);
-      }
-    });
-    safeMessages.forEach(message => {
-      // Determine the date from the message and ensure it's a Date object
-      let messageDate: Date;
-      
-      // Sjekk om den har en createdAt egenskap (GroupMessage format)
-      if ('createdAt' in message && message.createdAt) {
-        messageDate = message.createdAt instanceof Date 
-          ? message.createdAt 
-          : new Date(message.createdAt);
-      } 
-      // Sjekk for sent_at og created_at (DecryptedMessage format)
-      else if ('sent_at' in message && message.sent_at) {
-        messageDate = typeof message.sent_at === 'string' || message.sent_at instanceof Date
-          ? new Date(message.sent_at)
-          : new Date();
-      } 
-      else if ('created_at' in message && message.created_at) {
-        messageDate = typeof message.created_at === 'string' 
-            ? new Date(message.created_at)
-            : message.created_at instanceof Date
-              ? message.created_at
-              : new Date();
-      } 
-      // Fallback til nåværende tid
-      else {
-        messageDate = new Date();
-      }
         
-      const dateKey = format(messageDate, 'yyyy-MM-dd');
-      
-      if (!grouped[dateKey]) {
-        grouped[dateKey] = [];
+        grouped[dateKey].push(message);
+      } catch (error) {
+        console.error('Error processing message for grouping:', message, error);
       }
-      
-      grouped[dateKey].push(message);
     });
     
-    return groups;
+    return grouped;
   }, [messages]);
   
-  // Get user status from presence data
-  const getUserStatus = (userId: string): UserStatus | undefined => {
-    const presence = userPresence[userId];
-    return presence?.status;
-  };
-  
-  // Format date separator text
-  const getDateSeparatorText = (dateKey: string) => {
+  // Format date for display in the chat
+  const getDateSeparatorText = (dateKey: string): string => {
     try {
       const date = parseISO(dateKey);
       
-      if (isToday(date)) {
+      // Check if date is today
+      if (isSameDay(date, new Date())) {
         return 'I dag';
       }
       
-      if (isYesterday(date)) {
+      // Check if date is yesterday
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      if (isSameDay(date, yesterday)) {
         return 'I går';
       }
       
-      if (isThisWeek(date)) {
-        return format(date, 'EEEE', { locale: nb });
+      // Format as relative for recent dates (within 7 days)
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      if (date >= sevenDaysAgo) {
+        return formatDistanceToNow(date, { addSuffix: true, locale: nb });
       }
       
-      if (isThisYear(date)) {
-        return format(date, 'd. MMMM', { locale: nb });
-      }
-      
+      // Format as date for older dates
       return format(date, 'd. MMMM yyyy', { locale: nb });
     } catch (error) {
-      console.error('Error formatting date separator:', error);
+      console.error('Error formatting date separator:', dateKey, error);
       return dateKey;
     }
-    }
   };
   
-  // Create a function to get user status from presence data
-  const getUserStatus = (userId: string): UserStatus | undefined => {
-    if (!userPresence || !userPresence[userId]) {
-      return undefined;
-    }
-    return userPresence[userId].status;
-  };
-  
-  // Hjelpefunksjon for å hente sender-ID uavhengig av meldingstype
-  const getSenderId = (message: T): string | undefined => {
-    if ('senderId' in message) {
-      return message.senderId;
-    } else if ('sender' in message) {
-      // Håndter både streng og objekt-sender
-      if (typeof message.sender === 'string') {
-        return message.sender;
-      } else if (message.sender && typeof message.sender === 'object') {
-        return message.sender.id;
-      }
-    }
-    return undefined;
-  };
-  
-  // Check if two messages can be visually grouped (same sender, close in time)
-  const shouldGroupWithPrevious = (current: T, previous: T | null) => {
+  // Determine if a message should be grouped with the previous message
+  const shouldGroupWithPrevious = (current: T, previous?: T): boolean => {
     if (!previous) return false;
     
-    // Get sender IDs using hjelpefunksjonen
-    const currentSenderId = getSenderId(current);
-    const previousSenderId = getSenderId(previous);
+    // Get sender IDs considering both formats
+    const currentSenderId = current.senderId || current.sender_id || current.sender?.id;
+    const previousSenderId = previous.senderId || previous.sender_id || previous.sender?.id;
     
-    // Different senders means they can't be grouped
-    if (currentSenderId !== previousSenderId) return false;
-    
-    // Get timestamps and ensure they're Date objects
-    let currentDate: Date;
-    let previousDate: Date;
-    
-    // Hent dato for den nåværende meldingen
-    if ('createdAt' in current && current.createdAt) {
-      currentDate = current.createdAt instanceof Date 
-        ? current.createdAt 
-        : new Date(current.createdAt);
-    } 
-    else if ('sent_at' in current && current.sent_at) {
-      currentDate = typeof current.sent_at === 'string' || current.sent_at instanceof Date
-        ? new Date(current.sent_at)
-        : new Date();
-    } 
-    else if ('created_at' in current && current.created_at) {
-      currentDate = typeof current.created_at === 'string' 
-        ? new Date(current.created_at)
-        : current.created_at instanceof Date
-          ? current.created_at
-          : new Date();
-    }
-    else {
-      currentDate = new Date();
+    // If sender IDs are different, don't group
+    if (!currentSenderId || !previousSenderId || currentSenderId !== previousSenderId) {
+      return false;
     }
     
-    // Hent dato for den forrige meldingen
-    if ('createdAt' in previous && previous.createdAt) {
-      previousDate = previous.createdAt instanceof Date 
-        ? previous.createdAt
-        : new Date(previous.createdAt);
-    } 
-    else if ('sent_at' in previous && previous.sent_at) {
-      previousDate = typeof previous.sent_at === 'string' || previous.sent_at instanceof Date
-        ? new Date(previous.sent_at)
-        : new Date();
-    } 
-    else if ('created_at' in previous && previous.created_at) {
-      previousDate = typeof previous.created_at === 'string'
-        ? new Date(previous.created_at)
-        : previous.created_at instanceof Date
-          ? previous.created_at
-          : new Date();
-    }
-    else {
-      previousDate = new Date();
-    }
+    // Check if messages were sent within 5 minutes of each other
+    const currentDate = getMessageDate(current);
+    const previousDate = getMessageDate(previous);
+    const diffMinutes = (currentDate.getTime() - previousDate.getTime()) / (1000 * 60);
     
-    // If messages are more than 5 minutes apart, don't group them
-    const FIVE_MINUTES_MS = 5 * 60 * 1000;
-    return Math.abs(currentDate.getTime() - previousDate.getTime()) < FIVE_MINUTES_MS;
+    return diffMinutes < 5;
   };
   
-  return { 
-    groupedMessages, 
+  return {
+    groupedMessages,
     getDateSeparatorText,
-    getUserStatus
+    shouldGroupWithPrevious
   };
 }
