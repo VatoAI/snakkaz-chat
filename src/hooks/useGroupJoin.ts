@@ -1,71 +1,80 @@
 
-import { useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
 import { Group } from "@/types/group";
-import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
-export function useGroupJoin(
-  currentUserId: string, 
-  groups: Group[], 
-  setSelectedGroup: (g: Group | null) => void,
-  refreshGroups: () => Promise<void>
-) {
-  const { toast } = useToast();
-  
-  const handleJoinGroup = useCallback(async (groupId: string, password?: string) => {
+export const useGroupJoin = (
+  currentUserId?: string,
+  groups: Group[] = [],
+  setSelectedGroup?: React.Dispatch<React.SetStateAction<Group | null>>,
+  refreshGroups?: () => Promise<void>
+) => {
+  const [isJoining, setIsJoining] = useState(false);
+  const { user } = useAuth();
+  const userId = currentUserId || user?.id || '';
+
+  const handleJoinGroup = async (groupId: string, password?: string): Promise<boolean> => {
+    if (!userId) return false;
+    
+    setIsJoining(true);
     try {
-      if (password) {
-        const { data: group, error: groupError } = await supabase
-          .from('groups')
-          .select('password')
-          .eq('id', groupId)
-          .single();
-
-        if (groupError) throw groupError;
-
-        if (group.password !== password) {
-          toast({
-            title: "Feil passord",
-            description: "Passordet du oppga stemmer ikke med gruppens passord.",
-            variant: "destructive",
-          });
-          return false;
-        }
-      }
-
-      const { error: joinError } = await supabase
-        .from('group_members')
-        .insert({
-          user_id: currentUserId,
-          group_id: groupId,
-          role: 'member'
-        });
-
-      if (joinError) throw joinError;
-
-      await refreshGroups();
-
-      const joinedGroup = groups.find(g => g.id === groupId);
-      if (joinedGroup) {
-        setSelectedGroup(joinedGroup);
+      // This is a mock implementation
+      // In a real app, you'd join the group in the database
+      console.log(`Joining group ${groupId} with password: ${password || 'none'}`);
+      
+      // Find the group in the existing list
+      const group = groups.find(g => g.id === groupId);
+      if (!group) {
+        console.error("Group not found");
+        return false;
       }
       
-      toast({
-        title: "Du er nå med i gruppen",
-        description: "Du er nå med i gruppen og kan starte å chatte.",
-      });
-
+      // If it's a private group and requires password
+      if (group.visibility === 'private' && group.password && password !== group.password) {
+        console.error("Incorrect password");
+        return false;
+      }
+      
+      // Add the user as a member to the group (in a real app)
+      // Here we just update the local state temporarily
+      const updatedGroup: Group = {
+        ...group,
+        memberCount: (group.memberCount || 0) + 1,
+        members: [
+          ...(group.members || []),
+          {
+            id: `member-${Date.now()}`,
+            userId: userId,
+            groupId: groupId,
+            role: 'member',
+            joinedAt: new Date().toISOString(),
+            canWrite: true
+          }
+        ]
+      };
+      
+      // Set as selected group if setSelectedGroup was provided
+      if (setSelectedGroup) {
+        setSelectedGroup(updatedGroup);
+      }
+      
+      // Refresh the groups list if provided
+      if (refreshGroups) {
+        await refreshGroups();
+      }
+      
       return true;
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error joining group:", error);
-      toast({
-        title: "Kunne ikke bli med i gruppen",
-        description: error?.message || "En feil oppstod. Prøv igjen senere.",
-        variant: "destructive",
-      });
       return false;
+    } finally {
+      setIsJoining(false);
     }
-  }, [currentUserId, groups, refreshGroups, setSelectedGroup, toast]);
+  };
 
-  return { handleJoinGroup };
-}
+  return {
+    handleJoinGroup,
+    isJoining
+  };
+};

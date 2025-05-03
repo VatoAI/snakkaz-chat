@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect } from "react";
 import type { Profile } from "../types/profile";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,7 @@ import { BitcoinWallet } from "@/components/profile/BitcoinWallet";
 import { useToast } from "@/hooks/use-toast";
 import { useGroups } from "@/hooks/useGroups";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AppEncryptionContext, useAppEncryption } from "@/contexts/AppEncryptionContext";
+import { useAppEncryption } from "@/contexts/AppEncryptionContext";
 import { useProfileLoader } from "@/hooks/useProfileLoader";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -38,7 +38,7 @@ export default function Profile() {
   const [avatarUrl, setAvatarUrl] = useState("");
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const { screenCaptureProtection } = useAppEncryption();
-  const isEncryptionEnabled = screenCaptureProtection.isEnabled();
+  const isEncryptionEnabled = screenCaptureProtection?.isEnabled?.() || false;
   const { profileData, isProfileLoading, refreshProfile } = useProfileLoader(user?.id);
 
   // Privacy settings state
@@ -49,9 +49,6 @@ export default function Profile() {
 
   // Password change state
   const [isChangingPassword, setIsChangingPassword] = useState(false);
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
 
   // Two-factor authentication state
   const [isTwoFactorEnabled, setIsTwoFactorEnabled] = useState(false);
@@ -494,7 +491,7 @@ export default function Profile() {
 
                 <Button
                   variant="outline"
-                  className="w-full border-cyberdark-600 text-gray-300 hover:bg-cyberdark-800"
+                  className="w-full border-cyberdark-600 text-gray-300 hover:bg-cybergold-950/20 hover:text-cybergold-400"
                   onClick={() => signOut()}
                 >
                   <LogOut className="h-4 w-4 mr-2" /> Logg ut
