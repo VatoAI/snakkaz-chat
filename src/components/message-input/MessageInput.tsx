@@ -907,20 +907,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
                     inputRef.current.focus();
                   }
                 }}
-                className="text-xl p-2 hover:bg-cyberdark-700/80 hover:shadow-[0_0_5px_rgba(218,188,69,0.2)] rounded-lg transition-all duration-200"
-              >
-                {emoji}
-              </button>
-            ))}
-          </div>
-          <div className="text-center text-xs text-cybergold-500 pt-1 font-medium">
-            Flere emojier kommer snart
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-};
+                className="text-xl p-2 hover:bg-cyberdark-700/80 hover:shadow-[0_0_5px_rgba(218,188,69,0.2)] rounded-lg
+```
 
 export default MessageInput;

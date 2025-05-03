@@ -59,74 +59,56 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Switch } from '@/components/ui/switch';
-import MessageInput from '@/components/message-input/MessageInput';
-import { Group, GroupVisibility, SecurityLevel, GroupMember } from '@/types/groups';
-import { GroupMessage } from '@/types/group.d';
-// Fikser importen av SecurityLevel og GroupVisibility
-import { GroupVisibility } from '@/types/group';
+import { default as MessageInputComponent } from '@/components/message-input/MessageInput';
+import { Group, GroupVisibility, GroupMember, GroupMessage } from '@/types/group';
 import { SecurityLevel } from '@/types/security';
 import { usePresence } from '@/hooks/usePresence';
 import { UserStatus } from '@/types/presence';
 
-// Define message interfaces to fix 'any' types
-interface MessageContent {
-  text?: string;
-  mediaUrl?: string;
-  mediaType?: string;
-  thumbnailUrl?: string;
-  ttl?: number;
-  isEncrypted?: boolean;
-}
-
-// Define the message object interface
-interface Message {
-  id: string;
-  content: string;
-  sender_id: string;
-  groupId?: string;
-  group_id?: string;
-  createdAt: string;
-  created_at?: string;
-  mediaUrl?: string;
-  media_url?: string;
-}
-
-// Define chat message type to avoid 'any'
+// Define the message object interface that combines both formats
 interface ChatMessage {
   id: string;
-  content: string; // Make content required to match GroupMessage
+  content?: string;
+  text?: string;
   sender_id?: string;
   senderId?: string;
   group_id?: string;
   groupId?: string;
   created_at?: string;
-  createdAt?: string;
+  createdAt?: string | Date;
   is_edited?: boolean;
   isEdited?: boolean;
   mediaUrl?: string;
   media_url?: string;
   reply_to_id?: string;
   replyToId?: string;
+  sender?: {
+    id: string;
+    displayName?: string;
+    username?: string;
+    full_name?: string | null;
+    avatar?: string;
+    avatar_url?: string | null;
+  };
 }
+
+// Define Group type with compatibility for both property naming styles
+type GroupType = Group & {
+  id: string;
+  name: string;
+  description?: string;
+  avatarUrl?: string;
+  memberCount?: number;
+  visibility?: GroupVisibility;
+  securityLevel?: SecurityLevel;
+  is_premium?: boolean;
+};
 
 // Define getGroupMemberById function properly
 const getGroupMemberById = (members: GroupMember[] | undefined, userId: string): GroupMember | null => {
   if (!members || !Array.isArray(members)) return null;
   return members.find(member => member.userId === userId || member.user_id === userId) || null;
 };
-import { UserStatus } from '@/types/presence';
-import { Group as GroupType } from '@/types/groups';
-
-// Typeerklæring for å håndtere meldinger
-interface Message {
-  id: string;
-  text?: string;
-  sender?: {
-    id: string;
-    displayName?: string;
-    avatar?: string;
-  };
-}
 
 const GroupChatPage = () => {
   
@@ -135,30 +117,7 @@ const GroupChatPage = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { userProfiles, fetchProfiles } = useProfiles();
-  const { handleStatusChange, userPresence, isConnected } = usePresence(user?.id || null);
-  
-  // Oppdaterer bruken av usePresence - siden hooken forventer userId som første parameter
-  const { currentStatus, handleStatusChange, userPresence } = usePresence(
-    user?.id || null,
-    'online',
-    undefined,
-    false
-  );
-  
-  // Implementerer updatePresence-funksjonen manuelt siden den ikke finnes i usePresence
-  const updatePresence = (data: { 
-    status?: UserStatus, 
-    currentGroupId?: string | null, 
-    lastActive?: Date 
-  }) => {
-    // Oppdaterer status hvis den er angitt
-    if (data.status && data.status !== currentStatus) {
-      handleStatusChange(data.status);
-    }
-    
-    // I en reell implementasjon ville vi håndtert currentGroupId og lastActive,
-    // men vi bruker bare handleStatusChange siden det er det hooken tilbyr
-  };
+  const { handleStatusChange, userPresence } = usePresence(user?.id || null);
   
   // Refs
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -186,16 +145,15 @@ const GroupChatPage = () => {
   const [initialDisappearingTime, setInitialDisappearingTime] = useState(0);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [replyToMessage, setReplyToMessage] = useState<ChatMessage | null>(null);
-  const [replyToMessage, setReplyToMessage] = useState<Message | null>(null);
   const [hasMoreMessages, setHasMoreMessages] = useState(false);
   
   // Get groups
   const { 
     groups, 
-    fetchGroups,
+    getGroups: fetchGroups,
     createGroup,
     loading: groupsLoading 
-  } = useGroups();
+  } = useGroups({ userId: user?.id });
 
   // Since leaveGroup doesn't exist in useGroups, we'll define a local function
   const leaveGroup = async (groupId: string) => {
@@ -230,20 +188,17 @@ const GroupChatPage = () => {
     loadMessages
   } = useGroupChat(selectedGroup?.id);
   
-  // Oppdater presence når vi bytter gruppe
+  // Update presence when switching groups
   useEffect(() => {
     if (selectedGroup?.id && user?.id) {
       // Update status to online when group changes
       handleStatusChange('online');
-      
-      // We would ideally store currentGroupId in a separate way
-      // since handleStatusChange only accepts a status string
     } else {
       handleStatusChange('online');
     }
     
     return () => {
-      // Når komponenten unmounter, sett status til offline
+      // When component unmounts, set status to online (not offline)
       if (user?.id) {
         handleStatusChange('online');
       }
@@ -262,7 +217,8 @@ const GroupChatPage = () => {
     if (id && groups.length > 0) {
       const foundGroup = groups.find(g => g.id === id);
       if (foundGroup) {
-        setSelectedGroup(foundGroup);
+        // Cast to GroupType to ensure type compatibility
+        setSelectedGroup(foundGroup as unknown as GroupType);
       }
     }
   }, [id, groups]);
@@ -275,20 +231,19 @@ const GroupChatPage = () => {
     }
   }, [selectedGroup?.id, loadGroup]);
 
-  // Funksjon for å konvertere GroupType.SecurityLevel til MessageInput.securityLevel
+  // Function to convert SecurityLevel to MessageInput.securityLevel
   const mapSecurityLevelToMessageInput = (level?: SecurityLevel): 'p2p_e2ee' | 'server_e2ee' | 'standard' => {
-    // SecurityLevel kan være: 'p2p_e2ee' | 'server_e2ee' | 'standard' fra security.ts
-    // eller 'low' | 'standard' | 'high' | 'maximum' fra groups.ts
     if (!level) return 'standard';
     
-    // Konverter verdier mellom de forskjellige typedefinisjonene
-    if (level === 'high' || level === 'maximum') return 'server_e2ee';
+    // Convert values between the different type definitions
+    if (level === 'high' || level === 'maximum' || level === 'server_e2ee') return 'server_e2ee';
     if (level === 'p2p_e2ee') return 'p2p_e2ee';
     return 'standard';
   };
   
-  // Hjelper-funksjon for å sjekke om gruppen har høyt sikkerhetsnivå
+  // Helper function to check if the group has a high security level
   const isHighSecurityGroup = (level?: SecurityLevel): boolean => {
+    if (!level) return false;
     return level === 'high' || level === 'maximum' || level === 'p2p_e2ee' || level === 'server_e2ee';
   };
 
@@ -317,7 +272,8 @@ const GroupChatPage = () => {
       });
       
       if (newGroup) {
-        setSelectedGroup(newGroup);
+        // Cast to GroupType to ensure type compatibility
+        setSelectedGroup(newGroup as unknown as GroupType);
         setIsCreatingGroup(false);
       }
       
@@ -347,7 +303,8 @@ const GroupChatPage = () => {
       // Sjekk om vi finner den nye gruppen
       const joinedGroup = groups.find(g => g.id === code);
       if (joinedGroup) {
-        setSelectedGroup(joinedGroup);
+        // Cast to GroupType to ensure type compatibility
+        setSelectedGroup(joinedGroup as unknown as GroupType);
         toast({
           title: "Gruppe tilgang",
           description: `Du har blitt med i "${joinedGroup.name}"`,
@@ -541,9 +498,7 @@ const GroupChatPage = () => {
   };
   
   // Handle message editing
-  const handleEditMessage = (message: ChatMessage) => {
-  // Håndter redigering av melding
-  const handleEditMessage = (message: Message) => {
+  const handleEditMessage = (message: ChatMessage | GroupMessage) => {
     setEditingMessageId(message.id);
     // Setter meldingsteksten i input-feltet
     // Dette må gjøres i MessageInput komponenten
@@ -567,10 +522,8 @@ const GroupChatPage = () => {
   };
   
   // Handle reply to message
-  const handleReplyToMessage = (message: ChatMessage) => {
-  // Håndter svar på melding
-  const handleReplyToMessage = (message: Message) => {
-    setReplyToMessage(message);
+  const handleReplyToMessage = (message: ChatMessage | GroupMessage) => {
+    setReplyToMessage(message as ChatMessage);
   };
   
   // Handle reactions to messages
@@ -652,15 +605,17 @@ const GroupChatPage = () => {
               <Card key={group.id} className="bg-cyberdark-900 border-cyberdark-700">
                 <CardHeader>
                   <CardTitle className="text-cybergold-300">{group.name}</CardTitle>
-                  <CardDescription className="text-cybergold-500">{group.description}</CardDescription>
+                  <CardDescription className="text-cybergold-500">{group.description || ""}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-cybergold-400">
-                    {group.memberCount} medlemmer
+                    {group.memberCount || group.members?.length || 0} medlemmer
                   </p>
                 </CardContent>
                 <CardFooter className="flex justify-between">
-                  <Button variant="secondary" onClick={() => setSelectedGroup(group)}>
+                  <Button 
+                    variant="secondary" 
+                    onClick={() => setSelectedGroup(group as unknown as GroupType)}>
                     Vis chat
                   </Button>
                   <div className="flex items-center gap-1">
@@ -829,7 +784,7 @@ const GroupChatPage = () => {
               <div>
                 <h2 className="text-lg font-medium text-cybergold-300">{selectedGroup.name}</h2>
                 <p className="text-xs text-cybergold-500">
-                  {selectedGroup.memberCount} medlemmer 
+                  {selectedGroup.memberCount || selectedGroup.members?.length || 0} medlemmer 
                   {disappearingTime > 0 && (
                     <span className="ml-2 flex items-center">
                       • <Clock className="h-3 w-3 inline mr-1 ml-1 text-amber-400" />
@@ -945,7 +900,7 @@ const GroupChatPage = () => {
       {/* Messages area */}
       <div className="flex-1 overflow-hidden">
         <GroupMessageList 
-          messages={(groupMessages || []) as GroupMessage[]}
+          messages={Array.isArray(groupMessages) ? groupMessages : []} 
           isLoading={messagesLoading}
           userProfiles={userProfiles}
           onMessageEdit={handleEditMessage}
@@ -960,30 +915,21 @@ const GroupChatPage = () => {
       
       {/* Message input */}
       <div className="p-4 border-t border-cyberdark-700">
-        <MessageInput
+        <MessageInputComponent
           onSendMessage={handleSendMessage}
+          onSendEnhancedMedia={handleSendMedia}
           editingMessageId={editingMessageId}
-          editingContent={editingMessageId ? 
-            groupMessages?.find(m => m.id === editingMessageId)?.content : ''
-          }
-          onSendMedia={handleSendMedia}
-          placeholder={
-            editingMessageId ? "Rediger melding..." : 
-            replyToMessage ? "Skriv et svar..." : 
-            "Skriv en melding..."
-          }
+          editingContent={editingMessageId && groupMessages ? 
+            (groupMessages.find(m => m.id === editingMessageId)?.content || 
+             groupMessages.find(m => m.id === editingMessageId)?.text || '') : ''}
           securityLevel={mapSecurityLevelToMessageInput(selectedGroup.securityLevel)}
           showSecurityIndicator={true}
-          editingMessage={editingMessageId ? {
-            id: editingMessageId,
-            content: groupMessages?.find(m => m.id === editingMessageId)?.text || ''
-          } : null}
           onCancelEdit={() => setEditingMessageId(null)}
           replyToMessage={replyToMessage}
           onCancelReply={() => setReplyToMessage(null)}
           ttl={disappearingTime}
           onChangeTtl={toggleDisappearingMessages}
-          isEncrypted={selectedGroup.securityLevel === "high"}
+          isEncrypted={isHighSecurityGroup(selectedGroup.securityLevel)}
         />
       </div>
       
