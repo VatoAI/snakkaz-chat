@@ -59,7 +59,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Switch } from '@/components/ui/switch';
-import { default as MessageInputComponent } from '@/components/message-input/MessageInput';
+import { MessageInput } from '@/components/message-input/MessageInput';
 import { Group, GroupVisibility, GroupMember, GroupMessage } from '@/types/group';
 import { SecurityLevel } from '@/types/security';
 import { usePresence } from '@/hooks/usePresence';
@@ -150,10 +150,10 @@ const GroupChatPage = () => {
   // Get groups
   const { 
     groups, 
-    getGroups: fetchGroups,
-    createGroup,
+    refreshGroups: fetchGroups,
+    handleCreateGroup: createGroup,
     loading: groupsLoading 
-  } = useGroups({ userId: user?.id });
+  } = useGroups({ currentUserId: user?.id || '' });
 
   // Since leaveGroup doesn't exist in useGroups, we'll define a local function
   const leaveGroup = async (groupId: string) => {
@@ -915,13 +915,12 @@ const GroupChatPage = () => {
       
       {/* Message input */}
       <div className="p-4 border-t border-cyberdark-700">
-        <MessageInputComponent
+        <MessageInput
           onSendMessage={handleSendMessage}
           onSendEnhancedMedia={handleSendMedia}
           editingMessageId={editingMessageId}
-          editingContent={editingMessageId && groupMessages ? 
-            (groupMessages.find(m => m.id === editingMessageId)?.content || 
-             groupMessages.find(m => m.id === editingMessageId)?.text || '') : ''}
+          editingContent={editingMessageId ? (
+            groupMessages.find(m => m.id === editingMessageId)?.content || '') : ''}
           securityLevel={mapSecurityLevelToMessageInput(selectedGroup.securityLevel)}
           showSecurityIndicator={true}
           onCancelEdit={() => setEditingMessageId(null)}

@@ -1,4 +1,3 @@
-
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,7 +20,7 @@ import { supabase } from "@/integrations/supabase/client";
 export function UserNav() {
     const navigate = useNavigate();
     const { user, signOut } = useAuth();
-    const [isPremium, setIsPremium] = useState(false);
+    const [isPremiumState, setIsPremium] = useState(false);
 
     // Get first letter of user's name or email
     const getInitials = () => {
@@ -60,8 +59,7 @@ export function UserNav() {
         }
     }, [user]);
 
-    // Sjekk om brukeren har Premium-status
-    const isPremium = user?.user_metadata?.subscription_status === 'active';
+    const isPremium = user?.user_metadata?.subscription_status === 'active' || isPremiumState;
 
     return (
         <DropdownMenu>
@@ -90,37 +88,17 @@ export function UserNav() {
                         >
                             {getInitials()}
                         </AvatarFallback>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                    <Avatar className="h-8 w-8 border border-cyberdark-700">
-                        <AvatarImage src={user?.user_metadata?.avatar_url} alt={user?.email || "Bruker"} />
-                        <AvatarFallback className={`${isPremium ? 'bg-cybergold-600/20' : 'bg-cyberdark-700'} text-cybergold-400`}>
-                            {getInitials()}
-                        </AvatarFallback>
                     </Avatar>
-                    {isPremium && (
-                        <span className="absolute -top-1 -right-1 bg-cybergold-500 rounded-full w-3 h-3 flex items-center justify-center">
-                            <Crown className="h-2 w-2 text-black" />
-                        </span>
-                    )}
                     
-                    {/* Premium indikator */}
+                    {/* Premium indicator */}
                     {isPremium && (
                         <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-cybergold-500 rounded-full 
-                                     shadow-[0_0_6px_rgba(218,188,69,0.8)] border border-black z-10"
-                        />
+                                     shadow-[0_0_6px_rgba(218,188,69,0.8)] border border-black z-10">
+                        </div>
                     )}
                 </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="end" forceMount>
-                <DropdownMenuLabel className="font-normal">
-                    <div className="flex flex-col space-y-1">
-                        <div className="flex items-center">
-                            <p className="text-sm font-medium leading-none">{user?.user_metadata?.full_name || "Bruker"}</p>
-                            {isPremium && (
-                                <Crown className="h-3 w-3 ml-1 text-cybergold-400" />
-                            )}
-                        </div>
-                        <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
+            
             <DropdownMenuContent 
                 className="w-64 bg-gradient-to-b from-cyberdark-900 to-cyberdark-950 border border-cyberdark-700 shadow-xl" 
                 align="end" 

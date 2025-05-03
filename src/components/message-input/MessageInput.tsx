@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, Paperclip, Shield, Image, X, Mic, Camera, Smile, ShoppingBag, Loader2, Edit, CornerUpLeft } from 'lucide-react';
+import { Send, Paperclip, Shield, Image, X, Mic, Camera, Smile, ShoppingBag, Loader2, Edit, CornerUpLeft, Clock, PaperclipIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/hooks/useAuth';
 import { useSecureMessageKeys } from '@/hooks/useSecureMessageKeys';
 import { useDeviceDetection } from '@/hooks/useDeviceDetection';
@@ -7,11 +9,6 @@ import { useEnhancedMediaUpload, ResizeMode } from '@/hooks/useEnhancedMediaUplo
 import { useMessageReply } from '@/hooks/useMessageReply';
 import { EnhancedAudioRecorder } from '@/components/media/EnhancedAudioRecorder';
 import { cn } from '@/lib/utils';
-
-import React, { useState, useRef, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Send, X, Clock, Shield, PaperclipIcon } from 'lucide-react';
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -21,6 +18,7 @@ import {
 
 interface MessageInputProps {
   onSendMessage: (text: string) => Promise<void> | void;
+  onSendEnhancedMedia?: (mediaData: { url: string; thumbnailUrl?: string; ttl?: number; isEncrypted?: boolean }) => Promise<void> | void;
   editingMessageId?: string | null;
   editingContent?: string;
   editingMessage?: { id: string; content: string } | null; // For backward compatibility
@@ -30,13 +28,15 @@ interface MessageInputProps {
   ttl?: number;
   onChangeTtl?: (ttl: number) => void;
   isEncrypted?: boolean;
+  securityLevel?: 'p2p_e2ee' | 'server_e2ee' | 'standard';
+  showSecurityIndicator?: boolean;
   placeholder?: string;
   disabled?: boolean;
   maxLength?: number;
   autoFocus?: boolean;
 }
 
-const MessageInput: React.FC<MessageInputProps> = ({
+export const MessageInput: React.FC<MessageInputProps> = ({
   onSendMessage,
   editingMessageId,
   editingContent,
@@ -52,23 +52,6 @@ const MessageInput: React.FC<MessageInputProps> = ({
   maxLength = 2000,
   autoFocus = false,
 }) => {
-  const [message, setMessage] = useState<string>('');
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [showMediaUploader, setShowMediaUploader] = useState<boolean>(false);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [mediaTtl, setMediaTtl] = useState<number>(0); // TTL for media (0 = never expires)
-  const [showAudioRecorder, setShowAudioRecorder] = useState<boolean>(false);
-  const [showEmojiPicker, setShowEmojiPicker] = useState<boolean>(false);
-  const [typingTimeoutId, setTypingTimeoutId] = useState<NodeJS.Timeout | null>(null);
-  const [isMediaUploaderExpanded, setIsMediaUploaderExpanded] = useState<boolean>(false);
-  const [dragActive, setDragActive] = useState<boolean>(false);
-  const [captionText, setCaptionText] = useState<string>('');
-  const [activeMediaTab, setActiveMediaTab] = useState<'recent' | 'camera' | 'gallery'>('recent');
-  const [mediaQuality, setMediaQuality] = useState<'standard' | 'high' | 'raw'>('standard');
-  const [showDragHelp, setShowDragHelp] = useState<boolean>(false);
-
-  const inputRef = useRef<HTMLTextAreaElement>(null);
   // Handle backward compatibility for editingMessage
   const effectiveEditingMessageId = editingMessageId || editingMessage?.id;
   const effectiveEditingContent = editingContent || editingMessage?.content;
@@ -76,97 +59,6 @@ const MessageInput: React.FC<MessageInputProps> = ({
   const [text, setText] = useState(effectiveEditingContent || '');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const imageInputRef = useRef<HTMLInputElement>(null);
-  const dropAreaRef = useRef<HTMLDivElement>(null);
-  const { user } = useAuth();
-  const { isMobile, isTablet } = useDeviceDetection();
-  const { replyToMessage, clearReply } = useMessageReply();
-
-  // Use our enhanced media upload hook
-  const { uploadFile, cancelUpload, uploadState } = useEnhancedMediaUpload();
-
-  // Sikker meldingsnøkkelrotasjon via Double Ratchet
-  const conversationId = user?.id || 'default'; // Bør være en faktisk samtale-ID i produksjon
-  const { getEncryptionKeys, messageCounter } = useSecureMessageKeys({
-    conversationId,
-    onError: (error) => console.error("Secure message key error:", error)
-  });
-
-  // Rengjør media ressurser
-  const cleanupMedia = useCallback(() => {
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-    }
-
-    setSelectedFile(null);
-    setPreviewUrl(null);
-    setShowMediaUploader(false);
-    setCaptionText('');
-
-    // Reset file inputs
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-    if (imageInputRef.current) {
-      imageInputRef.current.value = '';
-    }
-  }, [previewUrl]);
-
-  // Legger til manglende handleCancelMedia funksjon
-  const handleCancelMedia = () => {
-    // Avbryt opplasting hvis den pågår
-    if (uploadState.isUploading) {
-      cancelUpload();
-    }
-    // Rengjør media ressurser
-    cleanupMedia();
-  };
-
-  // Send enhanced media function wrapped in useCallback to prevent recreation on every render
-  const sendEnhancedMedia = useCallback(async () => {
-    if (uploadState.url && onSendEnhancedMedia) {
-      try {
-        await onSendEnhancedMedia({
-          url: uploadState.url,
-          thumbnailUrl: uploadState.thumbnailUrl || undefined,
-          ttl: mediaTtl > 0 ? mediaTtl : undefined,
-          isEncrypted: uploadState.isEncrypted || mediaTtl > 0
-        });
-
-        // Send the caption as a follow-up message if provided
-        if (captionText.trim() && onSendMessage) {
-          await onSendMessage(captionText.trim());
-          setCaptionText('');
-        }
-
-        // Clean up
-        cleanupMedia();
-      } catch (error) {
-        console.error('Error sending enhanced media:', error);
-      } finally {
-        setIsSubmitting(false);
-      }
-    }
-  }, [uploadState.url, uploadState.thumbnailUrl, uploadState.isEncrypted, onSendEnhancedMedia, mediaTtl, captionText, onSendMessage, cleanupMedia]);
-
-  // Populate message input when entering edit mode
-  useEffect(() => {
-    if (editingMessage) {
-      setMessage(editingMessage.content);
-      
-      // Focus on the input when editing starts
-      if (inputRef.current) {
-        inputRef.current.focus();
-      }
-    } else {
-      // Reset message when exiting edit mode without submitting
-      if (!isSubmitting) {
-        setMessage('');
-      }
-    }
-  }, [editingMessage, isSubmitting]);
-
-  // Automatisk juster høyden på tekstområdet basert på innhold
 
   // Set initial value when editing
   useEffect(() => {
@@ -174,94 +66,13 @@ const MessageInput: React.FC<MessageInputProps> = ({
       setText(effectiveEditingContent);
       textareaRef.current?.focus();
     }
-  }, [autoFocus, isMobile, editingMessage]);
-
-  // Clean up preview URL when component unmounts
-  useEffect(() => {
-    return () => {
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl);
-      }
-      
-      // Clean up typing timeout
-      if (typingTimeoutId) {
-        clearTimeout(typingTimeoutId);
-      }
-    };
-  }, [previewUrl, typingTimeoutId]);
-  }, [effectiveEditingContent, effectiveEditingMessageId]);
+  }, [effectiveEditingContent]);
 
   // Handle autoFocus
   useEffect(() => {
     if (autoFocus) {
       textareaRef.current?.focus();
     }
-  }, [uploadState.url, isSubmitting, sendEnhancedMedia, onSendEnhancedMedia, mediaTtl]);
-
-  // Typing indicator handling
-  const handleTypingStart = useCallback(() => {
-    if (onStartTyping) {
-      onStartTyping();
-    }
-    
-    // Clear existing timeout if any
-    if (typingTimeoutId) {
-      clearTimeout(typingTimeoutId);
-    }
-    
-    // Set new timeout for typing stop
-    const newTimeoutId = setTimeout(() => {
-      if (onStopTyping) {
-        onStopTyping();
-      }
-    }, 3000); // Stop typing indicator after 3 seconds of inactivity
-    
-    setTypingTimeoutId(newTimeoutId);
-  }, [onStartTyping, onStopTyping, typingTimeoutId]);
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey && !isMobile) {
-      e.preventDefault();
-      handleSendMessage();
-    } else if (e.key === 'Escape' && editingMessage && onCancelEdit) {
-      e.preventDefault();
-      onCancelEdit();
-    } else {
-      // Trigger typing indicator for any other keypress
-      handleTypingStart();
-    }
-  };
-
-  const handleSendMessage = async () => {
-    const trimmedMessage = message.trim();
-    
-    if (disabled || (!trimmedMessage && !selectedFile && !uploadState.url)) {
-      return;
-    }
-    
-    try {
-      setIsSubmitting(true);
-      
-      // If we're editing an existing message
-      if (editingMessage && onUpdateMessage) {
-        await onUpdateMessage(editingMessage.id, trimmedMessage);
-        if (onCancelEdit) onCancelEdit();
-      } 
-      // If we're sending a new message
-      else if (trimmedMessage) {
-        await onSendMessage(trimmedMessage);
-        
-        // Clear reply after sending
-        if (replyToMessage) {
-          clearReply();
-        }
-      }
-      
-      setMessage('');
-      if (typingTimeoutId) {
-        clearTimeout(typingTimeoutId);
-        if (onStopTyping) onStopTyping();
-      }
   }, [autoFocus]);
 
   // Reset input after sending
@@ -291,72 +102,6 @@ const MessageInput: React.FC<MessageInputProps> = ({
     }
   };
 
-  interface ResizeOptions {
-    maxWidth: number;
-    maxHeight: number;
-    mode: ResizeMode;
-    quality: number;
-  }
-
-  interface UploadOptions {
-    compress: boolean;
-    resize?: ResizeOptions;
-    generateThumbnail: boolean;
-    encrypt: boolean;
-    encryptionKey?: string;
-  }
-
-  const handleUpload = async () => {
-    if (!selectedFile) return;
-
-    try {
-      setIsSubmitting(true);
-
-      // Generer en krypteringsnøkkel hvis TTL er satt
-      const shouldEncrypt = mediaTtl > 0 || securityLevel !== 'standard';
-      let encryptionKey;
-
-      if (shouldEncrypt) {
-        // Generer en sikker tilfeldig krypteringsnøkkel
-        const keys = await getEncryptionKeys();
-        encryptionKey = keys?.encryptionKey ||
-          Array.from(crypto.getRandomValues(new Uint8Array(16)))
-            .map(b => b.toString(16).padStart(2, '0'))
-            .join('');
-      }
-
-      // Build compression options based on media quality setting
-      const compressionOptions: UploadOptions = {
-        compress: mediaQuality !== 'raw',
-        resize: mediaQuality === 'standard' ? {
-          maxWidth: 1280,
-          maxHeight: 1280,
-          mode: 'auto',
-          quality: 0.85
-        } : mediaQuality === 'high' ? {
-          maxWidth: 1920,
-          maxHeight: 1920,
-          mode: 'auto',
-          quality: 0.92
-        } : undefined,
-        generateThumbnail: true,
-        encrypt: shouldEncrypt,
-        encryptionKey: encryptionKey
-      };
-
-      // Use the enhanced media uploader with selected preset
-      await uploadFile(selectedFile, compressionOptions);
-
-      // If user has added a caption, send it with the image
-      if (captionText.trim()) {
-        // Will be sent after the media is uploaded and sent
-        setMessage(captionText);
-      }
-
-    } catch (error) {
-      console.error('Upload error:', error);
-    }
-  };
   // Handle text change
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
@@ -377,87 +122,6 @@ const MessageInput: React.FC<MessageInputProps> = ({
     fileInputRef.current?.click();
   };
 
-  // Handle drag and drop for images
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(true);
-    setShowDragHelp(true);
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-    setShowDragHelp(false);
-  };
-
-  const handleDrop = async (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-    setShowDragHelp(false);
-    
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      const file = e.dataTransfer.files[0];
-      
-      // Støtte for flere filtyper
-      if (file.type.startsWith('image/') || file.type.startsWith('video/') || 
-          file.type.startsWith('audio/') || file.type === 'application/pdf') {
-        setSelectedFile(file);
-        const url = URL.createObjectURL(file);
-        setPreviewUrl(url);
-        setShowMediaUploader(true);
-      } else if (onSendFile) {
-        // For andre filtyper, bruk vanlig opplaster
-        try {
-          setIsSubmitting(true);
-          await onSendFile(file);
-        } catch (error) {
-          console.error('Error uploading file:', error);
-        } finally {
-          setIsSubmitting(false);
-        }
-      }
-    }
-  };
-
-  const handleAudioReady = async (audioBlob: Blob) => {
-    if (onSendAudio) {
-      try {
-        setIsSubmitting(true);
-        await onSendAudio(audioBlob);
-      } catch (error) {
-        console.error('Error sending audio:', error);
-      } finally {
-        setIsSubmitting(false);
-        setShowAudioRecorder(false);
-      }
-    }
-  };
-
-  // Bestemmer sikkerhetsindikatorens ikon og tekst basert på sikkerhetsnivå
-  const getSecurityIndicator = () => {
-    switch (securityLevel) {
-      case 'p2p_e2ee':
-        return {
-          icon: <Shield className="h-3 w-3 text-emerald-500" />,
-          text: "E2EE (P2P)"
-        };
-      case 'server_e2ee':
-        return {
-          icon: <Shield className="h-3 w-3 text-blue-500" />,
-          text: "E2EE"
-        };
-      default:
-        return {
-          icon: <Shield className="h-3 w-3 text-gray-400" />,
-          text: "Standard"
-        };
-    }
-  };
-
-  const securityIndicator = getSecurityIndicator();
   // Render TTL options
   const getTtlLabel = (seconds: number): string => {
     if (seconds === 0) return "Aldri";
@@ -468,53 +132,6 @@ const MessageInput: React.FC<MessageInputProps> = ({
   };
 
   return (
-    <div 
-      className={cn(
-        "flex flex-col w-full bg-cyberdark-900 border-t border-cyberdark-700",
-        showMediaUploader && "pb-2",
-        !isMobile && "rounded-lg",
-        dragActive && "border-2 border-dashed border-cybergold-500 bg-cyberdark-800/50"
-      )}
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
-      ref={dropAreaRef}
-    >
-      {/* Vis drag-and-drop instruksjoner når aktiv */}
-      {showDragHelp && (
-        <div className="absolute inset-0 flex items-center justify-center bg-cyberdark-900/80 z-10 rounded-lg pointer-events-none">
-          <div className="text-center">
-            <div className="bg-cybergold-600/20 p-6 rounded-full mb-4 mx-auto">
-              <Image className="h-10 w-10 text-cybergold-400" />
-            </div>
-            <p className="text-cybergold-400 font-medium">Slipp fil for å laste opp</p>
-          </div>
-        </div>
-      )}
-
-      {/* Show editing message indicator when in edit mode */}
-      {editingMessage && (
-        <div className="px-4 pt-2">
-          <EditingMessage 
-            content={editingMessage.content}
-            onCancel={handleCancelEdit}
-          />
-        </div>
-      )}
-
-      {/* Show reply preview */}
-      {replyToMessage && !editingMessage && (
-        <div className="px-4 pt-2">
-          <ReplyPreview 
-            message={{
-              id: replyToMessage.id,
-              content: replyToMessage.content,
-              sender: {
-                displayName: replyToMessage.sender.full_name || replyToMessage.sender.username || 'Ukjent'
-              }
-            }}
-            onCancel={clearReply}
-          />
     <div className="bg-cyberdark-900 border-t border-cyberdark-700 p-3">
       {/* Reply info if replying to a message */}
       {replyToMessage && (
@@ -537,135 +154,6 @@ const MessageInput: React.FC<MessageInputProps> = ({
           )}
         </div>
       )}
-
-      {/* Media upload UI */}
-      {showMediaUploader && selectedFile && previewUrl && (
-        <div className={cn(
-          "px-4 pt-3 pb-2",
-          isMobile && "fixed inset-x-0 bottom-0 z-50 bg-cyberdark-950 pb-6"
-        )}>
-          <div className="bg-cyberdark-800 rounded-lg overflow-hidden border border-cyberdark-700">
-            {/* Media preview header */}
-            <div className="flex items-center justify-between bg-cyberdark-950 p-2 border-b border-cyberdark-700">
-              <div className="flex items-center text-sm text-cybergold-300">
-                <span className="font-medium">
-                  {selectedFile.type.startsWith('image/') ? 'Bildeopplasting' : 
-                   selectedFile.type.startsWith('video/') ? 'Videoopplasting' : 
-                   selectedFile.type.startsWith('audio/') ? 'Lydopplasting' : 
-                   'Filopplasting'}
-                </span>
-                <span className="ml-2 text-xs text-cybergold-600">
-                  {Math.round(selectedFile.size / 1024)} KB
-                </span>
-              </div>
-              
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 rounded-full"
-                onClick={handleCancelMedia}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            
-            {/* Media content */}
-            <div className="p-3">
-              {/* Preview */}
-              <div className="relative mb-3 bg-cyberdark-950 rounded overflow-hidden flex items-center justify-center">
-                {selectedFile.type.startsWith('image/') && (
-                  <img src={previewUrl} alt="Preview" className="max-h-64 object-contain mx-auto" />
-                )}
-                {selectedFile.type.startsWith('video/') && (
-                  <video src={previewUrl} className="max-h-64 w-full" controls />
-                )}
-                {selectedFile.type.startsWith('audio/') && (
-                  <audio src={previewUrl} className="w-full mt-2" controls />
-                )}
-                {selectedFile.type === 'application/pdf' && (
-                  <div className="flex flex-col items-center justify-center p-4">
-                    <svg className="h-10 w-10 text-red-500 mb-2" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/>
-                      <path d="M14 2v6h6"/>
-                    </svg>
-                    <span className="text-sm text-cybergold-300">{selectedFile.name}</span>
-                  </div>
-                )}
-                
-                {/* Upload progress overlay */}
-                {uploadState.isUploading && (
-                  <div className="absolute inset-0 bg-cyberdark-950/70 flex flex-col items-center justify-center">
-                    <Loader2 className="h-8 w-8 animate-spin text-cybergold-400 mb-2" />
-                    <div className="w-3/4 max-w-xs">
-                      <Progress value={uploadState.progress} className="h-1.5" />
-                    </div>
-                    <p className="text-sm text-cybergold-300 mt-2">
-                      {uploadState.progress}% opplastet...
-                    </p>
-                  </div>
-                )}
-              </div>
-              
-              {/* Caption input */}
-              <div className="mb-3">
-                <input
-                  type="text"
-                  value={captionText}
-                  onChange={(e) => setCaptionText(e.target.value)}
-                  placeholder="Legg til bildetekst..."
-                  className="w-full bg-cyberdark-950 border border-cyberdark-700 rounded p-2 text-sm text-cybergold-300 placeholder:text-cybergold-600"
-                />
-              </div>
-              
-              {/* Media options */}
-              <div className="grid grid-cols-2 gap-3 mb-3">
-                {/* TTL selector */}
-                <div>
-                  <label className="block text-xs text-cybergold-400 mb-1">
-                    Selvdestruerende
-                  </label>
-                  <select 
-                    value={mediaTtl} 
-                    onChange={(e) => setMediaTtl(Number(e.target.value))}
-                    className="w-full bg-cyberdark-950 border border-cyberdark-700 rounded p-2 text-sm text-cybergold-300"
-                  >
-                    <option value="0">Aldri</option>
-                    <option value="300">5 minutter</option>
-                    <option value="3600">1 time</option>
-                    <option value="86400">24 timer</option>
-                    <option value="604800">7 dager</option>
-                  </select>
-                </div>
-                
-                {/* Quality selector */}
-                <div>
-                  <label className="block text-xs text-cybergold-400 mb-1">
-                    Kvalitet
-                  </label>
-                  <select 
-                    value={mediaQuality} 
-                    onChange={(e) => setMediaQuality(e.target.value as 'standard' | 'high' | 'raw')}
-                    className="w-full bg-cyberdark-950 border border-cyberdark-700 rounded p-2 text-sm text-cybergold-300"
-                  >
-                    <option value="standard">Standard</option>
-                    <option value="high">Høy</option>
-                    <option value="raw">Original</option>
-                  </select>
-                </div>
-              </div>
-              
-              {/* Security note */}
-              {securityLevel !== 'standard' && (
-                <div className="flex items-center bg-green-900/20 rounded p-2 mb-3 text-xs">
-                  <Shield className="h-3.5 w-3.5 text-green-500 mr-1.5 flex-shrink-0" />
-                  <span className="text-green-400">
-                    Dette {selectedFile.type.startsWith('image/') ? 'bildet' : 'videoklippet'} vil bli kryptert før opplasting
-                  </span>
-                </div>
-              )}
-              
-              {/* Action buttons */}
-              <div className="flex justify-end gap-2">
       
       {/* Edit mode info */}
       {effectiveEditingMessageId && (
@@ -770,109 +258,6 @@ const MessageInput: React.FC<MessageInputProps> = ({
         className="hidden"
         accept="image/*,video/*,audio/*"
       />
-      <input
-        type="file"
-        ref={imageInputRef}
-        onChange={handleFileChange}
-        style={{ display: 'none' }}
-        accept="image/*,video/*"
-      />
-
-      {/* Main message input area */}
-      <div className="flex items-end p-2 relative">
-        {/* Media action buttons */}
-        <div className="flex space-x-1 mb-1 mr-2">
-          <button
-            type="button"
-            onClick={() => imageInputRef.current?.click()}
-            disabled={disabled}
-            className="p-2 rounded-full hover:bg-cyberdark-800 transition-all duration-200 text-cybergold-500 hover:text-cybergold-400 hover:shadow-[0_0_8px_rgba(218,188,69,0.3)] active:scale-95"
-            title="Send bilde eller video"
-          >
-            <Image size={20} />
-          </button>
-
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={disabled}
-            className="p-2 rounded-full hover:bg-cyberdark-800 transition-all duration-200 text-cybergold-500 hover:text-cybergold-400 hover:shadow-[0_0_8px_rgba(218,188,69,0.3)] active:scale-95"
-            title="Send fil"
-          >
-            <Paperclip size={20} />
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setShowAudioRecorder(true)}
-            disabled={disabled || showAudioRecorder}
-            className="p-2 rounded-full hover:bg-cyberdark-800 transition-all duration-200 text-cybergold-500 hover:text-cybergold-400 hover:shadow-[0_0_8px_rgba(218,188,69,0.3)] active:scale-95"
-            title="Spill inn lydmelding"
-          >
-            <Mic size={20} />
-          </button>
-          
-          {/* Emoji picker button */}
-          <button
-            type="button"
-            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-            className="p-2 rounded-full hover:bg-cyberdark-800 transition-all duration-200 text-cybergold-500 hover:text-cybergold-400 hover:shadow-[0_0_8px_rgba(218,188,69,0.3)] active:scale-95"
-            title="Legg til emoji"
-          >
-            <Smile size={20} />
-          </button>
-        </div>
-
-        {/* Message text input */}
-        <textarea
-          ref={inputRef}
-          value={message}
-          onChange={(e) => {
-            setMessage(e.target.value);
-            handleTypingStart();
-          }}
-          onKeyDown={handleKeyDown}
-          placeholder={editingMessage ? "Rediger melding..." : placeholder}
-          disabled={disabled || showAudioRecorder}
-          className="flex-1 bg-gradient-to-r from-cyberdark-850 to-cyberdark-800 border border-cyberdark-700 focus:border-cybergold-600/50 
-                   resize-none max-h-[120px] p-3 focus:outline-none focus:ring-0 rounded-lg text-sm text-cybergold-200 
-                   placeholder:text-cybergold-600 transition-all duration-200 shadow-inner"
-          style={{ height: '40px' }}
-        />
-
-        {/* Send/Save button - Change text based on edit mode */}
-        <button
-          onClick={handleSendMessage}
-          disabled={(!message.trim() && !selectedFile) || isSubmitting || disabled || showAudioRecorder}
-          className={cn(
-            "ml-2 p-2.5 rounded-full transition-all duration-300", 
-            message.trim() ? 
-              "bg-gradient-to-br from-cybergold-500 to-cybergold-600 text-black hover:from-cybergold-400 hover:to-cybergold-500 shadow-md hover:shadow-[0_0_10px_rgba(218,188,69,0.4)] active:scale-95" : 
-              "bg-cyberdark-800 text-cybergold-600"
-          )}
-          title={editingMessage ? "Lagre endringer" : "Send melding"}
-        >
-          <Send size={20} className={message.trim() ? '' : 'opacity-50'} />
-        </button>
-
-        {/* Add security indicator */}
-        {showSecurityIndicator && (
-          <div className="absolute -top-6 right-3 flex items-center text-xs bg-cyberdark-850/80 px-2 py-0.5 rounded-full border border-cyberdark-700">
-            <Shield size={12} className={cn(
-              "mr-1",
-              securityLevel === 'p2p_e2ee' ? "text-green-400" : 
-              securityLevel === 'server_e2ee' ? "text-cybergold-400" : 
-              "text-cybergold-600"
-            )} />
-            <span className={cn(
-              securityLevel === 'p2p_e2ee' ? "text-green-400" : 
-              securityLevel === 'server_e2ee' ? "text-cybergold-400" : 
-              "text-cybergold-600"
-            )}>
-              {securityLevel === 'p2p_e2ee' ? 'E2EE' : 
-               securityLevel === 'server_e2ee' ? 'Server kryptert' : 
-               'Standard'}
-            </span>
       
       {/* Status indicators */}
       <div className="flex items-center mt-1 pl-1 gap-2">
@@ -892,22 +277,6 @@ const MessageInput: React.FC<MessageInputProps> = ({
           </div>
         )}
       </div>
-      
-      {/* Emoji picker */}
-      {showEmojiPicker && (
-        <div className="p-2 border-t border-cyberdark-700 bg-gradient-to-b from-cyberdark-850 to-cyberdark-900 animate-fade-in">
-          <div className="grid grid-cols-8 gap-2 p-2">
-            {['😀', '😂', '❤️', '👍', '🎉', '🔥', '⚡', '✨', '🙏', '👀', '💯', '🤷‍♂️', '🤔', '😊', '🥰', '😎'].map((emoji) => (
-              <button
-                key={emoji}
-                onClick={() => {
-                  setMessage(prev => prev + emoji);
-                  setShowEmojiPicker(false);
-                  if (inputRef.current) {
-                    inputRef.current.focus();
-                  }
-                }}
-                className="text-xl p-2 hover:bg-cyberdark-700/80 hover:shadow-[0_0_5px_rgba(218,188,69,0.2)] rounded-lg
-```
-
-export default MessageInput;
+    </div>
+  );
+};

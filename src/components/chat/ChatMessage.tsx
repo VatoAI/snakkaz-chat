@@ -20,7 +20,8 @@ import {
   Image as ImageIcon,
   Copy,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Loader2
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
@@ -35,6 +36,44 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+
+// Add MessageOptionButton component
+interface MessageOptionButtonProps extends ButtonProps {
+  icon: React.ReactNode;
+  tooltip?: string;
+  onClick?: () => void;
+}
+
+const MessageOptionButton: React.FC<MessageOptionButtonProps> = ({
+  icon,
+  tooltip,
+  onClick,
+  className,
+  ...props
+}) => {
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className={cn(
+              "h-7 w-7 rounded-full p-0 text-muted-foreground hover:bg-muted hover:text-foreground",
+              className
+            )}
+            onClick={onClick}
+            {...props}
+          >
+            {icon}
+            <span className="sr-only">{tooltip}</span>
+          </Button>
+        </TooltipTrigger>
+        {tooltip && <TooltipContent>{tooltip}</TooltipContent>}
+      </Tooltip>
+    </TooltipProvider>
+  );
+};
 
 interface ReplyToMessage {
   content: string;
@@ -59,6 +98,7 @@ interface Message {
   readBy?: string[];
   replyTo?: string;
   replyToMessage?: ReplyToMessage;
+  isPending?: boolean; // Added missing property
 }
 
 interface UserProfile {
@@ -80,6 +120,7 @@ interface ChatMessageProps {
   isEncrypted?: boolean;
   onDownload?: (url: string, filename: string) => Promise<void>;
   securityLevel?: 'standard' | 'server_e2ee' | 'p2p_e2ee';
+  onCancelCode?: () => void; // Added missing prop
 }
 
 export const ChatMessage: React.FC<ChatMessageProps> = ({
@@ -91,7 +132,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   onReply,
   isEncrypted = false,
   onDownload,
-  securityLevel = 'standard'
+  securityLevel = 'standard',
+  onCancelCode
 }) => {
   const [showOptions, setShowOptions] = useState(false);
   const [showFullImage, setShowFullImage] = useState(false);
@@ -103,6 +145,41 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [downloadError, setDownloadError] = useState<string | null>(null);
   const [isCopied, setIsCopied] = useState(false);
+  const [isHovering, setIsHovering] = useState(false);
+  const [isPending, setIsPending] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showTtlSelector, setShowTtlSelector] = useState(false);
+  
+  // Extract isPending from the message
+  const isPending = message.isPending || false;
+
+  // Add the copyToClipboard function
+  const copyToClipboard = useCallback(async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+    }
+  }, []);
+
+  // Add onCancelCode function
+  const onCancelCode = () => {
+    console.log("Code snippet editing cancelled");
+    // Add any additional logic needed
+  };
+
+  // Toggle hovering state for message options
+  const handleMouseEnter = useCallback(() => {
+    setIsHovering(true);
+    setShowOptions(true);
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    setIsHovering(false);
+    setShowOptions(false);
+  }, []);
 
   const { id, content, sender_id, created_at, media, status, readBy, replyTo, replyToMessage } = message;
 
@@ -467,8 +544,6 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
             ) : (
               <div className="h-full w-full flex items-center justify-center text-xs font-medium text-cybergold-400 bg-gradient-to-br from-cyberdark-700 to-cyberdark-800">
                 {senderProfile.display_name?.[0]?.toUpperCase() || 'U'}
-              <div className="h-full w-full flex items-center justify-center text-xs text-cybergold-400">
-                {displayName[0].toUpperCase()}
               </div>
             )}
           </div>
@@ -482,7 +557,6 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
               : 'rounded-tl-sm bg-cyberdark-800/90 border border-cyberdark-700/50',
             message.ttl ? 'border border-amber-700/30' : '',
             securityLevel !== 'standard' ? `border-l-2 ${securityColors.borderColor}` : '',
-            'group relative max-w-[85%] rounded-xl py-2 px-3 transition-all duration-200',
             'shadow-sm hover:shadow-md',
             isCurrentUser ? 
               'rounded-tr-sm bg-gradient-to-br from-cybergold-900/50 to-cyberdark-900 border-b border-r border-cybergold-700/30' : 
@@ -509,15 +583,14 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
 
           {media?.url && isImage && (
             <div 
-              className="relative rounded-md overflow-hidden mb-2 cursor-pointer group/image"
               className="relative rounded-md overflow-hidden mb-2 cursor-pointer group"
               onClick={handleMediaClick}
             >
-              <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover/image:opacity-100 transition-opacity duration-200 pointer-events-none"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none"></div>
               <img 
                 src={media.url} 
                 alt="Vedlagt bilde" 
-                className="w-full max-h-60 object-contain bg-cyberdark-900 transition-transform duration-300 group-hover/image:scale-[1.02]"
+                className="w-full max-h-60 object-contain bg-cyberdark-900 transition-transform duration-300 group-hover:scale-[1.02]"
                 loading="lazy"
               />
               
@@ -680,8 +753,6 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                   className="h-full bg-cybergold-500" 
                   style={{ width: `${downloadProgress}%` }}
                 ></div>
-                {isEncrypted && <Shield className="h-3 w-3 text-green-400 mr-1.5" />}
-                <Download className="h-4 w-4 text-cybergold-500 transition-transform duration-200 hover:scale-110 hover:text-cybergold-400" />
               </div>
             </div>
           )}
@@ -729,66 +800,83 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
             {securityLevel !== 'standard' && (
               <div className={`flex items-center ${securityColors.textColor}`}>
                 {securityColors.icon}
+              </div>
+            )}
+            
             {isEncrypted && (
               <div className="flex items-center text-green-400/90">
                 <Shield className="h-3 w-3" />
               </div>
             )}
           </div>
-
-          {showOptions && (
-            <div className={cn(
-              'absolute top-1 flex gap-1 bg-cyberdark-950/85 backdrop-blur-sm rounded-full p-0.5 shadow-md border border-cyberdark-800',
-              'opacity-0 animate-fade-in',
-              'absolute top-1 flex gap-1 bg-cyberdark-950/70 backdrop-blur-sm rounded-full p-0.5',
-              isCurrentUser ? 'left-1' : 'right-1'
-            )}>
-              {content && (
-                <button 
-                  className="p-1 hover:bg-cyberdark-700 rounded-full"
-                  onClick={copyMessageContent}
-                  title="Kopier tekst"
-                >
-                  {isCopied ? (
-                    <CheckCircle className="h-3 w-3 text-green-400" />
-                  ) : (
-                    <Copy className="h-3 w-3 text-cybergold-400" />
-                  )}
-                </button>
-              )}
-              
-              {onReply && (
-                <button 
-                  className="p-1.5 hover:bg-cybergold-500/20 rounded-full transition-colors"
-                  onClick={() => onReply(message)}
-                  title="Svar på melding"
-                >
-                  <Reply className="h-3 w-3 text-cybergold-400" />
-                </button>
-              )}
-
-              {onEdit && isCurrentUser && !message.ttl && (
-                <button 
-                  className="p-1.5 hover:bg-cybergold-500/20 rounded-full transition-colors"
-                  onClick={() => onEdit(message)}
-                  title="Rediger melding"
-                >
-                  <Edit className="h-3 w-3 text-cybergold-400" />
-                </button>
-              )}
-
-              {onDelete && isCurrentUser && (
-                <button 
-                  className="p-1.5 hover:bg-red-500/20 rounded-full transition-colors"
-                  onClick={handleDeleteClick}
-                  title="Slett melding"
-                >
-                  <Trash2 className="h-3 w-3 text-red-400" />
-                </button>
-              )}
-            </div>
+          
+          <div className={cn(
+            "relative flex items-center gap-1 py-1 px-2 rounded-lg mb-2 w-fit",
+            isPending 
+              ? "bg-cyberdark-800/80 border border-cyberdark-700" 
+              : "bg-cybergold-900/50 border border-cybergold-800/40",
+            isCurrentUser ? "ml-auto" : "mr-auto"
+          )}>
+            <Loader2 className="h-3 w-3 animate-spin mr-1" />
+            <span className="text-xs">
+              {isCurrentUser 
+                ? "Sender kode..." 
+                : `${senderProfile?.display_name || 'Bruker'} sender kode...`}
+            </span>
+          </div>
+          
+          {isHovering && isPending && isCurrentUser && (
+            <Button 
+              onClick={onCancelCode} 
+              variant="destructive" 
+              size="xs" 
+              className="absolute -top-8 right-0 h-7 text-xs"
+            >
+              Avbryt
+            </Button>
           )}
         </div>
+        
+        {/* Message menu */}
+        {showOptions && message.id && !isPending && (
+          <div className={cn(
+            'absolute bottom-full mb-1 p-1 bg-cyberdark-900/95 border border-cyberdark-700 rounded-md shadow-lg z-10',
+            isCurrentUser ? 'right-0' : 'left-0'
+          )}>
+            {/* Message menu options */}
+            <MessageOptionButton 
+              icon={<Reply className="h-3.5 w-3.5" />} 
+              tooltip="Svar på melding"
+              onClick={() => onReply?.(message)}
+            />
+            
+            {message.content && (
+              <MessageOptionButton 
+                icon={<Copy className="h-3.5 w-3.5" />} 
+                tooltip="Kopier tekst" 
+                onClick={copyToClipboard}
+              />
+            )}
+
+            {isCurrentUser && message.id && (
+              <>
+                <MessageOptionButton 
+                  icon={<Trash2 className="h-3.5 w-3.5" />} 
+                  tooltip="Slett melding" 
+                  onClick={() => setShowDeleteConfirm(true)} 
+                  className="hover:text-red-400"
+                />
+                {!message.ttl && (
+                  <MessageOptionButton 
+                    icon={<Clock className="h-3.5 w-3.5" />} 
+                    tooltip="Sett utløpstid" 
+                    onClick={() => setShowTtlSelector(true)}
+                  />
+                )}
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       {showFullImage && media?.url && (
@@ -799,7 +887,6 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
           <div className="relative max-w-4xl max-h-[90vh] w-full">
             <button 
               className="absolute top-2 right-2 bg-cyberdark-900/90 p-2 rounded-full z-10 hover:bg-cyberdark-800 transition-colors shadow-lg"
-              className="absolute top-2 right-2 bg-cyberdark-900/80 p-2 rounded-full z-10 hover:bg-cyberdark-800"
               onClick={(e) => {
                 e.stopPropagation();
                 setShowFullImage(false);
@@ -853,22 +940,6 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                     </>
                   )}
                 </Button>
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-cyberdark-900/90 backdrop-blur-sm rounded-lg px-4 py-2 text-sm border border-cyberdark-700 shadow-lg">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center">
-                  <span className="text-cybergold-500 mr-1">Fra:</span>
-                  <span className="text-cybergold-300 font-medium">{senderProfile.display_name}</span>
-                </div>
-                <div className="flex items-center">
-                  <span className="text-cybergold-500 mr-1">Dato:</span>
-                  <span className="text-cybergold-300">{absoluteTime}</span>
-                </div>
-                {isEncrypted && (
-                  <div className="flex items-center text-green-400 bg-green-900/20 rounded-full px-2 py-0.5">
-                    <Shield className="h-4 w-4 mr-1" />
-                    <span>Kryptert</span>
-                  </div>
-                )}
               </div>
             </div>
           </div>

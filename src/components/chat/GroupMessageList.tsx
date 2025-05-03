@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { ChatMessage } from './ChatMessage';
 import { GroupMessage } from '@/types/group';
@@ -193,13 +192,6 @@ export const GroupMessageList: React.FC<GroupMessageListProps> = ({
                     url: message.mediaUrl || message.media_url || '',
                     type: message.mediaType || message.media_type || 'image'
                   } : undefined,
-                  content: message.text || '',
-                  sender_id: message.senderId,
-                  created_at: message.createdAt instanceof Date ? message.createdAt.toISOString() : String(message.createdAt),
-                  media: message.mediaUrl ? {
-                    url: message.mediaUrl,
-                    type: message.mediaType || 'image'
-                  } : null,
                   ttl: message.ttl,
                   status: 'sent',
                   readBy: message.readBy || message.read_by,
