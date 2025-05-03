@@ -51,13 +51,11 @@ export const GroupMessageList: React.FC<GroupMessageListProps> = ({
   const [replyTargetMessages, setReplyTargetMessages] = useState<Record<string, GroupMessage>>({});
   
   // Use custom hook to group messages by time
-  const [groupedMessages, getDateSeparatorText] = useMessageGrouping(
+  const { groupedMessages, getDateSeparatorText } = useMessageGrouping(
     messages.map(msg => ({
       ...msg,
       senderId: msg.senderId || msg.sender_id || '',
-      createdAt: typeof (msg.createdAt || msg.created_at) === 'number' 
-        ? new Date(msg.createdAt || msg.created_at || 0) 
-        : (msg.createdAt || msg.created_at || new Date())
+      createdAt: msg.createdAt || msg.created_at || new Date()
     }))
   );
   
@@ -131,10 +129,14 @@ export const GroupMessageList: React.FC<GroupMessageListProps> = ({
   if (!userId) return null;
 
   // Helper function to handle date safely
-  const getIsoString = (dateInput: string | Date | undefined): string => {
+  const getIsoString = (dateInput: string | number | Date | undefined): string => {
     if (!dateInput) return new Date().toISOString();
     
     if (typeof dateInput === 'string') {
+      return new Date(dateInput).toISOString();
+    }
+    
+    if (typeof dateInput === 'number') {
       return new Date(dateInput).toISOString();
     }
     

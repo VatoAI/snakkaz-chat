@@ -259,12 +259,15 @@ const GroupChatPage = () => {
         return;
       }
       
-      const newGroup = await createGroup({
-        name: newGroupName.trim(),
-        description: newGroupDesc.trim(),
-        visibility: newGroupVisibility,
-        securityLevel: newGroupEncrypted ? "server_e2ee" : "standard"
-      });
+      const securityLevel = newGroupEncrypted ? "server_e2ee" : "standard";
+      
+      // Fix: Pass a string as expected by the createGroup function
+      const newGroup = await createGroup(
+        newGroupName.trim(),
+        newGroupDesc.trim(),
+        newGroupVisibility,
+        securityLevel
+      );
       
       toast({
         title: "Gruppe opprettet",
