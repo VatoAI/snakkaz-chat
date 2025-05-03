@@ -60,7 +60,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Switch } from '@/components/ui/switch';
 import { MessageInput } from '@/components/message-input/MessageInput';
-import { Group, GroupVisibility, GroupMember, GroupMessage } from '@/types/group';
+import { Group, GroupVisibility, GroupMember, GroupMessage } from '@/features/groups/types/group';
 import { SecurityLevel } from '@/types/security';
 import { usePresence } from '@/hooks/usePresence';
 import { UserStatus } from '@/types/presence';
@@ -903,7 +903,17 @@ const GroupChatPage = () => {
       {/* Messages area */}
       <div className="flex-1 overflow-hidden">
         <GroupMessageList 
-          messages={Array.isArray(groupMessages) ? groupMessages : []} 
+          messages={Array.isArray(groupMessages) 
+            ? groupMessages.map(msg => ({
+                ...msg,
+                senderId: msg.senderId || msg.sender_id || '',
+                content: msg.content || msg.text || '',
+                createdAt: msg.createdAt || msg.created_at || new Date(),
+                isEdited: msg.isEdited || msg.is_edited || false,
+                mediaUrl: msg.mediaUrl || msg.media_url || undefined,
+                replyToId: msg.replyToId || msg.reply_to_id || undefined
+              }))
+            : []} 
           isLoading={messagesLoading}
           userProfiles={userProfiles}
           onMessageEdit={handleEditMessage}

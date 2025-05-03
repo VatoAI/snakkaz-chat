@@ -1,9 +1,9 @@
-
 import { useState } from "react";
 import { Group } from "@/types/group";
 import { SecurityLevel } from "@/types/security";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { GroupVisibility } from "@/features/groups/types/group";
 
 export const useGroupCreation = (
   currentUserId?: string,
@@ -17,7 +17,7 @@ export const useGroupCreation = (
   const handleCreateGroup = async (
     name: string,
     description: string = "",
-    visibility: "public" | "private" | "hidden" = "private",
+    visibility: GroupVisibility = "private",
     securityLevel: SecurityLevel = "standard"
   ): Promise<Group | null> => {
     if (!userId) return null;

@@ -1,5 +1,4 @@
-
-export type GroupVisibility = 'public' | 'private' | 'hidden';
+export type GroupVisibility = 'public' | 'private' | 'hidden' | 'secret';
 export type GroupRole = 'admin' | 'moderator' | 'member';
 export type GroupWritePermission = 'all' | 'admins' | 'moderators';
 export type MessageTTLOption = 0 | 5 | 10 | 30 | 60 | 300 | 3600 | 86400 | 604800;
