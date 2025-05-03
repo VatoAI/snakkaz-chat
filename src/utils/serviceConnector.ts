@@ -2,6 +2,8 @@
  * Utility for managing connections to external SnakkaZ services
  * Provides graceful fallbacks when services are unavailable
  */
+import * as Sentry from '@sentry/react';
+import { getConfig } from '../config/app-config';
 
 // Define ServiceName type
 export type ServiceName = 'SnakkaZ Business Analyser' | 'SnakkaZ Secure Docs' | 'AI Dash Hub' | 'SnakkaZ Analytics Hub';
@@ -163,6 +165,66 @@ export function setupSilentFetch(): void {
 }
 
 /**
+ * Initialize Sentry for error monitoring in production
+ */
+export function initializeSentry(): void {
+    const config = getConfig();
+    const isProd = import.meta.env.PROD;
+    const sentryDsn = config.sentryDsn;
+
+    if (isProd && sentryDsn) {
+        try {
+            Sentry.init({
+                dsn: sentryDsn,
+                integrations: [
+                    new Sentry.BrowserTracing({
+                        // Set sampling rate for performance monitoring
+                        tracePropagationTargets: ['localhost', 'snakkaz.com'],
+                    }),
+                    new Sentry.Replay()
+                ],
+                // Set tracesSampleRate to 1.0 to capture 100% of transactions for performance monitoring
+                // We recommend adjusting this value in production
+                tracesSampleRate: 0.2,
+                // Capture Replay for 10% of all sessions
+                replaysSessionSampleRate: 0.1,
+                // Capture Replay for 100% of sessions with an error
+                replaysOnErrorSampleRate: 1.0,
+                environment: import.meta.env.MODE,
+                release: `snakkaz-chat@${import.meta.env.VITE_APP_VERSION || '1.0.0'}`,
+                beforeSend(event) {
+                    // Don't send events for known issues or development environments
+                    if (!isProd) {
+                        return null;
+                    }
+                    return event;
+                },
+            });
+
+            // Set user info if available
+            const user = localStorage.getItem('snakkaz_user');
+            if (user) {
+                try {
+                    const parsedUser = JSON.parse(user);
+                    if (parsedUser && parsedUser.id) {
+                        Sentry.setUser({
+                            id: parsedUser.id,
+                            // Don't include personal info like email or name
+                        });
+                    }
+                } catch (e) {
+                    console.debug('Failed to parse user for Sentry');
+                }
+            }
+
+            console.debug('Sentry initialized successfully');
+        } catch (error) {
+            console.error('Failed to initialize Sentry:', error);
+        }
+    }
+}
+
+/**
  * Setup global error handlers for resource loading errors
  */
 export function setupErrorHandlers(): void {
@@ -177,6 +239,18 @@ export function setupErrorHandlers(): void {
                 // Prevent error from showing in console
                 return true;
             }
+        }
+
+        // Capture in Sentry for production environment
+        if (import.meta.env.PROD && error && getConfig().sentryDsn) {
+            Sentry.captureException(error, {
+                extra: {
+                    source,
+                    lineno,
+                    colno,
+                    message,
+                }
+            });
         }
 
         // Pass to original handler
@@ -203,6 +277,17 @@ export function setupErrorHandlers(): void {
             }
         }
     }, true);
+
+    // Monitor fetch errors
+    window.addEventListener('unhandledrejection', function(event) {
+        if (import.meta.env.PROD && getConfig().sentryDsn) {
+            if (event.reason instanceof Error) {
+                Sentry.captureException(event.reason);
+            } else {
+                Sentry.captureMessage(`Unhandled Promise Rejection: ${JSON.stringify(event.reason)}`);
+            }
+        }
+    });
 }
 
 /**
@@ -211,4 +296,5 @@ export function setupErrorHandlers(): void {
 export function initializeErrorHandling(): void {
     setupSilentFetch();
     setupErrorHandlers();
+    initializeSentry();
 }

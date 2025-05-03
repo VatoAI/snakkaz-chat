@@ -7,109 +7,50 @@ import { useEnhancedMediaUpload, ResizeMode } from '@/hooks/useEnhancedMediaUplo
 import { useMessageReply } from '@/hooks/useMessageReply';
 import { EnhancedAudioRecorder } from '@/components/media/EnhancedAudioRecorder';
 import { cn } from '@/lib/utils';
+
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
+import { Send, X, Clock, Shield, PaperclipIcon } from 'lucide-react';
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface MessageInputProps {
-  onSendMessage: (message: string) => Promise<void>;
-  onSendFile?: (file: File) => Promise<void>;
-  onSendEnhancedMedia?: (mediaData: { url: string, thumbnailUrl?: string, ttl?: number, isEncrypted?: boolean }) => Promise<void>;
-  onSendAudio?: (blob: Blob) => Promise<void>;
-  onSendProduct?: (productData: ProductData) => Promise<void>;
-  onUpdateMessage?: (messageId: string, newContent: string) => Promise<void>;
+  onSendMessage: (text: string) => Promise<void> | void;
+  editingMessageId?: string | null;
+  editingContent?: string;
+  editingMessage?: { id: string; content: string } | null; // For backward compatibility
   onCancelEdit?: () => void;
-  editingMessage?: { id: string; content: string } | null;
+  replyToMessage?: any;
+  onCancelReply?: () => void;
+  ttl?: number;
+  onChangeTtl?: (ttl: number) => void;
+  isEncrypted?: boolean;
   placeholder?: string;
   disabled?: boolean;
-  securityLevel?: 'p2p_e2ee' | 'server_e2ee' | 'standard';
-  showSecurityIndicator?: boolean;
+  maxLength?: number;
   autoFocus?: boolean;
-  isPremiumGroup?: boolean;
-  allowMarketplace?: boolean;
-  onStartTyping?: () => void;
-  onStopTyping?: () => void;
 }
-
-// Nytt produkt-datagrensesnitt for markedsplass-funksjonalitet
-interface ProductData {
-  title: string;
-  description: string;
-  price: number;
-  currency?: string;
-  imageUrl?: string;
-  thumbnailUrl?: string;
-  inStock?: boolean;
-  quantity?: number;
-  contactInfo?: string;
-}
-
-interface EditingMessageProps {
-  content: string;
-  onCancel: () => void;
-}
-
-const EditingMessage: React.FC<EditingMessageProps> = ({ content, onCancel }) => {
-  return (
-    <div className="flex items-center gap-2 p-2 bg-cyberdark-800 rounded-md mb-2 text-xs">
-      <Edit className="h-3 w-3 text-cybergold-500" />
-      <span className="flex-1 truncate">Redigerer: {content}</span>
-      <button 
-        onClick={onCancel}
-        className="text-cybergold-400 hover:text-cybergold-300"
-      >
-        <X className="h-4 w-4" />
-      </button>
-    </div>
-  );
-};
-
-interface ReplyPreviewProps {
-  message: {
-    id: string;
-    content: string;
-    sender: {
-      displayName: string;
-    };
-  };
-  onCancel: () => void;
-}
-
-const ReplyPreview: React.FC<ReplyPreviewProps> = ({ message, onCancel }) => {
-  return (
-    <div className="flex items-center gap-2 p-2 bg-cyberdark-800 rounded-md mb-2 text-xs border-l-2 border-cyberblue-500">
-      <CornerUpLeft className="h-3 w-3 text-cyberblue-400" />
-      <div className="flex-1 truncate">
-        <span className="font-medium text-cyberblue-400">{message.sender.displayName}</span>
-        <span className="ml-2 opacity-75 truncate">{message.content}</span>
-      </div>
-      <button 
-        onClick={onCancel}
-        className="text-cybergold-400 hover:text-cybergold-300"
-      >
-        <X className="h-4 w-4" />
-      </button>
-    </div>
-  );
-};
 
 const MessageInput: React.FC<MessageInputProps> = ({
   onSendMessage,
-  onSendFile,
-  onSendEnhancedMedia,
-  onSendAudio,
-  onUpdateMessage,
+  editingMessageId,
+  editingContent,
+  editingMessage, // For backward compatibility
   onCancelEdit,
-  editingMessage,
+  replyToMessage,
+  onCancelReply,
+  ttl = 0,
+  onChangeTtl,
+  isEncrypted = false,
   placeholder = "Skriv en melding...",
   disabled = false,
-  securityLevel = 'standard',
-  showSecurityIndicator = true,
+  maxLength = 2000,
   autoFocus = false,
-  isPremiumGroup = false,
-  allowMarketplace = false,
-  onStartTyping,
-  onStopTyping,
 }) => {
   const [message, setMessage] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -128,6 +69,12 @@ const MessageInput: React.FC<MessageInputProps> = ({
   const [showDragHelp, setShowDragHelp] = useState<boolean>(false);
 
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  // Handle backward compatibility for editingMessage
+  const effectiveEditingMessageId = editingMessageId || editingMessage?.id;
+  const effectiveEditingContent = editingContent || editingMessage?.content;
+
+  const [text, setText] = useState(effectiveEditingContent || '');
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const dropAreaRef = useRef<HTMLDivElement>(null);
@@ -220,17 +167,12 @@ const MessageInput: React.FC<MessageInputProps> = ({
   }, [editingMessage, isSubmitting]);
 
   // Automatisk juster høyden på tekstområdet basert på innhold
-  useEffect(() => {
-    if (inputRef.current) {
-      inputRef.current.style.height = 'auto';
-      inputRef.current.style.height = `${Math.min(inputRef.current.scrollHeight, 120)}px`;
-    }
-  }, [message]);
 
-  // Autofokus på desktop, men ikke på mobile
+  // Set initial value when editing
   useEffect(() => {
-    if (autoFocus && !isMobile && inputRef.current && !editingMessage) {
-      inputRef.current.focus();
+    if (effectiveEditingContent) {
+      setText(effectiveEditingContent);
+      textareaRef.current?.focus();
     }
   }, [autoFocus, isMobile, editingMessage]);
 
@@ -247,11 +189,12 @@ const MessageInput: React.FC<MessageInputProps> = ({
       }
     };
   }, [previewUrl, typingTimeoutId]);
+  }, [effectiveEditingContent, effectiveEditingMessageId]);
 
-  // Handle upload completion
+  // Handle autoFocus
   useEffect(() => {
-    if (uploadState.url && !isSubmitting) {
-      sendEnhancedMedia();
+    if (autoFocus) {
+      textareaRef.current?.focus();
     }
   }, [uploadState.url, isSubmitting, sendEnhancedMedia, onSendEnhancedMedia, mediaTtl]);
 
@@ -319,46 +262,32 @@ const MessageInput: React.FC<MessageInputProps> = ({
         clearTimeout(typingTimeoutId);
         if (onStopTyping) onStopTyping();
       }
+  }, [autoFocus]);
+
+  // Reset input after sending
+  const resetInput = () => {
+    setText('');
+  };
+
+  // Handle send message
+  const handleSendMessage = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    
+    if (!text.trim() && !effectiveEditingMessageId) return;
+    
+    try {
+      await onSendMessage(text);
+      resetInput();
     } catch (error) {
-      console.error('Failed to send message:', error);
-    } finally {
-      setIsSubmitting(false);
+      console.error("Failed to send message:", error);
     }
   };
 
-  const handleCancelEdit = () => {
-    if (onCancelEdit) {
-      onCancelEdit();
-    }
-  };
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-
-      // Check if it's an image or video
-      if (file.type.startsWith('image/') || file.type.startsWith('video/')) {
-        // For images and videos, use enhanced uploader
-        setSelectedFile(file);
-        const url = URL.createObjectURL(file);
-        setPreviewUrl(url);
-        setShowMediaUploader(true);
-        setCaptionText(''); // Clear any previous caption
-      } else if (onSendFile) {
-        // For other file types, use regular uploader
-        try {
-          setIsSubmitting(true);
-          await onSendFile(file);
-        } catch (error) {
-          console.error('Error uploading file:', error);
-        } finally {
-          setIsSubmitting(false);
-          // Reset file input
-          if (fileInputRef.current) {
-            fileInputRef.current.value = '';
-          }
-        }
-      }
+  // Handle key press (Ctrl+Enter or Enter to send)
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if ((e.key === 'Enter' && !e.shiftKey) || (e.key === 'Enter' && e.ctrlKey)) {
+      e.preventDefault();
+      handleSendMessage();
     }
   };
 
@@ -427,6 +356,25 @@ const MessageInput: React.FC<MessageInputProps> = ({
     } catch (error) {
       console.error('Upload error:', error);
     }
+  };
+  // Handle text change
+  const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    if (value.length <= maxLength) {
+      setText(value);
+    }
+  };
+
+  // Handle TTL change
+  const handleTtlChange = (newTtl: number) => {
+    if (onChangeTtl) {
+      onChangeTtl(newTtl);
+    }
+  };
+
+  // Handle file selection
+  const handleFileSelect = () => {
+    fileInputRef.current?.click();
   };
 
   // Handle drag and drop for images
@@ -510,6 +458,14 @@ const MessageInput: React.FC<MessageInputProps> = ({
   };
 
   const securityIndicator = getSecurityIndicator();
+  // Render TTL options
+  const getTtlLabel = (seconds: number): string => {
+    if (seconds === 0) return "Aldri";
+    if (seconds < 60) return `${seconds} sekunder`;
+    if (seconds < 3600) return `${Math.floor(seconds / 60)} minutter`;
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)} timer`;
+    return `${Math.floor(seconds / 86400)} dager`;
+  };
 
   return (
     <div 
@@ -559,6 +515,26 @@ const MessageInput: React.FC<MessageInputProps> = ({
             }}
             onCancel={clearReply}
           />
+    <div className="bg-cyberdark-900 border-t border-cyberdark-700 p-3">
+      {/* Reply info if replying to a message */}
+      {replyToMessage && (
+        <div className="flex items-center bg-cyberdark-800 p-2 mb-2 rounded border-l-2 border-cybergold-600">
+          <div className="flex-1 overflow-hidden">
+            <div className="text-xs text-cybergold-500">Svar til</div>
+            <div className="text-sm text-cybergold-300 truncate">
+              {replyToMessage.content || replyToMessage.text || ""}
+            </div>
+          </div>
+          {onCancelReply && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-6 w-6 p-0" 
+              onClick={onCancelReply}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       )}
 
@@ -690,65 +666,109 @@ const MessageInput: React.FC<MessageInputProps> = ({
               
               {/* Action buttons */}
               <div className="flex justify-end gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={handleCancelMedia}
-                  disabled={uploadState.isUploading}
-                  className="border-cybergold-500/30 text-cybergold-400"
-                >
-                  Avbryt
-                </Button>
-                
-                <Button 
-                  size="sm"
-                  onClick={handleUpload}
-                  disabled={uploadState.isUploading}
-                  className="bg-cybergold-600 text-black hover:bg-cybergold-700"
-                >
-                  {uploadState.isUploading ? (
-                    <div className="flex items-center">
-                      <Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" />
-                      Laster opp...
-                    </div>
-                  ) : 'Send'}
-                </Button>
-              </div>
-            </div>
+      
+      {/* Edit mode info */}
+      {effectiveEditingMessageId && (
+        <div className="flex items-center bg-cyberdark-800 p-2 mb-2 rounded border-l-2 border-cyberblue-600">
+          <div className="flex-1 overflow-hidden">
+            <div className="text-xs text-cyberblue-500">Redigerer melding</div>
           </div>
+          {onCancelEdit && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-6 w-6 p-0" 
+              onClick={onCancelEdit}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       )}
       
-      {/* Audio recorder */}
-      {showAudioRecorder && (
-        <div className="p-4">
-          {/* EnhancedAudioRecorder-komponenten ville gå her */}
-          <div className="text-center p-4 bg-cyberdark-800 rounded-lg">
-            <Mic className="h-6 w-6 text-cybergold-400 mx-auto mb-2 animate-pulse" />
-            <p className="text-cybergold-300 text-sm mb-3">Opptak pågår...</p>
-            <div className="flex justify-center gap-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => setShowAudioRecorder(false)}
-              >
-                Avbryt
-              </Button>
-              <Button size="sm" className="bg-cybergold-600 text-black">
-                Send
-              </Button>
-            </div>
+      <form onSubmit={handleSendMessage} className="flex items-end gap-2">
+        <div className="relative flex-1">
+          <Textarea
+            ref={textareaRef}
+            value={text}
+            onChange={handleTextChange}
+            onKeyDown={handleKeyDown}
+            placeholder={placeholder}
+            disabled={disabled}
+            className="min-h-[60px] max-h-[200px] bg-cyberdark-800 border-cyberdark-700 text-cybergold-100 resize-none"
+            rows={1}
+          />
+          <div className="absolute bottom-2 right-2 flex items-center gap-1 text-xs text-cybergold-600">
+            {text.length > 0 && maxLength && (
+              <span>{text.length}/{maxLength}</span>
+            )}
           </div>
         </div>
-      )}
-
-      {/* File input fields - hidden */}
+        
+        <div className="flex gap-1 pb-1">
+          {/* TTL dropdown */}
+          {onChangeTtl && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  type="button" 
+                  variant={ttl > 0 ? "secondary" : "ghost"} 
+                  size="icon"
+                  className="h-10 w-10 rounded-full"
+                >
+                  <Clock className={`h-5 w-5 ${ttl > 0 ? 'text-cybergold-400' : 'text-cybergold-600'}`} />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-cyberdark-800 border-cyberdark-700">
+                <DropdownMenuItem onClick={() => handleTtlChange(0)}>
+                  Ikke selvslettende
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleTtlChange(300)}>
+                  5 minutter
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleTtlChange(3600)}>
+                  1 time
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleTtlChange(86400)}>
+                  24 timer
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleTtlChange(604800)}>
+                  7 dager
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+          
+          {/* Media upload button */}
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={handleFileSelect}
+            className="h-10 w-10 rounded-full"
+          >
+            <PaperclipIcon className="h-5 w-5 text-cybergold-600" />
+          </Button>
+          
+          {/* Send button */}
+          <Button
+            type="submit"
+            variant="default"
+            size="icon"
+            disabled={(!text.trim() && !effectiveEditingMessageId) || disabled}
+            className="h-10 w-10 rounded-full bg-cybergold-600 hover:bg-cybergold-500"
+          >
+            <Send className="h-5 w-5" />
+          </Button>
+        </div>
+      </form>
+      
+      {/* Hidden file input */}
       <input
         type="file"
         ref={fileInputRef}
-        onChange={handleFileChange}
-        style={{ display: 'none' }}
-        accept="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"
+        className="hidden"
+        accept="image/*,video/*,audio/*"
       />
       <input
         type="file"
@@ -853,6 +873,22 @@ const MessageInput: React.FC<MessageInputProps> = ({
                securityLevel === 'server_e2ee' ? 'Server kryptert' : 
                'Standard'}
             </span>
+      
+      {/* Status indicators */}
+      <div className="flex items-center mt-1 pl-1 gap-2">
+        {/* TTL indicator */}
+        {ttl > 0 && (
+          <div className="flex items-center text-xs text-cybergold-500">
+            <Clock className="h-3 w-3 mr-1" />
+            {getTtlLabel(ttl)}
+          </div>
+        )}
+        
+        {/* Encryption indicator */}
+        {isEncrypted && (
+          <div className="flex items-center text-xs text-green-500">
+            <Shield className="h-3 w-3 mr-1" />
+            Kryptert
           </div>
         )}
       </div>
@@ -884,6 +920,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
       )}
     </div>
   );
+};
 };
 
 export default MessageInput;

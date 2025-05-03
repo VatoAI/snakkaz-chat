@@ -1,1 +1,2 @@
-# Deployment trigger file\nLast deployment: 1. mai 2025 - Fixed group chat persistence and optimized AI assistant integration
+# Deployment trigger file
+Last deployment: 1. mai 2025 - Implementert produksjonsoptimaliseringer, Sentry-feilsporing og PWA-forbedringer for www.snakkaz.com lansering

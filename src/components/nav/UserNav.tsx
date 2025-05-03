@@ -1,3 +1,4 @@
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,14 +13,17 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
-import { Settings, Shield, LogOut, User, CreditCard } from "lucide-react";
+import { Settings, Shield, LogOut, User, CreditCard, Crown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export function UserNav() {
     const navigate = useNavigate();
     const { user, signOut } = useAuth();
+    const [isPremium, setIsPremium] = useState(false);
 
-    // Hent første bokstav i brukerens navn eller e-post
+    // Get first letter of user's name or email
     const getInitials = () => {
         if (!user) return "?";
         if (user.user_metadata?.full_name) {
@@ -30,6 +34,31 @@ export function UserNav() {
         }
         return "U";
     };
+    
+    useEffect(() => {
+        if (user?.id) {
+            const checkPremiumStatus = async () => {
+                try {
+                    const { data, error } = await supabase
+                        .from('profiles')
+                        .select('is_premium')
+                        .eq('id', user.id)
+                        .single();
+                    
+                    if (error) {
+                        console.error('Error checking premium status:', error);
+                        return;
+                    }
+                    
+                    setIsPremium(data?.is_premium || false);
+                } catch (err) {
+                    console.error('Failed to check premium status:', err);
+                }
+            };
+            
+            checkPremiumStatus();
+        }
+    }, [user]);
 
     // Sjekk om brukeren har Premium-status
     const isPremium = user?.user_metadata?.subscription_status === 'active';
@@ -61,7 +90,18 @@ export function UserNav() {
                         >
                             {getInitials()}
                         </AvatarFallback>
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                    <Avatar className="h-8 w-8 border border-cyberdark-700">
+                        <AvatarImage src={user?.user_metadata?.avatar_url} alt={user?.email || "Bruker"} />
+                        <AvatarFallback className={`${isPremium ? 'bg-cybergold-600/20' : 'bg-cyberdark-700'} text-cybergold-400`}>
+                            {getInitials()}
+                        </AvatarFallback>
                     </Avatar>
+                    {isPremium && (
+                        <span className="absolute -top-1 -right-1 bg-cybergold-500 rounded-full w-3 h-3 flex items-center justify-center">
+                            <Crown className="h-2 w-2 text-black" />
+                        </span>
+                    )}
                     
                     {/* Premium indikator */}
                     {isPremium && (
@@ -71,6 +111,16 @@ export function UserNav() {
                     )}
                 </Button>
             </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                        <div className="flex items-center">
+                            <p className="text-sm font-medium leading-none">{user?.user_metadata?.full_name || "Bruker"}</p>
+                            {isPremium && (
+                                <Crown className="h-3 w-3 ml-1 text-cybergold-400" />
+                            )}
+                        </div>
+                        <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
             <DropdownMenuContent 
                 className="w-64 bg-gradient-to-b from-cyberdark-900 to-cyberdark-950 border border-cyberdark-700 shadow-xl" 
                 align="end" 
@@ -130,6 +180,16 @@ export function UserNav() {
                         </div>
                         <span className="text-cybergold-300 group-hover:text-cybergold-400">Abonnement</span>
                     </DropdownMenuItem>
+                    {isPremium && (
+                        <DropdownMenuItem onClick={() => window.open('https://electrum.org/', '_blank')}>
+                            <img 
+                                src="/lovable-uploads/4402f982-40f7-49ac-8d9a-bb8bb64fc2bf.png" 
+                                alt="Electrum" 
+                                className="mr-2 h-4 w-4"
+                            />
+                            <span>Electrum-lommebok</span>
+                        </DropdownMenuItem>
+                    )}
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator className="bg-cyberdark-800" />
                 <DropdownMenuItem

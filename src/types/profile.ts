@@ -1,3 +1,4 @@
+
 // Profile type definition
 export interface Profile {
   id?: string;
@@ -17,6 +18,9 @@ export interface Profile {
   
   // Security settings
   two_factor_enabled?: boolean;
+  
+  // Verification
+  is_verified?: boolean; 
   
   // Additional fields
   created_at?: string;

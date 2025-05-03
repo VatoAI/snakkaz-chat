@@ -1,0 +1,25 @@
+// Export all chat components
+export { AIAgentChat } from './AIAgentChat';
+export { AdminButton } from './AdminButton';
+export { ChatDialogs } from './ChatDialogs';
+export { ChatFriends } from './ChatFriends';
+export { ChatGlassPanel } from './ChatGlassPanel';
+export { ChatGlobal } from './ChatGlobal';
+export { ChatHeader } from './ChatHeader';
+export { ChatInputField } from './ChatInputField';
+export { ChatInterface } from './ChatInterface';
+export { default as ChatList } from './ChatList';
+export { ChatMessage } from './ChatMessage';
+export { ChatMessageList } from './ChatMessageList';
+export { ChatPresence } from './ChatPresence';
+export { default as ChatSidebar } from './ChatSidebar';
+export { ChatTabs } from './ChatTabs';
+export { CommandHandler } from './CommandHandler';
+export { FriendsList } from './FriendsList';
+export { GroupMessageList } from './GroupMessageList';
+export { MediaUploader } from './MediaUploader';
+export { default as MessageBubble } from './MessageBubble';
+export { MigrationHelper } from './MigrationHelper';
+export { PrivateChats } from './PrivateChats';
+export { ScrollStabilizer } from './ScrollStabilizer';
+export { UsersProfiles } from './UsersProfiles';

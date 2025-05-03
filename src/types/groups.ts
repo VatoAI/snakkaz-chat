@@ -1,7 +1,8 @@
-// Group Types
-export type GroupRole = "admin" | "moderator" | "member" | "premium";
 
-export type GroupVisibility = "private" | "public";
+// Group Types
+export type GroupRole = "admin" | "moderator" | "member" | "premium" | "owner" | "guest";
+
+export type GroupVisibility = "private" | "public" | "hidden";
 
 export type SecurityLevel = "low" | "standard" | "high" | "maximum";
 
@@ -14,6 +15,12 @@ export interface GroupMember {
     can_write: boolean;
     storage_quota?: number; // Premium-medlemmer kan ha høyere quota
     premium_features?: string[]; // Liste over aktive premium-funksjoner
+    // Add compatibility with newer type
+    userId?: string;
+    groupId?: string;
+    joinedAt?: string;
+    isActive?: boolean;
+    lastActive?: string;
 }
 
 export interface Group {
@@ -21,6 +28,7 @@ export interface Group {
     name: string;
     description?: string;
     avatarUrl?: string;
+    avatar_url?: string; // For backward compatibility
     visibility: GroupVisibility;
     securityLevel?: SecurityLevel;
     is_premium: boolean;
@@ -33,6 +41,13 @@ export interface Group {
     max_message_retention?: number; // Antall dager meldinger beholdes (premium kan ha ubegrenset)
     members?: GroupMember[]; // Medlemsliste med roller
     premium_features?: PremiumFeatures; // Aktive premium-funksjoner
+    // Add compatibility with newer type
+    createdBy?: string; 
+    creator_id?: string;
+    type?: string;
+    isPublic?: boolean;
+    settings?: any;
+    password?: string;
 }
 
 export interface GroupInvitation {

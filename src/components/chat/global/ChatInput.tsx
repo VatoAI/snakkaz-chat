@@ -1,3 +1,4 @@
+
 import { MessageInput } from "@/components/message-input";
 
 interface ChatInputProps {
@@ -36,7 +37,8 @@ export const ChatInput = ({
         onSendMessage={handleSendMessage}
         placeholder="Skriv en melding..."
         disabled={isLoading}
-        editingMessage={editingMessage}
+        editingMessageId={editingMessage?.id}
+        editingContent={editingMessage?.content}
         onCancelEdit={onCancelEdit}
         autoFocus={true}
       />

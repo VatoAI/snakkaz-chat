@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useGroups } from "@/hooks/useGroups";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CreateGroupModal } from "./CreateGroupModal";
+import { CreateGroupModal } from "@/features/groups/components";
 import { InviteGroupModal } from "./InviteGroupModal";
 import { UserPlus, Users, Lock, Globe, Plus, Shield, RefreshCcw, Search, Star } from "lucide-react";
 import { type Group, SecurityLevel } from "@/types/groups";

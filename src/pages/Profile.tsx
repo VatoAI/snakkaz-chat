@@ -7,14 +7,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Edit, Eye, Key, Lock, LogOut, ShieldCheck, Upload, User, Shield } from "lucide-react";
+import { Edit, Eye, Key, Lock, LogOut, ShieldCheck, Upload, User, Shield, Bitcoin } from "lucide-react";
 import { PremiumUser } from "@/components/profile/PremiumUser";
+import { BitcoinWallet } from "@/components/profile/BitcoinWallet";
 import { useToast } from "@/hooks/use-toast";
 import { useGroups } from "@/hooks/useGroups";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AppEncryptionContext, useAppEncryption } from "@/contexts/AppEncryptionContext";
 import { useProfileLoader } from "@/hooks/useProfileLoader";
 import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { v4 as uuidv4 } from 'uuid';
 import {
   Dialog,
   DialogContent,
@@ -33,6 +36,7 @@ export default function Profile() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState("");
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const { screenCaptureProtection } = useAppEncryption();
   const isEncryptionEnabled = screenCaptureProtection.isEnabled();
   const { profileData, isProfileLoading, refreshProfile } = useProfileLoader(user?.id);
@@ -94,7 +98,13 @@ export default function Profile() {
       if (profileData) {
         setDisplayName(profileData.display_name || displayName);
         if (profileData.avatar_url) {
-          setAvatarUrl(profileData.avatar_url);
+          // Create proper URL from Supabase storage path
+          if (profileData.avatar_url.startsWith('avatars/')) {
+            const { data } = supabase.storage.from('avatars').getPublicUrl(profileData.avatar_url.replace('avatars/', ''));
+            setAvatarUrl(data.publicUrl);
+          } else {
+            setAvatarUrl(profileData.avatar_url);
+          }
         }
       }
     }
@@ -114,9 +124,27 @@ export default function Profile() {
 
     setIsSaving(true);
     try {
-      await updateProfile({
+      // First update profile information
+      const updates = {
         display_name: displayName,
-      });
+      };
+
+      // If we have a new avatar file, upload it first
+      if (avatarFile) {
+        const avatarFileName = `${uuidv4()}-${avatarFile.name}`;
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('avatars')
+          .upload(avatarFileName, avatarFile);
+
+        if (uploadError) {
+          throw uploadError;
+        }
+
+        // Update the avatar_url in the profile
+        updates['avatar_url'] = uploadData.path;
+      }
+
+      await updateProfile(updates);
 
       if (isEncryptionEnabled && profileData) {
         // Pseudokode for oppdatering av kryptert profildata
@@ -127,6 +155,7 @@ export default function Profile() {
       }
 
       await refreshProfile();
+      setAvatarFile(null);
 
       toast({
         title: "Profil oppdatert",
@@ -148,8 +177,32 @@ export default function Profile() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast({
+        variant: "destructive",
+        title: "Filen er for stor",
+        description: "Maksimal filstørrelse er 2MB. Vennligst velg en mindre fil.",
+      });
+      return;
+    }
+
+    // Validate file type
+    if (!['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(file.type)) {
+      toast({
+        variant: "destructive",
+        title: "Ugyldig filformat",
+        description: "Kun JPEG, PNG, GIF og WebP-bilder er støttet.",
+      });
+      return;
+    }
+
     setIsLoading(true);
     try {
+      // Store the file for later upload
+      setAvatarFile(file);
+      
+      // Create a preview
       const dataUrl = await readFileAsDataURL(file);
       setAvatarUrl(dataUrl);
 
@@ -457,10 +510,13 @@ export default function Profile() {
 
         <div className="md:col-span-2">
           <Tabs defaultValue="profile" className="w-full">
-            <TabsList className="w-full grid grid-cols-3 bg-cyberdark-800">
+            <TabsList className="w-full grid grid-cols-4 bg-cyberdark-800">
               <TabsTrigger value="profile">Profil</TabsTrigger>
               <TabsTrigger value="security">Sikkerhet</TabsTrigger>
               <TabsTrigger value="privacy">Personvern</TabsTrigger>
+              <TabsTrigger value="crypto" className="flex items-center gap-1.5">
+                <Bitcoin className="h-3.5 w-3.5" /> Krypto
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="profile" className="mt-4">
@@ -666,6 +722,30 @@ export default function Profile() {
                   </Button>
                 </CardFooter>
               </Card>
+            </TabsContent>
+
+            <TabsContent value="crypto" className="mt-4">
+              <BitcoinWallet userId={user?.id || ''} isPremium={isPremium} />
+              
+              {!isPremium && (
+                <Card className="bg-cyberdark-900 border-cyberdark-700 mt-4 border-dashed">
+                  <CardContent className="pt-6">
+                    <div className="flex flex-col items-center text-center p-4">
+                      <Bitcoin className="h-10 w-10 text-gray-500 mb-4" />
+                      <h3 className="text-lg font-medium text-white mb-2">Oppgrader til Premium</h3>
+                      <p className="text-sm text-gray-400 mb-6">
+                        Med Premium får du utvidede funksjoner for kryptohåndtering, inkludert multi-wallet støtte, enhetssynkronisering og mer sikkerhet.
+                      </p>
+                      <Button 
+                        className="bg-cybergold-600 hover:bg-cybergold-500 text-black"
+                        onClick={handleUpgrade}
+                      >
+                        Oppgrader til Premium
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </TabsContent>
           </Tabs>
         </div>

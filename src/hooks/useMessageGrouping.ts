@@ -1,10 +1,10 @@
-import { useMemo } from "react";
-import { format, isToday, isYesterday, isSameDay, isSameWeek, isSameMonth, isSameYear } from "date-fns";
-import { nb } from 'date-fns/locale';
-import { GroupMessage } from "@/types/group";
-import { DecryptedMessage } from "@/types/message";
-import { UserPresence, UserStatus } from "@/types/presence";
 
+import { useState, useMemo } from 'react';
+import { formatDistanceToNow, format, isToday, isYesterday, isThisWeek, isThisYear, parseISO } from 'date-fns';
+import { nb } from 'date-fns/locale';
+import { UserPresence, UserStatus } from '@/types/presence';
+
+interface UseMessageGroupingProps<T> {
 // Definer en union-type som inkluderer alle meldingstyper
 type MessageType = GroupMessage | DecryptedMessage;
 
@@ -34,6 +34,25 @@ interface UseMessageGroupingProps<T extends MessageType> {
   userPresence?: Record<string, UserPresence>;
 }
 
+export function useMessageGrouping<T extends { createdAt?: string | Date; created_at?: string | Date; senderId?: string; sender_id?: string }>({ 
+  messages,
+  userPresence = {}
+}: UseMessageGroupingProps<T>) {
+  // Safely determine the created time from different field formats
+  const getCreatedTime = (message: T): Date => {
+    if (message.createdAt) {
+      return message.createdAt instanceof Date 
+        ? message.createdAt 
+        : parseISO(message.createdAt as string);
+    }
+    if (message.created_at) {
+      return message.created_at instanceof Date 
+        ? message.created_at 
+        : parseISO(message.created_at as string);
+    }
+    return new Date();
+  };
+
 type GroupedMessages<T> = {
   [key: string]: T[];
 };
@@ -48,8 +67,26 @@ export const useMessageGrouping = <T extends MessageType>(props: UseMessageGroup
   
   // Group messages by date
   const groupedMessages = useMemo(() => {
-    const grouped: GroupedMessages<T> = {};
+    const groups: Record<string, T[]> = {};
     
+    if (!Array.isArray(messages)) {
+      console.error('Expected messages to be an array, but got:', messages);
+      return {};
+    }
+    
+    messages.forEach(message => {
+      try {
+        const date = getCreatedTime(message);
+        const dateKey = format(date, 'yyyy-MM-dd');
+        
+        if (!groups[dateKey]) {
+          groups[dateKey] = [];
+        }
+        groups[dateKey].push(message);
+      } catch (error) {
+        console.error('Error processing message for grouping:', error);
+      }
+    });
     safeMessages.forEach(message => {
       // Determine the date from the message and ensure it's a Date object
       let messageDate: Date;
@@ -87,23 +124,41 @@ export const useMessageGrouping = <T extends MessageType>(props: UseMessageGroup
       grouped[dateKey].push(message);
     });
     
-    return grouped;
-  }, [safeMessages]);
+    return groups;
+  }, [messages]);
   
-  // Format date separator text based on date
+  // Get user status from presence data
+  const getUserStatus = (userId: string): UserStatus | undefined => {
+    const presence = userPresence[userId];
+    return presence?.status;
+  };
+  
+  // Format date separator text
   const getDateSeparatorText = (dateKey: string) => {
-    const date = new Date(dateKey);
-    
-    if (isToday(date)) {
-      return 'I dag';
-    } else if (isYesterday(date)) {
-      return 'I går';
-    } else if (isSameWeek(date, new Date())) {
-      return format(date, 'EEEE', { locale: nb }); // Dag i uken
-    } else if (isSameYear(date, new Date())) {
-      return format(date, 'd. MMMM', { locale: nb });
-    } else {
+    try {
+      const date = parseISO(dateKey);
+      
+      if (isToday(date)) {
+        return 'I dag';
+      }
+      
+      if (isYesterday(date)) {
+        return 'I går';
+      }
+      
+      if (isThisWeek(date)) {
+        return format(date, 'EEEE', { locale: nb });
+      }
+      
+      if (isThisYear(date)) {
+        return format(date, 'd. MMMM', { locale: nb });
+      }
+      
       return format(date, 'd. MMMM yyyy', { locale: nb });
+    } catch (error) {
+      console.error('Error formatting date separator:', error);
+      return dateKey;
+    }
     }
   };
   
@@ -193,12 +248,10 @@ export const useMessageGrouping = <T extends MessageType>(props: UseMessageGroup
     const FIVE_MINUTES_MS = 5 * 60 * 1000;
     return Math.abs(currentDate.getTime() - previousDate.getTime()) < FIVE_MINUTES_MS;
   };
-
-  return {
-    messages: safeMessages,
-    groupedMessages,
+  
+  return { 
+    groupedMessages, 
     getDateSeparatorText,
-    getUserStatus,
-    shouldGroupWithPrevious
+    getUserStatus
   };
-};
+}

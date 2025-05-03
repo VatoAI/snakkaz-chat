@@ -75,13 +75,12 @@ export interface GroupMember {
 export interface Group {
   id: string;
   name: string;
-  description?: string;
-  avatarUrl?: string;
-  createdAt: Date | number;
+  createdAt: string;
   createdBy: string;
-  updatedAt: Date | number;
-  type: GroupType;
-  memberCount: number;
+  avatarUrl?: string;
+  type: string;
+  isPublic: boolean;
+  settings: any;
   members: GroupMember[];
   settings: GroupSettings;
   inviteLink?: string;
@@ -98,9 +97,24 @@ export interface Group {
   is_premium?: boolean;
   thumbnailUrl?: string;
 }
+  memberCount?: number;
+  description?: string;
+}
+
+export interface GroupMember {
+  id: string;
+  userId: string;
+  groupId: string;
+  role: GroupRole;
+  joinedAt: string;
+  isPremium?: boolean;
+}
+
+export type GroupRole = 'owner' | 'admin' | 'moderator' | 'member' | 'guest';
 
 export interface GroupMessage {
   id: string;
+  content: string;
   groupId: string;
   senderId: string;
   text?: string;
@@ -150,5 +164,9 @@ export interface GroupPoll {
   isAnonymous: boolean;
   isMultiSelect: boolean;
   isClosed: boolean;
+  createdAt: string;
+  updatedAt: string;
+  isEdited: boolean;
+  isDeleted: boolean;
+  isPinned: boolean;
 }
-

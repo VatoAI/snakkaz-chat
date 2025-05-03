@@ -1,17 +1,16 @@
 
 import { useState, useEffect } from "react";
-import { Group } from "@/types/group";
-import { SecurityLevel } from "@/types/security";
+import { Group, SecurityLevel } from "@/types/group";
 import { useGroupFetching } from "./useGroupFetching";
 import { useGroupCreation } from "./useGroupCreation";
 import { useGroupJoin } from "./useGroupJoin";
 
 interface UseGroupsProps {
   currentUserId: string;
-  userProfiles: Record<string, { username: string | null, avatar_url: string | null }>;
+  userProfiles?: Record<string, { username: string | null, avatar_url: string | null }>;
 }
 
-export function useGroups({ currentUserId }: UseGroupsProps) {
+export function useGroups({ currentUserId, userProfiles = {} }: UseGroupsProps) {
   const [groups, setGroups] = useState<Group[]>([]);
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
 

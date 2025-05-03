@@ -1,7 +1,8 @@
+
 import { useCallback, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { DecryptedMessage } from "@/types/message";
-import { decryptMessage } from "@/utils/encryption";
+import { decryptMessage } from "@/utils/encryption/index";
 
 interface FetchOptions {
   limit?: number;

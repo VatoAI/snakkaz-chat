@@ -59,6 +59,7 @@ export const DirectMessage = ({
       },
       receiver_id: friend.user_id,
       created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
       encryption_key: "",
       iv: "",
     };

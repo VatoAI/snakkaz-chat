@@ -31,6 +31,7 @@ export const useAIChat = (currentUserId: string) => {
           full_name: null
         },
         created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
         encryption_key: '',
         iv: '',
         is_encrypted: false
@@ -50,6 +51,7 @@ export const useAIChat = (currentUserId: string) => {
           full_name: null
         },
         created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
         encryption_key: '',
         iv: '',
         is_encrypted: false

@@ -19,6 +19,7 @@ import { supabase } from './integrations/supabase/client';
 import { useEffect, useState } from 'react';
 import GroupChatPage from './pages/GroupChatPage';
 import AdminPanel from './pages/AdminPanel';
+import CreateGroupPage from './pages/CreateGroupPage';
 
 function App() {
   const [isInitialized, setIsInitialized] = useState(false);
@@ -225,6 +226,11 @@ function App() {
                     <Route path="group-chat/:id?" element={
                       <ProtectedRoute>
                         <GroupChatPage />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="create-group" element={
+                      <ProtectedRoute>
+                        <CreateGroupPage />
                       </ProtectedRoute>
                     } />
                     <Route path="profile" element={
