@@ -50,14 +50,21 @@ export const GroupMessageList: React.FC<GroupMessageListProps> = ({
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
   const [replyTargetMessages, setReplyTargetMessages] = useState<Record<string, GroupMessage>>({});
   
-  // Use custom hook to group messages by time
-  const { groupedMessages, getDateSeparatorText } = useMessageGrouping(
-    messages.map(msg => ({
-      ...msg,
-      senderId: msg.senderId || msg.sender_id || '',
-      createdAt: msg.createdAt || msg.created_at || new Date()
-    }))
-  );
+  // Prepare messages for grouping by ensuring each has the right structure
+  const preparedMessages = messages.map(msg => ({
+    ...msg,
+    senderId: msg.senderId || msg.sender_id || '',
+    createdAt: msg.createdAt || msg.created_at || new Date()
+  }));
+  
+  // Use custom hook to group messages by time - fixed to properly use the returned array
+  const groupedMessages = useMessageGrouping(preparedMessages);
+  
+  // Helper function to format date separators
+  const getDateSeparatorText = (timestamp: Date | string) => {
+    const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
+    return formatDistanceToNow(date, { addSuffix: true, locale: nb });
+  };
   
   // IntersectionObserver to load more messages when scrolling to top
   const { ref: topLoadingRef } = useInView({
@@ -168,19 +175,21 @@ export const GroupMessageList: React.FC<GroupMessageListProps> = ({
       )}
       
       {/* Messages grouped by date */}
-      {Object.entries(groupedMessages).map(([dateKey, messagesForDate]) => (
-        <div key={dateKey} className="space-y-1">
-          {/* Dato-separator med forbedret design */}
+      {Array.isArray(groupedMessages) && groupedMessages.map((group, groupIndex) => (
+        <div key={`group-${group.senderId}-${groupIndex}`} className="space-y-1 mb-3">
           {/* Date separator */}
-          <div className="flex items-center justify-center my-4">
-            <div className="bg-gradient-to-r from-cyberdark-950 via-cyberdark-800 to-cyberdark-950 text-cybergold-500 
+          {groupIndex === 0 || new Date(group.timestamp).toDateString() !== 
+            new Date(groupedMessages[groupIndex - 1].timestamp).toDateString() ? (
+            <div className="flex items-center justify-center my-4">
+              <div className="bg-gradient-to-r from-cyberdark-950 via-cyberdark-800 to-cyberdark-950 text-cybergold-500 
                            px-4 py-1.5 rounded-full text-xs shadow-sm border-t border-b border-cybergold-800/20">
-              {getDateSeparatorText(dateKey)}
+                {getDateSeparatorText(group.timestamp)}
+              </div>
             </div>
-          </div>
+          ) : null}
           
-          {/* Messages for this date */}
-          {(messagesForDate as GroupMessage[]).map(message => {
+          {/* Messages for this group */}
+          {group.messages.map(message => {
             const isCurrentUser = (message.senderId || message.sender_id) === userId;
             
             // Find reply message if this message is a reply
@@ -223,7 +232,6 @@ export const GroupMessageList: React.FC<GroupMessageListProps> = ({
         </div>
       ))}
       
-      {/* Melding når chatten er tom med forbedret design */}
       {/* Empty chat message */}
       {!isLoading && messages.length === 0 && (
         <div className="flex flex-col items-center justify-center h-full text-center p-6 animate-fade-in">
@@ -238,7 +246,6 @@ export const GroupMessageList: React.FC<GroupMessageListProps> = ({
         </div>
       )}
       
-      {/* Laster-indikator med forbedret design */}
       {/* Loading indicator */}
       {isLoading && messages.length === 0 && (
         <div className="flex flex-col items-center justify-center h-full animate-fade-in">
@@ -253,14 +260,13 @@ export const GroupMessageList: React.FC<GroupMessageListProps> = ({
       {/* Reference to bottom of the list for auto-scroll */}
       <div ref={messagesEndRef} />
       
-      {/* Scroll til bunnen knapp med forbedret design */}
-      {/* Scroll to bottom button */}
+      {/* Scroll to bottom button - more mobile friendly */}
       {showScrollToBottom && (
         <Button
           variant="outline"
           size="icon"
           onClick={scrollToBottom}
-          className="fixed bottom-24 right-6 rounded-full h-11 w-11 border border-cybergold-700/30 
+          className="fixed bottom-20 right-4 md:bottom-24 md:right-6 rounded-full h-10 w-10 md:h-11 md:w-11 border border-cybergold-700/30 
                     bg-gradient-to-br from-cyberdark-800 to-cyberdark-900 hover:bg-cyberdark-800 
                     shadow-md hover:shadow-lg hover:border-cybergold-500/40 transition-all duration-300 z-10"
         >

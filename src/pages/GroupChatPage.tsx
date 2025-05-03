@@ -99,7 +99,7 @@ type GroupType = Group & {
   description?: string;
   avatarUrl?: string;
   memberCount?: number;
-  visibility?: GroupVisibility;
+  visibility?: GroupVisibility; // This is now properly defined in types/group.ts
   securityLevel?: SecurityLevel;
   is_premium?: boolean;
 };

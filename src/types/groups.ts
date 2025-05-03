@@ -1,8 +1,7 @@
-
 // Group Types
 export type GroupRole = "admin" | "moderator" | "member" | "premium" | "owner" | "guest";
 
-export type GroupVisibility = "private" | "public" | "hidden";
+export type GroupVisibility = "private" | "public" | "hidden" | "secret";
 
 export type SecurityLevel = "low" | "standard" | "high" | "maximum";
 

@@ -1,6 +1,5 @@
-
 export type GroupRole = 'owner' | 'admin' | 'moderator' | 'member' | 'guest' | 'premium';
-export type GroupVisibility = 'private' | 'public' | 'hidden';
+export type GroupVisibility = 'private' | 'public' | 'hidden' | 'secret';
 export type SecurityLevel = 'low' | 'standard' | 'high' | 'maximum' | 'premium' | 'server_e2ee' | 'p2p_e2ee';
 export type GroupWritePermission = "all" | "admin" | "selected";
 export type MessageTTLOption = 300 | 1800 | 3600 | 86400 | 604800 | null;
