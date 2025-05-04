@@ -95,7 +95,7 @@ export type ChatMessageWithSender = ChatMessage & {
  * Input type for the normalizeMessage function that accepts both camelCase and snake_case properties
  */
 export type MessageInput = Partial<ChatMessage> & {
-  [key: string]: any; // Allow for unknown properties from external APIs
+  [key: string]: unknown; // Allow for unknown properties from external APIs
 };
 
 /**
