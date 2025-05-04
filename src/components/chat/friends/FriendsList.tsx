@@ -5,29 +5,34 @@ import { FriendRecord } from '@/types/friend';
 
 interface FriendsListProps {
   friends: FriendRecord[];
-  friendsList: string[];
   currentUserId: string;
   webRTCManager: any;
-  directMessages: any[];
-  onNewMessage: (message: any) => void;
-  onSelectFriend: (friendId: string) => void;
-  selectedFriendId: string | null;
+  directMessages: DecryptedMessage[];
+  onNewMessage: (message: DecryptedMessage) => void;
+  onStartChat: (userId: string) => void; // Added this prop to match ChatPage usage
   userProfiles: Record<string, any>;
-  userPresence?: Record<string, string>; 
+  friendsList?: string[]; // Made optional
+  selectedFriendId?: string | null; // Made optional
+  userPresence?: Record<string, any>; // Made optional
 }
 
 export const FriendsList: React.FC<FriendsListProps> = ({
   friends,
-  friendsList,
   currentUserId,
   webRTCManager,
   directMessages,
   onNewMessage,
-  onSelectFriend,
-  selectedFriendId,
+  onStartChat, // Use the new prop
   userProfiles,
+  friendsList = [],
+  selectedFriendId = null,
   userPresence = {}
 }) => {
+  // Support both onStartChat and onSelectFriend (for backwards compatibility)
+  const handleSelectFriend = (friendId: string) => {
+    onStartChat(friendId);
+  };
+
   if (!friends || friends.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-6 space-y-4">
@@ -58,7 +63,7 @@ export const FriendsList: React.FC<FriendsListProps> = ({
     return (
       <div 
         key={friend.friendId}
-        onClick={() => onSelectFriend(friend.friendId)}
+        onClick={() => handleSelectFriend(friend.friendId)}
         className="flex items-center p-2 rounded-lg cursor-pointer hover:bg-cyberdark-800/50 transition-colors"
       >
         <div className="relative">
