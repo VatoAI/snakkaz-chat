@@ -9,19 +9,16 @@ interface MessageContentDisplayProps {
 }
 
 export const MessageContentDisplay = memo(({ message }: MessageContentDisplayProps) => {
-  // Always declare hooks at the top level of the component
   const isMobile = useIsMobile();
   const { notify } = useNotifications();
   const [renderError, setRenderError] = useState<string | null>(null);
   
-  // Handle missing or invalid message gracefully after hooks are declared
-  if (!message) {
-    return <div className="h-4"></div>;
-  }
-
-  const isDeleted = message.is_deleted;
-
+  // Every useEffect must be called regardless of conditions
   useEffect(() => {
+    if (!message) return;
+    
+    const isDeleted = message.is_deleted;
+    
     try {
       if (!isDeleted && message.created_at) {
         const messageDate = new Date(message.created_at);
@@ -38,12 +35,20 @@ export const MessageContentDisplay = memo(({ message }: MessageContentDisplayPro
     } catch (error) {
       console.error("Error in notification effect:", error);
     }
-  }, [message.created_at, message.content, isDeleted, notify]);
+  }, [message, notify]);
 
   // Reset error state on message change
   useEffect(() => {
+    if (!message) return;
     setRenderError(null);
-  }, [message.id]);
+  }, [message]);
+  
+  // Handle missing or invalid message gracefully
+  if (!message) {
+    return <div className="h-4"></div>;
+  }
+
+  const isDeleted = message.is_deleted;
 
   if (renderError) {
     return (
