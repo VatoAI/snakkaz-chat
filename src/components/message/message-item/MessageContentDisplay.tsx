@@ -1,4 +1,3 @@
-
 import { DecryptedMessage } from "@/types/message";
 import { useEffect, useState, memo } from "react";
 import { useNotifications } from "@/contexts/NotificationContext";
@@ -10,15 +9,17 @@ interface MessageContentDisplayProps {
 }
 
 export const MessageContentDisplay = memo(({ message }: MessageContentDisplayProps) => {
-  // Handle missing or invalid message gracefully to prevent hooks issues
+  // Always declare hooks at the top level of the component
+  const isMobile = useIsMobile();
+  const { notify } = useNotifications();
+  const [renderError, setRenderError] = useState<string | null>(null);
+  
+  // Handle missing or invalid message gracefully after hooks are declared
   if (!message) {
     return <div className="h-4"></div>;
   }
 
   const isDeleted = message.is_deleted;
-  const isMobile = useIsMobile();
-  const { notify } = useNotifications();
-  const [renderError, setRenderError] = useState<string | null>(null);
 
   useEffect(() => {
     try {

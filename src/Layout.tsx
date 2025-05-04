@@ -23,7 +23,7 @@ const Layout = () => {
     <div className="min-h-screen bg-cyberdark-950 flex flex-col">
       <AppHeader 
         variant="main"
-        showNavigation={false} {/* We're using AppNavigation instead */}
+        showNavigation={false} /* We're using AppNavigation instead */
         showLogo={true}
         showUserNav={!!user}
         showThemeToggle={true}
