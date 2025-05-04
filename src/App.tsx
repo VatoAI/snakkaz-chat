@@ -120,35 +120,36 @@ const App: React.FC = () => {
               {isMobile && <MobileNavigation />}
 
               <Toaster />
+              
+              {/* Group invite dialog - moved inside context providers */}
+              <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
+                <DialogContent className="sm:max-w-[425px] bg-cyberdark-900 border-cybergold-500/30">
+                  <DialogHeader>
+                    <DialogTitle className="text-cybergold-300">Bli med i gruppe</DialogTitle>
+                    <DialogDescription className="text-cybergold-500">
+                      Skriv inn koden du fikk tilsendt for å bli med i gruppen.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="grid gap-4 py-4">
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="inviteCode" className="text-right text-cybergold-300">
+                        Kode
+                      </Label>
+                      <Input
+                        type="text"
+                        id="inviteCode"
+                        value={inviteCode}
+                        onChange={(e) => setInviteCode(e.target.value)}
+                        className="col-span-3 bg-cyberdark-800 text-cybergold-200 border-cyberdark-700 focus:border-cybergold-500"
+                      />
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
           </AppEncryptionProvider>
         </ThemeProvider>
       </ProfileProvider>
-
-      <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
-        <DialogContent className="sm:max-w-[425px] bg-cyberdark-900 border-cybergold-500/30">
-          <DialogHeader>
-            <DialogTitle className="text-cybergold-300">Bli med i gruppe</DialogTitle>
-            <DialogDescription className="text-cybergold-500">
-              Skriv inn koden du fikk tilsendt for å bli med i gruppen.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="inviteCode" className="text-right text-cybergold-300">
-                Kode
-              </Label>
-              <Input
-                type="text"
-                id="inviteCode"
-                value={inviteCode}
-                onChange={(e) => setInviteCode(e.target.value)}
-                className="col-span-3 bg-cyberdark-800 text-cybergold-200 border-cyberdark-700 focus:border-cybergold-500"
-              />
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </AuthProvider>
   );
 };
