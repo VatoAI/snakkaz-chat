@@ -1,487 +1,292 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import MainNav from '@/components/navigation/MainNav';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
+import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Skeleton } from '@/components/ui/skeleton';
-import { 
-  Camera, 
-  User, 
-  Lock, 
-  Bell, 
-  Shield, 
-  Palette,
-  CloudUpload
-} from 'lucide-react';
-import { supabase } from '@/lib/supabaseClient';
+import { Camera, Check, Trash2, User } from 'lucide-react';
 
 const Profile = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(true);
-  const [profile, setProfile] = useState<any>({
-    username: '',
-    fullName: '',
+  
+  // Mock profile data - would be fetched from database in a real app
+  const [profile, setProfile] = useState({
+    username: 'brukernavn', // Default placeholder
+    displayName: '',
     bio: '',
-    email: '',
-    avatarUrl: null,
+    avatarUrl: '',
+    status: 'online',
+    publicProfile: true
   });
+  
   const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState({ ...profile });
-
-  useEffect(() => {
-    // Simuler lasting av profildata
-    const fetchProfile = async () => {
-      if (!user) return;
-      
-      try {
-        // I en ekte implementasjon ville vi hente profildataene fra Supabase
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        setProfile({
-          username: user.email?.split('@')[0] || 'bruker',
-          fullName: 'Snakkaz Bruker',
-          bio: 'Dette er en testbruker for Snakkaz Chat-appen. Redigér profilen for å legge til din egen bio!',
-          email: user.email,
-          avatarUrl: null,
-        });
-        
-        setFormData({
-          username: user.email?.split('@')[0] || 'bruker',
-          fullName: 'Snakkaz Bruker',
-          bio: 'Dette er en testbruker for Snakkaz Chat-appen. Redigér profilen for å legge til din egen bio!',
-          email: user.email,
-          avatarUrl: null,
-        });
-        
-        setIsLoading(false);
-      } catch (error) {
-        console.error('Feil ved henting av profil:', error);
-        toast({
-          variant: 'destructive',
-          title: 'Feil ved lasting',
-          description: 'Kunne ikke laste profildata',
-        });
-      }
-    };
-
-    fetchProfile();
-  }, [user, toast]);
-
+  const [editedProfile, setEditedProfile] = useState({ ...profile });
+  
+  const handleEditToggle = () => {
+    if (isEditing) {
+      // Save changes
+      setProfile(editedProfile);
+      toast({
+        title: "Profil oppdatert",
+        description: "Profilendringene dine har blitt lagret.",
+      });
+    }
+    setIsEditing(!isEditing);
+  };
+  
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setEditedProfile(prev => ({
       ...prev,
-      [name]: value,
+      [name]: value
     }));
   };
-
-  const handleSaveProfile = async () => {
-    try {
-      setIsLoading(true);
-      
-      // Simuler API-kall for å lagre profil
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Oppdater profilen lokalt
-      setProfile({...formData});
-      setIsEditing(false);
-      
-      toast({
-        title: 'Profil oppdatert',
-        description: 'Profilendringene dine har blitt lagret.',
-      });
-    } catch (error) {
-      console.error('Feil ved lagring av profil:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Feil ved lagring',
-        description: 'Kunne ikke lagre profilendringene dine.',
-      });
-    } finally {
-      setIsLoading(false);
-    }
+  
+  const handleSwitchChange = (checked: boolean) => {
+    setEditedProfile(prev => ({
+      ...prev,
+      publicProfile: checked
+    }));
   };
-
-  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-
-    try {
-      const file = files[0];
-      
-      // Simuler opplasting av profilbilde
-      setIsLoading(true);
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // I en ekte implementasjon ville vi lastet opp filen til Supabase Storage
-      // og deretter oppdatert brukerens profilbilde-URL
-      
-      // For demo-formål, lag en midlertidig URL for bildet
-      const avatarUrl = URL.createObjectURL(file);
-      
-      setFormData(prev => ({...prev, avatarUrl}));
-      
-      toast({
-        title: 'Profilbilde lastet opp',
-        description: 'Profilbildet ditt har blitt oppdatert.',
-      });
-    } catch (error) {
-      console.error('Feil ved opplasting av profilbilde:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Opplastingsfeil',
-        description: 'Kunne ikke laste opp profilbilde.',
-      });
-    } finally {
-      setIsLoading(false);
-    }
+  
+  const handleAvatarUpload = () => {
+    // Mock implementation - would open a file picker in real app
+    toast({
+      title: "Bilde-opplasting",
+      description: "Funksjon for å laste opp profilbilde er under utvikling.",
+    });
   };
 
   return (
-    <div className="container max-w-4xl py-8 px-4 bg-cyberdark-950 text-cybergold-200">
-      <h1 className="text-3xl font-bold mb-6 text-cybergold-300">Min profil</h1>
+    <div className="min-h-screen bg-cyberdark-950 text-cybergold-300 pb-16 md:pb-0 md:pt-16">
+      <MainNav />
       
-      <Tabs defaultValue="profile" className="w-full">
-        <TabsList className="grid grid-cols-4 bg-cyberdark-900 mb-6">
-          <TabsTrigger value="profile" className="data-[state=active]:bg-cyberdark-800 data-[state=active]:text-cybergold-300">
-            <User className="h-4 w-4 mr-2" />
-            Profil
-          </TabsTrigger>
-          <TabsTrigger value="security" className="data-[state=active]:bg-cyberdark-800 data-[state=active]:text-cybergold-300">
-            <Lock className="h-4 w-4 mr-2" />
-            Sikkerhet
-          </TabsTrigger>
-          <TabsTrigger value="notifications" className="data-[state=active]:bg-cyberdark-800 data-[state=active]:text-cybergold-300">
-            <Bell className="h-4 w-4 mr-2" />
-            Varsler
-          </TabsTrigger>
-          <TabsTrigger value="appearance" className="data-[state=active]:bg-cyberdark-800 data-[state=active]:text-cybergold-300">
-            <Palette className="h-4 w-4 mr-2" />
-            Utseende
-          </TabsTrigger>
-        </TabsList>
+      <main className="container max-w-4xl py-8 px-4">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-bold text-cybergold-400">Min profil</h1>
+          <Badge variant="outline" className="border-cybergold-600 text-cybergold-400">
+            {user?.email}
+          </Badge>
+        </div>
         
-        <TabsContent value="profile">
-          {isLoading ? (
-            <Card className="bg-cyberdark-900 border-cyberdark-800">
-              <CardHeader>
-                <div className="flex items-center space-x-4">
-                  <Skeleton className="h-20 w-20 rounded-full bg-cyberdark-800" />
-                  <div className="space-y-2">
-                    <Skeleton className="h-6 w-24 bg-cyberdark-800" />
-                    <Skeleton className="h-4 w-40 bg-cyberdark-800" />
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-2">
-                  <Skeleton className="h-5 w-20 bg-cyberdark-800" />
-                  <Skeleton className="h-10 w-full bg-cyberdark-800" />
-                </div>
-                <div className="space-y-2">
-                  <Skeleton className="h-5 w-20 bg-cyberdark-800" />
-                  <Skeleton className="h-10 w-full bg-cyberdark-800" />
-                </div>
-                <div className="space-y-2">
-                  <Skeleton className="h-5 w-20 bg-cyberdark-800" />
-                  <Skeleton className="h-24 w-full bg-cyberdark-800" />
-                </div>
-                <Skeleton className="h-10 w-40 bg-cyberdark-800" />
-              </CardContent>
-            </Card>
-          ) : (
-            <Card className="bg-cyberdark-900 border-cyberdark-800">
-              <CardHeader className="pb-4">
-                <div className="flex flex-col sm:flex-row sm:items-center">
-                  <div className="relative group mb-4 sm:mb-0 sm:mr-6">
-                    <Avatar className="h-24 w-24 border-2 border-cybergold-600">
-                      {formData.avatarUrl ? (
-                        <AvatarImage src={formData.avatarUrl} alt={formData.username} />
-                      ) : (
-                        <AvatarFallback className="bg-cybergold-900 text-cybergold-200 text-xl">
-                          {formData.username?.substring(0, 2).toUpperCase() || 'SB'}
-                        </AvatarFallback>
-                      )}
-                    </Avatar>
-                    
-                    {isEditing && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
-                        <label 
-                          htmlFor="avatar-upload" 
-                          className="cursor-pointer bg-cybergold-600 text-black p-2 rounded-full hover:bg-cybergold-500"
-                        >
-                          <Camera className="h-5 w-5" />
-                          <input 
-                            type="file" 
-                            id="avatar-upload"
-                            className="sr-only" 
-                            accept="image/*"
-                            onChange={handleAvatarUpload}
-                          />
-                        </label>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div>
-                    <h2 className="text-xl sm:text-2xl font-bold text-cybergold-300">{profile.username}</h2>
-                    <p className="text-cybergold-500">{profile.email}</p>
-                    {!isEditing && <p className="text-sm text-cybergold-400 mt-1">{profile.bio}</p>}
-                  </div>
-                </div>
-              </CardHeader>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Profile picture and basic info */}
+          <Card className="bg-cyberdark-900 border-cyberdark-700 md:col-span-1">
+            <CardHeader className="pb-0">
+              <CardTitle className="text-cybergold-400">Profilbilde</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col items-center pt-6">
+              <div className="relative mb-6">
+                <Avatar className="w-32 h-32 border-4 border-cybergold-600">
+                  <AvatarImage src={profile.avatarUrl} />
+                  <AvatarFallback className="bg-cyberdark-800 text-cybergold-500 text-4xl">
+                    <User />
+                  </AvatarFallback>
+                </Avatar>
+                
+                {isEditing && (
+                  <Button 
+                    size="icon" 
+                    className="absolute bottom-0 right-0 bg-cybergold-600 hover:bg-cybergold-500 text-black rounded-full h-10 w-10"
+                    onClick={handleAvatarUpload}
+                  >
+                    <Camera className="h-5 w-5" />
+                  </Button>
+                )}
+              </div>
               
-              <CardContent className="space-y-6">
+              <div className="text-center w-full">
+                <h2 className="text-xl font-bold text-cybergold-400 mb-1">
+                  {isEditing ? (
+                    <Input 
+                      name="displayName"
+                      value={editedProfile.displayName} 
+                      onChange={handleInputChange} 
+                      placeholder="Visningsnavn"
+                      className="bg-cyberdark-800 border-cyberdark-700 text-center"
+                    />
+                  ) : (
+                    profile.displayName || 'Legg til visningsnavn'
+                  )}
+                </h2>
+                
+                <p className="text-cybergold-600 mb-3">
+                  @{isEditing ? (
+                    <Input 
+                      name="username"
+                      value={editedProfile.username} 
+                      onChange={handleInputChange} 
+                      placeholder="brukernavn"
+                      className="bg-cyberdark-800 border-cyberdark-700 text-center mt-2"
+                    />
+                  ) : (
+                    profile.username
+                  )}
+                </p>
+                
+                <div className="flex items-center justify-center space-x-2 mb-4">
+                  <div className={`h-2 w-2 rounded-full ${
+                    profile.status === 'online' ? 'bg-green-500' : 
+                    profile.status === 'away' ? 'bg-amber-500' : 
+                    'bg-red-500'
+                  }`} />
+                  <span className="text-sm text-cybergold-500 capitalize">
+                    {profile.status}
+                  </span>
+                </div>
+                
+                <Button 
+                  variant={isEditing ? "default" : "outline"} 
+                  className={isEditing ? 
+                    "bg-cybergold-600 hover:bg-cybergold-500 text-black w-full" : 
+                    "bg-cyberdark-800 border-cyberdark-700 hover:bg-cyberdark-700 w-full"
+                  }
+                  onClick={handleEditToggle}
+                >
+                  {isEditing ? (
+                    <>
+                      <Check className="h-4 w-4 mr-2" />
+                      Lagre endringer
+                    </>
+                  ) : (
+                    'Rediger profil'
+                  )}
+                </Button>
+                
+                {isEditing && (
+                  <Button 
+                    variant="outline" 
+                    className="bg-red-900/20 border-red-900/50 hover:bg-red-900/30 text-red-400 mt-2 w-full"
+                    onClick={() => {
+                      setEditedProfile({...profile});
+                      setIsEditing(false);
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Avbryt
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Profile details */}
+          <Card className="bg-cyberdark-900 border-cyberdark-700 md:col-span-2">
+            <CardHeader>
+              <CardTitle className="text-cybergold-400">Profildetaljer</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Bio section */}
+              <div>
+                <Label htmlFor="bio" className="text-sm text-cybergold-500">Bio</Label>
                 {isEditing ? (
-                  <div className="space-y-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="username" className="text-cybergold-300">Brukernavn</Label>
-                      <Input
-                        id="username"
-                        name="username"
-                        value={formData.username}
-                        onChange={handleInputChange}
-                        className="bg-cyberdark-800 border-cyberdark-700 text-cybergold-200"
-                      />
-                    </div>
-                    
-                    <div className="grid gap-2">
-                      <Label htmlFor="fullName" className="text-cybergold-300">Fullt navn</Label>
-                      <Input
-                        id="fullName"
-                        name="fullName"
-                        value={formData.fullName}
-                        onChange={handleInputChange}
-                        className="bg-cyberdark-800 border-cyberdark-700 text-cybergold-200"
-                      />
-                    </div>
-                    
-                    <div className="grid gap-2">
-                      <Label htmlFor="bio" className="text-cybergold-300">Bio</Label>
-                      <Input
-                        id="bio"
-                        name="bio"
-                        value={formData.bio}
-                        onChange={handleInputChange}
-                        className="bg-cyberdark-800 border-cyberdark-700 text-cybergold-200 h-24"
-                      />
-                    </div>
-                    
-                    <div className="flex gap-3 pt-4">
-                      <Button 
-                        onClick={handleSaveProfile}
-                        disabled={isLoading}
-                        className="bg-cybergold-600 hover:bg-cybergold-500 text-black"
-                      >
-                        {isLoading ? 'Lagrer...' : 'Lagre endringer'}
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        onClick={() => {
-                          setFormData({...profile});
-                          setIsEditing(false);
-                        }}
-                        className="border-cyberdark-700 bg-cyberdark-800 hover:bg-cyberdark-700"
-                      >
-                        Avbryt
-                      </Button>
-                    </div>
-                  </div>
+                  <Textarea
+                    id="bio"
+                    name="bio"
+                    placeholder="Skriv litt om deg selv..."
+                    value={editedProfile.bio}
+                    onChange={handleInputChange}
+                    className="mt-2 bg-cyberdark-800 border-cyberdark-700 min-h-[120px]"
+                  />
                 ) : (
-                  <div className="space-y-6">
-                    <div>
-                      <h3 className="text-sm font-medium text-cybergold-500">Brukernavn</h3>
-                      <p className="mt-1 text-cybergold-300">{profile.username}</p>
-                    </div>
-                    
-                    <div>
-                      <h3 className="text-sm font-medium text-cybergold-500">Fullt navn</h3>
-                      <p className="mt-1 text-cybergold-300">{profile.fullName}</p>
-                    </div>
-                    
-                    <div>
-                      <h3 className="text-sm font-medium text-cybergold-500">Bio</h3>
-                      <p className="mt-1 text-cybergold-300">{profile.bio}</p>
-                    </div>
-                    
-                    <div>
-                      <h3 className="text-sm font-medium text-cybergold-500">E-post</h3>
-                      <p className="mt-1 text-cybergold-300">{profile.email}</p>
-                    </div>
-                    
-                    <Button 
-                      onClick={() => setIsEditing(true)} 
-                      variant="outline"
-                      className="border-cybergold-600/40 hover:bg-cyberdark-800 text-cybergold-300"
-                    >
-                      Redigér profil
-                    </Button>
+                  <div className="mt-2 p-3 bg-cyberdark-800 rounded-md min-h-[80px]">
+                    {profile.bio || <span className="text-cybergold-600 italic">Ingen biografi enda</span>}
                   </div>
                 )}
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-        
-        <TabsContent value="security">
-          <Card className="bg-cyberdark-900 border-cyberdark-800">
-            <CardHeader>
-              <h2 className="text-xl font-bold flex items-center text-cybergold-300">
-                <Shield className="mr-2 h-5 w-5" />
-                Sikkerhetsinnstillinger
-              </h2>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h3 className="text-cybergold-300">To-faktor autentisering</h3>
-                    <p className="text-sm text-cybergold-500">Sikre kontoen din med en ekstra verifikasjonskode</p>
-                  </div>
-                  <Switch />
+              </div>
+              
+              <Separator className="bg-cyberdark-700" />
+              
+              {/* Public profile setting */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-medium text-cybergold-400">Offentlig profil</h3>
+                  <p className="text-xs text-cybergold-600">Tillat andre å se profilen din</p>
                 </div>
-                
-                <div className="space-y-2">
-                  <h3 className="text-cybergold-300">Endre passord</h3>
-                  <Button 
-                    variant="outline"
-                    className="border-cybergold-600/40 hover:bg-cyberdark-800 text-cybergold-300"
+                {isEditing ? (
+                  <Switch 
+                    checked={editedProfile.publicProfile}
+                    onCheckedChange={handleSwitchChange}
+                    className="data-[state=checked]:bg-cybergold-500"
+                  />
+                ) : (
+                  <Badge 
+                    variant="outline" 
+                    className={
+                      profile.publicProfile ? 
+                      "border-green-600 text-green-400" : 
+                      "border-red-600 text-red-400"
+                    }
                   >
-                    Oppdater passord
-                  </Button>
-                </div>
+                    {profile.publicProfile ? "Synlig" : "Privat"}
+                  </Badge>
+                )}
+              </div>
+              
+              <Separator className="bg-cyberdark-700" />
+              
+              {/* Account info */}
+              <div>
+                <h3 className="text-sm font-medium text-cybergold-400 mb-4">Kontoinformasjon</h3>
                 
-                <div className="space-y-2">
-                  <h3 className="text-cybergold-300">Aktive økter</h3>
-                  <Card className="bg-cyberdark-800 border-cyberdark-700">
-                    <CardContent className="p-4">
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <p className="text-cybergold-300">Denne enheten</p>
-                          <p className="text-xs text-cybergold-500">Sist aktiv: Nå</p>
-                        </div>
-                        <Button 
-                          variant="link" 
-                          className="text-red-400 hover:text-red-300"
-                        >
-                          Logg ut
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
+                <div className="grid gap-4">
+                  <div className="grid grid-cols-3 items-center text-sm">
+                    <span className="text-cybergold-600">E-post</span>
+                    <span className="col-span-2 text-cybergold-300">{user?.email}</span>
+                  </div>
+                  
+                  <div className="grid grid-cols-3 items-center text-sm">
+                    <span className="text-cybergold-600">Medlem siden</span>
+                    <span className="col-span-2 text-cybergold-300">Mai 2025</span>
+                  </div>
+                  
+                  <div className="grid grid-cols-3 items-center text-sm">
+                    <span className="text-cybergold-600">ID</span>
+                    <span className="col-span-2 text-cybergold-300 break-all">
+                      {user?.id || 'Ikke tilgjengelig'}
+                    </span>
+                  </div>
                 </div>
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
-        
-        <TabsContent value="notifications">
-          <Card className="bg-cyberdark-900 border-cyberdark-800">
+          
+          {/* Activity stats */}
+          <Card className="bg-cyberdark-900 border-cyberdark-700 md:col-span-3">
             <CardHeader>
-              <h2 className="text-xl font-bold flex items-center text-cybergold-300">
-                <Bell className="mr-2 h-5 w-5" />
-                Varslingsinnstillinger
-              </h2>
+              <CardTitle className="text-cybergold-400">Aktivitet</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h3 className="text-cybergold-300">Direktemeldinger</h3>
-                    <p className="text-sm text-cybergold-500">Få varsler om nye meldinger</p>
-                  </div>
-                  <Switch defaultChecked />
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
+                <div className="bg-cyberdark-800 p-4 rounded-lg text-center">
+                  <h3 className="text-cybergold-600 text-sm mb-1">Meldinger</h3>
+                  <p className="text-2xl font-bold text-cybergold-400">0</p>
                 </div>
-                
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h3 className="text-cybergold-300">Gruppemeldinger</h3>
-                    <p className="text-sm text-cybergold-500">Få varsler om nye gruppemeldinger</p>
-                  </div>
-                  <Switch defaultChecked />
+                <div className="bg-cyberdark-800 p-4 rounded-lg text-center">
+                  <h3 className="text-cybergold-600 text-sm mb-1">Grupper</h3>
+                  <p className="text-2xl font-bold text-cybergold-400">0</p>
                 </div>
-                
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h3 className="text-cybergold-300">Venneforespørsler</h3>
-                    <p className="text-sm text-cybergold-500">Få varsler om nye venneforespørsler</p>
-                  </div>
-                  <Switch defaultChecked />
+                <div className="bg-cyberdark-800 p-4 rounded-lg text-center">
+                  <h3 className="text-cybergold-600 text-sm mb-1">Kontakter</h3>
+                  <p className="text-2xl font-bold text-cybergold-400">0</p>
                 </div>
-                
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h3 className="text-cybergold-300">E-postvarsler</h3>
-                    <p className="text-sm text-cybergold-500">Motta viktige varsler på e-post</p>
-                  </div>
-                  <Switch />
+                <div className="bg-cyberdark-800 p-4 rounded-lg text-center">
+                  <h3 className="text-cybergold-600 text-sm mb-1">Delte filer</h3>
+                  <p className="text-2xl font-bold text-cybergold-400">0</p>
                 </div>
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
-        
-        <TabsContent value="appearance">
-          <Card className="bg-cyberdark-900 border-cyberdark-800">
-            <CardHeader>
-              <h2 className="text-xl font-bold flex items-center text-cybergold-300">
-                <Palette className="mr-2 h-5 w-5" />
-                Utseendeinnstillinger
-              </h2>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <div>
-                  <h3 className="text-cybergold-300 mb-2">Tema</h3>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="border-2 border-cybergold-500 bg-cyberdark-800 p-2 rounded-md cursor-pointer text-center">
-                      <div className="h-12 bg-gradient-to-b from-cyberdark-950 to-cyberdark-900 mb-2 rounded"></div>
-                      <p className="text-xs text-cybergold-300">Mørk</p>
-                    </div>
-                    <div className="border border-cyberdark-700 bg-cyberdark-800 p-2 rounded-md cursor-pointer text-center">
-                      <div className="h-12 bg-gradient-to-b from-gray-100 to-gray-200 mb-2 rounded"></div>
-                      <p className="text-xs text-cybergold-300">Lys</p>
-                    </div>
-                    <div className="border border-cyberdark-700 bg-cyberdark-800 p-2 rounded-md cursor-pointer text-center">
-                      <div className="h-12 bg-gradient-to-b from-blue-900 to-purple-900 mb-2 rounded"></div>
-                      <p className="text-xs text-cybergold-300">Neon</p>
-                    </div>
-                  </div>
-                </div>
-                
-                <div>
-                  <h3 className="text-cybergold-300 mb-2">Tekststørrelse</h3>
-                  <div className="grid grid-cols-3 gap-2">
-                    <Button variant="outline" className="border-cyberdark-700 bg-cyberdark-800 hover:bg-cyberdark-700">
-                      <span className="text-sm">A</span>
-                    </Button>
-                    <Button variant="outline" className="border-cybergold-500 bg-cyberdark-700 hover:bg-cyberdark-600">
-                      <span className="text-base">A</span>
-                    </Button>
-                    <Button variant="outline" className="border-cyberdark-700 bg-cyberdark-800 hover:bg-cyberdark-700">
-                      <span className="text-lg">A</span>
-                    </Button>
-                  </div>
-                </div>
-                
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h3 className="text-cybergold-300">Animasjoner</h3>
-                    <p className="text-sm text-cybergold-500">Aktivér animasjonseffekter</p>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+        </div>
+      </main>
     </div>
   );
 };
