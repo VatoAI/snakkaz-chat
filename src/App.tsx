@@ -3,13 +3,12 @@ import { ErrorBoundary, FallbackProps } from 'react-error-boundary';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './hooks/useAuth';
 import { ProfileProvider } from './hooks/useProfile';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
-import ChatPage from './pages/chat/ChatPage';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import Chat from './pages/Chat';
 import GroupChatPage from './pages/GroupChatPage';
-import ProfilePage from './pages/ProfilePage';
-import SettingsPage from './pages/SettingsPage';
-import FriendRequestsPage from './pages/FriendRequestsPage';
+import Profile from './pages/Profile';
+import Settings from './pages/Settings';
 import { SyncDashboard } from './components/sync/SyncDashboard';
 import { Toaster } from '@/components/ui/toaster';
 import { useToast } from '@/hooks/use-toast';
@@ -24,6 +23,16 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useSearchParams } from 'react-router-dom';
+
+// Simple FriendRequestsPage component
+const FriendRequestsPage: React.FC = () => {
+  return (
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-4 text-cybergold-300">Venneforespørsler</h1>
+      <p className="text-cybergold-200">Ingen ventende venneforespørsler.</p>
+    </div>
+  );
+};
 
 // Define a FallbackComponent that matches the required props
 const ErrorFallback: React.FC<FallbackProps> = ({ 
@@ -90,12 +99,12 @@ const App: React.FC = () => {
             >
               <Router>
                 <Routes>
-                  <Route path="/" element={<LoginPage />} />
-                  <Route path="/register" element={<RegisterPage />} />
-                  <Route path="/chat" element={<ChatPage />} />
+                  <Route path="/" element={<Login />} />
+                  <Route path="/register" element={<Register />} />
+                  <Route path="/chat" element={<Chat />} />
                   <Route path="/group-chat/:id?" element={<GroupChatPage />} />
-                  <Route path="/profile" element={<ProfilePage />} />
-                  <Route path="/settings" element={<SettingsPage />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/settings" element={<Settings />} />
                   <Route path="/friend-requests" element={<FriendRequestsPage />} />
                   <Route path="/sync" element={<SyncDashboard />} />
                 </Routes>
