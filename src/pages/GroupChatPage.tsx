@@ -64,33 +64,7 @@ import { Group, GroupVisibility, GroupMember, GroupMessage } from '@/features/gr
 import { SecurityLevel } from '@/types/security';
 import { usePresence } from '@/hooks/usePresence';
 import { UserStatus } from '@/types/presence';
-
-// Define the message object interface that combines both formats
-interface ChatMessage {
-  id: string;
-  content?: string;
-  text?: string;  // This property is now properly defined
-  sender_id?: string;
-  senderId?: string;
-  group_id?: string;
-  groupId?: string;
-  created_at?: string;
-  createdAt?: string | Date;
-  is_edited?: boolean;
-  isEdited?: boolean;
-  mediaUrl?: string;
-  media_url?: string;
-  reply_to_id?: string;
-  replyToId?: string;
-  sender?: {
-    id: string;
-    displayName?: string;
-    username?: string;
-    full_name?: string | null;
-    avatar?: string;
-    avatar_url?: string | null;
-  };
-}
+import { ChatMessage, normalizeMessage } from '@/types/messages';
 
 // Define Group type with compatibility for both property naming styles
 type GroupType = Group & {
@@ -176,7 +150,7 @@ const GroupChatPage = () => {
   
   // Load group messages when selected
   const {
-    group,
+    group, 
     messages: groupMessages,
     loading: messagesLoading,
     sendMessage,
@@ -185,7 +159,8 @@ const GroupChatPage = () => {
     deleteMessage,
     reactToMessage,
     replyToMessage: replyToMessageFunc,
-    loadMessages
+    loadMessages,
+    offlineIndicator
   } = useGroupChat(selectedGroup?.id);
   
   // Update presence when switching groups
@@ -800,6 +775,14 @@ const GroupChatPage = () => {
           </div>
           
           <div className="flex items-center">
+            {/* Offline indicator */}
+            {offlineIndicator && (
+              <div className="mr-3 flex items-center px-2 py-1 bg-red-950/50 border border-red-800/60 rounded-full">
+                <span className="h-2 w-2 bg-red-500 rounded-full animate-pulse mr-2"></span>
+                <span className="text-xs text-red-400">Offline</span>
+              </div>
+            )}
+            
             {/* Security indicators */}
             <div className="flex items-center gap-1 mr-3">
               {selectedGroup.visibility === 'private' && (
@@ -900,23 +883,27 @@ const GroupChatPage = () => {
         </div>
       )}
       
+      {/* Offline mode banner */}
+      {offlineIndicator && (
+        <div className="bg-red-950/30 px-4 py-2 border-b border-red-800/30 flex items-center">
+          <div className="h-2 w-2 bg-red-500 rounded-full animate-pulse mr-2"></div>
+          <span className="text-sm text-red-300 flex-1">
+            Du er offline. Meldinger vil bli lagret lokalt og sendt når du er tilkoblet igjen.
+          </span>
+          <button 
+            className="text-xs text-red-400 hover:text-red-300 underline"
+            onClick={() => window.location.reload()}
+          >
+            Prøv på nytt
+          </button>
+        </div>
+      )}
+      
       {/* Messages area */}
       <div className="flex-1 overflow-hidden">
         <GroupMessageList 
           messages={Array.isArray(groupMessages) 
-            ? groupMessages.map(msg => {
-                // Use type assertion to help TypeScript understand the message structure
-                const chatMsg = msg as ChatMessage;
-                return {
-                  ...msg,
-                  senderId: chatMsg.senderId || chatMsg.sender_id || '',
-                  content: chatMsg.content || chatMsg.text || '',
-                  createdAt: chatMsg.createdAt || chatMsg.created_at || new Date(),
-                  isEdited: chatMsg.isEdited || chatMsg.is_edited || false,
-                  mediaUrl: chatMsg.mediaUrl || chatMsg.media_url || undefined,
-                  replyToId: chatMsg.replyToId || chatMsg.reply_to_id || undefined
-                };
-              })
+            ? groupMessages.map(msg => normalizeMessage(msg))
             : []} 
           isLoading={messagesLoading}
           userProfiles={userProfiles}
@@ -927,6 +914,7 @@ const GroupChatPage = () => {
           hasMoreMessages={hasMoreMessages}
           loadMoreMessages={handleLoadMoreMessages}
           currentUserId={user?.id}
+          offlineMode={offlineIndicator}
         />
       </div>
       

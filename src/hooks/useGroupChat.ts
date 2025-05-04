@@ -3,54 +3,64 @@ import { supabase } from '../lib/supabaseClient';
 import { useAuth } from './useAuth';
 import { useMessageReadStatus } from './message/useMessageReadStatus';
 import { Group } from '@/types/groups';
+import { ChatMessage, MessageContent, normalizeMessage } from '@/types/messages';
+import { messageQueue, QueuedMessage } from '@/services/messageQueue';
+import { useToast } from '@/hooks/use-toast';
 
-export interface MessageContent {
-  text?: string;
-  mediaUrl?: string;
-  mediaType?: string;
-  thumbnailUrl?: string;
-  ttl?: number;
-  isEncrypted?: boolean;
-}
+// Import the standardized types from the new messages.ts file
 
-export interface ChatMessage {
-  id: string;
-  content?: string;
-  sender_id: string;
-  senderId?: string;
-  group_id?: string;
-  groupId?: string;
-  created_at?: string;
-  createdAt?: string;
-  updated_at?: string;
-  updatedAt?: string;
-  is_edited?: boolean;
-  isEdited?: boolean;
-  is_deleted?: boolean;
-  isDeleted?: boolean;
-  is_pinned?: boolean;
-  isPinned?: boolean;
-  media_url?: string;
-  mediaUrl?: string;
-  media_type?: string;
-  mediaType?: string;
-  thumbnail_url?: string;
-  thumbnailUrl?: string;
-  ttl?: number;
-  read_by?: string[];
-  readBy?: string[];
-  reply_to_id?: string;
-  replyToId?: string;
-  is_encrypted?: boolean;
-  isEncrypted?: boolean;
-}
+export { MessageContent, ChatMessage }; // Re-export for backward compatibility
 
 export const useGroupChat = (groupId: string | undefined) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [group, setGroup] = useState<Group | null>(null);
+  const [offlineIndicator, setOfflineIndicator] = useState<boolean>(false);
   const { user } = useAuth();
   const { markMessageAsRead, markMessagesAsRead } = useMessageReadStatus();
+  const { toast } = useToast();
+
+  // Register message queue callback for group messages
+  useEffect(() => {
+    messageQueue.registerSendCallback('group', async (message: QueuedMessage) => {
+      if (!message.groupId || message.groupId !== groupId) return false;
+
+      try {
+        // Use the internal sendToSupabase function to send the queued message
+        const result = await sendToSupabase(message.content);
+        return !!result;
+      } catch (error) {
+        console.error('Failed to send queued message:', error);
+        return false;
+      }
+    });
+
+    // Network status monitoring
+    const handleOnline = () => {
+      setOfflineIndicator(false);
+      toast({
+        title: "Tilkoblet igjen",
+        description: "Du er nå tilkoblet og meldinger vil bli sendt.",
+      });
+    };
+
+    const handleOffline = () => {
+      setOfflineIndicator(true);
+      toast({
+        title: "Frakoblet",
+        description: "Du er nå frakoblet. Meldinger vil bli lagret og sendt når du er tilkoblet igjen.",
+        variant: "destructive"
+      });
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [groupId, toast]);
 
   // Load group details
   const loadGroup = useCallback(async () => {
@@ -90,7 +100,31 @@ export const useGroupChat = (groupId: string | undefined) => {
         return;
       }
       
-      setMessages(data || []);
+      // Normalize messages using our utility function to ensure consistent property access
+      const normalizedMessages = (data || []).map(normalizeMessage);
+      
+      // Add any pending offline messages from the queue
+      const queuedMessages = messageQueue.getQueuedMessagesForGroup(groupId);
+      
+      // Convert queued messages to the same format as server messages
+      const pendingMessages: ChatMessage[] = queuedMessages.map(qMsg => ({
+        id: qMsg.id,
+        content: qMsg.content.text,
+        senderId: user?.id || '',
+        groupId: qMsg.groupId,
+        createdAt: new Date(qMsg.timestamp),
+        isEdited: false,
+        isPending: true, // Mark as pending for UI indication
+        mediaUrl: qMsg.content.mediaUrl,
+        mediaType: qMsg.content.mediaType,
+      }));
+      
+      // Combine and sort all messages by timestamp
+      setMessages([...normalizedMessages, ...pendingMessages].sort((a, b) => {
+        const dateA = a.createdAt instanceof Date ? a.createdAt : new Date(a.createdAt);
+        const dateB = b.createdAt instanceof Date ? b.createdAt : new Date(b.createdAt);
+        return dateA.getTime() - dateB.getTime();
+      }));
       
       // Mark all fetched messages as read
       if (data?.length && user?.id) {
@@ -104,41 +138,12 @@ export const useGroupChat = (groupId: string | undefined) => {
     }
   }, [groupId, user?.id, markMessagesAsRead]);
 
-  // Load more messages with pagination
-  const loadMessages = useCallback(async (limit: number = 20) => {
-    if (!groupId) return;
+  // Internal function to send message to Supabase
+  const sendToSupabase = async (content: MessageContent) => {
+    if (!groupId || !user) return null;
     
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('messages')
-        .select('*')
-        .eq('group_id', groupId)
-        .order('created_at', { ascending: false })
-        .limit(limit);
-      
-      if (error) {
-        console.error('Error loading more messages:', error);
-        return;
-      }
-      
-      if (data) {
-        // Reverse to get chronological order and append to existing messages
-        const newMessages = [...data].reverse();
-        setMessages(prev => [...prev, ...newMessages]);
-      }
-    } catch (error) {
-      console.error('Failed to load more messages:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [groupId]);
-
-  const sendMessage = useCallback(async (content: MessageContent) => {
-    if (!groupId || !user) return;
-    
-    // Convert the content object to a format compatible with the database
-    const newMessage: Omit<ChatMessage, 'id'> = {
+    // Use snake_case for the database but camelCase for our application
+    const newMessage: Record<string, any> = {
       sender_id: user.id,
       group_id: groupId,
       created_at: new Date().toISOString(),
@@ -174,17 +179,114 @@ export const useGroupChat = (groupId: string | undefined) => {
       
       if (error) {
         console.error('Error sending group message:', error);
-        return;
+        return null;
       }
       
       if (data?.[0]) {
         // Mark your own message as read
         await markMessageAsRead(data[0].id);
+        return data[0];
       }
+      return null;
     } catch (error) {
       console.error('Failed to send group message:', error);
+      throw error;
     }
-  }, [groupId, user, markMessageAsRead]);
+  };
+
+  // Load more messages with pagination
+  const loadMessages = useCallback(async (limit: number = 20) => {
+    if (!groupId) return;
+    
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('group_id', groupId)
+        .order('created_at', { ascending: false })
+        .limit(limit);
+      
+      if (error) {
+        console.error('Error loading more messages:', error);
+        return;
+      }
+      
+      if (data) {
+        // Reverse to get chronological order and append to existing messages
+        // Use normalizeMessage to ensure consistent property access
+        const newMessages = [...data].reverse().map(normalizeMessage);
+        setMessages(prev => [...prev, ...newMessages]);
+      }
+    } catch (error) {
+      console.error('Failed to load more messages:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [groupId]);
+
+  const sendMessage = useCallback(async (content: MessageContent) => {
+    if (!groupId || !user) return;
+    
+    // For immediate UI feedback, create a temporary message
+    const tempMessage: ChatMessage = {
+      id: `temp-${Date.now()}`,
+      content: content.text,
+      senderId: user.id,
+      groupId: groupId,
+      createdAt: new Date(),
+      isPending: true,
+      mediaUrl: content.mediaUrl,
+      mediaType: content.mediaType,
+    };
+    
+    // Add to UI immediately
+    setMessages(prev => [...prev, tempMessage]);
+    
+    // Check if we're offline
+    if (!navigator.onLine) {
+      // Queue the message for later sending
+      messageQueue.addToQueue('group', groupId, undefined, content);
+      
+      toast({
+        title: "Melding lagret",
+        description: "Du er offline. Meldingen vil bli sendt når du er tilkoblet igjen.",
+      });
+      
+      return;
+    }
+    
+    try {
+      const sentMessage = await sendToSupabase(content);
+      
+      if (sentMessage) {
+        // Replace the temporary message with the real one
+        setMessages(prev => 
+          prev.filter(m => m.id !== tempMessage.id).concat(normalizeMessage(sentMessage))
+        );
+      } else {
+        // If send failed but we're online, try to queue
+        messageQueue.addToQueue('group', groupId, undefined, content);
+        
+        toast({
+          title: "Kunne ikke sende melding",
+          description: "Meldingen er lagret og vil bli forsøkt sendt på nytt.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Failed to send message:', error);
+      
+      // If there was an error, queue the message
+      messageQueue.addToQueue('group', groupId, undefined, content);
+      
+      toast({
+        title: "Feil ved sending",
+        description: "Meldingen er lagret og vil bli forsøkt sendt på nytt.",
+        variant: "destructive"
+      });
+    }
+  }, [groupId, user, toast]);
 
   // Edit a message
   const editMessage = useCallback(async (messageId: string, newContent: string) => {
@@ -206,10 +308,15 @@ export const useGroupChat = (groupId: string | undefined) => {
         return;
       }
       
-      // Update local state
+      // Update local state with normalized message
       setMessages(prev => prev.map(msg => 
         msg.id === messageId 
-          ? { ...msg, content: newContent, updated_at: new Date().toISOString(), is_edited: true }
+          ? normalizeMessage({
+              ...msg,
+              content: newContent,
+              updated_at: new Date().toISOString(),
+              is_edited: true
+            })
           : msg
       ));
     } catch (error) {
@@ -349,11 +456,12 @@ export const useGroupChat = (groupId: string | undefined) => {
             filter: `group_id=eq.${groupId}`,
           },
           async (payload) => {
-            const newMessage = payload.new as ChatMessage;
+            // Normalize message from realtime subscription
+            const newMessage = normalizeMessage(payload.new);
             setMessages(prev => [...prev, newMessage]);
             
             // Mark new messages from others as read
-            if (newMessage.sender_id !== user?.id) {
+            if (newMessage.senderId !== user?.id && newMessage.sender_id !== user?.id) {
               await markMessageAsRead(newMessage.id);
             }
           }
@@ -376,7 +484,8 @@ export const useGroupChat = (groupId: string | undefined) => {
     deleteMessage,
     reactToMessage,
     replyToMessage,
-    loadMessages
+    loadMessages,
+    offlineIndicator
   };
 };
 

@@ -20,6 +20,47 @@ import { useEffect, useState } from 'react';
 import GroupChatPage from './pages/GroupChatPage';
 import AdminPanel from './pages/AdminPanel';
 import CreateGroupPage from './pages/CreateGroupPage';
+import { ErrorBoundary, errorReporting, ErrorCategory, ErrorSeverity } from './services/errorReporting';
+import { Button } from './components/ui/button';
+import { RefreshCw, AlertTriangle } from 'lucide-react';
+
+// Error fallback component to show when an error is caught by ErrorBoundary
+const ErrorFallback = ({ error, resetErrorBoundary }: { error: Error, resetErrorBoundary: () => void }) => {
+  return (
+    <div className="h-screen w-full flex flex-col items-center justify-center bg-cyberdark-950 text-cybergold-400 p-4">
+      <div className="flex flex-col items-center max-w-md w-full">
+        <div className="p-6 bg-red-900/20 border border-red-700/30 rounded-xl w-full mb-8">
+          <div className="flex items-center justify-center mb-4">
+            <AlertTriangle className="h-12 w-12 text-red-500 mr-2" />
+          </div>
+          <h1 className="text-xl font-bold mb-4 text-red-400 text-center">
+            Beklager, noe gikk galt
+          </h1>
+          <p className="text-cybergold-300 mb-6 text-sm text-center">
+            Det oppstod en uventet feil. Vi har loggført denne feilen og jobber med å fikse det.
+          </p>
+          <p className="text-red-400/70 text-xs mb-4 p-3 bg-red-900/30 rounded border border-red-800/30 font-mono">
+            {error.message}
+          </p>
+          <div className="flex justify-center">
+            <Button 
+              onClick={resetErrorBoundary}
+              className="px-4 py-2 bg-cybergold-600 text-black rounded-md hover:bg-cybergold-500 transition flex items-center text-sm"
+            >
+              <RefreshCw className="h-4 w-4 mr-1" />
+              Prøv igjen
+            </Button>
+          </div>
+        </div>
+      </div>
+      
+      <div className="text-xs text-cybergold-600 text-center">
+        Du kan fortsatt gå tilbake til <a href="/" className="underline text-cybergold-500 hover:text-cybergold-400">hjemmesiden</a> 
+        eller <a href="/info" className="underline text-cybergold-500 hover:text-cybergold-400">kontakte support</a>.
+      </div>
+    </div>
+  );
+};
 
 function App() {
   const [isInitialized, setIsInitialized] = useState(false);
@@ -91,6 +132,14 @@ function App() {
           if (error) {
             console.error('Supabase-tilkoblingsfeil:', error.message);
             setInitError('Kunne ikke koble til Supabase. Sjekk nettverkstilkoblingen din.');
+            
+            // Logg feilen til feilrapporteringstjenesten
+            errorReporting.reportError(
+              error,
+              ErrorCategory.NETWORK,
+              ErrorSeverity.ERROR,
+              { action: 'initialize-app', connectionTest: true }
+            );
           }
           
           // Uansett om det er feil eller ikke, marker som initialisert og fullfør ladeprosessen
@@ -107,6 +156,14 @@ function App() {
           setInitError('Kunne ikke initialisere appen. Vennligst prøv igjen senere.');
           clearInterval(progressInterval);
           setIsInitialized(true); // Merk som initialisert for å vise feilmelding
+          
+          // Logg feilen til feilrapporteringstjenesten
+          errorReporting.reportError(
+            err instanceof Error ? err : new Error(String(err)),
+            ErrorCategory.NETWORK,
+            ErrorSeverity.ERROR,
+            { action: 'initialize-app', connectionTest: true }
+          );
         }
       };
       
@@ -117,7 +174,30 @@ function App() {
       console.error('App initialization error:', err);
       setInitError('Det oppstod en feil ved oppstart av appen.');
       setIsInitialized(true);
+      
+      // Logg feilen til feilrapporteringstjenesten
+      errorReporting.reportError(
+        err instanceof Error ? err : new Error(String(err)),
+        ErrorCategory.UNKNOWN,
+        ErrorSeverity.CRITICAL,
+        { action: 'initialize-app' }
+      );
     }
+  }, []);
+
+  // Oppdater brukerID i feilrapporteringstjenesten når bruker logger inn/ut
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user) {
+        errorReporting.setUser(session.user.id);
+      } else {
+        errorReporting.setUser(null);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   // Vis en forbedret laster mens appen initialiseres
@@ -203,63 +283,75 @@ function App() {
     );
   }
 
-  // Normal app rendering
+  // Normal app rendering med ErrorBoundary for å fange opp uventede feil
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <AppEncryptionProvider>
-          <NotificationProvider>
-            <MessageReplyProvider>
-              <Router>
-                <Routes>
-                  <Route path="/" element={<Layout />}>
-                    <Route index element={
-                      <ProtectedRoute>
-                        <Home />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="chat" element={
-                      <ProtectedRoute>
-                        <Chat />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="group-chat/:id?" element={
-                      <ProtectedRoute>
-                        <GroupChatPage />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="create-group" element={
-                      <ProtectedRoute>
-                        <CreateGroupPage />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="profile" element={
-                      <ProtectedRoute>
-                        <Profile />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="security-settings" element={
-                      <ProtectedRoute>
-                        <SecuritySettingsPage />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="admin" element={
-                      <ProtectedRoute>
-                        <AdminPanel />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="info" element={<InfoPage />} />
-                    <Route path="download" element={<DownloadPage />} />
-                  </Route>
-                  <Route path="/auth" element={<AuthPage />} />
-                </Routes>
-                <Toaster />
-              </Router>
-            </MessageReplyProvider>
-          </NotificationProvider>
-        </AppEncryptionProvider>
-      </AuthProvider>
-    </ThemeProvider>
+    <ErrorBoundary 
+      fallback={ErrorFallback} 
+      onError={(error: Error, info: { componentStack: string }) => {
+        errorReporting.reportError(
+          error,
+          ErrorCategory.UI,
+          ErrorSeverity.ERROR, 
+          { componentStack: info.componentStack }
+        );
+      }}
+    >
+      <ThemeProvider>
+        <AuthProvider>
+          <AppEncryptionProvider>
+            <NotificationProvider>
+              <MessageReplyProvider>
+                <Router>
+                  <Routes>
+                    <Route path="/" element={<Layout />}>
+                      <Route index element={
+                        <ProtectedRoute>
+                          <Home />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="chat" element={
+                        <ProtectedRoute>
+                          <Chat />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="group-chat/:id?" element={
+                        <ProtectedRoute>
+                          <GroupChatPage />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="create-group" element={
+                        <ProtectedRoute>
+                          <CreateGroupPage />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="profile" element={
+                        <ProtectedRoute>
+                          <Profile />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="security-settings" element={
+                        <ProtectedRoute>
+                          <SecuritySettingsPage />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="admin" element={
+                        <ProtectedRoute>
+                          <AdminPanel />
+                        </ProtectedRoute>
+                      } />
+                      <Route path="info" element={<InfoPage />} />
+                      <Route path="download" element={<DownloadPage />} />
+                    </Route>
+                    <Route path="/auth" element={<AuthPage />} />
+                  </Routes>
+                  <Toaster />
+                </Router>
+              </MessageReplyProvider>
+            </NotificationProvider>
+          </AppEncryptionProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 }
 
