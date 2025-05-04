@@ -56,16 +56,42 @@ export const formatRelativeTime = (timestamp: number | Date): string => {
 };
 
 /**
-  if (msgDate.toDateString() === today.toDateString()) {
-    return 'Today';
-  } else if (msgDate.toDateString() === yesterday.toDateString()) {
-    return 'Yesterday';
-  } else {
-    return msgDate.toLocaleDateString(undefined, { 
-      weekday: 'long', 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    });
+ * Formatterer tid som er igjen (brukes for selvdestruerende meldinger)
+ * @param expiryTime Utløpstid i millisekunder
+ * @returns Formatert tid igjen
+ */
+export const formatTimeLeft = (expiryTime: number): string => {
+  const now = Date.now();
+  const timeLeft = expiryTime - now;
+  
+  if (timeLeft <= 0) {
+    return 'Utløpt';
   }
+  
+  const secondsLeft = Math.floor(timeLeft / 1000);
+  
+  if (secondsLeft < 60) {
+    return `${secondsLeft}s`;
+  }
+  
+  const minutesLeft = Math.floor(secondsLeft / 60);
+  const remainingSeconds = secondsLeft % 60;
+  
+  if (minutesLeft < 60) {
+    return `${minutesLeft}m ${remainingSeconds}s`;
+  }
+  
+  const hoursLeft = Math.floor(minutesLeft / 60);
+  const remainingMinutes = minutesLeft % 60;
+  
+  return `${hoursLeft}t ${remainingMinutes}m`;
+};
+
+/**
+ * Konverterer minutter til millisekunder
+ * @param minutes Antall minutter
+ * @returns Millisekunder
+ */
+export const minutesToMilliseconds = (minutes: number): number => {
+  return minutes * 60 * 1000;
 };
