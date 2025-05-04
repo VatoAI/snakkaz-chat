@@ -1,3 +1,4 @@
+
 /**
  * Standardized chat message interfaces for Snakkaz Chat
  * Uses consistent camelCase naming with compatibility types for legacy snake_case fields
@@ -46,6 +47,8 @@ export interface ChatMessage {
   readBy?: string[];        // Array of user IDs who read the message
   replyToId?: string;       // ID of message being replied to
   isEncrypted?: boolean;    // Whether message content is encrypted
+  isPending?: boolean;      // Whether the message is pending delivery
+  hasError?: boolean;       // Whether there was an error sending the message
   
   // Optional fields for database compatibility
   text?: string;            // Alias for content
@@ -115,6 +118,8 @@ export function normalizeMessage(message: MessageInput): ChatMessage {
     readBy: message.readBy || message.read_by || [],
     replyToId: message.replyToId || message.reply_to_id,
     isEncrypted: message.isEncrypted || message.is_encrypted || false,
+    isPending: message.isPending || false,
+    hasError: message.hasError || false,
     sender: message.sender,
     
     // Preserve original fields for backward compatibility

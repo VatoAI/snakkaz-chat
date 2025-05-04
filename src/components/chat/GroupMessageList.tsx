@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { ChatMessage } from './ChatMessage';
 import { GroupMessage } from '@/types/group';
 import { useAuth } from '@/hooks/useAuth';
-import { Loader2, ChevronDown, MessageSquare, Reply, Edit, Trash } from 'lucide-react';
+import { Loader2, ChevronDown, MessageSquare } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { nb } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,8 @@ interface GroupMessageListProps {
   userProfiles?: Record<string, {
     displayName?: string;
     photoURL?: string;
+    username?: string;
+    avatar_url?: string;
     [key: string]: string | number | boolean | undefined;
   }>;
   onMessageEdit?: (message: GroupMessage) => void;
@@ -27,7 +29,7 @@ interface GroupMessageListProps {
   isEncryptedGroup?: boolean;
   currentUserId?: string;
   loadMoreMessages?: () => void;
-  offlineMode?: boolean; // Ny prop for å indikere offline-status
+  offlineMode?: boolean;
 }
 
 export const GroupMessageList: React.FC<GroupMessageListProps> = ({
@@ -43,7 +45,7 @@ export const GroupMessageList: React.FC<GroupMessageListProps> = ({
   isEncryptedGroup = false,
   currentUserId,
   loadMoreMessages,
-  offlineMode = false, // Standardverdi er false
+  offlineMode = false,
 }) => {
   const { user } = useAuth();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -158,7 +160,7 @@ export const GroupMessageList: React.FC<GroupMessageListProps> = ({
 
   // Helper function to determine message status indicator
   const renderMessageStatus = (message: GroupMessage) => {
-    // Vis pending-indikator hvis meldingen er markert som ventende
+    // Show pending indicator if message is marked as pending
     if (message.isPending) {
       return (
         <div className="inline-flex ml-1 text-xs items-center" title="Venter på sending">
@@ -168,7 +170,7 @@ export const GroupMessageList: React.FC<GroupMessageListProps> = ({
       );
     }
     
-    // Vis feilindikator hvis meldingen er markert med feil
+    // Show error indicator if message is marked with error
     if (message.hasError) {
       return (
         <div className="inline-flex ml-1 text-xs items-center" title="Kunne ikke sende">
@@ -263,7 +265,7 @@ export const GroupMessageList: React.FC<GroupMessageListProps> = ({
                   onReply={onMessageReply ? () => onMessageReply(message) : undefined}
                   isEncrypted={isEncryptedGroup || (message.isEncrypted || message.is_encrypted || false)}
                 >
-                  {isCurrentUser && renderMessageStatus(message)}
+                  {renderMessageStatus(message)}
                 </ChatMessage>
               );
             })}

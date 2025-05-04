@@ -21,6 +21,89 @@ import { GroupMembersList } from "./GroupMembersList";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { Badge } from "@/components/ui/badge";
 
+interface GroupChatHeaderProps {
+  group: Group;
+  connectionState: string;
+  dataChannelState: string;
+  usingServerFallback: boolean;
+  connectionAttempts: number;
+  onBack: () => void;
+  onReconnect: () => void;
+  securityLevel: string;
+  setSecurityLevel: (level: string) => void;
+  userProfiles?: Record<string, any>;
+  isAdmin: boolean;
+  isPremium: boolean;
+  isPremiumMember: boolean;
+  onShowInvite: () => void;
+  onShowPremium: () => void;
+  onShowMembers: () => void;
+  isPageEncryptionEnabled: boolean;
+  onEnablePageEncryption: () => void;
+  onEncryptAllMessages: () => void;
+  encryptionStatus: string;
+  isMobile?: boolean; // Make isMobile optional
+}
+
+interface GroupChatEmptyStateProps {
+  groupName?: string; // Make groupName optional
+  connectionState: string;
+  securityLevel: string;
+  isAdmin: boolean;
+  isPremium: boolean;
+  isPremiumMember: boolean;
+  memberCount: number;
+  onShowInvite: () => void;
+  onShowPremium: () => void;
+  isPageEncryptionEnabled: boolean;
+  onEnablePageEncryption?: () => void;
+}
+
+interface DirectMessageListProps {
+  messages: DecryptedMessage[];
+  currentUserId: string;
+  peerIsTyping: boolean;
+  isMessageRead: (messageId: string) => boolean;
+  connectionState: string;
+  dataChannelState: string;
+  usingServerFallback: boolean;
+  onEditMessage: (message: DecryptedMessage) => void;
+  onDeleteMessage: (messageId: string) => void;
+  securityLevel: string;
+  isPageEncrypted: boolean;
+  isPremiumMember: boolean;
+  isMobile?: boolean; // Make isMobile optional
+}
+
+interface GroupInviteButtonProps {
+  isOpen: boolean;
+  onClose: () => void;
+  userProfiles: Record<string, any>;
+  friendsList: string[];
+  currentUserId: string;
+  onInvite: (userId: string) => Promise<void>;
+  groupMembers: string[];
+  isMobile?: boolean; // Make isMobile optional
+}
+
+interface PremiumMembershipCardProps {
+  group: Group;
+  currentUserId: string;
+  currentMembership: GroupMember | undefined;
+  onUpgradeComplete: () => void;
+  isMobile?: boolean; // Make isMobile optional
+}
+
+interface GroupMembersListProps {
+  members: GroupMember[];
+  currentUserId: string;
+  userProfiles: Record<string, any>;
+  isAdmin: boolean;
+  groupId: string;
+  onMemberUpdated?: () => void; // Make onMemberUpdated optional
+  isMobile?: boolean; // Make isMobile optional
+}
+
 interface GroupChatProps {
   group: Group;
   currentUserId: string;
@@ -31,7 +114,7 @@ interface GroupChatProps {
   userProfiles?: Record<string, { username: string | null; avatar_url: string | null; status?: string }>;
 }
 
-export const GroupChat = ({
+export const GroupChat: React.FC<GroupChatProps> = ({
   group,
   currentUserId,
   webRTCManager,
@@ -101,7 +184,8 @@ export const GroupChat = ({
     }
   }, [isMobile]);
 
-  const handleFormSubmit = (message: string, files?: File[]) => {
+  // Fix the handleFormSubmit function
+  const handleFormSubmit = (text: string, files?: File[]) => {
     if (isMobile && files && files.length > 0) {
       toast({
         title: "Laster opp filer",
@@ -110,7 +194,7 @@ export const GroupChat = ({
       });
     }
 
-    handleSendMessage(message, files);
+    handleSendMessage(text, files);
   };
 
   const handleInviteUser = async (userId: string) => {

@@ -1,4 +1,4 @@
-
+import React, { useState } from 'react';
 import { UserStatus } from "@/types/presence";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -52,6 +52,23 @@ export const ChatHeader = ({
   const isVeryNarrowScreen = windowWidth < 360;
   
   const userProfiles = {}; // This would be populated from props
+
+  // Fix the comparison between UserStatus and "brb"
+  // Changed from: if (peerStatus === "brb") 
+  // To use proper type:
+  const renderStatusText = (status: UserStatus) => {
+    if (status === UserStatus.AWAY) {
+      return "Borte en liten stund";
+    } else if (status === UserStatus.ONLINE) {
+      return "Pålogget";
+    } else if (status === UserStatus.OFFLINE) {
+      return "Frakoblet";
+    } else if (status === UserStatus.BUSY) {
+      return "Opptatt";
+    } else {
+      return "Ukjent status";
+    }
+  };
 
   return (
     <TooltipProvider>
@@ -149,3 +166,5 @@ export const ChatHeader = ({
     </TooltipProvider>
   );
 };
+
+export default ChatHeader;

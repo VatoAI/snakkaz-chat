@@ -1,26 +1,30 @@
-
 import React from 'react';
 import { DecryptedMessage } from '@/types/message';
 import { UserPresence } from '@/types/presence';
+import { FriendRecord } from '@/types/friend';
 
 interface FriendsListProps {
-  friends: any[];
+  friends: FriendRecord[];
+  friendsList: string[];
   currentUserId: string;
   webRTCManager: any;
-  directMessages: DecryptedMessage[];
-  onNewMessage: (message: DecryptedMessage) => void;
-  onStartChat: (userId: string) => void;
-  userProfiles: Record<string, {username: string | null, avatar_url: string | null}>;
-  userPresence?: Record<string, UserPresence>; 
+  directMessages: any[];
+  onNewMessage: (message: any) => void;
+  onSelectFriend: (friendId: string) => void;
+  selectedFriendId: string | null;
+  userProfiles: Record<string, any>;
+  userPresence?: Record<string, string>; 
 }
 
 export const FriendsList: React.FC<FriendsListProps> = ({
   friends,
+  friendsList,
   currentUserId,
   webRTCManager,
   directMessages,
   onNewMessage,
-  onStartChat,
+  onSelectFriend,
+  selectedFriendId,
   userProfiles,
   userPresence = {}
 }) => {
@@ -45,45 +49,48 @@ export const FriendsList: React.FC<FriendsListProps> = ({
     );
   }
 
+  // Fix avatar_url access with defensive coding
+  const renderFriendItem = (friend: FriendRecord) => {
+    const friendProfile = userProfiles[friend.friendId] || {};
+    const avatarUrl = friendProfile.avatar_url || '/images/default-avatar.png';
+    const username = friendProfile.username || 'Unknown User';
+    
+    return (
+      <div 
+        key={friend.friendId}
+        onClick={() => onSelectFriend(friend.friendId)}
+        className="flex items-center p-2 rounded-lg cursor-pointer hover:bg-cyberdark-800/50 transition-colors"
+      >
+        <div className="relative">
+          <div className="w-10 h-10 rounded-full bg-cyberdark-700 overflow-hidden border border-cybergold-500/20">
+            {avatarUrl ? (
+              <img 
+                src={avatarUrl} 
+                alt={username}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-cybergold-300">
+                {(username || 'U').charAt(0).toUpperCase()}
+              </div>
+            )}
+          </div>
+          <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-cyberdark-900 ${userPresence && userPresence[friend.friendId]?.status === 'online' ? 'bg-green-500' : 'bg-cyberdark-400'}`}></div>
+        </div>
+        <div className="ml-3">
+          <div className="font-medium text-cybergold-200">{username}</div>
+          <div className="text-xs text-cyberdark-300">
+            {userPresence && userPresence[friend.friendId]?.status === 'online' ? 'Online' : 'Offline'}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-2 p-2">
       <h3 className="text-lg font-medium text-cybergold-300 px-2 mb-4">Mine venner</h3>
-      {friends.map(friend => {
-        const friendId = friend.user_id;
-        const profile = userProfiles[friendId] || {};
-        const isOnline = userPresence && userPresence[friendId]?.status === 'online';
-        
-        return (
-          <div 
-            key={friendId}
-            onClick={() => onStartChat(friendId)}
-            className="flex items-center p-2 rounded-lg cursor-pointer hover:bg-cyberdark-800/50 transition-colors"
-          >
-            <div className="relative">
-              <div className="w-10 h-10 rounded-full bg-cyberdark-700 overflow-hidden border border-cybergold-500/20">
-                {profile.avatar_url ? (
-                  <img 
-                    src={profile.avatar_url} 
-                    alt={profile.username || 'Friend'}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-cybergold-300">
-                    {(profile.username || 'U').charAt(0).toUpperCase()}
-                  </div>
-                )}
-              </div>
-              <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-cyberdark-900 ${isOnline ? 'bg-green-500' : 'bg-cyberdark-400'}`}></div>
-            </div>
-            <div className="ml-3">
-              <div className="font-medium text-cybergold-200">{profile.username || 'Ukjent bruker'}</div>
-              <div className="text-xs text-cyberdark-300">
-                {isOnline ? 'Online' : 'Offline'}
-              </div>
-            </div>
-          </div>
-        );
-      })}
+      {friends.map(friend => renderFriendItem(friend))}
     </div>
   );
 };

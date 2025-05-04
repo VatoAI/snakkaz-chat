@@ -122,7 +122,7 @@ export const FriendsContainer = ({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="h-full flex flex-col">
       {loading ? (
         <div className="flex items-center justify-center py-8">
           <Loader2 className="h-6 w-6 text-cybergold-400 animate-spin" />
@@ -198,21 +198,22 @@ export const FriendsContainer = ({
           </div>
           
           <TabsContent value="friends" className="mt-0">
-            {friends.length === 0 ? (
-              <EmptyFriendsList />
-            ) : (
-              <FriendsList 
+            {friends.length > 0 && (
+              <FriendsList
                 friends={filteredFriends}
                 friendsList={friendsList}
                 currentUserId={currentUserId}
                 webRTCManager={webRTCManager}
                 directMessages={directMessages}
                 onNewMessage={onNewMessage}
-                onStartChat={handleStartChat}
+                onSelectFriend={handleFriendSelect}
+                selectedFriendId={selectedFriendId}
                 userProfiles={userProfiles}
-                onRefresh={handleRefresh}
                 userPresence={userPresence}
               />
+            )}
+            {friends.length === 0 && !loading && (
+              <EmptyState currentUserId={currentUserId} />
             )}
           </TabsContent>
           
@@ -315,3 +316,16 @@ export const FriendsContainer = ({
     </div>
   );
 };
+
+interface EmptyStateProps {
+  currentUserId: string;
+}
+
+const EmptyState: React.FC<EmptyStateProps> = ({ currentUserId }) => (
+  <div className="text-center text-cybergold-500 py-6 bg-cyberdark-800/40 rounded-md p-4">
+    <div className="mb-2 flex justify-center">
+      <UsersRound className="h-10 w-10 text-cybergold-400/50" />
+    </div>
+    <p>Du har ingen venner.</p>
+  </div>
+);

@@ -1,3 +1,4 @@
+import React from 'react';
 import { MessageSquare, Crown, Clock, ShieldCheck, Circle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -8,6 +9,15 @@ import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { nb } from "date-fns/locale";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
+interface UserProfile {
+  id: string;
+  username?: string;
+  full_name?: string;
+  avatar_url?: string;
+  is_verified?: boolean;
+  status?: string;
+}
 
 interface FriendListItemProps {
   friend: Friend;
@@ -20,7 +30,7 @@ interface FriendListItemProps {
   lastSeen?: string;
 }
 
-export const FriendListItem = ({ 
+export const FriendListItem = ({
   friend,
   currentUserId,
   messages,
