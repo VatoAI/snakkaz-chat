@@ -904,15 +904,19 @@ const GroupChatPage = () => {
       <div className="flex-1 overflow-hidden">
         <GroupMessageList 
           messages={Array.isArray(groupMessages) 
-            ? groupMessages.map(msg => ({
-                ...msg,
-                senderId: msg.senderId || msg.sender_id || '',
-                content: msg.content || msg.text || '',
-                createdAt: msg.createdAt || msg.created_at || new Date(),
-                isEdited: msg.isEdited || msg.is_edited || false,
-                mediaUrl: msg.mediaUrl || msg.media_url || undefined,
-                replyToId: msg.replyToId || msg.reply_to_id || undefined
-              }))
+            ? groupMessages.map(msg => {
+                // Use type assertion to help TypeScript understand the message structure
+                const chatMsg = msg as ChatMessage;
+                return {
+                  ...msg,
+                  senderId: chatMsg.senderId || chatMsg.sender_id || '',
+                  content: chatMsg.content || chatMsg.text || '',
+                  createdAt: chatMsg.createdAt || chatMsg.created_at || new Date(),
+                  isEdited: chatMsg.isEdited || chatMsg.is_edited || false,
+                  mediaUrl: chatMsg.mediaUrl || chatMsg.media_url || undefined,
+                  replyToId: chatMsg.replyToId || chatMsg.reply_to_id || undefined
+                };
+              })
             : []} 
           isLoading={messagesLoading}
           userProfiles={userProfiles}
