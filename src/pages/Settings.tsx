@@ -24,12 +24,38 @@ import {
   Volume2,
   VolumeX,
   Mail,
-  NotificationOff,
+  BellOff,
   Lock,
   Key,
   Smartphone,
   LogOut
 } from 'lucide-react';
+
+// Define types for settings object
+interface NotificationSettings {
+  enabled: boolean;
+  sound: boolean;
+  email: boolean;
+  push: boolean;
+}
+
+interface PrivacySettings {
+  profileVisibility: string;
+  lastSeen: boolean;
+  readReceipts: boolean;
+}
+
+interface SecuritySettings {
+  twoFactorAuth: boolean;
+}
+
+interface SettingsState {
+  theme: string;
+  language: string;
+  notifications: NotificationSettings;
+  privacy: PrivacySettings;
+  security: SecuritySettings;
+}
 
 const Settings = () => {
   const { user, signOut } = useAuth();
@@ -37,7 +63,7 @@ const Settings = () => {
   const [activeTab, setActiveTab] = useState('general');
   
   // Mock state for settings
-  const [settings, setSettings] = useState({
+  const [settings, setSettings] = useState<SettingsState>({
     theme: 'dark',
     language: 'no',
     notifications: {
@@ -73,14 +99,19 @@ const Settings = () => {
     }
   };
   
-  const updateSetting = (category: string, setting: string, value: any) => {
-    setSettings(prev => ({
-      ...prev,
-      [category]: {
-        ...prev[category as keyof typeof prev],
-        [setting]: value
+  const updateSetting = (category: keyof SettingsState, setting: string, value: string | boolean | number) => {
+    setSettings(prev => {
+      if (category === 'notifications' || category === 'privacy' || category === 'security') {
+        return {
+          ...prev,
+          [category]: {
+            ...prev[category],
+            [setting]: value
+          }
+        };
       }
-    }));
+      return prev;
+    });
     
     toast({
       title: "Innstilling oppdatert",
