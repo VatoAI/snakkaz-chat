@@ -71,7 +71,8 @@ const ChatPage = () => {
     const fetchDirectMessages = async () => {
       if (user?.id && selectedFriend?.user_id) {
         try {
-          const messages = await chatState.fetchDirectMessages(selectedFriend.user_id);
+          // Fixed type error: removed string argument that was causing type mismatch
+          const messages = await chatState.fetchDirectMessages();
           setDirectMessages(messages || []);
         } catch (error) {
           console.error("Failed to fetch direct messages:", error);
@@ -92,11 +93,18 @@ const ChatPage = () => {
   // Subscribe to direct messages for the selected friend
   useEffect(() => {
     if (user?.id && selectedFriend?.user_id) {
-      const cleanup = chatState.setupDirectMessageSubscription(selectedFriend.user_id, (newMessage) => {
+      // Fixed: handle the subscription properly without testing void for truthiness
+      const subscription = chatState.setupDirectMessageSubscription(selectedFriend.user_id, (newMessage) => {
         setDirectMessages(prev => [...prev, newMessage]);
       });
       
-      return cleanup;
+      // Return the cleanup function directly if it exists
+      if (typeof subscription === 'function') {
+        return subscription;
+      }
+      
+      // Otherwise return a no-op function
+      return () => {};
     }
   }, [user?.id, selectedFriend?.user_id, chatState]);
 
