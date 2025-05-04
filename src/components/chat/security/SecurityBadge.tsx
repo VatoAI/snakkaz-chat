@@ -36,7 +36,7 @@ export const SecurityBadge = ({
   };
   
   let Icon = Shield;
-  let colors = securityColors[securityLevel];
+  const colors = securityColors[securityLevel];
   let title = '';
   
   switch (securityLevel) {

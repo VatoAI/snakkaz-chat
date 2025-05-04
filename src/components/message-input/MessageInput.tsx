@@ -181,7 +181,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     if ((!text.trim() && !attachmentData) || disabled) return;
     
     try {
-      let attachments = [];
+      const attachments = [];
       
       // Handle attachment if present
       if (attachmentData && onAttachFile) {
