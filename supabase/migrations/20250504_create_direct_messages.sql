@@ -1,6 +1,7 @@
--- Oppretter direct_messages-tabellen som mangler men er referert til i koden
-CREATE TABLE IF NOT EXISTS direct_messages (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+
+-- Create direct_messages table for private messaging
+CREATE TABLE IF NOT EXISTS public.direct_messages (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   sender_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   receiver_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   content TEXT,
@@ -22,17 +23,16 @@ CREATE TABLE IF NOT EXISTS direct_messages (
   reply_to_message_id UUID REFERENCES direct_messages(id) ON DELETE SET NULL
 );
 
--- Indekser for bedre ytelse
+-- Indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_direct_messages_sender_id ON direct_messages(sender_id);
 CREATE INDEX IF NOT EXISTS idx_direct_messages_receiver_id ON direct_messages(receiver_id);
 CREATE INDEX IF NOT EXISTS idx_direct_messages_created_at ON direct_messages(created_at);
 CREATE INDEX IF NOT EXISTS idx_direct_messages_group_id ON direct_messages(group_id);
 
--- Tilgangskontroll
+-- Row level security
 ALTER TABLE direct_messages ENABLE ROW LEVEL SECURITY;
 
--- Policy: Brukere kan bare lese meldinger de har sendt eller mottatt,
--- eller meldinger som er del av en gruppe de er medlem av
+-- Users can only read messages they sent or received
 CREATE POLICY "Brukere kan lese egne meldinger"
   ON direct_messages
   FOR SELECT
@@ -46,25 +46,25 @@ CREATE POLICY "Brukere kan lese egne meldinger"
     )
   );
 
--- Policy: Brukere kan bare sende meldinger som seg selv
+-- Users can only send messages as themselves
 CREATE POLICY "Brukere kan sende meldinger som seg selv"
   ON direct_messages
   FOR INSERT
   WITH CHECK (auth.uid() = sender_id);
 
--- Policy: Brukere kan bare endre egne meldinger
+-- Users can only update their own messages
 CREATE POLICY "Brukere kan endre egne meldinger"
   ON direct_messages
   FOR UPDATE
   USING (auth.uid() = sender_id);
 
--- Policy: Brukere kan bare slette egne meldinger
+-- Users can only delete their own messages
 CREATE POLICY "Brukere kan slette egne meldinger"
   ON direct_messages
   FOR DELETE
   USING (auth.uid() = sender_id);
 
--- Funksjon for å sette updated_at automatisk
+-- Trigger to update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_direct_messages_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -73,33 +73,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Trigger for å sette updated_at automatisk
+-- Create trigger to update timestamp
 CREATE TRIGGER set_direct_messages_updated_at
 BEFORE UPDATE ON direct_messages
 FOR EACH ROW
 EXECUTE FUNCTION update_direct_messages_updated_at();
-
--- Funksjon for å håndtere automatisk sletting av meldinger basert på ttl
-CREATE OR REPLACE FUNCTION check_direct_messages_ttl()
-RETURNS TRIGGER AS $$
-BEGIN
-  IF NEW.ephemeral_ttl IS NOT NULL THEN
-    -- Sett opp en notifikasjon for når meldingen skal slettes
-    PERFORM pg_notify(
-      'message_ttl_channel',
-      json_build_object(
-        'id', NEW.id,
-        'delete_at', (NEW.created_at + (NEW.ephemeral_ttl || ' seconds')::interval)::text
-      )::text
-    );
-  END IF;
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
--- Trigger for å håndtere automatisk sletting av meldinger
-CREATE TRIGGER direct_messages_ttl_trigger
-AFTER INSERT ON direct_messages
-FOR EACH ROW
-WHEN (NEW.ephemeral_ttl IS NOT NULL)
-EXECUTE FUNCTION check_direct_messages_ttl();

@@ -1,3 +1,4 @@
+
 /**
  * Kommunikasjons-konfigurasjon for Snakkaz Chat
  * 

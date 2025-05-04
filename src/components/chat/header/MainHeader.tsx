@@ -1,8 +1,8 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { HeaderLogo } from "./HeaderLogo";
-import { HeaderNavLinks } from "./HeaderNavLinks";
-import { Menu, X, User, LogOut, Bell } from "lucide-react";
+import { Menu, X, User, LogOut } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { MainNav } from "@/components/nav/MainNav";
@@ -79,7 +79,7 @@ export const MainHeader = ({
               variant="ghost" 
               size="sm"
               className="text-cyberred-400 hover:bg-cyberred-900/20 hover:text-cyberred-300"
-              onClick={signOut}
+              onClick={handleSignOut}
             >
               <LogOut className="h-4 w-4 mr-2" />
               <span>Logg ut</span>
@@ -89,7 +89,7 @@ export const MainHeader = ({
 
         {isMobile && (
           <div className="flex items-center space-x-3">
-            <MainNav />
+            {showNavigation && <MainNav />}
             <Button 
               variant="ghost" 
               size="icon" 
@@ -102,36 +102,29 @@ export const MainHeader = ({
         )}
       </div>
 
+      {/* Mobile menu */}
       {isMobile && mobileMenuOpen && (
         <div className="absolute top-full left-0 w-full bg-cyberdark-900/95 border-b border-cyberblue-500/30 shadow-neon-blue animate-fadeIn">
-          {showNavigation && (
-            <div className="px-4 py-3 border-b border-cyberdark-800">
-              <HeaderNavLinks 
-                activeTab={activeTab} 
-                onTabChange={handleNavigation}
-                vertical={true}
-              />
+          {session && (
+            <div className="py-4 px-6 space-y-3">
+              <Button 
+                variant="ghost" 
+                className="w-full justify-start text-cyberblue-300 hover:bg-cyberdark-800 hover:text-cyberblue-200"
+                onClick={handleProfile}
+              >
+                <User className="h-4 w-4 mr-2" />
+                Min Profil
+              </Button>
+              <Button 
+                variant="destructive" 
+                className="w-full justify-start bg-cyberred-600 hover:bg-cyberred-700 text-white"
+                onClick={handleSignOut}
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Logg ut
+              </Button>
             </div>
           )}
-          
-          <div className="py-4 px-6 space-y-3">
-            <Button 
-              variant="ghost" 
-              className="w-full justify-start text-cyberblue-300 hover:bg-cyberdark-800 hover:text-cyberblue-200"
-              onClick={handleProfile}
-            >
-              <User className="h-4 w-4 mr-2" />
-              Min Profil
-            </Button>
-            <Button 
-              variant="destructive" 
-              className="w-full justify-start bg-cyberred-600 hover:bg-cyberred-700 text-white"
-              onClick={signOut}
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-              Logg ut
-            </Button>
-          </div>
         </div>
       )}
     </header>

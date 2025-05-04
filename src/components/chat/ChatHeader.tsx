@@ -1,32 +1,22 @@
 
 import { UserStatus } from "@/types/presence";
-import { Badge } from "@/components/ui/badge";
-import { useState, useEffect } from "react";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { copyToClipboard } from "@/utils/clipboard";
 import { useNavigate } from "react-router-dom";
-import { NotificationSettings } from "./notification/NotificationSettings";
-import { HeaderNavLinks } from "./header/HeaderNavLinks";
-import { ProfileDropdown } from "./header/ProfileDropdown";
-import { UserAvatar } from "./header/UserAvatar";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { AIAssistantButton } from "./header/AIAssistantButton";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { AdminButton } from "./AdminButton";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { HeaderNavLinks } from "./header/HeaderNavLinks";
+import { ProfileDropdown } from "./header/ProfileDropdown";
+import { AIAssistantButton } from "./header/AIAssistantButton";
+import { AdminButton } from "./AdminButton";
+import { copyToClipboard } from "@/utils/clipboard";
+import { useToast } from "@/hooks/use-toast";
 
 interface ChatHeaderProps {
   userPresence: Record<string, any>;
   currentUserId: string | null;
   currentStatus: UserStatus;
   onStatusChange: (status: UserStatus) => void;
-  webRTCManager: any;
-  directMessages: any[];
-  onNewMessage: (message: { id: string; content: string }) => void;
-  onStartChat: (friendId: string) => void;
-  userProfiles: Record<string, { username: string | null; avatar_url: string | null }>;
   activeTab: string;
   onTabChange: (tab: string) => void;
 }
@@ -36,11 +26,6 @@ export const ChatHeader = ({
   currentUserId,
   currentStatus,
   onStatusChange,
-  webRTCManager,
-  directMessages,
-  onNewMessage,
-  onStartChat,
-  userProfiles,
   activeTab,
   onTabChange
 }: ChatHeaderProps) => {
@@ -51,8 +36,8 @@ export const ChatHeader = ({
   const { isAdmin } = useIsAdmin(user?.id);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
-  // Add window resize listener
-  useEffect(() => {
+  // Use effect for window resize listener
+  React.useEffect(() => {
     const handleResize = () => {
       setWindowWidth(window.innerWidth);
     };
@@ -65,6 +50,8 @@ export const ChatHeader = ({
 
   // Determine a more precise mobile value
   const isVeryNarrowScreen = windowWidth < 360;
+  
+  const userProfiles = {}; // This would be populated from props
 
   return (
     <TooltipProvider>
@@ -124,7 +111,6 @@ export const ChatHeader = ({
 
             {/* Right Section - actions and profile */}
             <div className="flex flex-row items-center gap-1 sm:gap-2 flex-shrink-0">
-              {!isVeryNarrowScreen && !isMobile && <NotificationSettings />}
               <AIAssistantButton currentUserId={currentUserId || ''} />
               {isAdmin && !isVeryNarrowScreen && <AdminButton />}
               {currentUserId && (

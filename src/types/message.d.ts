@@ -10,8 +10,8 @@ export interface DecryptedMessage {
   };
   created_at: string;
   updated_at?: string;
-  encryption_key: string;
-  iv: string;
+  encryption_key?: string;
+  iv?: string;
   ephemeral_ttl?: number;
   ttl?: number;
   media_url?: string;
@@ -36,4 +36,5 @@ export interface DecryptedMessage {
   };
   status?: string;
   readBy?: string[];
+  room_id?: string | null;
 }

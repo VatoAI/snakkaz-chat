@@ -1,158 +1,89 @@
 
-import { useState } from "react";
-import { User, MessageSquare } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Friend } from "./types";
-import { DirectMessage } from "./DirectMessage";
-import { WebRTCManager } from "@/utils/webrtc";
-import { DecryptedMessage } from "@/types/message";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { supabase } from "@/integrations/supabase/client";
+import React from 'react';
+import { DecryptedMessage } from '@/types/message';
+import { UserPresence } from '@/types/presence';
 
 interface FriendsListProps {
-  friends: Friend[];
+  friends: any[];
   currentUserId: string;
-  webRTCManager: WebRTCManager | null;
+  webRTCManager: any;
   directMessages: DecryptedMessage[];
   onNewMessage: (message: DecryptedMessage) => void;
-  onStartChat?: (friendId: string) => void;
-  userProfiles?: Record<string, {username: string | null, avatar_url: string | null}>;
+  onStartChat: (userId: string) => void;
+  userProfiles: Record<string, {username: string | null, avatar_url: string | null}>;
+  userPresence?: Record<string, UserPresence>; 
 }
 
-export const FriendsList = ({ 
-  friends, 
+export const FriendsList: React.FC<FriendsListProps> = ({
+  friends,
   currentUserId,
   webRTCManager,
   directMessages,
   onNewMessage,
   onStartChat,
-  userProfiles = {}
-}: FriendsListProps) => {
-  const [selectedFriend, setSelectedFriend] = useState<Friend | null>(null);
-  const [readMessages, setReadMessages] = useState<Set<string>>(new Set());
-
-  if (friends.length === 0) {
+  userProfiles,
+  userPresence = {}
+}) => {
+  if (!friends || friends.length === 0) {
     return (
-      <div className="text-center text-cybergold-500 py-4 bg-cyberdark-800/40 rounded-md p-4">
-        <div className="mb-2 flex justify-center">
-          <User className="h-10 w-10 text-cybergold-400/50" />
+      <div className="flex flex-col items-center justify-center h-full p-6 space-y-4">
+        <div className="w-20 h-20 rounded-full bg-cyberdark-800 flex items-center justify-center">
+          <svg className="w-10 h-10 text-cyberdark-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
         </div>
-        <p>Du har ingen venner ennå.</p>
-        <p className="text-sm mt-1">Søk etter brukere og send venneforespørsler for å begynne å chatte.</p>
+        <h3 className="text-lg font-medium text-cybergold-300">Ingen venner ennå</h3>
+        <p className="text-center text-sm text-cyberdark-300">
+          Du har ikke lagt til noen venner ennå. Når du legger til venner, vil de vises her.
+        </p>
+        <button 
+          className="px-4 py-2 bg-cyberblue-600 text-white rounded hover:bg-cyberblue-700 transition"
+        >
+          Legg til venner
+        </button>
       </div>
-    );
-  }
-
-  const handleSelectFriend = (friend: Friend) => {
-    // Mark all messages from this friend as read
-    const friendId = friend.user_id === currentUserId ? friend.friend_id : friend.user_id;
-    const messagesFromFriend = directMessages.filter(msg => msg.sender.id === friendId);
-    
-    const newReadMessages = new Set(readMessages);
-    messagesFromFriend.forEach(msg => newReadMessages.add(msg.id));
-    
-    setReadMessages(newReadMessages);
-    
-    if (onStartChat) {
-      onStartChat(friendId);
-    } else {
-      setSelectedFriend(friend);
-    }
-  };
-
-  if (selectedFriend && !onStartChat) {
-    return (
-      <DirectMessage 
-        friend={selectedFriend}
-        currentUserId={currentUserId}
-        webRTCManager={webRTCManager}
-        onBack={() => setSelectedFriend(null)}
-        messages={directMessages}
-        onNewMessage={onNewMessage}
-        userProfiles={userProfiles}
-      />
     );
   }
 
   return (
-    <div className="space-y-2">
-      <h3 className="text-sm font-medium text-cybergold-300 px-1">Dine venner</h3>
-      <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
-        {friends.map((friend) => {
-          const friendId = friend.user_id === currentUserId ? friend.friend_id : friend.user_id;
-          
-          // Get messages from this friend that haven't been read
-          const unreadMessages = directMessages.filter(
-            msg => msg.sender.id === friendId && !readMessages.has(msg.id)
-          );
-          
-          // Find the most recent message for this friend
-          const recentMessages = directMessages.filter(
-            msg => (msg.sender.id === friendId && msg.receiver_id === currentUserId) || 
-                   (msg.sender.id === currentUserId && msg.receiver_id === friendId)
-          ).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-          
-          const lastMessage = recentMessages.length > 0 ? recentMessages[0] : null;
-          const isRecentMessage = lastMessage && 
-            (new Date().getTime() - new Date(lastMessage.created_at).getTime() < 60000); // Within last minute
-          
-          // Get user profile info
-          const friendProfile = friend.profile || userProfiles[friendId];
-          const username = friendProfile?.username || 'Ukjent bruker';
-          const avatarUrl = friendProfile?.avatar_url;
-          
-          return (
-            <div
-              key={friend.id}
-              className="flex items-center justify-between p-3 bg-cyberdark-800 border border-cybergold-500/30 rounded-md hover:bg-cyberdark-700 transition-colors cursor-pointer"
-              onClick={() => handleSelectFriend(friend)}
-            >
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <Avatar className="w-10 h-10 border-2 border-cybergold-500/20">
-                    {avatarUrl ? (
-                      <AvatarImage 
-                        src={supabase.storage.from('avatars').getPublicUrl(avatarUrl).data.publicUrl} 
-                        alt={username}
-                      />
-                    ) : (
-                      <AvatarFallback className="bg-cybergold-500/20 text-cybergold-300">
-                        {username.substring(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    )}
-                  </Avatar>
-                  {isRecentMessage && (
-                    <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border border-cyberdark-800"></span>
-                  )}
-                </div>
-                <div>
-                  <p className="text-cybergold-200 font-medium">
-                    {username}
-                  </p>
-                  {lastMessage && (
-                    <p className="text-xs text-cybergold-400 truncate max-w-[150px]">
-                      {lastMessage.sender.id === currentUserId ? 'You: ' : ''}
-                      {lastMessage.content}
-                    </p>
-                  )}
-                </div>
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="relative text-cybergold-400 hover:text-cybergold-300 hover:bg-cyberdark-600"
-              >
-                <MessageSquare className="w-5 h-5" />
-                {unreadMessages.length > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-cybergold-500 text-cyberdark-900 text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                    {unreadMessages.length}
-                  </span>
+    <div className="space-y-2 p-2">
+      <h3 className="text-lg font-medium text-cybergold-300 px-2 mb-4">Mine venner</h3>
+      {friends.map(friend => {
+        const friendId = friend.user_id;
+        const profile = userProfiles[friendId] || {};
+        const isOnline = userPresence && userPresence[friendId]?.status === 'online';
+        
+        return (
+          <div 
+            key={friendId}
+            onClick={() => onStartChat(friendId)}
+            className="flex items-center p-2 rounded-lg cursor-pointer hover:bg-cyberdark-800/50 transition-colors"
+          >
+            <div className="relative">
+              <div className="w-10 h-10 rounded-full bg-cyberdark-700 overflow-hidden border border-cybergold-500/20">
+                {profile.avatar_url ? (
+                  <img 
+                    src={profile.avatar_url} 
+                    alt={profile.username || 'Friend'}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-cybergold-300">
+                    {(profile.username || 'U').charAt(0).toUpperCase()}
+                  </div>
                 )}
-              </Button>
+              </div>
+              <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-cyberdark-900 ${isOnline ? 'bg-green-500' : 'bg-cyberdark-400'}`}></div>
             </div>
-          );
-        })}
-      </div>
+            <div className="ml-3">
+              <div className="font-medium text-cybergold-200">{profile.username || 'Ukjent bruker'}</div>
+              <div className="text-xs text-cyberdark-300">
+                {isOnline ? 'Online' : 'Offline'}
+              </div>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 };

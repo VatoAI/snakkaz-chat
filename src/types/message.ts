@@ -1,3 +1,4 @@
+
 export interface Message {
   id: string;
   senderId: string;
@@ -103,3 +104,6 @@ export const formatMessageDate = (date: Date | string): string => {
   const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' };
   return messageDate.toLocaleDateString('no-NO', options);
 };
+
+// Add the missing DecryptedMessage export for backwards compatibility
+export type { DecryptedMessage } from './message.d';

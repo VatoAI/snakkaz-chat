@@ -1,3 +1,4 @@
+
 #!/bin/sh
 echo "Applying Snakkaz Chat database migrations..."
 
@@ -9,4 +10,3 @@ psql "$DATABASE_URL" -f supabase/migrations/fix_group_members_policy.sql
 psql "$DATABASE_URL" -f supabase/migrations/20250504_create_direct_messages.sql
 
 echo "Migrations completed!"
-

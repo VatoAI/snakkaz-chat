@@ -2,7 +2,6 @@
 import { useRef, useEffect } from "react";
 import { DecryptedMessage } from "@/types/message";
 import { MessageGroup } from "@/components/message/MessageGroup";
-import { SecurityLevel } from "@/types/security";
 import { UserStatus } from "@/types/presence";
 
 interface DirectMessageListProps {
@@ -15,7 +14,7 @@ interface DirectMessageListProps {
   usingServerFallback?: boolean;
   onEditMessage?: (message: DecryptedMessage) => void;
   onDeleteMessage?: (messageId: string) => void;
-  securityLevel?: SecurityLevel;
+  securityLevel?: string;
   isPageEncrypted?: boolean;
   isPremiumMember?: boolean;
 }
