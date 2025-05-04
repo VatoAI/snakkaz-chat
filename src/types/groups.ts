@@ -1,83 +1,149 @@
-// Group Types
+// Consolidated Group Types for SnakkaZ Chat
+
+// Group role with all possible values from both definitions
 export type GroupRole = "admin" | "moderator" | "member" | "premium" | "owner" | "guest";
 
-export type GroupVisibility = "private" | "public" | "hidden" | "secret";
+// Group visibility with all possible values from both definitions
+export type GroupVisibility = "public" | "private" | "hidden" | "secret";
 
-export type SecurityLevel = "low" | "standard" | "high" | "maximum";
+// Security levels with all possible values from both definitions
+export type SecurityLevel = "low" | "standard" | "high" | "maximum" | "p2p_e2ee" | "server_e2ee";
 
-export interface GroupMember {
-    id: string;
-    group_id: string;
-    user_id: string;
-    role: GroupRole;
-    createdAt: string;
-    can_write: boolean;
-    storage_quota?: number; // Premium-medlemmer kan ha høyere quota
-    premium_features?: string[]; // Liste over aktive premium-funksjoner
-    // Add compatibility with newer type
-    userId?: string;
-    groupId?: string;
-    joinedAt?: string;
-    isActive?: boolean;
-    lastActive?: string;
+// Write permission types
+export type GroupWritePermission = "all" | "admin" | "admins" | "moderators" | "selected";
+
+// Message TTL options with all values
+export type MessageTTLOption = 0 | 5 | 10 | 30 | 60 | 300 | 1800 | 3600 | 86400 | 604800 | null;
+
+// Premium features for groups
+export interface PremiumFeatures {
+    enhanced_encryption?: boolean;
+    unlimited_storage?: boolean;
+    advanced_permissions?: boolean;
+    file_sharing?: boolean;
+    ai_moderation?: boolean;
+    priority_bandwidth?: boolean;
+    message_editing?: boolean;
+    custom_branding?: boolean;
 }
 
+// Group member with all properties from both definitions, using camelCase as primary
+export interface GroupMember {
+    id: string;
+    userId: string;
+    user_id?: string; // For backward compatibility
+    groupId: string;
+    group_id?: string; // For backward compatibility
+    role: GroupRole;
+    joinedAt: string;
+    joined_at?: string; // For backward compatibility
+    canWrite: boolean;
+    can_write?: boolean; // For backward compatibility
+    permissions?: string[];
+    isActive?: boolean;
+    lastActive?: string;
+    createdAt?: string;
+    storage_quota?: number;
+    premium_features?: string[];
+}
+
+// Group interface with all properties from both definitions, using camelCase as primary
 export interface Group {
     id: string;
     name: string;
     description?: string;
     avatarUrl?: string;
     avatar_url?: string; // For backward compatibility
-    visibility: GroupVisibility;
-    securityLevel?: SecurityLevel;
-    is_premium: boolean;
-    memberCount: number;
-    unreadCount?: number;
     createdAt: string;
-    updatedAt: string;
-    max_members?: number; // Premium-grupper kan ha flere medlemmer
-    storage_limit?: number; // Premium-grupper kan ha mer lagringsplass
-    max_message_retention?: number; // Antall dager meldinger beholdes (premium kan ha ubegrenset)
-    members?: GroupMember[]; // Medlemsliste med roller
-    premium_features?: PremiumFeatures; // Aktive premium-funksjoner
-    // Add compatibility with newer type
-    createdBy?: string; 
-    creator_id?: string;
+    createdBy: string;
+    creator_id?: string; // For backward compatibility
+    updatedAt?: string;
+    updated_at?: string; // For backward compatibility
+    visibility: GroupVisibility;
+    securityLevel: SecurityLevel;
+    isPremium: boolean;
+    is_premium?: boolean; // For backward compatibility
+    premium?: boolean; // For backward compatibility
+    memberCount?: number;
+    unreadCount?: number;
+    password?: string;
+    members?: GroupMember[];
+    writePermissions?: GroupWritePermission;
+    write_permissions?: GroupWritePermission; // For backward compatibility
+    defaultMessageTtl?: number;
+    default_message_ttl?: number; // For backward compatibility
+    maxMembers?: number;
+    max_members?: number; // For backward compatibility
+    storageLimit?: number;
+    storage_limit?: number; // For backward compatibility
+    maxMessageRetention?: number;
+    max_message_retention?: number; // For backward compatibility
+    premiumFeatures?: PremiumFeatures;
+    premium_features?: PremiumFeatures; // For backward compatibility
     type?: string;
     isPublic?: boolean;
     settings?: any;
-    password?: string;
 }
 
-export interface GroupInvitation {
+// Group message interface with all properties, using camelCase as primary
+export interface GroupMessage {
     id: string;
-    group_id: string;
-    code: string;
-    email?: string;
-    expires_at: string;
-    created_by: string;
+    content: string;
+    text?: string; // For backward compatibility
+    senderId: string;
+    sender_id?: string; // For backward compatibility
+    groupId: string;
+    group_id?: string; // For backward compatibility
     createdAt: string;
+    created_at?: string; // For backward compatibility
+    isEdited?: boolean;
+    is_edited?: boolean; // For backward compatibility
+    mediaUrl?: string;
+    media_url?: string; // For backward compatibility
+    mediaType?: string;
+    media_type?: string; // For backward compatibility
+    ttl?: number;
+    readBy?: string[];
+    read_by?: string[]; // For backward compatibility
+    replyToId?: string;
+    reply_to_id?: string; // For backward compatibility
+    isEncrypted?: boolean;
+    is_encrypted?: boolean; // For backward compatibility
 }
 
+// Group invitation with all properties, using camelCase as primary
+export interface GroupInvite {
+    id: string;
+    groupId: string;
+    group_id?: string; // For backward compatibility
+    invitedBy: string;
+    invited_by?: string; // For backward compatibility
+    createdBy?: string;
+    created_by?: string; // For backward compatibility
+    invitedUserId?: string;
+    invited_user_id?: string; // For backward compatibility
+    email?: string;
+    code: string;
+    expiresAt: string;
+    expires_at?: string; // For backward compatibility
+    createdAt: string;
+    created_at?: string; // For backward compatibility
+}
+
+// Data for creating a new group
 export interface CreateGroupData {
     name: string;
     description?: string;
-    visibility: GroupVisibility;
+    visibility?: GroupVisibility;
     securityLevel?: SecurityLevel;
-    is_premium?: boolean;
+    isPremium?: boolean;
+    is_premium?: boolean; // For backward compatibility
+    password?: string;
+    initialMembers?: string[];
 }
 
-export type GroupWritePermission = "all" | "admin" | "selected";
-
-export type MessageTTLOption = 300 | 1800 | 3600 | 86400 | 604800 | null;
-
-export interface PremiumFeatures {
-    enhanced_encryption?: boolean; // 256-bit kryptering (versus standard 128-bit)
-    unlimited_storage?: boolean; // Ubegrenset lagringsplass for meldinger
-    advanced_permissions?: boolean; // Detaljerte tilgangskontroller
-    file_sharing?: boolean; // Støtte for sikker fildeling
-    ai_moderation?: boolean; // AI-drevet moderering av innhold
-    priority_bandwidth?: boolean; // Prioritert båndbredde for bedre ytelse
-    message_editing?: boolean; // Mulighet til å redigere sendte meldinger
-    custom_branding?: boolean; // Tilpasset merking for bedriftskunder
+// For backward compatibility, export the old types as well
+export {
+    Group as GroupData,
+    GroupInvite as GroupInvitation
 }
