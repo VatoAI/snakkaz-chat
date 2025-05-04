@@ -1,61 +1,61 @@
-
 /**
- * Utility functions for time formatting
+ * Formatting utilities for tidshåndtering
  */
 
-// Format seconds into a human-readable duration
-export const formatDuration = (seconds: number): string => {
-  if (seconds < 60) {
-    return `${seconds} seconds`;
-  } else if (seconds < 3600) {
-    const minutes = Math.floor(seconds / 60);
-    return `${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`;
-  } else if (seconds < 86400) {
-    const hours = Math.floor(seconds / 3600);
-    return `${hours} ${hours === 1 ? 'hour' : 'hours'}`;
-  } else {
-    const days = Math.floor(seconds / 86400);
-    return `${days} ${days === 1 ? 'day' : 'days'}`;
+/**
+ * Formatter en dato til en lesbar string
+ * @param date Dato som skal formateres
+ * @param includeTime Om klokkeslett skal inkluderes
+ * @returns Formatert dato string
+ */
+export const formatDate = (date: Date, includeTime: boolean = false): string => {
+  const options: Intl.DateTimeFormatOptions = {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  };
+
+  if (includeTime) {
+    options.hour = '2-digit';
+    options.minute = '2-digit';
   }
+
+  return new Intl.DateTimeFormat('nb-NO', options).format(date);
 };
 
-// Format a date to a relative time string (e.g., "2 hours ago")
-export const formatRelativeTime = (date: Date | string): string => {
+/**
+ * Formatter et timestamp til relativ tid (f.eks. "for 5 minutter siden")
+ * @param timestamp Timestamp som skal formateres
+ * @returns Formatert relativ tid string
+ */
+export const formatRelativeTime = (timestamp: number | Date): string => {
+  const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
   const now = new Date();
-  const targetDate = typeof date === 'string' ? new Date(date) : date;
-  
-  const diffInSeconds = Math.floor((now.getTime() - targetDate.getTime()) / 1000);
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
   
   if (diffInSeconds < 60) {
-    return 'just now';
-  } else if (diffInSeconds < 3600) {
-    const minutes = Math.floor(diffInSeconds / 60);
-    return `${minutes} ${minutes === 1 ? 'minute' : 'minutes'} ago`;
-  } else if (diffInSeconds < 86400) {
-    const hours = Math.floor(diffInSeconds / 3600);
-    return `${hours} ${hours === 1 ? 'hour' : 'hours'} ago`;
-  } else if (diffInSeconds < 604800) { // 7 days
-    const days = Math.floor(diffInSeconds / 86400);
-    return `${days} ${days === 1 ? 'day' : 'days'} ago`;
-  } else {
-    // Format as date
-    return targetDate.toLocaleDateString();
+    return 'Nettopp';
   }
-};
-
-// Format date for chat messages
-export const formatMessageTime = (date: Date | string): string => {
-  const msgDate = typeof date === 'string' ? new Date(date) : date;
-  return msgDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-};
-
-// Format date for message groups
-export const formatMessageDate = (date: Date | string): string => {
-  const msgDate = typeof date === 'string' ? new Date(date) : date;
-  const today = new Date();
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
   
+  const diffInMinutes = Math.floor(diffInSeconds / 60);
+  if (diffInMinutes < 60) {
+    return `${diffInMinutes} ${diffInMinutes === 1 ? 'minutt' : 'minutter'} siden`;
+  }
+  
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  if (diffInHours < 24) {
+    return `${diffInHours} ${diffInHours === 1 ? 'time' : 'timer'} siden`;
+  }
+  
+  const diffInDays = Math.floor(diffInHours / 24);
+  if (diffInDays < 7) {
+    return `${diffInDays} ${diffInDays === 1 ? 'dag' : 'dager'} siden`;
+  }
+  
+  return formatDate(date, false);
+};
+
+/**
   if (msgDate.toDateString() === today.toDateString()) {
     return 'Today';
   } else if (msgDate.toDateString() === yesterday.toDateString()) {
