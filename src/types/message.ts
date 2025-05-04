@@ -1,4 +1,3 @@
-
 export interface Message {
   id: string;
   senderId: string;
@@ -73,6 +72,19 @@ export interface MediaMessage {
   duration?: number; // For audio/video
   isEncrypted?: boolean;
   decryptionKey?: string;
+}
+
+// MessageContent interface for rendering message content
+export interface MessageContent {
+  text?: string;
+  media?: MediaMessage;
+  attachments?: MediaMessage[];
+  replyTo?: {
+    id: string;
+    content: string;
+    sender: string;
+  };
+  isCiphered?: boolean;
 }
 
 // Utility functions
