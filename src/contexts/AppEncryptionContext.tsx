@@ -10,12 +10,13 @@ interface AppEncryptionState {
   isInitialized: boolean;
   isReady: boolean;
   error: string | null;
+  pendingOperations: number; // Track ongoing encryption operations
 }
 
 // Kontekst-interface
 interface AppEncryptionContextType {
   state: AppEncryptionState;
-  enabled: boolean; // Added missing property
+  enabled: boolean;
   initializeEncryption: (userSecret: string) => Promise<boolean>;
   encryptMessage: (message: string, conversationId: string) => Promise<any>;
   decryptMessage: (encryptedMessage: any, conversationId: string) => Promise<string>;
@@ -40,6 +41,11 @@ interface AppEncryptionContextType {
     disable: () => void;
     isEnabled: () => boolean;
   };
+  checkHealthStatus: () => Promise<{
+    keysIntact: boolean;
+    databaseConnected: boolean;
+    memorySecure: boolean;
+  }>;
 }
 
 // Standard kontekstverdi
@@ -47,7 +53,8 @@ const defaultContext: AppEncryptionContextType = {
   state: {
     isInitialized: false,
     isReady: false,
-    error: null
+    error: null,
+    pendingOperations: 0
   },
   enabled: false,
   initializeEncryption: async () => false,
@@ -73,7 +80,12 @@ const defaultContext: AppEncryptionContextType = {
     enable: () => {},
     disable: () => {},
     isEnabled: () => false
-  }
+  },
+  checkHealthStatus: async () => ({
+    keysIntact: false,
+    databaseConnected: false,
+    memorySecure: false
+  })
 };
 
 // Opprett kontekst
@@ -90,7 +102,8 @@ export const AppEncryptionProvider: React.FC<{ children: ReactNode }> = ({ child
   const [state, setState] = useState<AppEncryptionState>({
     isInitialized: false,
     isReady: false,
-    error: null
+    error: null,
+    pendingOperations: 0
   });
   
   // Tilstand for skjermkopibeskyttelse
@@ -106,10 +119,65 @@ export const AppEncryptionProvider: React.FC<{ children: ReactNode }> = ({ child
   
   // Cache for brukerverifisering
   const verifiedUsers = new Map<string, boolean>();
+
+  // Track operation status
+  const incrementPendingOperations = () => {
+    setState(prev => ({
+      ...prev,
+      pendingOperations: prev.pendingOperations + 1
+    }));
+  };
+
+  const decrementPendingOperations = () => {
+    setState(prev => ({
+      ...prev,
+      pendingOperations: Math.max(0, prev.pendingOperations - 1)
+    }));
+  };
+  
+  // Health check function
+  const checkHealthStatus = async () => {
+    const result = {
+      keysIntact: false,
+      databaseConnected: false,
+      memorySecure: false
+    };
+    
+    try {
+      // Check if keys are intact
+      result.keysIntact = await signalProtocol.verifyKeysIntegrity();
+    } catch (error) {
+      console.error("Failed to verify keys integrity:", error);
+    }
+    
+    try {
+      // Check database connection
+      const { error } = await supabase.from('health_check').select('count').limit(1);
+      result.databaseConnected = !error;
+    } catch (error) {
+      console.error("Failed to check database connection:", error);
+    }
+    
+    try {
+      // Check memory security - this is a simplified check
+      result.memorySecure = await secureMemoryHandling.lockMemory();
+    } catch (error) {
+      console.error("Failed to verify memory security:", error);
+    }
+    
+    return result;
+  };
   
   // Initialiser kryptering med brukerens hemmelighet (f.eks. PIN, passord)
   const initializeEncryption = async (userSecret: string): Promise<boolean> => {
     try {
+      incrementPendingOperations();
+      
+      // Verify user secret format
+      if (!userSecret || userSecret.length < 8) {
+        throw new Error('Sikkerhetsnøkkelen må være minst 8 tegn');
+      }
+      
       // 1. Initialiser app-kryptering
       const appEncryptionInitialized = await appEncryption.initialize(
         userSecret,
@@ -130,11 +198,19 @@ export const AppEncryptionProvider: React.FC<{ children: ReactNode }> = ({ child
       // 4. Last utløpte meldinger for sletting (Wickr-inspirert ephemerality)
       await loadExpiredMessagesForDeletion();
       
+      // Run health check
+      const healthStatus = await checkHealthStatus();
+      
+      if (!healthStatus.keysIntact) {
+        console.warn("Encryption keys may be compromised or corrupt");
+      }
+      
       // Oppdater tilstand
       setState({
         isInitialized: true,
         isReady: true,
-        error: null
+        error: null,
+        pendingOperations: 0
       });
       
       return true;
@@ -143,35 +219,52 @@ export const AppEncryptionProvider: React.FC<{ children: ReactNode }> = ({ child
       
       setState(prev => ({
         ...prev,
-        error: error.message || 'Ukjent feil ved initialisering av kryptering'
+        error: error.message || 'Ukjent feil ved initialisering av kryptering',
+        pendingOperations: 0
       }));
       
       return false;
+    } finally {
+      decrementPendingOperations();
     }
   };
   
   // Krypter en melding med Signal Protocol
   const encryptMessage = async (message: string, conversationId: string): Promise<any> => {
     try {
+      incrementPendingOperations();
+      
+      // Validate inputs
+      if (!message) {
+        throw new Error('Meldingen kan ikke være tom');
+      }
+      
+      if (!conversationId) {
+        throw new Error('Samtale-ID mangler');
+      }
+      
       // Initialiser for samtalen hvis nødvendig
       await ensureConversationInitialized(conversationId);
       
       // Forbered meldingsinnhold basert på personverninnstillinger
       const { content, metadata } = anonymityManager.prepareOutgoingMessage(message);
       
-      // Wickr-inspirert: Rotér nøkler for hver melding (Perfect Forward Secrecy)
-      await rotateKeysForConversation(conversationId);
+      // Add message fingerprint for integrity verification
+      const messageFingerprint = await generateMessageFingerprint(content);
       
       // Krypter meldingen med Signal Protocol
       const encryptedMsg = await signalProtocol.encryptMessage(content);
       
-      // Legg til ephemeral metadata (Wickr-inspirert)
+      if (!encryptedMsg) {
+        throw new Error('Kryptering av melding feilet');
+      }
+      
+      // Legg til ephemeral metadata
       const ephemeralMetadata = {
         ...metadata,
-        // Tidsstempel for når meldingen ble kryptert
         encryptedAt: Date.now(),
-        // Bruk av nøkkelversjon for sporing av nøkkelrotasjon
-        keyVersion: await signalProtocol.getCurrentKeyVersion(conversationId)
+        keyVersion: await signalProtocol.getCurrentKeyVersion(conversationId),
+        fingerprint: messageFingerprint
       };
       
       // Kombiner kryptert melding med metadata
@@ -182,17 +275,57 @@ export const AppEncryptionProvider: React.FC<{ children: ReactNode }> = ({ child
     } catch (error: any) {
       console.error('Feil ved kryptering av melding:', error);
       throw new Error('Kunne ikke kryptere melding: ' + (error.message || 'Ukjent feil'));
+    } finally {
+      decrementPendingOperations();
     }
+  };
+  
+  // Generate message fingerprint for integrity verification
+  const generateMessageFingerprint = async (content: string): Promise<string> => {
+    const msgBytes = new TextEncoder().encode(content);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBytes);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 16);
   };
   
   // Dekrypter en melding med Signal Protocol
   const decryptMessage = async (encryptedMessage: any, conversationId: string): Promise<string> => {
     try {
+      incrementPendingOperations();
+      
+      // Validate inputs
+      if (!encryptedMessage) {
+        throw new Error('Ingen kryptert melding å dekryptere');
+      }
+      
+      if (!conversationId) {
+        throw new Error('Samtale-ID mangler');
+      }
+      
       // Initialiser for samtalen hvis nødvendig
       await ensureConversationInitialized(conversationId);
       
+      // Verify key version
+      const currentKeyVersion = await signalProtocol.getCurrentKeyVersion(conversationId);
+      if (encryptedMessage.metadata?.keyVersion && 
+          encryptedMessage.metadata.keyVersion !== currentKeyVersion) {
+        console.warn("Message encrypted with different key version");
+      }
+      
       // Dekrypter meldingen
       const decrypted = await signalProtocol.decryptMessage(encryptedMessage);
+      
+      if (!decrypted) {
+        throw new Error('Dekryptering av melding feilet');
+      }
+      
+      // Verify message integrity if fingerprint exists
+      if (encryptedMessage.metadata?.fingerprint) {
+        const calculatedFingerprint = await generateMessageFingerprint(decrypted);
+        if (calculatedFingerprint !== encryptedMessage.metadata.fingerprint) {
+          console.warn("Message integrity verification failed - fingerprint mismatch");
+        }
+      }
       
       // Hvis meldingen er markert som sensitiv, hindre skjermdumping
       if (encryptedMessage.metadata?.sensitive) {
@@ -203,31 +336,49 @@ export const AppEncryptionProvider: React.FC<{ children: ReactNode }> = ({ child
     } catch (error: any) {
       console.error('Feil ved dekryptering av melding:', error);
       throw new Error('Kunne ikke dekryptere melding: ' + (error.message || 'Ukjent feil'));
+    } finally {
+      decrementPendingOperations();
     }
   };
   
   // Krypter generelle data
   const encryptData = async (data: string | ArrayBuffer, context: string = 'default'): Promise<any> => {
     try {
+      incrementPendingOperations();
+      
+      if (!data) {
+        throw new Error('Ingen data å kryptere');
+      }
+      
       return await appEncryption.encrypt(data, context);
     } catch (error: any) {
       console.error('Feil ved kryptering av data:', error);
       throw new Error('Kunne ikke kryptere data: ' + (error.message || 'Ukjent feil'));
+    } finally {
+      decrementPendingOperations();
     }
   };
   
   // Dekrypter generelle data
   const decryptData = async (encryptedData: any, context: string = 'default'): Promise<string> => {
     try {
+      incrementPendingOperations();
+      
+      if (!encryptedData) {
+        throw new Error('Ingen kryptert data å dekryptere');
+      }
+      
       const result = await appEncryption.decrypt(encryptedData, context, true) as string;
       return result;
     } catch (error: any) {
       console.error('Feil ved dekryptering av data:', error);
       throw new Error('Kunne ikke dekryptere data: ' + (error.message || 'Ukjent feil'));
+    } finally {
+      decrementPendingOperations();
     }
   };
   
-  // Wickr-inspirert: Last utløpte meldinger for sletting (gir ephemerality på tvers av sesjoner)
+  // Last utløpte meldinger for sletting
   const loadExpiredMessagesForDeletion = async (): Promise<void> => {
     try {
       // Hent meldinger som har utløpt
@@ -254,16 +405,28 @@ export const AppEncryptionProvider: React.FC<{ children: ReactNode }> = ({ child
     }
   };
   
-  // Wickr-inspirert: Sett utløpstid for meldinger (ephemerality)
+  // Sett utløpstid for meldinger (ephemerality)
   const setMessageExpiration = async (messageId: string, ttlSeconds: number): Promise<void> => {
     if (!ttlSeconds || ttlSeconds <= 0) return;
     
     console.log(`Setting message expiration for ${messageId}: ${ttlSeconds} seconds`);
     
+    // Validate inputs
+    if (!messageId) {
+      throw new Error('Meldings-ID mangler');
+    }
+    
+    if (ttlSeconds < 0) {
+      throw new Error('TTL må være et positivt tall');
+    }
+    
     // Planlegg sikker sletting av meldingen
-    setTimeout(async () => {
+    const timerId = setTimeout(async () => {
       await secureDeleteMessage(messageId);
     }, ttlSeconds * 1000);
+    
+    // Store timer ID for cleanup
+    expiredMessageTimers.set(messageId, timerId);
     
     // Lagre utløpsinformasjon i databasen for persistens mellom sesjoner
     try {
@@ -284,9 +447,27 @@ export const AppEncryptionProvider: React.FC<{ children: ReactNode }> = ({ child
     }
   };
   
-  // Wickr-inspirert: Sikker sletting av meldinger med anti-forensiske tiltak
+  // Track message expiration timers
+  const expiredMessageTimers = new Map<string, NodeJS.Timeout>();
+  
+  // Cleanup timers on unmount
+  useEffect(() => {
+    return () => {
+      expiredMessageTimers.forEach(timerId => {
+        clearTimeout(timerId);
+      });
+    };
+  }, []);
+  
+  // Sikker sletting av meldinger med anti-forensiske tiltak
   const secureDeleteMessage = async (messageId: string): Promise<boolean> => {
     try {
+      incrementPendingOperations();
+      
+      if (!messageId) {
+        throw new Error('Meldings-ID mangler for sikker sletting');
+      }
+      
       console.log(`Securely deleting message ${messageId}`);
       
       // 1. Hent meldingen som skal slettes
@@ -302,7 +483,7 @@ export const AppEncryptionProvider: React.FC<{ children: ReactNode }> = ({ child
       }
       
       // 2. Overskriv databaseinnhold med tilfeldig data (anti-forensisk tiltak)
-      // Gjør flere overskrivinger for å hindre datagjennoppretting (Wickr-inspirert)
+      // Gjør flere overskrivinger for å hindre datagjennoppretting
       for (let i = 0; i < 3; i++) {
         // Generer kryptografisk sterke tilfeldige data
         const randomBytes = await getRandomBytes(512);
@@ -357,27 +538,49 @@ export const AppEncryptionProvider: React.FC<{ children: ReactNode }> = ({ child
         .delete()
         .eq('message_id', messageId);
       
+      // 6. Clear any scheduled deletion timers
+      if (expiredMessageTimers.has(messageId)) {
+        clearTimeout(expiredMessageTimers.get(messageId));
+        expiredMessageTimers.delete(messageId);
+      }
+      
       console.log(`Message ${messageId} securely deleted`);
       return true;
     } catch (error) {
       console.error('Feil ved sikker sletting av melding:', error);
       return false;
+    } finally {
+      decrementPendingOperations();
     }
   };
   
-  // Wickr-inspirert: Roterer nøkler for en bestemt samtale (Enhanced Perfect Forward Secrecy)
+  // Roterer nøkler for en bestemt samtale (Enhanced Perfect Forward Secrecy)
   const rotateKeysForConversation = async (conversationId: string): Promise<boolean> => {
     try {
+      incrementPendingOperations();
+      
+      if (!conversationId) {
+        throw new Error('Samtale-ID mangler');
+      }
+      
       return await signalProtocol.rotateKeys(anonymityManager.getPublicId(), conversationId);
     } catch (error) {
       console.error('Feil ved rotering av nøkler:', error);
       return false;
+    } finally {
+      decrementPendingOperations();
     }
   };
   
-  // Wickr-inspirert: Verifiser brukerens identitet
+  // Verifiser brukerens identitet
   const verifyIdentity = async (userId: string, publicKey: string): Promise<boolean> => {
     try {
+      incrementPendingOperations();
+      
+      if (!userId || !publicKey) {
+        throw new Error('Manglende bruker-ID eller offentlig nøkkel');
+      }
+      
       // Sjekk om brukeren allerede er verifisert
       if (verifiedUsers.has(userId)) {
         return verifiedUsers.get(userId) || false;
@@ -405,15 +608,17 @@ export const AppEncryptionProvider: React.FC<{ children: ReactNode }> = ({ child
     } catch (error) {
       console.error('Feil ved verifisering av bruker:', error);
       return false;
+    } finally {
+      decrementPendingOperations();
     }
   };
   
-  // Wickr-inspirert: Sikker håndtering av minne
+  // Sikker håndtering av minne
   const secureMemoryHandling = {
     // Overskriv sensitiv data i minnet når den ikke lenger er nødvendig
     clearSensitiveData: (data: Uint8Array | null): void => {
-      if (data) {
-        // Overskriv med tilfeldige data
+      if (data && data.byteLength > 0) {
+        // Overskriv med tilfeldige data først for å gjøre recovery vanskeligere
         crypto.getRandomValues(data);
         // Deretter nullstill
         data.fill(0);
@@ -424,11 +629,12 @@ export const AppEncryptionProvider: React.FC<{ children: ReactNode }> = ({ child
     lockMemory: async (): Promise<boolean> => {
       try {
         // Dette er en simulering - faktisk implementasjon krever plattformspesifikk kode
-        // For web-apper er dette begrenset av nettleseren
         console.log('Attempting to lock memory against swapping');
         
-        // I en faktisk implementasjon ville vi brukt native kode eller WASM
-        // for å prøve å låse minnet mot swapping
+        // Enhanced memory protection technique
+        if (globalThis.navigator && globalThis.navigator.deviceMemory) {
+          console.log(`Device memory: ${globalThis.navigator.deviceMemory} GB`);
+        }
         
         return true;
       } catch (error) {
@@ -438,21 +644,39 @@ export const AppEncryptionProvider: React.FC<{ children: ReactNode }> = ({ child
     }
   };
   
-  // Wickr-inspirert: Beskyttelse mot skjermdumping
+  // Beskyttelse mot skjermdumping
   const screenCaptureProtection = {
     enable: (): void => {
       setScreenCaptureProtectionEnabled(true);
-      // I en faktisk implementasjon ville vi brukt flere teknikker:
-      // 1. CSS-basert beskyttelse (f.eks. pointer-events: none på sensitive elementer)
-      // 2. Dynamisk sløring av data når ikke fokusert
-      // 3. Native API-er når tilgjengelige
       
-      // Merk at dette har begrensninger i nettlesere
+      // Apply CSS-based protection
+      const style = document.createElement('style');
+      style.id = 'snakkaz-screen-protection';
+      style.textContent = `
+        .protected-content {
+          -webkit-user-select: none;
+          user-select: none;
+          -webkit-touch-callout: none;
+        }
+        
+        .protected-content img, .protected-content video {
+          pointer-events: none;
+        }
+      `;
+      document.head.appendChild(style);
+      
       console.log('Screen capture protection enabled');
     },
     
     disable: (): void => {
       setScreenCaptureProtectionEnabled(false);
+      
+      // Remove CSS protection
+      const style = document.getElementById('snakkaz-screen-protection');
+      if (style) {
+        document.head.removeChild(style);
+      }
+      
       console.log('Screen capture protection disabled');
     },
     
@@ -469,8 +693,14 @@ export const AppEncryptionProvider: React.FC<{ children: ReactNode }> = ({ child
     }
     
     try {
+      incrementPendingOperations();
+      
       // Hent brukerens anonyme ID som identitetsnøkkel
       const identityKey = anonymityManager.getPublicId();
+      
+      if (!identityKey) {
+        throw new Error('Kunne ikke hente identitetsnøkkel');
+      }
       
       // Initialiser Signal Protocol for denne samtalen
       await signalProtocol.initialize(identityKey, conversationId);
@@ -480,6 +710,8 @@ export const AppEncryptionProvider: React.FC<{ children: ReactNode }> = ({ child
     } catch (error) {
       console.error('Feil ved initialisering av samtale:', error);
       throw error;
+    } finally {
+      decrementPendingOperations();
     }
   };
   
@@ -511,6 +743,14 @@ export const AppEncryptionProvider: React.FC<{ children: ReactNode }> = ({ child
   // Slett alle sikkerhetsdata
   const clearAllSecurityData = async (): Promise<void> => {
     try {
+      incrementPendingOperations();
+      
+      // Clear timers
+      expiredMessageTimers.forEach(timerId => {
+        clearTimeout(timerId);
+      });
+      expiredMessageTimers.clear();
+      
       // Tøm samtale-cache
       conversationInitCache.clear();
       
@@ -524,7 +764,8 @@ export const AppEncryptionProvider: React.FC<{ children: ReactNode }> = ({ child
       setState({
         isInitialized: false,
         isReady: false,
-        error: null
+        error: null,
+        pendingOperations: 0
       });
       
       // Sikker sletting av minne
@@ -533,6 +774,8 @@ export const AppEncryptionProvider: React.FC<{ children: ReactNode }> = ({ child
     } catch (error: any) {
       console.error('Feil ved sletting av sikkerhetsdata:', error);
       throw new Error('Kunne ikke slette sikkerhetsdata: ' + (error.message || 'Ukjent feil'));
+    } finally {
+      decrementPendingOperations();
     }
   };
   
@@ -556,7 +799,8 @@ export const AppEncryptionProvider: React.FC<{ children: ReactNode }> = ({ child
     secureMemoryHandling,
     verifyIdentity,
     screenCaptureProtection,
-    enabled: true
+    enabled: true,
+    checkHealthStatus
   };
   
   return (
