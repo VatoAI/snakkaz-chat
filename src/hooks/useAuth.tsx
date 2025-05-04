@@ -1,4 +1,4 @@
-import { useState, useEffect, createContext, useContext, ReactNode, JSX } from 'react';
+import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -17,7 +17,7 @@ export type AuthContextType = {
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // AuthProvider component
-export const AuthProvider = ({ children }: { children: ReactNode }): JSX.Element => {
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
