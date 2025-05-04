@@ -3,6 +3,7 @@ import { useAuth } from "./hooks/useAuth";
 import { useIsMobile } from "./hooks/use-mobile";
 import MobileLayout from "./components/mobile/MobileLayout";
 import { AppHeader } from "./components/chat/header/AppHeader";
+import AppNavigation from "./components/nav/AppNavigation";
 
 const Layout = () => {
   const { user } = useAuth();
@@ -22,12 +23,20 @@ const Layout = () => {
     <div className="min-h-screen bg-cyberdark-950 flex flex-col">
       <AppHeader 
         variant="main"
-        showNavigation={true}
+        showNavigation={false} {/* We're using AppNavigation instead */}
         showLogo={true}
         showUserNav={!!user}
         showThemeToggle={true}
         showDownloadButton={true}
-      />
+      >
+        <div className="hidden lg:block">
+          <AppNavigation 
+            variant="horizontal" 
+            activeIndicator={true} 
+            compact={false}
+          />
+        </div>
+      </AppHeader>
 
       <main className="flex-1">
         <Outlet />

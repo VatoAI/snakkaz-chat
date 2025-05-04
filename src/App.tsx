@@ -16,13 +16,13 @@ import { Toaster } from '@/components/ui/toaster';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect } from 'react';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
-import { MobileNavigation } from './components/MobileNavigation';
 import { useTheme } from '@/hooks/useTheme';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useSearchParams } from 'react-router-dom';
 import { AppHeader } from './components/chat/header/AppHeader';
+import AppNavigation from './components/nav/AppNavigation';
 
 // Simple FriendRequestsPage component
 const FriendRequestsPage: React.FC = () => {
@@ -107,8 +107,15 @@ const App: React.FC = () => {
                 </ErrorBoundary>
               </div>
 
-              {/* Mobile Navigation */}
-              {isMobile && <MobileNavigation />}
+              {/* Mobile Navigation - replaced with unified AppNavigation */}
+              {isMobile && (
+                <AppNavigation 
+                  variant="bottom"
+                  showLabels={true}
+                  activeIndicator={false}
+                  className="z-50"
+                />
+              )}
 
               <Toaster />
               

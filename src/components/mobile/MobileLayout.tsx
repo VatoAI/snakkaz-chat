@@ -1,11 +1,12 @@
 import React, { useState, useEffect, ReactNode } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useDeviceDetection } from '@/hooks/useDeviceDetection';
-import { MessageCircle, Users, Settings, Plus, Menu } from 'lucide-react';
 import MobileMenu from './MobileMenu';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useMobilePinSecurity } from '@/hooks/useMobilePinSecurity';
+import { AppHeader } from '@/components/chat/header/AppHeader';
+import AppNavigation from '@/components/nav/AppNavigation';
 
 interface MobileLayoutProps {
   children: ReactNode;
@@ -21,7 +22,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({ children }) => {
   const { isLocked, verifyPin } = useMobilePinSecurity();
   const [pinInput, setPinInput] = useState('');
   
-  // Bestem sidetittel basert på gjeldende URL
+  // Determine page title based on current URL
   useEffect(() => {
     if (location.pathname.includes('/messages')) {
       setTitle('Meldinger');
@@ -36,7 +37,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({ children }) => {
     }
   }, [location]);
 
-  // Håndter PIN-validering 
+  // Handle PIN verification 
   const handlePinSubmit = () => {
     if (pinInput.length === 4) {
       if (verifyPin(pinInput)) {
@@ -53,7 +54,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({ children }) => {
       setPinInput(newPin);
       
       if (newPin.length === 4) {
-        // Automatisk verifiser når alle 4 sifre er lagt inn
+        // Automatically verify when all 4 digits are entered
         setTimeout(() => {
           handlePinSubmit();
         }, 200);
@@ -65,12 +66,12 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({ children }) => {
     setPinInput(prev => prev.slice(0, -1));
   };
 
-  // Hvis ikke mobil, ikke vis mobildesignet
+  // If not mobile, don't show mobile design
   if (!isMobile) {
     return <>{children}</>;
   }
   
-  // Vis PIN-skjerm hvis låst
+  // Show PIN screen if locked
   if (isLocked) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-background p-6">
@@ -115,60 +116,45 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({ children }) => {
     );
   }
 
+  // Handle menu actions
+  const handleMenuOpen = () => setMenuOpen(true);
+  const handleAddNew = () => {
+    if (location.pathname === '/messages') {
+      navigate('/new-message');
+    }
+  };
+
   return (
     <div className="flex flex-col h-[100svh] bg-background">
-      {/* Topp-bar */}
-      <div className="h-14 border-b flex items-center justify-between px-4">
-        <div className="flex items-center">
-          <Button variant="ghost" size="icon" onClick={() => setMenuOpen(true)}>
-            <Menu size={22} />
-          </Button>
-          <h1 className="ml-3 text-lg font-medium">{title}</h1>
-        </div>
-        {location.pathname === '/messages' && (
-          <Button variant="ghost" size="icon" onClick={() => navigate('/new-message')}>
-            <Plus size={22} />
-          </Button>
-        )}
-      </div>
+      {/* Top header using unified AppHeader */}
+      <AppHeader 
+        variant="mobile"
+        title={title}
+        showLogo={false}
+        showNavigation={false}
+        showUserNav={false}
+        showThemeToggle={false}
+        onMenuClick={handleMenuOpen}
+        onAddClick={location.pathname === '/messages' ? handleAddNew : undefined}
+      />
       
-      {/* Hovedinnhold */}
-      <div className="flex-1 overflow-hidden">
+      {/* Main content */}
+      <div className="flex-1 overflow-hidden pb-16"> {/* Add padding to bottom to account for navigation */}
         {children}
       </div>
       
-      {/* Bunnmeny */}
-      <div className="h-16 border-t flex items-center justify-around">
-        <Button 
-          variant="ghost" 
-          className="flex flex-col items-center py-1 h-full w-full"
-          onClick={() => navigate('/messages')}
-        >
-          <MessageCircle size={22} />
-          <span className="text-xs mt-1">Meldinger</span>
-        </Button>
-        <Button 
-          variant="ghost" 
-          className="flex flex-col items-center py-1 h-full w-full"
-          onClick={() => navigate('/contacts')}
-        >
-          <Users size={22} />
-          <span className="text-xs mt-1">Kontakter</span>
-        </Button>
-        <Button 
-          variant="ghost" 
-          className="flex flex-col items-center py-1 h-full w-full"
-          onClick={() => navigate('/settings')}
-        >
-          <Settings size={22} />
-          <span className="text-xs mt-1">Innstillinger</span>
-        </Button>
-      </div>
+      {/* Bottom navigation using unified AppNavigation component */}
+      <AppNavigation 
+        variant="bottom" 
+        showLabels={true}
+        activeIndicator={false}
+        className="h-16 z-50"
+      />
       
-      {/* Mobil-meny */}
+      {/* Mobile menu */}
       <MobileMenu isOpen={menuOpen} setIsOpen={setMenuOpen} />
     </div>
   );
-};
+}
 
 export default MobileLayout;
