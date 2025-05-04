@@ -163,7 +163,7 @@ export function AppHeader({
           )}
           
           {(title || subtitle) && (
-            <div className="flex flex-col justify-center"></div>
+            <div className="flex flex-col justify-center">
               {title && !showLogo && <h2 className="font-medium text-foreground truncate">{title}</h2>}
               {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
             </div>

@@ -18,13 +18,11 @@ import { useEffect } from 'react';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { MobileNavigation } from './components/MobileNavigation';
 import { useTheme } from '@/hooks/useTheme';
-import { ThemeSwitcher } from './components/ThemeSwitcher';
-import { Button } from '@/components/ui/button';
-import { QrCode, Users } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useSearchParams } from 'react-router-dom';
+import { AppHeader } from './components/chat/header/AppHeader';
 
 // Simple FriendRequestsPage component
 const FriendRequestsPage: React.FC = () => {
@@ -75,21 +73,14 @@ const App: React.FC = () => {
         <ThemeProvider>
           <AppEncryptionProvider>
             <div className="flex flex-col h-screen bg-cyberdark-950 text-cybergold-200">
-              {/* Top Navigation */}
-              <header className="bg-cyberdark-900 border-b border-cyberdark-700 p-4 flex items-center justify-between">
-                <div className="flex items-center">
-                  <h1 className="text-xl font-semibold">Snakkaz Chat</h1>
-                  {isMobile && (
-                    <Button variant="ghost" size="icon" className="ml-2">
-                      <Users className="h-5 w-5" />
-                    </Button>
-                  )}
-                </div>
-
-                <div className="flex items-center space-x-4">
-                  <ThemeSwitcher />
-                </div>
-              </header>
+              <AppHeader 
+                variant={isMobile ? "mobile" : "main"}
+                title="Snakkaz Chat"
+                showLogo={!isMobile}
+                showNavigation={false}
+                showUserNav={false}
+                showThemeToggle={true}
+              />
 
               {/* Main Content */}
               <div className="flex-1 overflow-hidden">
