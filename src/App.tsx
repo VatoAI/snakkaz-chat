@@ -3,6 +3,7 @@ import { ErrorBoundary, FallbackProps } from 'react-error-boundary';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './hooks/useAuth';
 import { ProfileProvider } from './hooks/useProfile';
+import { ThemeProvider } from './hooks/useTheme';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Chat from './pages/Chat';
@@ -70,53 +71,55 @@ const App: React.FC = () => {
   return (
     <AuthProvider>
       <ProfileProvider>
-        <div className="flex flex-col h-screen bg-cyberdark-950 text-cybergold-200">
-          {/* Top Navigation */}
-          <header className="bg-cyberdark-900 border-b border-cyberdark-700 p-4 flex items-center justify-between">
-            <div className="flex items-center">
-              <h1 className="text-xl font-semibold">Snakkaz Chat</h1>
-              {isMobile && (
-                <Button variant="ghost" size="icon" className="ml-2">
-                  <Users className="h-5 w-5" />
-                </Button>
-              )}
+        <ThemeProvider>
+          <div className="flex flex-col h-screen bg-cyberdark-950 text-cybergold-200">
+            {/* Top Navigation */}
+            <header className="bg-cyberdark-900 border-b border-cyberdark-700 p-4 flex items-center justify-between">
+              <div className="flex items-center">
+                <h1 className="text-xl font-semibold">Snakkaz Chat</h1>
+                {isMobile && (
+                  <Button variant="ghost" size="icon" className="ml-2">
+                    <Users className="h-5 w-5" />
+                  </Button>
+                )}
+              </div>
+
+              <div className="flex items-center space-x-4">
+                <ThemeSwitcher />
+              </div>
+            </header>
+
+            {/* Main Content */}
+            <div className="flex-1 overflow-hidden">
+              <ErrorBoundary
+                FallbackComponent={ErrorFallback}
+                onError={(error, info) => {
+                  console.error("Error caught by ErrorBoundary:", error);
+                  console.error("Component stack:", info.componentStack);
+                  // Additional error handling logic here
+                }}
+              >
+                <Router>
+                  <Routes>
+                    <Route path="/" element={<Login />} />
+                    <Route path="/register" element={<Register />} />
+                    <Route path="/chat" element={<Chat />} />
+                    <Route path="/group-chat/:id?" element={<GroupChatPage />} />
+                    <Route path="/profile" element={<Profile />} />
+                    <Route path="/settings" element={<Settings />} />
+                    <Route path="/friend-requests" element={<FriendRequestsPage />} />
+                    <Route path="/sync" element={<SyncDashboard />} />
+                  </Routes>
+                </Router>
+              </ErrorBoundary>
             </div>
 
-            <div className="flex items-center space-x-4">
-              <ThemeSwitcher />
-            </div>
-          </header>
+            {/* Mobile Navigation */}
+            {isMobile && <MobileNavigation />}
 
-          {/* Main Content */}
-          <div className="flex-1 overflow-hidden">
-            <ErrorBoundary
-              FallbackComponent={ErrorFallback}
-              onError={(error, info) => {
-                console.error("Error caught by ErrorBoundary:", error);
-                console.error("Component stack:", info.componentStack);
-                // Additional error handling logic here
-              }}
-            >
-              <Router>
-                <Routes>
-                  <Route path="/" element={<Login />} />
-                  <Route path="/register" element={<Register />} />
-                  <Route path="/chat" element={<Chat />} />
-                  <Route path="/group-chat/:id?" element={<GroupChatPage />} />
-                  <Route path="/profile" element={<Profile />} />
-                  <Route path="/settings" element={<Settings />} />
-                  <Route path="/friend-requests" element={<FriendRequestsPage />} />
-                  <Route path="/sync" element={<SyncDashboard />} />
-                </Routes>
-              </Router>
-            </ErrorBoundary>
+            <Toaster />
           </div>
-
-          {/* Mobile Navigation */}
-          {isMobile && <MobileNavigation />}
-
-          <Toaster />
-        </div>
+        </ThemeProvider>
       </ProfileProvider>
 
       <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
