@@ -27,6 +27,7 @@ export interface MessageReaction {
   userId: string;
   emoji: string;
   createdAt: string | Date;
+  count?: number; // Antall reaksjoner av denne typen
 }
 
 /**
@@ -52,8 +53,20 @@ export interface ChatMessage {
   isPending?: boolean;      // Whether the message is pending delivery
   hasError?: boolean;       // Whether there was an error sending the message
   
-  // Optional fields for database compatibility
+  // Egenskaper som brukes i MessageList.tsx og AppMessage.tsx
+  timestamp?: string | Date; // Tidsangivelse (brukt for sortering og groupering)
+  isRead?: boolean;         // Om meldingen er lest
+  senderName?: string;      // Avsenderens navn
+  ephemeral?: boolean;      // Om meldingen er midlertidig
+  expiresAt?: string | Date; // Når meldingen utløper
+  reactions?: MessageReaction[]; // Reaksjoner på meldingen
+  replyToPreview?: string;  // Forhåndsvisning av svaret
+  replyToSenderName?: string; // Navnet på den som ble svart til
+  fileUrl?: string;         // URL til fil
+  fileName?: string;        // Filnavn
   text?: string;            // Alias for content
+  
+  // Optional fields for database compatibility
   sender_id?: string;       // Snake case alias for compatibility
   group_id?: string;
   created_at?: string;
@@ -123,6 +136,18 @@ export function normalizeMessage(message: MessageInput): ChatMessage {
     isPending: message.isPending || false,
     hasError: message.hasError || false,
     sender: message.sender,
+    
+    // Nye egenskaper
+    timestamp: message.timestamp || message.createdAt || message.created_at || new Date(),
+    isRead: message.isRead || false,
+    senderName: message.senderName || message.sender?.username || message.sender?.displayName || '',
+    ephemeral: message.ephemeral || false,
+    expiresAt: message.expiresAt || null,
+    reactions: message.reactions || [],
+    replyToPreview: message.replyToPreview || '',
+    replyToSenderName: message.replyToSenderName || '',
+    fileUrl: message.fileUrl || message.mediaUrl || message.media_url || '',
+    fileName: message.fileName || '',
     
     // Preserve original fields for backward compatibility
     text: message.content || message.text,
