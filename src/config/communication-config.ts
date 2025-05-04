@@ -37,11 +37,11 @@ export interface CommunicationConfig {
  * Standard kommunikasjonskonfigurasjon for applikasjonen
  */
 export const defaultCommunicationConfig: CommunicationConfig = {
-  // Setter server som standard kommunikasjonsmetode
-  primaryMethod: 'server',
+  // Setter hybrid som standard kommunikasjonsmetode for best ytelse
+  primaryMethod: 'hybrid',
   
-  // Deaktiverer P2P som standard for å forenkle systemet
-  enableP2P: false,
+  // Aktiverer P2P for bedre sikkerhet og lavere serverkostnader
+  enableP2P: true,
   
   // Server-kommunikasjon er alltid aktivert
   enableServer: true,
@@ -63,6 +63,12 @@ export const defaultCommunicationConfig: CommunicationConfig = {
 export let activeCommunicationConfig: CommunicationConfig = {
   ...defaultCommunicationConfig
 };
+
+// Umiddelbar aktivering av P2P-kommunikasjon ved oppstart
+updateCommunicationConfig({
+  enableP2P: true,
+  primaryMethod: 'hybrid'
+});
 
 /**
  * Oppdater den aktive kommunikasjonskonfigurasjonen
