@@ -1,6 +1,6 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabaseClient';
+import { supabase } from '@/lib/supabaseClient';
 import { useToast } from '@/hooks/use-toast';
 import { Session, User } from '@supabase/supabase-js';
 

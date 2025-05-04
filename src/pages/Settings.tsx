@@ -1,260 +1,523 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/hooks/use-toast";
+import React, { useState } from 'react';
 import { useAuth } from "@/hooks/useAuth";
+import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  ShieldCheck,
+  Bell,
+  Palette,
+  Moon,
+  Sun,
+  Monitor,
+  LockKeyhole,
+  Key,
+  Smartphone,
+  MessageSquare,
+  Globe,
+  FileText
+} from 'lucide-react';
 
-export default function Settings() {
-    const { toast } = useToast();
-    const { user } = useAuth();
-    const [loading, setLoading] = useState<boolean>(false);
+const SettingCard: React.FC<{
+  title: string;
+  description: string;
+  children: React.ReactNode;
+}> = ({ title, description, children }) => {
+  return (
+    <Card className="bg-cyberdark-900 border-cyberdark-700 mb-4">
+      <CardHeader>
+        <CardTitle className="text-lg text-cybergold-400">{title}</CardTitle>
+        <CardDescription className="text-cybergold-600">{description}</CardDescription>
+      </CardHeader>
+      <CardContent>{children}</CardContent>
+    </Card>
+  );
+};
 
-    const [notificationsEnabled, setNotificationsEnabled] = useState<boolean>(true);
-    const [soundsEnabled, setSoundsEnabled] = useState<boolean>(true);
-    const [darkMode, setDarkMode] = useState<boolean>(true);
-    const [language, setLanguage] = useState<string>("no");
+const ToggleSetting: React.FC<{
+  title: string;
+  description: string;
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
+}> = ({ title, description, checked, onCheckedChange }) => {
+  return (
+    <div className="flex items-center justify-between mb-6">
+      <div>
+        <h4 className="text-base font-medium text-cybergold-300">{title}</h4>
+        <p className="text-sm text-cybergold-500">{description}</p>
+      </div>
+      <Switch
+        checked={checked}
+        onCheckedChange={onCheckedChange}
+        className="data-[state=checked]:bg-cybergold-600"
+      />
+    </div>
+  );
+};
 
-    const handleSaveAppearance = () => {
-        setLoading(true);
+const Settings: React.FC = () => {
+  const { user, signOut } = useAuth();
+  const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState("general");
+  
+  // Håndterer generelle innstillinger
+  const [language, setLanguage] = useState("nb-NO");
+  const [theme, setTheme] = useState("dark");
+  const [fontScale, setFontScale] = useState("medium");
+  const [animations, setAnimations] = useState(true);
+  
+  // Sikkerhetsinnstillinger
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
+  const [autoLockEnabled, setAutoLockEnabled] = useState(false);
+  const [pinEnabled, setPinEnabled] = useState(false);
+  
+  // Personverninnstillinger
+  const [readReceipts, setReadReceipts] = useState(true);
+  const [onlineStatus, setOnlineStatus] = useState(true);
+  const [linkPreview, setLinkPreview] = useState(true);
+  
+  // Varslingsinnstillinger
+  const [pushNotifications, setPushNotifications] = useState(true);
+  const [messageNotifications, setMessageNotifications] = useState(true);
+  const [groupNotifications, setGroupNotifications] = useState(true);
+  const [callNotifications, setCallNotifications] = useState(true);
+  
+  // Varslingslyder
+  const [notificationSound, setNotificationSound] = useState("default");
+  const [messageSound, setMessageSound] = useState("default");
 
-        // Simulerer en API-kall med en timeout
-        setTimeout(() => {
-            setLoading(false);
-            toast({
-                title: "Innstillinger lagret",
-                description: "Dine visningsinnstillinger er nå oppdatert.",
-            });
-        }, 1000);
-    };
+  // Håndter lagring av innstillinger
+  const saveSettings = () => {
+    toast({
+      title: "Innstillinger lagret",
+      description: "Dine innstillinger har blitt oppdatert.",
+    });
+  };
 
-    const handleSaveNotifications = () => {
-        setLoading(true);
+  // Håndter aktivering av 2FA
+  const enable2FA = () => {
+    toast({
+      title: "2FA er under utvikling",
+      description: "To-faktorautentisering vil være tilgjengelig snart.",
+    });
+  };
 
-        // Simulerer en API-kall med en timeout
-        setTimeout(() => {
-            setLoading(false);
-            toast({
-                title: "Innstillinger lagret",
-                description: "Dine varslingsinnstillinger er nå oppdatert.",
-            });
-        }, 1000);
-    };
+  // Håndter tilbakestilling av passord
+  const resetPassword = async () => {
+    try {
+      // I en ekte implementasjon vil vi kalle Supabase her
+      toast({
+        title: "E-post sendt",
+        description: "Følg instruksjonene i e-posten for å tilbakestille passordet.",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Feil",
+        description: "Kunne ikke sende e-post for tilbakestilling.",
+      });
+    }
+  };
 
-    return (
-        <div className="container py-10">
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold text-cybergold-400">Innstillinger</h1>
-                <p className="text-cyberdark-300">Tilpass Snakkaz etter dine behov</p>
+  return (
+    <div className="container max-w-4xl py-8 px-4">
+      <h1 className="text-3xl font-bold mb-6 text-cybergold-300">Innstillinger</h1>
+      
+      <Tabs 
+        value={activeTab} 
+        onValueChange={setActiveTab} 
+        className="w-full"
+      >
+        <TabsList className="grid grid-cols-5 bg-cyberdark-800 mb-6">
+          <TabsTrigger value="general" className="data-[state=active]:bg-cyberdark-700">
+            <Palette className="h-4 w-4 mr-2" />
+            <span className="hidden md:inline">Generelt</span>
+          </TabsTrigger>
+          <TabsTrigger value="security" className="data-[state=active]:bg-cyberdark-700">
+            <ShieldCheck className="h-4 w-4 mr-2" />
+            <span className="hidden md:inline">Sikkerhet</span>
+          </TabsTrigger>
+          <TabsTrigger value="privacy" className="data-[state=active]:bg-cyberdark-700">
+            <LockKeyhole className="h-4 w-4 mr-2" />
+            <span className="hidden md:inline">Personvern</span>
+          </TabsTrigger>
+          <TabsTrigger value="notifications" className="data-[state=active]:bg-cyberdark-700">
+            <Bell className="h-4 w-4 mr-2" />
+            <span className="hidden md:inline">Varsler</span>
+          </TabsTrigger>
+          <TabsTrigger value="about" className="data-[state=active]:bg-cyberdark-700">
+            <FileText className="h-4 w-4 mr-2" />
+            <span className="hidden md:inline">Om</span>
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="general">
+          <SettingCard 
+            title="Visning" 
+            description="Tilpass utseende og opplevelse"
+          >
+            <div className="space-y-6">
+              <div className="flex flex-col space-y-2">
+                <Label className="text-cybergold-300">Tema</Label>
+                <div className="flex space-x-4 mt-2">
+                  <Button 
+                    variant={theme === "dark" ? "default" : "outline"} 
+                    onClick={() => setTheme("dark")}
+                    className={theme === "dark" ? "bg-cybergold-600 text-black" : "border-cyberdark-700"}
+                  >
+                    <Moon className="h-4 w-4 mr-2" />
+                    Mørkt
+                  </Button>
+                  <Button 
+                    variant={theme === "light" ? "default" : "outline"} 
+                    onClick={() => setTheme("light")}
+                    className={theme === "light" ? "bg-cybergold-600 text-black" : "border-cyberdark-700"}
+                  >
+                    <Sun className="h-4 w-4 mr-2" />
+                    Lyst
+                  </Button>
+                  <Button 
+                    variant={theme === "system" ? "default" : "outline"} 
+                    onClick={() => setTheme("system")}
+                    className={theme === "system" ? "bg-cybergold-600 text-black" : "border-cyberdark-700"}
+                  >
+                    <Monitor className="h-4 w-4 mr-2" />
+                    System
+                  </Button>
+                </div>
+              </div>
+              
+              <div className="flex flex-col space-y-2">
+                <Label className="text-cybergold-300">Tekststørrelse</Label>
+                <Select value={fontScale} onValueChange={setFontScale}>
+                  <SelectTrigger className="bg-cyberdark-800 border-cyberdark-700 w-[180px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-cyberdark-800 border-cyberdark-700">
+                    <SelectItem value="small">Liten</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="large">Stor</SelectItem>
+                    <SelectItem value="xl">Ekstra stor</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="flex flex-col space-y-2">
+                <Label className="text-cybergold-300">Språk</Label>
+                <Select value={language} onValueChange={setLanguage}>
+                  <SelectTrigger className="bg-cyberdark-800 border-cyberdark-700 w-[180px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-cyberdark-800 border-cyberdark-700">
+                    <SelectItem value="nb-NO">Norsk (Bokmål)</SelectItem>
+                    <SelectItem value="nn-NO">Norsk (Nynorsk)</SelectItem>
+                    <SelectItem value="en-US">Engelsk</SelectItem>
+                    <SelectItem value="sv-SE">Svensk</SelectItem>
+                    <SelectItem value="da-DK">Dansk</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <ToggleSetting
+                title="Animasjoner"
+                description="Aktivér animasjonseffekter i appen"
+                checked={animations}
+                onCheckedChange={setAnimations}
+              />
             </div>
+          </SettingCard>
+          
+          <div className="mt-6">
+            <Button 
+              onClick={saveSettings}
+              className="bg-cybergold-600 text-black hover:bg-cybergold-500"
+            >
+              Lagre innstillinger
+            </Button>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="security">
+          <SettingCard 
+            title="Kontosikkerhet" 
+            description="Administrer logg inn og autentisering"
+          >
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-base font-medium text-cybergold-300">To-faktorautentisering</h4>
+                  <p className="text-sm text-cybergold-500">Legg til et ekstra lag med sikkerhet til kontoen din</p>
+                </div>
+                <Button 
+                  variant={twoFactorEnabled ? "destructive" : "outline"}
+                  onClick={twoFactorEnabled ? () => setTwoFactorEnabled(false) : enable2FA}
+                  className={!twoFactorEnabled ? "border-cybergold-600 text-cybergold-300" : ""}
+                >
+                  {twoFactorEnabled ? "Deaktiver" : "Aktiver"} 2FA
+                </Button>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-base font-medium text-cybergold-300">Tilbakestill passord</h4>
+                  <p className="text-sm text-cybergold-500">Send en e-post for å tilbakestille passordet ditt</p>
+                </div>
+                <Button 
+                  variant="outline" 
+                  onClick={resetPassword}
+                  className="border-cybergold-600 text-cybergold-300"
+                >
+                  <Key className="h-4 w-4 mr-2" />
+                  Tilbakestill
+                </Button>
+              </div>
+              
+              <ToggleSetting
+                title="Applikasjonslås"
+                description="Automatisk lås appen når den er inaktiv"
+                checked={autoLockEnabled}
+                onCheckedChange={setAutoLockEnabled}
+              />
+              
+              <ToggleSetting
+                title="PIN-kode"
+                description="Krev PIN-kode for å få tilgang til appen"
+                checked={pinEnabled}
+                onCheckedChange={setPinEnabled}
+              />
+            </div>
+          </SettingCard>
+          
+          <SettingCard 
+            title="Økter" 
+            description="Administrer dine aktive økter"
+          >
+            <div className="bg-cyberdark-800 p-4 rounded-md mb-4">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h4 className="text-base font-medium text-cybergold-300">Denne enheten</h4>
+                  <p className="text-xs text-cybergold-500">Aktiv nå</p>
+                </div>
+                <div className="flex items-center">
+                  <Smartphone className="h-4 w-4 text-cybergold-500 mr-2" />
+                  <span className="text-cybergold-400">Gjeldende økt</span>
+                </div>
+              </div>
+            </div>
+            
+            <Button 
+              variant="destructive"
+              onClick={() => signOut()}
+              className="w-full"
+            >
+              Logg ut av alle enheter
+            </Button>
+          </SettingCard>
+        </TabsContent>
+        
+        <TabsContent value="privacy">
+          <SettingCard 
+            title="Meldingspersonvern" 
+            description="Kontroller hvordan andre ser din meldingsaktivitet"
+          >
+            <div className="space-y-6">
+              <ToggleSetting
+                title="Lesebekreftelser"
+                description="La andre se når du har lest meldingene deres"
+                checked={readReceipts}
+                onCheckedChange={setReadReceipts}
+              />
+              
+              <ToggleSetting
+                title="Online-status"
+                description="Vis når du er aktiv til andre brukere"
+                checked={onlineStatus}
+                onCheckedChange={setOnlineStatus}
+              />
+              
+              <ToggleSetting
+                title="Link-forhåndsvisning"
+                description="Vis forhåndsvisninger av delte lenker i meldinger"
+                checked={linkPreview}
+                onCheckedChange={setLinkPreview}
+              />
+            </div>
+          </SettingCard>
+          
+          <SettingCard 
+            title="Datalagring" 
+            description="Administrer hvordan data lagres og brukes"
+          >
+            <div className="space-y-4">
+              <Button 
+                variant="outline" 
+                className="w-full border-cybergold-600 text-cybergold-300"
+              >
+                Last ned mine data
+              </Button>
+              <Button 
+                variant="destructive"
+                className="w-full"
+              >
+                Slett konto og data
+              </Button>
+            </div>
+          </SettingCard>
+        </TabsContent>
+        
+        <TabsContent value="notifications">
+          <SettingCard 
+            title="Varslingsinnstillinger" 
+            description="Administrer hvordan du mottar varsler"
+          >
+            <div className="space-y-6">
+              <ToggleSetting
+                title="Push-varsler"
+                description="Motta push-varsler på denne enheten"
+                checked={pushNotifications}
+                onCheckedChange={setPushNotifications}
+              />
+              
+              <ToggleSetting
+                title="Meldingsvarsler"
+                description="Få varsler når du mottar nye meldinger"
+                checked={messageNotifications}
+                onCheckedChange={setMessageNotifications}
+              />
+              
+              <ToggleSetting
+                title="Gruppevarsler"
+                description="Få varsler fra gruppesamtaler"
+                checked={groupNotifications}
+                onCheckedChange={setGroupNotifications}
+              />
+              
+              <ToggleSetting
+                title="Anropsvarsler"
+                description="Få varsler om innkommende anrop"
+                checked={callNotifications}
+                onCheckedChange={setCallNotifications}
+              />
+            </div>
+          </SettingCard>
+          
+          <SettingCard 
+            title="Lyder" 
+            description="Administrer varslingslyder"
+          >
+            <div className="space-y-4">
+              <div className="flex flex-col space-y-2">
+                <Label className="text-cybergold-300">Varslingslyd</Label>
+                <Select value={notificationSound} onValueChange={setNotificationSound}>
+                  <SelectTrigger className="bg-cyberdark-800 border-cyberdark-700">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-cyberdark-800 border-cyberdark-700">
+                    <SelectItem value="default">Standard</SelectItem>
+                    <SelectItem value="subtle">Subtil</SelectItem>
+                    <SelectItem value="cyber">Cyber</SelectItem>
+                    <SelectItem value="retro">Retro</SelectItem>
+                    <SelectItem value="none">Ingen lyd</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="flex flex-col space-y-2">
+                <Label className="text-cybergold-300">Meldingslyd</Label>
+                <Select value={messageSound} onValueChange={setMessageSound}>
+                  <SelectTrigger className="bg-cyberdark-800 border-cyberdark-700">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-cyberdark-800 border-cyberdark-700">
+                    <SelectItem value="default">Standard</SelectItem>
+                    <SelectItem value="subtle">Subtil</SelectItem>
+                    <SelectItem value="cyber">Cyber</SelectItem>
+                    <SelectItem value="retro">Retro</SelectItem>
+                    <SelectItem value="none">Ingen lyd</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </SettingCard>
+        </TabsContent>
+        
+        <TabsContent value="about">
+          <SettingCard 
+            title="Om Snakkaz Chat" 
+            description="Programvareinformasjon"
+          >
+            <div className="space-y-4">
+              <div>
+                <h4 className="text-base font-medium text-cybergold-300">Versjon</h4>
+                <p className="text-cybergold-500">1.0.0</p>
+              </div>
+              
+              <div>
+                <h4 className="text-base font-medium text-cybergold-300">Utviklet av</h4>
+                <p className="text-cybergold-500">Snakkaz Team</p>
+              </div>
+              
+              <div className="pt-4 space-y-2">
+                <Button 
+                  variant="outline" 
+                  className="border-cybergold-600 text-cybergold-300 w-full"
+                  onClick={() => window.open('https://github.com/snakkaz', '_blank')}
+                >
+                  <Globe className="h-4 w-4 mr-2" />
+                  Besøk nettsiden vår
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  className="border-cybergold-600 text-cybergold-300 w-full"
+                  onClick={() => window.open('https://snakkaz.com/support', '_blank')}
+                >
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  Kundesupport
+                </Button>
+              </div>
+            </div>
+          </SettingCard>
+          
+          <SettingCard 
+            title="Juridisk" 
+            description="Juridisk informasjon"
+          >
+            <div className="space-y-4">
+              <Button 
+                variant="ghost" 
+                className="w-full text-left justify-start"
+                onClick={() => window.open('/terms', '_blank')}
+              >
+                Vilkår for bruk
+              </Button>
+              
+              <Button 
+                variant="ghost" 
+                className="w-full text-left justify-start"
+                onClick={() => window.open('/privacy', '_blank')}
+              >
+                Personvernerklæring
+              </Button>
+              
+              <Button 
+                variant="ghost" 
+                className="w-full text-left justify-start"
+                onClick={() => window.open('/cookies', '_blank')}
+              >
+                Cookie-policy
+              </Button>
+            </div>
+          </SettingCard>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};
 
-            <Tabs defaultValue="appearance" className="max-w-3xl">
-                <TabsList className="mb-6">
-                    <TabsTrigger value="appearance">Utseende</TabsTrigger>
-                    <TabsTrigger value="notifications">Varsler</TabsTrigger>
-                    <TabsTrigger value="privacy">Personvern</TabsTrigger>
-                    <TabsTrigger value="devices">Enheter</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="appearance">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Utseende</CardTitle>
-                            <CardDescription>
-                                Tilpass hvordan Snakkaz ser ut for deg
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <Label htmlFor="dark-mode">Mørkt tema</Label>
-                                    <p className="text-sm text-muted-foreground">
-                                        Bruk mørkt tema for mindre belastning på øynene
-                                    </p>
-                                </div>
-                                <Switch
-                                    id="dark-mode"
-                                    checked={darkMode}
-                                    onCheckedChange={setDarkMode}
-                                />
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="language">Språk</Label>
-                                <Select value={language} onValueChange={setLanguage}>
-                                    <SelectTrigger id="language">
-                                        <SelectValue placeholder="Velg språk" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="no">Norsk</SelectItem>
-                                        <SelectItem value="en">English</SelectItem>
-                                        <SelectItem value="sv">Svenska</SelectItem>
-                                        <SelectItem value="da">Dansk</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </CardContent>
-                        <CardFooter>
-                            <Button onClick={handleSaveAppearance} disabled={loading}>
-                                {loading ? "Lagrer..." : "Lagre endringer"}
-                            </Button>
-                        </CardFooter>
-                    </Card>
-                </TabsContent>
-
-                <TabsContent value="notifications">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Varsler</CardTitle>
-                            <CardDescription>
-                                Bestem hvordan du vil motta varsler fra Snakkaz
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <Label htmlFor="notifications">Aktiver varsler</Label>
-                                    <p className="text-sm text-muted-foreground">
-                                        Få varsler når du mottar nye meldinger
-                                    </p>
-                                </div>
-                                <Switch
-                                    id="notifications"
-                                    checked={notificationsEnabled}
-                                    onCheckedChange={setNotificationsEnabled}
-                                />
-                            </div>
-
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <Label htmlFor="sounds">Varsellyder</Label>
-                                    <p className="text-sm text-muted-foreground">
-                                        Spill av lyd når du mottar nye meldinger
-                                    </p>
-                                </div>
-                                <Switch
-                                    id="sounds"
-                                    checked={soundsEnabled}
-                                    onCheckedChange={setSoundsEnabled}
-                                    disabled={!notificationsEnabled}
-                                />
-                            </div>
-                        </CardContent>
-                        <CardFooter>
-                            <Button onClick={handleSaveNotifications} disabled={loading}>
-                                {loading ? "Lagrer..." : "Lagre endringer"}
-                            </Button>
-                        </CardFooter>
-                    </Card>
-                </TabsContent>
-
-                <TabsContent value="privacy">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Personvern</CardTitle>
-                            <CardDescription>
-                                Administrer dine personverninnstillinger
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <Label>Les kvittering</Label>
-                                    <p className="text-sm text-muted-foreground">
-                                        La andre se når du har lest meldingene deres
-                                    </p>
-                                </div>
-                                <Switch defaultChecked />
-                            </div>
-
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <Label>Aktiv status</Label>
-                                    <p className="text-sm text-muted-foreground">
-                                        Vis andre når du er pålogget
-                                    </p>
-                                </div>
-                                <Switch defaultChecked />
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label>Databehandling</Label>
-                                <Button variant="outline" className="w-full justify-start">
-                                    Last ned dine data
-                                </Button>
-                                <Button variant="outline" className="w-full justify-start text-red-500">
-                                    Slett konto og alle data
-                                </Button>
-                            </div>
-                        </CardContent>
-                        <CardFooter>
-                            <p className="text-sm text-muted-foreground">
-                                Din e-post: {user?.email}
-                            </p>
-                        </CardFooter>
-                    </Card>
-                </TabsContent>
-
-                <TabsContent value="devices">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Tilkoblede enheter</CardTitle>
-                            <CardDescription>
-                                Administrer enheter som er pålogget din konto
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-4">
-                                <div className="flex items-center justify-between bg-cyberdark-900 p-3 rounded-lg">
-                                    <div className="flex items-center gap-3">
-                                        <div className="bg-cybergold-500/20 p-2 rounded-full">
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-cybergold-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                <rect width="14" height="20" x="5" y="2" rx="2" ry="2" />
-                                                <path d="M12 18h.01" />
-                                            </svg>
-                                        </div>
-                                        <div>
-                                            <p className="font-medium">Denne enheten</p>
-                                            <p className="text-xs text-muted-foreground">Chrome • Oslo, Norge</p>
-                                        </div>
-                                    </div>
-                                    <Button variant="ghost" size="sm">
-                                        Aktiv nå
-                                    </Button>
-                                </div>
-
-                                <div className="flex items-center justify-between bg-cyberdark-900 p-3 rounded-lg">
-                                    <div className="flex items-center gap-3">
-                                        <div className="bg-cyberdark-700 p-2 rounded-full">
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-cyberdark-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                <rect width="16" height="10" x="4" y="7" rx="2" />
-                                                <path d="M12 22v-4" />
-                                                <path d="M6 22h12" />
-                                            </svg>
-                                        </div>
-                                        <div>
-                                            <p className="font-medium">Desktop</p>
-                                            <p className="text-xs text-muted-foreground">Firefox • Oslo, Norge</p>
-                                        </div>
-                                    </div>
-                                    <Button variant="destructive" size="sm">
-                                        Logg ut
-                                    </Button>
-                                </div>
-                            </div>
-                        </CardContent>
-                        <CardFooter>
-                            <Button variant="outline" className="w-full justify-center text-red-500">
-                                Logg ut fra alle enheter
-                            </Button>
-                        </CardFooter>
-                    </Card>
-                </TabsContent>
-            </Tabs>
-        </div>
-    );
-}
+export default Settings;
