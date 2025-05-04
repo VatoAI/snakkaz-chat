@@ -69,7 +69,7 @@ import { UserStatus } from '@/types/presence';
 interface ChatMessage {
   id: string;
   content?: string;
-  text?: string;
+  text?: string;  // This property is now properly defined
   sender_id?: string;
   senderId?: string;
   group_id?: string;
