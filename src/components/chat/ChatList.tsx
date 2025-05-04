@@ -111,7 +111,7 @@ const ChatList = () => {
     };
     
     loadConversations();
-  }, [friends, groups, loadingFriends, loadingGroups]);
+  }, [friends, groups, loadingFriends, loadingGroups, getLatestMessages]);
 
   const handleConversationClick = (conversation: ConversationItem) => {
     if (conversation.type === 'direct') {

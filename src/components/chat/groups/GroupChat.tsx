@@ -182,7 +182,7 @@ export const GroupChat: React.FC<GroupChatProps> = ({
       if (showMembersDialog) setShowMembersDialog(false);
       if (showInviteDialog) setShowInviteDialog(false);
     }
-  }, [isMobile]);
+  }, [isMobile, showMembersDialog, showInviteDialog]);
 
   // Fix the handleFormSubmit function
   const handleFormSubmit = (text: string, files?: File[]) => {
