@@ -1,15 +1,16 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from './useAuth';
 import { useMessageReadStatus } from './message/useMessageReadStatus';
 import { Group } from '@/types/groups';
-import { ChatMessage, MessageContent, normalizeMessage } from '@/types/messages';
+import type { ChatMessage, MessageContent } from '@/types/messages';
+import { normalizeMessage } from '@/types/messages';
 import { messageQueue, QueuedMessage } from '@/services/messageQueue';
 import { useToast } from '@/hooks/use-toast';
 
-// Import the standardized types from the new messages.ts file
-
-export { MessageContent, ChatMessage }; // Re-export for backward compatibility
+// Re-export the imported types for backward compatibility
+export type { ChatMessage, MessageContent };
 
 export const useGroupChat = (groupId: string | undefined) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);

@@ -37,4 +37,6 @@ export interface DecryptedMessage {
   status?: string;
   readBy?: string[];
   room_id?: string | null;
+  isPending?: boolean;
+  hasError?: boolean;
 }

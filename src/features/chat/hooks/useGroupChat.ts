@@ -43,6 +43,8 @@ export interface ChatMessage {
   replyToId?: string;
   is_encrypted?: boolean;
   isEncrypted?: boolean;
+  isPending?: boolean;
+  hasError?: boolean;
 }
 
 export const useGroupChat = (groupId: string | undefined) => {
