@@ -1,8 +1,7 @@
-
 import React from 'react';
 import { ChatInputField } from '@/components/chat/ChatInputField';
 import { DecryptedMessage } from '@/types/message';
-import { SecurityLevel } from '@/types/groups';
+import { SecurityLevel } from '@/types/security';
 
 interface MessageInputProps {
   // Original props
@@ -65,7 +64,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       onChange={setNewMessage}
       onSubmit={handleSubmitWrapped}
       disabled={isLoading}
-      ttl={ttl || 0}
+      ttl={ttl !== null ? ttl : 0}
       onTtlChange={setTtl}
       isEditing={!!editingMessage}
       onCancelEdit={onCancelEdit}

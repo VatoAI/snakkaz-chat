@@ -1,6 +1,4 @@
-
 import { useState, useEffect } from "react";
-import { GroupMessage } from "@/types/group";
 import { WebRTCManager } from "@/utils/webrtc";
 import { DecryptedMessage } from "@/types/message";
 import { FriendListItem } from "./FriendListItem";
@@ -74,7 +72,9 @@ export const FriendsList = ({
   const handleSelectFriend = (friend: Friend) => {
     // Mark all messages from this friend as read
     const friendId = friend.friend_id;
-    const messagesFromFriend = directMessages.filter(msg => msg.sender.id === friendId);
+    const messagesFromFriend = directMessages.filter(msg => 
+      msg.sender && msg.sender.id === friendId
+    );
     
     const newReadMessages = new Set(readMessages);
     messagesFromFriend.forEach(msg => newReadMessages.add(msg.id));
@@ -91,7 +91,7 @@ export const FriendsList = ({
   // Count unread messages per friend
   const unreadCountByFriend: Record<string, number> = {};
   directMessages.forEach(msg => {
-    if (!readMessages.has(msg.id) && msg.sender.id !== currentUserId) {
+    if (msg.sender && !readMessages.has(msg.id) && msg.sender.id !== currentUserId) {
       if (!unreadCountByFriend[msg.sender.id]) {
         unreadCountByFriend[msg.sender.id] = 0;
       }
