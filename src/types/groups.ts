@@ -1,7 +1,7 @@
-
-export type GroupVisibility = 'public' | 'private' | 'hidden' | 'secret';
-export type GroupRole = 'admin' | 'member' | 'moderator' | 'owner' | 'guest' | 'premium';
-export type SecurityLevel = 'low' | 'standard' | 'high' | 'maximum' | 'premium' | 'server_e2ee' | 'p2p_e2ee';
+export type GroupVisibility = 'public' | 'private' | 'secret' | 'hidden';
+export type GroupRole = 'admin' | 'member' | 'premium';
+// Importing SecurityLevel from security.ts to ensure consistency
+import { SecurityLevel } from './security';
 
 export interface Group {
   id: string;
