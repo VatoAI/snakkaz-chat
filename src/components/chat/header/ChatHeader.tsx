@@ -4,9 +4,7 @@ import { Phone, Video, MoreVertical } from 'lucide-react';
 import { AppHeader } from './AppHeader';
 import { UserAvatar } from './UserAvatar';
 import { HeaderActionButton } from './HeaderActionButton';
-
-// Define UserStatus as a string literal type
-type UserStatus = 'online' | 'away' | 'busy' | 'offline';
+import { UserStatus } from '@/types/presence';
 
 interface ChatHeaderProps {
   recipientInfo: {
@@ -29,13 +27,13 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
     if (!isOnline) return 'Offline';
     
     switch (status) {
-      case 'online':
+      case UserStatus.ONLINE:
         return 'Online nå';
-      case 'away':
+      case UserStatus.AWAY:
         return 'Borte';
-      case 'busy':
+      case UserStatus.BUSY:
         return 'Opptatt';
-      case 'offline':
+      case UserStatus.OFFLINE:
         return 'Offline';
       default:
         return isOnline ? 'Online nå' : 'Sist sett nylig';
@@ -47,11 +45,11 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
     if (!isOnline) return 'bg-gray-400';
     
     switch (status) {
-      case 'online':
+      case UserStatus.ONLINE:
         return 'bg-green-500';
-      case 'away':
+      case UserStatus.AWAY:
         return 'bg-yellow-500';
-      case 'busy':
+      case UserStatus.BUSY:
         return 'bg-red-500';
       default:
         return isOnline ? 'bg-green-500' : 'bg-gray-400';
@@ -101,7 +99,6 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
           status={getStatusColor(recipientInfo.status, recipientInfo.isOnline)}
         />
       }
-      isOnline={recipientInfo.isOnline}
       actions={actionButtons}
     />
   );

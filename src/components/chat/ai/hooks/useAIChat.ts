@@ -1,70 +1,133 @@
-import { useState, useCallback } from 'react';
+
+import { useState, FormEvent } from 'react';
 import { DecryptedMessage } from '@/types/message';
 
-export const useAIChat = () => {
+// Define the workflow structure
+interface Workflow {
+  type: string;
+  steps: string[];
+  currentStep: number;
+}
+
+// Define the help details structure
+interface HelpDetails {
+  title: string;
+  content: string;
+}
+
+// Define the command structure
+interface Command {
+  action: string;
+  payload: any;
+}
+
+export const useAIChat = (currentUserId: string) => {
   const [messages, setMessages] = useState<DecryptedMessage[]>([]);
+  const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState('');
+  const [activeWorkflow, setActiveWorkflow] = useState<Workflow | null>(null);
+  const [helpDetails, setHelpDetails] = useState<HelpDetails | null>(null);
+  const [activeCommand, setActiveCommand] = useState<Command | null>(null);
+  const [pendingCommand, setPendingCommand] = useState<Command | null>(null);
 
-  const sendMessageToAI = useCallback(async (message: string) => {
+  const sendMessageToAI = async (message: string) => {
     setIsLoading(true);
-    setError(null);
-
     try {
-      // Simulate AI response delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Simulate AI response
-      const aiResponse = `AI: I received your message: "${message}". Thank you!`;
-      const aiMessage = createAIMessage(aiResponse);
-
-      setMessages(prevMessages => [...prevMessages, aiMessage]);
-    } catch (e) {
-      setError('Failed to get response from AI.');
-      console.error("AI Chat Error:", e);
+      // Mock AI response for now
+      const aiMessage: DecryptedMessage = {
+        id: Date.now().toString(),
+        content: `AI response to: ${message}`,
+        created_at: new Date().toISOString(),
+        sender: {
+          id: 'ai-assistant',
+          username: 'AI Assistant',
+          full_name: 'AI Assistant',
+          avatar_url: null
+        }
+      };
+      
+      setMessages(prev => [...prev, aiMessage]);
+      setError('');
+    } catch (err) {
+      setError('Failed to send message to AI');
+      console.error(err);
     } finally {
       setIsLoading(false);
     }
-  }, []);
-
-  const createAIMessage = (content: string): DecryptedMessage => {
-    return {
-      id: `ai-${Date.now()}`,
-      content: content,
-      sender: {
-        id: 'ai-assistant',
-        username: null,
-        full_name: null,
-        avatar_url: '/images/ai-assistant.png' // Add default avatar URL
-      },
-      created_at: new Date().toISOString(),
-    };
   };
 
-  const createUserMessage = (content: string): DecryptedMessage => {
-    return {
-      id: `user-${Date.now()}`,
-      content: content,
+  const addMessage = (message: string) => {
+    const newMsg: DecryptedMessage = {
+      id: Date.now().toString(),
+      content: message,
+      created_at: new Date().toISOString(),
       sender: {
-        id: 'user',
+        id: currentUserId,
         username: 'You',
-        full_name: null,
-        avatar_url: '/images/default-avatar.png' // Add default avatar URL
-      },
-      created_at: new Date().toISOString(),
+        full_name: 'You',
+        avatar_url: null
+      }
     };
+    
+    setMessages(prev => [...prev, newMsg]);
   };
 
-  const addMessage = useCallback((message: string) => {
-    const userMessage = createUserMessage(message);
-    setMessages(prevMessages => [...prevMessages, userMessage]);
-  }, []);
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!newMessage.trim()) return;
+    
+    addMessage(newMessage);
+    const msgToSend = newMessage;
+    setNewMessage('');
+    await sendMessageToAI(msgToSend);
+  };
+
+  const handleNextStep = () => {
+    if (activeWorkflow && activeWorkflow.currentStep < activeWorkflow.steps.length - 1) {
+      setActiveWorkflow({
+        ...activeWorkflow,
+        currentStep: activeWorkflow.currentStep + 1
+      });
+    }
+  };
+
+  const handlePrevStep = () => {
+    if (activeWorkflow && activeWorkflow.currentStep > 0) {
+      setActiveWorkflow({
+        ...activeWorkflow,
+        currentStep: activeWorkflow.currentStep - 1
+      });
+    }
+  };
+
+  const handleConfirmCommand = () => {
+    if (pendingCommand) {
+      setActiveCommand(pendingCommand);
+      setPendingCommand(null);
+    }
+  };
+
+  const handleCancelCommand = () => {
+    setPendingCommand(null);
+  };
 
   return {
     messages,
+    newMessage,
+    setNewMessage,
     isLoading,
     error,
+    activeWorkflow,
+    helpDetails,
+    activeCommand,
+    pendingCommand,
     sendMessageToAI,
     addMessage,
+    handleSubmit,
+    handleNextStep,
+    handlePrevStep,
+    handleConfirmCommand,
+    handleCancelCommand,
   };
 };

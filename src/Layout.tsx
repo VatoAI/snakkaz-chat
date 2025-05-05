@@ -1,3 +1,4 @@
+
 import { Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "./hooks/useAuth";
 import { useIsMobile } from "./hooks/use-mobile";
@@ -22,8 +23,10 @@ const Layout = () => {
   return (
     <div className="min-h-screen bg-cyberdark-950 flex flex-col">
       <AppHeader 
-        variant="main"
-        showNavigation={false} /* We're using AppNavigation instead */
+        variant="default" // Changed from "main" to "default"
+        context="direct-message" // Added context prop to match type
+        title="SnakkaZ" // Added required title prop
+        showNavigation={false}
         showLogo={true}
         showUserNav={!!user}
         showThemeToggle={true}

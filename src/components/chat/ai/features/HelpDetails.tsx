@@ -1,28 +1,27 @@
 
-import { Card } from "@/components/ui/card";
-import { HelpCircle } from "lucide-react";
+import React from 'react';
+import { X } from 'lucide-react';
 
 interface HelpDetailsProps {
-  details: string[];
+  details: {
+    title: string;
+    content: string;
+  };
 }
 
-export const HelpDetails = ({ details }: HelpDetailsProps) => {
+export const HelpDetails: React.FC<HelpDetailsProps> = ({ details }) => {
   return (
-    <Card className="absolute bottom-4 right-4 w-80 p-4 bg-cyberdark-800 border-cybergold-500/30">
-      <div className="flex items-center gap-2 mb-3">
-        <HelpCircle className="h-5 w-5 text-cybergold-400" />
-        <h3 className="text-sm font-medium text-cybergold-300">
-          Hjelpedetaljer
-        </h3>
+    <div className="fixed bottom-20 right-4 bg-cyberdark-900 border border-cybergold-500/40 rounded-lg p-4 shadow-lg max-w-sm w-full">
+      <div className="flex justify-between items-start mb-2">
+        <h3 className="text-lg font-semibold text-cybergold-400">{details.title}</h3>
+        <button className="p-1 rounded-full hover:bg-cyberdark-800">
+          <X className="w-5 h-5 text-cybergold-400" />
+        </button>
       </div>
-      <ul className="space-y-2 text-sm text-white">
-        {details.map((detail, index) => (
-          <li key={index} className="flex items-start gap-2">
-            <span className="text-cybergold-400 mt-1">•</span>
-            <span>{detail}</span>
-          </li>
-        ))}
-      </ul>
-    </Card>
+      
+      <div className="prose prose-invert prose-sm max-w-none text-cybergold-300">
+        {details.content}
+      </div>
+    </div>
   );
 };

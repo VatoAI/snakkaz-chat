@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Shield, ShieldCheck, UserCircle, Users } from 'lucide-react';
@@ -74,11 +75,11 @@ const ChatList = () => {
         
         // Process groups
         const groupConversations = (groups || []).map(group => {
-          // Safely convert Group securityLevel to ConversationItem securityLevel
+          // Safely convert Group security_level to ConversationItem securityLevel
           let securityLevel: 'standard' | 'high' | 'maximum' = 'standard';
-          if (group.securityLevel === 'high' || group.securityLevel === 'maximum') {
-            securityLevel = group.securityLevel;
-          } else if (group.securityLevel === 'low') {
+          if (group.security_level === 'high' || group.security_level === 'maximum') {
+            securityLevel = group.security_level as 'high' | 'maximum';
+          } else if (group.security_level === 'low') {
             securityLevel = 'standard';
           }
           
@@ -86,9 +87,9 @@ const ChatList = () => {
             id: group.id,
             type: 'group' as const,
             name: group.name,
-            avatarUrl: group.avatarUrl,
+            avatarUrl: group.avatar_url,
             lastMessage: undefined, // Groups don't have lastMessage property, so we set to undefined
-            unreadCount: group.unreadCount || 0,
+            unreadCount: 0, // Set to default value since unreadCount doesn't exist
             securityLevel
           };
         });
@@ -111,7 +112,7 @@ const ChatList = () => {
     };
     
     loadConversations();
-  }, [friends, groups, loadingFriends, loadingGroups, getLatestMessages]);
+  }, [friends, groups, loadingFriends, loadingGroups]);
 
   const handleConversationClick = (conversation: ConversationItem) => {
     if (conversation.type === 'direct') {
