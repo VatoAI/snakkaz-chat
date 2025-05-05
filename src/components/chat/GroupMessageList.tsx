@@ -68,18 +68,48 @@ export const GroupMessageList: React.FC<GroupMessageListProps> = ({
   const [replyTargetMessages, setReplyTargetMessages] = useState<Record<string, GroupMessage>>({});
   
   // Prepare messages for grouping by ensuring each has the right structure
-  const preparedMessages = messages.map(msg => ({
-    ...msg,
-    senderId: msg.senderId || msg.sender_id || '',
-    createdAt: msg.createdAt || msg.created_at || new Date()
-  }));
+  const preparedMessages = messages.map(msg => {
+    // Safely handle createdAt/created_at conversion to ensure we have a valid Date
+    let createdAtDate: Date;
+    const dateValue = msg.createdAt || msg.created_at;
+    
+    if (dateValue instanceof Date) {
+      createdAtDate = dateValue;
+    } else if (typeof dateValue === 'string') {
+      // Handle ISO string or any valid date string
+      createdAtDate = new Date(dateValue);
+      // Check if the date is valid
+      if (isNaN(createdAtDate.getTime())) {
+        createdAtDate = new Date(); // Fallback to current date if invalid
+      }
+    } else {
+      createdAtDate = new Date(); // Default fallback
+    }
+    
+    return {
+      ...msg,
+      senderId: msg.senderId || msg.sender_id || '',
+      createdAt: createdAtDate // Always store as Date object
+    };
+  });
   
   // Use custom hook to group messages by time - fixed to properly use the returned array
   const groupedMessages = useMessageGrouping(preparedMessages);
   
-  // Helper function to format date separators
+  // Helper function to format date separators - fixed to safely handle different date formats
   const getDateSeparatorText = (timestamp: Date | string) => {
-    const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
+    let date: Date;
+    
+    if (timestamp instanceof Date) {
+      date = timestamp;
+    } else {
+      date = new Date(timestamp);
+      // Check if the date is valid
+      if (isNaN(date.getTime())) {
+        date = new Date(); // Fallback
+      }
+    }
+    
     return formatDistanceToNow(date, { addSuffix: true, locale: nb });
   };
   
@@ -152,23 +182,27 @@ export const GroupMessageList: React.FC<GroupMessageListProps> = ({
   const userId = currentUserId || user?.id;
   if (!userId) return null;
 
-  // Helper function to handle date safely
+  // Helper function to handle date safely - improved for better type safety
   const getIsoString = (dateInput: string | number | Date | undefined): string => {
     if (!dateInput) return new Date().toISOString();
     
+    let date: Date;
+    
     if (typeof dateInput === 'string') {
-      return new Date(dateInput).toISOString();
+      date = new Date(dateInput);
+      // Check if the date is valid
+      if (isNaN(date.getTime())) {
+        return new Date().toISOString(); // Fallback if parse fails
+      }
+    } else if (typeof dateInput === 'number') {
+      date = new Date(dateInput);
+    } else if (dateInput instanceof Date) {
+      date = dateInput;
+    } else {
+      return new Date().toISOString();
     }
     
-    if (typeof dateInput === 'number') {
-      return new Date(dateInput).toISOString();
-    }
-    
-    if (dateInput instanceof Date) {
-      return dateInput.toISOString();
-    }
-    
-    return new Date().toISOString();
+    return date.toISOString();
   };
 
   // Helper function to determine message status indicator
@@ -225,70 +259,79 @@ export const GroupMessageList: React.FC<GroupMessageListProps> = ({
           </div>
         )}
         
-        {/* Messages grouped by date */}
-        {Array.isArray(groupedMessages) && groupedMessages.map((group, groupIndex) => (
-          <div key={`group-${group.senderId}-${groupIndex}`} className="space-y-1 mb-3">
-            {/* Date separator */}
-            {groupIndex === 0 || new Date(group.timestamp).toDateString() !== 
-              new Date(groupedMessages[groupIndex - 1].timestamp).toDateString() ? (
-              <div className="flex items-center justify-center my-4">
-                <div className="bg-gradient-to-r from-cyberdark-950 via-cyberdark-800 to-cyberdark-950 text-cybergold-500 
-                            px-4 py-1.5 rounded-full text-xs shadow-sm border-t border-b border-cybergold-800/20">
-                  {getDateSeparatorText(group.timestamp)}
+        {/* Messages grouped by date - fixed to safely compare dates */}
+        {Array.isArray(groupedMessages) && groupedMessages.map((group, groupIndex) => {
+          // Safely convert both dates for comparison
+          const currentGroupDate = new Date(group.timestamp);
+          const prevGroupDate = groupIndex > 0 ? new Date(groupedMessages[groupIndex - 1].timestamp) : null;
+          
+          const shouldShowDateSeparator = groupIndex === 0 || 
+            !prevGroupDate || 
+            currentGroupDate.toDateString() !== prevGroupDate.toDateString();
+          
+          return (
+            <div key={`group-${group.senderId}-${groupIndex}`} className="space-y-1 mb-3">
+              {/* Date separator */}
+              {shouldShowDateSeparator ? (
+                <div className="flex items-center justify-center my-4">
+                  <div className="bg-gradient-to-r from-cyberdark-950 via-cyberdark-800 to-cyberdark-950 text-cybergold-500 
+                              px-4 py-1.5 rounded-full text-xs shadow-sm border-t border-b border-cybergold-800/20">
+                    {getDateSeparatorText(group.timestamp)}
+                  </div>
                 </div>
-              </div>
-            ) : null}
-            
-            {/* Messages for this group */}
-            {group.messages.map((message: any) => {
-              const isCurrentUser = (message.senderId || message.sender_id) === userId;
+              ) : null}
               
-              // Find reply message if this message is a reply
-              let replyToMessage = null;
-              const replyId = message.replyToId || message.reply_to_id;
-              if (replyId) {
-                replyToMessage = replyTargetMessages[replyId];
-              }
-              
-              return (
-                <ChatMessage
-                  key={message.id}
-                  message={{
-                    id: message.id,
-                    content: message.content || message.text || '',
-                    sender: { 
-                      id: message.senderId || message.sender_id || '',
-                      username: userProfiles[message.senderId || message.sender_id || '']?.username || 'Unknown',
-                      full_name: null,
-                      avatar_url: userProfiles[message.senderId || message.sender_id || '']?.avatar_url || null
-                    },
-                    created_at: getIsoString(message.createdAt || message.created_at),
-                    media: (message.mediaUrl || message.media_url) ? {
-                      url: message.mediaUrl || message.media_url || '',
-                      type: message.mediaType || message.media_type || 'image'
-                    } : undefined,
-                    ttl: message.ttl,
-                    status: 'sent',
-                    readBy: message.readBy || message.read_by,
-                    replyTo: message.replyToId || message.reply_to_id,
-                    replyToMessage: replyToMessage ? {
-                      content: replyToMessage.content || replyToMessage.text || '',
-                      sender_id: replyToMessage.senderId || replyToMessage.sender_id || ''
-                    } : undefined
-                  }}
-                  isCurrentUser={isCurrentUser}
-                  userProfiles={userProfiles}
-                  onEdit={onMessageEdit ? () => onMessageEdit(message as GroupMessage) : undefined}
-                  onDelete={onMessageDelete ? () => onMessageDelete(message.id) : undefined}
-                  onReply={onMessageReply ? () => onMessageReply(message as GroupMessage) : undefined}
-                  isEncrypted={isEncryptedGroup || (message.isEncrypted || message.is_encrypted || false)}
-                >
-                  {renderMessageStatus(message)}
-                </ChatMessage>
-              );
-            })}
-          </div>
-        ))}
+              {/* Messages for this group */}
+              {group.messages.map((message: any) => {
+                const isCurrentUser = (message.senderId || message.sender_id) === userId;
+                
+                // Find reply message if this message is a reply
+                let replyToMessage = null;
+                const replyId = message.replyToId || message.reply_to_id;
+                if (replyId) {
+                  replyToMessage = replyTargetMessages[replyId];
+                }
+                
+                return (
+                  <ChatMessage
+                    key={message.id}
+                    message={{
+                      id: message.id,
+                      content: message.content || message.text || '',
+                      sender: { 
+                        id: message.senderId || message.sender_id || '',
+                        username: userProfiles[message.senderId || message.sender_id || '']?.username || 'Unknown',
+                        full_name: null,
+                        avatar_url: userProfiles[message.senderId || message.sender_id || '']?.avatar_url || null
+                      },
+                      created_at: getIsoString(message.createdAt || message.created_at),
+                      media: (message.mediaUrl || message.media_url) ? {
+                        url: message.mediaUrl || message.media_url || '',
+                        type: message.mediaType || message.media_type || 'image'
+                      } : undefined,
+                      ttl: message.ttl,
+                      status: 'sent',
+                      readBy: message.readBy || message.read_by,
+                      replyTo: message.replyToId || message.reply_to_id,
+                      replyToMessage: replyToMessage ? {
+                        content: replyToMessage.content || replyToMessage.text || '',
+                        sender_id: replyToMessage.senderId || replyToMessage.sender_id || ''
+                      } : undefined
+                    }}
+                    isCurrentUser={isCurrentUser}
+                    userProfiles={userProfiles}
+                    onEdit={onMessageEdit ? () => onMessageEdit(message as GroupMessage) : undefined}
+                    onDelete={onMessageDelete ? () => onMessageDelete(message.id) : undefined}
+                    onReply={onMessageReply ? () => onMessageReply(message as GroupMessage) : undefined}
+                    isEncrypted={isEncryptedGroup || (message.isEncrypted || message.is_encrypted || false)}
+                  >
+                    {renderMessageStatus(message)}
+                  </ChatMessage>
+                );
+              })}
+            </div>
+          );
+        })}
         
         {/* Empty chat message */}
         {!isLoading && messages.length === 0 && (
