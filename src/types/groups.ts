@@ -1,7 +1,7 @@
 
-export type GroupVisibility = 'public' | 'private' | 'secret';
-export type GroupRole = 'admin' | 'member' | 'premium';
-export type SecurityLevel = 'standard' | 'p2p_e2ee' | 'server_e2ee';
+export type GroupVisibility = 'public' | 'private' | 'hidden' | 'secret';
+export type GroupRole = 'admin' | 'member' | 'moderator' | 'owner' | 'guest' | 'premium';
+export type SecurityLevel = 'low' | 'standard' | 'high' | 'maximum' | 'premium' | 'server_e2ee' | 'p2p_e2ee';
 
 export interface Group {
   id: string;
@@ -16,6 +16,11 @@ export interface Group {
   members?: GroupMember[];
   created_at?: string;
   updated_at?: string;
+  
+  // Aliases for compatibility
+  securityLevel?: SecurityLevel;
+  avatarUrl?: string | null;
+  unreadCount?: number;
 }
 
 export interface GroupMember {
@@ -25,6 +30,14 @@ export interface GroupMember {
   role: GroupRole;
   joined_at?: string;
   invited_by?: string;
+  
+  // Aliases for compatibility
+  groupId?: string;
+  userId?: string;
+  joinedAt?: string;
+  canWrite?: boolean;
+  can_write?: boolean;
+  permissions?: any;
 }
 
 export interface GroupInvite {
@@ -35,4 +48,11 @@ export interface GroupInvite {
   status: 'pending' | 'accepted' | 'rejected';
   created_at?: string;
   updated_at?: string;
+  
+  // Aliases for compatibility
+  groupId?: string;
+  invitedById?: string;
+  invitedUserId?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }

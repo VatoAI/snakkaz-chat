@@ -70,6 +70,8 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       isEditing={!!editingMessage}
       onCancelEdit={onCancelEdit}
       placeholder={placeholder}
+      replyToMessage={replyToMessage}
+      onCancelReply={onCancelReply}
     />
   );
 };

@@ -12,6 +12,12 @@ interface AppHeaderProps {
   isOnline?: boolean;
   actions?: React.ReactNode;
   onBackClick?: () => void;
+  children?: React.ReactNode; // Added children prop
+  showNavigation?: boolean;
+  showLogo?: boolean;
+  showUserNav?: boolean;
+  showThemeToggle?: boolean;
+  showDownloadButton?: boolean;
 }
 
 export const AppHeader: React.FC<AppHeaderProps> = ({
@@ -21,7 +27,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   subtitle,
   avatar,
   actions,
-  onBackClick
+  onBackClick,
+  children // Added children prop
 }) => {
   return (
     <header className="bg-cyberdark-900 border-b border-cyberdark-700 p-3 flex items-center">
@@ -57,6 +64,12 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
       {actions && (
         <div className="flex items-center space-x-1">
           {actions}
+        </div>
+      )}
+      
+      {children && (
+        <div className="ml-auto">
+          {children}
         </div>
       )}
     </header>

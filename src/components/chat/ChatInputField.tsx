@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Send, Clock, Paperclip, X, Image as ImageIcon, Smile } from 'lucide-react';
 import { cx, theme } from '../lib/theme';
 import { MediaUploader } from './MediaUploader';
+import { DecryptedMessage } from '@/types/message';
 
 interface ChatInputFieldProps {
   value: string;
@@ -16,6 +17,8 @@ interface ChatInputFieldProps {
   className?: string;
   isUploading?: boolean;
   maxMediaSizeMB?: number;
+  replyToMessage?: DecryptedMessage | null; // Added replyToMessage prop
+  onCancelReply?: () => void; // Added onCancelReply prop
 }
 
 export const ChatInputField: React.FC<ChatInputFieldProps> = ({
@@ -30,7 +33,9 @@ export const ChatInputField: React.FC<ChatInputFieldProps> = ({
   isEditing = false,
   className = '',
   isUploading = false,
-  maxMediaSizeMB = 5
+  maxMediaSizeMB = 5,
+  replyToMessage, // Added replyToMessage prop
+  onCancelReply // Added onCancelReply prop
 }) => {
   const [isFocused, setIsFocused] = useState(false);
   const [isMediaPickerOpen, setIsMediaPickerOpen] = useState(false);
@@ -84,6 +89,29 @@ export const ChatInputField: React.FC<ChatInputFieldProps> = ({
     setIsMediaPickerOpen(prev => !prev);
   };
 
+  // Show reply message preview
+  const replyPreview = replyToMessage && (
+    <div className="flex items-center justify-between px-3 py-2 border-b border-cyberdark-700 bg-cyberdark-800/50">
+      <div className="flex items-center space-x-2">
+        <div className="w-1 h-12 bg-cybergold-500 rounded-full"></div>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs text-cybergold-400">
+            Svar til {replyToMessage.sender?.username || 'Bruker'}
+          </p>
+          <p className="text-xs text-cybergold-500 truncate">
+            {replyToMessage.content || ''}
+          </p>
+        </div>
+      </div>
+      <button 
+        onClick={onCancelReply}
+        className="text-cybergold-400 hover:text-cybergold-300"
+      >
+        <X className="h-4 w-4" />
+      </button>
+    </div>
+  );
+
   return (
     <div className={cx(
       'relative bg-cyberdark-900 rounded-md',
@@ -131,6 +159,9 @@ export const ChatInputField: React.FC<ChatInputFieldProps> = ({
           </button>
         </div>
       )}
+      
+      {/* Reply preview */}
+      {replyPreview}
       
       {/* Media preview if a file is selected */}
       {selectedMedia && (

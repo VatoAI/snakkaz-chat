@@ -9,6 +9,19 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useMessageGrouping } from '@/hooks/useMessageGrouping';
 import { useInView } from 'react-intersection-observer';
+import { DecryptedMessage } from '@/types/message';
+
+interface MessageGroupItem {
+  id: string;
+  senderId: string;
+  sender_id?: string;
+  content: string;
+  text?: string;
+  createdAt: string | Date;
+  created_at?: string | Date;
+  timestamp: Date;
+  messages: any[];
+}
 
 interface GroupMessageListProps {
   messages: GroupMessage[];
@@ -187,7 +200,7 @@ export const GroupMessageList: React.FC<GroupMessageListProps> = ({
     <div className="h-full flex flex-col">
       {/* Offline indicator banner at the top of the message list */}
       {offlineMode && (
-        <div className="sticky top-0 z-10 bg-red-900/70 backdrop-blur-sm px-3 py-1.5 text-xs flex items-center justify-center text-red-100 border-b border-red-800/50">
+        <div className="sticky top-0 z-10 bg-red-900/700 backdrop-blur-sm px-3 py-1.5 text-xs flex items-center justify-center text-red-100 border-b border-red-800/50">
           <div className="h-1.5 w-1.5 bg-red-500 rounded-full mr-1.5 animate-pulse"></div>
           <span>Offline-modus • {messages.filter(m => m.isPending).length} ventende meldinger</span>
         </div>
@@ -227,7 +240,7 @@ export const GroupMessageList: React.FC<GroupMessageListProps> = ({
             ) : null}
             
             {/* Messages for this group */}
-            {group.messages.map(message => {
+            {group.messages.map((message: any) => {
               const isCurrentUser = (message.senderId || message.sender_id) === userId;
               
               // Find reply message if this message is a reply
@@ -243,7 +256,12 @@ export const GroupMessageList: React.FC<GroupMessageListProps> = ({
                   message={{
                     id: message.id,
                     content: message.content || message.text || '',
-                    sender_id: message.senderId || message.sender_id || '',
+                    sender: { 
+                      id: message.senderId || message.sender_id || '',
+                      username: userProfiles[message.senderId || message.sender_id || '']?.username || 'Unknown',
+                      full_name: null,
+                      avatar_url: userProfiles[message.senderId || message.sender_id || '']?.avatar_url || null
+                    },
                     created_at: getIsoString(message.createdAt || message.created_at),
                     media: (message.mediaUrl || message.media_url) ? {
                       url: message.mediaUrl || message.media_url || '',
@@ -260,9 +278,9 @@ export const GroupMessageList: React.FC<GroupMessageListProps> = ({
                   }}
                   isCurrentUser={isCurrentUser}
                   userProfiles={userProfiles}
-                  onEdit={onMessageEdit ? () => onMessageEdit(message) : undefined}
+                  onEdit={onMessageEdit ? () => onMessageEdit(message as GroupMessage) : undefined}
                   onDelete={onMessageDelete ? () => onMessageDelete(message.id) : undefined}
-                  onReply={onMessageReply ? () => onMessageReply(message) : undefined}
+                  onReply={onMessageReply ? () => onMessageReply(message as GroupMessage) : undefined}
                   isEncrypted={isEncryptedGroup || (message.isEncrypted || message.is_encrypted || false)}
                 >
                   {renderMessageStatus(message)}
