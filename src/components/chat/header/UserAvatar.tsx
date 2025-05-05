@@ -1,62 +1,36 @@
+
 import React from 'react';
-import { cn } from '@/lib/utils';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User, Users } from 'lucide-react';
 
 interface UserAvatarProps {
   src?: string;
-  alt?: string;
-  size?: 'sm' | 'md' | 'lg';
+  alt: string;
   isGroup?: boolean;
-  className?: string;
+  status?: string;
 }
 
-/**
- * Reusable avatar component for users and groups
- */
-export function UserAvatar({ 
+export const UserAvatar: React.FC<UserAvatarProps> = ({ 
   src, 
-  alt = 'User', 
-  size = 'md', 
+  alt, 
   isGroup = false,
-  className 
-}: UserAvatarProps) {
-  // Size classes
-  const sizeClasses = {
-    sm: 'h-7 w-7',
-    md: 'h-9 w-9',
-    lg: 'h-12 w-12'
-  };
-
-  // Icon size classes
-  const iconSizeClasses = {
-    sm: 'h-4 w-4',
-    md: 'h-5 w-5',
-    lg: 'h-6 w-6'
-  };
-  
+  status
+}) => {
   return (
-    <div 
-      className={cn(
-        'rounded-full overflow-hidden bg-muted flex-shrink-0', 
-        sizeClasses[size],
-        className
-      )}
-    >
-      {src ? (
-        <img
-          src={src}
-          alt={alt}
-          className="h-full w-full object-cover"
+    <div className="relative">
+      <Avatar className="h-10 w-10 border-2 border-cyberdark-700">
+        <AvatarImage src={src} alt={alt} />
+        <AvatarFallback className="bg-cyberdark-800 text-cybergold-500">
+          {isGroup ? <Users className="h-5 w-5" /> : <User className="h-5 w-5" />}
+        </AvatarFallback>
+      </Avatar>
+      
+      {status && (
+        <span 
+          className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-cyberdark-950 ${status}`}
+          aria-hidden="true"
         />
-      ) : (
-        <div className="h-full w-full flex items-center justify-center bg-primary/10">
-          {isGroup ? (
-            <Users className={cn('text-primary', iconSizeClasses[size])} />
-          ) : (
-            <User className={cn('text-primary', iconSizeClasses[size])} />
-          )}
-        </div>
       )}
     </div>
   );
-}
+};
