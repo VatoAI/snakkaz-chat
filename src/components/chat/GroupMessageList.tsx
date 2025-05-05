@@ -10,6 +10,12 @@ import { cn } from '@/lib/utils';
 import { useMessageGrouping } from '@/hooks/useMessageGrouping';
 import { useInView } from 'react-intersection-observer';
 import { DecryptedMessage } from '@/types/message';
+import { UserStatus } from '@/types/presence';
+
+interface TypingIndicator {
+  userId: string;
+  timestamp: number;
+}
 
 interface MessageGroupItem {
   id: string;
@@ -66,6 +72,7 @@ export const GroupMessageList: React.FC<GroupMessageListProps> = ({
   const [autoScrollEnabled, setAutoScrollEnabled] = useState(true);
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
   const [replyTargetMessages, setReplyTargetMessages] = useState<Record<string, GroupMessage>>({});
+  const [typingUsers, setTypingUsers] = useState<TypingIndicator[]>([]);
   
   // Prepare messages for grouping by ensuring each has the right structure
   const preparedMessages = messages.map(msg => {
@@ -230,6 +237,59 @@ export const GroupMessageList: React.FC<GroupMessageListProps> = ({
     return null;
   };
 
+  // Simulate cleanup of stale typing indicators
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = Date.now();
+      setTypingUsers(prev => 
+        prev.filter(user => now - user.timestamp < 5000)
+      );
+    }, 1000);
+    
+    return () => clearInterval(interval);
+  }, []);
+  
+  // Function to show that a user is typing
+  const showUserTyping = (userId: string) => {
+    if (userId === currentUserId) return;
+    
+    setTypingUsers(prev => {
+      const exists = prev.find(u => u.userId === userId);
+      if (exists) {
+        return prev.map(u => 
+          u.userId === userId ? { ...u, timestamp: Date.now() } : u
+        );
+      } else {
+        return [...prev, { userId, timestamp: Date.now() }];
+      }
+    });
+  };
+  
+  // Function to render typing indicators
+  const renderTypingIndicators = () => {
+    if (typingUsers.length === 0) return null;
+    
+    return (
+      <div className="px-4 py-2 animate-fade-in">
+        {typingUsers.map(user => {
+          const profile = userProfiles[user.userId];
+          const username = profile?.username || profile?.displayName || 'Someone';
+          
+          return (
+            <div key={user.userId} className="flex items-center text-xs text-cybergold-500">
+              <div className="flex space-x-1 mr-2">
+                <div className="w-1 h-1 rounded-full bg-cybergold-500 animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                <div className="w-1 h-1 rounded-full bg-cybergold-500 animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                <div className="w-1 h-1 rounded-full bg-cybergold-500 animate-bounce" style={{ animationDelay: '300ms' }}></div>
+              </div>
+              <span>{username} skriver...</span>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   return (
     <div className="h-full flex flex-col">
       {/* Offline indicator banner at the top of the message list */}
@@ -258,6 +318,9 @@ export const GroupMessageList: React.FC<GroupMessageListProps> = ({
             )}
           </div>
         )}
+        
+        {/* Typing indicators */}
+        {renderTypingIndicators()}
         
         {/* Messages grouped by date - fixed to safely compare dates */}
         {Array.isArray(groupedMessages) && groupedMessages.map((group, groupIndex) => {
