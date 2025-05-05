@@ -1,5 +1,4 @@
-
-export type UserStatus = 'online' | 'away' | 'busy' | 'offline';
+export type UserStatus = 'online' | 'away' | 'busy' | 'offline' | 'brb';
 
 export interface UserPresence {
   status: UserStatus;

@@ -46,20 +46,19 @@ export interface GroupMember {
 export interface GroupInvite {
   id: string;
   group_id: string;
+  groupId?: string; // For camelCase compatibility
   invited_by: string;
+  invitedById?: string; // For camelCase compatibility
   invited_user_id: string;
+  invitedUserId?: string; // For camelCase compatibility
   status: 'pending' | 'accepted' | 'rejected';
   created_at?: string;
+  createdAt?: string; // For camelCase compatibility
   updated_at?: string;
-  
-  // Aliases for compatibility
-  groupId?: string;
-  invitedById?: string;
-  invitedUserId?: string;
-  createdAt?: string;
-  updatedAt?: string;
-  
-  // Display properties
+  updatedAt?: string; // For camelCase compatibility
+  expires_at?: string;
+  expiresAt?: string; // For camelCase compatibility
+  // Computed properties for display
   group_name?: string;
   sender_username?: string;
 }
