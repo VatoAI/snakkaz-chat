@@ -1,8 +1,14 @@
+
 import React, { useState } from 'react';
 import { Group, SecurityLevel, GroupMember } from '@/types/groups';
 import { Shield, Info, User, UserPlus, Settings, Lock, Wifi, WifiOff, RefreshCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { 
+  Tooltip, 
+  TooltipContent, 
+  TooltipProvider, 
+  TooltipTrigger 
+} from '@/components/ui/tooltip';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';

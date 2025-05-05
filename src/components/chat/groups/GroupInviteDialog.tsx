@@ -1,17 +1,13 @@
-
 import React from 'react';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle,
-  DialogDescription,
-  DialogFooter 
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { GroupInvite } from "@/types/group";
-import { Loader2 } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog';
+import { GroupInvite } from '@/types/groups';
+import { Button } from '@/components/ui/button';
+import { CheckIcon, XIcon } from 'lucide-react';
 
 interface GroupInviteDialogProps {
   isOpen: boolean;
@@ -22,108 +18,55 @@ interface GroupInviteDialogProps {
   userProfiles: Record<string, { username: string | null; avatar_url: string | null; }>;
 }
 
-export function GroupInviteDialog({
+export const GroupInviteDialog: React.FC<GroupInviteDialogProps> = ({
   isOpen,
   onClose,
   invites,
   onAccept,
   onDecline,
   userProfiles
-}: GroupInviteDialogProps) {
-  const [processingInvite, setProcessingInvite] = React.useState<string | null>(null);
-  const [processingAction, setProcessingAction] = React.useState<'accept' | 'decline' | null>(null);
-
-  const handleAccept = async (invite: GroupInvite) => {
-    try {
-      setProcessingInvite(invite.id);
-      setProcessingAction('accept');
-      await onAccept(invite);
-    } finally {
-      setProcessingInvite(null);
-      setProcessingAction(null);
-    }
-  };
-
-  const handleDecline = async (invite: GroupInvite) => {
-    try {
-      setProcessingInvite(invite.id);
-      setProcessingAction('decline');
-      await onDecline(invite);
-    } finally {
-      setProcessingInvite(null);
-      setProcessingAction(null);
-    }
-  };
-
+}) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="bg-cyberdark-900 border-cybergold-500/30 text-cybergold-200 max-w-md">
         <DialogHeader>
-          <DialogTitle>Group Invitations</DialogTitle>
-          <DialogDescription>
-            You have {invites.length} pending group {invites.length === 1 ? 'invitation' : 'invitations'}.
-          </DialogDescription>
+          <DialogTitle>Group Invites</DialogTitle>
         </DialogHeader>
-
-        <div className="max-h-[300px] overflow-y-auto py-2">
-          {invites.length === 0 ? (
-            <div className="text-center py-4 text-muted-foreground">
-              No pending invitations
+        <div className="divide-y divide-cybergold-500/20">
+          {invites.map((invite) => (
+            <div key={invite.id} className="py-4 flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-cybergold-300">
+                  {userProfiles[invite.invited_by]?.username || 'Unknown User'} invited you to join {invite.group_name || 'Unknown Group'}
+                </p>
+                <p className="text-xs text-cybergold-500">
+                  Created at: {invite.created_at}
+                </p>
+              </div>
+              <div className="flex space-x-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-green-500 hover:bg-green-500/10"
+                  onClick={() => onAccept(invite)}
+                >
+                  <CheckIcon className="h-4 w-4" />
+                  <span className="sr-only">Accept</span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-red-500 hover:bg-red-500/10"
+                  onClick={() => onDecline(invite)}
+                >
+                  <XIcon className="h-4 w-4" />
+                  <span className="sr-only">Decline</span>
+                </Button>
+              </div>
             </div>
-          ) : (
-            invites.map(invite => {
-              const senderProfile = invite.invitedById ? userProfiles[invite.invitedById] : null;
-              const isProcessing = processingInvite === invite.id;
-              
-              return (
-                <div key={invite.id} className="flex items-center justify-between py-3 border-b last:border-0">
-                  <div className="flex items-center gap-3">
-                    <Avatar>
-                      <AvatarImage src={senderProfile?.avatar_url || ''} />
-                      <AvatarFallback>
-                        {senderProfile?.username?.charAt(0) || 'U'}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="font-medium">{invite.group_name || 'Unknown Group'}</p>
-                      <p className="text-sm text-muted-foreground">
-                        From: {senderProfile?.username || 'Unknown user'}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      onClick={() => handleAccept(invite)}
-                      disabled={isProcessing}
-                    >
-                      {isProcessing && processingAction === 'accept' ? (
-                        <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                      ) : 'Accept'}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleDecline(invite)}
-                      disabled={isProcessing}
-                    >
-                      {isProcessing && processingAction === 'decline' ? (
-                        <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                      ) : 'Decline'}
-                    </Button>
-                  </div>
-                </div>
-              );
-            })
-          )}
+          ))}
         </div>
-        
-        <DialogFooter>
-          <Button variant="secondary" onClick={onClose}>
-            Close
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
-}
+};
