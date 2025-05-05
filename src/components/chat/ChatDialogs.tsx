@@ -1,7 +1,8 @@
 
 import { GroupPasswordDialog } from "@/components/chat/groups/GroupPasswordDialog";
 import { GroupInviteDialog } from "@/components/chat/groups/GroupInviteDialog";
-import { Group, GroupInvite } from "@/types/group";
+import { Group } from "@/types/group";
+import { GroupInvite } from "@/types/groups";
 
 interface ChatDialogsProps {
   isPasswordDialogOpen: boolean;

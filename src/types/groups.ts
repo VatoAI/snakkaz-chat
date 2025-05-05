@@ -30,11 +30,14 @@ export interface GroupMember {
   role: GroupRole;
   joined_at?: string;
   invited_by?: string;
+  last_active?: string;
+  storage_quota?: number;
   
   // Aliases for compatibility
   groupId?: string;
   userId?: string;
   joinedAt?: string;
+  lastActive?: string;
   canWrite?: boolean;
   can_write?: boolean;
   permissions?: any;
@@ -55,4 +58,8 @@ export interface GroupInvite {
   invitedUserId?: string;
   createdAt?: string;
   updatedAt?: string;
+  
+  // Display properties
+  group_name?: string;
+  sender_username?: string;
 }
