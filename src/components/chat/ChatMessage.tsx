@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { DecryptedMessage } from '@/types/message';
 import { cn } from '@/lib/utils';
@@ -32,7 +33,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   isEncrypted = false,
   children // Accept children prop
 }) => {
-  const sender = userProfiles[message.sender_id || message.sender?.id || ''];
+  const sender = message.sender ? userProfiles[message.sender.id || ''] : null;
   const isMedia = message.media_url || message.media;
   const hasBeenEdited = message.is_edited || message.edited_at;
   
@@ -75,7 +76,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
     )}>
       <div className="absolute top-0 left-0 flex items-center justify-start">
         {isEncrypted && (
-          <Shield className="h-4 w-4 text-green-500 mr-1" title="Ende-til-ende kryptert" />
+          <Shield className="h-4 w-4 text-green-500 mr-1" aria-label="Ende-til-ende kryptert" />
         )}
       </div>
       

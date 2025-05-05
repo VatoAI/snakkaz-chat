@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect } from 'react';
 import { ChatMessage } from './ChatMessage';
 import { cx, theme } from '../lib/theme';
@@ -121,10 +122,10 @@ export const ChatMessageList: React.FC<ChatMessageListProps> = ({
             <ChatMessage
               key={message.id}
               message={message}
-              isCurrentUser={message.sender_id === currentUserId}
+              isCurrentUser={message.sender?.id === currentUserId}
               userProfiles={userProfiles}
-              onEdit={onEdit}
-              onDelete={onDelete}
+              onEdit={() => onEdit && onEdit(message)}
+              onDelete={() => onDelete && onDelete(message.id)}
             />
           ))}
         </div>

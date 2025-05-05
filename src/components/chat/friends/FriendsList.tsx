@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { DecryptedMessage } from '@/types/message';
 import { UserPresence } from '@/types/presence';
@@ -9,11 +10,11 @@ interface FriendsListProps {
   webRTCManager: any;
   directMessages: DecryptedMessage[];
   onNewMessage: (message: DecryptedMessage) => void;
-  onStartChat: (userId: string) => void; // Added this prop to match ChatPage usage
+  onStartChat: (userId: string) => void;
   userProfiles: Record<string, any>;
-  friendsList?: string[]; // Made optional
-  selectedFriendId?: string | null; // Made optional
-  userPresence?: Record<string, any>; // Made optional
+  friendsList?: string[];
+  selectedFriendId?: string | null;
+  userPresence?: Record<string, any>;
 }
 
 export const FriendsList: React.FC<FriendsListProps> = ({
@@ -22,13 +23,13 @@ export const FriendsList: React.FC<FriendsListProps> = ({
   webRTCManager,
   directMessages,
   onNewMessage,
-  onStartChat, // Use the new prop
+  onStartChat,
   userProfiles,
   friendsList = [],
   selectedFriendId = null,
   userPresence = {}
 }) => {
-  // Support both onStartChat and onSelectFriend (for backwards compatibility)
+  // Handle selecting a friend
   const handleSelectFriend = (friendId: string) => {
     onStartChat(friendId);
   };
@@ -54,16 +55,16 @@ export const FriendsList: React.FC<FriendsListProps> = ({
     );
   }
 
-  // Fix avatar_url access with defensive coding
+  // Render friends list
   const renderFriendItem = (friend: FriendRecord) => {
-    const friendProfile = userProfiles[friend.friendId] || {};
+    const friendProfile = userProfiles[friend.friend_id] || {};
     const avatarUrl = friendProfile.avatar_url || '/images/default-avatar.png';
     const username = friendProfile.username || 'Unknown User';
     
     return (
       <div 
-        key={friend.friendId}
-        onClick={() => handleSelectFriend(friend.friendId)}
+        key={friend.friend_id}
+        onClick={() => handleSelectFriend(friend.friend_id)}
         className="flex items-center p-2 rounded-lg cursor-pointer hover:bg-cyberdark-800/50 transition-colors"
       >
         <div className="relative">
@@ -80,12 +81,12 @@ export const FriendsList: React.FC<FriendsListProps> = ({
               </div>
             )}
           </div>
-          <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-cyberdark-900 ${userPresence && userPresence[friend.friendId]?.status === 'online' ? 'bg-green-500' : 'bg-cyberdark-400'}`}></div>
+          <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-cyberdark-900 ${userPresence && userPresence[friend.friend_id]?.status === 'online' ? 'bg-green-500' : 'bg-cyberdark-400'}`}></div>
         </div>
         <div className="ml-3">
           <div className="font-medium text-cybergold-200">{username}</div>
           <div className="text-xs text-cyberdark-300">
-            {userPresence && userPresence[friend.friendId]?.status === 'online' ? 'Online' : 'Offline'}
+            {userPresence && userPresence[friend.friend_id]?.status === 'online' ? 'Online' : 'Offline'}
           </div>
         </div>
       </div>

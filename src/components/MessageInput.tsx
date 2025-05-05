@@ -1,5 +1,5 @@
 
-import React, { FormEvent } from 'react';
+import React from 'react';
 import { ChatInputField } from '@/components/chat/ChatInputField';
 import { DecryptedMessage } from '@/types/message';
 import { SecurityLevel } from '@/types/groups';
@@ -54,7 +54,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     }
     
     if (onSubmit) {
-      const event = new FormEvent('submit') as any;
+      const event = {} as React.FormEvent;
       await onSubmit(event);
     }
   };
@@ -70,12 +70,6 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       isEditing={!!editingMessage}
       onCancelEdit={onCancelEdit}
       placeholder={placeholder}
-      replyToMessage={replyToMessage}
-      onCancelReply={onCancelReply}
-      enableAttachments={enableAttachments}
-      enableEphemeralMessages={enableEphemeralMessages}
-      ephemeralTTL={ephemeralTTL}
-      securityLevel={securityLevel}
     />
   );
 };

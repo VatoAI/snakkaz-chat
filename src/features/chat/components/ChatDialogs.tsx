@@ -2,7 +2,7 @@
 import { GroupPasswordDialog } from "@/components/chat/groups/GroupPasswordDialog";
 import { GroupInviteDialog } from "@/features/groups/components/GroupInviteDialog";
 import { Group } from "@/types/group";
-import { GroupInvite } from "@/types/groups"; // Importing from groups.ts instead of group.ts
+import { GroupInvite } from "@/types/groups";
 
 interface ChatDialogsProps {
   isPasswordDialogOpen: boolean;

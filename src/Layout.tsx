@@ -23,9 +23,9 @@ const Layout = () => {
   return (
     <div className="min-h-screen bg-cyberdark-950 flex flex-col">
       <AppHeader 
-        variant="default" // Changed from "main" to "default"
-        context="direct-message" // Added context prop to match type
-        title="SnakkaZ" // Added required title prop
+        variant="default"
+        context="direct-message"
+        title="SnakkaZ"
         showNavigation={false}
         showLogo={true}
         showUserNav={!!user}

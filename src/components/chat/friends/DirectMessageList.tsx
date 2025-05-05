@@ -17,6 +17,7 @@ interface DirectMessageListProps {
   securityLevel?: string;
   isPageEncrypted?: boolean;
   isPremiumMember?: boolean;
+  isMobile?: boolean;
 }
 
 export const DirectMessageList = ({
@@ -31,7 +32,8 @@ export const DirectMessageList = ({
   onDeleteMessage,
   securityLevel = 'server_e2ee',
   isPageEncrypted = false,
-  isPremiumMember = false
+  isPremiumMember = false,
+  isMobile = false
 }: DirectMessageListProps) => {
   const bottomRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -46,7 +48,7 @@ export const DirectMessageList = ({
   };
 
   const getUserStatus = (userId: string): UserStatus => {
-    return 'online'; // This would be replaced with actual status logic
+    return UserStatus.ONLINE; // This would be replaced with actual status logic
   };
 
   const groupedMessages: Record<string, DecryptedMessage[]> = {};
