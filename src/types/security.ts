@@ -1,5 +1,5 @@
 // Define security levels for encryption
-export type SecurityLevel = 'standard' | 'server_e2ee' | 'p2p_e2ee' | 'high' | 'maximum';
+export type SecurityLevel = 'low' | 'standard' | 'server_e2ee' | 'p2p_e2ee' | 'high' | 'maximum' | 'premium';
 
 // Define security-related interfaces
 export interface SecuritySettings {
