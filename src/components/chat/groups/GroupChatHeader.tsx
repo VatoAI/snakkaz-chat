@@ -1,19 +1,11 @@
-import { Group } from "@/types/groups";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft, RefreshCw, Shield, Users, UserPlus, Lock, Layers, Crown, Star, UserCog } from "lucide-react";
-import { SecurityLevel } from "@/types/security";
-import { SecurityBadge } from "../security/SecurityBadge";
-import { cn } from "@/lib/utils";
-import { supabase } from "@/integrations/supabase/client";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
-} from "@/components/ui/dropdown-menu";
+import React, { useState } from 'react';
+import { Group, SecurityLevel, GroupMember } from '@/types/groups';
+import { Shield, Info, User, UserPlus, Settings, Lock, Wifi, WifiOff, RefreshCcw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { cn } from '@/lib/utils';
 
 interface GroupChatHeaderProps {
   group: Group;
@@ -23,23 +15,23 @@ interface GroupChatHeaderProps {
   connectionAttempts: number;
   onBack: () => void;
   onReconnect: () => void;
-  securityLevel: SecurityLevel;
-  setSecurityLevel: (level: SecurityLevel) => void;
-  userProfiles?: Record<string, {username: string | null, avatar_url: string | null}>;
-  isAdmin?: boolean;
-  isPremium?: boolean;
-  isPremiumMember?: boolean;
-  onShowInvite?: () => void;
-  onShowPremium?: () => void;
-  onShowMembers?: () => void;
-  // Props for helside-kryptering
-  isPageEncryptionEnabled?: boolean;
-  encryptionStatus?: 'idle' | 'encrypting' | 'decrypting' | 'error';
-  onEnablePageEncryption?: () => void;
-  onEncryptAllMessages?: () => void;
+  securityLevel: string;
+  setSecurityLevel: (level: string) => void;
+  userProfiles?: Record<string, any>;
+  isAdmin: boolean;
+  isPremium: boolean;
+  isPremiumMember: boolean;
+  onShowInvite: () => void;
+  onShowPremium: () => void;
+  onShowMembers: () => void;
+  isPageEncryptionEnabled: boolean;
+  onEnablePageEncryption: () => void;
+  onEncryptAllMessages: () => void;
+  encryptionStatus: string;
+  isMobile?: boolean;
 }
 
-export const GroupChatHeader = ({
+export const GroupChatHeader: React.FC<GroupChatHeaderProps> = ({
   group,
   connectionState,
   dataChannelState,
@@ -50,280 +42,173 @@ export const GroupChatHeader = ({
   securityLevel,
   setSecurityLevel,
   userProfiles = {},
-  isAdmin = false,
-  isPremium = false,
-  isPremiumMember = false,
+  isAdmin,
+  isPremium,
+  isPremiumMember,
   onShowInvite,
   onShowPremium,
   onShowMembers,
-  // Helside-krypteringsprops
-  isPageEncryptionEnabled = false,
-  encryptionStatus = 'idle',
+  isPageEncryptionEnabled,
   onEnablePageEncryption,
-  onEncryptAllMessages
-}: GroupChatHeaderProps) => {
-  // Map the connection states to a display indicator
-  const getConnectionStatus = () => {
-    if (usingServerFallback) {
-      return {
-        status: "warning",
-        message: "Faller tilbake til server",
-        icon: <Shield className="h-4 w-4 text-yellow-500" />
-      };
+  onEncryptAllMessages,
+  encryptionStatus,
+  isMobile = false
+}) => {
+  const [showInfo, setShowInfo] = useState(false);
+  
+  const getSecurityLevelText = (level: string): string => {
+    switch (level) {
+      case 'p2p_e2ee':
+        return 'P2P (Ende-til-ende kryptert)';
+      case 'server_e2ee':
+        return 'Server (Ende-til-ende kryptert)';
+      case 'premium':
+        return 'Premium';
+      case 'high':
+        return 'Høy';
+      case 'maximum':
+        return 'Maksimum';
+      default:
+        return 'Standard';
     }
-    
-    if (securityLevel === 'server_e2ee' || securityLevel === 'standard') {
-      return {
-        status: "ok",
-        message: isPremiumMember ? "256-bit kryptering" : "Server-kryptert",
-        icon: <Shield className="h-4 w-4 text-green-500" />
-      };
-    }
-
-    if (connectionState === 'connected' && dataChannelState === 'open') {
-      return {
-        status: "ok",
-        message: isPremiumMember ? "Premium P2P forbindelse" : "Tilkoblet P2P",
-        icon: <Shield className="h-4 w-4 text-green-500" />
-      };
-    }
-    
-    if (connectionState === 'connecting' || connectionAttempts > 0) {
-      return {
-        status: "warning",
-        message: "Kobler til...",
-        icon: <RefreshCw className="h-4 w-4 text-yellow-500 animate-spin" />
-      };
-    }
-
-    return {
-      status: "error",
-      message: "Ikke tilkoblet",
-      icon: <Shield className="h-4 w-4 text-red-500" />
-    };
   };
-  
-  const connectionStatus = getConnectionStatus();
-  
-  return (
-    <header className={cn(
-      "bg-cyberdark-900 border-b p-3",
-      isPremium ? "border-cybergold-500/40" : "border-cybergold-500/20"
-    )}>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-cybergold-500 hover:bg-cyberdark-800"
-            onClick={onBack}
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <Avatar className={cn(
-                "h-10 w-10 border-2",
-                isPremium ? "border-cybergold-500/50" : "border-cybergold-500/20"
-              )}>
-                {group.avatarUrl ? (
-                  <AvatarImage 
-                    src={supabase.storage.from('group_avatars').getPublicUrl(group.avatarUrl).data.publicUrl} 
-                    alt={group.name} 
-                  />
-                ) : (
-                  <AvatarFallback className="bg-cybergold-500/20 text-cybergold-300">
-                    <Users className="h-5 w-5" />
-                  </AvatarFallback>
-                )}
-              </Avatar>
-              
-              {isPremium && (
-                <span className="absolute bottom-0 right-0 h-4 w-4 rounded-full bg-cybergold-500 border border-cyberdark-900 flex items-center justify-center">
-                  <Crown className="h-2.5 w-2.5 text-cyberdark-950" />
-                </span>
-              )}
-            </div>
-            
-            <div>
-              <h3 className="font-medium text-cybergold-200 flex items-center gap-1">
-                {group.name}
-                {isPremium && <Crown className="h-3.5 w-3.5 text-cybergold-400" />}
-              </h3>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-cybergold-400 flex items-center cursor-pointer" onClick={onShowMembers}>
-                  <Users className="h-3.5 w-3.5 mr-1" />
-                  {group.members?.length || 0} {(group.members?.length || 0) === 1 ? 'medlem' : 'medlemmer'}
-                </span>
-                
-                <span 
-                  className={cn(
-                    "text-xs px-1.5 py-0.5 rounded-full flex items-center",
-                    connectionStatus.status === 'ok' ? "bg-green-600/20 text-green-400" : 
-                    connectionStatus.status === 'warning' ? "bg-yellow-600/20 text-yellow-400" : 
-                    "bg-red-600/20 text-red-400"
-                  )}
-                >
-                  {connectionStatus.icon}
-                  <span className="ml-1">{connectionStatus.message}</span>
-                </span>
-                
-                {/* Vis helside-krypteringsindikator hvis aktivert */}
-                {isPageEncryptionEnabled && (
-                  <span className="text-xs px-1.5 py-0.5 rounded-full bg-cybergold-600/20 text-cybergold-400 flex items-center">
-                    <Lock className="h-3.5 w-3.5 mr-1" />
-                    <span>{isPremiumMember ? "256-bit kryptert" : "Kryptert"}</span>
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div className="flex items-center gap-2">
-          <TooltipProvider>
-            {/* Premium-medlemskap knapp */}
-            {isPremium && onShowPremium && !isPremiumMember && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-cybergold-400 hover:text-cybergold-300 hover:bg-cyberdark-800"
-                    onClick={onShowPremium}
-                  >
-                    <Star className="h-5 w-5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Oppgrader til Premium</p>
-                </TooltipContent>
-              </Tooltip>
-            )}
-            
-            {/* Medlemsliste-knapp */}
-            {onShowMembers && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-cybergold-400 hover:text-cybergold-300 hover:bg-cyberdark-800"
-                    onClick={onShowMembers}
-                  >
-                    <UserCog className="h-5 w-5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Se medlemmer</p>
-                </TooltipContent>
-              </Tooltip>
-            )}
 
-            {/* Helside-krypteringsmeny */}
-            {(isAdmin || isPremiumMember) && onEnablePageEncryption && (
-              <Tooltip>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className={cn(
-                        "h-8 w-8 hover:bg-cyberdark-800",
-                        isPageEncryptionEnabled ? "text-cybergold-300" : "text-gray-400"
-                      )}
-                    >
-                      <Layers className="h-5 w-5" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="bg-cyberdark-900 border border-cybergold-500/30">
-                    <DropdownMenuItem
-                      disabled={isPageEncryptionEnabled || encryptionStatus !== 'idle'}
-                      onClick={onEnablePageEncryption}
-                      className={cn(
-                        "flex items-center cursor-pointer",
-                        isPageEncryptionEnabled ? "text-gray-500" : "text-cybergold-400 hover:bg-cyberdark-800"
-                      )}
-                    >
-                      <Lock className="h-4 w-4 mr-2" />
-                      {isPremiumMember 
-                        ? "Aktiver 256-bit kryptering" 
-                        : "Aktiver helside-kryptering"}
-                    </DropdownMenuItem>
-                    
-                    <DropdownMenuSeparator className="bg-cybergold-500/20" />
-                    
-                    <DropdownMenuItem
-                      disabled={!isPageEncryptionEnabled || encryptionStatus !== 'idle'}
-                      onClick={onEncryptAllMessages}
-                      className={cn(
-                        "flex items-center cursor-pointer",
-                        !isPageEncryptionEnabled ? "text-gray-500" : "text-cybergold-400 hover:bg-cyberdark-800"
-                      )}
-                    >
-                      <Shield className="h-4 w-4 mr-2" />
-                      Krypter alle meldinger
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-                <TooltipTrigger asChild>
-                  <div className="inline-block">
-                    <span className="sr-only">Krypteringsalternativer</span>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Krypteringsalternativer</p>
-                </TooltipContent>
-              </Tooltip>
-            )}
-            
-            <SecurityBadge 
-              securityLevel={securityLevel}
-              connectionState={connectionState}
-              dataChannelState={dataChannelState}
-              usingServerFallback={usingServerFallback}
-              isPremium={isPremiumMember} // Endret fra isPremiumSecurity til isPremium
-            />
-            
-            {(isAdmin || isPremiumMember) && onShowInvite && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-cybergold-400 hover:text-cybergold-300 hover:bg-cyberdark-800"
-                    onClick={onShowInvite}
-                  >
-                    <UserPlus className="h-5 w-5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Inviter til gruppe</p>
-                </TooltipContent>
-              </Tooltip>
-            )}
-            
-            {connectionStatus.status === 'error' && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-cybergold-400 hover:text-cybergold-300 hover:bg-cyberdark-800"
-                    onClick={onReconnect}
-                  >
-                    <RefreshCw className="h-5 w-5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Koble til på nytt</p>
-                </TooltipContent>
-              </Tooltip>
-            )}
-          </TooltipProvider>
-        </div>
+  return (
+    <header className="bg-cyberdark-900 border-b border-cyberdark-700 p-3 flex items-center">
+      <Button
+        variant="ghost"
+        size="icon"
+        className="mr-2 rounded-full h-9 w-9 text-cybergold-400 hover:text-cybergold-300 hover:bg-cyberdark-800 lg:hidden"
+        onClick={onBack}
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="currentColor"
+          className="w-5 h-5"
+        >
+          <path
+            fillRule="evenodd"
+            d="M11.03 3.97a.75.75 0 010 1.06l-6.22 6.22H21a.75.75 0 010 1.5H4.81l6.22 6.22a.75.75 0 11-1.06 1.06l-7.5-7.5a.75.75 0 010-1.06l7.5-7.5a.75.75 0 011.06 0z"
+            clipRule="evenodd"
+          />
+        </svg>
+        <span className="sr-only">Tilbake</span>
+      </Button>
+      
+      <div className="flex-1 min-w-0">
+        <h2 className="text-lg font-semibold text-cybergold-400 truncate">
+          {group.name}
+        </h2>
+        <p className="text-sm text-cybergold-600 truncate">
+          {group.description}
+        </p>
       </div>
+      
+      <div className="flex items-center space-x-2">
+        {connectionState !== 'connected' && (
+          <TooltipProvider>
+            <Tooltip delayDuration={300}>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-cybergold-500 hover:text-cybergold-400 hover:bg-cyberdark-800"
+                  onClick={onReconnect}
+                  disabled={connectionAttempts >= 3}
+                >
+                  {usingServerFallback ? (
+                    <WifiOff className="h-4 w-4" />
+                  ) : (
+                    <Wifi className="h-4 w-4" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="bg-black text-white text-xs py-1 px-2">
+                {usingServerFallback
+                  ? 'Bruker server-fallback'
+                  : 'Prøver å koble til P2P...'}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+        
+        <TooltipProvider>
+          <Tooltip delayDuration={300}>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-cybergold-500 hover:text-cybergold-400 hover:bg-cyberdark-800"
+                onClick={() => setShowInfo(true)}
+              >
+                <Info className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="bg-black text-white text-xs py-1 px-2">
+              Gruppeinnstillinger
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
+      
+      <Dialog open={showInfo} onOpenChange={setShowInfo}>
+        <DialogContent className="bg-cyberdark-900 border-cybergold-500/30 text-cybergold-200 max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5 text-cybergold-400" />
+              Gruppeinnstillinger
+            </DialogTitle>
+          </DialogHeader>
+          
+          <Tabs defaultValue="info" className="w-full">
+            <TabsList className="w-full bg-cyberdark-800">
+              <TabsTrigger value="info" className="flex-1 data-[state=active]:bg-cybergold-900/30 data-[state=active]:text-cybergold-300">Info</TabsTrigger>
+              <TabsTrigger value="members" className="flex-1 data-[state=active]:bg-cybergold-900/30 data-[state=active]:text-cybergold-300">Medlemmer</TabsTrigger>
+              <TabsTrigger value="security" className="flex-1 data-[state=active]:bg-cybergold-900/30 data-[state=active]:text-cybergold-300">Sikkerhet</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="info" className="mt-4">
+              <div className="space-y-2">
+                <div className="text-sm text-cybergold-500">
+                  <span className="font-medium text-cybergold-400">Navn:</span> {group.name}
+                </div>
+                <div className="text-sm text-cybergold-500">
+                  <span className="font-medium text-cybergold-400">Beskrivelse:</span> {group.description || 'Ingen beskrivelse'}
+                </div>
+                <div className="text-sm text-cybergold-500">
+                  <span className="font-medium text-cybergold-400">Sikkerhetsnivå:</span> {getSecurityLevelText(securityLevel)}
+                </div>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="members" className="mt-4">
+              <div className="space-y-2">
+                <Button variant="outline" className="w-full bg-cybergold-900/50 text-cybergold-300 hover:bg-cybergold-800/60 border border-cybergold-700" onClick={onShowInvite}>
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  Inviter nye medlemmer
+                </Button>
+                <Button variant="ghost" className="w-full text-cybergold-500 hover:bg-cyberdark-800 justify-start">
+                  <User className="mr-2 h-4 w-4" />
+                  Vis alle medlemmer
+                </Button>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="security" className="mt-4">
+              <div className="space-y-2">
+                <div className="text-sm text-cybergold-500">
+                  <span className="font-medium text-cybergold-400">Kryptering:</span> {encryptionStatus}
+                </div>
+                <Button variant="outline" className="w-full bg-cybergold-900/50 text-cybergold-300 hover:bg-cybergold-800/60 border border-cybergold-700">
+                  <Lock className="mr-2 h-4 w-4" />
+                  Endre sikkerhetsnivå
+                </Button>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </DialogContent>
+      </Dialog>
     </header>
   );
 };
