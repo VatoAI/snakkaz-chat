@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -6,7 +7,7 @@ interface HeaderActionButtonProps {
   icon: React.ReactNode;
   label: string;
   onClick: () => void;
-  className?: string; // Add className prop
+  className?: string;
 }
 
 export const HeaderActionButton: React.FC<HeaderActionButtonProps> = ({

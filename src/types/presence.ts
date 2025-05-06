@@ -1,7 +1,5 @@
-export type UserStatus = 'online' | 'offline' | 'away' | 'busy' | 'brb';
 
-// For bakoverkompatibilitet, støtt også enum-formatet
-export enum UserStatusEnum {
+export enum UserStatus {
   ONLINE = 'online',
   OFFLINE = 'offline',
   AWAY = 'away',
@@ -10,16 +8,8 @@ export enum UserStatusEnum {
 }
 
 export interface UserPresence {
-  status: UserStatus | string;
-  online: boolean;
-  lastActive?: string;
-  last_seen?: string;
-  customStatus?: string;
+  user_id: string;
+  status: UserStatus;
+  last_seen: string;
+  online?: boolean;
 }
-
-// Helper functions for working with user status
-export const isValidStatus = (status: string): status is UserStatus => {
-  return ['online', 'offline', 'away', 'busy', 'brb'].includes(status);
-};
-
-export const getDefaultStatus = (): UserStatus => 'online';

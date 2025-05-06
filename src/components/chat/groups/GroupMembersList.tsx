@@ -6,6 +6,7 @@ import { MoreVertical, CheckCircle, UserPlus, UserMinus, UserCog } from "lucide-
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { getInitials } from "@/utils/user";
+import { Users } from 'lucide-react';
 
 interface GroupMembersListProps {
   members: GroupMember[];

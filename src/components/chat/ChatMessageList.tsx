@@ -1,147 +1,133 @@
 
-import React, { useEffect, useRef, useState } from 'react';
-import { DecryptedMessage } from '@/types/message';
+import React, { useRef, useEffect } from 'react';
 import { ChatMessage } from './ChatMessage';
-import { formatDistanceToNow } from 'date-fns';
-import { nb } from 'date-fns/locale';
-import { ChevronDown, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useInView } from 'react-intersection-observer';
+import { cx, theme } from '../lib/theme';
+import { Loader2 } from 'lucide-react';
 
 interface ChatMessageListProps {
-  messages: DecryptedMessage[];
+  messages: Array<any>;
   currentUserId: string;
+  userProfiles?: Record<string, any>;
+  onEdit?: (message: any) => void;
+  onDelete?: (messageId: string) => void;
   isLoading?: boolean;
   hasMoreMessages?: boolean;
-  onEdit?: (message: DecryptedMessage) => void;
-  onDelete?: (messageId: string) => void;
-  onReplyToMessage?: (message: DecryptedMessage) => void;
+  isLoadingMore?: boolean; // Renamed from isLoadingMoreMessages for consistency
   onLoadMore?: () => void;
-  userProfiles?: Record<string, any>;
-  isEncrypted?: boolean;
   className?: string;
 }
 
 const ChatMessageList: React.FC<ChatMessageListProps> = ({
   messages,
   currentUserId,
-  isLoading = false,
-  hasMoreMessages = false,
+  userProfiles,
   onEdit,
   onDelete,
-  onReplyToMessage,
+  isLoading = false,
+  hasMoreMessages = false,
+  isLoadingMore = false, // Renamed from isLoadingMoreMessages
   onLoadMore,
-  userProfiles = {},
-  isEncrypted = false,
   className = ''
 }) => {
-  const endRef = useRef<HTMLDivElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [autoScroll, setAutoScroll] = useState(true);
-  const [showScrollBottom, setShowScrollBottom] = useState(false);
-  
-  // Use IntersectionObserver for loading more messages
-  const { ref: topRef } = useInView({
-    threshold: 0.1,
-    onChange: (inView) => {
-      if (inView && hasMoreMessages && onLoadMore) {
-        onLoadMore();
-      }
-    }
-  });
-  
-  // Group messages by date
-  const groupedMessages = groupMessagesByDate(messages);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const prevMessagesLength = useRef<number>(messages.length);
   
   // Scroll to bottom when new messages arrive
   useEffect(() => {
-    if (autoScroll && endRef.current) {
-      endRef.current.scrollIntoView({ behavior: 'smooth' });
+    if (messages.length > prevMessagesLength.current) {
+      scrollToBottom();
     }
-  }, [messages.length, autoScroll]);
+    prevMessagesLength.current = messages.length;
+  }, [messages.length]);
   
-  // Detect scroll position to manage auto-scroll feature
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
+  // Handle scrolling for "load more" functionality
+  const handleScroll = () => {
+    if (!messagesContainerRef.current || !onLoadMore || isLoadingMore || !hasMoreMessages) {
+      return;
+    }
     
-    const handleScroll = () => {
-      const { scrollTop, scrollHeight, clientHeight } = container;
-      const nearBottom = scrollHeight - scrollTop - clientHeight < 150;
-      
-      setAutoScroll(nearBottom);
-      setShowScrollBottom(!nearBottom);
-    };
-    
-    container.addEventListener('scroll', handleScroll);
-    return () => container.removeEventListener('scroll', handleScroll);
-  }, []);
+    const { scrollTop } = messagesContainerRef.current;
+    // If user has scrolled almost to the top, load more messages
+    if (scrollTop < 50) {
+      onLoadMore();
+    }
+  };
   
-  // Scroll to bottom manually
+  // Scroll to bottom of message list
   const scrollToBottom = () => {
-    if (endRef.current) {
-      endRef.current.scrollIntoView({ behavior: 'smooth' });
-      setAutoScroll(true);
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   };
   
-  // Get text for date separators
-  const getDateText = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const today = new Date();
+  // Group messages by date
+  const groupMessagesByDate = () => {
+    const groups: Record<string, any[]> = {};
     
-    // Format date separators nicely
-    if (date.toDateString() === today.toDateString()) {
-      return 'I dag';
-    } else if (date.toDateString() === new Date(today.setDate(today.getDate() - 1)).toDateString()) {
-      return 'I går';
-    } else {
-      return formatDistanceToNow(date, { addSuffix: true, locale: nb });
-    }
+    messages.forEach(message => {
+      const date = new Date(message.created_at).toLocaleDateString('nb-NO');
+      if (!groups[date]) {
+        groups[date] = [];
+      }
+      groups[date].push(message);
+    });
+    
+    return groups;
   };
+  
+  const messageGroups = groupMessagesByDate();
   
   return (
-    <div 
-      ref={containerRef}
-      className={`flex flex-col h-full overflow-y-auto px-2 md:px-4 py-4 bg-gradient-to-b from-cyberdark-950 to-cyberdark-900/95 ${className}`}
+    <div
+      ref={messagesContainerRef}
+      className={cx(
+        'flex flex-col h-full overflow-y-auto p-4 scrollbar-thin scrollbar-thumb-cyberdark-700 scrollbar-track-cyberdark-900',
+        className
+      )}
+      onScroll={handleScroll}
     >
-      {/* Load more indicator */}
-      {hasMoreMessages && (
-        <div 
-          ref={topRef}
-          className="flex justify-center py-2"
-        >
-          {isLoading && (
-            <Loader2 className="h-5 w-5 text-cybergold-500 animate-spin" />
-          )}
+      {/* "Load more" loader */}
+      {isLoadingMore && (
+        <div className="flex justify-center py-2">
+          <Loader2 className="h-5 w-5 text-cybergold-500 animate-spin" />
         </div>
       )}
       
-      {/* Messages grouped by date */}
-      {Object.entries(groupedMessages).map(([dateKey, messagesForDate]) => (
-        <div key={dateKey} className="mb-4">
-          {/* Date separator */}
-          <div className="flex justify-center mb-4">
-            <div className="px-3 py-1 bg-cyberdark-800/80 text-cybergold-500 text-xs rounded-full">
-              {getDateText(dateKey)}
-            </div>
+      {/* "Load more" button if there are more messages */}
+      {!isLoadingMore && hasMoreMessages && (
+        <button
+          className={cx(
+            'mx-auto mb-2 py-1 px-3 rounded-full text-xs',
+            theme.colors.button.secondary.bg,
+            theme.colors.button.secondary.text,
+            theme.colors.button.secondary.hover
+          )}
+          onClick={onLoadMore}
+        >
+          Last flere meldinger
+        </button>
+      )}
+      
+      {/* Message groups by date */}
+      {Object.entries(messageGroups).map(([date, msgs]) => (
+        <div key={date} className="mb-4">
+          <div className="flex items-center justify-center my-3">
+            <div className="h-[1px] flex-grow bg-cyberdark-700"></div>
+            <span className="px-2 text-xs text-cybergold-600">{date}</span>
+            <div className="h-[1px] flex-grow bg-cyberdark-700"></div>
           </div>
           
-          {/* Messages for this date */}
-          <div className="space-y-3">
-            {messagesForDate.map(message => (
-              <ChatMessage
-                key={message.id}
-                message={message}
-                isCurrentUser={message.sender?.id === currentUserId}
-                userProfiles={userProfiles}
-                onReply={onReplyToMessage ? () => onReplyToMessage(message) : undefined}
-                onEdit={onEdit ? () => onEdit(message) : undefined}
-                onDelete={onDelete ? () => onDelete(message.id) : undefined}
-                isEncrypted={isEncrypted}
-              />
-            ))}
-          </div>
+          {msgs.map(message => (
+            <ChatMessage
+              key={message.id}
+              message={message}
+              isCurrentUser={message.sender_id === currentUserId || message.sender?.id === currentUserId}
+              userProfiles={userProfiles}
+              onEdit={onEdit}
+              onDelete={onDelete}
+            />
+          ))}
         </div>
       ))}
       
@@ -156,44 +142,17 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
       )}
       
       {/* Loading state */}
-      {isLoading && messages.length === 0 && (
+      {isLoading && (
         <div className="flex flex-col items-center justify-center flex-grow">
           <Loader2 className="h-8 w-8 text-cybergold-500 animate-spin mb-2" />
           <span className="text-sm text-cybergold-600">Laster inn meldinger...</span>
         </div>
       )}
       
-      {/* Scroll to bottom button */}
-      {showScrollBottom && (
-        <button
-          onClick={scrollToBottom}
-          className="fixed bottom-24 right-8 bg-cybergold-600 text-cyberdark-900 rounded-full p-2 shadow-lg hover:bg-cybergold-500 transition-colors"
-        >
-          <ChevronDown className="h-5 w-5" />
-        </button>
-      )}
-      
-      {/* Invisible element for auto-scrolling */}
-      <div ref={endRef} />
+      {/* Invisible element used to scroll to bottom */}
+      <div ref={messagesEndRef} />
     </div>
   );
-};
-
-// Helper function to group messages by date
-const groupMessagesByDate = (messages: DecryptedMessage[]): Record<string, DecryptedMessage[]> => {
-  const groups: Record<string, DecryptedMessage[]> = {};
-  
-  messages.forEach(message => {
-    if (!message.created_at) return;
-    
-    const date = new Date(message.created_at).toLocaleDateString();
-    if (!groups[date]) {
-      groups[date] = [];
-    }
-    groups[date].push(message);
-  });
-  
-  return groups;
 };
 
 export default ChatMessageList;

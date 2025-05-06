@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from "react";
-import { ArrowLeft, PhoneCall, VideoIcon, InfoIcon, Shield, Lock, AlertTriangle, Crown, Star } from "lucide-react";
+import { ArrowLeft, PhoneCall, VideoIcon, InfoIcon, Shield, Lock, AlertTriangle, Crown, Star, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { SecurityBadge } from "../security/SecurityBadge";

@@ -1,4 +1,6 @@
+
 export type GroupVisibility = 'public' | 'private' | 'hidden' | 'secret';
+export type GroupWritePermission = 'all' | 'admins' | 'owner';
 
 export interface Group {
   id: string;
@@ -14,7 +16,7 @@ export interface Group {
   memberCount?: number;
   createdBy?: string;
   password?: string;
-  write_permissions?: string;
+  write_permissions?: string | GroupWritePermission;
 }
 
 export interface GroupMember {

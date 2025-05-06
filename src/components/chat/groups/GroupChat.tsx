@@ -462,7 +462,7 @@ export const GroupChat: React.FC<GroupChatProps> = ({
               toast({
                 title: "Medlemskap oppgradert",
                 description: "Du er nå premium-medlem i denne gruppen",
-                variant: "success",
+                variant: "default", // Changed from "success" to "default"
               });
             }}
             isMobile={isMobile}
@@ -518,7 +518,7 @@ export const GroupChat: React.FC<GroupChatProps> = ({
                   toast({
                     title: "Medlemsstatus oppdatert",
                     description: "Endringene har blitt lagret",
-                    variant: "success",
+                    variant: "default", // Changed from "success" to "default"
                   });
                 }}
                 isMobile={isMobile}
@@ -535,7 +535,7 @@ export const GroupChat: React.FC<GroupChatProps> = ({
                   toast({
                     title: "Medlemsstatus oppdatert",
                     description: "Endringene har blitt lagret",
-                    variant: "success",
+                    variant: "default", // Changed from "success" to "default"
                   });
                 }}
                 isMobile={isMobile}
@@ -552,7 +552,7 @@ export const GroupChat: React.FC<GroupChatProps> = ({
                   toast({
                     title: "Medlemsstatus oppdatert",
                     description: "Endringene har blitt lagret",
-                    variant: "success",
+                    variant: "default", // Changed from "success" to "default"
                   });
                 }}
                 isMobile={isMobile}
