@@ -605,6 +605,75 @@ textarea:focus, input:focus, select:focus {
   }
 }
 
+@layer utilities {
+  /* Mobile-specific animations */
+  .animate-pulse-subtle {
+    animation: subtle-pulse 2s infinite;
+  }
+
+  /* Enhanced mobile safe areas */
+  .mobile-bottom-safe {
+    padding-bottom: env(safe-area-inset-bottom, 16px);
+  }
+
+  .mobile-top-safe {
+    padding-top: env(safe-area-inset-top, 16px);
+  }
+
+  .mobile-left-safe {
+    padding-left: env(safe-area-inset-left, 16px);
+  }
+
+  .mobile-right-safe {
+    padding-right: env(safe-area-inset-right, 16px);
+  }
+
+  /* Improved touch targets for mobile */
+  @media (max-width: 640px) {
+    .mobile-touch-target {
+      min-height: 44px;
+      min-width: 44px;
+    }
+    
+    .mobile-touch-padding {
+      padding: 12px;
+    }
+    
+    /* Fix for iOS virtual keyboard issues */
+    .ios-scroll-fix {
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Bouncy scroll overscroll behavior */
+    .mobile-elastic-scroll {
+      overscroll-behavior-y: auto;
+    }
+    
+    /* Prevent overscroll */
+    .mobile-no-overscroll {
+      overscroll-behavior: none;
+    }
+    
+    /* Mobile fixed height for dynamic content */
+    .mobile-dynamic-height {
+      height: 100dvh;
+    }
+  }
+  
+  /* Helper for fluid sizing that works better on mobile */
+  .fluid-text-sm {
+    font-size: clamp(0.75rem, 2vw, 0.875rem);
+  }
+  
+  .fluid-text-base {
+    font-size: clamp(0.875rem, 2.5vw, 1rem);
+  }
+  
+  .fluid-text-lg {
+    font-size: clamp(1rem, 3vw, 1.125rem);
+  }
+}
+
 /* Generelle stilforbedringer */
 body {
   @apply bg-cyberdark-950 text-cybergold-100;
