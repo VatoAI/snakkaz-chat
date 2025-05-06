@@ -1,12 +1,12 @@
-import React, { useState, useCallback } from "react";
-import { GroupMember } from "@/types/groups";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { MoreVertical, CheckCircle, UserPlus, UserMinus, UserCog } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
-import { getInitials } from "@/utils/user";
-import { Users } from 'lucide-react';
+import React from 'react';
+import { UserAvatar } from '../header/UserAvatar';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { GroupMember } from '@/types/group';
+import { Crown, Shield, Star, MoreHorizontal, UserX, Users } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface GroupMembersListProps {
   members: GroupMember[];
@@ -14,8 +14,8 @@ interface GroupMembersListProps {
   userProfiles: Record<string, any>;
   isAdmin: boolean;
   groupId: string;
-  onMemberUpdated?: () => void; // Make onMemberUpdated optional
-  isMobile?: boolean; // Add isMobile property
+  onMemberUpdated?: () => void;
+  isMobile?: boolean;
 }
 
 export const GroupMembersList: React.FC<GroupMembersListProps> = ({
@@ -25,124 +25,148 @@ export const GroupMembersList: React.FC<GroupMembersListProps> = ({
   isAdmin,
   groupId,
   onMemberUpdated,
-  isMobile
+  isMobile = false
 }) => {
-  const [loadingMember, setLoadingMember] = useState<string | null>(null);
+  const { toast } = useToast();
 
-  const handlePromoteMember = useCallback(async (member: GroupMember) => {
-    if (!isAdmin || loadingMember) return;
-
-    setLoadingMember(member.id || null);
-
+  const handlePromoteToAdmin = async (memberId: string) => {
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const { error } = await supabase
+        .from('group_members')
+        .update({ role: 'admin' })
+        .eq('group_id', groupId)
+        .eq('user_id', memberId);
 
-      // Update member role to admin
-      // In a real implementation, you would call your API here
-      console.log(`Promoting member ${member.user_id} to admin`);
+      if (error) {
+        throw error;
+      }
 
+      toast({
+        title: 'Medlem oppgradert',
+        description: 'Medlemmet er nå administrator',
+      });
       onMemberUpdated?.();
     } catch (error) {
-      console.error("Failed to promote member", error);
-    } finally {
-      setLoadingMember(null);
+      console.error('Error promoting member:', error);
+      toast({
+        title: 'Kunne ikke oppgradere medlem',
+        description: 'En feil oppstod. Prøv igjen senere.',
+        variant: 'destructive',
+      });
     }
-  }, [isAdmin, loadingMember, onMemberUpdated]);
+  };
 
-  const handleRemoveMember = useCallback(async (member: GroupMember) => {
-    if (!isAdmin || loadingMember) return;
-
-    setLoadingMember(member.id || null);
-
+  const handleDemoteFromAdmin = async (memberId: string) => {
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const { error } = await supabase
+        .from('group_members')
+        .update({ role: 'member' })
+        .eq('group_id', groupId)
+        .eq('user_id', memberId);
 
-      // Remove member from group
-      // In a real implementation, you would call your API here
-      console.log(`Removing member ${member.user_id} from group`);
+      if (error) {
+        throw error;
+      }
 
+      toast({
+        title: 'Medlem nedgradert',
+        description: 'Medlemmet er ikke lenger administrator',
+      });
       onMemberUpdated?.();
     } catch (error) {
-      console.error("Failed to remove member", error);
-    } finally {
-      setLoadingMember(null);
+      console.error('Error demoting member:', error);
+      toast({
+        title: 'Kunne ikke nedgradere medlem',
+        description: 'En feil oppstod. Prøv igjen senere.',
+        variant: 'destructive',
+      });
     }
-  }, [isAdmin, loadingMember, onMemberUpdated]);
+  };
+
+  const handleRemoveMember = async (memberId: string) => {
+    try {
+      const { error } = await supabase
+        .from('group_members')
+        .delete()
+        .eq('group_id', groupId)
+        .eq('user_id', memberId);
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: 'Medlem fjernet',
+        description: 'Medlemmet er fjernet fra gruppen',
+      });
+      onMemberUpdated?.();
+    } catch (error) {
+      console.error('Error removing member:', error);
+      toast({
+        title: 'Kunne ikke fjerne medlem',
+        description: 'En feil oppstod. Prøv igjen senere.',
+        variant: 'destructive',
+      });
+    }
+  };
 
   return (
     <div className="space-y-2">
-      {members.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-4 text-center">
-          <div className="w-10 h-10 bg-cyberdark-800 rounded-full flex items-center justify-center mb-2">
-            <Users className="h-5 w-5 text-cybergold-500/70" />
-          </div>
-          <p className="text-sm text-cybergold-500">Ingen medlemmer i denne gruppen</p>
-        </div>
-      ) : (
-        members.map((member) => {
-          const userProfile = userProfiles[member.user_id];
-          const isAdminMember = member.role === "admin";
-          const isLoading = loadingMember === member.id;
-          const isCurrentUser = member.user_id === currentUserId;
+      {members.map((member) => {
+        const userProfile = userProfiles[member.user_id];
+        const isCurrentUser = member.user_id === currentUserId;
+        const isAdminMember = member.role === 'admin';
 
-          return (
-            <div key={member.id} className="flex items-center justify-between p-2 rounded-md bg-cyberdark-800">
-              <div className="flex items-center space-x-3">
-                <Avatar className="h-8 w-8">
-                  {userProfile?.avatar_url ? (
-                    <AvatarImage src={userProfile.avatar_url} alt={userProfile?.username || "Group Member"} />
-                  ) : (
-                    <AvatarFallback className="bg-cyberdark-700 text-cybergold-300">
-                      {getInitials(userProfile?.username || "Ukjent bruker")}
-                    </AvatarFallback>
+        return (
+          <div key={member.user_id} className="flex items-center justify-between p-2 rounded-md bg-cyberdark-900/50 border border-cyberdark-700">
+            <div className="flex items-center space-x-2">
+              <UserAvatar
+                src={userProfile?.avatar_url || undefined}
+                alt={userProfile?.username || 'Group Member'}
+                size={32}
+              />
+              <div>
+                <div className="text-sm font-medium text-cybergold-300">{userProfile?.username || 'Unknown User'}</div>
+                <div className="text-xs text-cybergold-500">
+                  {isAdminMember && (
+                    <Badge variant="secondary" className="mr-1">
+                      <Crown className="h-3 w-3 mr-0.5" />
+                      Admin
+                    </Badge>
                   )}
-                </Avatar>
-                <div>
-                  <p className="text-sm font-medium text-cybergold-300">{userProfile?.username || "Ukjent bruker"}</p>
-                  <p className="text-xs text-cybergold-500">{userProfile?.status || "Offline"}</p>
+                  {isCurrentUser && <Badge variant="outline">Meg</Badge>}
                 </div>
               </div>
-              {isAdmin && !isCurrentUser ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="h-8 w-8 p-0 rounded-full hover:bg-cyberdark-700">
-                      <span className="sr-only">Åpne meny</span>
-                      <MoreVertical className="h-4 w-4 text-cybergold-400" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-40 bg-cyberdark-900 border-cybergold-500/30 text-cybergold-200">
-                    <DropdownMenuLabel>Administrer</DropdownMenuLabel>
-                    <DropdownMenuSeparator className="bg-cybergold-500/30" />
-                    {!isAdminMember ? (
-                      <DropdownMenuItem onClick={() => handlePromoteMember(member)} disabled={isLoading}>
-                        <UserCog className="mr-2 h-4 w-4" />
-                        Gjør til admin
-                      </DropdownMenuItem>
-                    ) : (
-                      <DropdownMenuItem disabled>
-                        <CheckCircle className="mr-2 h-4 w-4" />
-                        Allerede admin
-                      </DropdownMenuItem>
-                    )}
-                    <DropdownMenuItem onClick={() => handleRemoveMember(member)} disabled={isLoading}>
-                      <UserMinus className="mr-2 h-4 w-4" />
-                      Fjern fra gruppen
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ) : (
-                isCurrentUser && (
-                  <Badge variant="secondary" className="bg-cybergold-900/30 border-cybergold-700 text-cybergold-400">
-                    Deg
-                  </Badge>
-                )
-              )}
             </div>
-          );
-        })
-      )}
+            {isAdmin && !isCurrentUser && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="h-8 w-8 p-0 rounded-full hover:bg-cyberdark-800">
+                    <MoreHorizontal className="h-4 w-4 text-cybergold-400" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" forceMount className="w-48 bg-cyberdark-900 border-cyberdark-700 text-cybergold-200">
+                  {isAdminMember ? (
+                    <DropdownMenuItem onClick={() => handleDemoteFromAdmin(member.user_id)} className="focus:bg-cyberdark-800">
+                      <Shield className="h-4 w-4 mr-2" />
+                      Fjern Admin
+                    </DropdownMenuItem>
+                  ) : (
+                    <DropdownMenuItem onClick={() => handlePromoteToAdmin(member.user_id)} className="focus:bg-cyberdark-800">
+                      <Crown className="h-4 w-4 mr-2" />
+                      Gjør til Admin
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem onClick={() => handleRemoveMember(member.user_id)} className="text-red-500 focus:bg-cyberdark-800">
+                    <UserX className="h-4 w-4 mr-2" />
+                    Fjern fra gruppen
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 };
