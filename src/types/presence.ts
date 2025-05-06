@@ -10,9 +10,10 @@ export enum UserStatusEnum {
 }
 
 export interface UserPresence {
-  status: UserStatus;
+  status: UserStatus | string;
   online: boolean;
   lastActive?: string;
+  last_seen?: string;
   customStatus?: string;
 }
 

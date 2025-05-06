@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import ChatMessageList from './ChatMessageList';
 import { ChatInputField } from './ChatInputField';
+import ChatMessageList from './ChatMessageList';
 import { ChatHeader } from './header/ChatHeader';
 import { UploadProgress } from './message/UploadProgress';
 
