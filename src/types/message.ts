@@ -1,4 +1,3 @@
-
 import { UserStatus } from './presence';
 import { SecurityLevel } from './security';
 
@@ -86,4 +85,35 @@ export interface ChatMessage {
     avatar?: string;
     avatar_url?: string | null;
   };
+}
+
+export interface User {
+  id: string;
+  username?: string;
+  avatar_url?: string;
+}
+
+export interface Message {
+  id: string;
+  sender_id: string;
+  content?: string;
+  media_url?: string;
+  created_at: string;
+  updated_at?: string;
+  is_edited?: boolean;
+  ttl?: number;
+  expires_at?: string;
+  sender?: User;
+}
+
+export interface DecryptedMessage {
+  id: string;
+  sender: User;
+  content?: string;
+  media_url?: string;
+  timestamp?: string;
+  created_at?: string;
+  is_edited?: boolean;
+  ttl?: number;
+  is_encrypted?: boolean;
 }

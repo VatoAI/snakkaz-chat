@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Send, Clock, Paperclip, X, Image as ImageIcon, Smile } from 'lucide-react';
 import { cx, theme } from '../lib/theme';
 import { MediaUploader } from './MediaUploader';
-import { DecryptedMessage } from '@/types/message';
+import type { Message as DecryptedMessage } from '@/types/message';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 export interface MediaUploaderProps {

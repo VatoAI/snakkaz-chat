@@ -1,4 +1,3 @@
-
 import React, { useRef, useState } from 'react';
 import { UploadCloud, X, CheckCircle, AlertCircle } from 'lucide-react';
 import { cx, theme } from '../lib/theme';
@@ -13,6 +12,7 @@ interface MediaUploaderProps {
   maxSizeMB?: number;
   buttonText?: string;
   uploadProgress?: number;
+  isMobile?: boolean;
 }
 
 export const MediaUploader: React.FC<MediaUploaderProps> = ({
@@ -22,7 +22,8 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
   isUploading = false,
   maxSizeMB = 5,
   buttonText = "Velg fil",
-  uploadProgress = 0
+  uploadProgress = 0,
+  isMobile = false
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
@@ -63,11 +64,12 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
             variant="outline"
             className={cx(
               "w-full flex items-center justify-center gap-2 py-6",
+              isMobile && "mobile-touch-target",
               theme.colors.border.medium,
               "bg-cyberdark-800 hover:bg-cyberdark-700"
             )}
           >
-            <UploadCloud className="w-5 h-5 text-cybergold-400" />
+            <UploadCloud className={`${isMobile ? 'w-6 h-6' : 'w-5 h-5'} text-cybergold-400`} />
             <span className="text-cybergold-400">{buttonText}</span>
           </Button>
           
@@ -99,7 +101,7 @@ export const MediaUploader: React.FC<MediaUploaderProps> = ({
                 variant="ghost"
                 size="icon"
                 onClick={onCancel}
-                className="h-6 w-6 text-cybergold-400 hover:text-cybergold-300"
+                className={`h-6 w-6 text-cybergold-400 hover:text-cybergold-300 ${isMobile ? 'mobile-touch-target' : ''}`}
               >
                 <X className="h-4 w-4" />
               </Button>

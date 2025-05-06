@@ -6,7 +6,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useMobilePinSecurity } from '@/hooks/useMobilePinSecurity';
 import { AppHeader } from '@/components/chat/header/AppHeader';
-import AppNavigation from '@/components/nav/AppNavigation';
+import { MobileNavigation } from '@/components/MobileNavigation';
 
 interface MobileLayoutProps {
   children: ReactNode;
@@ -32,6 +32,8 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({ children }) => {
       setTitle('Innstillinger');
     } else if (location.pathname.includes('/chat/')) {
       setTitle('Chat');
+    } else if (location.pathname.includes('/chat')) {
+      setTitle('Samtaler');
     } else {
       setTitle('SnakkaZ');
     }
@@ -74,7 +76,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({ children }) => {
   // Show PIN screen if locked
   if (isLocked) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen bg-background p-6">
+      <div className="flex flex-col items-center justify-center h-[100svh] bg-background p-6 mobile-safe-padding">
         <h1 className="text-2xl font-bold mb-8">Lås opp SnakkaZ</h1>
         
         <div className="flex gap-3 mb-8">
@@ -92,7 +94,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({ children }) => {
           {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => (
             <button 
               key={num} 
-              className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center text-2xl font-medium"
+              className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center text-2xl font-medium mobile-touch-target"
               onClick={() => handlePinDigit(num.toString())}
             >
               {num}
@@ -100,13 +102,13 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({ children }) => {
           ))}
           <div className="w-16 h-16" /> {/* Empty space */}
           <button 
-            className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center text-2xl font-medium"
+            className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center text-2xl font-medium mobile-touch-target"
             onClick={() => handlePinDigit('0')}
           >
             0
           </button>
           <button 
-            className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center"
+            className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center mobile-touch-target"
             onClick={handlePinDelete}
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19l-7-7 7-7"></path><path d="M19 12H5"></path></svg>
@@ -121,35 +123,40 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({ children }) => {
   const handleAddNew = () => {
     if (location.pathname === '/messages') {
       navigate('/new-message');
+    } else if (location.pathname === '/chat') {
+      navigate('/contacts');
     }
   };
 
+  // Check if we should hide the navigation (in chat view for example)
+  const hideNavigation = location.pathname.includes('/chat/');
+
   return (
-    <div className="flex flex-col h-[100svh] bg-background">
+    <div className="flex flex-col h-[100svh] bg-background mobile-dynamic-height">
       {/* Top header using unified AppHeader */}
       <AppHeader 
-        variant="mobile"
+        variant="default"
         title={title}
         showLogo={false}
         showNavigation={false}
         showUserNav={false}
         showThemeToggle={false}
         onMenuClick={handleMenuOpen}
-        onAddClick={location.pathname === '/messages' ? handleAddNew : undefined}
+        onAddClick={(location.pathname === '/messages' || location.pathname === '/chat') ? handleAddNew : undefined}
+        className="mobile-top-safe"
       />
       
       {/* Main content */}
-      <div className="flex-1 overflow-hidden pb-16"> {/* Add padding to bottom to account for navigation */}
+      <div className={`flex-1 overflow-hidden ${!hideNavigation ? 'pb-16' : ''}`}> 
         {children}
       </div>
       
-      {/* Bottom navigation using unified AppNavigation component */}
-      <AppNavigation 
-        variant="bottom" 
-        showLabels={true}
-        activeIndicator={false}
-        className="h-16 z-50"
-      />
+      {/* Bottom navigation - only show on list views, not in chat conversation */}
+      {!hideNavigation && (
+        <div className="fixed bottom-0 left-0 right-0 z-50">
+          <MobileNavigation />
+        </div>
+      )}
       
       {/* Mobile menu */}
       <MobileMenu isOpen={menuOpen} setIsOpen={setMenuOpen} />

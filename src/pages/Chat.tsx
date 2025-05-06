@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import MainNav from '@/components/navigation/MainNav';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -7,44 +8,246 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
-import { MessagesSquare, Users, Bell, Settings } from 'lucide-react';
+import { MessagesSquare, Users, Bell, Settings, Plus } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
+import MobileChatContainer from '@/components/mobile/MobileChatContainer';
+import { MobileContactList } from '@/components/mobile/MobileContactList';
 
-// Dette er en placeholder Chat-side som viser grunnleggende struktur
-// Den faktiske implementasjonen vil kreve flere komponenter og integrasjoner
-
+// Dette er en Chat-side med forbedret mobiltilpasning
 const Chat = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const { conversationId } = useParams();
+  const isMobile = useIsMobile();
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('messages');
   const username = user?.user_metadata?.username || 'bruker';
+  
+  // Mock data for demonstration
+  const [messages, setMessages] = useState<any[]>([]);
+  const [selectedChat, setSelectedChat] = useState<any>(null);
+  const currentUserId = user?.id || null;
 
   useEffect(() => {
     // Simuler lasting av meldinger
     const loadingTimeout = setTimeout(() => {
       setIsLoading(false);
-    }, 1500);
+      
+      // Generate some mock messages if in a conversation
+      if (conversationId) {
+        const mockMessages = generateMockMessages(conversationId);
+        setMessages(mockMessages);
+        
+        // Set selected chat based on conversation ID
+        const mockChat = mockChats.find(chat => chat.id === conversationId);
+        if (mockChat) {
+          setSelectedChat(mockChat);
+        }
+      }
+    }, 1000);
 
     return () => clearTimeout(loadingTimeout);
-  }, []);
+  }, [conversationId]);
 
-  const handleNewChat = () => {
+  // Navigate to selected conversation
+  const handleChatSelect = (chatId: string) => {
+    navigate(`/chat/${chatId}`);
+  };
+
+  // Add a new message
+  const handleSendMessage = async (text: string, mediaFile?: File) => {
+    if (!text.trim() && !mediaFile) return;
+    
+    const newMessage = {
+      id: `msg-${Date.now()}`,
+      sender: {
+        id: currentUserId,
+        username: username
+      },
+      content: text,
+      media_url: mediaFile ? URL.createObjectURL(mediaFile) : undefined,
+      timestamp: new Date().toISOString(),
+      is_edited: false
+    };
+    
+    setMessages(prev => [...prev, newMessage]);
+    
+    // In a real app, you would send the message to your backend here
     toast({
-      title: 'Ny chat',
-      description: 'Funksjonen for å starte ny chat er under utvikling.',
+      title: "Melding sendt",
+      description: "Din melding ble sendt.",
+      duration: 2000
     });
   };
 
+  const handleNewChat = () => {
+    if (isMobile) {
+      navigate('/contacts');
+    } else {
+      toast({
+        title: 'Ny chat',
+        description: 'Funksjonen for å starte ny chat er under utvikling.',
+      });
+    }
+  };
+  
+  // Mock data for demonstration
+  const mockChats = [
+    {
+      id: "chat-1",
+      username: "Alex Smith",
+      avatarColor: "from-cybergold-400 to-cybergold-600",
+      initials: "AS",
+      lastMessage: "Hei! Hvordan går det med Snakkaz-prosjektet?",
+      time: "14:22",
+      isOnline: true
+    },
+    {
+      id: "chat-2",
+      username: "Maja Jensen",
+      avatarColor: "from-purple-400 to-purple-600",
+      initials: "MJ",
+      lastMessage: "Send meg de filene når du har tid!",
+      time: "i går",
+      isOnline: false
+    },
+    {
+      id: "chat-3",
+      username: "Thomas Olsen",
+      avatarColor: "from-blue-400 to-blue-600",
+      initials: "TO",
+      lastMessage: "Kan vi møtes for å diskutere designet?",
+      time: "ons",
+      isOnline: true
+    },
+    {
+      id: "chat-4",
+      username: "Lise Hansen",
+      avatarColor: "from-green-400 to-green-600",
+      initials: "LH",
+      lastMessage: "Takk for hjelpen med koden!",
+      time: "tirs",
+      isOnline: false
+    }
+  ];
+  
+  function generateMockMessages(chatId: string) {
+    const chat = mockChats.find(c => c.id === chatId);
+    if (!chat) return [];
+    
+    return [
+      {
+        id: `${chatId}-msg-1`,
+        sender: {
+          id: chat.id,
+          username: chat.username
+        },
+        content: "Hei! Hvordan går det med deg?",
+        timestamp: new Date(Date.now() - 3600000).toISOString(),
+        is_edited: false
+      },
+      {
+        id: `${chatId}-msg-2`,
+        sender: {
+          id: currentUserId,
+          username: username
+        },
+        content: "Det går bra takk! Jobber med Snakkaz-appen nå. Den begynner å ta form!",
+        timestamp: new Date(Date.now() - 3500000).toISOString(),
+        is_edited: false
+      },
+      {
+        id: `${chatId}-msg-3`,
+        sender: {
+          id: chat.id,
+          username: chat.username
+        },
+        content: "Høres spennende ut! Kan ikke vente med å se den ferdige appen.",
+        timestamp: new Date(Date.now() - 1800000).toISOString(),
+        is_edited: false
+      },
+      {
+        id: `${chatId}-msg-4`,
+        sender: {
+          id: currentUserId,
+          username: username
+        },
+        content: "Jeg jobber med å forbedre mobilvisningen akkurat nå. Det blir mye bedre med nye komponenter.",
+        timestamp: new Date(Date.now() - 900000).toISOString(),
+        is_edited: false
+      },
+      {
+        id: `${chatId}-msg-5`,
+        sender: {
+          id: chat.id,
+          username: chat.username
+        },
+        content: chat.lastMessage,
+        timestamp: new Date(Date.now() - 300000).toISOString(),
+        is_edited: false
+      }
+    ];
+  }
+
+  // Mobile-specific layout when in a conversation
+  if (isMobile && conversationId && selectedChat) {
+    return (
+      <MobileChatContainer
+        messages={messages}
+        currentUserId={currentUserId}
+        conversationId={conversationId}
+        onSendMessage={handleSendMessage}
+        onDeleteMessage={(id) => {
+          setMessages(prev => prev.filter(msg => msg.id !== id));
+          toast({
+            title: "Melding slettet",
+            description: "Meldingen ble slettet.",
+            duration: 2000
+          });
+        }}
+        hasMoreMessages={false}
+        chatPartner={{
+          id: selectedChat.id,
+          username: selectedChat.username,
+          isOnline: selectedChat.isOnline
+        }}
+        showBackButton={true}
+        onBackClick={() => navigate('/chat')}
+      />
+    );
+  }
+
+  // Mobile contacts list view
+  if (isMobile && activeTab === 'contacts' && !conversationId) {
+    return (
+      <MobileContactList 
+        onContactSelect={handleChatSelect}
+        showBackButton={false}
+      />
+    );
+  }
+
+  // Regular desktop layout or mobile chat list
   return (
     <div className="min-h-screen bg-cyberdark-950 text-cybergold-300 pb-16 md:pb-0 md:pt-16">
       <MainNav />
       <main className="container max-w-4xl py-8 px-4">
-        <h1 className="text-2xl font-bold mb-6 text-cybergold-400">Chat</h1>
-        <div className="bg-cyberdark-900 border border-cyberdark-700 rounded-lg p-4">
-          <p>Velkommen til Snakkaz Chat, {username}!</p>
-          <p className="mt-4">Vi arbeider med å implementere chatfunksjonaliteten. Denne vil snart være klar.</p>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold text-cybergold-400">Chat</h1>
+          {isMobile && (
+            <Button 
+              onClick={handleNewChat}
+              size="icon"
+              className="rounded-full bg-cybergold-600 hover:bg-cybergold-500 text-black"
+            >
+              <Plus className="h-5 w-5" />
+              <span className="sr-only">Ny chat</span>
+            </Button>
+          )}
         </div>
-        <div className="h-full flex flex-col bg-cyberdark-950 text-cybergold-200 mt-8">
+        
+        <div className="h-full flex flex-col bg-cyberdark-950 text-cybergold-200">
           <div className="flex-1 overflow-hidden">
             <Tabs 
               defaultValue="messages" 
@@ -58,28 +261,28 @@ const Chat = () => {
                     className={`data-[state=active]:border-b-2 data-[state=active]:border-cybergold-500 data-[state=active]:text-cybergold-400`}
                   >
                     <MessagesSquare className="h-5 w-5 mr-2" />
-                    <span className="hidden sm:inline">Meldinger</span>
+                    <span className={isMobile ? "sr-only" : "inline"}>Meldinger</span>
                   </TabsTrigger>
                   <TabsTrigger 
                     value="contacts" 
                     className={`data-[state=active]:border-b-2 data-[state=active]:border-cybergold-500 data-[state=active]:text-cybergold-400`}
                   >
                     <Users className="h-5 w-5 mr-2" />
-                    <span className="hidden sm:inline">Kontakter</span>
+                    <span className={isMobile ? "sr-only" : "inline"}>Kontakter</span>
                   </TabsTrigger>
                   <TabsTrigger 
                     value="notifications" 
                     className={`data-[state=active]:border-b-2 data-[state=active]:border-cybergold-500 data-[state=active]:text-cybergold-400`}
                   >
                     <Bell className="h-5 w-5 mr-2" />
-                    <span className="hidden sm:inline">Varsler</span>
+                    <span className={isMobile ? "sr-only" : "inline"}>Varsler</span>
                   </TabsTrigger>
                   <TabsTrigger 
                     value="settings" 
                     className={`data-[state=active]:border-b-2 data-[state=active]:border-cybergold-500 data-[state=active]:text-cybergold-400`}
                   >
                     <Settings className="h-5 w-5 mr-2" />
-                    <span className="hidden sm:inline">Innstillinger</span>
+                    <span className={isMobile ? "sr-only" : "inline"}>Innstillinger</span>
                   </TabsTrigger>
                 </TabsList>
               </div>
@@ -87,15 +290,17 @@ const Chat = () => {
               <TabsContent value="messages" className="flex-1 overflow-hidden p-4">
                 <div className="mb-4 flex justify-between items-center">
                   <h2 className="text-xl font-semibold text-cybergold-300">Dine samtaler</h2>
-                  <Button 
-                    onClick={handleNewChat}
-                    className="bg-cybergold-600 hover:bg-cybergold-500 text-black"
-                  >
-                    Ny samtale
-                  </Button>
+                  {!isMobile && (
+                    <Button 
+                      onClick={handleNewChat}
+                      className="bg-cybergold-600 hover:bg-cybergold-500 text-black"
+                    >
+                      Ny samtale
+                    </Button>
+                  )}
                 </div>
 
-                <ScrollArea className="h-[calc(100vh-220px)]">
+                <ScrollArea className={`${isMobile ? 'h-[calc(100vh-180px)]' : 'h-[calc(100vh-220px)]'}`}>
                   {isLoading ? (
                     <div className="space-y-4">
                       {Array(5).fill(0).map((_, i) => (
@@ -113,65 +318,29 @@ const Chat = () => {
                     </div>
                   ) : (
                     <div className="space-y-2">
-                      <Card className="p-4 bg-cyberdark-800/50 border-cyberdark-700 hover:bg-cyberdark-800 cursor-pointer">
-                        <div className="flex items-center">
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cybergold-400 to-cybergold-600 flex items-center justify-center mr-3">
-                            <span className="text-black font-bold">AS</span>
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex justify-between">
-                              <p className="font-medium text-cybergold-300">Alex Smith</p>
-                              <span className="text-xs text-cybergold-500">14:22</span>
+                      {mockChats.map(chat => (
+                        <Card 
+                          key={chat.id}
+                          className="p-4 bg-cyberdark-800/50 border-cyberdark-700 hover:bg-cyberdark-800 cursor-pointer transition-colors"
+                          onClick={() => handleChatSelect(chat.id)}
+                        >
+                          <div className="flex items-center">
+                            <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${chat.avatarColor} flex items-center justify-center mr-3 relative`}>
+                              <span className="text-black font-bold">{chat.initials}</span>
+                              {chat.isOnline && (
+                                <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-cyberdark-800"></div>
+                              )}
                             </div>
-                            <p className="text-sm text-cybergold-400 truncate">Hei! Hvordan går det med Snakkaz-prosjektet?</p>
-                          </div>
-                        </div>
-                      </Card>
-                      
-                      <Card className="p-4 bg-cyberdark-800/50 border-cyberdark-700 hover:bg-cyberdark-800 cursor-pointer">
-                        <div className="flex items-center">
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center mr-3">
-                            <span className="text-black font-bold">MJ</span>
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex justify-between">
-                              <p className="font-medium text-cybergold-300">Maja Jensen</p>
-                              <span className="text-xs text-cybergold-500">i går</span>
+                            <div className="flex-1">
+                              <div className="flex justify-between">
+                                <p className="font-medium text-cybergold-300">{chat.username}</p>
+                                <span className="text-xs text-cybergold-500">{chat.time}</span>
+                              </div>
+                              <p className="text-sm text-cybergold-400 truncate">{chat.lastMessage}</p>
                             </div>
-                            <p className="text-sm text-cybergold-400 truncate">Send meg de filene når du har tid!</p>
                           </div>
-                        </div>
-                      </Card>
-                      
-                      <Card className="p-4 bg-cyberdark-800/50 border-cyberdark-700 hover:bg-cyberdark-800 cursor-pointer">
-                        <div className="flex items-center">
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center mr-3">
-                            <span className="text-black font-bold">TO</span>
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex justify-between">
-                              <p className="font-medium text-cybergold-300">Thomas Olsen</p>
-                              <span className="text-xs text-cybergold-500">ons</span>
-                            </div>
-                            <p className="text-sm text-cybergold-400 truncate">Kan vi møtes for å diskutere designet?</p>
-                          </div>
-                        </div>
-                      </Card>
-                      
-                      <Card className="p-4 bg-cyberdark-800/50 border-cyberdark-700 hover:bg-cyberdark-800 cursor-pointer">
-                        <div className="flex items-center">
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center mr-3">
-                            <span className="text-black font-bold">LH</span>
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex justify-between">
-                              <p className="font-medium text-cybergold-300">Lise Hansen</p>
-                              <span className="text-xs text-cybergold-500">tirs</span>
-                            </div>
-                            <p className="text-sm text-cybergold-400 truncate">Takk for hjelpen med koden!</p>
-                          </div>
-                        </div>
-                      </Card>
+                        </Card>
+                      ))}
                     </div>
                   )}
                 </ScrollArea>
