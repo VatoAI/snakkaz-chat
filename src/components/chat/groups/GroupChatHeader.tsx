@@ -1,16 +1,14 @@
-import React, { useState, useCallback } from "react";
-import { ArrowLeft, PhoneCall, VideoIcon, InfoIcon, Shield, Lock, AlertTriangle, Crown, Star, Users } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { SecurityBadge } from "../security/SecurityBadge";
-import { SecurityLevel } from '@/types/security';
-import { getInitials } from "@/utils/user";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
+import React from 'react';
+import { ChevronLeft, Shield, Lock, Users, Download, Upload, RefreshCw } from 'lucide-react';
+import { UserAvatar } from '../header/UserAvatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Group } from '@/types/group';
+import { cn } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface GroupChatHeaderProps {
-  group: any;
+  group: Group;
   connectionState: string;
   dataChannelState: string;
   usingServerFallback: boolean;
@@ -54,35 +52,15 @@ export const GroupChatHeader: React.FC<GroupChatHeaderProps> = ({
   onEnablePageEncryption,
   onEncryptAllMessages,
   encryptionStatus,
-  isMobile
+  isMobile = false
 }) => {
-  const [showSecurityOptions, setShowSecurityOptions] = useState(false);
-  const { toast } = useToast();
-  
-  const handleSecurityChange = useCallback((level: SecurityLevel) => {
-    if (!isAdmin && !isPremiumMember) {
-      toast({
-        title: "Manglende tillatelse",
-        description: "Bare administratorer og premium-medlemmer kan endre sikkerhetsnivå",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    setSecurityLevel(level);
-    setShowSecurityOptions(false);
-  }, [isAdmin, isPremiumMember, setSecurityLevel, toast]);
-  
-  const isSecureConnection = 
-    (securityLevel === 'p2p_e2ee' && (
-      (connectionState === 'connected' && dataChannelState === 'open') || 
-      usingServerFallback
-    )) || 
-    securityLevel === 'server_e2ee' || 
-    securityLevel === 'standard';
-  
+  const isSecureConnection =
+    (securityLevel === "p2p_e2ee" && connectionState === "connected" && dataChannelState === "open") ||
+    securityLevel === "server_e2ee" ||
+    securityLevel === "standard";
+
   return (
-    <div className="flex items-center justify-between px-3 py-2 bg-cyberdark-900/80 border-b border-cyberdark-800">
+    <div className="flex items-center justify-between px-3 py-2 border-b border-cyberdark-700 bg-cyberdark-900/80">
       <div className="flex items-center">
         <Button
           variant="ghost"
@@ -90,110 +68,111 @@ export const GroupChatHeader: React.FC<GroupChatHeaderProps> = ({
           onClick={onBack}
           className="mr-2 text-cybergold-400 hover:bg-cyberdark-800"
         >
-          <ArrowLeft className="h-5 w-5" />
+          <ChevronLeft className="h-5 w-5" />
         </Button>
-        
-        <Avatar className="h-8 w-8 mr-2">
-          {group.avatar_url ? (
-            <AvatarImage src={group.avatar_url} alt={group.name} />
-          ) : (
-            <AvatarFallback className="bg-cyberdark-700 text-cybergold-300">
-              {getInitials(group.name)}
-            </AvatarFallback>
-          )}
-        </Avatar>
-        
-        <div className="flex flex-col">
-          <h3 className="font-medium text-cybergold-300">{group.name}</h3>
-          <div className="text-xs text-cybergold-500 flex items-center gap-1">
-            {isSecureConnection ? (
-              <Shield className="h-3 w-3" />
-            ) : (
-              <AlertTriangle className="h-3 w-3 text-amber-500" />
-            )}
-            <span>{encryptionStatus}</span>
+
+        <div className="flex items-center">
+          <UserAvatar
+            src={group.avatar_url || "/snakkaz-logo.png"}
+            alt={group.name}
+            isGroup={true}
+            size={isMobile ? 32 : 36}
+          />
+          <div className="ml-2">
+            <h3 className="font-medium text-cybergold-300">{group.name}</h3>
+            <p className="text-xs text-cybergold-500">
+              {group.memberCount || group.members?.length || 0} medlemmer
+            </p>
           </div>
         </div>
       </div>
-      
-      <div className="flex items-center gap-2">
-        {isPremium && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onShowPremium}
-            className="text-cybergold-400 hover:bg-cyberdark-800"
-          >
-            <Star className="h-5 w-5" />
-          </Button>
-        )}
-        
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onShowInvite}
-          className="text-cybergold-400 hover:bg-cyberdark-800"
-        >
-          <Users className="h-5 w-5" />
-        </Button>
-        
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onShowMembers}
-          className="text-cybergold-400 hover:bg-cyberdark-800"
-        >
-          <InfoIcon className="h-5 w-5" />
-        </Button>
-        
-        {showSecurityOptions ? (
-          <div className="relative">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setShowSecurityOptions(false)}
-              className="text-cybergold-400 hover:bg-cyberdark-800"
-            >
-              <Lock className="h-5 w-5" />
-            </Button>
-            
-            <div className="absolute right-0 top-10 z-10 w-48 rounded-md shadow-lg bg-cyberdark-800 border border-cyberdark-700">
-              <div className="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu-button">
-                <button
-                  onClick={() => handleSecurityChange('standard' as SecurityLevel)}
-                  className="block w-full text-left px-4 py-2 text-sm text-cybergold-300 hover:bg-cyberdark-700 hover:text-white"
-                  role="menuitem"
+
+      <div className="flex items-center space-x-2">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onShowMembers}
+                className="text-cybergold-400 hover:bg-cyberdark-800"
+              >
+                <Users className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Vis medlemmer</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onShowInvite}
+                className="text-cybergold-400 hover:bg-cyberdark-800"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="lucide lucide-user-plus h-4 w-4"
                 >
-                  Standard
-                </button>
-                <button
-                  onClick={() => handleSecurityChange('server_e2ee' as SecurityLevel)}
-                  className="block w-full text-left px-4 py-2 text-sm text-cybergold-300 hover:bg-cyberdark-700 hover:text-white"
-                  role="menuitem"
-                >
-                  Server E2EE
-                </button>
-                <button
-                  onClick={() => handleSecurityChange('p2p_e2ee' as SecurityLevel)}
-                  className="block w-full text-left px-4 py-2 text-sm text-cybergold-300 hover:bg-cyberdark-700 hover:text-white"
-                  role="menuitem"
-                >
-                  Peer-to-Peer E2EE
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setShowSecurityOptions(true)}
-            className="text-cybergold-400 hover:bg-cyberdark-800"
-          >
-            <Lock className="h-5 w-5" />
-          </Button>
-        )}
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                  <circle cx="8.5" cy="7" r="4" />
+                  <line x1="20" x2="17" y1="15" y2="15" />
+                  <line x1="18.5" x2="18.5" y1="13.5" y2="16.5" />
+                </svg>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Inviter medlemmer</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onReconnect}
+                disabled={connectionState === "connecting" || connectionState === "connected"}
+                className={cn(
+                  "text-cybergold-400 hover:bg-cyberdark-800",
+                  connectionState === "connecting" && "animate-spin"
+                )}
+              >
+                <RefreshCw className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>
+                {connectionState === "connecting"
+                  ? "Kobler til..."
+                  : connectionState === "connected"
+                  ? "Tilkoblet"
+                  : "Koble til på nytt"}
+              </p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
     </div>
   );
 };
+
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"

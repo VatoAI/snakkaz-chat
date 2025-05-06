@@ -16,6 +16,7 @@ export interface UserPresence {
   last_seen: string;
   online?: boolean;
 }
+<<<<<<< HEAD
   status: UserStatus;
   online: boolean;
   lastActive?: string;
@@ -28,3 +29,14 @@ export const isValidStatus = (status: string): status is UserStatus => {
 };
 
 export const getDefaultStatus = (): UserStatus => 'online';
+=======
+
+// Utility functions for UserStatus
+export function isValidStatus(status: string): status is UserStatus {
+  return Object.values(UserStatus).includes(status as UserStatus);
+}
+
+export function getDefaultStatus(): UserStatus {
+  return UserStatus.ONLINE;
+}
+>>>>>>> 09bc5ce1a428b3836c8087ae88ab127e98605ff6

@@ -1,90 +1,123 @@
+
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Group } from '@/types/groups';
+import { useToast } from '@/hooks/use-toast';
+import { Group, GroupMember, GroupVisibility, GroupWritePermission } from '@/types/group';
 import { SecurityLevel } from '@/types/security';
 
-export type GroupWritePermission = "all" | "admin" | "selected";
-export type MessageTTLOption = 300 | 1800 | 3600 | 86400 | 604800 | null;
+export const useGroupCreation = () => {
+  const { toast } = useToast();
+  const [isCreating, setIsCreating] = useState(false);
+  const [groupName, setGroupName] = useState('');
+  const [groupDescription, setGroupDescription] = useState('');
+  const [groupVisibility, setGroupVisibility] = useState<GroupVisibility>('public');
+  const [groupSecurityLevel, setGroupSecurityLevel] = useState<SecurityLevel>('standard');
+  const [groupPassword, setGroupPassword] = useState('');
+  const [groupWritePermissions, setGroupWritePermissions] = useState<GroupWritePermission>('all');
 
-export const useGroupCreation = (currentUserId: string) => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  
-  const createGroup = async (formData: {
-    name: string;
-    description?: string;
-    visibility: string;
-    securityLevel: SecurityLevel;
-    password?: string;
-    writePermissions?: GroupWritePermission;
-  }): Promise<string | null> => {
-    setIsLoading(true);
-    setError(null);
-    
+  const resetForm = () => {
+    setGroupName('');
+    setGroupDescription('');
+    setGroupVisibility('public');
+    setGroupSecurityLevel('standard');
+    setGroupPassword('');
+    setGroupWritePermissions('all');
+  };
+
+  const createGroup = async (userId: string) => {
+    if (!groupName) {
+      toast({ 
+        title: 'Group name required',
+        description: 'Please enter a name for your group.',
+        variant: 'destructive'
+      });
+      return null;
+    }
+
     try {
+      setIsCreating(true);
+
+      const timestamp = new Date().toISOString();
+
+      // First create the group
+      const newGroup = {
+        creator_id: userId,
+        name: groupName,
+        description: groupDescription,
+        visibility: groupVisibility,
+        security_level: groupSecurityLevel,
+        password: groupPassword,
+        created_at: timestamp,
+        updated_at: timestamp,
+        write_permissions: groupWritePermissions
+      };
+
       const { data, error } = await supabase
         .from('groups')
-        .insert({
-          creator_id: currentUserId,
-          name: formData.name,
-          description: formData.description,
-          visibility: formData.visibility,
-          security_level: formData.securityLevel,
-          password: formData.visibility === 'private' && formData.password ? formData.password : null,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          write_permissions: formData.writePermissions || 'all'
-        })
-        .select('id')
+        .insert(newGroup)
+        .select()
         .single();
-      
+
       if (error) {
         throw error;
       }
-      
-      if (!data) {
-        throw new Error('Failed to create group');
+
+      if (!data?.id) {
+        throw new Error('Failed to create group - no ID returned');
       }
       
-      // Add the creator as a member of the group
+      const groupId = data.id;
+
+      // Now add the creator as an admin member
       const { error: memberError } = await supabase
         .from('group_members')
         .insert({
-          group_id: data.id,
-          user_id: currentUserId,
+          group_id: groupId,
+          user_id: userId,
           role: 'admin',
-          joined_at: new Date().toISOString()
+          joined_at: timestamp,
+          can_write: true
         });
-      
+
       if (memberError) {
         throw memberError;
       }
 
-      const newGroup = {
-        creator_id: currentUserId,
-        name: formData.name,
-        description: formData.description,
-        visibility: formData.visibility,
-        security_level: formData.securityLevel,
-        password: formData.visibility === 'private' && formData.password ? formData.password : null,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        write_permissions: formData.writePermissions || 'all'
-      } as Group;
-      
-      return data.id;
-    } catch (err: any) {
-      console.error('Error creating group:', err);
-      setError(err.message || 'Failed to create group');
+      toast({
+        title: 'Group created',
+        description: `Your group "${groupName}" has been created successfully.`,
+      });
+
+      resetForm();
+      return data as Group;
+    } catch (error) {
+      console.error('Error creating group:', error);
+      toast({
+        title: 'Failed to create group',
+        description: 'There was an error creating your group. Please try again.',
+        variant: 'destructive'
+      });
       return null;
     } finally {
-      setIsLoading(false);
+      setIsCreating(false);
     }
   };
-  
+
   return {
-    isLoading,
-    error,
-    createGroup
+    isCreating,
+    groupName,
+    setGroupName,
+    groupDescription,
+    setGroupDescription,
+    groupVisibility,
+    setGroupVisibility,
+    groupSecurityLevel,
+    setGroupSecurityLevel,
+    groupPassword, 
+    setGroupPassword,
+    groupWritePermissions,
+    setGroupWritePermissions,
+    createGroup,
+    resetForm
   };
 };

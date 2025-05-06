@@ -12,7 +12,7 @@ interface ChatMessageListProps {
   onDelete?: (messageId: string) => void;
   isLoading?: boolean;
   hasMoreMessages?: boolean;
-  isLoadingMore?: boolean; // Renamed from isLoadingMoreMessages for consistency
+  isLoadingMore?: boolean;
   onLoadMore?: () => void;
   className?: string;
 }
@@ -20,136 +20,99 @@ interface ChatMessageListProps {
 const ChatMessageList: React.FC<ChatMessageListProps> = ({
   messages,
   currentUserId,
-  userProfiles,
+  userProfiles = {},
   onEdit,
   onDelete,
   isLoading = false,
   hasMoreMessages = false,
-  isLoadingMore = false, // Renamed from isLoadingMoreMessages
+  isLoadingMore = false,
   onLoadMore,
-  className = ''
+  className = '',
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const messagesContainerRef = useRef<HTMLDivElement>(null);
-  const prevMessagesLength = useRef<number>(messages.length);
+  const containerRef = useRef<HTMLDivElement>(null);
   
   // Scroll to bottom when new messages arrive
   useEffect(() => {
-    if (messages.length > prevMessagesLength.current) {
-      scrollToBottom();
-    }
-    prevMessagesLength.current = messages.length;
-  }, [messages.length]);
-  
-  // Handle scrolling for "load more" functionality
-  const handleScroll = () => {
-    if (!messagesContainerRef.current || !onLoadMore || isLoadingMore || !hasMoreMessages) {
-      return;
-    }
-    
-    const { scrollTop } = messagesContainerRef.current;
-    // If user has scrolled almost to the top, load more messages
-    if (scrollTop < 50) {
-      onLoadMore();
-    }
-  };
-  
-  // Scroll to bottom of message list
-  const scrollToBottom = () => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  };
+  }, [messages.length]);
   
-  // Group messages by date
-  const groupMessagesByDate = () => {
-    const groups: Record<string, any[]> = {};
+  // Handle scroll to load more messages
+  useEffect(() => {
+    const container = containerRef.current;
     
-    messages.forEach(message => {
-      const date = new Date(message.created_at).toLocaleDateString('nb-NO');
-      if (!groups[date]) {
-        groups[date] = [];
+    if (!container || !hasMoreMessages || !onLoadMore) {
+      return;
+    }
+    
+    const handleScroll = () => {
+      if (isLoadingMore || !hasMoreMessages) return;
+      
+      // Check if user has scrolled to the top
+      if (container.scrollTop < 50) {
+        // Save current scroll position and height
+        const scrollHeight = container.scrollHeight;
+        
+        // Call onLoadMore to fetch more messages
+        onLoadMore();
+        
+        // After loading more messages, adjust scroll position to maintain relative position
+        setTimeout(() => {
+          const newScrollHeight = container.scrollHeight;
+          const heightDifference = newScrollHeight - scrollHeight;
+          container.scrollTop = heightDifference;
+        }, 100);
       }
-      groups[date].push(message);
-    });
+    };
     
-    return groups;
-  };
-  
-  const messageGroups = groupMessagesByDate();
+    container.addEventListener('scroll', handleScroll);
+    return () => {
+      container.removeEventListener('scroll', handleScroll);
+    };
+  }, [hasMoreMessages, isLoadingMore, onLoadMore]);
   
   return (
-    <div
-      ref={messagesContainerRef}
-      className={cx(
-        'flex flex-col h-full overflow-y-auto p-4 scrollbar-thin scrollbar-thumb-cyberdark-700 scrollbar-track-cyberdark-900',
-        className
-      )}
-      onScroll={handleScroll}
+    <div 
+      ref={containerRef}
+      className={cx('flex-1 overflow-y-auto p-4 space-y-2', className)}
     >
-      {/* "Load more" loader */}
+      {/* Loading indicator for more messages */}
       {isLoadingMore && (
         <div className="flex justify-center py-2">
-          <Loader2 className="h-5 w-5 text-cybergold-500 animate-spin" />
+          <Loader2 className="h-5 w-5 animate-spin text-cybergold-400" />
         </div>
       )}
       
-      {/* "Load more" button if there are more messages */}
-      {!isLoadingMore && hasMoreMessages && (
-        <button
-          className={cx(
-            'mx-auto mb-2 py-1 px-3 rounded-full text-xs',
-            theme.colors.button.secondary.bg,
-            theme.colors.button.secondary.text,
-            theme.colors.button.secondary.hover
-          )}
-          onClick={onLoadMore}
-        >
-          Last flere meldinger
-        </button>
-      )}
-      
-      {/* Message groups by date */}
-      {Object.entries(messageGroups).map(([date, msgs]) => (
-        <div key={date} className="mb-4">
-          <div className="flex items-center justify-center my-3">
-            <div className="h-[1px] flex-grow bg-cyberdark-700"></div>
-            <span className="px-2 text-xs text-cybergold-600">{date}</span>
-            <div className="h-[1px] flex-grow bg-cyberdark-700"></div>
-          </div>
-          
-          {msgs.map(message => (
-            <ChatMessage
-              key={message.id}
-              message={message}
-              isCurrentUser={message.sender_id === currentUserId || message.sender?.id === currentUserId}
-              userProfiles={userProfiles}
-              onEdit={onEdit}
-              onDelete={onDelete}
-            />
-          ))}
-        </div>
+      {/* Messages */}
+      {messages.map((message) => (
+        <ChatMessage
+          key={message.id}
+          message={message}
+          isCurrentUser={message.sender_id === currentUserId || message.senderId === currentUserId}
+          userProfile={userProfiles[message.sender_id || message.senderId]}
+          onEdit={onEdit ? () => onEdit(message) : undefined}
+          onDelete={onDelete ? () => onDelete(message.id) : undefined}
+        />
       ))}
       
-      {/* Empty state */}
-      {messages.length === 0 && !isLoading && (
-        <div className="flex flex-col items-center justify-center flex-grow text-center p-6">
-          <div className="text-lg mb-2 text-cybergold-400">Ingen meldinger ennå</div>
-          <p className="text-sm text-cybergold-600">
-            Send en melding for å starte samtalen
-          </p>
-        </div>
-      )}
-      
-      {/* Loading state */}
+      {/* Loading indicator */}
       {isLoading && (
-        <div className="flex flex-col items-center justify-center flex-grow">
-          <Loader2 className="h-8 w-8 text-cybergold-500 animate-spin mb-2" />
-          <span className="text-sm text-cybergold-600">Laster inn meldinger...</span>
+        <div className="flex justify-center py-4">
+          <Loader2 className="h-6 w-6 animate-spin text-cybergold-400" />
         </div>
       )}
       
-      {/* Invisible element used to scroll to bottom */}
+      {/* Empty state */}
+      {!isLoading && messages.length === 0 && (
+        <div className="flex flex-col items-center justify-center h-full py-10">
+          <p className="text-cybergold-500 text-sm">Ingen meldinger ennå</p>
+          <p className="text-cybergold-600 text-xs mt-1">Send en melding for å starte en samtale</p>
+        </div>
+      )}
+      
+      {/* Invisible div for auto-scrolling to latest message */}
       <div ref={messagesEndRef} />
     </div>
   );
