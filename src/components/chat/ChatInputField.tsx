@@ -5,6 +5,16 @@ import { MediaUploader } from './MediaUploader';
 import { DecryptedMessage } from '@/types/message';
 import { useIsMobile } from '@/hooks/use-mobile';
 
+export interface MediaUploaderProps {
+  onFileSelect: (file: File) => void;
+  onCancel: () => void;
+  selectedFile: File | null;
+  isUploading?: boolean;
+  maxSizeMB?: number;
+  buttonText?: string;
+  isMobile?: boolean;
+}
+
 interface ChatInputFieldProps {
   value: string;
   onChange: (value: string) => void;
