@@ -1,7 +1,5 @@
-export type UserStatus = 'online' | 'offline' | 'away' | 'busy' | 'brb';
 
-// For bakoverkompatibilitet, støtt også enum-formatet
-export enum UserStatusEnum {
+export enum UserStatus {
   ONLINE = 'online',
   OFFLINE = 'offline',
   AWAY = 'away',
@@ -9,7 +7,15 @@ export enum UserStatusEnum {
   BRB = 'brb'
 }
 
+// Også eksporter som string literal type for bedre kompatibilitet
+export type UserStatusType = 'online' | 'offline' | 'away' | 'busy' | 'brb';
+
 export interface UserPresence {
+  user_id: string;
+  status: UserStatus;
+  last_seen: string;
+  online?: boolean;
+}
   status: UserStatus;
   online: boolean;
   lastActive?: string;

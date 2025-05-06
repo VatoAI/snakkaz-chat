@@ -1,219 +1,89 @@
-// Consolidated Message Types for SnakkaZ Chat
 
-// Message reaction interface
-export interface MessageReaction {
-  userId: string;
-  user_id?: string; // For backward compatibility
-  emoji: string;
-  createdAt: string | Date;
-  created_at?: string | Date; // For backward compatibility
-}
+import { UserStatus } from './presence';
+import { SecurityLevel } from './security';
 
-// Media message interface
-export interface MediaMessage {
-  url: string;
-  type: 'image' | 'video' | 'audio' | 'file';
-  name?: string;
-  size?: number;
-  thumbnailUrl?: string;
-  thumbnail_url?: string; // For backward compatibility
-  duration?: number; // For audio/video
-  isEncrypted?: boolean;
-  is_encrypted?: boolean; // For backward compatibility
-  decryptionKey?: string;
-  decryption_key?: string; // For backward compatibility
-}
-
-// MessageContent interface for rendering
+/**
+ * Base message content that can be sent in a chat
+ */
 export interface MessageContent {
   text?: string;
-  media?: MediaMessage;
-  attachments?: MediaMessage[];
-  replyTo?: {
-    id: string;
-    content: string;
-    sender: string;
-  };
-  isCiphered?: boolean;
-}
-
-// Base message type with all common fields
-export interface Message {
-  id: string;
-  content: string;
-  text?: string; // For backward compatibility
-  senderId: string;
-  sender_id?: string; // For backward compatibility
-  createdAt: string;
-  created_at?: string; // For backward compatibility
-  updatedAt?: string;
-  updated_at?: string; // For backward compatibility
-  isEdited?: boolean;
-  is_edited?: boolean; // For backward compatibility
-  isDeleted?: boolean;
-  is_deleted?: boolean; // For backward compatibility
   mediaUrl?: string;
-  media_url?: string; // For backward compatibility
-  mediaType?: 'image' | 'video' | 'audio' | 'file';
-  media_type?: string; // For backward compatibility
-  media?: MediaMessage;
+  mediaType?: string; 
   thumbnailUrl?: string;
-  thumbnail_url?: string; // For backward compatibility
-  replyToId?: string;
-  reply_to_id?: string; // For backward compatibility
-  replyTo?: string;
-  replyToMessage?: {
-    content: string;
-    sender_id: string;
-  };
-  ttl?: number;
-  ephemeral_ttl?: number; // For backward compatibility
-  isEncrypted?: boolean;
-  is_encrypted?: boolean; // For backward compatibility
-  encryption_key?: string;
-  iv?: string;
-  reactions?: MessageReaction[];
-  metadata?: Record<string, any>;
-  status?: 'sent' | 'delivered' | 'read' | 'failed';
-  isDelivered?: boolean;
-  is_delivered?: boolean; // For backward compatibility
-  readAt?: string;
-  read_at?: string; // For backward compatibility
-  readBy?: string[];
-  read_by?: string[]; // For backward compatibility
-  editedAt?: string;
-  edited_at?: string; // For backward compatibility
-  deletedAt?: string;
-  deleted_at?: string; // For backward compatibility
-  isPending?: boolean;
-  hasError?: boolean;
-}
-
-// Direct message type extending base message
-export interface DirectMessage extends Message {
-  receiverId: string;
-  receiver_id?: string; // For backward compatibility
-  chatId?: string;
-  chat_id?: string; // For backward compatibility
-  room_id?: string;
-  groupId?: undefined; // Explicitly undefined for direct messages
-  group_id?: undefined; // For backward compatibility
-}
-
-// Group message type extending base message
-export interface GroupMessage extends Message {
-  groupId: string;
-  group_id?: string; // For backward compatibility
-  room_id?: string;
-  receiverId?: undefined; // Explicitly undefined for group messages
-  receiver_id?: undefined; // For backward compatibility
-}
-
-// Pending message waiting to be sent
-export interface PendingMessage {
-  id: string;
-  content: string;
-  senderId: string;
-  createdAt: Date | string;
-  mediaUrl?: string;
-  mediaType?: 'image' | 'video' | 'audio' | 'file';
-  thumbnailUrl?: string;
-  receiverId?: string; // For direct messages
-  groupId?: string; // For group messages
-  replyToId?: string;
   ttl?: number;
   isEncrypted?: boolean;
-  isPending: boolean;
 }
 
-// Comprehensive decrypted message type with all needed fields
-export interface DecryptedMessage {
+/**
+ * Reaction to a message
+ */
+export interface MessageReaction {
   id: string;
-  content: string;
-  sender: {
-    id: string;
-    username: string | null;
-    full_name: string | null;
-    avatar_url: string | null;
-  };
-  created_at: string;
-  createdAt?: string; // For backward compatibility
+  messageId: string;
+  userId: string;
+  emoji: string;
+  createdAt: string | Date;
+  count?: number; // Number of reactions of this type
+}
+
+/**
+ * Main standardized message interface using camelCase
+ */
+export interface ChatMessage {
+  id: string;
+  content?: string;         // Message text content
+  senderId: string;         // User ID of sender
+  groupId?: string;         // Group ID if group message
+  createdAt: string | Date; // Creation timestamp
+  updatedAt?: string | Date; // Last update timestamp
+  isEdited?: boolean;       // Whether message has been edited
+  isDeleted?: boolean;      // Soft delete flag
+  isPinned?: boolean;       // Pinned message flag
+  mediaUrl?: string;        // URL to media content
+  mediaType?: string;       // Type of media (image, video, etc)
+  thumbnailUrl?: string;    // Thumbnail for media
+  ttl?: number;             // Time-to-live in seconds for disappearing messages
+  readBy?: string[];        // Array of user IDs who read the message
+  replyToId?: string;       // ID of message being replied to
+  isEncrypted?: boolean;    // Whether message content is encrypted
+  isPending?: boolean;      // Whether the message is pending delivery
+  hasError?: boolean;       // Whether there was an error sending the message
+  
+  // Properties used in MessageList.tsx and AppMessage.tsx
+  timestamp?: string | Date; // Time reference (used for sorting and grouping)
+  isRead?: boolean;         // Whether the message is read
+  senderName?: string;      // Sender's name
+  ephemeral?: boolean;      // Whether the message is temporary
+  expiresAt?: string | Date; // When the message expires
+  reactions?: MessageReaction[]; // Reactions to the message
+  replyToPreview?: string;  // Preview of the reply
+  replyToSenderName?: string; // Name of the person being replied to
+  fileUrl?: string;         // URL to file
+  fileName?: string;        // File name
+  text?: string;            // Alias for content
+  
+  // Optional fields for database compatibility
+  sender_id?: string;       // Snake case alias for compatibility
+  group_id?: string;
+  created_at?: string;
   updated_at?: string;
-  updatedAt?: string; // For backward compatibility
-  encryption_key?: string;
-  iv?: string;
-  ttl?: number;
-  ephemeral_ttl?: number; // For backward compatibility
-  media_url?: string;
-  mediaUrl?: string; // For backward compatibility
-  media_type?: string;
-  mediaType?: string; // For backward compatibility
-  media?: {
-    url: string;
-    type: string;
-  };
   is_edited?: boolean;
-  isEdited?: boolean; // For backward compatibility
-  edited_at?: string | null;
-  editedAt?: string | null; // For backward compatibility
   is_deleted?: boolean;
-  isDeleted?: boolean; // For backward compatibility
-  deleted_at?: string | null;
-  deletedAt?: string | null; // For backward compatibility
-  receiver_id?: string | null;
-  receiverId?: string | null; // For backward compatibility
-  group_id?: string | null;
-  groupId?: string | null; // For backward compatibility
-  read_at?: string | null;
-  readAt?: string | null; // For backward compatibility
-  is_delivered?: boolean;
-  isDelivered?: boolean; // For backward compatibility
+  is_pinned?: boolean;
+  media_url?: string;
+  media_type?: string;
+  thumbnail_url?: string;
+  read_by?: string[];
+  reply_to_id?: string;
   is_encrypted?: boolean;
-  isEncrypted?: boolean; // For backward compatibility
-  replyTo?: string;
-  replyToId?: string; // For backward compatibility
-  replyToMessage?: {
-    content: string;
-    sender_id: string;
+  
+  // Optional sender information
+  sender?: {
+    id: string;
+    displayName?: string;
+    username?: string;
+    full_name?: string | null;
+    avatar?: string;
+    avatar_url?: string | null;
   };
-  status?: string;
-  readBy?: string[];
-  read_by?: string[]; // For backward compatibility
-  room_id?: string | null;
-  roomId?: string | null; // For backward compatibility
-  isPending?: boolean;
-  hasError?: boolean;
 }
-
-// Message type enum
-export type MessageType = 'text' | 'image' | 'video' | 'audio' | 'file' | 'location' | 'contact' | 'system';
-
-// Utility functions
-export const formatMessageDate = (date: Date | string): string => {
-  const messageDate = typeof date === 'string' ? new Date(date) : date;
-  const now = new Date();
-  
-  // Same day, just show time
-  if (messageDate.toDateString() === now.toDateString()) {
-    return messageDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  }
-  
-  // Yesterday
-  const yesterday = new Date(now);
-  yesterday.setDate(yesterday.getDate() - 1);
-  if (messageDate.toDateString() === yesterday.toDateString()) {
-    return `I går ${messageDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-  }
-  
-  // Within a week
-  const oneWeekAgo = new Date(now);
-  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-  if (messageDate > oneWeekAgo) {
-    const options: Intl.DateTimeFormatOptions = { weekday: 'long', hour: '2-digit', minute: '2-digit' };
-    return messageDate.toLocaleDateString('no-NO', options);
-  }
-  
-  // Older than a week
-  const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' };
-  return messageDate.toLocaleDateString('no-NO', options);
-};

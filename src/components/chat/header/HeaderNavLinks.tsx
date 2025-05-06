@@ -4,7 +4,7 @@ import { Home, Globe, MessageSquare, Users, Volume, VolumeX, Info, Crown } from 
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useState, useEffect } from "react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
-import { UserStatus } from "@/types/presence";
+import { UserStatus, getDefaultStatus } from '@/types/presence';
 
 interface HeaderNavLinksProps {
   activeTab: string;
@@ -16,7 +16,7 @@ interface HeaderNavLinksProps {
 export const HeaderNavLinks = ({ 
   activeTab, 
   onTabChange, 
-  currentStatus = 'online',
+  currentStatus = getDefaultStatus(),
   vertical = false
 }: HeaderNavLinksProps) => {
   const navigate = useNavigate();

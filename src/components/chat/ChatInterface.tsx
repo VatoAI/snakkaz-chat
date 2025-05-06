@@ -3,6 +3,7 @@ import { ChatInputField } from './ChatInputField';
 import ChatMessageList from './ChatMessageList';
 import { ChatHeader } from './header/ChatHeader';
 import { UploadProgress } from './message/UploadProgress';
+import { UserStatus } from '@/types/presence';
 
 interface ChatInterfaceProps {
   messages: Array<any>;
@@ -18,6 +19,7 @@ interface ChatInterfaceProps {
     name: string;
     avatar?: string;
     isOnline?: boolean;
+    status?: UserStatus;
   };
   isDirectMessage?: boolean;
   onBackToList?: () => void;
@@ -35,7 +37,7 @@ interface ChatInterfaceProps {
   onLoadMoreMessages?: () => void;
 }
 
-export const ChatInterface: React.FC<ChatInterfaceProps> = ({
+const ChatInterface: React.FC<ChatInterfaceProps> = ({
   messages,
   currentUserId,
   userProfiles,
@@ -75,7 +77,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   
   return (
     <div className="flex flex-col h-full bg-background">
-      {/* Chat header - now using the extracted ChatHeader component */}
+      {/* Chat header */}
       {recipientInfo && (
         <ChatHeader 
           recipientInfo={recipientInfo}
@@ -93,7 +95,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         onDelete={onDeleteMessage}
         isLoading={isLoading}
         hasMoreMessages={hasMoreMessages}
-        isLoadingMoreMessages={isLoadingMoreMessages}
+        isLoadingMore={isLoadingMoreMessages}
         onLoadMore={onLoadMoreMessages}
         className="flex-grow"
       />
@@ -124,3 +126,5 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     </div>
   );
 };
+
+export default ChatInterface;

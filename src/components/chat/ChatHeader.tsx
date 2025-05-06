@@ -54,8 +54,6 @@ export const ChatHeader = ({
   const userProfiles = {}; // This would be populated from props
 
   // Fix the comparison between UserStatus and "brb"
-  // Changed from: if (peerStatus === "brb") 
-  // To use proper type:
   const renderStatusText = (status: UserStatus) => {
     if (status === UserStatus.AWAY) {
       return "Borte en liten stund";

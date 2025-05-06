@@ -1,28 +1,15 @@
 
-/**
- * Index-fil for eksport av chat-relaterte komponenter
- * Forenkler imports ved å samle alle eksporter på ett sted
- */
-
-// Chat UI-komponenter
-export { ChatInterface } from './ChatInterface';
+// Export components
 export { ChatHeader } from './header/ChatHeader';
-export { ChatInputField } from './ChatInputField';
-export { ChatMessageList } from './ChatMessageList';
-export { ChatMessage } from './ChatMessage';
-// Export default imports as named exports
-import ChatSidebar from './ChatSidebar';
-export { ChatSidebar };
-export { ChatTabs } from './ChatTabs';
-import MessageBubble from './MessageBubble';
-export { MessageBubble };
+export { default as ChatInterface } from './ChatInterface';
+export { default as ChatMessageList } from './ChatMessageList';
+export { default as AppChatInterface } from './AppChatInterface';
+export { default as DirectMessage } from './friends/DirectMessage';
+export { GroupChat } from './groups/GroupChat';
+export { FriendsList } from './friends/list/FriendsList';
 
-// Chat funksjonalitetskomponenter
-export { ChatPresence } from './ChatPresence';
-export { FriendsList } from './FriendsList';
-export { PrivateChats } from './PrivateChats';
-
-// Create basic placeholder for missing exports
-export const ai = {};
-export const groups = {};
-export const security = {};
+// Export hooks
+export { useGroups } from './hooks/useGroups';
+export { usePresence } from './hooks/usePresence';
+export { useChatState } from './hooks/useChatState';
+export { useGroupInvites } from './hooks/useGroupInvites';

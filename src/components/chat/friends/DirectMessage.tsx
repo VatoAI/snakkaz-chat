@@ -44,7 +44,7 @@ export const DirectMessage: React.FC<DirectMessageProps> = ({
   // Format messages for GroupMessageList component
   const formattedMessages = messages.map(message => ({
     ...message,
-    senderId: message.sender?.id || message.sender_id,
+    senderId: message.sender?.id || message.sender_id, // Handle both sender.id and sender_id 
     createdAt: message.created_at || new Date().toISOString(),
   })) as GroupMessage[];
   

@@ -1,34 +1,66 @@
 
 import React from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User, Users } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { getInitials } from '@/utils/user';
+import { UserStatus } from '@/types/presence';
 
-interface UserAvatarProps {
-  src?: string;
-  alt: string;
-  isGroup?: boolean;
-  status?: string;
+export interface UserAvatarProps {
+  src?: string | null;
+  alt?: string;
+  fallback?: string;
+  size?: number;
+  status?: UserStatus | string;
+  className?: string;
+  fallbackClassName?: string;
 }
 
-export const UserAvatar: React.FC<UserAvatarProps> = ({ 
-  src, 
-  alt, 
-  isGroup = false,
-  status
+export const UserAvatar: React.FC<UserAvatarProps> = ({
+  src,
+  alt = 'User',
+  fallback,
+  size = 40,
+  status,
+  className,
+  fallbackClassName
 }) => {
+  const initials = fallback || getInitials(alt);
+  
   return (
     <div className="relative">
-      <Avatar className="h-10 w-10 border-2 border-cyberdark-700">
-        <AvatarImage src={src} alt={alt} />
-        <AvatarFallback className="bg-cyberdark-800 text-cybergold-500">
-          {isGroup ? <Users className="h-5 w-5" /> : <User className="h-5 w-5" />}
-        </AvatarFallback>
+      <Avatar 
+        className={cn(
+          "border-2 border-cyberdark-700",
+          className
+        )}
+        style={{ width: size, height: size }}
+      >
+        {src ? (
+          <AvatarImage src={src} alt={alt} />
+        ) : (
+          <AvatarFallback 
+            className={cn(
+              "bg-cyberdark-700 text-cybergold-300",
+              fallbackClassName
+            )}
+          >
+            {initials}
+          </AvatarFallback>
+        )}
       </Avatar>
       
       {status && (
         <span 
-          className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-cyberdark-950 ${status}`}
-          aria-hidden="true"
+          className={cn(
+            "absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-cyberdark-900",
+            typeof status === 'string' ? (
+              status === 'online' ? 'bg-green-500' :
+              status === 'away' ? 'bg-amber-500' :
+              status === 'busy' ? 'bg-red-500' :
+              status === 'brb' ? 'bg-purple-500' :
+              'bg-gray-500'
+            ) : 'bg-gray-500'
+          )}
         />
       )}
     </div>

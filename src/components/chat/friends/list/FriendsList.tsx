@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { WebRTCManager } from "@/utils/webrtc";
 import { DecryptedMessage } from "@/types/message";
@@ -13,7 +14,7 @@ interface FriendsListProps {
   directMessages: DecryptedMessage[];
   onNewMessage: (message: DecryptedMessage) => void;
   onStartChat?: (friendId: string) => void;
-  userProfiles?: Record<string, {username: string | null, avatar_url: string | null}>;
+  userProfiles?: Record<string, {username: string | null, avatar_url: string | null, full_name?: string | null}>;
   friends?: any[]; // We'll receive this from the parent now
   friendsList?: string[];
   onRefresh?: () => void;
@@ -51,8 +52,8 @@ export const FriendsList = ({
       profile: {
         id: friend.friend_id,
         username: userProfiles[friend.friend_id]?.username || "Ukjent bruker",
-        full_name: userProfiles[friend.friend_id]?.full_name,
-        avatar_url: userProfiles[friend.friend_id]?.avatar_url
+        full_name: userProfiles[friend.friend_id]?.full_name || null,
+        avatar_url: userProfiles[friend.friend_id]?.avatar_url || null
       }
     } as Friend;
   }).filter(Boolean) : [];

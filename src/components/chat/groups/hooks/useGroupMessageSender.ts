@@ -1,4 +1,3 @@
-
 import { useState, useRef, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { encryptMessage } from "@/utils/encryption";
@@ -90,7 +89,8 @@ export const useGroupMessageSender = (
             sender: {
               id: currentUserId,
               username: null,
-              full_name: null
+              full_name: null,
+              avatar_url: null // Add avatar_url with null value
             },
             receiver_id: null,
             group_id: groupId,

@@ -1,4 +1,3 @@
-
 import { ReactNode } from "react";
 import { DecryptedMessage } from "@/types/message";
 import { cn } from "@/lib/utils";
@@ -62,10 +61,10 @@ export const MessageContainer = ({
             isCurrentUser ? "justify-end flex-row-reverse" : ""
           )}>
             <UserAvatar
-              avatarUrl={message.sender.avatar_url}
-              username={username}
+              src={message.sender.avatar_url}
+              alt={username}
               size={28}
-              status={userStatus ?? "online"}
+              status={userStatus ?? UserStatus.ONLINE}
               className={userStatus ? statusColors[userStatus].glow : undefined}
             />
             <div className="flex flex-col text-xs items-start">

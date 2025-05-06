@@ -1,3 +1,8 @@
+
+export type SecurityLevel = 'standard' | 'enhanced' | 'maximum' | 'server_e2ee' | 'client_e2ee' | 'premium' | 'low' | 'high' | 'p2p_e2ee';
+
+// For backwards compatibility
+export type SecurityLevelAlias = SecurityLevel;
 // Define security levels for encryption
 export type SecurityLevel = 'low' | 'standard' | 'server_e2ee' | 'p2p_e2ee' | 'high' | 'maximum' | 'premium';
 
