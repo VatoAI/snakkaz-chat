@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { GroupInvite } from "@/types/group";
+import { GroupInvite } from '@/types/groups';
 
 export const useGroupInvites = (userId: string) => {
   const [invites, setInvites] = useState<GroupInvite[]>([]);

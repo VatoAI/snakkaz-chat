@@ -13,6 +13,8 @@ interface MainHeaderProps {
   showNavigation?: boolean;
 }
 
+export type HeaderVariant = 'default' | 'chat' | 'main';
+
 export const MainHeader = ({ 
   activeTab = "home", 
   onTabChange = () => {}, 

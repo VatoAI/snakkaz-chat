@@ -1,9 +1,8 @@
-
 import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { DecryptedMessage } from '@/types/message';
 import { UserStatus } from '@/types/presence';
-import { SecurityLevel } from '@/types/groups';
+import { SecurityLevel } from '@/types/security';
 import AppMessageList from '../message/AppMessageList';
 import { MessageInput } from '../MessageInput';
 import { MessageVariant } from '../message/AppMessage';

@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { SecurityLevel } from '@/types/groups';
+import { SecurityLevel } from '@/types/security';
 import { MessageSquare, Shield, UserPlus, Lock, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';

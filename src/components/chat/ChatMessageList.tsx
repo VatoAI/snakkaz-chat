@@ -13,12 +13,13 @@ interface ChatMessageListProps {
   currentUserId: string;
   isLoading?: boolean;
   hasMoreMessages?: boolean;
-  onEditMessage?: (message: DecryptedMessage) => void;
-  onDeleteMessage?: (messageId: string) => void;
+  onEdit?: (message: DecryptedMessage) => void;
+  onDelete?: (messageId: string) => void;
   onReplyToMessage?: (message: DecryptedMessage) => void;
   onLoadMore?: () => void;
   userProfiles?: Record<string, any>;
   isEncrypted?: boolean;
+  className?: string;
 }
 
 const ChatMessageList: React.FC<ChatMessageListProps> = ({
@@ -26,12 +27,13 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
   currentUserId,
   isLoading = false,
   hasMoreMessages = false,
-  onEditMessage,
-  onDeleteMessage,
+  onEdit,
+  onDelete,
   onReplyToMessage,
   onLoadMore,
   userProfiles = {},
-  isEncrypted = false
+  isEncrypted = false,
+  className = ''
 }) => {
   const endRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -101,7 +103,7 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
   return (
     <div 
       ref={containerRef}
-      className="flex flex-col h-full overflow-y-auto px-2 md:px-4 py-4 bg-gradient-to-b from-cyberdark-950 to-cyberdark-900/95"
+      className={`flex flex-col h-full overflow-y-auto px-2 md:px-4 py-4 bg-gradient-to-b from-cyberdark-950 to-cyberdark-900/95 ${className}`}
     >
       {/* Load more indicator */}
       {hasMoreMessages && (
@@ -131,11 +133,11 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
               <ChatMessage
                 key={message.id}
                 message={message}
-                isCurrentUser={message.sender.id === currentUserId}
+                isCurrentUser={message.sender?.id === currentUserId}
                 userProfiles={userProfiles}
                 onReply={onReplyToMessage ? () => onReplyToMessage(message) : undefined}
-                onEdit={onEditMessage ? () => onEditMessage(message) : undefined}
-                onDelete={onDeleteMessage ? () => onDeleteMessage(message.id) : undefined}
+                onEdit={onEdit ? () => onEdit(message) : undefined}
+                onDelete={onDelete ? () => onDelete(message.id) : undefined}
                 isEncrypted={isEncrypted}
               />
             ))}
@@ -144,55 +146,54 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
       ))}
       
       {/* Empty state */}
-      {!isLoading && messages.length === 0 && (
-        <div className="flex flex-col items-center justify-center h-full text-cybergold-600">
-          <p>Ingen meldinger enda.</p>
-          <p className="text-sm mt-1">Start en samtale!</p>
+      {messages.length === 0 && !isLoading && (
+        <div className="flex flex-col items-center justify-center flex-grow text-center p-6">
+          <div className="text-lg mb-2 text-cybergold-400">Ingen meldinger ennå</div>
+          <p className="text-sm text-cybergold-600">
+            Send en melding for å starte samtalen
+          </p>
         </div>
       )}
       
       {/* Loading state */}
       {isLoading && messages.length === 0 && (
-        <div className="flex flex-col items-center justify-center h-full">
+        <div className="flex flex-col items-center justify-center flex-grow">
           <Loader2 className="h-8 w-8 text-cybergold-500 animate-spin mb-2" />
-          <p className="text-cybergold-600">Laster meldinger...</p>
+          <span className="text-sm text-cybergold-600">Laster inn meldinger...</span>
         </div>
       )}
       
-      {/* Scroll to bottom reference */}
-      <div ref={endRef} />
-      
       {/* Scroll to bottom button */}
       {showScrollBottom && (
-        <Button
-          variant="outline"
-          size="icon"
-          className="fixed bottom-24 right-6 rounded-full bg-cyberdark-900 border-cybergold-700 shadow-md"
+        <button
           onClick={scrollToBottom}
+          className="fixed bottom-24 right-8 bg-cybergold-600 text-cyberdark-900 rounded-full p-2 shadow-lg hover:bg-cybergold-500 transition-colors"
         >
-          <ChevronDown className="h-5 w-5 text-cybergold-400" />
-        </Button>
+          <ChevronDown className="h-5 w-5" />
+        </button>
       )}
+      
+      {/* Invisible element for auto-scrolling */}
+      <div ref={endRef} />
     </div>
   );
 };
 
 // Helper function to group messages by date
-function groupMessagesByDate(messages: DecryptedMessage[]): Record<string, DecryptedMessage[]> {
+const groupMessagesByDate = (messages: DecryptedMessage[]): Record<string, DecryptedMessage[]> => {
   const groups: Record<string, DecryptedMessage[]> = {};
   
   messages.forEach(message => {
-    const date = new Date(message.created_at);
-    const dateKey = date.toISOString().split('T')[0]; // YYYY-MM-DD
+    if (!message.created_at) return;
     
-    if (!groups[dateKey]) {
-      groups[dateKey] = [];
+    const date = new Date(message.created_at).toLocaleDateString();
+    if (!groups[date]) {
+      groups[date] = [];
     }
-    
-    groups[dateKey].push(message);
+    groups[date].push(message);
   });
   
   return groups;
-}
+};
 
 export default ChatMessageList;

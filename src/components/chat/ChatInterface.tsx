@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { ChatInputField } from './ChatInputField';
 import ChatMessageList from './ChatMessageList';
@@ -124,3 +125,5 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     </div>
   );
 };
+
+export default ChatInterface;

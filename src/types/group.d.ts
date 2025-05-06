@@ -1,5 +1,4 @@
-
-export type GroupVisibility = 'public' | 'private' | 'hidden';
+export type GroupVisibility = 'public' | 'private' | 'hidden' | 'secret';
 
 export interface Group {
   id: string;
@@ -13,7 +12,9 @@ export interface Group {
   members?: GroupMember[];
   is_premium?: boolean;
   memberCount?: number;
-  createdBy?: string; // Adding this to fix conflict with another Group type
+  createdBy?: string;
+  password?: string;
+  write_permissions?: string;
 }
 
 export interface GroupMember {
@@ -52,6 +53,6 @@ export interface GroupMessage {
   readBy?: string[];
   reply_to_id?: string;
   replyToId?: string;
-  isPending?: boolean; // Add missing property
-  hasError?: boolean;  // Add missing property
+  isPending?: boolean;
+  hasError?: boolean;
 }
