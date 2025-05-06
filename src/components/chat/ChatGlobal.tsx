@@ -118,6 +118,15 @@ export const ChatGlobal = ({
     setRealtimeGroups(recentGroups);
   }, [recentGroups]);
 
+  // Endre callback signaturer for å håndtere DecryptedMessage
+  const handleOnNewMessage = (message: DecryptedMessage) => {
+    // Implementer håndtering av nye meldinger
+    console.log('New message received:', message);
+    if (typeof onNewMessage === 'function') {
+      onNewMessage(message);
+    }
+  };
+
   return (
     <div className="h-full flex relative">
       {/* Main chat area */}

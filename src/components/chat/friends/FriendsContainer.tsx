@@ -12,7 +12,7 @@ export interface FriendsContainerProps {
   directMessages: DecryptedMessage[];
   onNewMessage: (message: DecryptedMessage) => void;
   userProfiles: Record<string, { username: string; avatar_url: string }>;
-  onStartChat?: (userId: string) => void; // Make this prop optional
+  onStartChat: (userId: string) => void; // Added this prop
 }
 
 export const FriendsContainer: React.FC<FriendsContainerProps> = ({

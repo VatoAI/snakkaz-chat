@@ -1,28 +1,25 @@
 
 import React from 'react';
-import { Button } from '@/components/ui/button';
 
-interface HeaderActionButtonProps {
+export interface HeaderActionButtonProps {
   icon: React.ReactNode;
   label: string;
   onClick: () => void;
+  className?: string; // Legg til className prop
 }
 
-export const HeaderActionButton: React.FC<HeaderActionButtonProps> = ({
-  icon,
-  label,
-  onClick
+export const HeaderActionButton: React.FC<HeaderActionButtonProps> = ({ 
+  icon, 
+  label, 
+  onClick,
+  className = ''
 }) => {
   return (
-    <Button
-      variant="ghost"
-      size="icon"
-      className="rounded-full h-9 w-9 text-cybergold-400 hover:text-cybergold-300 hover:bg-cyberdark-800"
+    <button 
+      className={`p-2 rounded-full hover:bg-cyberdark-800 flex items-center justify-center ${className}`}
       onClick={onClick}
-      aria-label={label}
-      title={label}
     >
       {icon}
-    </Button>
+    </button>
   );
 };

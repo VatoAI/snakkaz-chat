@@ -1,382 +1,260 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { ChatMessage } from './ChatMessage';
-import { GroupMessage } from '@/types/group';
-import { useAuth } from '@/hooks/useAuth';
-import { Loader2, ChevronDown, MessageSquare } from 'lucide-react';
+
+import React, { useRef, useEffect } from 'react';
+import { Loader2 } from 'lucide-react';
+import { DecryptedMessage } from '@/types/message.d';
 import { formatDistanceToNow } from 'date-fns';
 import { nb } from 'date-fns/locale';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-import { useMessageGrouping } from '@/hooks/useMessageGrouping';
-import { useInView } from 'react-intersection-observer';
-import { DecryptedMessage } from '@/types/message';
 
-interface MessageGroupItem {
+// Define our own GroupMessage type that matches the expected structure
+export interface GroupMessage {
   id: string;
-  senderId: string;
+  content?: string;
   sender_id?: string;
-  content: string;
-  text?: string;
-  createdAt: string | Date;
-  created_at?: string | Date;
-  timestamp: Date;
-  messages: any[];
+  group_id?: string;
+  created_at: string;
+  updated_at?: string;
+  is_encrypted?: boolean;
+  is_deleted?: boolean;
+  is_edited?: boolean;
+  is_pinned?: boolean;
+  is_announcement?: boolean;
+  read_by?: string[];
+  reply_to_id?: string;
+  senderId?: string;
+  createdAt?: string;
+  isPending?: boolean;
+  hasError?: boolean;
+  media?: {
+    url: string;
+    type: string;
+    thumbnail?: string;
+  };
+  replyToId?: string;
 }
 
 interface GroupMessageListProps {
   messages: GroupMessage[];
-  isLoading: boolean;
-  userProfiles?: Record<string, {
-    displayName?: string;
-    photoURL?: string;
-    username?: string;
-    avatar_url?: string;
-    [key: string]: string | number | boolean | undefined;
-  }>;
-  onMessageEdit?: (message: GroupMessage) => void;
-  onMessageDelete?: (messageId: string) => void;
-  onMessageReply?: (message: GroupMessage) => void;
-  onReactionAdd?: (messageId: string, emoji: string) => void;
-  onLoadMore?: () => void;
-  hasMoreMessages?: boolean;
-  isEncryptedGroup?: boolean;
-  currentUserId?: string;
-  loadMoreMessages?: () => void;
-  offlineMode?: boolean;
+  currentUserId: string;
+  userProfiles?: Record<string, any>;
+  isLoading?: boolean;
 }
 
 export const GroupMessageList: React.FC<GroupMessageListProps> = ({
   messages,
-  isLoading,
-  userProfiles = {},
-  onMessageEdit,
-  onMessageDelete,
-  onMessageReply,
-  onReactionAdd,
-  onLoadMore,
-  hasMoreMessages = false,
-  isEncryptedGroup = false,
   currentUserId,
-  loadMoreMessages,
-  offlineMode = false,
+  userProfiles = {},
+  isLoading = false
 }) => {
-  const { user } = useAuth();
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [autoScrollEnabled, setAutoScrollEnabled] = useState(true);
-  const [showScrollToBottom, setShowScrollToBottom] = useState(false);
-  const [replyTargetMessages, setReplyTargetMessages] = useState<Record<string, GroupMessage>>({});
   
-  // Prepare messages for grouping by ensuring each has the right structure
-  const preparedMessages = messages.map(msg => {
-    // Safely handle createdAt/created_at conversion to ensure we have a valid Date
-    let createdAtDate: Date;
-    const dateValue = msg.createdAt || msg.created_at;
-    
-    if (dateValue instanceof Date) {
-      createdAtDate = dateValue;
-    } else if (typeof dateValue === 'string') {
-      // Handle ISO string or any valid date string
-      createdAtDate = new Date(dateValue);
-      // Check if the date is valid
-      if (isNaN(createdAtDate.getTime())) {
-        createdAtDate = new Date(); // Fallback to current date if invalid
-      }
-    } else {
-      createdAtDate = new Date(); // Default fallback
-    }
-    
-    return {
-      ...msg,
-      senderId: msg.senderId || msg.sender_id || '',
-      createdAt: createdAtDate // Always store as Date object
-    };
-  });
-  
-  // Use custom hook to group messages by time - fixed to properly use the returned array
-  const groupedMessages = useMessageGrouping(preparedMessages);
-  
-  // Helper function to format date separators - fixed to safely handle different date formats
-  const getDateSeparatorText = (timestamp: Date | string) => {
-    let date: Date;
-    
-    if (timestamp instanceof Date) {
-      date = timestamp;
-    } else {
-      date = new Date(timestamp);
-      // Check if the date is valid
-      if (isNaN(date.getTime())) {
-        date = new Date(); // Fallback
-      }
-    }
-    
-    return formatDistanceToNow(date, { addSuffix: true, locale: nb });
-  };
-  
-  // IntersectionObserver to load more messages when scrolling to top
-  const { ref: topLoadingRef } = useInView({
-    threshold: 0.1,
-    onChange: (inView) => {
-      if (inView && hasMoreMessages && onLoadMore) {
-        onLoadMore();
-      }
-    },
-  });
-
-  // Watch if we're at the bottom of the list
+  // Scroll to bottom on new messages
   useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-    
-    const handleScroll = () => {
-      const { scrollTop, scrollHeight, clientHeight } = container;
-      const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
-      
-      setAutoScrollEnabled(isNearBottom);
-      setShowScrollToBottom(!isNearBottom);
-    };
-    
-    container.addEventListener('scroll', handleScroll);
-    return () => container.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  // Scroll to bottom when new messages come in if autoScroll is on
-  useEffect(() => {
-    if (autoScrollEnabled && messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [messages.length, autoScrollEnabled]);
-
-  // Fetch reply messages
-  useEffect(() => {
-    const replyIds = messages
-      .filter(m => {
-        const replyId = m.replyToId || m.reply_to_id;
-        return replyId && !replyTargetMessages[replyId];
-      })
-      .map(m => (m.replyToId || m.reply_to_id) as string)
-      .filter(Boolean);
-      
-    if (replyIds.length === 0) return;
-    
-    // Here we would normally fetch replyTo messages from API
-    // This is a simplified version that just finds them from current messages array
-    const foundMessages = messages.filter(m => m.id && replyIds.includes(m.id));
-    if (foundMessages.length > 0) {
-      const newReplyTargets = {...replyTargetMessages};
-      foundMessages.forEach(m => {
-        newReplyTargets[m.id] = m;
-      });
-      setReplyTargetMessages(newReplyTargets);
-    }
-  }, [messages, replyTargetMessages]);
-
-  // Function to scroll to bottom of the list
-  const scrollToBottom = () => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-      setAutoScrollEnabled(true);
     }
+  }, [messages.length]);
+  
+  // Group messages by date
+  const groupedMessages = groupMessagesByDate(messages);
+  
+  const formatMessageTime = (timestamp: string) => {
+    return new Date(timestamp).toLocaleTimeString('nb-NO', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
-
-  const userId = currentUserId || user?.id;
-  if (!userId) return null;
-
-  // Helper function to handle date safely - improved for better type safety
-  const getIsoString = (dateInput: string | number | Date | undefined): string => {
-    if (!dateInput) return new Date().toISOString();
-    
-    let date: Date;
-    
-    if (typeof dateInput === 'string') {
-      date = new Date(dateInput);
-      // Check if the date is valid
-      if (isNaN(date.getTime())) {
-        return new Date().toISOString(); // Fallback if parse fails
-      }
-    } else if (typeof dateInput === 'number') {
-      date = new Date(dateInput);
-    } else if (dateInput instanceof Date) {
-      date = dateInput;
-    } else {
-      return new Date().toISOString();
-    }
-    
-    return date.toISOString();
-  };
-
-  // Helper function to determine message status indicator
-  const renderMessageStatus = (message: GroupMessage) => {
-    // Show pending indicator if message is marked as pending
-    if (message.isPending) {
-      return (
-        <div className="inline-flex ml-1 text-xs items-center" title="Venter på sending">
-          <div className="animate-pulse w-1.5 h-1.5 bg-amber-500 rounded-full mr-1"></div>
-          <span className="text-amber-500 text-[10px]">Venter</span>
-        </div>
-      );
-    }
-    
-    // Show error indicator if message is marked with error
-    if (message.hasError) {
-      return (
-        <div className="inline-flex ml-1 text-xs items-center" title="Kunne ikke sende">
-          <div className="w-1.5 h-1.5 bg-red-500 rounded-full mr-1"></div>
-          <span className="text-red-500 text-[10px]">Feilet</span>
-        </div>
-      );
-    }
-    
-    return null;
-  };
-
+  
   return (
-    <div className="h-full flex flex-col">
-      {/* Offline indicator banner at the top of the message list */}
-      {offlineMode && (
-        <div className="sticky top-0 z-10 bg-red-900/700 backdrop-blur-sm px-3 py-1.5 text-xs flex items-center justify-center text-red-100 border-b border-red-800/50">
-          <div className="h-1.5 w-1.5 bg-red-500 rounded-full mr-1.5 animate-pulse"></div>
-          <span>Offline-modus • {messages.filter(m => m.isPending).length} ventende meldinger</span>
+    <div className="flex-1 overflow-y-auto p-4">
+      {/* Loading indicator */}
+      {isLoading && (
+        <div className="flex justify-center py-4">
+          <Loader2 className="h-6 w-6 animate-spin text-cybergold-500" />
         </div>
       )}
-
-      <div 
-        ref={containerRef}
-        className="flex flex-col h-full overflow-y-auto px-2 md:px-4 pt-2 pb-2 bg-gradient-to-b from-cyberdark-950 to-cyberdark-900"
-      >
-        {/* Load more messages indicator */}
-        {hasMoreMessages && (
-          <div 
-            ref={topLoadingRef} 
-            className="flex justify-center py-4 opacity-80"
-          >
-            {isLoading && (
-              <div className="flex flex-col items-center">
-                <Loader2 className="h-6 w-6 text-cybergold-500 animate-spin mb-1" />
-                <span className="text-xs text-cybergold-600">Laster tidligere meldinger...</span>
-              </div>
-            )}
+      
+      {/* Messages grouped by date */}
+      {Object.entries(groupedMessages).map(([date, dateMessages]) => (
+        <div key={date} className="mb-6">
+          <div className="flex justify-center mb-3">
+            <div className="px-3 py-1 rounded text-xs bg-cyberdark-800 text-gray-400">
+              {formatDate(date)}
+            </div>
           </div>
-        )}
-        
-        {/* Messages grouped by date - fixed to safely compare dates */}
-        {Array.isArray(groupedMessages) && groupedMessages.map((group, groupIndex) => {
-          // Safely convert both dates for comparison
-          const currentGroupDate = new Date(group.timestamp);
-          const prevGroupDate = groupIndex > 0 ? new Date(groupedMessages[groupIndex - 1].timestamp) : null;
           
-          const shouldShowDateSeparator = groupIndex === 0 || 
-            !prevGroupDate || 
-            currentGroupDate.toDateString() !== prevGroupDate.toDateString();
-          
-          return (
-            <div key={`group-${group.senderId}-${groupIndex}`} className="space-y-1 mb-3">
-              {/* Date separator */}
-              {shouldShowDateSeparator ? (
-                <div className="flex items-center justify-center my-4">
-                  <div className="bg-gradient-to-r from-cyberdark-950 via-cyberdark-800 to-cyberdark-950 text-cybergold-500 
-                              px-4 py-1.5 rounded-full text-xs shadow-sm border-t border-b border-cybergold-800/20">
-                    {getDateSeparatorText(group.timestamp)}
+          {dateMessages.map((message) => {
+            const isMyMessage = (message.sender_id || message.senderId) === currentUserId;
+            const sender = userProfiles[message.sender_id || message.senderId || ''] || { 
+              username: 'Unknown User', 
+              avatar_url: null 
+            };
+            
+            // Handle reply reference if available
+            const replyToId = message.replyToId || message.reply_to_id;
+            const replyToMessage = replyToId 
+              ? messages.find(m => m.id === replyToId) 
+              : null;
+              
+            const replyToSender = replyToMessage 
+              ? userProfiles[replyToMessage.sender_id || replyToMessage.senderId || ''] 
+              : null;
+            
+            return (
+              <div 
+                key={message.id} 
+                className={`flex mb-3 ${isMyMessage ? 'justify-end' : 'justify-start'}`}
+              >
+                {/* For messages from others, show avatar */}
+                {!isMyMessage && (
+                  <div className="w-8 h-8 rounded-full overflow-hidden mr-2 flex-shrink-0 bg-cyberdark-800">
+                    {sender.avatar_url ? (
+                      <img 
+                        src={sender.avatar_url} 
+                        alt={sender.username} 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-cybergold-400">
+                        {sender.username.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                <div 
+                  className={`max-w-[75%] rounded-lg p-3 ${
+                    isMyMessage 
+                      ? 'bg-cybergold-900/30 text-gray-100' 
+                      : 'bg-cyberdark-800 text-gray-100'
+                  }`}
+                >
+                  {/* Sender name for messages from others */}
+                  {!isMyMessage && (
+                    <div className="text-xs font-medium text-cybergold-400 mb-1">
+                      {sender.username}
+                    </div>
+                  )}
+                  
+                  {/* Reply reference if any */}
+                  {replyToMessage && (
+                    <div className="mb-2 pl-2 border-l-2 border-cybergold-600/50">
+                      <div className="text-xs text-cybergold-500 mb-0.5">
+                        {isMyMessage ? 'Du svarte' : `Svar til ${replyToSender?.username || 'Unknown'}`}
+                      </div>
+                      <div className="text-xs text-gray-400 truncate">
+                        {replyToMessage.content || 'Media'}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Message content */}
+                  {!message.is_deleted ? (
+                    <>
+                      {message.content && (
+                        <div className="text-sm break-words mb-2">
+                          {message.content}
+                        </div>
+                      )}
+                      
+                      {/* Media content if any */}
+                      {message.media && (
+                        <div className="rounded overflow-hidden mt-2">
+                          {message.media.type.startsWith('image/') ? (
+                            <img 
+                              src={message.media.url} 
+                              alt="Image" 
+                              className="max-h-48 rounded"
+                            />
+                          ) : (
+                            <div className="p-2 bg-cyberdark-900 rounded text-xs text-gray-400">
+                              [Attachment: {message.media.type}]
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="text-sm italic text-gray-500">
+                      Denne meldingen er slettet
+                    </div>
+                  )}
+                  
+                  {/* Status indicators */}
+                  <div className="flex items-center mt-1 text-xs">
+                    {/* Time */}
+                    <span className="text-gray-500">
+                      {formatMessageTime(message.created_at)}
+                    </span>
+                    
+                    {/* Edited indicator */}
+                    {message.is_edited && (
+                      <span className="ml-1.5 text-gray-500">
+                        (redigert)
+                      </span>
+                    )}
+                    
+                    {/* Pending indicator */}
+                    {message.isPending && (
+                      <span className="ml-1.5 text-gray-500">
+                        (sender...)
+                      </span>
+                    )}
+                    
+                    {/* Error indicator */}
+                    {message.hasError && (
+                      <span className="ml-1.5 text-red-500">
+                        (feilet)
+                      </span>
+                    )}
                   </div>
                 </div>
-              ) : null}
-              
-              {/* Messages for this group */}
-              {group.messages.map((message: any) => {
-                const isCurrentUser = (message.senderId || message.sender_id) === userId;
-                
-                // Find reply message if this message is a reply
-                let replyToMessage = null;
-                const replyId = message.replyToId || message.reply_to_id;
-                if (replyId) {
-                  replyToMessage = replyTargetMessages[replyId];
-                }
-                
-                return (
-                  <ChatMessage
-                    key={message.id}
-                    message={{
-                      id: message.id,
-                      content: message.content || message.text || '',
-                      sender: { 
-                        id: message.senderId || message.sender_id || '',
-                        username: userProfiles[message.senderId || message.sender_id || '']?.username || 'Unknown',
-                        full_name: null,
-                        avatar_url: userProfiles[message.senderId || message.sender_id || '']?.avatar_url || null
-                      },
-                      created_at: getIsoString(message.createdAt || message.created_at),
-                      media: (message.mediaUrl || message.media_url) ? {
-                        url: message.mediaUrl || message.media_url || '',
-                        type: message.mediaType || message.media_type || 'image'
-                      } : undefined,
-                      ttl: message.ttl,
-                      status: 'sent',
-                      readBy: message.readBy || message.read_by,
-                      replyTo: message.replyToId || message.reply_to_id,
-                      replyToMessage: replyToMessage ? {
-                        content: replyToMessage.content || replyToMessage.text || '',
-                        sender_id: replyToMessage.senderId || replyToMessage.sender_id || ''
-                      } : undefined
-                    }}
-                    isCurrentUser={isCurrentUser}
-                    userProfiles={userProfiles}
-                    onEdit={onMessageEdit ? () => onMessageEdit(message as GroupMessage) : undefined}
-                    onDelete={onMessageDelete ? () => onMessageDelete(message.id) : undefined}
-                    onReply={onMessageReply ? () => onMessageReply(message as GroupMessage) : undefined}
-                    isEncrypted={isEncryptedGroup || (message.isEncrypted || message.is_encrypted || false)}
-                  >
-                    {renderMessageStatus(message)}
-                  </ChatMessage>
-                );
-              })}
-            </div>
-          );
-        })}
-        
-        {/* Empty chat message */}
-        {!isLoading && messages.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-full text-center p-6 animate-fade-in">
-            <div className="p-4 rounded-xl bg-cyberdark-800/50 border border-cyberdark-700 mb-3 w-16 h-16 
-                          flex items-center justify-center shadow-lg">
-              <MessageSquare className="h-8 w-8 text-cybergold-500 opacity-70" />
-            </div>
-            <p className="text-cybergold-400 font-medium mb-1">Ingen meldinger enda</p>
-            <p className="text-sm text-cybergold-600">
-              Send den første meldingen for å starte samtalen!
-            </p>
-          </div>
-        )}
-        
-        {/* Loading indicator */}
-        {isLoading && messages.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-full animate-fade-in">
-            <div className="p-5 rounded-xl bg-cyberdark-800/60 border border-cyberdark-700 mb-4">
-              <Loader2 className="h-10 w-10 text-cybergold-500 animate-spin" />
-            </div>
-            <p className="text-cybergold-400 font-medium">Laster samtale</p>
-            <p className="text-sm text-cybergold-600 mt-1">Henter meldinger...</p>
-          </div>
-        )}
-        
-        {/* Reference to bottom of the list for auto-scroll */}
-        <div ref={messagesEndRef} />
-        
-        {/* Scroll to bottom button - more mobile friendly */}
-        {showScrollToBottom && (
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={scrollToBottom}
-            className="fixed bottom-20 right-4 md:bottom-24 md:right-6 rounded-full h-10 w-10 md:h-11 md:w-11 border border-cybergold-700/30 
-                      bg-gradient-to-br from-cyberdark-800 to-cyberdark-900 hover:bg-cyberdark-800 
-                      shadow-md hover:shadow-lg hover:border-cybergold-500/40 transition-all duration-300 z-10"
-          >
-            <ChevronDown className="h-5 w-5 text-cybergold-500" />
-          </Button>
-        )}
-      </div>
+              </div>
+            );
+          })}
+        </div>
+      ))}
+      
+      {/* Empty state */}
+      {!isLoading && messages.length === 0 && (
+        <div className="h-full flex flex-col items-center justify-center">
+          <p className="text-gray-400 mb-1">Ingen meldinger ennå</p>
+          <p className="text-xs text-gray-500">Start samtalen ved å sende en melding</p>
+        </div>
+      )}
+      
+      <div ref={messagesEndRef} />
     </div>
   );
 };
 
-export default GroupMessageList;
+// Helper functions
+const groupMessagesByDate = (messages: GroupMessage[]) => {
+  const groups: Record<string, GroupMessage[]> = {};
+  
+  messages.forEach(message => {
+    const date = new Date(message.created_at || message.createdAt || new Date()).toISOString().split('T')[0];
+    if (!groups[date]) {
+      groups[date] = [];
+    }
+    groups[date].push(message);
+  });
+  
+  return groups;
+};
+
+const formatDate = (isoDate: string) => {
+  const date = new Date(isoDate);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  
+  if (date.toISOString().split('T')[0] === today.toISOString().split('T')[0]) {
+    return 'I dag';
+  } else if (date.toISOString().split('T')[0] === yesterday.toISOString().split('T')[0]) {
+    return 'I går';
+  } else {
+    return formatDistanceToNow(date, { addSuffix: true, locale: nb });
+  }
+};

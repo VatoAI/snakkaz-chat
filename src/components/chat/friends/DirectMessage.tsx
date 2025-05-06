@@ -1,13 +1,12 @@
-
 import React, { useState, useEffect } from 'react';
 import { MessageInput } from '@/components/MessageInput';
-import { GroupMessageList } from '@/components/chat/GroupMessageList';
+import { GroupMessageList, GroupMessage } from '@/components/chat/GroupMessageList';
 import { ArrowLeft, PhoneCall, VideoIcon, InfoIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar } from '@/components/ui/avatar';
 import { AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { WebRTCManager } from '@/utils/webrtc';
-import { DecryptedMessage } from '@/types/message';
+import { DecryptedMessage } from '@/types/message.d';
 import { GroupMessage } from '@/types/group';
 import { getInitials } from '@/utils/user';
 
@@ -41,12 +40,19 @@ export const DirectMessage: React.FC<DirectMessageProps> = ({
   const [isSending, setIsSending] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   
-  // Format messages for GroupMessageList component
-  const formattedMessages = messages.map(message => ({
-    ...message,
-    senderId: message.sender?.id || message.sender_id, // Handle both sender.id and sender_id 
-    createdAt: message.created_at || new Date().toISOString(),
-  })) as GroupMessage[];
+  // Format messages for GroupMessageList component, but use type assertion to satisfy TypeScript
+  const formattedMessages: GroupMessage[] = messages.map(message => ({
+    id: message.id,
+    content: message.content,
+    sender_id: message.sender?.id || message.sender_id, 
+    group_id: message.group_id,
+    created_at: message.created_at || new Date().toISOString(),
+    is_deleted: message.is_deleted,
+    is_edited: message.is_edited,
+    isPending: message.isPending,
+    hasError: message.hasError,
+    // Add other fields as needed
+  }));
   
   const friendUsername = friend?.profile?.username || userProfiles[friend?.friend_id]?.username || 'Unknown User';
   const friendAvatar = friend?.profile?.avatar_url || userProfiles[friend?.friend_id]?.avatar_url;

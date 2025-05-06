@@ -216,7 +216,7 @@ export const DirectMessageContainer = ({
       };
       
       // Update UI immediately
-      onNewMessage(mediaMessage as DecryptedMessage);
+      handleOnNewMessage(mediaMessage as DecryptedMessage);
       
       // Send to server or via WebRTC
       const { data, error } = await supabase
@@ -255,6 +255,13 @@ export const DirectMessageContainer = ({
         description: "Failed to send media",
         variant: "destructive"
       });
+    }
+  };
+
+  const handleOnNewMessage = (message: DecryptedMessage) => {
+    // Oppdater state med ny melding
+    if (typeof onNewMessage === 'function') {
+      onNewMessage(message);
     }
   };
 

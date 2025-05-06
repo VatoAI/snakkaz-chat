@@ -1,182 +1,135 @@
-import React, { useState, useRef } from 'react';
-import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
-import { DecryptedMessage } from '@/types/message';
-import { MoreHorizontal, Reply, Trash, Edit, Lock, Copy, Clock } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
-} from '@/components/ui/dropdown-menu';
+
+import React, { useState } from 'react';
+import { DecryptedMessage } from '@/types/message.d';
+import { formatDistanceToNow } from 'date-fns';
+import { nb } from 'date-fns/locale';
+import { MoreVertical, Edit, Trash, Check, Clock } from 'lucide-react';
 
 interface ChatMessageProps {
   message: Partial<DecryptedMessage>;
-  isCurrentUser?: boolean;
-  userProfiles?: Record<string, any>;
-  onReply?: () => void;
+  isCurrentUser: boolean;
+  userProfiles: Record<string, any>;
   onEdit?: () => void;
   onDelete?: () => void;
-  onReactionAdd?: (emoji: string) => void;
-  showAvatar?: boolean;
-  isEncrypted?: boolean;
-  children?: React.ReactNode;
 }
 
-export const ChatMessage: React.FC<ChatMessageProps> = ({
-  message,
-  isCurrentUser = false,
-  userProfiles = {},
-  onReply,
+export const ChatMessage: React.FC<ChatMessageProps> = ({ 
+  message, 
+  isCurrentUser,
+  userProfiles,
   onEdit,
-  onDelete,
-  onReactionAdd,
-  showAvatar = true,
-  isEncrypted = false,
-  children
+  onDelete
 }) => {
   const [showActions, setShowActions] = useState(false);
-  const actionsRef = useRef<HTMLDivElement>(null);
   
-  const senderId = message.sender?.id || '';
-  
-  const senderProfile = userProfiles[senderId] || {
-    username: message.sender?.username || 'Unknown User',
-    avatar_url: message.sender?.avatar_url || null
+  // Handle undefined sender_id
+  const senderId = message.sender_id || message.sender?.id || '';
+  const profile = userProfiles[senderId] || {
+    username: 'Unknown',
+    avatar_url: null
   };
   
+  // Format timestamp
   const formattedTime = message.created_at 
-    ? format(new Date(message.created_at), 'HH:mm')
+    ? formatDistanceToNow(new Date(message.created_at), { addSuffix: true, locale: nb })
     : '';
   
-  const isEdited = message.is_edited || message.isEdited;
+  // Handle opening/closing action menu
+  const toggleActions = () => setShowActions(!showActions);
   
-  // Message content rendering functions
+  // Check if message has been edited
+  const isEdited = message.is_edited === true || message.isEdited === true;
   
   return (
-    <div 
-      className={cn(
-        "group relative flex items-start gap-2 py-1",
-        isCurrentUser ? "justify-end" : "justify-start"
-      )}
-      onMouseEnter={() => setShowActions(true)}
-      onMouseLeave={() => setShowActions(false)}
-    >
-      {!isCurrentUser && showAvatar && (
-        <div className="flex-shrink-0 w-8 h-8 rounded-full overflow-hidden bg-cyberdark-700 mt-1">
-          {senderProfile.avatar_url ? (
+    <div className={`flex gap-3 group ${isCurrentUser ? 'justify-end' : ''}`}>
+      {/* Avatar for non-user messages */}
+      {!isCurrentUser && (
+        <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-cyberdark-800">
+          {profile.avatar_url ? (
             <img 
-              src={senderProfile.avatar_url} 
-              alt={senderProfile.username || 'User avatar'} 
+              src={profile.avatar_url} 
+              alt={profile.username} 
               className="w-full h-full object-cover"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-cybergold-900 text-cybergold-400">
-              {(senderProfile.username || 'U').charAt(0).toUpperCase()}
+            <div className="w-full h-full flex items-center justify-center text-cybergold-500 font-medium">
+              {profile.username.charAt(0).toUpperCase()}
             </div>
           )}
         </div>
       )}
       
-      <div className={cn(
-        "relative max-w-[85%] sm:max-w-[75%]",
-        isCurrentUser ? "bg-cybergold-900/30 border border-cybergold-800/30" : "bg-cyberdark-800/80 border border-cyberdark-700",
-        "rounded-lg px-3 py-2 text-sm shadow-sm"
-      )}>
+      {/* Message content */}
+      <div 
+        className={`relative max-w-[75%] rounded-lg p-3 ${
+          isCurrentUser 
+            ? 'bg-cybergold-900/30 text-cybergold-50' 
+            : 'bg-cyberdark-800 text-gray-200'
+        }`}
+        onMouseEnter={() => isCurrentUser && setShowActions(true)}
+        onMouseLeave={() => setShowActions(false)}
+      >
+        {/* Sender name for non-user messages */}
         {!isCurrentUser && (
           <div className="text-xs font-medium text-cybergold-400 mb-1">
-            {senderProfile.username || 'Unknown User'}
-            {isEncrypted && (
-              <Lock 
-                className="inline-block ml-1 text-cybergold-500" 
-                size={12} 
-                aria-label="Encrypted message"
-              />
-            )}
+            {profile.username}
           </div>
         )}
         
-        {/* Message content */}
-        <div className="text-cybergold-300 break-words">
-          {message.content}
-          {message.is_edited && (
-            <span className="text-xs text-cybergold-600 ml-1">(redigert)</span>
+        {/* Message text */}
+        {!message.is_deleted ? (
+          <div className="text-sm break-words">
+            {message.content}
+          </div>
+        ) : (
+          <div className="text-sm italic text-gray-500">
+            Denne meldingen er slettet
+          </div>
+        )}
+        
+        {/* Message metadata */}
+        <div className="flex items-center mt-1 text-xs text-gray-500">
+          <span>{formattedTime}</span>
+          
+          {/* Edit indicator */}
+          {isEdited && (
+            <span className="ml-2 flex items-center">
+              <Check className="w-3 h-3 mr-1" />
+              redigert
+            </span>
+          )}
+          
+          {/* TTL indicator */}
+          {(message.ttl || message.ttl === 0) && (
+            <span className="ml-2 flex items-center">
+              <Clock className="w-3 h-3 mr-1" />
+              {message.ttl > 0 ? `${message.ttl}s` : 'Utløper straks'}
+            </span>
           )}
         </div>
         
-        {/* Message time */}
-        <div className="text-[10px] text-cybergold-600 mt-1 flex items-center">
-          {formattedTime}
-          {message.ttl && message.ttl > 0 && (
-            <span className="ml-1 flex items-center" title="Disappearing message">
-              <Clock size={10} className="mr-0.5" />
-              {formatTTL(message.ttl)}
-            </span>
-          )}
-          {children}
-        </div>
-      </div>
-      
-      {/* Message actions */}
-      {showActions && (
-        <div 
-          ref={actionsRef}
-          className={cn(
-            "absolute top-0 opacity-0 group-hover:opacity-100 transition-opacity",
-            isCurrentUser ? "-left-10" : "-right-10",
-          )}
-        >
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full">
-                <MoreHorizontal className="h-4 w-4 text-cybergold-500" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align={isCurrentUser ? "start" : "end"} className="bg-cyberdark-900 border-cyberdark-700">
-              {onReply && (
-                <DropdownMenuItem onClick={onReply} className="text-cybergold-400 hover:text-cybergold-300">
-                  <Reply className="mr-2 h-4 w-4" />
-                  <span>Svar</span>
-                </DropdownMenuItem>
-              )}
-              {isCurrentUser && onEdit && (
-                <DropdownMenuItem onClick={onEdit} className="text-cybergold-400 hover:text-cybergold-300">
-                  <Edit className="mr-2 h-4 w-4" />
-                  <span>Rediger</span>
-                </DropdownMenuItem>
-              )}
-              {isCurrentUser && onDelete && (
-                <DropdownMenuItem onClick={onDelete} className="text-red-500 hover:text-red-400">
-                  <Trash className="mr-2 h-4 w-4" />
-                  <span>Slett</span>
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuItem 
-                onClick={() => navigator.clipboard.writeText(message.content || '')}
-                className="text-cybergold-400 hover:text-cybergold-300"
+        {/* Action buttons */}
+        {isCurrentUser && showActions && (onEdit || onDelete) && (
+          <div className="absolute top-2 right-2 bg-cyberdark-900 rounded-md shadow-lg overflow-hidden">
+            {onEdit && (
+              <button 
+                onClick={onEdit}
+                className="p-2 hover:bg-cyberdark-800"
               >
-                <Copy className="mr-2 h-4 w-4" />
-                <span>Kopier tekst</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      )}
+                <Edit className="w-4 h-4 text-cybergold-500" />
+              </button>
+            )}
+            {onDelete && (
+              <button 
+                onClick={onDelete}
+                className="p-2 hover:bg-cyberdark-800"
+              >
+                <Trash className="w-4 h-4 text-red-500" />
+              </button>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
-};
-
-// Helper function to format TTL time
-const formatTTL = (ttl: number): string => {
-  if (ttl < 60) {
-    return `${ttl}s`;
-  } else if (ttl < 3600) {
-    return `${Math.floor(ttl / 60)}m`;
-  } else if (ttl < 86400) {
-    return `${Math.floor(ttl / 3600)}h`;
-  } else {
-    return `${Math.floor(ttl / 86400)}d`;
-  }
 };

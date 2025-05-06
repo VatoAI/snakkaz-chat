@@ -91,7 +91,7 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
           key={message.id}
           message={message}
           isCurrentUser={message.sender_id === currentUserId || message.senderId === currentUserId}
-          userProfile={userProfiles[message.sender_id || message.senderId]}
+          userProfiles={userProfiles}
           onEdit={onEdit ? () => onEdit(message) : undefined}
           onDelete={onDelete ? () => onDelete(message.id) : undefined}
         />
