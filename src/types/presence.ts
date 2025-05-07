@@ -1,25 +1,15 @@
 
 export enum UserStatus {
   ONLINE = 'online',
-  OFFLINE = 'offline',
   AWAY = 'away',
   BUSY = 'busy',
-  BRB = 'brb'
+  OFFLINE = 'offline',
+  INVISIBLE = 'invisible'
 }
-
-// Også eksporter som string literal type for bedre kompatibilitet
-export type UserStatusType = 'online' | 'offline' | 'away' | 'busy' | 'brb';
 
 export interface UserPresence {
-  user_id: string;
+  userId: string;
   status: UserStatus;
-  last_seen: string;
-  online?: boolean;
+  lastActive?: string;
+  customStatus?: string;
 }
-
-// Helper functions for working with user status
-export const isValidStatus = (status: string): status is UserStatus => {
-  return ['online', 'offline', 'away', 'busy', 'brb'].includes(status);
-};
-
-export const getDefaultStatus = (): UserStatus => UserStatus.ONLINE;

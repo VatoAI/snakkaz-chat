@@ -1,6 +1,7 @@
+
 import React from 'react';
 import { ChatInputField } from '@/components/chat/ChatInputField';
-import { DecryptedMessage } from '@/types/message';
+import { DecryptedMessage } from '@/types/message.d';
 import { SecurityLevel } from '@/types/security';
 
 interface MessageInputProps {

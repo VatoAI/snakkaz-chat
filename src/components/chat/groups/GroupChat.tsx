@@ -1,17 +1,17 @@
-import { Group, GroupMember } from "@/types/groups";
-import { DecryptedMessage } from "@/types/message";
-import { WebRTCManager } from "@/utils/webrtc";
+import { useState, useEffect, useCallback } from "react";
+import { DecryptedMessage } from "@/types/message.d";
+import { Group } from "@/types/group";
 import { GroupChatHeader } from "./GroupChatHeader";
-import { GroupChatEmptyState } from "./GroupChatEmptyState";
-import { DirectMessageList } from "../friends/DirectMessageList";
-import { DirectMessageForm } from "../friends/DirectMessageForm";
+import { GroupMessageList } from "./GroupMessageList";
+import { MessageInput } from "@/components/MessageInput";
 import { useGroupChat } from "./hooks/useGroupChat";
-import { ChatGlassPanel } from "../ChatGlassPanel";
-import { useState, useMemo, useEffect } from "react";
-import { GroupInviteButton } from "./GroupInviteButton";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { useGroupEncryption } from "./hooks/useGroupEncryption";
+import { useAuth } from "@/hooks/useAuth";
+import useGroupEncryption from "./hooks/useGroupEncryption";
+import { WebRTCManager } from "@/utils/webrtc";
+import { GroupChatEmptyState } from "./GroupChatEmptyState";
+import { useToast } from "@/components/ui/use-toast";
+import { SecurityLevel } from "@/types/security";
+import { UserStatus } from "@/types/presence";
 import { Button } from "@/components/ui/button";
 import { Shield, Lock, AlertTriangle, Crown, Star, ArrowRight, Users } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
@@ -184,7 +184,6 @@ export const GroupChat: React.FC<GroupChatProps> = ({
     }
   }, [isMobile, showMembersDialog, showInviteDialog]);
 
-  // Fix the handleFormSubmit function
   const handleFormSubmit = (text: string, files?: File[]) => {
     if (isMobile && files && files.length > 0) {
       toast({
@@ -390,7 +389,7 @@ export const GroupChat: React.FC<GroupChatProps> = ({
               onEnablePageEncryption={isAdmin || isPremiumMember ? handleEnablePageEncryption : undefined}
             />
           ) : (
-            <DirectMessageList
+            <GroupMessageList
               messages={groupMessages}
               currentUserId={currentUserId}
               peerIsTyping={peerIsTyping}
@@ -410,7 +409,7 @@ export const GroupChat: React.FC<GroupChatProps> = ({
       </div>
       <div className="w-full">
         <ChatGlassPanel className="rounded-b-2xl rounded-t-none shadow-neon-gold/10" noPadding>
-          <DirectMessageForm
+          <MessageInput
             usingServerFallback={usingServerFallback}
             sendError={sendError}
             isLoading={isLoading}

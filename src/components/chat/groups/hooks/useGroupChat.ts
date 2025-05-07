@@ -1,6 +1,5 @@
-
 import { Group } from "@/types/group";
-import { DecryptedMessage } from "@/types/message";
+import { DecryptedMessage } from "@/types/message.d";
 import { WebRTCManager } from "@/utils/webrtc";
 import { useDirectMessageState } from "../../friends/hooks/useDirectMessageState";
 import { useDirectMessageConnection } from "../../friends/hooks/useDirectMessageConnection";
@@ -16,7 +15,6 @@ export const useGroupChat = (
   onNewMessage: (message: DecryptedMessage) => void,
   messages: DecryptedMessage[] = []
 ) => {
-  // Use the base state management hook
   const {
     newMessage,
     setNewMessage,
@@ -37,20 +35,12 @@ export const useGroupChat = (
     handleCancelEditMessage,
   } = useDirectMessageState(currentUserId, group.id);
 
-  // Set up connection management for P2P connections
   const { handleReconnect } = useDirectMessageConnection(
     webRTCManager,
-    // For groups, we connect to all members
     group.members.find(m => {
-      // Support both camelCase and snake_case
-      const memberId = m.userId || m.user_id;
+      const memberId = m.user_id;
       return memberId !== currentUserId;
-    })?.userId || 
-    group.members.find(m => {
-      // Support both camelCase and snake_case
-      const memberId = m.userId || m.user_id;
-      return memberId !== currentUserId;
-    })?.user_id,
+    })?.user_id || "",
     connectionState,
     setConnectionState,
     dataChannelState,
@@ -61,20 +51,17 @@ export const useGroupChat = (
     setConnectionAttempts
   );
 
-  // Typing indicator for group chat
   const { peerIsTyping, startTyping } = useTypingIndicator(
     currentUserId,
     group.id
   );
   
-  // Read receipts for group messages
   const { isMessageRead, markMessagesAsRead } = useReadReceipts(
     currentUserId,
     group.id,
     messages
   );
 
-  // Message sending functionality for group
   const { 
     sendError, 
     handleSendMessage: handleSendGroupMessage
@@ -85,7 +72,6 @@ export const useGroupChat = (
     onNewMessage
   );
 
-  // Handle form submission (edit/send)
   const { handleSubmit, handleDeleteMessage } = useGroupMessageSubmit(
     currentUserId,
     newMessage,

@@ -3,7 +3,7 @@ import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from './hooks/useAuth';
 import { Toaster } from "@/components/ui/toaster";
-import { ErrorBoundary } from 'react-error-boundary';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 // Lazy load components
 const Login = lazy(() => import("@/pages/Login"));
@@ -14,22 +14,6 @@ const Chat = lazy(() => import("@/pages/Chat"));
 const Profile = lazy(() => import("@/pages/Profile"));
 const Settings = lazy(() => import("@/pages/Settings"));
 const GroupChatPage = lazy(() => import("@/pages/GroupChatPage"));
-
-// Error fallback component
-const ErrorFallback = () => (
-  <div className="flex items-center justify-center h-screen bg-cyberdark-950 text-cybergold-400">
-    <div className="text-center p-6 max-w-md">
-      <h2 className="text-2xl font-bold mb-4">Noe gikk galt</h2>
-      <p className="mb-4">Det oppstod en feil under lasting av denne siden.</p>
-      <button 
-        onClick={() => window.location.reload()}
-        className="px-4 py-2 bg-cybergold-600 text-black rounded hover:bg-cybergold-500 transition-colors"
-      >
-        Last siden på nytt
-      </button>
-    </div>
-  </div>
-);
 
 // Loading component
 const LoadingSpinner = () => (
@@ -78,7 +62,7 @@ const PublicOnlyRoute = ({ children }: { children: JSX.Element }) => {
 
 function App() {
   return (
-    <ErrorBoundary FallbackComponent={ErrorFallback}>
+    <ErrorBoundary>
       <AuthProvider>
         <Suspense fallback={<LoadingSpinner />}>
           <Routes>

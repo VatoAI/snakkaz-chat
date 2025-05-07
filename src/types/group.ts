@@ -1,29 +1,25 @@
 
-import { SecurityLevel } from './security';
-
 export interface Group {
   id: string;
   name: string;
   creator_id: string;
-  description?: string;
-  visibility?: string;
-  security_level: SecurityLevel;
-  password?: string;
+  avatar_url?: string | null;
   created_at: string;
-  updated_at?: string;
-  write_permissions?: string;
-  members?: GroupMember[];
-  avatar_url?: string;
-  is_premium?: boolean;
+  default_message_ttl?: number;
+  members: GroupMember[];
+  security_level: string;
+  write_permissions: string;
+  password?: string | null;
 }
 
 export interface GroupMember {
   id: string;
-  user_id: string;
   group_id: string;
-  joined_at: string;
+  user_id: string;
   role: string;
+  joined_at: string;
   can_write: boolean;
+  userId?: string; // For backward compatibility
 }
 
 export interface GroupInvite {
@@ -33,9 +29,8 @@ export interface GroupInvite {
   invited_by: string;
   created_at: string;
   expires_at: string;
+  group_name?: string; // For displaying group name in invites
 }
 
-export type MessageTTLOption = {
-  value: number;
-  label: string;
-};
+export type GroupVisibility = 'public' | 'private' | 'invite_only' | 'hidden';
+export type GroupWritePermission = 'all' | 'admin' | 'moderator';
