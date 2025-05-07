@@ -1,2 +1,4 @@
-
-export type SecurityLevel = 'low' | 'standard' | 'high' | 'maximum' | 'premium' | 'p2p_e2ee' | 'server_e2ee';
+// This file is kept for backward compatibility
+// Import the enum from the main implementation file
+import { SecurityLevel } from './security';
+export { SecurityLevel };
