@@ -1,5 +1,5 @@
-
 import { SecurityLevel } from './security';
+import { User } from './message';
 
 export interface Group {
   id: string;
@@ -24,6 +24,21 @@ export interface GroupMember {
   joined_at: string;
   role: string;
   can_write: boolean;
+  user?: User;
+}
+
+export interface GroupMessage {
+  id: string;
+  group_id: string;
+  sender_id: string;
+  content?: string;
+  created_at: string;
+  updated_at?: string;
+  is_edited?: boolean;
+  is_deleted?: boolean;
+  media_url?: string;
+  media_type?: string;
+  sender?: User;
 }
 
 export interface GroupInvite {

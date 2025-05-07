@@ -90,7 +90,9 @@ export interface ChatMessage {
 export interface User {
   id: string;
   username?: string;
+  full_name?: string;
   avatar_url?: string;
+  displayName?: string;
 }
 
 export interface Message {
@@ -104,16 +106,25 @@ export interface Message {
   ttl?: number;
   expires_at?: string;
   sender?: User;
+  receiver_id?: string;
+  read_at?: string;
+  is_deleted?: boolean;
 }
 
 export interface DecryptedMessage {
   id: string;
+  sender_id?: string;
   sender: User;
   content?: string;
   media_url?: string;
   timestamp?: string;
   created_at?: string;
+  updated_at?: string;
   is_edited?: boolean;
+  isEdited?: boolean;
   ttl?: number;
   is_encrypted?: boolean;
+  receiver_id?: string;
+  read_at?: string;
+  is_deleted?: boolean;
 }
