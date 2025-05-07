@@ -1,96 +1,150 @@
 /**
- * Main Encryption Service
+ * Encryption Service
  * 
- * This service coordinates all encryption-related operations including:
- * - Key management
- * - User authentication for encryption
- * - Integration with various encryption strategies
+ * Main encryption service that provides encryption and decryption functionality
+ * for the Snakkaz Chat application. Supports different security levels and encryption types.
  */
 
-import { encryptPageForOffline, decryptOfflinePage, isPageAvailableOffline } from './offlinePageEncryption';
+import { generateEncryptionKey, encryptData, decryptData } from '../../utils/encryption/encryption-utils';
 
-// Supported security levels
+// Security levels supported by the application
 export enum SecurityLevel {
-  STANDARD = 'STANDARD',
-  E2EE = 'E2EE',
-  P2P_E2EE = 'P2P_E2EE'
+  STANDARD = 'STANDARD',        // Standard encryption
+  E2EE = 'E2EE',                // End-to-end encryption
+  P2P_E2EE = 'P2P_E2EE',        // Peer-to-peer end-to-end encryption
 }
 
-// Encryption configuration
-interface EncryptionConfig {
-  defaultSecurityLevel: SecurityLevel;
-  enableOfflineSupport: boolean;
-  keyRotationIntervalDays: number;
+// Types of encryption available
+export enum EncryptionType {
+  MESSAGE = 'MESSAGE',          // For individual messages
+  WHOLE_PAGE = 'WHOLE_PAGE',    // For entire pages
+  FILE = 'FILE',                // For files and attachments
+  USER_DATA = 'USER_DATA',      // For user profile data
 }
 
-// Default configuration values
-const DEFAULT_CONFIG: EncryptionConfig = {
-  defaultSecurityLevel: SecurityLevel.E2EE,
-  enableOfflineSupport: true,
-  keyRotationIntervalDays: 30,
-};
+interface EncryptionResult {
+  encryptedData: string;
+  keyId: string;
+  securityLevel: SecurityLevel;
+  timestamp: number;
+  metadata?: Record<string, unknown>;
+}
 
-/**
- * Main encryption service class
- */
+interface DecryptionOptions {
+  securityLevel?: SecurityLevel;
+  keyId?: string;
+  key?: string;
+}
+
 export class EncryptionService {
-  private config: EncryptionConfig;
-  
-  constructor(config: Partial<EncryptionConfig> = {}) {
-    this.config = { ...DEFAULT_CONFIG, ...config };
+  /**
+   * Encrypt data with the specified security level and encryption type
+   */
+  public async encrypt(
+    data: string | object,
+    securityLevel: SecurityLevel = SecurityLevel.E2EE,
+    encryptionType: EncryptionType = EncryptionType.MESSAGE,
+    customKey?: string
+  ): Promise<EncryptionResult> {
+    try {
+      // Convert object to string if needed
+      const dataString = typeof data === 'object' ? JSON.stringify(data) : data;
+      
+      // Generate or use provided encryption key
+      const { key, keyId } = customKey 
+        ? { key: customKey, keyId: this.generateKeyId() } 
+        : await this.generateKey(securityLevel, encryptionType);
+      
+      // Encrypt the data
+      const encryptedData = await encryptData(dataString, key, encryptionType);
+      
+      return {
+        encryptedData,
+        keyId,
+        securityLevel,
+        timestamp: Date.now(),
+        metadata: {
+          encryptionType,
+          version: '1.0'
+        }
+      };
+    } catch (error) {
+      console.error('Encryption failed:', error);
+      throw new Error(`Failed to encrypt data: ${(error as Error).message}`);
+    }
+  }
+
+  /**
+   * Decrypt previously encrypted data
+   */
+  public async decrypt<T = any>(
+    encryptedData: string,
+    key: string,
+    options?: DecryptionOptions
+  ): Promise<T> {
+    try {
+      const decryptedData = await decryptData(encryptedData, key);
+      
+      // Try to parse as JSON if possible
+      try {
+        return JSON.parse(decryptedData) as T;
+      } catch {
+        // Return as is if not valid JSON
+        return decryptedData as unknown as T;
+      }
+    } catch (error) {
+      console.error('Decryption failed:', error);
+      throw new Error(`Failed to decrypt data: ${(error as Error).message}`);
+    }
+  }
+
+  /**
+   * Generate a new encryption key based on security level and type
+   */
+  private async generateKey(
+    securityLevel: SecurityLevel,
+    encryptionType: EncryptionType
+  ): Promise<{ key: string; keyId: string }> {
+    const key = await generateEncryptionKey(securityLevel);
+    const keyId = this.generateKeyId();
+    return { key, keyId };
+  }
+
+  /**
+   * Generate a unique key identifier
+   */
+  private generateKeyId(): string {
+    return `key_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+  }
+
+  /**
+   * Verify if the key can decrypt the data
+   */
+  public async verifyKey(encryptedData: string, key: string): Promise<boolean> {
+    try {
+      await this.decrypt(encryptedData, key);
+      return true;
+    } catch {
+      return false;
+    }
   }
   
   /**
-   * Initialize the encryption service
+   * Generate a random password-safe string with specified length
    */
-  public async initialize(): Promise<void> {
-    // Add initialization logic here (e.g., loading keys, checking for updates)
-    console.log('Encryption service initialized with security level:', this.config.defaultSecurityLevel);
-  }
-  
-  /**
-   * Encrypt content with appropriate security level
-   */
-  public async encrypt(content: any, securityLevel?: SecurityLevel, enableOffline: boolean = this.config.enableOfflineSupport): Promise<any> {
-    const effectiveSecurityLevel = securityLevel || this.config.defaultSecurityLevel;
+  public generateRandomString(length: number = 32): string {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_!@#$%^&*()';
+    let result = '';
+    const randomValues = new Uint8Array(length);
+    window.crypto.getRandomValues(randomValues);
     
-    if (enableOffline && effectiveSecurityLevel === SecurityLevel.P2P_E2EE) {
-      // Use offline encryption for P2P_E2EE mode
-      const pageId = typeof content.id === 'string' ? content.id : `page-${Date.now()}`;
-      return encryptPageForOffline(pageId, content);
+    for (let i = 0; i < length; i++) {
+      result += chars.charAt(randomValues[i] % chars.length);
     }
     
-    // Add other encryption strategies here
-    throw new Error(`Encryption with security level ${effectiveSecurityLevel} not yet implemented`);
-  }
-  
-  /**
-   * Decrypt content according to its security level
-   */
-  public async decrypt(encryptedData: any, pageId?: string): Promise<any> {
-    // Check if this is offline encrypted data
-    if (encryptedData.securityLevel === SecurityLevel.P2P_E2EE && encryptedData.isOfflineReady && pageId) {
-      return decryptOfflinePage(pageId, encryptedData);
-    }
-    
-    // Add other decryption strategies here
-    throw new Error(`Decryption for security level ${encryptedData.securityLevel} not yet implemented`);
-  }
-  
-  /**
-   * Check if content is available offline
-   */
-  public async isAvailableOffline(pageId: string): Promise<boolean> {
-    return isPageAvailableOffline(pageId);
-  }
-  
-  /**
-   * Update encryption configuration
-   */
-  public updateConfig(config: Partial<EncryptionConfig>): void {
-    this.config = { ...this.config, ...config };
+    return result;
   }
 }
 
-// Export a default instance
-export const defaultEncryptionService = new EncryptionService();
+// Export singleton instance
+export const encryptionService = new EncryptionService();
