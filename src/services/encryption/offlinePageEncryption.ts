@@ -76,11 +76,19 @@ export const getOfflineKey = async (pageId: string): Promise<OfflineEncryptionKe
 };
 
 /**
+ * Interface for page data that can be encrypted
+ */
+interface PageDataToEncrypt {
+  content: string;
+  metadata?: Record<string, unknown>;
+}
+
+/**
  * Encrypt page content with P2P_E2EE security level and prepare for offline use
  */
 export const encryptPageForOffline = async (
   pageId: string,
-  pageData: any
+  pageData: PageDataToEncrypt
 ): Promise<EncryptedPageData> => {
   try {
     // Generate a new encryption key
@@ -103,9 +111,14 @@ export const encryptPageForOffline = async (
     };
   } catch (error) {
     console.error('Failed to encrypt page for offline use:', error);
-    throw new Error('Could not encrypt page for offline use');
+    throw new Error('Could not encrypt the page for offline use');
   }
 };
+
+export const decryptOfflinePage = async (
+  pageId: string,
+  encryptedData: EncryptedPageData
+): Promise<PageDataToEncrypt> => {
 
 /**
  * Decrypt page content for offline use
