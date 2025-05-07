@@ -36,7 +36,28 @@ interface DecryptionOptions {
   key?: string;
 }
 
+// Key rotation policy options
+export interface KeyRotationPolicy {
+  intervalDays: number;       // How often keys should be rotated
+  autoRotate: boolean;        // Whether to automatically rotate keys
+  retainPreviousKeys: number; // How many previous keys to retain
+}
+
+// Default key rotation policy
+const DEFAULT_KEY_ROTATION_POLICY: KeyRotationPolicy = {
+  intervalDays: 30,
+  autoRotate: true,
+  retainPreviousKeys: 3
+};
+
 export class EncryptionService {
+  private keyRotationPolicy: KeyRotationPolicy;
+  private keyHistory: Map<string, { key: string, createdAt: number }> = new Map();
+  
+  constructor(keyRotationPolicy: Partial<KeyRotationPolicy> = {}) {
+    this.keyRotationPolicy = { ...DEFAULT_KEY_ROTATION_POLICY, ...keyRotationPolicy };
+  }
+
   /**
    * Encrypt data with the specified security level and encryption type
    */
@@ -55,6 +76,11 @@ export class EncryptionService {
         ? { key: customKey, keyId: this.generateKeyId() } 
         : await this.generateKey(securityLevel, encryptionType);
       
+      // Store key in history if not a custom key
+      if (!customKey) {
+        this.keyHistory.set(keyId, { key, createdAt: Date.now() });
+      }
+      
       // Encrypt the data
       const encryptedData = await encryptData(dataString, key, encryptionType);
       
@@ -65,7 +91,7 @@ export class EncryptionService {
         timestamp: Date.now(),
         metadata: {
           encryptionType,
-          version: '1.0'
+          version: '1.1'
         }
       };
     } catch (error) {
@@ -104,19 +130,30 @@ export class EncryptionService {
   private async generateKey(
     securityLevel: SecurityLevel,
     encryptionType: EncryptionType
-  ): Promise<{ key: string; keyId: string }> {
-    const key = await generateEncryptionKey(securityLevel);
+  ): Promise<{ key: string, keyId: string }> {
+    // Determine key strength based on security level
+    const keyStrength = securityLevel === SecurityLevel.STANDARD ? 'standard' :
+                       securityLevel === SecurityLevel.E2EE ? 'high' : 'ultra';
+                       
+    // Generate the encryption key
+    const key = await generateEncryptionKey(keyStrength, encryptionType);
+    
+    // Generate a unique identifier for this key
     const keyId = this.generateKeyId();
+    
     return { key, keyId };
   }
-
+  
   /**
    * Generate a unique key identifier
    */
   private generateKeyId(): string {
-    return `key_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+    // Create a timestamp-based ID with a random component
+    const timestamp = Date.now().toString(36);
+    const randomPart = Math.random().toString(36).substring(2, 10);
+    return `key_${timestamp}_${randomPart}`;
   }
-
+  
   /**
    * Verify if the key can decrypt the data
    */
@@ -143,6 +180,153 @@ export class EncryptionService {
     }
     
     return result;
+  }
+  
+  /**
+   * Re-encrypt data with a new key
+   * Useful for key rotation or changing security levels
+   */
+  public async reEncrypt(
+    encryptedData: string,
+    currentKey: string,
+    newSecurityLevel?: SecurityLevel,
+    newEncryptionType?: EncryptionType,
+    customNewKey?: string
+  ): Promise<EncryptionResult> {
+    // First decrypt with current key
+    const decryptedData = await this.decrypt(encryptedData, currentKey);
+    
+    // Get metadata from original encryption if available
+    let metadata: any = {};
+    try {
+      const originalData = JSON.parse(decryptedData as string);
+      if (originalData.metadata) {
+        metadata = originalData.metadata;
+      }
+    } catch {}
+    
+    // Now re-encrypt with new parameters
+    return this.encrypt(
+      decryptedData,
+      newSecurityLevel || SecurityLevel.E2EE,
+      newEncryptionType || EncryptionType.MESSAGE,
+      customNewKey
+    );
+  }
+  
+  /**
+   * Derive an encryption key from a user passphrase
+   * Useful for user-provided passwords
+   */
+  public async deriveKeyFromPassphrase(
+    passphrase: string, 
+    salt?: string
+  ): Promise<{ key: string; salt: string }> {
+    // Generate salt if not provided
+    const useSalt = salt || this.generateRandomString(16);
+    
+    // Use Web Crypto API for key derivation
+    const encoder = new TextEncoder();
+    const passphraseData = encoder.encode(passphrase);
+    const saltData = encoder.encode(useSalt);
+    
+    // Import the passphrase as a key
+    const importedKey = await window.crypto.subtle.importKey(
+      'raw',
+      passphraseData,
+      { name: 'PBKDF2' },
+      false,
+      ['deriveKey', 'deriveBits']
+    );
+    
+    // Derive bits using PBKDF2
+    const derivedBits = await window.crypto.subtle.deriveBits(
+      {
+        name: 'PBKDF2',
+        salt: saltData,
+        iterations: 100000,
+        hash: 'SHA-256',
+      },
+      importedKey,
+      256
+    );
+    
+    // Convert to Base64 string for use with our encryption functions
+    const derivedKey = btoa(String.fromCharCode(...new Uint8Array(derivedBits)));
+    
+    return { key: derivedKey, salt: useSalt };
+  }
+  
+  /**
+   * Manage key rotation based on policy
+   */
+  public async rotateKeys(): Promise<Map<string, { key: string; keyId: string }>> {
+    const rotatedKeys = new Map<string, { key: string; keyId: string }>();
+    
+    // Check which keys need rotation based on policy
+    const cutoffTime = Date.now() - this.keyRotationPolicy.intervalDays * 24 * 60 * 60 * 1000;
+    
+    for (const [keyId, { key, createdAt }] of this.keyHistory.entries()) {
+      if (createdAt < cutoffTime) {
+        // Generate a new key for each security level
+        for (const securityLevel of Object.values(SecurityLevel)) {
+          for (const encryptionType of Object.values(EncryptionType)) {
+            const { key: newKey, keyId: newKeyId } = await this.generateKey(
+              securityLevel as SecurityLevel,
+              encryptionType as EncryptionType
+            );
+            
+            rotatedKeys.set(`${securityLevel}_${encryptionType}`, { key: newKey, keyId: newKeyId });
+            
+            // Store new key in history
+            this.keyHistory.set(newKeyId, { key: newKey, createdAt: Date.now() });
+          }
+        }
+        
+        // Remove old key if we've exceeded retention policy
+        if (this.keyHistory.size > this.keyRotationPolicy.retainPreviousKeys) {
+          // Find oldest key
+          let oldestKeyId = '';
+          let oldestTime = Date.now();
+          
+          for (const [keyId, { createdAt }] of this.keyHistory.entries()) {
+            if (createdAt < oldestTime) {
+              oldestTime = createdAt;
+              oldestKeyId = keyId;
+            }
+          }
+          
+          // Remove oldest key
+          if (oldestKeyId) {
+            this.keyHistory.delete(oldestKeyId);
+          }
+        }
+      }
+    }
+    
+    return rotatedKeys;
+  }
+  
+  /**
+   * Set or update the key rotation policy
+   */
+  public setKeyRotationPolicy(policy: Partial<KeyRotationPolicy>): void {
+    this.keyRotationPolicy = { ...this.keyRotationPolicy, ...policy };
+  }
+  
+  /**
+   * Get the current key rotation policy
+   */
+  public getKeyRotationPolicy(): KeyRotationPolicy {
+    return { ...this.keyRotationPolicy };
+  }
+  
+  /**
+   * Retrieve a specific key by ID if available in history
+   */
+  public getKeyById(keyId: string): string | undefined {
+    const keyEntry = this.keyHistory.get(keyId);
+    return keyEntry?.key;
   }
 }
 

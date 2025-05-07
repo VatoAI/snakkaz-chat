@@ -115,11 +115,6 @@ export const encryptPageForOffline = async (
   }
 };
 
-export const decryptOfflinePage = async (
-  pageId: string,
-  encryptedData: EncryptedPageData
-): Promise<PageDataToEncrypt> => {
-
 /**
  * Decrypt page content for offline use
  */
