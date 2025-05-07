@@ -1,10 +1,15 @@
 // This script helps set up a custom domain for your Supabase project
 // Usage: node scripts/setup-custom-domain.js
 
-const { execSync } = require('child_process');
-const fs = require('fs');
-const path = require('path');
-const readline = require('readline');
+import { exec } from 'child_process';
+import fs from 'fs';
+import path from 'path';
+import readline from 'readline';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -32,8 +37,8 @@ try {
 
 console.log('\nThis script will guide you through setting up a custom domain for your Supabase project.');
 console.log('\n=== PREREQUISITES ===');
-console.log('1. Make sure you have the Supabase CLI installed: npm install -g supabase');
-console.log('2. You should be logged in to the Supabase CLI: supabase login');
+console.log('1. Make sure you have the Supabase CLI installed: npm install supabase --save-dev');
+console.log('2. You should be logged in to the Supabase CLI: npx supabase login');
 console.log('3. You need to own the domain you want to use');
 console.log('4. You must have already set up DNS management for your domain');
 
@@ -53,7 +58,7 @@ rl.question('\nEnter your custom domain (e.g., www.snakkaz.com): ', async (custo
     console.log('\nStep 1: Adding custom domain to your Supabase project...');
     console.log('This will return configuration values that you need to add to your DNS records.');
     
-    console.log('\nRunning: supabase domains add ' + customDomain);
+    console.log('\nRunning: npx supabase domains add ' + customDomain);
     console.log('\nFollow the instructions returned by the Supabase CLI:');
     console.log('1. Add the displayed CNAME records to your DNS provider');
     console.log('2. It may take up to 48 hours for DNS changes to propagate');
@@ -61,12 +66,12 @@ rl.question('\nEnter your custom domain (e.g., www.snakkaz.com): ', async (custo
     // We print the command but don't execute it automatically 
     // because the user needs to see and handle the output
     console.log('\n=== MANUAL ACTION REQUIRED ===');
-    console.log(`Run this command: supabase domains add ${customDomain} -p ${projectId}`);
+    console.log(`Run this command: npx supabase domains add ${customDomain} -p ${projectId}`);
     console.log('Then follow the instructions provided by the command output.\n');
 
     // Step 2: Checking domain status
     console.log('\nAfter adding DNS records, you can check the status with:');
-    console.log(`supabase domains verify ${customDomain} -p ${projectId}`);
+    console.log(`npx supabase domains verify ${customDomain} -p ${projectId}`);
 
     // Step 3: Update project configuration
     console.log('\nStep 3: Updating project configuration...');
@@ -114,7 +119,7 @@ export const environment = {
       console.log(`Updated environment configuration at ${envConfigPath}`);
 
       // Update Supabase client to use custom domain (if it exists)
-      const supabaseClientPath = '/workspaces/snakkaz-chat/src/integrations/supabase/client.ts';
+      const supabaseClientPath = path.join(__dirname, '../src/integrations/supabase/client.ts');
       if (fs.existsSync(supabaseClientPath)) {
         let clientContent = fs.readFileSync(supabaseClientPath, 'utf8');
         
@@ -148,7 +153,7 @@ export const environment = {
     console.log('\n=== CUSTOM DOMAIN SETUP GUIDE ===');
     console.log('1. Add the CNAME records provided by Supabase CLI to your DNS provider');
     console.log('2. Wait for DNS propagation (may take up to 48 hours)');
-    console.log(`3. Verify the domain with: supabase domains verify ${customDomain} -p ${projectId}`);
+    console.log(`3. Verify the domain with: npx supabase domains verify ${customDomain} -p ${projectId}`);
     console.log('4. Update your front-end code to use the custom domain URL');
     console.log('\nOnce verified, your Supabase API will be available at:');
     console.log(`https://${customDomain}/api`);
