@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { UserStatus } from '@/types/presence';
 import { Badge } from '@/components/ui/badge';
@@ -29,7 +28,7 @@ export const ChatPresence: React.FC<ChatPresenceProps> = ({
         return 'bg-amber-500';
       case UserStatus.BUSY:
         return 'bg-red-500';
-      case UserStatus.BRB:
+      case 'brb': // Use string literal instead of enum value
         return 'bg-purple-500';
       case UserStatus.OFFLINE:
       default:
@@ -46,7 +45,7 @@ export const ChatPresence: React.FC<ChatPresenceProps> = ({
         return 'Away';
       case UserStatus.BUSY:
         return 'Busy';
-      case UserStatus.BRB:
+      case 'brb': // Use string literal instead of enum value
         return 'Be Right Back';
       case UserStatus.OFFLINE:
       default:

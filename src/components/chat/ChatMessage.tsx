@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { DecryptedMessage } from '@/types/message.d';
 import { formatDistanceToNow } from 'date-fns';
@@ -37,8 +36,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   // Handle opening/closing action menu
   const toggleActions = () => setShowActions(!showActions);
   
-  // Check if message has been edited
-  const isEdited = message.is_edited === true || message.isEdited === true;
+  // Check if message has been edited - use is_edited consistently
+  const isEdited = message.is_edited === true;
   
   return (
     <div className={`flex gap-3 group ${isCurrentUser ? 'justify-end' : ''}`}>
