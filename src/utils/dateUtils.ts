@@ -1,3 +1,4 @@
+
 /**
  * Formats a date for message timestamps in a user-friendly way
  * @param date The date to format
