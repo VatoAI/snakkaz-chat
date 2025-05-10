@@ -1,3 +1,5 @@
+
+import React from 'react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -7,7 +9,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from '@/components/ui/alert-dialog';
 
 interface CommandConfirmationDialogProps {
   isOpen: boolean;
@@ -17,32 +19,32 @@ interface CommandConfirmationDialogProps {
   onCancel: () => void;
 }
 
-export const CommandConfirmationDialog = ({
+export const CommandConfirmationDialog: React.FC<CommandConfirmationDialogProps> = ({
   isOpen,
   title,
   description,
   onConfirm,
   onCancel
-}: CommandConfirmationDialogProps) => {
+}) => {
   return (
     <AlertDialog open={isOpen}>
-      <AlertDialogContent className="bg-cyberdark-800 border-cybergold-500/30">
+      <AlertDialogContent className="bg-cyberdark-900 border-cybergold-500/40">
         <AlertDialogHeader>
-          <AlertDialogTitle className="text-cybergold-300">{title}</AlertDialogTitle>
-          <AlertDialogDescription className="text-cybergold-200">
+          <AlertDialogTitle className="text-cybergold-400">{title}</AlertDialogTitle>
+          <AlertDialogDescription className="text-cybergold-600">
             {description}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel
+          <AlertDialogCancel 
             onClick={onCancel}
-            className="bg-cyberdark-700 text-cybergold-300 hover:bg-cyberdark-600"
+            className="bg-cyberdark-800 text-cybergold-400 hover:bg-cyberdark-700"
           >
             Avbryt
           </AlertDialogCancel>
-          <AlertDialogAction
+          <AlertDialogAction 
             onClick={onConfirm}
-            className="bg-cyberblue-600 text-white hover:bg-cyberblue-500"
+            className="bg-cybergold-600 text-black hover:bg-cybergold-500"
           >
             Bekreft
           </AlertDialogAction>

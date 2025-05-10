@@ -1,67 +1,119 @@
-import { ThemeProvider } from './contexts/ThemeContext';
-import { AuthProvider } from './contexts/AuthContext';
-import { AppEncryptionProvider } from './contexts/AppEncryptionContext';
-import { NotificationProvider } from './contexts/NotificationContext';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import Layout from './Layout';
-import Chat from './pages/Chat';
-import Profile from './pages/Profile';
-import InfoPage from './pages/Info';
-import DownloadPage from './pages/Download'; 
-import AuthPage from './pages/auth/AuthPage';
-import { ProtectedRoute } from './components/auth/ProtectedRoute';
-import { Toaster } from './components/ui/toaster';
-import { secureSupabase } from './integrations/supabase/secure-client';
-import { supabase } from './integrations/supabase/client';
-import { useEffect } from 'react';
 
-// Erstatt standard Supabase-klient med den sikre
-Object.defineProperty(window, 'supabase', { 
-  value: secureSupabase,
-  writable: false 
-});
+import React, { Suspense, lazy } from 'react';
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { AuthProvider, useAuth } from './hooks/useAuth';
+import { Toaster } from "@/components/ui/toaster";
+import { ErrorBoundary } from './components/ErrorBoundary';
+
+// Lazy load components
+const Login = lazy(() => import("@/pages/Login"));
+const Register = lazy(() => import("@/pages/Register"));
+const ForgotPassword = lazy(() => import("@/pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
+const Chat = lazy(() => import("@/pages/Chat"));
+const Profile = lazy(() => import("@/pages/Profile"));
+const Settings = lazy(() => import("@/pages/Settings"));
+const GroupChatPage = lazy(() => import("@/pages/GroupChatPage"));
+
+// Loading component
+const LoadingSpinner = () => (
+  <div className="h-screen flex items-center justify-center bg-cyberdark-950">
+    <div className="flex flex-col items-center">
+      <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-cybergold-500 mb-4"></div>
+      <p className="text-cybergold-400">Laster inn...</p>
+    </div>
+  </div>
+);
+
+// Protected route component
+const RequireAuth = ({ children }: { children: JSX.Element }) => {
+  const { user, loading } = useAuth();
+  const location = useLocation();
+
+  // Show a simple loading screen while authentication is checked
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
+  // Redirect to login if not authenticated
+  if (!user) {
+    return <Navigate to="/" state={{ from: location }} replace />;
+  }
+
+  return children;
+};
+
+// Public routes only available to non-authenticated users
+const PublicOnlyRoute = ({ children }: { children: JSX.Element }) => {
+  const { user, loading } = useAuth();
+  
+  // Show a simple loading screen while authentication is checked
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
+  // Redirect to chat if already authenticated
+  if (user) {
+    return <Navigate to="/chat" replace />;
+  }
+
+  return children;
+};
 
 function App() {
-  // Logger sikkerhetstiltak ved oppstart (kun i utviklingsmodus)
-  useEffect(() => {
-    if (import.meta.env.DEV) {
-      console.log('🔒 Snakkaz Chat Enhanced Security:');
-      console.log('- Perfect Forward Secrecy aktivert');
-      console.log('- Argon2 PIN-sikkerhet implementert');
-      console.log('- Sertifikat-pinning aktivert');
-    }
-  }, []);
-
   return (
-    <ThemeProvider>
+    <ErrorBoundary>
       <AuthProvider>
-        <AppEncryptionProvider>
-          <NotificationProvider>
-            <Router>
-              <Routes>
-                <Route path="/" element={<Layout />}>
-                  <Route index element={<Navigate to="/chat" replace />} />
-                  <Route path="chat" element={
-                    <ProtectedRoute>
-                      <Chat />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="profile" element={
-                    <ProtectedRoute>
-                      <Profile />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="info" element={<InfoPage />} />
-                  <Route path="download" element={<DownloadPage />} />
-                </Route>
-                <Route path="/auth" element={<AuthPage />} />
-              </Routes>
-              <Toaster />
-            </Router>
-          </NotificationProvider>
-        </AppEncryptionProvider>
+        <Suspense fallback={<LoadingSpinner />}>
+          <Routes>
+            {/* Public routes (only available when not logged in) */}
+            <Route path="/" element={
+              <PublicOnlyRoute>
+                <Login />
+              </PublicOnlyRoute>
+            } />
+            <Route path="/register" element={
+              <PublicOnlyRoute>
+                <Register />
+              </PublicOnlyRoute>
+            } />
+            <Route path="/forgot-password" element={
+              <PublicOnlyRoute>
+                <ForgotPassword />
+              </PublicOnlyRoute>
+            } />
+            <Route path="/reset-password" element={<ResetPassword />} />
+
+            {/* Protected routes (require login) */}
+            <Route path="/chat" element={
+              <RequireAuth>
+                <Chat />
+              </RequireAuth>
+            } />
+            <Route path="/profile" element={
+              <RequireAuth>
+                <Profile />
+              </RequireAuth>
+            } />
+            <Route path="/settings" element={
+              <RequireAuth>
+                <Settings />
+              </RequireAuth>
+            } />
+            <Route path="/group/:id" element={
+              <RequireAuth>
+                <GroupChatPage />
+              </RequireAuth>
+            } />
+            
+            {/* Redirect to home page for all other paths */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Suspense>
+        
+        <Toaster />
       </AuthProvider>
-    </ThemeProvider>
+    </ErrorBoundary>
   );
 }
 

@@ -33,7 +33,16 @@ export const ImageMedia = ({
     if (!url) return;
 
     const img = new window.Image();
-    let timeoutId: number;
+    const timeoutId: number = window.setTimeout(() => {
+      if (!isLoaded) {
+        img.src = ""; // Avbryter gjeldende lasting
+        if (loadAttempts < 2) {
+          setLoadAttempts(prev => prev + 1);
+        } else {
+          setHasError(true);
+        }
+      }
+    }, 15000); // 15 sekunder timeout
 
     img.onload = () => {
       clearTimeout(timeoutId);
@@ -55,18 +64,6 @@ export const ImageMedia = ({
         setIsLoaded(false);
       }
     };
-
-    // Timeout for å fange tilfeller hvor bildet tar for lang tid å laste
-    timeoutId = window.setTimeout(() => {
-      if (!isLoaded) {
-        img.src = ""; // Avbryter gjeldende lasting
-        if (loadAttempts < 2) {
-          setLoadAttempts(prev => prev + 1);
-        } else {
-          setHasError(true);
-        }
-      }
-    }, 15000); // 15 sekunder timeout
 
     // Set source after adding event handlers
     img.src = url;

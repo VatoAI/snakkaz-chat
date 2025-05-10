@@ -1,50 +1,53 @@
 import { SecurityLevel } from './security';
-
-export type GroupWritePermission = 'all' | 'admin' | 'selected';
-// Fjernet null som et alternativ siden alle meldinger skal slettes 
-export type MessageTTLOption = 300 | 1800 | 3600 | 86400 | 604800; // 5min, 30min, 1h, 24h, 7d
+import { User } from './message';
 
 export interface Group {
   id: string;
   name: string;
-  created_at: string;
   creator_id: string;
+  avatar_url?: string | null;
+  created_at: string;
+  default_message_ttl?: number;
   members: GroupMember[];
-  security_level: SecurityLevel;
-  password?: string;
-  avatar_url?: string;
-  // Nye felter
-  write_permissions: GroupWritePermission; // 'all', 'admin', eller 'selected'
-  default_message_ttl: MessageTTLOption; // Standard TTL for meldinger i gruppen, nå påkrevd
-  // Premium features
-  is_premium: boolean;
-  description: string | null;
+  security_level: string;
+  write_permissions: string;
+  password?: string | null;
 }
 
 export interface GroupMember {
   id: string;
-  user_id: string;
   group_id: string;
-  role: 'admin' | 'member';
+  user_id: string;
+  role: string;
   joined_at: string;
-  profile?: {
-    id: string;
-    username: string | null;
-    avatar_url: string | null;
-    full_name: string | null;
-  };
-  // Nytt felt
-  can_write?: boolean; // Om brukeren kan skrive meldinger, relevant når write_permissions === 'selected'
+  can_write: boolean;
+  userId?: string; // For backward compatibility
+  user?: User;
+}
+
+export interface GroupMessage {
+  id: string;
+  group_id: string;
+  sender_id: string;
+  content?: string;
+  created_at: string;
+  updated_at?: string;
+  is_edited?: boolean;
+  is_deleted?: boolean;
+  media_url?: string;
+  media_type?: string;
+  sender?: User;
 }
 
 export interface GroupInvite {
   id: string;
   group_id: string;
-  invited_by: string;
   invited_user_id: string;
+  invited_by: string;
   created_at: string;
   expires_at: string;
-  group_name?: string;
-  sender_username?: string;
+  group_name?: string; // For displaying group name in invites
 }
 
+export type GroupVisibility = 'public' | 'private' | 'invite_only' | 'hidden';
+export type GroupWritePermission = 'all' | 'admin' | 'moderator';

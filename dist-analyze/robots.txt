@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Sitemap: https://www.snakkaz.com/sitemap.xml
+
+# Disallow sensitive folders
+Disallow: /admin
+Disallow: /settings/security
+Disallow: /api/

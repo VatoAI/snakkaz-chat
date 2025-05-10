@@ -1,10 +1,11 @@
 
 import { useCallback } from "react";
-import { DecryptedMessage } from "@/types/message";
+import { DecryptedMessage } from "@/types/message.d";
 import { useMessageEditor } from "@/hooks/message/useMessageEditor";
 import { useMessageDeleter } from "@/hooks/message/useMessageDeleter";
 import { useToast } from "@/components/ui/use-toast";
 
+// Modified to match the expected function signatures
 export const useDirectMessageSubmit = (
   currentUserId: string,
   newMessage: string,
@@ -12,7 +13,7 @@ export const useDirectMessageSubmit = (
   setIsLoading: (loading: boolean) => void,
   editingMessage: { id: string; content: string } | null,
   setEditingMessage: (message: { id: string; content: string } | null) => void,
-  handleSendDirectMessage: (e: React.FormEvent, message: string) => Promise<boolean>
+  handleSendDirectMessage: (text: string, encryptionKey?: string, iv?: string) => Promise<boolean>
 ) => {
   const { toast } = useToast();
   
@@ -31,6 +32,7 @@ export const useDirectMessageSubmit = (
     toast
   );
   
+  // Modified to match the expected function signature
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -40,8 +42,8 @@ export const useDirectMessageSubmit = (
       setEditingMessage(null);
       setNewMessage("");
     } else {
-      // Handle new message submission
-      const success = await handleSendDirectMessage(e, newMessage);
+      // Modified to call handleSendDirectMessage with the text directly
+      const success = await handleSendDirectMessage(newMessage);
       if (success) {
         setNewMessage("");
       }

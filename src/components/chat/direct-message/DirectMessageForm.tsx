@@ -4,13 +4,18 @@ import { AlertTriangle, RefreshCw, X, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SecurityLevel } from "@/types/security";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import MessageInput from "@/components/MessageInput";
+import { SecureMessageInput } from "@/components/message-input/SecureMessageInput";
 
 interface DirectMessageFormProps {
   usingServerFallback: boolean;
   sendError: string | null;
   isLoading: boolean;
-  onSendMessage: (e: FormEvent, text: string) => Promise<boolean>;
+  onSendMessage: (e: FormEvent, text: string, options?: {
+    ttl?: number | null,
+    preventScreenshot?: boolean,
+    mediaUrl?: string,
+    mediaType?: string
+  }) => Promise<boolean>;
   onSendMedia?: (mediaData: { url: string, thumbnailUrl?: string }) => Promise<void>;
   newMessage: string;
   onChangeMessage: (text: string) => void;
@@ -89,22 +94,46 @@ export const DirectMessageForm = ({
         console.error("Message sending failed without throwing an error");
         setLocalError("Kunne ikke sende melding. Prøv igjen senere.");
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error in form submission:", error);
-      setLocalError(error.message || "Kunne ikke sende melding. Prøv igjen senere.");
+      const errorMessage = error instanceof Error ? error.message : "Kunne ikke sende melding. Prøv igjen senere.";
+      setLocalError(errorMessage);
     }
   };
 
-  const handleSendEnhancedMedia = async (mediaData: { url: string, thumbnailUrl?: string }) => {
-    if (onSendMedia) {
-      try {
-        await onSendMedia(mediaData);
-        console.log("Media sent successfully");
+  const handleSendSecureMessage = async (message: string, options: {
+    ttl?: number | null,
+    preventScreenshot?: boolean,
+    mediaUrl?: string,
+    mediaType?: string
+  }) => {
+    if (message.trim() === '' && !options.mediaUrl) return;
+    
+    // Check network connection first
+    if (networkStatus === 'offline') {
+      setLocalError("Du er ikke tilkoblet internett. Sjekk din forbindelse og prøv igjen.");
+      return;
+    }
+    
+    setIsComposing(false);
+    setLocalError(null);
+    
+    try {
+      // Create a synthetic event object
+      const syntheticEvent = { preventDefault: () => {} } as React.FormEvent;
+      const success = await onSendMessage(syntheticEvent, message, options);
+      
+      if (success) {
+        console.log("Secure message sent successfully");
         setShowSuccess(true);
-      } catch (error) {
-        console.error("Error sending media:", error);
-        setLocalError("Kunne ikke sende bilde. Prøv igjen senere.");
+      } else {
+        console.error("Message sending failed without throwing an error");
+        setLocalError("Kunne ikke sende melding. Prøv igjen senere.");
       }
+    } catch (error: unknown) {
+      console.error("Error sending secure message:", error);
+      const errorMessage = error instanceof Error ? error.message : "Kunne ikke sende melding. Prøv igjen senere.";
+      setLocalError(errorMessage);
     }
   };
   
@@ -200,19 +229,10 @@ export const DirectMessageForm = ({
         </div>
       )}
       
-      <MessageInput 
-        onSendMessage={async (msg) => {
-          // Create a synthetic event object instead of trying to use FormEvent as a constructor
-          const syntheticEvent = { preventDefault: () => {} } as React.FormEvent;
-          await onSendMessage(syntheticEvent, msg);
-          return Promise.resolve();
-        }}
-        onSendEnhancedMedia={handleSendEnhancedMedia}
-        placeholder="Skriv en melding..."
-        disabled={networkStatus === 'offline' || isLoading}
-        securityLevel={securityLevel as any}
-        showSecurityIndicator={true}
-        autoFocus={true}
+      <SecureMessageInput 
+        onSend={handleSendSecureMessage}
+        isLoading={isLoading || networkStatus === 'offline'}
+        placeholder="Skriv en sikker melding..."
       />
     </div>
   );

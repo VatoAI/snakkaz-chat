@@ -1,5 +1,6 @@
+
 import { useCallback } from "react";
-import { DecryptedMessage } from "@/types/message";
+import { DecryptedMessage } from "@/types/message.d";
 
 export const useMessageP2P = (
   setMessages: (updater: (prev: DecryptedMessage[]) => DecryptedMessage[]) => void

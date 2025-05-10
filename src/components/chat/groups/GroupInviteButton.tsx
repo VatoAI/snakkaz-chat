@@ -11,11 +11,12 @@ import { cn } from "@/lib/utils";
 interface GroupInviteButtonProps {
   isOpen: boolean;
   onClose: () => void;
-  onInvite: (userId: string) => void;
-  userProfiles: Record<string, {username: string | null, avatar_url: string | null}>;
+  userProfiles: Record<string, any>;
   friendsList: string[];
   currentUserId: string;
+  onInvite: (userId: string) => Promise<void>;
   groupMembers: string[];
+  isMobile?: boolean; // Add isMobile property
 }
 
 export const GroupInviteButton = ({

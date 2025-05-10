@@ -1,0 +1,93 @@
+name: Deploy Snakkaz Chat
+
+# Kjøres når kode pushes til main-branch eller manuelt trigges
+on:
+  push:
+    branches:
+      - main  # Deploy når endringer pushes til main branch
+  workflow_dispatch:  # Tillat manuell kjøring av workflow
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        continue-on-error: false  # Stopper workflow om dependencies ikke kan installeres
+        
+      - name: Check for required secrets
+        run: |
+          if [[ -z "${{ secrets.SUPABASE_URL }}" || -z "${{ secrets.SUPABASE_ANON_KEY }}" ]]; then
+            echo "Error: Required secrets SUPABASE_URL or SUPABASE_ANON_KEY are missing"
+            exit 1
+          fi
+        
+      - name: Build project
+        run: npm run build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          VITE_APP_URL: 'https://www.snakkaz.com'
+          VITE_API_ENDPOINT: 'https://api.snakkaz.com'
+          VITE_APP_ENV: 'production'
+          VITE_BUILD_TIME: ${{ github.event.repository.updated_at || github.event.head_commit.timestamp }}
+          
+      - name: Add .htaccess file
+        run: |
+          echo '<IfModule mod_rewrite.c>
+            RewriteEngine On
+            RewriteBase /
+            RewriteRule ^index\.html$ - [L]
+            RewriteCond %{REQUEST_FILENAME} !-f
+            RewriteCond %{REQUEST_FILENAME} !-d
+            RewriteRule . /index.html [L]
+          </IfModule>' > dist/.htaccess
+      
+      - name: Validate build output
+        run: |
+          if [ ! -f "dist/index.html" ]; then
+            echo "Error: Build failed, index.html not found in dist folder"
+            exit 1
+          fi
+          echo "Build validation successful"
+          
+      - name: Check FTP credentials
+        run: |
+          if [[ -z "${{ secrets.FTP_SERVER }}" || -z "${{ secrets.FTP_USERNAME }}" || -z "${{ secrets.FTP_PASSWORD }}" ]]; then
+            echo "Error: FTP credentials missing. Please check repository secrets."
+            exit 1
+          fi
+          
+      - name: Deploy to web server
+        id: deploy
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./dist/
+          server-dir: ${{ secrets.SERVER_DIR || '/' }}
+          dangerous-clean-slate: false  # Ikke slett eksisterende filer på serveren
+      
+      - name: Create deployment summary
+        if: success()
+        run: |
+          echo "# 🚀 Deploy completed successfully" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Deployment details" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment:** Production" >> $GITHUB_STEP_SUMMARY
+          echo "- **URL:** https://www.snakkaz.com" >> $GITHUB_STEP_SUMMARY
+          echo "- **Deployed at:** $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Remember to verify that the site is working correctly!" >> $GITHUB_STEP_SUMMARY

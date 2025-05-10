@@ -1,7 +1,7 @@
 import { ChatMessages } from "./global/ChatMessages";
 import { ChatInput } from "./global/ChatInput";
 import { ChatSidebar } from "./global/ChatSidebar";
-import { DecryptedMessage } from "@/types/message";
+import { DecryptedMessage } from "@/types/message.d";
 import { UserPresence } from "@/types/presence";
 import { useState, useEffect, useCallback } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -27,6 +27,7 @@ interface ChatGlobalProps {
   onStartChat?: (userId: string) => void;
   recentGroups?: { id: string; name: string; unreadCount: number; lastActive: string }[];
   recentConversations?: { userId: string; username: string; unreadCount: number; lastActive: string }[];
+  onNewMessage?: (message: DecryptedMessage) => void;
 
   // Pagination props
   loadMoreMessages?: () => Promise<void>;
@@ -53,6 +54,7 @@ export const ChatGlobal = ({
   onStartChat,
   recentGroups = [],
   recentConversations = [],
+  onNewMessage,
 
   // Pagination props
   loadMoreMessages,
@@ -117,6 +119,13 @@ export const ChatGlobal = ({
   useEffect(() => {
     setRealtimeGroups(recentGroups);
   }, [recentGroups]);
+
+  // Handle for new messages if provided
+  const handleOnNewMessage = (message: DecryptedMessage) => {
+    if (typeof onNewMessage === 'function') {
+      onNewMessage(message);
+    }
+  };
 
   return (
     <div className="h-full flex relative">

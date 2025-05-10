@@ -1,144 +1,188 @@
+import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/lib/supabaseClient';
+import { useToast } from '@/hooks/use-toast';
+import { Session, User } from '@supabase/supabase-js';
 
-import { createContext, useContext, ReactNode, useState, useEffect } from 'react';
+// Importer typene fra .ts-filen
+import { AuthContextType } from './useAuth.d';
 
-interface User {
-  uid: string;
-  email: string | null;
-  displayName: string | null;
-  photoURL: string | null;
-}
+// Opprett Auth Context
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-interface AuthContextType {
-  user: User | null;
-  loading: boolean;
-  error: string | null;
-  pinLocked: boolean;
-  setPinLocked: (locked: boolean) => void;
-  hasPinSetup: boolean;
-  setHasPinSetup: (hasPin: boolean) => void;
-  login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, displayName: string) => Promise<void>;
-  logout: () => Promise<void>;
-  updateProfile: (data: Partial<User>) => Promise<void>;
-  resetPassword: (email: string) => Promise<void>;
-}
-
-export const AuthContext = createContext<AuthContextType | null>(null);
-
-interface AuthProviderProps {
-  children: ReactNode;
-}
-
-export const AuthProvider = ({ children }: AuthProviderProps) => {
+// Auth Provider komponent
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [pinLocked, setPinLocked] = useState(false);
-  const [hasPinSetup, setHasPinSetup] = useState(false);
-  
-  // Mock Authentication functions for demo purposes
-  // Replace these with actual supabase or other auth provider methods
-  const login = async (email: string, password: string) => {
-    setLoading(true);
-    try {
-      // Mock successful login
-      const mockUser = {
-        uid: '123',
-        email: email,
-        displayName: 'Test User',
-        photoURL: null,
-      };
-      setUser(mockUser);
-      setError(null);
-      
-      // Check if PIN is set up by looking for a stored value
-      const hasPin = localStorage.getItem('snakkaz_pin_setup') === 'true';
-      setHasPinSetup(hasPin);
-      setPinLocked(hasPin); // If PIN is set up, lock by default until PIN is entered
-    } catch (err: any) {
-      setError(err.message || 'Login failed');
-      setUser(null);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const register = async (email: string, password: string, displayName: string) => {
-    setLoading(true);
-    try {
-      // Mock successful registration
-      const mockUser = {
-        uid: '123',
-        email: email,
-        displayName: displayName,
-        photoURL: null,
-      };
-      setUser(mockUser);
-      setError(null);
-      
-      // New user doesn't have PIN setup
-      setHasPinSetup(false);
-      setPinLocked(false);
-    } catch (err: any) {
-      setError(err.message || 'Registration failed');
-      setUser(null);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const logout = async () => {
-    // Mock logout
-    setUser(null);
-    setError(null);
-  };
-
-  const updateProfile = async (data: Partial<User>) => {
-    if (!user) return;
-    // Mock profile update
-    setUser({ ...user, ...data });
-  };
-
-  const resetPassword = async (email: string) => {
-    // Mock password reset
-    setError(null);
-  };
+  const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    // Mock checking session
-    setUser(null);
-    setLoading(false);
-    
-    // Check if PIN is set up
-    const hasPin = localStorage.getItem('snakkaz_pin_setup') === 'true';
-    setHasPinSetup(hasPin);
-    setPinLocked(hasPin); // If PIN is set up, lock by default until PIN is entered
+    // Sjekk om brukeren allerede er innlogget
+    const checkUser = async () => {
+      setLoading(true);
+      
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          throw error;
+        }
+
+        if (data?.session) {
+          setSession(data.session);
+          setUser(data.session.user);
+        }
+      } catch (error) {
+        console.error('Feil ved innlasting av bruker:', error);
+        setError('Kunne ikke laste inn brukerprofil');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // Kjør initialsjekk
+    checkUser();
+
+    // Set opp lytter for auth-endringer
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (session) {
+          setSession(session);
+          setUser(session.user);
+        } else {
+          setSession(null);
+          setUser(null);
+        }
+        setLoading(false);
+      }
+    );
+
+    // Cleanup lytter ved unmounting
+    return () => {
+      authListener?.subscription.unsubscribe();
+    };
   }, []);
 
+  // Logg inn
+  const signIn = async (email: string, password: string) => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (error) throw error;
+
+      setSession(data.session);
+      setUser(data.user);
+      navigate('/chat');
+      
+      toast({
+        title: "Innlogging vellykket",
+        description: "Velkommen tilbake!",
+      });
+    } catch (error: any) {
+      console.error('Innloggingsfeil:', error.message);
+      setError(error.message);
+      toast({
+        variant: "destructive",
+        title: "Innloggingsfeil",
+        description: error.message || "Kunne ikke logge inn. Sjekk påloggingsinformasjonen.",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Logg ut
+  const signOut = async () => {
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) throw error;
+
+      setSession(null);
+      setUser(null);
+      navigate('/');
+      
+      toast({
+        title: "Utlogget",
+        description: "Du har blitt logget ut.",
+      });
+    } catch (error: any) {
+      console.error('Utloggingsfeil:', error.message);
+      setError(error.message);
+      toast({
+        variant: "destructive",
+        title: "Utloggingsfeil",
+        description: error.message || "Kunne ikke logge ut. Prøv igjen.",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Registrer ny bruker
+  const signUp = async (email: string, password: string, metadata: any = {}) => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: metadata
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Registrering vellykket",
+        description: "Sjekk e-posten din for bekreftelseslenke.",
+      });
+      
+      // Ikke naviger til Chat direkte, vent på e-postbekreftelse
+      // Hvis bruker er bekreftet umiddelbart, vil onAuthStateChange håndtere det
+    } catch (error: any) {
+      console.error('Registreringsfeil:', error.message);
+      setError(error.message);
+      toast({
+        variant: "destructive",
+        title: "Registreringsfeil",
+        description: error.message || "Kunne ikke opprette konto. Prøv igjen.",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Eksporter alle verdiene
   const value = {
     user,
+    session,
+    signIn,
+    signOut,
+    signUp,
     loading,
     error,
-    pinLocked,
-    setPinLocked,
-    hasPinSetup,
-    setHasPinSetup,
-    login,
-    register,
-    logout,
-    updateProfile,
-    resetPassword
+    isAuthenticated: !!user
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-export const useAuth = (): AuthContextType => {
+// Hook for enkel tilgang til auth context
+export const useAuth = () => {
   const context = useContext(AuthContext);
-  
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+  if (context === undefined) {
+    throw new Error('useAuth må brukes innenfor en AuthProvider');
   }
-  
   return context;
 };
+
+export default useAuth;

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { cx, theme } from '../lib/theme';
-import { ChatMessageList } from './ChatMessageList';
 import { ChatInputField } from './ChatInputField';
-import { ArrowLeft, User, Users, Info } from 'lucide-react';
+import ChatMessageList from './ChatMessageList';
+import { ChatHeader } from './header/ChatHeader';
+import { UploadProgress } from './message/UploadProgress';
+import { UserStatus } from '@/types/presence';
 
 interface ChatInterfaceProps {
   messages: Array<any>;
@@ -18,6 +19,7 @@ interface ChatInterfaceProps {
     name: string;
     avatar?: string;
     isOnline?: boolean;
+    status?: UserStatus;
   };
   isDirectMessage?: boolean;
   onBackToList?: () => void;
@@ -30,13 +32,12 @@ interface ChatInterfaceProps {
     progress: number;
     status: 'uploading' | 'error' | 'success';
   } | null;
-  // Paginering
   hasMoreMessages?: boolean;
   isLoadingMoreMessages?: boolean;
   onLoadMoreMessages?: () => void;
 }
 
-export const ChatInterface: React.FC<ChatInterfaceProps> = ({
+const ChatInterface: React.FC<ChatInterfaceProps> = ({
   messages,
   currentUserId,
   userProfiles,
@@ -75,69 +76,14 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   };
   
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-background">
       {/* Chat header */}
       {recipientInfo && (
-        <div className={cx(
-          'flex items-center px-4 py-3 border-b',
-          theme.colors.border.medium
-        )}>
-          {/* Back button for mobile */}
-          {onBackToList && (
-            <button
-              className="mr-2 p-2 rounded-full hover:bg-cyberdark-800"
-              onClick={onBackToList}
-            >
-              <ArrowLeft className="h-4 w-4 text-cybergold-400" />
-            </button>
-          )}
-          
-          {/* Avatar */}
-          <div className="relative h-8 w-8 rounded-full overflow-hidden bg-cyberdark-800 mr-3">
-            {recipientInfo.avatar ? (
-              <img
-                src={recipientInfo.avatar}
-                alt={recipientInfo.name}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <div className="h-full w-full flex items-center justify-center">
-                {isDirectMessage ? (
-                  <User className="h-4 w-4 text-cybergold-400" />
-                ) : (
-                  <Users className="h-4 w-4 text-cybergold-400" />
-                )}
-              </div>
-            )}
-            
-            {/* Online indicator */}
-            {recipientInfo.isOnline !== undefined && (
-              <div className={cx(
-                'absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-cyberdark-950',
-                recipientInfo.isOnline ? 'bg-green-500' : 'bg-gray-500'
-              )}></div>
-            )}
-          </div>
-          
-          {/* Name and status */}
-          <div className="flex-grow">
-            <div className="font-medium text-cybergold-300">
-              {recipientInfo.name}
-            </div>
-            {recipientInfo.isOnline !== undefined && (
-              <div className="text-xs text-cybergold-600">
-                {recipientInfo.isOnline ? 'Online' : 'Offline'}
-              </div>
-            )}
-          </div>
-          
-          {/* Info button */}
-          <button
-            className="p-2 rounded-full hover:bg-cyberdark-800"
-          >
-            <Info className="h-4 w-4 text-cybergold-500" />
-          </button>
-        </div>
+        <ChatHeader 
+          recipientInfo={recipientInfo}
+          isDirectMessage={isDirectMessage}
+          onBackToList={onBackToList}
+        />
       )}
       
       {/* Messages area */}
@@ -149,18 +95,18 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         onDelete={onDeleteMessage}
         isLoading={isLoading}
         hasMoreMessages={hasMoreMessages}
-        isLoadingMoreMessages={isLoadingMoreMessages}
+        isLoadingMore={isLoadingMoreMessages}
         onLoadMore={onLoadMoreMessages}
         className="flex-grow"
       />
       
       {/* Input area */}
-      <div className="p-3">
+      <div className="px-2 py-1.5 border-t border-border">
         <ChatInputField
           value={newMessage}
           onChange={onNewMessageChange}
           onSubmit={handleSendMessage}
-          placeholder={isDirectMessage ? "Skriv en privat melding..." : "Skriv en melding..."}
+          placeholder={isDirectMessage ? "Melding..." : "Melding..."}
           disabled={isLoading || (!!uploadingMedia && uploadingMedia.status === 'uploading')}
           ttl={ttl}
           onTtlChange={onTtlChange}
@@ -169,29 +115,16 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           isUploading={!!uploadingMedia && uploadingMedia.status === 'uploading'}
         />
         
-        {/* Upload progress */}
-        {uploadingMedia && uploadingMedia.status === 'uploading' && (
-          <div className="mt-2">
-            <div className="flex items-center justify-between text-xs text-cybergold-500 mb-1">
-              <span>Laster opp {uploadingMedia.file.name}...</span>
-              <span>{uploadingMedia.progress}%</span>
-            </div>
-            <div className="h-1 w-full bg-cyberdark-800 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-cybergold-500 transition-all duration-300"
-                style={{ width: `${uploadingMedia.progress}%` }}
-              ></div>
-            </div>
-          </div>
-        )}
-        
-        {/* Upload error */}
-        {uploadingMedia && uploadingMedia.status === 'error' && (
-          <div className="mt-2 px-3 py-2 bg-red-900/20 border border-red-900/30 rounded-md text-sm text-red-400">
-            Det oppstod en feil under opplasting av filen. Vennligst prøv igjen.
-          </div>
+        {/* Upload progress - now using the extracted UploadProgress component */}
+        {uploadingMedia && (
+          <UploadProgress 
+            progress={uploadingMedia.progress}
+            status={uploadingMedia.status}
+          />
         )}
       </div>
     </div>
   );
 };
+
+export default ChatInterface;

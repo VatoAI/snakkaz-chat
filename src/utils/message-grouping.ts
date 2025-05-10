@@ -1,53 +1,47 @@
 
 import { DecryptedMessage } from "@/types/message";
 
-export const groupMessages = (messages: DecryptedMessage[]) => {
-  if (!Array.isArray(messages)) {
-    console.error("Expected messages to be an array, but got:", messages);
-    return [];
-  }
-  
-  const groups: DecryptedMessage[][] = [];
-  let currentGroup: DecryptedMessage[] = [];
+// Time threshold in milliseconds for grouping messages (5 minutes)
+const TIME_THRESHOLD = 5 * 60 * 1000;
 
-  messages.forEach((message, index) => {
-    // Skip undefined or null messages or those without sender
-    if (!message || !message.sender) {
-      console.warn("Skipping invalid message:", message);
-      return;
-    }
-    
-    if (index === 0 || currentGroup.length === 0) {
-      currentGroup.push(message);
-    } else {
-      const prevMessage = currentGroup[currentGroup.length - 1];
-      
-      // Make sure we have valid data for comparison
-      if (!prevMessage || !prevMessage.sender || !message.sender) {
-        // Start a new group if we can't compare
-        if (currentGroup.length > 0) {
-          groups.push([...currentGroup]);
-        }
-        currentGroup = [message];
-        return;
-      }
-      
-      const timeDiff = new Date(message.created_at).getTime() - new Date(prevMessage.created_at).getTime();
-      const sameUser = message.sender.id === prevMessage.sender.id;
-      
-      // Group messages if they are from same user and not more than 5 minutes apart
-      if (sameUser && timeDiff < 5 * 60 * 1000) {
-        currentGroup.push(message);
-      } else {
-        groups.push([...currentGroup]);
-        currentGroup = [message];
-      }
-    }
+/**
+ * Groups messages that are within the TIME_THRESHOLD of each other
+ */
+export const groupMessages = (messages: DecryptedMessage[]): DecryptedMessage[][] => {
+  if (!messages.length) return [];
+
+  const sortedMessages = [...messages].sort((a, b) => {
+    const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
+    const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
+    return timeA - timeB;
   });
 
-  if (currentGroup.length > 0) {
+  const groups: DecryptedMessage[][] = [];
+  let currentGroup: DecryptedMessage[] = [sortedMessages[0]];
+
+  for (let i = 1; i < sortedMessages.length; i++) {
+    const currentMessage = sortedMessages[i];
+    const previousMessage = sortedMessages[i - 1];
+    
+    const currentTime = currentMessage.created_at ? new Date(currentMessage.created_at).getTime() : 0;
+    const previousTime = previousMessage.created_at ? new Date(previousMessage.created_at).getTime() : 0;
+    
+    // Check if messages have the same sender and are within time threshold
+    if (
+      currentMessage.sender_id === previousMessage.sender_id &&
+      (currentTime - previousTime) < TIME_THRESHOLD
+    ) {
+      currentGroup.push(currentMessage);
+    } else {
+      groups.push(currentGroup);
+      currentGroup = [currentMessage];
+    }
+  }
+  
+  // Add the last group if it's not empty
+  if (currentGroup.length) {
     groups.push(currentGroup);
   }
-
+  
   return groups;
 };

@@ -13,13 +13,15 @@ interface PremiumMembershipCardProps {
   currentUserId: string;
   currentMembership: GroupMember | undefined;
   onUpgradeComplete: () => void;
+  isMobile?: boolean; // Add isMobile property
 }
 
 export function PremiumMembershipCard({
   group,
   currentUserId,
   currentMembership,
-  onUpgradeComplete
+  onUpgradeComplete,
+  isMobile
 }: PremiumMembershipCardProps) {
   const { toast } = useToast();
   const [showPayment, setShowPayment] = useState(false);

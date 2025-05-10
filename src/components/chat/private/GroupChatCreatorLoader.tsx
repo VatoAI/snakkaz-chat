@@ -1,6 +1,6 @@
+
 import { lazy, Suspense } from "react";
-import type { SecurityLevel } from "@/types/security";
-import { GroupWritePermission, MessageTTLOption } from "@/types/group";
+import { SecurityLevel, GroupWritePermission, MessageTTLOption } from "@/types/group";
 
 // Lazy-load the group chat creator dialog - update the path to the correct location
 const GroupChatCreator = lazy(() =>

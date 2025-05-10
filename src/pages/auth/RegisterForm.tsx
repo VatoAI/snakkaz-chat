@@ -107,6 +107,7 @@ export const RegisterForm = ({ onSuccess }: RegisterFormProps) => {
     setIsLoading(true);
 
     try {
+      // Registrer brukeren via Supabase Auth
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -119,6 +120,24 @@ export const RegisterForm = ({ onSuccess }: RegisterFormProps) => {
 
       if (error) {
         throw error;
+      }
+
+      if (data.user) {
+        // Opprett brukerprofil i profiles-tabellen
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: data.user.id,
+            username: username,
+            avatar_url: null,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          });
+          
+        if (profileError) {
+          console.error("Profile creation error:", profileError);
+          throw new Error("Konto opprettet, men kunne ikke opprette brukerprofil.");
+        }
       }
 
       toast({

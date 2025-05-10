@@ -375,6 +375,57 @@ export function useAIChat(): UseAIChatReturn {
           resolve('Snakkaz bruker ende-til-ende-kryptering (E2EE) for å beskytte dine samtaler. Ingen kan lese meldingene dine, ikke engang vi.');
         } else if (message.toLowerCase().includes('premium')) {
           resolve('Snakkaz Premium gir deg utvidede funksjoner som større filoverføringer, lengre meldingshistorikk og prioritert kundesupport.');
+        } else if (message.toLowerCase().includes('sammenlign') || (message.toLowerCase().includes('vs') && message.toLowerCase().includes('snakkaz'))) {
+          resolve(`
+# Sammenligning av Snakkaz med andre meldingsapper
+
+## 🔒 Sikkerhet
+
+| App | Ende-til-ende kryptering | Helside-kryptering | Selvdestruerende meldinger | Kvantumsikker |
+|-----|--------------------------|--------------------|-----------------------------|---------------|
+| **Snakkaz** | ✅ Alle chatter | ✅ Premium-grupper | ✅ Konfigurerbare timere | 🔄 Under utvikling |
+| Telegram | ❌ Kun "Secret Chats" | ❌ Nei | ✅ Secret Chats | ❌ Nei |
+| Signal | ✅ Alle chatter | ❌ Nei | ✅ Begrenset | ✅ SPQR-teknologi |
+| Wickr | ✅ Alle chatter | ❌ Nei | ✅ Burn-on-read | ❌ Nei |
+
+## 🌟 Funksjoner
+
+| App | Gruppesamtaler | Mediaopplasting | AI-assistanse | Plattformer |
+|-----|---------------|-----------------|--------------|------------|
+| **Snakkaz** | ✅ Med rollestyring | ✅ Kryptert, 1GB (Premium) | ✅ Integrert | Web, snart mobilapper |
+| Telegram | ✅ Opptil 200K medlemmer | ✅ Opptil 2GB | ❌ Kun bots | Alle plattformer |
+| Signal | ✅ Begrenset funksjonalitet | ✅ Kryptert | ❌ Nei | Alle plattformer |
+| Wickr | ✅ Enterprise-fokusert | ✅ Kryptert | ❌ Nei | Alle plattformer |
+
+## 🚀 Unike fordeler med Snakkaz
+
+1. **Bedre privatlivskontroll** - Kombinerer det beste fra alle med vårt eget sikkerhetssystem
+2. **Smartere kryptering** - Mer strømlinjeformet enn Wickr, mer omfattende enn Telegram
+3. **Cyberpunk design** - Unik brukeropplevelse i forhold til de andre appenes standarddesign
+4. **AI-integrering** - Intelligent assistent uten å gå på kompromiss med ende-til-ende kryptering
+5. **Forbedret batteritid** - Optimaliserte krypteringsoperasjoner for bedre mobile ytelse
+
+Har du spørsmål om noen spesifikke funksjoner?`);
+        } else if (message.toLowerCase().includes('telegram') || message.toLowerCase().includes('signal') || message.toLowerCase().includes('wickr')) {
+          resolve(`
+Jeg ser at du spør om andre meldingsapper! Her er hvordan Snakkaz skiller seg ut sammenlignet med disse:
+
+### Sammenlignet med Telegram:
+- **Kryptering:** Snakkaz gir ende-til-ende kryptering for alle samtaler, ikke bare "Secret Chats"
+- **Sikkerhet:** Vi tilbyr helside-kryptering i premium-grupper, en funksjon Telegram mangler
+- **Personvern:** Våre data lagres ikke i sentraliserte skytjenester som kan kompromitteres
+
+### Sammenlignet med Signal:
+- **Brukeropplevelse:** Snakkaz har et mer moderne, cyberpunk-inspirert design
+- **Gruppesamtaler:** Vi tilbyr mer avansert rollestyring og adminfunksjoner
+- **AI-funksjoner:** Snakkaz integrerer AI-assistanse som Signal mangler helt
+
+### Sammenlignet med Wickr:
+- **Ytelse:** Snakkaz er optimalisert for lavere batterforbruk på mobile enheter
+- **Tilgjengelighet:** Vi fokuserer på både privatbrukere og bedrifter, mens Wickr er primært enterprise-fokusert
+- **Brukergrensesnitt:** Vårt design er mer intuitivt for ikke-tekniske brukere
+
+Vil du ha mer detaljert informasjon om noen av disse sammenligningene?`);
         } else {
           resolve('Interessant. Fortell meg gjerne mer om det, så skal jeg prøve å hjelpe deg på best mulig måte.');
         }

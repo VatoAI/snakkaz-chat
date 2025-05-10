@@ -11,6 +11,14 @@ export interface Profile {
   bio: string | null;
   website: string | null;
   social_links: Record<string, string> | null;
+  
+  // Privacy settings
+  show_online_status?: boolean;
+  read_receipts?: boolean;
+  allow_invites?: boolean;
+  
+  // Security settings
+  two_factor_enabled?: boolean;
 }
 
 export const useProfileLoader = (userId: string | undefined = undefined) => {
@@ -19,7 +27,7 @@ export const useProfileLoader = (userId: string | undefined = undefined) => {
   const [profileData, setProfileData] = useState<Profile | null>(null);
   const [isProfileLoading, setIsProfileLoading] = useState<boolean>(false);
   const { toast } = useToast();
-  const { isEncryptionEnabled, encryptData, decryptData } = useAppEncryption();
+  const { enabled: isEncryptionEnabled, encryptData, decryptData } = useAppEncryption();
 
   const loadProfile = useCallback(async (profileUserId: string) => {
     if (loading[profileUserId]) return;
@@ -32,7 +40,7 @@ export const useProfileLoader = (userId: string | undefined = undefined) => {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('username, display_name, avatar_url, email, bio, website, social_links')
+        .select('username, display_name, avatar_url, email, bio, website, social_links, show_online_status, read_receipts, allow_invites, two_factor_enabled')
         .eq('id', profileUserId)
         .maybeSingle();
 
@@ -54,13 +62,21 @@ export const useProfileLoader = (userId: string | undefined = undefined) => {
         email: data?.email || null,
         bio: data?.bio || null,
         website: data?.website || null,
-        social_links: data?.social_links || null
+        social_links: data?.social_links || null,
+        
+        // Privacy settings
+        show_online_status: data?.show_online_status,
+        read_receipts: data?.read_receipts,
+        allow_invites: data?.allow_invites,
+        
+        // Security settings
+        two_factor_enabled: data?.two_factor_enabled
       };
 
       // Dekrypter data hvis kryptering er aktivert og vi har kryptert innhold
       if (isEncryptionEnabled && data?.bio && typeof data.bio === 'string' && data.bio.startsWith('ENC:')) {
         try {
-          const decryptedBio = await decryptData<string>(data.bio.substring(4));
+          const decryptedBio = await decryptData(data.bio.substring(4));
           if (decryptedBio) {
             profileData.bio = decryptedBio;
           }
@@ -109,7 +125,7 @@ export const useProfileLoader = (userId: string | undefined = undefined) => {
         setIsProfileLoading(false);
       }
     }
-  }, [toast, userId, isEncryptionEnabled, decryptData]);
+  }, [toast, userId, isEncryptionEnabled, decryptData, loading]);
 
   const refreshProfile = useCallback(async () => {
     if (!userId) return false;

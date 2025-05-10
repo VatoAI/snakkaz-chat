@@ -1,7 +1,6 @@
 
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Workflow } from "lucide-react";
+import React from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface WorkflowDisplayProps {
   type: string;
@@ -11,49 +10,47 @@ interface WorkflowDisplayProps {
   onNextStep: () => void;
 }
 
-export const WorkflowDisplay = ({ 
-  type, 
-  steps, 
-  currentStep, 
-  onPrevStep, 
-  onNextStep 
-}: WorkflowDisplayProps) => {
+export const WorkflowDisplay: React.FC<WorkflowDisplayProps> = ({
+  type,
+  steps,
+  currentStep,
+  onPrevStep,
+  onNextStep
+}) => {
   return (
-    <Card className="absolute bottom-4 right-4 w-80 p-4 bg-cyberdark-800 border-cybergold-500/30">
-      <div className="flex items-center gap-2 mb-3">
-        <Workflow className="h-5 w-5 text-cybergold-400" />
-        <h3 className="text-sm font-medium text-cybergold-300">
-          Workflow: {type}
-        </h3>
+    <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-cyberdark-900 border border-cybergold-500/40 rounded-lg p-4 shadow-lg max-w-lg w-full">
+      <div className="flex flex-col">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold text-cybergold-400">
+            {type} ({currentStep + 1}/{steps.length})
+          </h3>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={onPrevStep}
+              disabled={currentStep === 0}
+              className="p-1 rounded-full hover:bg-cyberdark-800 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <ChevronLeft className="w-5 h-5 text-cybergold-400" />
+            </button>
+            <button
+              onClick={onNextStep}
+              disabled={currentStep === steps.length - 1}
+              className="p-1 rounded-full hover:bg-cyberdark-800 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <ChevronRight className="w-5 h-5 text-cybergold-400" />
+            </button>
+          </div>
+        </div>
+        
+        <div className="w-full bg-cyberdark-800 h-1 mb-4 rounded-full overflow-hidden">
+          <div 
+            className="bg-cybergold-500 h-full rounded-full"
+            style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
+          />
+        </div>
+        
+        <p className="text-cybergold-300">{steps[currentStep]}</p>
       </div>
-      <div className="space-y-2 mb-4">
-        <p className="text-sm text-cybergold-200">
-          Steg {currentStep + 1} av {steps.length}:
-        </p>
-        <p className="text-sm text-white">
-          {steps[currentStep]}
-        </p>
-      </div>
-      <div className="flex justify-between">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onPrevStep}
-          disabled={currentStep === 0}
-          className="text-cybergold-400 border-cybergold-500/30"
-        >
-          Forrige
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onNextStep}
-          disabled={currentStep === steps.length - 1}
-          className="text-cybergold-400 border-cybergold-500/30"
-        >
-          Neste
-        </Button>
-      </div>
-    </Card>
+    </div>
   );
 };

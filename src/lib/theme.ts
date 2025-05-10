@@ -1,110 +1,82 @@
-// Theme constants for consistent colors across the application
+import clsx, { ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+// Hjelpefunksjon for å kombinere Tailwind-klasser på en sikker måte
+export function cx(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
+// Applikasjonens fargepalett
 export const theme = {
   colors: {
-    // Main background and surfaces
-    background: {
-      primary: 'bg-cyberdark-950',      // Mørkeste bakgrunn
-      secondary: 'bg-cyberdark-900',    // Litt lysere bakgrunn for kort, sidefelter
-      tertiary: 'bg-cyberdark-800',     // For hover states, aktive elementer
-      overlay: 'bg-cyberdark-900/95',   // For overlegg med blur
+    // Primærfarger
+    cybergold: {
+      100: '#FFF7E0',
+      200: '#FFF0C2',
+      300: '#FFE9A3',
+      400: '#FFE285',
+      500: '#FFD966',
+      600: '#E6C05C',
+      700: '#CCA852',
+      800: '#B39147',
+      900: '#997A3D'
     },
-    
-    // Text colors
-    text: {
-      primary: 'text-cybergold-200',      // Standard tekst
-      secondary: 'text-cybergold-400',    // Overskrifter, fremhevet tekst
-      muted: 'text-cybergold-500',        // Nedtonet tekst
-      link: 'text-cybergold-300',         // Lenker
-      inverse: 'text-cyberdark-950',      // Tekst på lyse bakgrunner
+    // Sekundærfarger
+    cyberblue: {
+      100: '#E0F7FF',
+      200: '#C2F0FF',
+      300: '#A3E9FF',
+      400: '#85E2FF',
+      500: '#66D9FF',
+      600: '#5CC0E6',
+      700: '#52A8CC',
+      800: '#4791B3',
+      900: '#3D7A99'
     },
-    
-    // Border colors
-    border: {
-      light: 'border-cybergold-700/30',    // Subtile grenser
-      medium: 'border-cyberdark-700',      // Standard grenser
-      active: 'border-cybergold-500',      // Aktive/fokuserte elementer
-    },
-    
-    // Button and interactive element colors
-    button: {
-      primary: {
-        bg: 'bg-cybergold-600',
-        text: 'text-cyberdark-950',
-        hover: 'hover:bg-cybergold-500',
-      },
-      secondary: {
-        bg: 'bg-cyberdark-800',
-        text: 'text-cybergold-400',
-        hover: 'hover:bg-cyberdark-700',
-      },
-      outline: {
-        bg: 'bg-transparent',
-        text: 'text-cybergold-400',
-        border: 'border-cyberdark-700',
-        hover: 'hover:bg-cyberdark-800',
-      },
-      ghost: {
-        bg: 'bg-transparent',
-        text: 'text-cybergold-400',
-        hover: 'hover:bg-cyberdark-800',
-      },
-    },
-    
-    // Status colors
-    status: {
-      online: 'bg-green-500',
-      away: 'bg-amber-500',
-      busy: 'bg-red-500',
-      offline: 'bg-gray-500',
-      success: 'bg-green-500',
-      error: 'bg-red-500',
-      warning: 'bg-amber-500',
-      info: 'bg-cyberblue-500',
-    },
+    // Bakgrunnsfarger
+    cyberdark: {
+      50: '#383944',
+      100: '#32333E',
+      200: '#2D2E38',
+      300: '#292A33',
+      400: '#24252D',
+      500: '#202128',
+      600: '#1B1C22',
+      700: '#17181D',
+      800: '#121318',
+      900: '#0E0E12',
+      950: '#0A0A0D'
+    }
   },
-  
-  // Standardiserte skyggeeffekter
   shadows: {
-    sm: 'shadow-sm shadow-cybergold-900/20',
-    md: 'shadow-md shadow-cybergold-900/20',
-    lg: 'shadow-lg shadow-cybergold-900/20',
+    sm: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+    md: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+    lg: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+    xl: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+    '2xl': '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+    glow: '0 0 15px rgba(255, 217, 102, 0.5)'
   },
-  
-  // Animation og transition standarder
   animation: {
-    fast: 'transition-all duration-150 ease-in-out',
-    normal: 'transition-all duration-300 ease-in-out',
-    slow: 'transition-all duration-500 ease-in-out',
+    fast: '0.2s',
+    default: '0.3s',
+    slow: '0.5s'
+  },
+  borderRadius: {
+    none: '0',
+    sm: '0.125rem',
+    default: '0.25rem',
+    md: '0.375rem',
+    lg: '0.5rem',
+    xl: '0.75rem',
+    '2xl': '1rem',
+    '3xl': '1.5rem',
+    full: '9999px'
+  },
+  screens: {
+    sm: '640px',
+    md: '768px',
+    lg: '1024px',
+    xl: '1280px',
+    '2xl': '1536px'
   }
-};
-
-// Helper for å kombinere flere temastiler
-export const cx = (...classes: string[]) => {
-  return classes.filter(Boolean).join(' ');
-};
-
-// Funksjon for å hente button styles basert på variant
-export const getButtonStyles = (
-  variant: 'primary' | 'secondary' | 'outline' | 'ghost' = 'primary',
-  size: 'sm' | 'md' | 'lg' = 'md'
-) => {
-  const baseStyles = 'inline-flex items-center justify-center font-medium rounded-md';
-  
-  const variantStyles = theme.colors.button[variant];
-  
-  const sizeStyles = {
-    sm: 'h-8 px-3 text-xs',
-    md: 'h-10 px-4 py-2',
-    lg: 'h-12 px-6 text-lg',
-  }[size];
-  
-  return cx(
-    baseStyles,
-    variantStyles.bg,
-    variantStyles.text,
-    variantStyles.hover,
-    variantStyles.border || '',
-    sizeStyles,
-    theme.animation.fast
-  );
 };

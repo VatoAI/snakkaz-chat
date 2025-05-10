@@ -16,4 +16,3 @@ export const groupMessagesByTime = (messages: DecryptedMessage[]): DecryptedMess
 
 // Import the existing grouping function
 import { groupMessages } from "./message-grouping";
-

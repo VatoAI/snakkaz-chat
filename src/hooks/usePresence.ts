@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from "@/integrations/supabase/client";
-import { UserStatus } from '@/types/presence';
+import { UserStatus, isValidStatus, getDefaultStatus } from '@/types/presence';
 
 export const usePresence = (
   userId: string | null,
@@ -20,11 +20,8 @@ export const usePresence = (
     if (!userId || hidden) return;
 
     try {
-      // Sikrer at statusen er en av de tillatte verdiene
-      const validStatus: UserStatus =
-        ['online', 'busy', 'brb', 'offline'].includes(newStatus as UserStatus)
-          ? newStatus
-          : 'online';
+      // Bruker den nye isValidStatus-hjelpefunksjonen for å validere status
+      const validStatus: UserStatus = isValidStatus(newStatus) ? newStatus : getDefaultStatus();
 
       const { error } = await supabase
         .from('user_presence')

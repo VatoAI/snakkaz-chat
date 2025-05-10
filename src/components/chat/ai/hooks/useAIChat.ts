@@ -1,106 +1,86 @@
 
-import { useState } from 'react';
-import { aiAgent } from '@/services/ai-agent';
-import { DecryptedMessage } from "@/types/message";
+import { useState, FormEvent } from 'react';
+import { DecryptedMessage } from '@/types/message';
+
+// Define the workflow structure
+interface Workflow {
+  type: string;
+  steps: string[];
+  currentStep: number;
+}
+
+// Define the help details structure
+interface HelpDetails {
+  title: string;
+  content: string;
+}
+
+// Define the command structure
+interface Command {
+  action: string;
+  payload: any;
+}
 
 export const useAIChat = (currentUserId: string) => {
   const [messages, setMessages] = useState<DecryptedMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [activeWorkflow, setActiveWorkflow] = useState<{
-    type: string;
-    steps: string[];
-    currentStep: number;
-  } | null>(null);
-  const [helpDetails, setHelpDetails] = useState<string[] | null>(null);
-  const [activeCommand, setActiveCommand] = useState<{ action: string; payload: any } | null>(null);
-  const [pendingCommand, setPendingCommand] = useState<{ action: string; payload: any } | null>(null);
+  const [error, setError] = useState('');
+  const [activeWorkflow, setActiveWorkflow] = useState<Workflow | null>(null);
+  const [helpDetails, setHelpDetails] = useState<HelpDetails | null>(null);
+  const [activeCommand, setActiveCommand] = useState<Command | null>(null);
+  const [pendingCommand, setPendingCommand] = useState<Command | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newMessage.trim()) return;
-
+  const sendMessageToAI = async (message: string) => {
     setIsLoading(true);
     try {
-      const userMessage: DecryptedMessage = {
+      // Mock AI response for now
+      const aiMessage: DecryptedMessage = {
         id: Date.now().toString(),
-        content: newMessage,
-        sender: {
-          id: currentUserId,
-          username: null,
-          full_name: null
-        },
+        content: `AI response to: ${message}`,
         created_at: new Date().toISOString(),
-        encryption_key: '',
-        iv: '',
-        is_encrypted: false
-      };
-
-      setMessages(prev => [...prev, userMessage]);
-      setNewMessage('');
-
-      const response = await aiAgent.processMessage(userMessage);
-
-      const agentMessage: DecryptedMessage = {
-        id: `ai-${Date.now()}`,
-        content: response.content,
         sender: {
-          id: 'ai-agent',
-          username: 'SnakkaZ Assistant',
-          full_name: null
-        },
-        created_at: new Date().toISOString(),
-        encryption_key: '',
-        iv: '',
-        is_encrypted: false
+          id: 'ai-assistant',
+          username: 'AI Assistant',
+          full_name: 'AI Assistant',
+          avatar_url: null
+        }
       };
-
-      setMessages(prev => [...prev, agentMessage]);
-
-      if (response.action) {
-        handleAgentAction(response.action);
-      }
-    } catch (error) {
-      console.error('Error processing AI agent message:', error);
+      
+      setMessages(prev => [...prev, aiMessage]);
+      setError('');
+    } catch (err) {
+      setError('Failed to send message to AI');
+      console.error(err);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleAgentAction = (action: { type: string; payload: any }) => {
-    switch (action.type) {
-      case 'workflow':
-        setActiveWorkflow({
-          type: action.payload.workflowType,
-          steps: action.payload.steps,
-          currentStep: 0
-        });
-        setHelpDetails(null);
-        setActiveCommand(null);
-        break;
-      case 'help':
-        if (action.payload.details) {
-          setHelpDetails(action.payload.details);
-          setActiveWorkflow(null);
-          setActiveCommand(null);
-        }
-        break;
-      case 'command':
-        if (action.payload.requiresConfirmation) {
-          setPendingCommand({
-            action: action.payload.action,
-            payload: action.payload
-          });
-        } else {
-          setActiveCommand({
-            action: action.payload.action,
-            payload: action.payload
-          });
-        }
-        setActiveWorkflow(null);
-        setHelpDetails(null);
-        break;
-    }
+  const addMessage = (message: string) => {
+    const newMsg: DecryptedMessage = {
+      id: Date.now().toString(),
+      content: message,
+      created_at: new Date().toISOString(),
+      sender: {
+        id: currentUserId,
+        username: 'You',
+        full_name: 'You',
+        avatar_url: null
+      }
+    };
+    
+    setMessages(prev => [...prev, newMsg]);
+  };
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!newMessage.trim()) return;
+    
+    addMessage(newMessage);
+    const msgToSend = newMessage;
+    setNewMessage('');
+    await sendMessageToAI(msgToSend);
   };
 
   const handleNextStep = () => {
@@ -137,14 +117,17 @@ export const useAIChat = (currentUserId: string) => {
     newMessage,
     setNewMessage,
     isLoading,
+    error,
     activeWorkflow,
     helpDetails,
     activeCommand,
     pendingCommand,
+    sendMessageToAI,
+    addMessage,
     handleSubmit,
     handleNextStep,
     handlePrevStep,
     handleConfirmCommand,
-    handleCancelCommand
+    handleCancelCommand,
   };
 };

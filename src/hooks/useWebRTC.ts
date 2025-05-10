@@ -3,6 +3,7 @@ import { WebRTCManager } from "@/utils/webrtc";
 import { supabase } from "@/integrations/supabase/client";
 import { REALTIME_SUBSCRIBE_STATES } from '@supabase/supabase-js';
 import { useToast } from "@/components/ui/use-toast";
+import { activeCommunicationConfig, isP2PEnabled } from "@/config/communication-config";
 
 const handleChannelSubscription = (
   status: string,
@@ -33,12 +34,21 @@ const handleChannelSubscription = (
 // Export the hook
 export const useWebRTC = () => {
   const [manager, setManager] = useState<WebRTCManager | null>(null);
-  const [status, setStatus] = useState<'initializing' | 'ready' | 'error'>('initializing');
+  const [status, setStatus] = useState<'initializing' | 'ready' | 'disabled' | 'error'>('initializing');
   const signalChannel = useRef<any>(null);
   const { toast } = useToast();
   
   const setupWebRTC = useCallback(async (userId: string, onReady?: () => void) => {
     try {
+      // Sjekk om P2P er deaktivert i konfigurasjonen
+      if (!isP2PEnabled()) {
+        console.log("WebRTC/P2P er deaktivert i kommunikasjonsinnstillingene");
+        setStatus('disabled');
+        // Fortsett med onReady selv om P2P er deaktivert
+        if (onReady) onReady();
+        return;
+      }
+      
       console.log("Setting up WebRTC for user:", userId);
       setStatus('initializing');
       
@@ -62,7 +72,9 @@ export const useWebRTC = () => {
       }
       
       // Create WebRTC manager
-      const webRTCManager = new WebRTCManager(userId);
+      const webRTCManager = new WebRTCManager(userId, {
+        maxReconnectAttempts: activeCommunicationConfig.maxP2PReconnectAttempts
+      });
       setManager(webRTCManager);
       
       // Set up signaling channel
@@ -90,21 +102,23 @@ export const useWebRTC = () => {
           const onlineUsers = Object.keys(state).filter(id => id !== userId);
           console.log("Online users:", onlineUsers);
           
-          // We'll handle connections differently since initializeConnection isn't available
-          onlineUsers.forEach(peerId => {
-            if (webRTCManager) {
-              console.log(`Detected peer ${peerId} online`);
-              // Use available methods for connection
-              webRTCManager.connectToPeer(peerId, {} as JsonWebKey)
-                .catch(err => console.error(`Failed to connect to peer ${peerId}:`, err));
-            }
-          });
+          // Vi initialiserer bare tilkobling hvis P2P er aktivert
+          if (isP2PEnabled()) {
+            onlineUsers.forEach(peerId => {
+              if (webRTCManager) {
+                console.log(`Detected peer ${peerId} online`);
+                // Use available methods for connection
+                webRTCManager.connectToPeer(peerId, {} as JsonWebKey)
+                  .catch(err => console.error(`Failed to connect to peer ${peerId}:`, err));
+              }
+            });
+          }
         })
         .on('presence', { event: 'join' }, ({ key, newPresences }) => {
           console.log("User joined:", key, newPresences);
           
-          // Initialize connection with new user using available methods
-          if (key !== userId && webRTCManager) {
+          // Initialiser bare tilkobling hvis P2P er aktivert
+          if (key !== userId && webRTCManager && isP2PEnabled()) {
             console.log(`New peer ${key} joined`);
             // Use available methods for connection
             webRTCManager.connectToPeer(key, {} as JsonWebKey)
@@ -126,6 +140,9 @@ export const useWebRTC = () => {
         description: "Failed to set up WebRTC connections. Please try refreshing the page.",
         variant: "destructive",
       });
+      
+      // Forsøk å fortsette selv om WebRTC feiler
+      if (onReady) onReady();
     }
   }, [toast]);
   
@@ -143,7 +160,7 @@ export const useWebRTC = () => {
   
   // Periodic health check for WebRTC
   useEffect(() => {
-    if (manager && status === 'ready') {
+    if (manager && status === 'ready' && isP2PEnabled()) {
       const checkInterval = setInterval(() => {
         try {
           // Get the manager status and log it
@@ -158,9 +175,28 @@ export const useWebRTC = () => {
     }
   }, [manager, status]);
   
+  // Observer for endringer i kommunikasjonskonfigurasjon
+  useEffect(() => {
+    const configObserver = () => {
+      if (!isP2PEnabled() && manager) {
+        // Koble fra alle P2P-tilkoblinger hvis funksjonen er deaktivert
+        manager.disconnectAll();
+        setStatus('disabled');
+      }
+    };
+    
+    // Registrer listener for konfigurasjon (dette er en forenklet tilnærming)
+    window.addEventListener('communication-config-change', configObserver);
+    
+    return () => {
+      window.removeEventListener('communication-config-change', configObserver);
+    };
+  }, [manager]);
+  
   return {
-    webRTCManager: manager,
+    webRTCManager: isP2PEnabled() ? manager : null,
     setupWebRTC,
     status,
+    isP2PEnabled: isP2PEnabled()
   };
 };

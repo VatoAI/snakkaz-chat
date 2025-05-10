@@ -1,4 +1,3 @@
-
 import { Friend } from "../types";
 import { DecryptedMessage } from "@/types/message";
 import { WebRTCManager } from "@/utils/webrtc";

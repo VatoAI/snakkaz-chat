@@ -111,6 +111,13 @@ export const ChatTabs = ({
     return Array.from(conversations.values());
   }, [currentUserId, directMessages, userProfiles]);
 
+  const handleOnNewMessage = (message: DecryptedMessage) => {
+    // Implementer håndtering av nye meldinger
+    if (typeof onNewMessage === 'function') {
+      onNewMessage(message);
+    }
+  };
+
   return (
     <TabsContainer
       activeTab={activeTab}

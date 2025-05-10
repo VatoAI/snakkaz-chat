@@ -1,72 +1,75 @@
 
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Circle, Clock, Loader2 } from "lucide-react";
-import { UserStatus } from "@/types/presence";
-import { cn } from "@/lib/utils";
-import { useState } from "react";
+import React from 'react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { cn } from '@/lib/utils';
+import { getInitials } from '@/utils/user';
+import { UserStatus } from '@/types/presence';
 
-interface UserAvatarProps {
-  avatarUrl?: string | null;
-  username?: string | null;
+export interface UserAvatarProps {
+  src?: string | null;
+  alt?: string;
+  fallback?: string;
   size?: number;
-  status?: UserStatus;
+  status?: UserStatus | string;
   className?: string;
+  fallbackClassName?: string;
+  avatarUrl?: string | null;  // Added for compatibility
+  isGroup?: boolean;  // Added for compatibility with group chats
 }
 
-export function UserAvatar({ 
-  avatarUrl, 
-  username = "", 
-  size = 32, 
-  status = "online",
-  className
-}: UserAvatarProps) {
-  const [imageError, setImageError] = useState(false);
-  const initials = !avatarUrl || imageError ? username?.slice(0,2).toUpperCase() : "";
-
-  const statusColors = {
-    online: "bg-cyberblue-400",
-    busy: "bg-cyberred-500",
-    brb: "bg-cyberblue-200",
-    offline: "bg-cyberdark-700"
-  };
-
-  const statusIcons = {
-    online: Circle,
-    busy: Clock,
-    brb: Loader2,
-    offline: Circle
-  };
-
-  const StatusIcon = statusIcons[status];
-
+export const UserAvatar: React.FC<UserAvatarProps> = ({
+  src,
+  avatarUrl, // Added alternative prop for avatar URL
+  alt = 'User',
+  fallback,
+  size = 40,
+  status,
+  className,
+  fallbackClassName,
+  isGroup = false // Default to false
+}) => {
+  // Use src or avatarUrl, whichever is provided
+  const imageUrl = src || avatarUrl;
+  const initials = fallback || getInitials(alt);
+  
   return (
-    <div className="relative select-none" style={{ width: size, height: size }}>
-      <Avatar
+    <div className="relative">
+      <Avatar 
         className={cn(
-          "relative border-4 border-cyberblue-400/80 shadow-neon-blue hover:border-cybergold-400 hover:shadow-neon-gold transition-all duration-200 bg-gradient-to-br from-cyberdark-800 via-cyberred-900/60 to-cybergold-400/50 overflow-hidden",
+          "border-2",
+          isGroup ? "border-cybergold-700" : "border-cyberdark-700",
           className
         )}
         style={{ width: size, height: size }}
       >
-        {avatarUrl && !imageError ? (
-          <AvatarImage
-            src={avatarUrl}
-            alt={username || "Avatar"}
-            className="absolute inset-0 w-full h-full object-cover"
-            onError={() => setImageError(true)}
-          />
+        {imageUrl ? (
+          <AvatarImage src={imageUrl} alt={alt} />
         ) : (
-          <AvatarFallback className="bg-cyberdark-800 text-cybergold-300 text-lg font-bold">
-            {initials || "?"}
+          <AvatarFallback 
+            className={cn(
+              "bg-cyberdark-700 text-cybergold-300",
+              fallbackClassName
+            )}
+          >
+            {initials}
           </AvatarFallback>
         )}
       </Avatar>
-      <div className={cn(
-        "absolute -bottom-1 -right-1 rounded-full p-0.5 border-2 border-cyberdark-950",
-        statusColors[status]
-      )}>
-        <StatusIcon className="w-3 h-3 text-cybergold-200" />
-      </div>
+      
+      {status && !isGroup && (
+        <span 
+          className={cn(
+            "absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-cyberdark-900",
+            typeof status === 'string' ? (
+              status === 'online' ? 'bg-green-500' :
+              status === 'away' ? 'bg-amber-500' :
+              status === 'busy' ? 'bg-red-500' :
+              status === 'brb' ? 'bg-purple-500' :
+              'bg-gray-500'
+            ) : 'bg-gray-500'
+          )}
+        />
+      )}
     </div>
   );
-}
+};

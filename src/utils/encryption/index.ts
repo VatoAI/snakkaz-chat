@@ -1,50 +1,35 @@
+
 /**
  * Entry point for encryption utilities
+ * 
+ * This file consolidates all encryption-related exports from various modules
+ * to provide a single import point for the application.
  */
 
-// Re-export all non-conflicting encryption functionality
-export * from './secure-connection';
-export * from './data-conversion';
-export * from './types';
-export * from './key-management';
+// Re-export functions from message-encryption module
+export { encryptMessage, decryptMessage, importEncryptionKey, generateMessageEncryptionKey } from './message-encryption';
 
-// Handle potential conflicts with named imports/exports
-// Import media module functions and rename the conflicting importEncryptionKey
-import { 
-  encryptMedia, 
-  encryptFile, 
-  decryptMedia,
-  importEncryptionKey as importMediaEncryptionKey 
-} from './media';
+// Re-export from media encryption module
+export { encryptMedia, decryptMedia, encryptFile } from './media';
 
-// Import message encryption module functions
-import { 
-  encryptMessage, 
-  decryptMessage,
-  importEncryptionKey
-} from './message-encryption';
-
-// Re-export with renamed function to avoid conflicts
+// Re-export from data-conversion module
 export { 
-  encryptMedia,
-  encryptFile, 
-  decryptMedia,
-  encryptMessage, 
-  decryptMessage,
-  importEncryptionKey,
-  importMediaEncryptionKey
-};
+  str2ab, 
+  ab2str, 
+  arrayBufferToBase64, 
+  base64ToArrayBuffer, 
+  hexToArrayBuffer, 
+  arrayBufferToHex 
+} from './data-conversion';
 
-// Export blob encryption as alias
-export const encryptBlob = encryptMedia;
+// Re-export types
+export * from './types';
 
-// Export group functions
-import { createGroupEncryptionKey, getGroupEncryptionKey } from './group';
-export { createGroupEncryptionKey, getGroupEncryptionKey };
+// Re-export blob encryption as an alias for encryptMedia
+export { encryptMedia as encryptBlob } from './media';
 
-// Export group-keys with renamed function to avoid conflict
-import { generateEncryptionKey as generateGroupEncryptionKey, importGroupEncryptionKey } from './group-keys';
-export { generateGroupEncryptionKey, importGroupEncryptionKey };
+// Export group encryption functions
+export { createGroupEncryptionKey, getGroupEncryptionKey } from './group';
 
-// Export whole page encryption
-export * from './whole-page-encryption';
+// Re-export from the main encryption utility
+export { generateEncryptionKey, encryptWithKey, decryptWithKey } from '../encryption';

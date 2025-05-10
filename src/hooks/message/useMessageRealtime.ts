@@ -1,9 +1,13 @@
-
-import { useCallback, useRef } from "react";
+import { useCallback, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { DecryptedMessage } from "@/types/message";
 import { decryptMessage } from "@/utils/encryption";
+import { activeCommunicationConfig } from "@/config/communication-config";
 
+/**
+ * Hook for å abonnere på sanntidsoppdateringer av meldinger
+ * Uavhengig av om meldingene kommer via P2P eller server
+ */
 export const useMessageRealtime = (
   userId: string | null, 
   setMessages: (updater: React.SetStateAction<DecryptedMessage[]>) => void,
@@ -11,31 +15,49 @@ export const useMessageRealtime = (
   groupId?: string
 ) => {
   const activeChannelRef = useRef<any>(null);
+  const isUnmountedRef = useRef(false);
+  
+  // Opprense ved unmounting
+  useEffect(() => {
+    return () => {
+      isUnmountedRef.current = true;
+      if (activeChannelRef.current) {
+        console.log("Rydder opp sanntidsabonnement ved unmounting");
+        supabase.removeChannel(activeChannelRef.current);
+        activeChannelRef.current = null;
+      }
+    };
+  }, []);
 
   const setupRealtimeSubscription = useCallback(() => {
     if (!userId) {
-      console.log("User not authenticated");
+      console.log("Bruker er ikke autentisert");
       return () => {};
     }
 
-    // Clean up any existing subscription
+    // Rydd opp eksisterende abonnement
     if (activeChannelRef.current) {
-      console.log("Cleaning up existing subscription");
+      console.log("Rydder opp eksisterende abonnement");
       supabase.removeChannel(activeChannelRef.current);
       activeChannelRef.current = null;
     }
 
+    // Opprett korrekt filter basert på om vi er i en direkte samtale eller en gruppe
     let channelFilter = "*";
     if (receiverId) {
-      channelFilter = `and(or(sender_id:eq:${userId},sender_id:eq:${receiverId}),or(receiver_id:eq:${userId},receiver_id:eq:${receiverId}))`;
+      // For direktemeldinger: bare meldinger mellom disse to brukerne
+      channelFilter = `and(or(sender_id.eq.${userId},sender_id.eq.${receiverId}),or(receiver_id.eq.${userId},receiver_id.eq.${receiverId}))`;
     } else if (groupId) {
-      channelFilter = `group_id:eq:${groupId}`;
+      // For gruppemeldinger: bare meldinger til denne gruppen
+      channelFilter = `group_id.eq.${groupId}`;
     } else {
-      channelFilter = `and(receiver_id:is:null,group_id:is:null)`;
+      // For globale meldinger: bare meldinger uten mottaker og gruppe
+      channelFilter = `and(receiver_id.is.null,group_id.is.null)`;
     }
 
-    console.log("Setting up realtime subscription with filter:", channelFilter);
+    console.log("Setter opp sanntidsabonnement med filter:", channelFilter);
 
+    // Opprett kanalen og abonner
     const channel = supabase
       .channel('messages-channel')
       .on(
@@ -47,15 +69,21 @@ export const useMessageRealtime = (
           filter: channelFilter
         },
         async (payload) => {
-          console.log("Realtime INSERT event received:", payload);
+          if (isUnmountedRef.current) return;
+          
+          console.log("Sanntids INSERT-hendelse mottatt:", payload);
           const newMessage = payload.new as any;
           
-          // Skip messages sent by this user (already in UI)
-          if (newMessage.sender_id === userId) {
+          // Hopp over meldinger sendt av denne brukeren (allerede i UI)
+          // Dette gjelder kun når meldinger sendes via server og ikke P2P
+          if (activeCommunicationConfig.enableServer && 
+              !activeCommunicationConfig.enableP2P && 
+              newMessage.sender_id === userId) {
             return;
           }
 
           try {
+            // Hent avsenderinfo
             const { data: senderData, error: senderError } = await supabase
               .from('profiles')
               .select('id, username, full_name, avatar_url')
@@ -66,27 +94,35 @@ export const useMessageRealtime = (
               throw senderError;
             }
 
-            // For private messages, only add if it's for this user
-            if (newMessage.receiver_id && newMessage.receiver_id !== userId) {
+            // For private meldinger, bare vis hvis det er for denne brukeren
+            if (newMessage.receiver_id && 
+                newMessage.receiver_id !== userId && 
+                newMessage.sender_id !== userId) {
               return;
             }
             
-            const content = await decryptMessage(
-              newMessage.encrypted_content,
-              newMessage.encryption_key,
-              newMessage.iv
-            );
+            // Dekrypter innhold hvis det er kryptert
+            let content = newMessage.content || '';
+            if (newMessage.encrypted_content) {
+              content = await decryptMessage(
+                newMessage.encrypted_content,
+                newMessage.encryption_key,
+                newMessage.iv
+              );
+            }
 
+            // Opprett dekryptert meldingsrepresentasjon
             const decryptedMessage: DecryptedMessage = {
               id: newMessage.id,
               content,
               sender: senderData,
               created_at: newMessage.created_at,
-              encryption_key: newMessage.encryption_key,
-              iv: newMessage.iv,
+              encryption_key: newMessage.encryption_key || '',
+              iv: newMessage.iv || '',
               ephemeral_ttl: newMessage.ephemeral_ttl,
               media_url: newMessage.media_url,
               media_type: newMessage.media_type,
+              is_encrypted: !!newMessage.encrypted_content,
               is_edited: newMessage.is_edited || false,
               edited_at: newMessage.edited_at || null,
               is_deleted: newMessage.is_deleted || false,
@@ -100,9 +136,25 @@ export const useMessageRealtime = (
               media_metadata: newMessage.media_metadata,
             };
 
-            setMessages(prevMessages => [...prevMessages, decryptedMessage]);
+            // Oppdater meldingsstaten
+            if (!isUnmountedRef.current) {
+              // Kontroller for duplikater
+              setMessages(prevMessages => {
+                if (prevMessages.some(msg => msg.id === decryptedMessage.id)) {
+                  // Meldingen finnes allerede, ikke legg den til
+                  return prevMessages;
+                }
+                // Meldingen er ny, legg til og sorter etter tid
+                return [...prevMessages, decryptedMessage]
+                  .sort((a, b) => {
+                    const timeA = new Date(a.created_at).getTime();
+                    const timeB = new Date(b.created_at).getTime();
+                    return timeA - timeB;
+                  });
+              });
+            }
           } catch (error) {
-            console.error("Error processing realtime message:", error);
+            console.error("Feil ved behandling av sanntidsmelding:", error);
           }
         }
       )
@@ -115,65 +167,65 @@ export const useMessageRealtime = (
           filter: channelFilter
         },
         async (payload) => {
-          console.log("Realtime UPDATE event received:", payload);
+          if (isUnmountedRef.current) return;
+          
+          console.log("Sanntids UPDATE-hendelse mottatt:", payload);
           const updatedMessage = payload.new as any;
           
-          // Use a more efficient update approach to avoid full re-renders
+          // Mer effektiv oppdatering uten full re-rendering
           setMessages(prevMessages => 
             prevMessages.map(msg => {
               if (msg.id === updatedMessage.id) {
-                // Create a shallow copy for the update
-                const updatedMsg = { ...msg };
+                // Dekrypter innhold om nødvendig
+                const updateMessage = async () => {
+                  if (updatedMessage.encrypted_content && updatedMessage.encryption_key && updatedMessage.iv) {
+                    try {
+                      const content = await decryptMessage(
+                        updatedMessage.encrypted_content,
+                        updatedMessage.encryption_key,
+                        updatedMessage.iv
+                      );
+                      
+                      return {
+                        ...msg,
+                        content,
+                        is_edited: updatedMessage.is_edited || false,
+                        edited_at: updatedMessage.edited_at || null,
+                        is_deleted: updatedMessage.is_deleted || false,
+                        deleted_at: updatedMessage.deleted_at || null,
+                        read_at: updatedMessage.read_at,
+                        is_delivered: updatedMessage.is_delivered || false
+                      };
+                    } catch (error) {
+                      console.error("Feil ved dekryptering av oppdatert melding:", error);
+                      return msg;
+                    }
+                  }
+                  
+                  return {
+                    ...msg,
+                    content: updatedMessage.content || msg.content,
+                    is_edited: updatedMessage.is_edited || false,
+                    edited_at: updatedMessage.edited_at || null,
+                    is_deleted: updatedMessage.is_deleted || false,
+                    deleted_at: updatedMessage.deleted_at || null,
+                    read_at: updatedMessage.read_at,
+                    is_delivered: updatedMessage.is_delivered || false
+                  };
+                };
                 
-                // Handle deletion status
-                if (updatedMessage.is_deleted) {
-                  updatedMsg.is_deleted = true;
-                  updatedMsg.deleted_at = updatedMessage.deleted_at || new Date().toISOString();
-                  return updatedMsg;
-                }
-                
-                // Handle metadata updates without content changes
-                if (!updatedMessage.encrypted_content || !updatedMessage.encryption_key || !updatedMessage.iv) {
-                  // Only update the metadata properties
-                  updatedMsg.is_edited = updatedMessage.is_edited || msg.is_edited;
-                  updatedMsg.edited_at = updatedMessage.edited_at || msg.edited_at;
-                  updatedMsg.read_at = updatedMessage.read_at || msg.read_at;
-                  updatedMsg.is_delivered = updatedMessage.is_delivered || msg.is_delivered;
-                  return updatedMsg;
-                }
-                
-                // For content updates, avoid triggering a state update until the content is decrypted
-                const originalMsg = msg;
-                
-                // Decrypt content in the background
-                decryptMessage(
-                  updatedMessage.encrypted_content,
-                  updatedMessage.encryption_key,
-                  updatedMessage.iv
-                ).then(content => {
-                  // Update the message with decrypted content in a separate state update
-                  setMessages(prevMsgs => 
-                    prevMsgs.map(m => 
-                      m.id === updatedMessage.id 
-                        ? {
-                            ...m,
-                            content,
-                            is_edited: updatedMessage.is_edited || false,
-                            edited_at: updatedMessage.edited_at || null,
-                            is_deleted: updatedMessage.is_deleted || false,
-                            deleted_at: updatedMessage.deleted_at || null,
-                            read_at: updatedMessage.read_at,
-                            is_delivered: updatedMessage.is_delivered || false
-                          }
-                        : m
-                    )
-                  );
-                }).catch(err => {
-                  console.error("Error decrypting updated message:", err);
+                // Vi må håndtere Promise på en spesiell måte her
+                // For dette eksemplet gjør vi en enkel oppdatering uten å vente
+                updateMessage().then(updatedMsg => {
+                  if (!isUnmountedRef.current) {
+                    setMessages(prev => 
+                      prev.map(m => m.id === updatedMsg.id ? updatedMsg : m)
+                    );
+                  }
                 });
                 
-                // Return the original message for now
-                return originalMsg;
+                // Returnerer den originale meldingen for nå, den vil bli oppdatert senere
+                return msg;
               }
               return msg;
             })
@@ -189,10 +241,12 @@ export const useMessageRealtime = (
           filter: channelFilter
         },
         async (payload) => {
-          console.log("Realtime DELETE event received:", payload);
+          if (isUnmountedRef.current) return;
+          
+          console.log("Sanntids DELETE-hendelse mottatt:", payload);
           const deletedMessage = payload.old as any;
           
-          // Remove the deleted message from the state
+          // Fjern slettet melding fra tilstanden
           setMessages(prevMessages => 
             prevMessages.filter(msg => msg.id !== deletedMessage.id)
           );
@@ -200,14 +254,14 @@ export const useMessageRealtime = (
       )
       .subscribe();
 
-    // Save the channel reference for cleanup
+    // Lagre kanalreferansen for opprydding
     activeChannelRef.current = channel;
 
-    console.log("Realtime subscription set up successfully");
+    console.log("Sanntidsabonnement vellykket oppsatt");
 
-    // Return a cleanup function
+    // Returner en opprydningsfunksjon
     return () => {
-      console.log("Cleaning up realtime subscription");
+      console.log("Rydder opp sanntidsabonnement");
       supabase.removeChannel(channel);
       activeChannelRef.current = null;
     };

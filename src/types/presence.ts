@@ -1,8 +1,15 @@
 
-export type UserStatus = 'online' | 'busy' | 'brb' | 'offline';
+export enum UserStatus {
+  ONLINE = 'online',
+  AWAY = 'away',
+  BUSY = 'busy',
+  OFFLINE = 'offline',
+  INVISIBLE = 'invisible'
+}
 
 export interface UserPresence {
-  user_id: string;
+  userId: string;
   status: UserStatus;
-  last_seen: string;
+  lastActive?: string;
+  customStatus?: string;
 }

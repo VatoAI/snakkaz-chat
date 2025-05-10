@@ -1,4 +1,3 @@
-
 import { Button } from '@/components/ui/button';
 import { Users } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -14,6 +13,15 @@ interface FriendsSheetProps {
   isFriendsOpen: boolean;
   setIsFriendsOpen: (open: boolean) => void;
   userProfiles?: Record<string, {username: string | null, avatar_url: string | null}>;
+}
+
+interface FriendsContainerProps {
+  currentUserId: string;
+  webRTCManager: any;
+  directMessages: DecryptedMessage[];
+  onNewMessage: (message: DecryptedMessage) => void;
+  onStartChat?: (userId: string) => void;
+  userProfiles: Record<string, any>;
 }
 
 export const FriendsSheet = ({

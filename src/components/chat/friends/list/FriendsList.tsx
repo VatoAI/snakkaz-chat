@@ -1,12 +1,12 @@
+
 import { useState, useEffect } from "react";
-import { Friend } from "../types";
-import { DirectMessage } from "../DirectMessage";
 import { WebRTCManager } from "@/utils/webrtc";
 import { DecryptedMessage } from "@/types/message";
 import { FriendListItem } from "./FriendListItem";
 import { EmptyFriendsList } from "./EmptyFriendsList";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
+import { Friend } from "../types";
 
 interface FriendsListProps {
   currentUserId: string;
@@ -14,10 +14,11 @@ interface FriendsListProps {
   directMessages: DecryptedMessage[];
   onNewMessage: (message: DecryptedMessage) => void;
   onStartChat?: (friendId: string) => void;
-  userProfiles?: Record<string, {username: string | null, avatar_url: string | null}>;
+  userProfiles?: Record<string, {username: string | null, avatar_url: string | null, full_name?: string | null}>;
   friends?: any[]; // We'll receive this from the parent now
   friendsList?: string[];
   onRefresh?: () => void;
+  selectedFriendId?: string | null;
 }
 
 export const FriendsList = ({ 
@@ -29,7 +30,8 @@ export const FriendsList = ({
   userProfiles = {},
   friends = [],
   friendsList = [],
-  onRefresh
+  onRefresh,
+  selectedFriendId
 }: FriendsListProps) => {
   const [selectedFriend, setSelectedFriend] = useState<Friend | null>(null);
   const [readMessages, setReadMessages] = useState<Set<string>>(new Set());
@@ -45,13 +47,13 @@ export const FriendsList = ({
     return {
       id: friend.id,
       user_id: currentUserId,
-      friend_id: friend.id,
+      friend_id: friend.friend_id,
       status: "accepted",
       profile: {
-        id: friend.id,
-        username: friend.username || "Ukjent bruker",
-        full_name: friend.full_name,
-        avatar_url: friend.avatar_url
+        id: friend.friend_id,
+        username: userProfiles[friend.friend_id]?.username || "Ukjent bruker",
+        full_name: userProfiles[friend.friend_id]?.full_name || null,
+        avatar_url: userProfiles[friend.friend_id]?.avatar_url || null
       }
     } as Friend;
   }).filter(Boolean) : [];
@@ -71,7 +73,9 @@ export const FriendsList = ({
   const handleSelectFriend = (friend: Friend) => {
     // Mark all messages from this friend as read
     const friendId = friend.friend_id;
-    const messagesFromFriend = directMessages.filter(msg => msg.sender.id === friendId);
+    const messagesFromFriend = directMessages.filter(msg => 
+      msg.sender && msg.sender.id === friendId
+    );
     
     const newReadMessages = new Set(readMessages);
     messagesFromFriend.forEach(msg => newReadMessages.add(msg.id));
@@ -84,25 +88,11 @@ export const FriendsList = ({
       setSelectedFriend(friend);
     }
   };
-
-  if (selectedFriend && !onStartChat) {
-    return (
-      <DirectMessage 
-        friend={selectedFriend}
-        currentUserId={currentUserId}
-        webRTCManager={webRTCManager}
-        onBack={() => setSelectedFriend(null)}
-        messages={directMessages}
-        onNewMessage={onNewMessage}
-        userProfiles={userProfiles}
-      />
-    );
-  }
   
   // Count unread messages per friend
   const unreadCountByFriend: Record<string, number> = {};
   directMessages.forEach(msg => {
-    if (!readMessages.has(msg.id) && msg.sender.id !== currentUserId) {
+    if (msg.sender && !readMessages.has(msg.id) && msg.sender.id !== currentUserId) {
       if (!unreadCountByFriend[msg.sender.id]) {
         unreadCountByFriend[msg.sender.id] = 0;
       }
@@ -136,6 +126,7 @@ export const FriendsList = ({
             onSelect={handleSelectFriend}
             unreadCount={unreadCountByFriend[friend.friend_id] || 0}
             onlineStatus="offline" // Default to offline instead of using friend.profile.status
+            isSelected={selectedFriendId === friend.friend_id}
           />
         ))}
       </div>

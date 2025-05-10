@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -59,6 +58,8 @@ export default function AdminUsersManager() {
 
   const sortUsers = (users: User[], sortBy: SortOption): User[] => {
     return [...users].sort((a, b) => {
+      let lastA, lastB;
+      
       switch (sortBy) {
         case "username":
           return a.username.localeCompare(b.username);
@@ -67,8 +68,8 @@ export default function AdminUsersManager() {
         case "created":
           return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
         case "last_login":
-          const lastA = a.last_sign_in ? new Date(a.last_sign_in).getTime() : 0;
-          const lastB = b.last_sign_in ? new Date(b.last_sign_in).getTime() : 0;
+          lastA = a.last_sign_in ? new Date(a.last_sign_in).getTime() : 0;
+          lastB = b.last_sign_in ? new Date(b.last_sign_in).getTime() : 0;
           return lastB - lastA;
         default:
           return 0;

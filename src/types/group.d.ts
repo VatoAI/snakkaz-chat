@@ -1,40 +1,60 @@
 
-import { SecurityLevel } from "./security";
-
-export type GroupWritePermission = 'all' | 'admin' | 'selected';
-export type MessageTTLOption = 300 | 1800 | 3600 | 86400 | 604800 | null;
+export type GroupVisibility = 'public' | 'private' | 'hidden' | 'secret';
+export type GroupWritePermission = 'all' | 'admins' | 'owner';
 
 export interface Group {
   id: string;
   name: string;
-  description: string | null;
-  created_at: string;
-  creator_id: string;
-  security_level: SecurityLevel;
-  write_permissions: GroupWritePermission;
-  default_message_ttl: MessageTTLOption;
-  password?: string | null;
-  avatar_url?: string | null;
-  members: GroupMember[];
-  is_premium: boolean;
+  description?: string;
+  visibility?: GroupVisibility;
+  avatar_url?: string;
+  created_at?: string;
+  creator_id?: string;
+  security_level?: string;
+  members?: GroupMember[];
+  is_premium?: boolean;
+  memberCount?: number;
+  createdBy?: string;
+  password?: string;
+  write_permissions?: string | GroupWritePermission;
 }
 
 export interface GroupMember {
-  id: string;
-  user_id: string;
-  group_id: string;
-  role: 'admin' | 'member';
-  joined_at: string;
-  can_write: boolean;
-  username?: string;
-  avatar_url?: string;
+  id?: string;
+  group_id?: string;
+  user_id?: string;
+  userId?: string;
+  role?: string;
+  joined_at?: string;
+  joinedAt?: string;
+  can_write?: boolean;
+  canWrite?: boolean;
 }
 
-export interface GroupInvite {
+export interface GroupMessage {
   id: string;
-  group_id: string;
-  invited_user_id: string;
-  invited_by: string;
-  created_at: string;
-  expires_at: string;
+  content?: string;
+  text?: string;
+  sender_id?: string;
+  senderId?: string;
+  group_id?: string;
+  groupId?: string;
+  created_at?: string;
+  createdAt?: string | Date;
+  updated_at?: string;
+  updatedAt?: string | Date;
+  is_edited?: boolean;
+  isEdited?: boolean;
+  is_deleted?: boolean;
+  isDeleted?: boolean;
+  media_url?: string;
+  mediaUrl?: string;
+  media_type?: string;
+  mediaType?: string;
+  read_by?: string[];
+  readBy?: string[];
+  reply_to_id?: string;
+  replyToId?: string;
+  isPending?: boolean;
+  hasError?: boolean;
 }
