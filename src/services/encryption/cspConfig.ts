@@ -43,6 +43,8 @@ export function buildCspPolicy() {
   const domains = {
     supabase: [supabaseUrl, '*.supabase.co', '*.supabase.in'],
     storage: ['*.amazonaws.com', 'storage.googleapis.com'], // Common storage providers
+    app: ['*.snakkaz.com', 'dash.snakkaz.com', 'business.snakkaz.com', 'docs.snakkaz.com', 'analytics.snakkaz.com'],
+    cdn: ['cdn.pngtree.com', '*.gpteng.co'],
   };
   
   // Build CSP
@@ -63,7 +65,7 @@ export function buildCspPolicy() {
     "font-src 'self' data:",
     
     // Connect (API calls) - critical for Supabase
-    `connect-src 'self' ${domains.supabase.join(' ')} ${domains.storage.join(' ')} wss://*.supabase.co`,
+    `connect-src 'self' ${domains.supabase.join(' ')} ${domains.storage.join(' ')} ${domains.app.join(' ')} ${domains.cdn.join(' ')} wss://*.supabase.co`,
     
     // Media
     "media-src 'self' blob:",

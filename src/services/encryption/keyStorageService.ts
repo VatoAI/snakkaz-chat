@@ -61,7 +61,7 @@ export async function retrieveKey(keyId: string): Promise<CryptoKey | null> {
     
     // Parse JWK and import the key
     const jwk = JSON.parse(keyData);
-    const key = await importKeyFromJwk(jwk, KeyType.AES_GCM, ['encrypt', 'decrypt']);
+    const key = await importKeyFromJwk(jwk, KeyType.AES_GCM, [KeyUsage.ENCRYPT, KeyUsage.DECRYPT]);
     
     // Update cache
     keyCache.set(keyId, key);

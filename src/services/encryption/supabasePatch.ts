@@ -87,6 +87,7 @@ function createFallbackClient() {
     }),
     auth: {
       getUser: errorHandler,
+      getSession: errorHandler,
       signIn: errorHandler,
       signOut: errorHandler,
       onAuthStateChange: () => ({ 
@@ -112,7 +113,8 @@ export const supabase = createSupabaseClient();
 // Export a utility to test the connection
 export const testConnection = async () => {
   try {
-    const { data, error } = await supabase.auth.getSession();
+    // Use getUser instead of getSession for better compatibility
+    const { data, error } = await supabase.auth.getUser();
     if (error) throw error;
     return { success: true, data };
   } catch (error) {
