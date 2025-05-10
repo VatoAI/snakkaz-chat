@@ -173,13 +173,35 @@ export const LoginButton: React.FC<LoginButtonProps> = ({
     focus:outline-none focus:ring-2 focus:ring-cybergold-500/50 focus:ring-offset-2 focus:ring-offset-cyberdark-900
   `;
   
+  // Add keyframes to document head once
+  React.useEffect(() => {
+    // Create style element for animations if it doesn't exist
+    const styleId = 'snakkaz-login-animations';
+    if (typeof document !== 'undefined' && !document.getElementById(styleId)) {
+      const style = document.createElement('style');
+      style.id = styleId;
+      style.textContent = `
+        ${animations.buttonGlow}
+        ${animations.shineEffect}
+        ${animations.pulse}
+        ${animations.fadeSlideIn}
+      `;
+      document.head.appendChild(style);
+    }
+    
+    return () => {
+      // Cleanup on unmount
+      if (typeof document !== 'undefined') {
+        const existingStyle = document.getElementById(styleId);
+        if (existingStyle) {
+          existingStyle.parentNode?.removeChild(existingStyle);
+        }
+      }
+    };
+  }, []);
+
   return (
     <>
-      <style jsx>{animations.buttonGlow}</style>
-      <style jsx>{animations.shineEffect}</style>
-      <style jsx>{animations.pulse}</style>
-      <style jsx>{animations.fadeSlideIn}</style>
-
       <button 
         className={buttonClasses}
         onClick={handleLogin}
@@ -216,9 +238,12 @@ export const LoginButton: React.FC<LoginButtonProps> = ({
   );
 };
 
+// Use Supabase User type
+import { User } from '@supabase/supabase-js';
+
 // Export a simple login/logout toggle button
 export const AuthButton: React.FC<Omit<LoginButtonProps, 'onLoginSuccess' | 'onLoginError'> & { 
-  user: any | null;
+  user: User | null;
   onLogout?: () => void;
 }> = ({ user, onLogout, ...props }) => {
   const handleLogout = async () => {
