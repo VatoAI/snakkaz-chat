@@ -90,12 +90,22 @@ export interface GroupMessage {
   readBy?: string[];        // List of member IDs who read the message
   deliveredTo?: string[];   // List of member IDs the message was delivered to
   isEdited?: boolean;       // Whether the message has been edited
+  editHistory?: {           // History of edits to the message
+    timestamp: Date;
+    editorId: string;      
+    previousContent: string;
+  }[];
   isDeleted?: boolean;      // Whether the message has been deleted
   reactions?: {
     emoji: string;
     count: number;
     userIds: string[];
   }[];
+  editHistory?: {
+    timestamp: Date;
+    editorId: string;
+    previousContent: string;
+  }[];                      // History of edits
 }
 
 // Group info
@@ -254,7 +264,7 @@ export class GroupChatService {
     const messageId = this.generateMessageId();
     
     // Initial message object
-    let message: GroupMessage = {
+    const message: GroupMessage = {
       id: messageId,
       sender: {
         id: senderId,
@@ -373,7 +383,7 @@ export class GroupChatService {
     }
     
     // Check if reaction already exists
-    let reaction = message.reactions.find(r => r.emoji === emoji);
+    const reaction = message.reactions.find(r => r.emoji === emoji);
     
     if (reaction) {
       // Check if user already reacted
@@ -434,6 +444,63 @@ export class GroupChatService {
   }
   
   /**
+   * Edit an existing message
+   * This allows users to modify their previously sent messages
+   */
+  public async editMessage(
+    groupId: string,
+    messageId: string,
+    userId: string,
+    newContent: string
+  ): Promise<GroupMessage> {
+    // Get the message and group
+    const message = await this.getGroupMessage(groupId, messageId);
+    const group = await this.getGroup(groupId);
+    
+    // Check if user has permission to edit (only sender can edit)
+    if (message.sender.id !== userId) {
+      throw new Error('You can only edit your own messages');
+    }
+    
+    // Check if message is deleted
+    if (message.isDeleted) {
+      throw new Error('Cannot edit a deleted message');
+    }
+    
+    // Save original content for audit trail
+    const originalContent = message.content;
+    
+    // Update the message content
+    if (group.encryptionKeys && message.encryptionInfo?.isEncrypted) {
+      // Encrypt the new content with the same key
+      const encryptedContent = await this.encryptGroupMessage(
+        newContent, 
+        group, 
+        message.encryptionInfo.keyId
+      );
+      
+      message.content = encryptedContent.encryptedData;
+    } else {
+      message.content = newContent;
+    }
+    
+    // Mark as edited
+    message.isEdited = true;
+    message.editHistory = message.editHistory || [];
+    message.editHistory.push({
+      timestamp: new Date(),
+      editorId: userId,
+      // For encrypted messages, we store the encrypted versions
+      previousContent: originalContent
+    });
+    
+    // Save updated message
+    await this.saveGroupMessage(groupId, message);
+    
+    return message;
+  }
+  
+  /**
    * Leave a group
    */
   public async leaveGroup(
@@ -483,7 +550,7 @@ export class GroupChatService {
     
     // Rotate encryption keys if needed for security
     if (group.encryptionKeys && group.settings.securityLevel === GroupSecurityLevel.PREMIUM) {
-      await this.rotateGroupKey(group);
+      await this.rotateGroupKeyInternal(group);
     }
   }
   
@@ -539,6 +606,131 @@ export class GroupChatService {
     return group;
   }
   
+  /**
+   * Rotate the encryption key for a group
+   * This enhances security by periodically changing the encryption keys
+   */
+  public async rotateGroupKey(
+    groupId: string,
+    requestedByUserId: string
+  ): Promise<{ 
+    success: boolean; 
+    newKeyId?: string; 
+    keyVersion?: number;
+  }> {
+    // Get the group
+    const group = await this.getGroup(groupId);
+    
+    // Check if user has permission to rotate keys
+    const user = group.members.find(m => m.id === requestedByUserId);
+    if (!user || user.role !== GroupRole.ADMIN) {
+      throw new Error('Only group admins can rotate encryption keys');
+    }
+    
+    // Check if group has encryption enabled
+    if (!group.encryptionKeys) {
+      return { 
+        success: false
+      };
+    }
+    
+    try {
+      // Generate a new encryption key for the group
+      const { keyId } = await this.generateGroupEncryptionKey(group);
+      
+      // Update group encryption key info
+      const newKeyVersion = (group.encryptionKeys.keyVersion || 1) + 1;
+      
+      group.encryptionKeys = {
+        groupKeyId: keyId,
+        rotatedAt: new Date(),
+        keyVersion: newKeyVersion
+      };
+      
+      // Save the updated group
+      await this.saveGroup(group);
+      
+      // Share the new key with all group members
+      await Promise.all(
+        group.members.map(async member => {
+          await this.shareGroupKeyWithMember(group, member);
+        })
+      );
+      
+      // Log the key rotation (in a real implementation, this would be audited)
+      console.log(`Group ${groupId} encryption key rotated. New key ID: ${keyId}, version: ${newKeyVersion}`);
+      
+      return {
+        success: true,
+        newKeyId: keyId,
+        keyVersion: newKeyVersion
+      };
+    } catch (error) {
+      console.error(`Failed to rotate key for group ${groupId}:`, error);
+      throw new Error(`Key rotation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+  
+  /**
+   * Re-encrypt group history with the new key
+   * This is important after a key rotation to ensure past messages remain accessible
+   */
+  public async reEncryptGroupHistory(
+    groupId: string,
+    oldKeyId: string,
+    newKeyId: string,
+    requestedByUserId: string
+  ): Promise<{ 
+    success: boolean; 
+    messagesReEncrypted: number;
+  }> {
+    // Get the group
+    const group = await this.getGroup(groupId);
+    
+    // Check if user has permission
+    const user = group.members.find(m => m.id === requestedByUserId);
+    if (!user || user.role !== GroupRole.ADMIN) {
+      throw new Error('Only group admins can re-encrypt messages');
+    }
+    
+    try {
+      // Get all encrypted messages with the old key
+      const messages = await this.fetchGroupEncryptedMessages(groupId, oldKeyId);
+      
+      // Re-encrypt each message with the new key
+      let reEncryptedCount = 0;
+      
+      for (const message of messages) {
+        if (message.encryptionInfo?.isEncrypted && message.encryptionInfo.keyId === oldKeyId) {
+          // Decrypt with old key and re-encrypt with new key
+          const decryptedContent = await this.decryptGroupMessage(message.content, oldKeyId);
+          
+          // Re-encrypt with new key
+          const encryptedContent = await this.encryptGroupMessage(decryptedContent, group, newKeyId);
+          
+          // Update the message
+          message.content = encryptedContent.encryptedData;
+          message.encryptionInfo.keyId = newKeyId;
+          
+          // Save the updated message
+          await this.saveGroupMessage(groupId, message);
+          
+          reEncryptedCount++;
+        }
+      }
+      
+      console.log(`Re-encrypted ${reEncryptedCount} messages in group ${groupId}`);
+      
+      return {
+        success: true,
+        messagesReEncrypted: reEncryptedCount
+      };
+    } catch (error) {
+      console.error(`Failed to re-encrypt messages for group ${groupId}:`, error);
+      throw new Error(`Re-encryption failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+  
   // PRIVATE METHODS
   
   /**
@@ -576,7 +768,8 @@ export class GroupChatService {
    */
   private async encryptGroupMessage(
     content: string,
-    group: Group
+    group: Group,
+    keyId?: string
   ): Promise<{ encryptedData: string; keyId: string }> {
     // In a real implementation, this would use the group's encryption key
     // to encrypt the message
@@ -590,8 +783,22 @@ export class GroupChatService {
     
     return {
       encryptedData: encryptionResult.encryptedData,
-      keyId: encryptionResult.keyId
+      keyId: keyId || encryptionResult.keyId
     };
+  }
+  
+  /**
+   * Decrypt a message for a group
+   */
+  private async decryptGroupMessage(
+    content: string,
+    keyId: string
+  ): Promise<string> {
+    // In a real implementation, this would use the group's encryption key
+    // to decrypt the message
+    
+    // Placeholder implementation
+    return this.encryptionService.decrypt(content, keyId);
   }
   
   /**
@@ -642,21 +849,22 @@ export class GroupChatService {
   }
   
   /**
-   * Rotate a group's encryption key
+   * Rotate a group's encryption key - internal implementation
    */
-  private async rotateGroupKey(group: Group): Promise<void> {
+  private async rotateGroupKeyInternal(group: Group): Promise<{keyId: string, keyVersion: number}> {
     if (!group.encryptionKeys) {
-      return;
+      throw new Error("Group doesn't have encryption enabled");
     }
     
     // Generate a new key
     const { keyId } = await this.generateGroupEncryptionKey(group);
     
     // Update group encryption info
+    const newKeyVersion = (group.encryptionKeys.keyVersion || 0) + 1;
     group.encryptionKeys = {
       groupKeyId: keyId,
       rotatedAt: new Date(),
-      keyVersion: (group.encryptionKeys.keyVersion || 0) + 1
+      keyVersion: newKeyVersion
     };
     
     // Save updated group
@@ -664,8 +872,26 @@ export class GroupChatService {
     
     // Share the new key with all members
     // In a real implementation, this would encrypt the key for each member
+    await Promise.all(
+      group.members.map(async member => {
+        await this.shareGroupKeyWithMember(group, member);
+      })
+    );
     
     console.log(`Rotated encryption key for group ${group.id}`);
+    return { keyId, keyVersion: newKeyVersion };
+  }
+  
+  /**
+   * Fetch encrypted messages for a group
+   */
+  private async fetchGroupEncryptedMessages(
+    groupId: string,
+    keyId: string
+  ): Promise<GroupMessage[]> {
+    // In a real implementation, this would fetch from the database
+    // This is just a placeholder
+    return [];
   }
   
   /**
