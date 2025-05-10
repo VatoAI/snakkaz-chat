@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Snakkaz Chat Security Test</title>
+  
+  <!-- CSP meta tag will be inserted by our script -->
+  
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      line-height: 1.6;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+      background: #f5f5f5;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      padding: 30px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      border-radius: 5px;
+    }
+    h1 {
+      border-bottom: 2px solid #007bff;
+      padding-bottom: 10px;
+      margin-top: 0;
+      color: #007bff;
+    }
+    .result-box {
+      margin: 20px 0;
+      padding: 15px;
+      border-radius: 4px;
+    }
+    .success {
+      background-color: #d4edda;
+      border: 1px solid #c3e6cb;
+      color: #155724;
+    }
+    .warning {
+      background-color: #fff3cd;
+      border: 1px solid #ffeeba;
+      color: #856404;
+    }
+    .error {
+      background-color: #f8d7da;
+      border: 1px solid #f5c6cb;
+      color: #721c24;
+    }
+    .result-box h3 {
+      margin-top: 0;
+    }
+    button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-right: 10px;
+      margin-bottom: 10px;
+    }
+    button:hover {
+      background-color: #0069d9;
+    }
+    pre {
+      background-color: #f8f9fa;
+      padding: 15px;
+      border-radius: 4px;
+      overflow-x: auto;
+    }
+    .test-section {
+      margin-bottom: 30px;
+    }
+    .features-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .feature-badge {
+      display: inline-block;
+      padding: 5px 10px;
+      border-radius: 15px;
+      font-size: 14px;
+      margin-right: 5px;
+      margin-bottom: 5px;
+    }
+    .supported {
+      background-color: #d4edda;
+      color: #155724;
+    }
+    .unsupported {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Snakkaz Chat Security Test</h1>
+    
+    <p>Dette er en testside for Snakkaz Chat sikkerhets- og krypteringsmodulen. Bruk knappene nedenfor for å teste ulike aspekter av implementasjonen.</p>
+    
+    <div class="test-section">
+      <h2>1. Initialiser sikkerhetsløsning</h2>
+      <button onclick="setupSecurity()">Initialiser sikkerhet</button>
+      <div id="setup-result" class="result-box"></div>
+    </div>
+    
+    <div class="test-section">
+      <h2>2. Test nettleserkompatibilitet</h2>
+      <button onclick="testBrowser()">Test nettleserfunksjoner</button>
+      <div id="browser-result" class="result-box"></div>
+      
+      <div class="features-list" id="features-list">
+        <!-- Feature badges will be added here -->
+      </div>
+    </div>
+    
+    <div class="test-section">
+      <h2>3. Test CSP-konfigurasjon</h2>
+      <button onclick="testCsp()">Test CSP</button>
+      <div id="csp-result" class="result-box"></div>
+    </div>
+    
+    <div class="test-section">
+      <h2>4. Test nettverkstilkoblinger</h2>
+      <button onclick="testConnections()">Test API-tilkoblinger</button>
+      <div id="connection-result" class="result-box"></div>
+    </div>
+    
+    <div class="test-section">
+      <h2>5. Kjør alle tester</h2>
+      <button onclick="runAllTests()">Kjør fullstendig diagnose</button>
+      <div id="all-result" class="result-box"></div>
+    </div>
+    
+    <div class="test-section">
+      <h2>CSP Status</h2>
+      <pre id="csp-status">CSP ikke sjekket ennå</pre>
+    </div>
+  </div>
+
+  <script type="module">
+    // Import the security module
+    import { 
+      setupSnakkazSecurity, 
+      testBrowserCompatibility, 
+      testContentSecurityPolicy,
+      testConnection,
+      runFullDiagnostics
+    } from './index.js';
+    
+    // Make functions available globally
+    window.setupSecurity = async function() {
+      const result = document.getElementById('setup-result');
+      
+      try {
+        const success = await setupSnakkazSecurity();
+        
+        if (success) {
+          result.className = 'result-box success';
+          result.innerHTML = '<h3>✅ Sikkerhetsløsning initialisert</h3>' +
+            '<p>CSP, fallback-håndtering og nettleserfeilrettinger er nå aktive.</p>';
+        } else {
+          result.className = 'result-box error';
+          result.innerHTML = '<h3>❌ Feil ved initialisering</h3>' +
+            '<p>Se konsollen for detaljer.</p>';
+        }
+        
+        // Update CSP status
+        updateCspStatus();
+      } catch (error) {
+        result.className = 'result-box error';
+        result.innerHTML = `<h3>❌ Feil</h3><p>${error.message}</p>`;
+      }
+    };
+    
+    window.testBrowser = async function() {
+      const result = document.getElementById('browser-result');
+      const featuresList = document.getElementById('features-list');
+      
+      try {
+        const browserTest = await testBrowserCompatibility();
+        
+        if (browserTest.success) {
+          result.className = 'result-box success';
+          result.innerHTML = '<h3>✅ Nettleseren støtter alle nødvendige funksjoner</h3>';
+        } else {
+          result.className = 'result-box warning';
+          result.innerHTML = `<h3>⚠️ Nettleseren mangler noen funksjoner</h3>
+            <p>${browserTest.issues.join('<br>')}</p>`;
+        }
+        
+        // Display feature badges
+        featuresList.innerHTML = '';
+        
+        browserTest.supportedFeatures.forEach(feature => {
+          const badge = document.createElement('span');
+          badge.className = 'feature-badge supported';
+          badge.textContent = `✓ ${feature}`;
+          featuresList.appendChild(badge);
+        });
+        
+        browserTest.unsupportedFeatures.forEach(feature => {
+          const badge = document.createElement('span');
+          badge.className = 'feature-badge unsupported';
+          badge.textContent = `✗ ${feature}`;
+          featuresList.appendChild(badge);
+        });
+      } catch (error) {
+        result.className = 'result-box error';
+        result.innerHTML = `<h3>❌ Feil</h3><p>${error.message}</p>`;
+      }
+    };
+    
+    window.testCsp = async function() {
+      const result = document.getElementById('csp-result');
+      
+      try {
+        const cspTest = testContentSecurityPolicy();
+        
+        if (cspTest.success) {
+          result.className = 'result-box success';
+          result.innerHTML = '<h3>✅ CSP-konfigurasjon OK</h3>' +
+            '<p>Alle nødvendige domener er inkludert i CSP-policyen.</p>';
+        } else {
+          result.className = 'result-box warning';
+          let missingDomains = '';
+          if (cspTest.details && cspTest.details.missingDomains) {
+            missingDomains = cspTest.details.missingDomains
+              .map(d => `<li>${d.type}: ${d.domain}</li>`)
+              .join('');
+          }
+          
+          result.innerHTML = `<h3>⚠️ CSP-konfigurasjon må oppdateres</h3>
+            <p>Manglende domener:</p>
+            <ul>${missingDomains || '<li>Ingen detaljer tilgjengelig</li>'}</ul>`;
+        }
+        
+        // Update CSP status
+        updateCspStatus();
+      } catch (error) {
+        result.className = 'result-box error';
+        result.innerHTML = `<h3>❌ Feil</h3><p>${error.message}</p>`;
+      }
+    };
+    
+    window.testConnections = async function() {
+      const result = document.getElementById('connection-result');
+      
+      try {
+        result.className = 'result-box';
+        result.innerHTML = '<h3>⏳ Tester tilkoblinger...</h3>';
+        
+        const connectionTest = await testConnection();
+        
+        if (connectionTest.success) {
+          result.className = 'result-box success';
+          result.innerHTML = '<h3>✅ API-tilkoblinger OK</h3>' +
+            '<p>Alle nødvendige tilkoblinger fungerer.</p>';
+        } else {
+          result.className = 'result-box error';
+          result.innerHTML = `<h3>❌ Problemer med API-tilkoblinger</h3>
+            <p>${connectionTest.error || 'Ingen detaljer tilgjengelig'}</p>`;
+        }
+      } catch (error) {
+        result.className = 'result-box error';
+        result.innerHTML = `<h3>❌ Feil</h3><p>${error.message}</p>`;
+      }
+    };
+    
+    window.runAllTests = async function() {
+      const result = document.getElementById('all-result');
+      
+      try {
+        result.className = 'result-box';
+        result.innerHTML = '<h3>⏳ Kjører diagnostikk...</h3>';
+        
+        const diagnostics = await runFullDiagnostics();
+        
+        let status = 'success';
+        let failures = [];
+        
+        // Check for failures
+        if (!diagnostics.e2ee.success) {
+          status = 'error';
+          failures.push('E2EE');
+        }
+        if (!diagnostics.connection.success) {
+          status = 'error';
+          failures.push('API-tilkoblinger');
+        }
+        if (!diagnostics.browser.success) {
+          if (status !== 'error') status = 'warning';
+          failures.push('Nettleserkompatibilitet');
+        }
+        if (!diagnostics.csp.success) {
+          if (status !== 'error') status = 'warning';
+          failures.push('CSP');
+        }
+        
+        result.className = `result-box ${status}`;
+        
+        if (failures.length === 0) {
+          result.innerHTML = '<h3>✅ Alle tester bestått!</h3>' +
+            '<p>Systemet er konfigurert riktig og klar til bruk.</p>';
+        } else {
+          const icon = status === 'error' ? '❌' : '⚠️';
+          result.innerHTML = `<h3>${icon} Noen tester feilet</h3>
+            <p>Problemer ble funnet med: ${failures.join(', ')}</p>
+            <p>Se konsollen for detaljer.</p>`;
+        }
+      } catch (error) {
+        result.className = 'result-box error';
+        result.innerHTML = `<h3>❌ Feil</h3><p>${error.message}</p>`;
+      }
+    };
+    
+    function updateCspStatus() {
+      const cspStatus = document.getElementById('csp-status');
+      const metaTag = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
+      
+      if (metaTag) {
+        cspStatus.textContent = metaTag.getAttribute('content');
+      } else {
+        cspStatus.textContent = 'Ingen CSP meta tag funnet';
+      }
+    }
+    
+    // Initialize
+    updateCspStatus();
+  </script>
+</body>
+</html>

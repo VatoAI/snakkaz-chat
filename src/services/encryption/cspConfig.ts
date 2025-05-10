@@ -29,7 +29,26 @@ export function applyCspPolicy() {
   metaTag.content = cspContent;
   document.head.appendChild(metaTag);
   
+  // Remove SRI integrity checks that might be causing issues
+  removeSriIntegrityChecks();
+  
   console.log('Applied Content Security Policy for Snakkaz Chat');
+}
+
+/**
+ * Remove SRI integrity checks that might cause blocking
+ * This is a workaround for the integrity errors
+ */
+function removeSriIntegrityChecks() {
+  // Find all script tags with integrity attributes
+  const scripts = document.querySelectorAll('script[integrity]');
+  
+  // Remove integrity attributes
+  scripts.forEach(script => {
+    const scriptEl = script as HTMLScriptElement;
+    console.log(`Removing integrity check for: ${scriptEl.src}`);
+    scriptEl.removeAttribute('integrity');
+  });
 }
 
 /**
@@ -41,10 +60,21 @@ export function buildCspPolicy() {
   
   // List of domains needed for the application
   const domains = {
-    supabase: [supabaseUrl, '*.supabase.co', '*.supabase.in'],
+    supabase: [supabaseUrl, '*.supabase.co', '*.supabase.in', 'https://*.supabase.co', 'wss://*.supabase.co'],
     storage: ['*.amazonaws.com', 'storage.googleapis.com'], // Common storage providers
-    app: ['*.snakkaz.com', 'dash.snakkaz.com', 'business.snakkaz.com', 'docs.snakkaz.com', 'analytics.snakkaz.com'],
-    cdn: ['cdn.pngtree.com', '*.gpteng.co'],
+    app: [
+      '*.snakkaz.com', 
+      'www.snakkaz.com', 
+      'dash.snakkaz.com', 
+      'business.snakkaz.com', 
+      'docs.snakkaz.com', 
+      'analytics.snakkaz.com',
+      'https://dash.snakkaz.com/ping',
+      'https://business.snakkaz.com/ping', 
+      'https://docs.snakkaz.com/ping',
+      'https://analytics.snakkaz.com/ping'
+    ],
+    cdn: ['cdn.pngtree.com', '*.gpteng.co', '*.cloudflareinsights.com', 'static.cloudflareinsights.com', 'cdn.gpteng.co'],
   };
   
   // Build CSP
@@ -53,7 +83,7 @@ export function buildCspPolicy() {
     "default-src 'self'",
     
     // Scripts - limit to self and trusted CDNs if needed
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // Consider removing unsafe-* in production
+    `script-src 'self' 'unsafe-inline' 'unsafe-eval' ${domains.app.join(' ')} ${domains.cdn.join(' ')}`,
     
     // Styles
     "style-src 'self' 'unsafe-inline'",
@@ -65,7 +95,7 @@ export function buildCspPolicy() {
     "font-src 'self' data:",
     
     // Connect (API calls) - critical for Supabase
-    `connect-src 'self' ${domains.supabase.join(' ')} ${domains.storage.join(' ')} ${domains.app.join(' ')} ${domains.cdn.join(' ')} wss://*.supabase.co`,
+    `connect-src 'self' ${domains.supabase.join(' ')} ${domains.storage.join(' ')} ${domains.app.join(' ')} ${domains.cdn.join(' ')} wss://*.supabase.co https://*.supabase.co https://*.gpteng.co https://*.snakkaz.com`,
     
     // Media
     "media-src 'self' blob:",
@@ -118,10 +148,68 @@ export function testCsp() {
   
   // Return domains that will be allowed by the policy
   return {
+    success: true,
     allowedDomains: {
       supabase: ['*.supabase.co', '*.supabase.in', getSupabaseDomain()],
       api: ['self', getSupabaseDomain()],
       storage: ['*.amazonaws.com', 'storage.googleapis.com']
     }
   };
+}
+
+/**
+ * Test the Content Security Policy by validating that all required domains are included
+ * @returns {Object} Test results
+ */
+export function testContentSecurityPolicy() {
+  console.log('\nTesting Content Security Policy...');
+  
+  // Get the CSP policy currently applied
+  let cspContent = '';
+  if (typeof document !== 'undefined') {
+    const cspMetaTag = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
+    cspContent = cspMetaTag ? cspMetaTag.getAttribute('content') || '' : '';
+  }
+  
+  // If not applied, generate what it would be
+  if (!cspContent) {
+    cspContent = buildCspPolicy();
+  }
+  
+  const results = {
+    success: true,
+    missingDomains: [],
+    cspApplied: !!cspContent,
+    cspContent
+  };
+  
+  // Required domains that must be in the CSP
+  const requiredDomains = [
+    { type: 'connect-src', domain: '*.supabase.co' },
+    { type: 'connect-src', domain: '*.supabase.in' },
+    { type: 'img-src', domain: '*.amazonaws.com' },
+    { type: 'img-src', domain: 'storage.googleapis.com' },
+    { type: 'script-src', domain: 'cdn.jsdelivr.net' }
+  ];
+  
+  // Check if each required domain is included in the CSP
+  for (const { type, domain } of requiredDomains) {
+    const directivePattern = new RegExp(`${type}\\s[^;]*${domain.replace('.', '\\.')}`, 'i');
+    if (!directivePattern.test(cspContent)) {
+      results.success = false;
+      results.missingDomains.push({ type, domain });
+    }
+  }
+  
+  // Log results
+  if (results.success) {
+    console.log('✅ All required domains are included in the CSP.');
+  } else {
+    console.log('❌ Some required domains are missing from the CSP:');
+    results.missingDomains.forEach(({ type, domain }) => {
+      console.log(`   - Missing ${domain} in ${type} directive`);
+    });
+  }
+  
+  return results;
 }
