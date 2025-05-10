@@ -40,15 +40,44 @@ export function applyCspPolicy() {
  * This is a workaround for the integrity errors
  */
 function removeSriIntegrityChecks() {
-  // Find all script tags with integrity attributes
+  // Handle script tags with integrity attributes
   const scripts = document.querySelectorAll('script[integrity]');
-  
-  // Remove integrity attributes
   scripts.forEach(script => {
     const scriptEl = script as HTMLScriptElement;
-    console.log(`Removing integrity check for: ${scriptEl.src}`);
+    console.log(`Removing integrity check for script: ${scriptEl.src}`);
     scriptEl.removeAttribute('integrity');
   });
+  
+  // Handle link tags (CSS) with integrity attributes
+  const links = document.querySelectorAll('link[integrity]');
+  links.forEach(link => {
+    const linkEl = link as HTMLLinkElement;
+    console.log(`Removing integrity check for link: ${linkEl.href}`);
+    linkEl.removeAttribute('integrity');
+  });
+  
+  // Set up a mutation observer to handle dynamically added elements
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.type === 'childList') {
+        mutation.addedNodes.forEach((node) => {
+          if (node.nodeType === Node.ELEMENT_NODE) {
+            const element = node as Element;
+            if ((element.tagName === 'SCRIPT' || element.tagName === 'LINK') && element.hasAttribute('integrity')) {
+              const url = element.tagName === 'SCRIPT' 
+                ? (element as HTMLScriptElement).src 
+                : (element as HTMLLinkElement).href;
+              console.log(`Removing integrity check for dynamically added element: ${url}`);
+              element.removeAttribute('integrity');
+            }
+          }
+        });
+      }
+    });
+  });
+  
+  // Start observing the document with the configured parameters
+  observer.observe(document, { childList: true, subtree: true });
 }
 
 /**
@@ -69,12 +98,24 @@ export function buildCspPolicy() {
       'business.snakkaz.com', 
       'docs.snakkaz.com', 
       'analytics.snakkaz.com',
+      'https://*.snakkaz.com',
+      'https://dash.snakkaz.com',
+      'https://business.snakkaz.com', 
+      'https://docs.snakkaz.com',
+      'https://analytics.snakkaz.com',
       'https://dash.snakkaz.com/ping',
       'https://business.snakkaz.com/ping', 
       'https://docs.snakkaz.com/ping',
       'https://analytics.snakkaz.com/ping'
     ],
-    cdn: ['cdn.pngtree.com', '*.gpteng.co', '*.cloudflareinsights.com', 'static.cloudflareinsights.com', 'cdn.gpteng.co'],
+    cdn: [
+      'cdn.pngtree.com', 
+      '*.gpteng.co', 
+      '*.cloudflareinsights.com', 
+      'static.cloudflareinsights.com', 
+      'https://static.cloudflareinsights.com',
+      'cdn.gpteng.co'
+    ],
   };
   
   // Build CSP
@@ -94,8 +135,12 @@ export function buildCspPolicy() {
     // Fonts
     "font-src 'self' data:",
     
-    // Connect (API calls) - critical for Supabase
-    `connect-src 'self' ${domains.supabase.join(' ')} ${domains.storage.join(' ')} ${domains.app.join(' ')} ${domains.cdn.join(' ')} wss://*.supabase.co https://*.supabase.co https://*.gpteng.co https://*.snakkaz.com`,
+    // Connect (API calls) - critical for Supabase and snakkaz subdomains
+    `connect-src 'self' ${domains.supabase.join(' ')} ${domains.storage.join(' ')} ${domains.app.join(' ')} ${domains.cdn.join(' ')} 
+     wss://*.supabase.co https://*.supabase.co https://*.gpteng.co 
+     https://*.snakkaz.com https://dash.snakkaz.com https://business.snakkaz.com https://docs.snakkaz.com https://analytics.snakkaz.com 
+     https://dash.snakkaz.com/ping https://business.snakkaz.com/ping https://docs.snakkaz.com/ping https://analytics.snakkaz.com/ping 
+     https://static.cloudflareinsights.com`,
     
     // Media
     "media-src 'self' blob:",

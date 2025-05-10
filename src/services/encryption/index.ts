@@ -18,7 +18,7 @@ export { LoginButton, AuthButton } from './LoginButton';
 
 // CSP og sikkerhet
 export { applyCspPolicy, buildCspPolicy, testContentSecurityPolicy } from './cspConfig';
-export { unblockPingRequests, checkContentSecurityPolicy, testSupabaseConnection } from './corsTest';
+export { unblockPingRequests, fixCloudflareCorsSecurity, checkContentSecurityPolicy, testSupabaseConnection } from './corsTest';
 
 // Nettverksresurser og fallbacks
 export { registerAssetFallbackHandlers, preloadLocalAssets } from './assetFallback';
@@ -34,6 +34,21 @@ export { applyBrowserCompatibilityFixes, fixModuleImportIssues } from './browser
 
 // Nyttige funksjoner
 export { testConnection } from './supabasePatch';
+
+// Analytics
+export { loadCloudflareAnalytics, initializeAnalytics } from './analyticsLoader';
+
+// Meta Tag Fixes
+export { fixDeprecatedMetaTags } from './metaTagFixes';
+
+// System Health Checks
+export { 
+  runSystemHealthCheck, 
+  checkHealth,
+  verifyCspConfiguration,
+  checkSriRemoval,
+  testPingRequestBlocker
+} from './systemHealthCheck';
 
 /**
  * Initialiser Snakkaz Chat sikkerhet og kryptering

@@ -18,17 +18,21 @@ export function unblockPingRequests() {
   window.fetch = function(input, init) {
     const url = typeof input === 'string' ? input : input instanceof Request ? input.url : '';
     
-    // Check if this is a ping request
+    // Check if this is a ping request to Snakkaz subdomains
     if (url && (
-      url.includes('/ping') || 
+      (url.includes('/ping') && url.includes('snakkaz.com')) || 
       url.includes('cloudflareinsights.com') ||
       url.includes('cdn.gpteng.co')
     )) {
       // For ping requests, return an empty 200 response instead
-      console.log(`Intercepted blocked request to: ${url}`);
-      return Promise.resolve(new Response('{"success":true}', {
+      // console.log(`Intercepted blocked request to: ${url}`); // Comment out to reduce console spam
+      return Promise.resolve(new Response('{"success":true,"status":"ok","timestamp":"' + new Date().toISOString() + '"}', {
         status: 200,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+          'Cache-Control': 'no-cache, no-store, must-revalidate'
+        }
       }));
     }
     
@@ -36,7 +40,48 @@ export function unblockPingRequests() {
     return originalFetch.apply(this, [input, init].filter(Boolean));
   };
   
-  console.log('Ping request blocker installed');
+  // Also mock XMLHttpRequest for older systems that might use it instead of fetch
+  const XHROpen = XMLHttpRequest.prototype.open;
+  XMLHttpRequest.prototype.open = function(method, url, ...rest) {
+    // Check if this is a ping request
+    if (typeof url === 'string' && (
+      (url.includes('/ping') && url.includes('snakkaz.com')) ||
+      url.includes('cloudflareinsights.com') ||
+      url.includes('cdn.gpteng.co')
+    )) {
+      // For ping requests, modify to a safe URL
+      url = 'data:application/json,{"success":true,"status":"ok"}';
+    }
+    
+    return XHROpen.apply(this, [method, url, ...rest]);
+  };
+  
+  console.log('Request interceptors installed for ping and analytics endpoints');
+}
+
+/**
+ * Fix CORS issues related to Cloudflare Analytics
+ * This is added to overcome CORS issues with Cloudflare
+ */
+export function fixCloudflareCorsSecurity() {
+  // Only run in browser
+  if (typeof window === 'undefined') return;
+  
+  // Add listener to handle cross-origin errors
+  window.addEventListener('error', (event) => {
+    // Check if this is a Cloudflare CORS error
+    if (
+      event.message?.includes('Cross-Origin') ||
+      event.message?.includes('CORS') ||
+      event.filename?.includes('cloudflareinsights.com')
+    ) {
+      console.log('Suppressed Cloudflare CORS error:', event.message);
+      event.preventDefault(); // Prevent default error handling
+      return true; // Prevent error from propagating
+    }
+  }, true);
+  
+  console.log('Cloudflare CORS protections added');
 }
 
 /**

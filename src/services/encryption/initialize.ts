@@ -8,8 +8,10 @@
 import { applyCspPolicy } from './cspConfig';
 import { registerAssetFallbackHandlers, preloadLocalAssets } from './assetFallback';
 import { runDiagnosticTest } from './diagnosticTest';
-import { unblockPingRequests } from './corsTest';
+import { unblockPingRequests, fixCloudflareCorsSecurity } from './corsTest';
 import { applyBrowserCompatibilityFixes, fixModuleImportIssues } from './browserFixes';
+import { initializeAnalytics } from './analyticsLoader';
+import { fixDeprecatedMetaTags } from './metaTagFixes';
 
 /**
  * Initialize Snakkaz Chat application
@@ -22,6 +24,9 @@ export function initializeSnakkazChat() {
   // Apply browser compatibility fixes
   applyBrowserCompatibilityFixes();
   
+  // Fix deprecated meta tags
+  fixDeprecatedMetaTags();
+  
   // Fix module import issues in older browsers
   fixModuleImportIssues();
   
@@ -31,11 +36,20 @@ export function initializeSnakkazChat() {
   // Unblock ping requests that cause CSP errors
   unblockPingRequests();
   
+  // Fix Cloudflare CORS security issues
+  fixCloudflareCorsSecurity();
+  
   // Preload local assets for faster fallbacks
   preloadLocalAssets();
   
   // Add global error handler for critical network resources
   addNetworkErrorHandling();
+  
+  // Fix deprecated meta tags
+  fixDeprecatedMetaTags();
+  
+  // Initialize analytics safely
+  initializeAnalytics();
   
   // Log initialization complete
   console.log('Snakkaz Chat initialized with security and fallback solutions');
