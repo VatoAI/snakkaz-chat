@@ -12,7 +12,7 @@ import { Input } from '../../components/ui/input';
 import { Loader2, Send, Image, Paperclip, Smile, X, Check, CheckCheck } from 'lucide-react';
 import { Avatar } from '../../components/ui/avatar';
 import { Progress } from '../../components/ui/progress';
-import { Tooltip } from '../../components/ui/tooltip';
+import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '../../components/ui/tooltip';
 import { Dialog, DialogContent } from '../../components/ui/dialog';
 import { format } from 'date-fns';
 
@@ -60,106 +60,118 @@ const Message: React.FC<MessageProps> = ({
   
   return (
     <div className={`flex mb-4 ${isOwn ? 'justify-end' : 'justify-start'}`}>
-      <div className={`relative max-w-[80%] ${isOwn ? 'order-2' : 'order-1'}`}>
-        {/* Sender avatar for non-own messages */}
-        {!isOwn && (
-          <div className="absolute -left-10 bottom-0">
-            <Avatar className="w-8 h-8">
-              <div className="bg-cyberdark-800 w-full h-full flex items-center justify-center text-cybergold-300">
-                {sender.displayName?.charAt(0) || '?'}
-              </div>
-            </Avatar>
-          </div>
-        )}
-        
-        {/* Message content */}
-        <div 
-          className={`rounded-lg p-3 ${
-            isOwn 
-              ? 'bg-cyberblue-900 text-white' 
-              : 'bg-cyberdark-800 text-cybergold-50'
-          } ${isDeleted ? 'italic opacity-70' : ''}`}
-        >
-          {/* Sender name for non-own messages */}
+      <TooltipProvider>
+        <div className={`relative max-w-[80%] ${isOwn ? 'order-2' : 'order-1'}`}>
+          {/* Sender avatar for non-own messages */}
           {!isOwn && (
-            <div className="text-xs text-cybergold-400 mb-1">
-              {sender.displayName || 'Unknown'}
-              {isEncrypted && (
-                <span className="ml-2 text-green-400 text-xs">
-                  🔒 Encrypted
-                </span>
-              )}
-            </div>
-          )}
-          
-          {/* Message text */}
-          <div className="break-words">{content}</div>
-          
-          {/* Media attachments */}
-          {mediaAttachments && mediaAttachments.length > 0 && (
-            <div className="mt-2 space-y-2">
-              {mediaAttachments.map((media, index) => (
-                <div key={index} className="relative">
-                  {media.type.startsWith('image/') ? (
-                    <div className="relative">
-                      <img 
-                        src={media.thumbnailUrl || media.url} 
-                        alt={media.name}
-                        className="rounded-md max-h-60 max-w-full cursor-pointer hover:opacity-90 transition-opacity"
-                        onClick={() => setMediaPreview(media.url)}
-                      />
-                    </div>
-                  ) : (
-                    <div className="flex items-center p-2 bg-cyberdark-900 rounded-md">
-                      <div className="mr-2">
-                        <Paperclip size={16} className="text-cybergold-400" />
-                      </div>
-                      <div className="flex-grow">
-                        <div className="text-sm truncate">{media.name}</div>
-                        <div className="text-xs text-cybergold-400">
-                          {media.type}
-                        </div>
-                      </div>
-                      <a 
-                        href={media.url} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="ml-2 p-1 bg-cybergold-900 rounded hover:bg-cybergold-800"
-                      >
-                        <Button variant="link" size="sm">
-                          Download
-                        </Button>
-                      </a>
-                    </div>
-                  )}
+            <div className="absolute -left-10 bottom-0">
+              <Avatar className="w-8 h-8">
+                <div className="bg-cyberdark-800 w-full h-full flex items-center justify-center text-cybergold-300">
+                  {sender.displayName?.charAt(0) || '?'}
                 </div>
-              ))}
+              </Avatar>
             </div>
           )}
           
-          {/* Timestamp and read status */}
-          <div className="flex items-center justify-end mt-1 space-x-1">
-            <span className="text-xs opacity-70">
-              {format(timestamp, 'HH:mm')}
-            </span>
-            
-            {/* Read receipts for own messages */}
-            {isOwn && (
-              <div className="text-xs">
-                {readStatus.readByCount > 1 ? (
-                  <Tooltip content={`Read by ${readStatus.readByCount - 1} people`}>
-                    <CheckCheck size={14} className="text-cybergold-400" />
-                  </Tooltip>
-                ) : readStatus.deliveredToCount > 1 ? (
-                  <Tooltip content="Delivered">
-                    <Check size={14} className="text-gray-400" />
-                  </Tooltip>
-                ) : null}
+          {/* Message content */}
+          <div 
+            className={`rounded-lg p-3 ${
+              isOwn 
+                ? 'bg-cyberblue-900 text-white' 
+                : 'bg-cyberdark-800 text-cybergold-50'
+            } ${isDeleted ? 'italic opacity-70' : ''}`}
+          >
+            {/* Sender name for non-own messages */}
+            {!isOwn && (
+              <div className="text-xs text-cybergold-400 mb-1">
+                {sender.displayName || 'Unknown'}
+                {isEncrypted && (
+                  <span className="ml-2 text-green-400 text-xs">
+                    🔒 Encrypted
+                  </span>
+                )}
               </div>
             )}
+            
+            {/* Message text */}
+            <div className="break-words">{content}</div>
+            
+            {/* Media attachments */}
+            {mediaAttachments && mediaAttachments.length > 0 && (
+              <div className="mt-2 space-y-2">
+                {mediaAttachments.map((media, index) => (
+                  <div key={index} className="relative">
+                    {media.type.startsWith('image/') ? (
+                      <div className="relative">
+                        <img 
+                          src={media.thumbnailUrl || media.url} 
+                          alt={media.name}
+                          className="rounded-md max-h-60 max-w-full cursor-pointer hover:opacity-90 transition-opacity"
+                          onClick={() => setMediaPreview(media.url)}
+                        />
+                      </div>
+                    ) : (
+                      <div className="flex items-center p-2 bg-cyberdark-900 rounded-md">
+                        <div className="mr-2">
+                          <Paperclip size={16} className="text-cybergold-400" />
+                        </div>
+                        <div className="flex-grow">
+                          <div className="text-sm truncate">{media.name}</div>
+                          <div className="text-xs text-cybergold-400">
+                            {media.type}
+                          </div>
+                        </div>
+                        <a 
+                          href={media.url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="ml-2 p-1 bg-cybergold-900 rounded hover:bg-cybergold-800"
+                        >
+                          <Button variant="link" size="sm">
+                            Download
+                          </Button>
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            {/* Timestamp and read status */}
+            <div className="flex items-center justify-end mt-1 space-x-1">
+              <span className="text-xs opacity-70">
+                {format(timestamp, 'HH:mm')}
+              </span>
+              
+              {/* Read receipts for own messages */}
+              {isOwn && (
+                <div className="text-xs">
+                  {readStatus.readByCount > 1 ? (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span><CheckCheck size={14} className="text-cybergold-400" /></span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Read by {readStatus.readByCount - 1} people</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  ) : readStatus.deliveredToCount > 1 ? (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span><Check size={14} className="text-gray-400" /></span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Delivered</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  ) : null}
+                </div>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      </TooltipProvider>
       
       {/* Media preview dialog */}
       <Dialog open={!!mediaPreview} onOpenChange={() => setMediaPreview(null)}>
