@@ -45,6 +45,8 @@
 6. `/services/encryption/systemHealthCheck.ts` (ny)
 7. `/services/encryption/system-test.html` (ny)
 8. `/services/encryption/index.ts`
+9. `/.github/workflows/deploy.yml` (forbedret)
+10. `/.github/workflows/deploy-improvements.md` (ny dokumentasjon)
 
 ## Hvordan verifisere løsningene
 1. Åpne system-test.html i nettleseren
@@ -58,5 +60,12 @@
 
 ## Merk
 De fleste CSP- og SRI-feilene bør nå være løst, men noen tredjepartsscripter kan fortsatt ha problemer. Systemet er nå mer robust mot slike feil og vil håndtere dem på en mer elegant måte uten å vise feil i konsollen.
+
+### 7. GitHub Actions Workflow Forbedringer
+- Oppdaterte deploy.yml med forbedret feilhåndtering og robusthet
+- La til validering av nødvendige secrets og byggeresultater
+- Lagt til støtte for manuell workflow-trigger via workflow_dispatch
+- Implementerte detaljert deployment summary med statusrapport
+- Forbedret miljøvariabelhåndtering med build-timestamp
 
 ## Oppdatert: 10. mai 2025
