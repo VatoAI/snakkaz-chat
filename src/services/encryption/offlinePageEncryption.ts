@@ -3,6 +3,8 @@
  * 
  * This service provides functionality for encrypting and decrypting entire pages
  * with support for offline mode and P2P_E2EE security level.
+ * 
+ * Updated to support domain-specific encryption for www.snakkaz.com
  */
 
 import { encryptWholePage, decryptWholePage, generateGroupPageKey } from '../../utils/encryption/whole-page-encryption';
@@ -11,12 +13,36 @@ import { getLocalStorage, setLocalStorage } from '../../utils/storage';
 // Key used for storing encryption keys in local storage
 const OFFLINE_KEYS_STORAGE = 'snakkaz_offline_encryption_keys';
 
+// Import environment for domain-specific configurations
+let environment: { supabase?: { customDomain?: string }; app?: { baseUrl?: string } } = {};
+try {
+  // Dynamic import to avoid circular dependencies
+  import('../../config/environment').then(module => {
+    environment = module.environment;
+  }).catch(() => {
+    console.warn('Could not load environment config, using defaults');
+    environment = { 
+      supabase: { customDomain: 'www.snakkaz.com' },
+      app: { baseUrl: 'https://www.snakkaz.com' }
+    };
+  });
+} catch (error) {
+  console.warn('Error importing environment config:', error);
+}
+
+// Storage keys that include domain information for better separation
+const getDomainSpecificKey = (baseKey: string): string => {
+  const domain = window.location.hostname || 'localhost';
+  return `${baseKey}_${domain.replace(/\./g, '_')}`;
+};
+
 interface OfflineEncryptionKey {
   keyId: string;
   key: string;
   pageId: string;
   timestamp: number;
   securityLevel: string;
+  domain?: string; // Added domain tracking
 }
 
 interface EncryptedPageData {
@@ -47,7 +73,8 @@ export const storeOfflineKey = async (
       key,
       pageId,
       timestamp: Date.now(),
-      securityLevel
+      securityLevel,
+      domain: window.location.hostname // Add domain tracking
     };
     
     // Remove any existing key for the same page
@@ -121,7 +148,7 @@ export const encryptPageForOffline = async (
 export const decryptOfflinePage = async (
   pageId: string,
   encryptedData: EncryptedPageData
-): Promise<any> => {
+): Promise<unknown> => {
   try {
     // Get the key from offline storage
     const offlineKey = await getOfflineKey(pageId);
@@ -139,7 +166,7 @@ export const decryptOfflinePage = async (
     const decryptedData = await decryptWholePage(encryptedData.encryptedContent, offlineKey.key);
     return decryptedData;
   } catch (error) {
-    console.error('Failed to decrypt offline page:', error);
+    console.error('Failed to decrypt offline page:', error instanceof Error ? error.message : 'Unknown error');
     throw new Error('Could not decrypt the page');
   }
 };
