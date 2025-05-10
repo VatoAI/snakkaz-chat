@@ -101,11 +101,6 @@ export interface GroupMessage {
     count: number;
     userIds: string[];
   }[];
-  editHistory?: {
-    timestamp: Date;
-    editorId: string;
-    previousContent: string;
-  }[];                      // History of edits
 }
 
 // Group info
@@ -596,7 +591,7 @@ export class GroupChatService {
         };
       } else if (settings.securityLevel === GroupSecurityLevel.PREMIUM) {
         // Upgrading to premium security, rotate keys
-        await this.rotateGroupKey(group);
+        await this.rotateGroupKey(group.id, group.createdBy);
       }
     }
     

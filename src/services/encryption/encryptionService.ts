@@ -316,6 +316,75 @@ export class EncryptionService {
   }
 
   /**
+   * Encrypt text with a password
+   * @param text Text to encrypt
+   * @param password Password to use for encryption
+   * @returns Encrypted data object
+   */
+  public async encryptWithPassword(text: string, password: string): Promise<{ encryptedData: string }> {
+    try {
+      // Generate a random salt
+      const salt = generateSalt();
+      
+      // Derive a key from the password
+      const key = await deriveKeyFromPassword(password, salt);
+      
+      // Convert text to ArrayBuffer
+      const data = stringToArrayBuffer(text);
+      
+      // Generate a random IV
+      const iv = window.crypto.getRandomValues(new Uint8Array(12));
+      
+      // Encrypt the data
+      const { encryptedData } = await encryptAesGcm(data, key, iv.buffer);
+      
+      // Combine salt + iv + encrypted data and encode as base64
+      const resultBuffer = new Uint8Array(salt.length + iv.length + encryptedData.byteLength);
+      resultBuffer.set(salt, 0);
+      resultBuffer.set(iv, salt.length);
+      resultBuffer.set(new Uint8Array(encryptedData), salt.length + iv.length);
+      
+      return {
+        encryptedData: arrayBufferToBase64(resultBuffer)
+      };
+    } catch (error) {
+      console.error('Password encryption failed:', error);
+      throw new Error('Failed to encrypt with password');
+    }
+  }
+
+  /**
+   * Decrypt text with a password
+   * @param encryptedData Encrypted data string (base64)
+   * @param password Password to use for decryption
+   * @returns Decrypted text
+   */
+  public async decryptWithPassword(encryptedData: string, password: string): Promise<string> {
+    try {
+      // Decode the base64 encrypted data
+      const encryptedBuffer = base64ToArrayBuffer(encryptedData);
+      const encryptedArray = new Uint8Array(encryptedBuffer);
+      
+      // Extract salt, iv, and encrypted data
+      const salt = encryptedArray.slice(0, 16);
+      const iv = encryptedArray.slice(16, 28);
+      const data = encryptedArray.slice(28);
+      
+      // Derive the key from the password
+      const key = await deriveKeyFromPassword(password, salt);
+      
+      // Decrypt the data
+      const decryptedBuffer = await decryptAesGcm(data.buffer, key, iv.buffer);
+      
+      // Convert the decrypted data back to string
+      return arrayBufferToString(decryptedBuffer);
+    } catch (error) {
+      console.error('Password decryption failed:', error);
+      throw new Error('Failed to decrypt with password');
+    }
+  }
+
+  /**
    * Generate a new encryption key based on security level and type
    */
   private async generateKey(

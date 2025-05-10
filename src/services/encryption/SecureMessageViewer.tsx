@@ -74,12 +74,12 @@ const SecureMessageViewer: React.FC = () => {
     
     try {
       // Decode data if needed
-      let encryptedData = data;
+      const encryptedData = data;
       
       // Try to decrypt
       const decrypted = pwd
         ? await encryptionService.decryptWithPassword(encryptedData, pwd)
-        : await encryptionService.decrypt(encryptedData);
+        : await encryptionService.decrypt(encryptedData, "defaultKey") as string;
         
       setDecryptedMessage(decrypted);
       setError(null);

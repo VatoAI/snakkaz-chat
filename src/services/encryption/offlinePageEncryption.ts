@@ -55,6 +55,50 @@ interface EncryptedPageData {
 }
 
 /**
+ * Interface for full page data including messages and settings
+ */
+interface WholePageData {
+  content: string;
+  metadata: Record<string, unknown>;
+  messages: unknown[];
+  settings: unknown;
+}
+
+/**
+ * Interface for page data that can be encrypted
+ */
+interface PageDataToEncrypt {
+  content: string;
+  metadata?: Record<string, unknown>;
+}
+
+/**
+ * Convert PageDataToEncrypt to WholePageData
+ */
+const convertToWholePageData = (data: PageDataToEncrypt): WholePageData => {
+  // Try to parse content as JSON if possible
+  let messages = [];
+  let settings = {};
+  
+  try {
+    const parsed = JSON.parse(data.content);
+    if (parsed && typeof parsed === 'object') {
+      messages = parsed.messages || [];
+      settings = parsed.settings || {};
+    }
+  } catch (error) {
+    console.debug('Could not parse page data as JSON, using defaults');
+  }
+  
+  return {
+    content: data.content,
+    metadata: data.metadata,
+    messages,
+    settings
+  };
+};
+
+/**
  * Store an encryption key for offline use
  */
 export const storeOfflineKey = async (
@@ -65,7 +109,7 @@ export const storeOfflineKey = async (
 ): Promise<void> => {
   try {
     // Get existing keys
-    const existingKeys = await getLocalStorage<OfflineEncryptionKey[]>(OFFLINE_KEYS_STORAGE) || [];
+    const existingKeys = await getLocalStorage(OFFLINE_KEYS_STORAGE) as OfflineEncryptionKey[] || [];
     
     // Add the new key
     const offlineKey: OfflineEncryptionKey = {
@@ -94,21 +138,13 @@ export const storeOfflineKey = async (
  */
 export const getOfflineKey = async (pageId: string): Promise<OfflineEncryptionKey | null> => {
   try {
-    const keys = await getLocalStorage<OfflineEncryptionKey[]>(OFFLINE_KEYS_STORAGE) || [];
+    const keys = await getLocalStorage(OFFLINE_KEYS_STORAGE) as OfflineEncryptionKey[] || [];
     return keys.find(k => k.pageId === pageId) || null;
   } catch (error) {
     console.error('Failed to retrieve offline key:', error);
     return null;
   }
 };
-
-/**
- * Interface for page data that can be encrypted
- */
-interface PageDataToEncrypt {
-  content: string;
-  metadata?: Record<string, unknown>;
-}
 
 /**
  * Encrypt page content with P2P_E2EE security level and prepare for offline use
@@ -122,7 +158,8 @@ export const encryptPageForOffline = async (
     const { key, keyId } = await generateGroupPageKey();
     
     // Encrypt the page content
-    const encryptedContent = await encryptWholePage(pageData, key);
+    const wholePageData = convertToWholePageData(pageData);
+    const encryptedContent = await encryptWholePage(wholePageData, key);
     
     // Store the key for offline use
     await storeOfflineKey(keyId, key, pageId);
@@ -184,7 +221,7 @@ export const isPageAvailableOffline = async (pageId: string): Promise<boolean> =
  */
 export const removeOfflinePageData = async (pageId: string): Promise<void> => {
   try {
-    const existingKeys = await getLocalStorage<OfflineEncryptionKey[]>(OFFLINE_KEYS_STORAGE) || [];
+    const existingKeys = await getLocalStorage(OFFLINE_KEYS_STORAGE) as OfflineEncryptionKey[] || [];
     const updatedKeys = existingKeys.filter(k => k.pageId !== pageId);
     await setLocalStorage(OFFLINE_KEYS_STORAGE, updatedKeys);
   } catch (error) {

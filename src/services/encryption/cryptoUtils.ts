@@ -75,11 +75,17 @@ export const generateKey = async (
   extractable: boolean = false
 ): Promise<CryptoKey> => {
   try {
-    return await window.crypto.subtle.generateKey(
+    const key = await window.crypto.subtle.generateKey(
       algorithm as AesKeyGenParams | RsaHashedKeyGenParams | EcKeyGenParams,
       extractable,
       keyUsages as KeyUsage[]
     );
+    
+    // Handle the case where generateKey returns a CryptoKeyPair instead of a CryptoKey
+    if ('privateKey' in key) {
+      return key.privateKey; // Or decide which key to return based on your needs
+    }
+    return key;
   } catch (error) {
     console.error('Key generation failed:', error);
     throw new Error(`Failed to generate key: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -96,7 +102,7 @@ export const generateAesKey = async (
   return generateKey(
     KeyType.AES_GCM,
     [KeyUsage.ENCRYPT, KeyUsage.DECRYPT],
-    { name: KeyType.AES_GCM, length },
+    { name: KeyType.AES_GCM as string, length },
     extractable
   );
 };
@@ -111,7 +117,7 @@ export const generateRsaKeyPair = async (
 ): Promise<CryptoKeyPair> => {
   return await window.crypto.subtle.generateKey(
     {
-      name: KeyType.RSA_OAEP,
+      name: KeyType.RSA_OAEP as string,
       modulusLength,
       publicExponent: new Uint8Array([1, 0, 1]), // 65537
       hash: { name: hashAlgorithm }
@@ -130,7 +136,7 @@ export const generateEcdhKeyPair = async (
 ): Promise<CryptoKeyPair> => {
   return await window.crypto.subtle.generateKey(
     {
-      name: KeyType.ECDH,
+      name: KeyType.ECDH as string,
       namedCurve: curve
     },
     extractable,
@@ -148,7 +154,7 @@ export const generateEcdsaKeyPair = async (
 ): Promise<CryptoKeyPair> => {
   return await window.crypto.subtle.generateKey(
     {
-      name: KeyType.ECDSA,
+      name: KeyType.ECDSA as string,
       namedCurve: curve,
       hash: { name: hashAlgorithm }
     },
@@ -177,7 +183,7 @@ export const encryptAesGcm = async (
   // Encrypt the data
   const encryptedData = await window.crypto.subtle.encrypt(
     {
-      name: KeyType.AES_GCM,
+      name: KeyType.AES_GCM as string,
       iv: ivToUse
     },
     key,
@@ -200,7 +206,7 @@ export const decryptAesGcm = async (
 ): Promise<ArrayBuffer> => {
   return await window.crypto.subtle.decrypt(
     {
-      name: KeyType.AES_GCM,
+      name: KeyType.AES_GCM as string,
       iv
     },
     key,
@@ -220,7 +226,7 @@ export const encryptRsaOaep = async (
   
   return await window.crypto.subtle.encrypt(
     {
-      name: KeyType.RSA_OAEP
+      name: KeyType.RSA_OAEP as string
     },
     publicKey,
     dataBuffer
@@ -236,7 +242,7 @@ export const decryptRsaOaep = async (
 ): Promise<ArrayBuffer> => {
   return await window.crypto.subtle.decrypt(
     {
-      name: KeyType.RSA_OAEP
+      name: KeyType.RSA_OAEP as string
     },
     privateKey,
     encryptedData
@@ -252,7 +258,7 @@ export const deriveSharedSecret = async (
 ): Promise<ArrayBuffer> => {
   return await window.crypto.subtle.deriveBits(
     {
-      name: KeyType.ECDH,
+      name: KeyType.ECDH as string,
       public: publicKey
     },
     privateKey,
@@ -272,7 +278,7 @@ export const signData = async (
   
   return await window.crypto.subtle.sign(
     {
-      name: KeyType.ECDSA,
+      name: KeyType.ECDSA as string,
       hash: { name: 'SHA-256' }
     },
     privateKey,
@@ -293,7 +299,7 @@ export const verifySignature = async (
   
   return await window.crypto.subtle.verify(
     {
-      name: KeyType.ECDSA,
+      name: KeyType.ECDSA as string,
       hash: { name: 'SHA-256' }
     },
     publicKey,
@@ -336,23 +342,24 @@ const getAlgorithmForKeyType = (keyType: KeyType, jwk: JsonWebKey): AlgorithmIde
   switch (keyType) {
     case KeyType.AES_GCM:
       return {
-        name: KeyType.AES_GCM
+        name: keyType as string
       };
     case KeyType.RSA_OAEP:
+      // Using a type assertion since the Web Crypto API types don't fully match TypeScript
       return {
-        name: KeyType.RSA_OAEP,
+        name: keyType as string,
         hash: { name: 'SHA-256' }
-      };
+      } as unknown as AlgorithmIdentifier;
     case KeyType.ECDH:
       return {
-        name: KeyType.ECDH,
+        name: keyType as string,
         namedCurve: jwk.crv || 'P-256'
-      };
+      } as unknown as AlgorithmIdentifier;
     case KeyType.ECDSA:
       return {
-        name: KeyType.ECDSA,
+        name: keyType as string,
         namedCurve: jwk.crv || 'P-256'
-      };
+      } as unknown as AlgorithmIdentifier;
     default:
       throw new Error(`Unsupported key type: ${keyType}`);
   }
@@ -388,7 +395,7 @@ export const deriveKeyFromPassword = async (
     },
     passwordKey,
     {
-      name: KeyType.AES_GCM,
+      name: KeyType.AES_GCM as string,
       length: 256
     },
     extractable,

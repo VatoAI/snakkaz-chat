@@ -7,13 +7,13 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useChat } from '../../services/encryption/ChatContext';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
 import { Loader2, Send, Image, Paperclip, Smile, X, Check, CheckCheck } from 'lucide-react';
-import { Avatar } from '../ui/avatar';
-import { Progress } from '../ui/progress';
-import { Tooltip } from '../ui/tooltip';
-import { Dialog, DialogContent } from '../ui/dialog';
+import { Avatar } from '../../components/ui/avatar';
+import { Progress } from '../../components/ui/progress';
+import { Tooltip } from '../../components/ui/tooltip';
+import { Dialog, DialogContent } from '../../components/ui/dialog';
 import { format } from 'date-fns';
 
 // Message interface

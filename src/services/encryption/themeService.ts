@@ -49,7 +49,7 @@ export const themeColors: Record<string, ThemeColors> = {
  */
 export const getCurrentTheme = async (): Promise<Theme> => {
   try {
-    const savedTheme = await getLocalStorage<Theme>(THEME_STORAGE_KEY);
+    const savedTheme = await getLocalStorage(THEME_STORAGE_KEY) as Theme;
     return savedTheme || Theme.SYSTEM;
   } catch (error) {
     console.error('Failed to get theme preference:', error);
@@ -110,8 +110,9 @@ export const initializeTheme = async (): Promise<void> => {
     }
     
     // Listen for system theme changes if using system preference
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-      if (getCurrentTheme() === Theme.SYSTEM) {
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', async e => {
+      const currentTheme = await getCurrentTheme();
+      if (currentTheme === Theme.SYSTEM) {
         applyTheme(e.matches ? Theme.DARK : Theme.LIGHT);
       }
     });

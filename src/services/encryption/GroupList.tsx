@@ -7,27 +7,27 @@
 
 import React, { useState } from 'react';
 import { useChat } from '../../services/encryption/ChatContext';
-import { Button } from '../ui/button';
+import { Button } from '../../components/ui/button';
 import { 
   Dialog, 
   DialogContent, 
   DialogHeader, 
   DialogTitle, 
   DialogFooter 
-} from '../ui/dialog';
+} from '../../components/ui/dialog';
 import { 
   Select, 
   SelectContent, 
   SelectItem, 
   SelectTrigger, 
   SelectValue 
-} from '../ui/select';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
-import { Avatar } from '../ui/avatar';
+} from '../../components/ui/select';
+import { Input } from '../../components/ui/input';
+import { Label } from '../../components/ui/label';
+import { Avatar } from '../../components/ui/avatar';
 import { Shield, Plus, Users, Settings, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
-import { GroupSecurityLevel } from '../../services/encryption/groupChatService';
+import { GroupSecurityLevel, Group } from '../../services/encryption/groupChatService';
 
 interface GroupListProps {
   onGroupSelect?: (group: Group) => void;
