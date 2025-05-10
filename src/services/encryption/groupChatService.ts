@@ -6,6 +6,7 @@
 
 import { EncryptionService, SecurityLevel, EncryptionType } from './encryptionService';
 import * as GroupE2EE from '../../utils/encryption/group-e2ee';
+import { exportKeyToJwk } from './cryptoUtils';
 
 // Group member roles
 export enum GroupRole {
@@ -757,21 +758,30 @@ export class GroupChatService {
     const keyStrength = group.settings.securityLevel === GroupSecurityLevel.PREMIUM ? 
       'ultra' : (group.settings.securityLevel === GroupSecurityLevel.ENHANCED ? 'high' : 'standard');
       
-    const { key, groupKey } = await GroupE2EE.generateGroupKey(group.id, creatorId, keyStrength as 'standard' | 'high' | 'ultra');
+    // The key from GroupE2EE.generateGroupKey is a CryptoKey, but we need a string
+    // and the groupKey contains metadata about the key
+    const { key: cryptoKey, groupKey } = await GroupE2EE.generateGroupKey(group.id, creatorId, keyStrength as 'standard' | 'high' | 'ultra');
+    
+    // Export the CryptoKey to a string format via JWK
+    const keyJwk = await exportKeyToJwk(cryptoKey);
+    const keyString = JSON.stringify(keyJwk);
     
     // Return the key details
     return { 
-      key: groupKey.encryptedKey,
+      key: keyString, // Return the serialized key as a string
       keyId: groupKey.keyId
     };
     
-    const key = this.encryptionService.generateRandomString(32);
-    const keyId = `gk_${group.id}_${Date.now().toString(36)}`;
+    // The following code is commented out as it's been replaced by the GroupE2EE implementation above
+    /*
+    const fallbackKey = this.encryptionService.generateRandomString(32);
+    const fallbackKeyId = `gk_${group.id}_${Date.now().toString(36)}`;
     
     // In a real implementation, this would securely store the key
     // and share it with all group members
     
-    return { key, keyId };
+    return { key: fallbackKey, keyId: fallbackKeyId };
+    */
   }
   
   /**
@@ -788,7 +798,7 @@ export class GroupChatService {
     }
 
     // Get the group key
-    let groupKeyId = keyId || group.encryptionKeys.groupKeyId;
+    const groupKeyId = keyId || group.encryptionKeys.groupKeyId;
     
     try {
       // In a real implementation, we would:

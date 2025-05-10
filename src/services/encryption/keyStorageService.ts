@@ -1,10 +1,19 @@
 /**
  * Key Storage Service
  * 
- * Provides secure storage and retrieval of encryption keys
+ * Provides secure storage a    // Parse JWK and import the key
+    const jwk = JSON.parse(keyData);
+    const key = await importKeyFromJwk(jwk, KeyType.AES_GCM, [KeyUsage.ENCRYPT, KeyUsage.DECRYPT]);retrieval of encryption keys
  */
 
-import { encryptAesGcm, decryptAesGcm, exportKeyToJwk, importKeyFromJwk } from './cryptoUtils';
+import { 
+  encryptAesGcm, 
+  decryptAesGcm, 
+  exportKeyToJwk, 
+  importKeyFromJwk,
+  KeyType,
+  KeyUsage
+} from './cryptoUtils';
 
 // In-memory cache for keys
 const keyCache = new Map<string, CryptoKey>();
@@ -52,7 +61,7 @@ export async function retrieveKey(keyId: string): Promise<CryptoKey | null> {
     
     // Parse JWK and import the key
     const jwk = JSON.parse(keyData);
-    const key = await importKeyFromJwk(jwk, 'AES-GCM', ['encrypt', 'decrypt']);
+    const key = await importKeyFromJwk(jwk, KeyType.AES_GCM, ['encrypt', 'decrypt']);
     
     // Update cache
     keyCache.set(keyId, key);
@@ -100,7 +109,7 @@ export async function getDeviceEncryptionKey(): Promise<CryptoKey> {
     const key = await window.crypto.subtle.generateKey(
       keyAlgorithm,
       true,
-      ['encrypt', 'decrypt']
+      [KeyUsage.ENCRYPT, KeyUsage.DECRYPT]
     );
     
     // Store the device key

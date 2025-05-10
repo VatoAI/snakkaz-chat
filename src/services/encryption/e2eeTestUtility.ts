@@ -5,7 +5,7 @@
  * It helps with debugging and verifying that encryption/decryption works correctly.
  */
 
-import * as GroupE2EE from '../utils/encryption/group-e2ee';
+import * as GroupE2EE from '../../utils/encryption/group-e2ee';
 import { storeKey, retrieveKey } from './keyStorageService';
 
 /**
