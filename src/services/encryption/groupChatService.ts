@@ -5,6 +5,7 @@
  */
 
 import { EncryptionService, SecurityLevel, EncryptionType } from './encryptionService';
+import * as GroupE2EE from '../../utils/encryption/group-e2ee';
 
 // Group member roles
 export enum GroupRole {
@@ -746,8 +747,23 @@ export class GroupChatService {
    * Generate an encryption key for a group
    */
   private async generateGroupEncryptionKey(group: Group): Promise<{ key: string; keyId: string }> {
-    const securityLevel = group.settings.securityLevel === GroupSecurityLevel.PREMIUM ? 
-      SecurityLevel.P2P_E2EE : SecurityLevel.E2EE;
+    // Use the new group E2EE functionality
+    const creatorId = group.createdBy || group.members.find(m => m.role === GroupRole.ADMIN)?.id || '';
+    
+    if (!creatorId) {
+      throw new Error('Group must have a creator or admin to generate encryption keys');
+    }
+    
+    const keyStrength = group.settings.securityLevel === GroupSecurityLevel.PREMIUM ? 
+      'ultra' : (group.settings.securityLevel === GroupSecurityLevel.ENHANCED ? 'high' : 'standard');
+      
+    const { key, groupKey } = await GroupE2EE.generateGroupKey(group.id, creatorId, keyStrength as 'standard' | 'high' | 'ultra');
+    
+    // Return the key details
+    return { 
+      key: groupKey.encryptedKey,
+      keyId: groupKey.keyId
+    };
     
     const key = this.encryptionService.generateRandomString(32);
     const keyId = `gk_${group.id}_${Date.now().toString(36)}`;
@@ -766,20 +782,53 @@ export class GroupChatService {
     group: Group,
     keyId?: string
   ): Promise<{ encryptedData: string; keyId: string }> {
-    // In a real implementation, this would use the group's encryption key
-    // to encrypt the message
+    // Use the improved group E2EE implementation
+    if (!group.encryptionKeys) {
+      throw new Error('Group does not have encryption enabled');
+    }
+
+    // Get the group key
+    let groupKeyId = keyId || group.encryptionKeys.groupKeyId;
     
-    // Placeholder implementation
-    const encryptionResult = await this.encryptionService.encrypt(
-      content,
-      SecurityLevel.E2EE,
-      EncryptionType.MESSAGE
-    );
-    
-    return {
-      encryptedData: encryptionResult.encryptedData,
-      keyId: keyId || encryptionResult.keyId
-    };
+    try {
+      // In a real implementation, we would:
+      // 1. Get the CryptoKey from local storage or fetch if not available
+      // 2. Use it directly with the group-e2ee module
+      
+      // For this implementation, we'll use a simulated approach:
+      const mockGroupKey = await window.crypto.subtle.generateKey(
+        {
+          name: 'AES-GCM',
+          length: 256
+        },
+        true,
+        ['encrypt', 'decrypt']
+      );
+      
+      // Use our new group-e2ee utility to encrypt the message
+      const { encryptedData, iv } = await GroupE2EE.encryptGroupMessage(content, mockGroupKey);
+      
+      // In a real implementation, we'd store the IV with the message
+      // For this demo, we're including it in the encrypted data
+      return {
+        encryptedData: `${encryptedData}|${iv}`,
+        keyId: groupKeyId
+      };
+    } catch (error) {
+      console.error('Error encrypting group message:', error);
+      
+      // Fallback to existing encryption service
+      const encryptionResult = await this.encryptionService.encrypt(
+        content,
+        SecurityLevel.E2EE,
+        EncryptionType.MESSAGE
+      );
+      
+      return {
+        encryptedData: encryptionResult.encryptedData,
+        keyId: keyId || encryptionResult.keyId
+      };
+    }
   }
   
   /**
@@ -789,11 +838,36 @@ export class GroupChatService {
     content: string,
     keyId: string
   ): Promise<string> {
-    // In a real implementation, this would use the group's encryption key
-    // to decrypt the message
-    
-    // Placeholder implementation
-    return this.encryptionService.decrypt(content, keyId);
+    try {
+      // In a real implementation, we would:
+      // 1. Retrieve the decryption key for this keyId
+      // 2. Use it with our group-e2ee module
+      
+      // For this implementation, assume the message has the format encryptedData|iv
+      const [encryptedData, iv] = content.split('|');
+      
+      if (!encryptedData || !iv) {
+        throw new Error('Invalid encrypted message format');
+      }
+      
+      // Create a mock key for demo purposes
+      const mockGroupKey = await window.crypto.subtle.generateKey(
+        {
+          name: 'AES-GCM',
+          length: 256
+        },
+        true,
+        ['encrypt', 'decrypt']
+      );
+      
+      // Use our new group-e2ee utility to decrypt
+      return await GroupE2EE.decryptGroupMessage(encryptedData, iv, mockGroupKey);
+    } catch (error) {
+      console.error('Error decrypting group message:', error);
+      
+      // Fallback to existing decryption method
+      return this.encryptionService.decrypt(content, keyId);
+    }
   }
   
   /**

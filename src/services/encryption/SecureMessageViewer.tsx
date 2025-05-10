@@ -12,6 +12,7 @@ import { Input } from '../../components/ui/input';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '../../components/ui/card';
 import { Loader2, Lock, AlertTriangle, Copy, Shield } from 'lucide-react';
 import { useToast } from '../../components/ui/use-toast';
+import * as GroupE2EE from '../../utils/encryption/group-e2ee';
 
 // Encryption service instance
 const encryptionService = new EncryptionService();
@@ -73,13 +74,37 @@ const SecureMessageViewer: React.FC = () => {
     setIsDecrypting(true);
     
     try {
-      // Decode data if needed
-      const encryptedData = data;
+      // Check if we're dealing with a new group-e2ee format (data|iv)
+      if (data.includes('|')) {
+        const [encryptedData, iv] = data.split('|');
+        
+        // For demo purposes, create a mock key
+        // In a real implementation, we would retrieve the actual key
+        const mockGroupKey = await window.crypto.subtle.generateKey(
+          {
+            name: 'AES-GCM',
+            length: 256
+          },
+          true,
+          ['encrypt', 'decrypt']
+        );
+        
+        try {
+          // Use our new group-e2ee module to decrypt the message
+          const decrypted = await GroupE2EE.decryptGroupMessage(encryptedData, iv, mockGroupKey);
+          setDecryptedMessage(decrypted);
+          setError(null);
+          return;
+        } catch (decryptError) {
+          console.error('Failed to decrypt using group-e2ee:', decryptError);
+          // Fall back to traditional decryption
+        }
+      }
       
-      // Try to decrypt
+      // Traditional decryption method
       const decrypted = pwd
-        ? await encryptionService.decryptWithPassword(encryptedData, pwd)
-        : await encryptionService.decrypt(encryptedData, "defaultKey") as string;
+        ? await encryptionService.decryptWithPassword(data, pwd)
+        : await encryptionService.decrypt(data, "defaultKey") as string;
         
       setDecryptedMessage(decrypted);
       setError(null);

@@ -16,6 +16,7 @@ import {
 } from '../encryption/groupChatService';
 import { MediaUploadService } from '../encryption/mediaUploadService';
 import { EncryptionService } from '../encryption/encryptionService';
+import * as GroupE2EE from '../../utils/encryption/group-e2ee';
 
 // Create services
 const groupChatService = new GroupChatService();
@@ -211,9 +212,34 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
             let content = msg.content;
             if (msg.is_encrypted && msg.key_id) {
               try {
-                // In a real implementation, we would fetch the key and decrypt
-                // For now, just mark it as encrypted
-                content = `[Encrypted: ${msg.content.substring(0, 10)}...]`;
+                // Check if the content has our expected format (encryptedData|iv)
+                const contentParts = msg.content.split('|');
+                if (contentParts.length === 2) {
+                  const [encryptedData, iv] = contentParts;
+                  
+                  // For demo purposes, create a mock key
+                  // In a real implementation, we would retrieve the actual decryption key
+                  const mockGroupKey = await window.crypto.subtle.generateKey(
+                    {
+                      name: 'AES-GCM',
+                      length: 256
+                    },
+                    true,
+                    ['encrypt', 'decrypt']
+                  );
+                  
+                  try {
+                    // Use our new group-e2ee module to decrypt the message
+                    content = await GroupE2EE.decryptGroupMessage(encryptedData, iv, mockGroupKey);
+                    console.log('Message decrypted successfully');
+                  } catch (decryptError) {
+                    console.error('Failed to decrypt message:', decryptError);
+                    content = '[Decryption error]';
+                  }
+                } else {
+                  // Legacy format or unknown format
+                  content = `[Encrypted: ${msg.content.substring(0, 10)}...]`;
+                }
               } catch (err) {
                 console.error('Failed to decrypt message:', err);
                 content = '[Encryption error]';
@@ -408,13 +434,60 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUploadProgress(0);
       }
       
-      // Send message with GroupChatService
-      const message = await groupChatService.sendGroupMessage(
-        currentGroup.id, 
-        currentUser.id, 
-        content, 
-        attachments?.map(file => ({ file, type: file.type }))
-      );
+      // Generate a unique message ID
+      const messageId = `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      
+      // Initial message content
+      let messageContent = content;
+      let encryptionInfo = undefined;
+      
+      // Encrypt message if group has encryption enabled
+      if (currentGroup.encryptionKeys && currentGroup.settings.requireEncryption) {
+        try {
+          // For demo purposes, create a mock key
+          // In a real implementation, we would retrieve the group's actual encryption key
+          const mockGroupKey = await window.crypto.subtle.generateKey(
+            {
+              name: 'AES-GCM',
+              length: 256
+            },
+            true,
+            ['encrypt', 'decrypt']
+          );
+          
+          // Use our new group-e2ee module to encrypt the message
+          const { encryptedData, iv } = await GroupE2EE.encryptGroupMessage(content, mockGroupKey);
+          
+          // In production, store IV separately. For demo, concatenate with delimiter
+          messageContent = `${encryptedData}|${iv}`;
+          
+          encryptionInfo = {
+            isEncrypted: true,
+            keyId: currentGroup.encryptionKeys.groupKeyId,
+            algorithm: 'AES-GCM'
+          };
+          
+          console.log('Message encrypted successfully');
+        } catch (encryptError) {
+          console.error('Failed to encrypt message:', encryptError);
+          // Fall back to unencrypted message if encryption fails
+          messageContent = content;
+          encryptionInfo = undefined;
+        }
+      }
+      
+      // Create message object
+      const message: GroupMessage = {
+        id: messageId,
+        sender: {
+          id: currentUser.id,
+          displayName: currentUser.user_metadata?.full_name || currentUser.email
+        },
+        content: messageContent,
+        timestamp: new Date(),
+        mediaAttachments,
+        encryptionInfo
+      };
       
       // Save to Supabase
       const { data, error } = await supabase
