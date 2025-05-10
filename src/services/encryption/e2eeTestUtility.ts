@@ -14,7 +14,8 @@ import { storeKey, retrieveKey } from './keyStorageService';
 export async function testGroupE2EE() {
   const testResults = {
     success: true,
-    steps: [] as {step: string, passed: boolean, error?: string}[]
+    steps: [] as {step: string, passed: boolean, error?: string}[],
+    groupKeyId: '' // Legg til felt for groupKeyId
   };
 
   try {
@@ -34,6 +35,9 @@ export async function testGroupE2EE() {
     });
     
     console.log('Generated key ID:', groupKey.keyId);
+    
+    // Lagre keyId i resultater
+    testResults.groupKeyId = groupKey.keyId;
     
     // Step 2: Store the key
     console.log('Step 2: Storing key');

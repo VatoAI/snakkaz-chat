@@ -17,6 +17,7 @@ import {
 import { MediaUploadService } from '../encryption/mediaUploadService';
 import { EncryptionService } from '../encryption/encryptionService';
 import * as GroupE2EE from '../../utils/encryption/group-e2ee';
+import { User } from '@supabase/supabase-js';
 
 // Create services
 const groupChatService = new GroupChatService();
@@ -25,11 +26,14 @@ const encryptionService = new EncryptionService();
 
 // Chat context interface
 interface ChatContextProps {
+  // User
+  currentUser: User | null;
+  
   // Groups
   groups: Group[];
   currentGroup: Group | null;
   setCurrentGroup: (group: Group | null) => void;
-  createGroup: (name: string, settings?: any) => Promise<Group>;
+  createGroup: (name: string, settings?: Record<string, unknown>) => Promise<Group>;
   leaveGroup: (groupId: string) => Promise<void>;
   
   // Messages
@@ -62,7 +66,7 @@ const ChatContext = createContext<ChatContextProps | undefined>(undefined);
 // Provider component
 export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // State
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [groups, setGroups] = useState<Group[]>([]);
   const [currentGroup, setCurrentGroup] = useState<Group | null>(null);
   const [messages, setMessages] = useState<GroupMessage[]>([]);
@@ -669,7 +673,8 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
   
   // Context value
-  const value: ChatContextProps = {
+  const contextValue: ChatContextProps = {
+    currentUser,
     groups,
     currentGroup,
     setCurrentGroup,
@@ -689,7 +694,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
   
   return (
-    <ChatContext.Provider value={value}>
+    <ChatContext.Provider value={contextValue}>
       {children}
     </ChatContext.Provider>
   );

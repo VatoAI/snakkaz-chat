@@ -6,8 +6,15 @@
  * i applikasjonen.
  */
 
-// Hovedfunksjonalitet for oppsett
+// Importer for lokal bruk i denne filen
+import { initializeSnakkazChat, runDiagnostics } from './initialize';
+import { runDiagnosticTest, testBrowserCompatibility } from './diagnosticTest';
+
+// Hovedfunksjonalitet for oppsett (re-eksporterer for bruk i andre filer)
 export { initializeSnakkazChat, runDiagnostics } from './initialize';
+
+// Authentication components
+export { LoginButton, AuthButton } from './LoginButton';
 
 // CSP og sikkerhet
 export { applyCspPolicy, buildCspPolicy, testContentSecurityPolicy } from './cspConfig';
