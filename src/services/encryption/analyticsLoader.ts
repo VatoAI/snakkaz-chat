@@ -141,13 +141,18 @@ export function loadCloudflareAnalytics() {
       const script = document.createElement('script');
       script.defer = true;
       script.crossOrigin = 'anonymous'; // Add CORS attribute
-      script.src = 'https://static.cloudflareinsights.com/beacon.min.js?token=c5bd7bbfe41c47c2a5ec'; // Use URL parameter instead of data attribute
       
-      // Add data attributes required by Cloudflare (with correct version)
+      // Use the exact URL that's in the error message to ensure it matches
+      script.src = 'https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015'; 
+      
+      // Add data attributes required by Cloudflare (with current version)
       script.setAttribute('data-cf-beacon', '{"token":"c5bd7bbfe41c47c2a5ec","version":"2023.10.0","spa":true,"spaMode":"auto","cookieDomain":"snakkaz.com","referrerPolicy":"no-referrer-when-downgrade"}'); 
       
       // Explicitly set CORS attributes on the element
       script.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
+      
+      // Remove any SRI attributes that might be added automatically
+      script.removeAttribute('integrity');
       
       // Listen for errors
       script.onerror = () => {

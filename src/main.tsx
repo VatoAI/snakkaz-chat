@@ -9,9 +9,13 @@ import './utils/externalScripts'; // This auto-initializes
 
 // Import security initialization for Snakkaz Chat
 import { initializeSnakkazChat } from './services/encryption/initialize';
+import { applyAllCspFixes } from './services/encryption/cspFixes';
 
 // Initialize error handlers as early as possible to prevent console errors
 initializeErrorHandling();
+
+// Apply the emergency CSP fixes first to prevent loading issues
+applyAllCspFixes();
 
 // Initialize Snakkaz Chat security features
 initializeSnakkazChat();

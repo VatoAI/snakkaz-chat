@@ -44,7 +44,7 @@ export function unblockPingRequests() {
       url.includes('docs.snakkaz.com') ||
       url.includes('report-violation') || // CSP violation reporting
       url.includes('beacon.min.js') ||    // Cloudflare beacon
-      url.includes('vcd15cbe7772f49c399c6a5babf22c124') // Include exact Cloudflare beacon ID
+      url.includes('vcd15cbe7772f49c399c6a5babf22c1241717689176015') // Include exact Cloudflare beacon ID from error message
     )) {
       console.debug(`Intercepted potentially blocked request to: ${url}`);
       
@@ -105,6 +105,30 @@ export function unblockPingRequests() {
 export function fixCloudflareCorsSecurity() {
   if (typeof window === 'undefined') return;
   
+  // Fix the specific Cloudflare Analytics script with the correct URL
+  const fixCloudflareScript = () => {
+    // Find any existing Cloudflare scripts
+    const scripts = document.querySelectorAll('script[src*="cloudflareinsights.com"]');
+    scripts.forEach(script => {
+      // Update to the exact URL from the error message
+      const scriptEl = script as HTMLScriptElement;
+      if (scriptEl.src.includes('beacon.min.js')) {
+        scriptEl.src = 'https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015';
+        scriptEl.removeAttribute('integrity');
+        scriptEl.setAttribute('crossorigin', 'anonymous');
+        scriptEl.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
+        console.log('Updated Cloudflare Analytics script URL to match version');
+      }
+    });
+  };
+  
+  // Run the fix when the DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', fixCloudflareScript);
+  } else {
+    fixCloudflareScript();
+  }
+  
   // Suppress CORS errors in the console
   window.addEventListener('error', (event) => {
     if (
@@ -116,6 +140,7 @@ export function fixCloudflareCorsSecurity() {
       event.message?.includes('Subresource Integrity') ||
       event.message?.includes('SHA-') ||
       event.message?.includes('has been blocked') ||
+      event.message?.includes('match the content') || // Add specific error from logs
       event.filename?.includes('cloudflareinsights.com')
     ) {
       console.debug(`Suppressed browser error: ${event.message}`);

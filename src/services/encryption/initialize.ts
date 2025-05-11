@@ -31,8 +31,23 @@ export function initializeSnakkazChat() {
   // Apply immediate fixes for critical issues
   console.log('Initializing Snakkaz Chat security and compatibility fixes...');
   
-  // Apply CSP early - this is critical for security
-  applyCspPolicy();
+  try {
+    // Import the emergency fixes from cspFixes.ts
+    import('./cspFixes').then(module => {
+      console.log('Applying emergency CSP fixes...');
+      module.applyAllCspFixes();
+    }).catch(err => {
+      console.error('Failed to apply emergency CSP fixes:', err);
+      // Fall back to standard fixes if the import fails
+      applyCspPolicy();
+      unblockPingRequests();
+      fixCloudflareCorsSecurity();
+    });
+  } catch (error) {
+    console.error('Error importing emergency fixes:', error);
+    // Apply traditional fixes as fallback
+    applyCspPolicy();
+  }
   
   // Fix missing resources (like auth-bg.jpg)
   fixMissingResources();
@@ -51,9 +66,6 @@ export function initializeSnakkazChat() {
   
   // Unblock ping requests that cause CSP errors - critical for subdomain access
   unblockPingRequests();
-  
-  // Fix Cloudflare CORS security issues
-  fixCloudflareCorsSecurity();
   
   // Fix module import issues in older browsers
   fixModuleImportIssues();

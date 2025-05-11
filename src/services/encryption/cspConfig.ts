@@ -158,8 +158,9 @@ export function buildCspPolicy() {
     
     // Connect (API calls) - critical for Supabase and snakkaz subdomains
     `connect-src 'self' ${domains.supabase.join(' ')} ${domains.storage.join(' ')} ${domains.app.join(' ')} ${domains.cdn.join(' ')} 
-     wss://*.supabase.co https://*.supabase.co https://*.gpteng.co 
-     https://*.snakkaz.com http://*.snakkaz.com`,
+     wss://*.supabase.co https://*.supabase.co https://*.gpteng.co https://cdn.gpteng.co
+     https://*.snakkaz.com http://*.snakkaz.com dash.snakkaz.com business.snakkaz.com docs.snakkaz.com analytics.snakkaz.com
+     https://static.cloudflareinsights.com cloudflareinsights.com *.cloudflareinsights.com`,
     
     // Media
     "media-src 'self' blob:",
