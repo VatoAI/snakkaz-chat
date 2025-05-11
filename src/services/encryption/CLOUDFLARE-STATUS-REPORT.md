@@ -58,6 +58,10 @@ API credentials have been configured for programmatic access to Cloudflare:
 - Zone ID: bba5fb2c80aede33ac2c22f8f99110d3
 - Account ID: 0785388bb3883d3a10ab7f60a7a4968a
 
+The API integration now supports both authentication methods:
+1. **API Token** (recommended) - Account-owned token with specific permissions
+2. **Global API Key** - For complete account access using email and API key
+
 These credentials enable:
 - Automated cache purging
 - DNS record management
@@ -66,7 +70,7 @@ These credentials enable:
 
 ### Management Tools
 
-A Cloudflare management tool has been implemented for easy console-based operations:
+An enhanced Cloudflare management tool has been implemented for easy console-based operations:
 
 - File: `/src/services/encryption/cloudflareManagement.ts`
 - Browser usage: `import("/src/services/encryption/cloudflareManagement.js").then(m => window.cfTools = m.cfTools)`
@@ -74,14 +78,19 @@ A Cloudflare management tool has been implemented for easy console-based operati
   - `cfTools.purgeCache()` - Purge CDN cache
   - `cfTools.testConnection()` - Test API connectivity
   - `cfTools.listDnsRecords()` - List DNS records
+  - `cfTools.switchAuthMethod("token")` - Switch to API token authentication
+  - `cfTools.switchAuthMethod("key")` - Switch to Global API key authentication
   - `cfTools.help()` - Show all commands
 
 ## Next Steps
 
-1. Create an API Token in Cloudflare Dashboard:
-   - Go to User Profile > API Tokens
-   - Create token with "Zone:Cache Purge" and "Zone:DNS:Edit" permissions
-   - Use token with the management tools
+1. Create Authentication Credentials (choose one):
+   - **Option A**: Create an Account-owned API Token
+     - Go to Account > API Tokens
+     - Create token with appropriate zone permissions
+   
+   - **Option B**: Use the Global API Key
+     - Go to User Profile > API Tokens > View Global API Key
 
 2. Configure additional Cloudflare features in the dashboard:
    - Page Rules

@@ -24,13 +24,27 @@ export const CLOUDFLARE_CONFIG = {
 };
 
 /**
- * Create API headers with authentication token
- * @param apiToken The Cloudflare API token
+ * Create API headers with authentication using account-owned API token
+ * @param apiToken The Cloudflare API token (account-owned token)
  * @returns Headers object with proper authentication
  */
 export function createCloudflareApiHeaders(apiToken: string): HeadersInit {
   return {
     'Authorization': `Bearer ${apiToken}`,
+    'Content-Type': 'application/json'
+  };
+}
+
+/**
+ * Create API headers with authentication using API Key (legacy but still works)
+ * @param email Email associated with the Cloudflare account
+ * @param apiKey Global API Key from Cloudflare
+ * @returns Headers object with proper authentication
+ */
+export function createCloudflareApiKeyHeaders(email: string, apiKey: string): HeadersInit {
+  return {
+    'X-Auth-Email': email,
+    'X-Auth-Key': apiKey,
     'Content-Type': 'application/json'
   };
 }
