@@ -19,6 +19,9 @@ import { fixCloudflareAnalyticsIntegration } from './cloudflareHelper';
  * Should be called at the start of your application
  */
 export function initializeSnakkazChat() {
+  // Apply immediate fixes for critical issues
+  console.log('Initializing Snakkaz Chat security and compatibility fixes...');
+  
   // Apply CSP early
   applyCspPolicy();
   
@@ -28,19 +31,19 @@ export function initializeSnakkazChat() {
   // Fix deprecated meta tags
   fixDeprecatedMetaTags();
   
+  // Unblock ping requests that cause CSP errors - critical for subdomain access
+  unblockPingRequests();
+  
+  // Fix Cloudflare CORS security issues
+  fixCloudflareCorsSecurity();
+  
   // Fix module import issues in older browsers
   fixModuleImportIssues();
   
   // Register asset fallback handlers
   registerAssetFallbackHandlers();
   
-  // Unblock ping requests that cause CSP errors
-  unblockPingRequests();
-  
-  // Fix Cloudflare CORS security issues
-  fixCloudflareCorsSecurity();
-  
-  // Fix Cloudflare Analytics integration specifically
+  // Fix Cloudflare Analytics integration specifically - this is a critical fix
   fixCloudflareAnalyticsIntegration();
   
   // Preload local assets for faster fallbacks
@@ -49,23 +52,62 @@ export function initializeSnakkazChat() {
   // Add global error handler for critical network resources
   addNetworkErrorHandling();
   
-  // Fix deprecated meta tags
-  fixDeprecatedMetaTags();
-  
   // Initialize analytics safely
   initializeAnalytics();
   
-  // Re-apply CSP to ensure it's properly set with all needed domains
-  setTimeout(() => {
+  // Multiple re-application of fixes to catch any dynamic DOM changes
+  const reapplyFixes = () => {
+    console.log('Re-applying security fixes for dynamic content...');
+    
     // Apply CSP again to catch any dynamic modifications
     applyCspPolicy();
+    
     // Fix meta tags again
     fixDeprecatedMetaTags();
+    
     // Fix Cloudflare CORS security issues again
     fixCloudflareCorsSecurity();
+    
     // Fix Cloudflare Analytics integration specifically
     fixCloudflareAnalyticsIntegration();
-  }, 500);
+    
+    // Re-unblock ping requests in case new event handlers were added
+    unblockPingRequests();
+  };
+  
+  // Apply fixes after initial render
+  setTimeout(reapplyFixes, 500);
+  
+  // Apply fixes again after full page load
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', reapplyFixes);
+  }
+  
+  // Apply fixes one more time after all resources are loaded
+  window.addEventListener('load', reapplyFixes);
+  
+  // Set up a mutation observer to detect dynamic script additions
+  const observer = new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+        // Check if any scripts were added
+        const hasNewScripts = Array.from(mutation.addedNodes).some(
+          node => node.nodeName === 'SCRIPT' || node.nodeName === 'LINK'
+        );
+        
+        if (hasNewScripts) {
+          reapplyFixes();
+          break;
+        }
+      }
+    }
+  });
+  
+  // Observe the document for added scripts
+  observer.observe(document.documentElement, {
+    childList: true,
+    subtree: true
+  });
   
   // Log initialization complete
   console.log('Snakkaz Chat initialized with security and fallback solutions');

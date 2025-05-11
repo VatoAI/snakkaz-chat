@@ -157,9 +157,18 @@ export function buildCspPolicy() {
     // Connect (API calls) - critical for Supabase and snakkaz subdomains
     `connect-src 'self' ${domains.supabase.join(' ')} ${domains.storage.join(' ')} ${domains.app.join(' ')} ${domains.cdn.join(' ')} 
      wss://*.supabase.co https://*.supabase.co https://*.gpteng.co 
-     https://*.snakkaz.com https://www.snakkaz.com https://dash.snakkaz.com https://business.snakkaz.com https://docs.snakkaz.com https://analytics.snakkaz.com 
-     https://dash.snakkaz.com/ping https://business.snakkaz.com/ping https://docs.snakkaz.com/ping https://analytics.snakkaz.com/ping 
-     https://static.cloudflareinsights.com https://cloudflareinsights.com cloudflareinsights.com *.cloudflareinsights.com`,
+     https://*.snakkaz.com http://*.snakkaz.com https://www.snakkaz.com http://www.snakkaz.com 
+     https://dash.snakkaz.com http://dash.snakkaz.com 
+     https://business.snakkaz.com http://business.snakkaz.com 
+     https://docs.snakkaz.com http://docs.snakkaz.com 
+     https://analytics.snakkaz.com http://analytics.snakkaz.com 
+     https://dash.snakkaz.com/ping http://dash.snakkaz.com/ping 
+     https://business.snakkaz.com/ping http://business.snakkaz.com/ping 
+     https://docs.snakkaz.com/ping http://docs.snakkaz.com/ping 
+     https://analytics.snakkaz.com/ping http://analytics.snakkaz.com/ping 
+     https://static.cloudflareinsights.com http://static.cloudflareinsights.com 
+     https://cloudflareinsights.com http://cloudflareinsights.com 
+     cloudflareinsights.com *.cloudflareinsights.com`,
     
     // Media
     "media-src 'self' blob:",

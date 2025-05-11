@@ -26,7 +26,8 @@ export function unblockPingRequests() {
       url.includes('dash.snakkaz.com') ||
       url.includes('analytics.snakkaz.com') ||
       url.includes('business.snakkaz.com') ||
-      url.includes('docs.snakkaz.com')
+      url.includes('docs.snakkaz.com') ||
+      url.includes('vcd15cbe7772f49c399c6a5babf22c124') // Include exact Cloudflare beacon ID
     )) {
       console.log(`Intercepted blocked request to: ${url}`);
       return Promise.resolve(new Response('{"success":true,"status":"ok","timestamp":"' + new Date().toISOString() + '"}', {

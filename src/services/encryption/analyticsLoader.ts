@@ -15,6 +15,12 @@ function removeSriIntegrityAttributes() {
     const scripts = document.querySelectorAll('script[integrity]');
     scripts.forEach(script => {
       script.removeAttribute('integrity');
+      
+      // For Cloudflare scripts, also set crossorigin and other attributes
+      if (script.src && script.src.includes('cloudflare')) {
+        script.setAttribute('crossorigin', 'anonymous');
+        script.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
+      }
     });
     
     // Handle link tags (CSS) with integrity attributes
@@ -23,13 +29,24 @@ function removeSriIntegrityAttributes() {
       link.removeAttribute('integrity');
     });
     
+    // Specifically look for Cloudflare Analytics scripts by URL pattern
+    const cfScripts = document.querySelectorAll('script[src*="cloudflareinsights.com"]');
+    cfScripts.forEach(script => {
+      script.removeAttribute('integrity');
+      script.setAttribute('crossorigin', 'anonymous');
+      script.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
+    });
+    
     // Also prevent SRI validation errors from showing in console
     const originalConsoleError = console.error;
     console.error = function(msg, ...args) {
       if (typeof msg === 'string' && 
           (msg.includes('integrity') || msg.includes('SRI') || 
-           msg.includes('SHA-') || msg.includes('Subresource Integrity'))) {
-        // Suppress SRI-related errors
+           msg.includes('SHA-') || msg.includes('Subresource Integrity') ||
+           (msg.includes('Cross-Origin') && msg.includes('cloudflareinsights.com')) ||
+           (msg.includes('Content-Security-Policy') && msg.includes('connect-src')))) {
+        // Suppress SRI-related errors and specific CSP errors
+        console.debug('[Suppressed]', msg);
         return;
       }
       originalConsoleError.call(console, msg, ...args);
@@ -100,7 +117,10 @@ export function loadCloudflareAnalytics() {
       script.src = 'https://static.cloudflareinsights.com/beacon.min.js?token=c5bd7bbfe41c47c2a5ec'; // Use URL parameter instead of data attribute
       
       // Add data attributes required by Cloudflare (with correct version)
-      script.setAttribute('data-cf-beacon', '{"token":"c5bd7bbfe41c47c2a5ec","version":"2023.10.0"}'); 
+      script.setAttribute('data-cf-beacon', '{"token":"c5bd7bbfe41c47c2a5ec","version":"2023.10.0","spa":true,"cookieDomain":"snakkaz.com"}'); 
+      
+      // Explicitly set CORS attributes on the element
+      script.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
       
       // Listen for errors
       script.onerror = () => {

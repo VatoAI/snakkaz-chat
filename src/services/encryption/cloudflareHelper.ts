@@ -13,7 +13,23 @@ export function fixCloudflareAnalyticsIntegration() {
   
   console.log('Applying Cloudflare Analytics integration fixes...');
 
-  // Find and fix Cloudflare scripts
+  // Remove all existing Cloudflare scripts first - they might be problematic
+  const existingCfScripts = document.querySelectorAll('script[src*="cloudflare"]');
+  existingCfScripts.forEach(script => {
+    console.log(`Removing potentially problematic Cloudflare script: ${(script as HTMLScriptElement).src}`);
+    script.parentNode?.removeChild(script);
+  });
+
+  // Manually inject a fresh Cloudflare Analytics script
+  const newScript = document.createElement('script');
+  newScript.defer = true;
+  newScript.crossOrigin = 'anonymous';
+  newScript.referrerPolicy = 'no-referrer-when-downgrade';
+  newScript.src = 'https://static.cloudflareinsights.com/beacon.min.js?token=c5bd7bbfe41c47c2a5ec';
+  newScript.setAttribute('data-cf-beacon', '{"token":"c5bd7bbfe41c47c2a5ec","version":"2023.10.0","spa":true}');
+  document.head.appendChild(newScript);
+  
+  // Find and fix any remaining or newly added Cloudflare scripts
   const cfScripts = document.querySelectorAll('script[src*="cloudflare"]');
   cfScripts.forEach(script => {
     const scriptEl = script as HTMLScriptElement;
@@ -28,6 +44,11 @@ export function fixCloudflareAnalyticsIntegration() {
     if (!scriptEl.hasAttribute('crossorigin')) {
       scriptEl.crossOrigin = 'anonymous';
       console.log(`Adding crossorigin attribute for Cloudflare script: ${scriptEl.src}`);
+    }
+    
+    // Add referrer policy
+    if (!scriptEl.hasAttribute('referrerpolicy')) {
+      scriptEl.referrerPolicy = 'no-referrer-when-downgrade';
     }
   });
   
