@@ -55,28 +55,15 @@ fi
 # Kjør Cloudflare sikkerhetssjekker først
 echo
 echo "🔒 Kjører Cloudflare sikkerhetskontroll..."
-node -e "
-  const { checkCloudflareIntegration } = require('./src/services/encryption/cloudflareSecurityCheck');
-  
-  async function runCheck() {
-    try {
-      console.log('Starter sjekk av Cloudflare-integrasjon...');
-      const result = await checkCloudflareIntegration();
-      console.log('Resultat:', JSON.stringify(result, null, 2));
-      
-      if (result.success) {
-        console.log('✅ Cloudflare-integrasjon er vellykket!');
-      } else {
-        console.log('⚠️  OBS: Cloudflare-integrasjon har problemer.');
-        console.log('   Du kan fortsette deploymentet, men sjekk loggene for detaljer.');
-      }
-    } catch (error) {
-      console.error('❌ Cloudflare-sjekk feilet:', error);
-    }
-  }
-  
-  runCheck();
-"
+echo "   Bruker check-cloudflare-status.sh for en fullstendig sjekk..."
+
+# Kjør Cloudflare-sjekken som et separat skript
+if [ -f "check-cloudflare-status.sh" ]; then
+  ./check-cloudflare-status.sh
+else
+  echo "⚠️  check-cloudflare-status.sh ble ikke funnet."
+  echo "   Fortsetter uten Cloudflare-sjekk..."
+fi
 
 echo
 echo "Skriv en commit-melding (f.eks. 'Oppdatert Cloudflare-sikkerhet'):"
