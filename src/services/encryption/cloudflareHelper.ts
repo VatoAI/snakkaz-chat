@@ -20,14 +20,14 @@ export function fixCloudflareAnalyticsIntegration() {
     script.parentNode?.removeChild(script);
   });
 
-  // Manually inject a fresh Cloudflare Analytics script
+  // Manually inject a fresh Cloudflare Analytics script using the exact URL from the error message
   const newScript = document.createElement('script');
   newScript.defer = true;
   newScript.crossOrigin = 'anonymous';
   newScript.referrerPolicy = 'no-referrer-when-downgrade';
-  newScript.src = 'https://static.cloudflareinsights.com/beacon.min.js?token=c5bd7bbfe41c47c2a5ec';
+  newScript.src = 'https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015';
   // Update the data-cf-beacon attribute with all required fields
-  newScript.setAttribute('data-cf-beacon', '{"token":"c5bd7bbfe41c47c2a5ec","version":"2023.10.0","spa":true,"spaMode":"auto","cookieDomain":"snakkaz.com"}'); 
+  newScript.setAttribute('data-cf-beacon', '{"token":"c5bd7bbfe41c47c2a5ec","version":"2023.10.0","spa":true,"spaMode":"auto","cookieDomain":"snakkaz.com","referrerPolicy":"no-referrer-when-downgrade"}'); 
   document.head.appendChild(newScript);
   
   // Find and fix any remaining or newly added Cloudflare scripts

@@ -120,7 +120,7 @@ jobs:
           dangerous-clean-slate: false
       
       - name: Purge Cloudflare Cache
-        if: success() && secrets.CLOUDFLARE_ZONE_ID != '' && secrets.CLOUDFLARE_API_TOKEN != ''
+        if: success() && env.CF_ZONE_ID_CHECK == 'true' && env.CF_API_TOKEN_CHECK == 'true'
         run: |
           echo "Purging Cloudflare cache for faster content delivery..."
           response=$(curl -s -w "\n%{http_code}" -X POST "https://api.cloudflare.com/client/v4/zones/${{ secrets.CLOUDFLARE_ZONE_ID }}/purge_cache" \
@@ -152,8 +152,7 @@ jobs:
           echo "- **Deployed at:** $(date)" >> $GITHUB_STEP_SUMMARY
           echo "- **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          if [[ "${{ secrets.CLOUDFLARE_ZONE_ID != '' && secrets.CLOUDFLARE_API_TOKEN != '' }}" == "true" ]]; then
-            if [[ -n "${{ secrets.CLOUDFLARE_ZONE_ID }}" && -n "${{ secrets.CLOUDFLARE_API_TOKEN }}" ]]; then
+          if [[ "$CF_ZONE_ID_CHECK" == "true" && "$CF_API_TOKEN_CHECK" == "true" ]]; then
             echo "- **Cloudflare cache:** Purged" >> $GITHUB_STEP_SUMMARY
           else
             echo "- **Cloudflare cache:** Not purged (missing configuration)" >> $GITHUB_STEP_SUMMARY

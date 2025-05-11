@@ -57,6 +57,39 @@ fi
 echo
 echo "🔒 Kjører DNS og Cloudflare sikkerhetskontroll..."
 
+# Verify CSP configuration
+echo "🔒 Sjekker Content Security Policy (CSP) konfigurasjon..."
+
+# Check if index.html has CSP meta tag
+if grep -q "Content-Security-Policy" index.html; then
+  echo "✅ CSP meta tag funnet i index.html"
+else
+  echo "⚠️ ADVARSEL: CSP meta tag mangler i index.html!"
+  echo "   Dette kan forårsake CORS-feil og blokkere Cloudflare Analytics."
+  echo "   Vil du fortsette likevel? (y/n)"
+  read -r continue_without_csp
+  if [[ $continue_without_csp != "y" ]]; then
+    echo "Deployment avbrutt. Legg til CSP meta tag i index.html først."
+    exit 1
+  fi
+fi
+
+# Check if Cloudflare Analytics script is included with correct URL
+if grep -q "static.cloudflareinsights.com/beacon.min.js/" index.html; then
+  echo "✅ Cloudflare Analytics script funnet i index.html"
+else
+  echo "⚠️ ADVARSEL: Cloudflare Analytics script mangler eller har feil URL i index.html!"
+  echo "   Dette kan forårsake analytics tracking problemer."
+fi
+
+# Check if CSP allows connections to Snakkaz subdomains
+if grep -q "dash.snakkaz.com" index.html && grep -q "business.snakkaz.com" index.html; then
+  echo "✅ CSP tillater tilkobling til Snakkaz subdomener"
+else
+  echo "⚠️ ADVARSEL: CSP konfigurasjon mangler tillatelser for Snakkaz subdomener!"
+  echo "   Dette kan blokkere kommunikasjon med dash.snakkaz.com og business.snakkaz.com"
+fi
+
 # Spør om API tokens for å kunne kjøre avanserte sjekker
 echo "Skriv inn Cloudflare API token for å sjekke DNS og konfigurasjon"
 echo "(Du kan hoppe over dette ved å trykke Enter):"

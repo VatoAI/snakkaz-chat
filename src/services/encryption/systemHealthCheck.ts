@@ -200,10 +200,11 @@ export function checkCloudflareStatus(): Promise<{success: boolean, details?: Re
       const hasCloudflareHeaders = !!cfRay;
       
       return response.text().then(text => {
-        return { text, cfRay, cfCache, hasCloudflareHeaders };
+        return { text, cfRay: cfRay || '', cfCache: cfCache || '', hasCloudflareHeaders };
       });
     })
-    .then(({ text, cfRay, cfCache, hasCloudflareHeaders }) => {
+    .then((result: { text: string, cfRay: string, cfCache: string, hasCloudflareHeaders: boolean }) => {
+      const { text, cfRay, cfCache, hasCloudflareHeaders } = result;
       // Parse the trace data into key-value pairs
       const traceData = text.split('\n').reduce((acc, line) => {
         const [key, value] = line.split('=');
@@ -226,7 +227,9 @@ export function checkCloudflareStatus(): Promise<{success: boolean, details?: Re
         return { 
           success: true, 
           details: {
-            ...traceData,
+            message: 'Cloudflare DNS is properly configured',
+            domainReachable: true,
+            recommendation: 'No action needed',
             cfRay,
             cfCache,
             securityLevel,
@@ -458,7 +461,24 @@ export function runSystemHealthCheck(): Promise<{
       // Check DNS health
       const dnsManager = getDnsManager();
       return dnsManager.performHealthCheck().then(dnsHealth => {
-        results.details.dnsHealth = dnsHealth;
+        // Ensure dnsHealth has the correct format as DnsHealthStatus
+        const typedDnsHealth: DnsHealthStatus = {
+          status: (dnsHealth.status as 'healthy' | 'issues' | 'critical'),
+          issues: dnsHealth.issues || [],
+          recommendations: dnsHealth.recommendations || [],
+          cloudflare: dnsHealth.cloudflare || {
+            nameserversConfigured: false,
+            zoneActive: false,
+            wwwRecordExists: false,
+            sslConfigured: false
+          },
+          namecheap: dnsHealth.namecheap || {
+            usingCloudflareNameservers: false,
+            nameservers: []
+          }
+        };
+        
+        results.details.dnsHealth = typedDnsHealth;
 
         // Overall health determination - don't require Cloudflare DNS to be active yet
         const criticalChecks = {
