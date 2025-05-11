@@ -23,7 +23,7 @@ const config = {
 /**
  * Main configuration tool for Cloudflare
  */
-const cfTools = {
+export const cfTools = {
   apiToken: null,
   
   /**
@@ -351,14 +351,11 @@ Example usage:
   }
 };
 
-// Export the tools
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { cfTools, config };
-} else if (typeof window !== 'undefined') {
-  window.cfTools = cfTools;
-}
+// Export the config
+export const cloudflareConfig = config;
 
-// Automatically show help when loaded directly
+// Make tools available on window when in browser
 if (typeof window !== 'undefined') {
+  window.cfTools = cfTools;
   console.log('Cloudflare configuration tools loaded. Use cfTools.help() for usage information.');
 }
