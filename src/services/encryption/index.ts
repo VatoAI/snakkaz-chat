@@ -34,6 +34,7 @@ export { CLOUDFLARE_CONFIG, isCloudflareConfigured } from './cloudflareConfig';
 export { cfTools } from './cloudflareManagement';
 export * as CloudflareApi from './cloudflareApi';
 export { checkCloudflareIntegration, testDnsPropagation } from './cloudflareSecurityCheck';
+export { fixCloudflareAnalyticsIntegration } from './cloudflareHelper';
 
 // Enhanced Cloudflare security
 export {

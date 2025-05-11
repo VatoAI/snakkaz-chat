@@ -12,6 +12,7 @@ import { unblockPingRequests, fixCloudflareCorsSecurity } from './corsTest';
 import { applyBrowserCompatibilityFixes, fixModuleImportIssues } from './browserFixes';
 import { initializeAnalytics } from './analyticsLoader';
 import { fixDeprecatedMetaTags } from './metaTagFixes';
+import { fixCloudflareAnalyticsIntegration } from './cloudflareHelper';
 
 /**
  * Initialize Snakkaz Chat application
@@ -39,6 +40,9 @@ export function initializeSnakkazChat() {
   // Fix Cloudflare CORS security issues
   fixCloudflareCorsSecurity();
   
+  // Fix Cloudflare Analytics integration specifically
+  fixCloudflareAnalyticsIntegration();
+  
   // Preload local assets for faster fallbacks
   preloadLocalAssets();
   
@@ -50,7 +54,18 @@ export function initializeSnakkazChat() {
   
   // Initialize analytics safely
   initializeAnalytics();
-  initializeAnalytics();
+  
+  // Re-apply CSP to ensure it's properly set with all needed domains
+  setTimeout(() => {
+    // Apply CSP again to catch any dynamic modifications
+    applyCspPolicy();
+    // Fix meta tags again
+    fixDeprecatedMetaTags();
+    // Fix Cloudflare CORS security issues again
+    fixCloudflareCorsSecurity();
+    // Fix Cloudflare Analytics integration specifically
+    fixCloudflareAnalyticsIntegration();
+  }, 500);
   
   // Log initialization complete
   console.log('Snakkaz Chat initialized with security and fallback solutions');
