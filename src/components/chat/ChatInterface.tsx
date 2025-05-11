@@ -6,6 +6,8 @@ import { UploadProgress } from './message/UploadProgress';
 import { UserStatus } from '@/types/presence';
 import PinnedMessages from './PinnedMessages';
 import { DecryptedMessage } from '@/types/message.d';
+import { MobileChatMessageList } from '../mobile/pin/MobileChatMessageList';
+import { useIsMobile } from '@/hooks/useIsMobile';
 
 // Define UserProfile directly in the file to avoid import issues
 interface UserProfile {
@@ -89,6 +91,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 }) => {
   const [isUploadingMedia, setIsUploadingMedia] = useState(false);
   const [pinnedSectionVisible, setPinnedSectionVisible] = useState(true);
+  const isMobile = useIsMobile();
   
   const handleSendMessage = async (text: string, mediaFile?: File) => {
     if (mediaFile) {
@@ -147,23 +150,46 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         />
       )}
       
-      {/* Messages area */}
-      <ChatMessageList
-        messages={messages}
-        currentUserId={currentUserId}
-        userProfiles={userProfiles}
-        onEdit={onEditMessage}
-        onDelete={onDeleteMessage}
-        onPin={canPin ? handlePinMessage : undefined}
-        chatType={chatType}
-        isLoading={isLoading}
-        hasMoreMessages={hasMoreMessages}
-        isLoadingMore={isLoadingMoreMessages}
-        onLoadMore={onLoadMoreMessages}
-        className="flex-grow"
-        pinnedMessageIds={pinnedMessageIds}
-        canPin={canPin}
-      />
+      {/* Messages area - conditionally render mobile or desktop version */}
+      {isMobile ? (
+        <MobileChatMessageList
+          messages={messages}
+          currentUserId={currentUserId}
+          userProfiles={userProfiles}
+          onEdit={onEditMessage}
+          onDelete={onDeleteMessage}
+          onPin={canPin ? handlePinMessage : undefined}
+          onUnpin={canPin ? handleUnpinMessage : undefined}
+          onCopy={(content) => navigator.clipboard.writeText(content)}
+          onShare={(message) => console.log('share', message)}
+          chatType={chatType}
+          isLoading={isLoading}
+          hasMoreMessages={hasMoreMessages}
+          isLoadingMoreMessages={isLoadingMoreMessages}
+          onLoadMore={onLoadMoreMessages}
+          className="flex-grow"
+          pinnedMessageIds={pinnedMessageIds}
+          canPin={canPin}
+          chatId={chatId}
+        />
+      ) : (
+        <ChatMessageList
+          messages={messages}
+          currentUserId={currentUserId}
+          userProfiles={userProfiles}
+          onEdit={onEditMessage}
+          onDelete={onDeleteMessage}
+          onPin={canPin ? handlePinMessage : undefined}
+          chatType={chatType}
+          isLoading={isLoading}
+          hasMoreMessages={hasMoreMessages}
+          isLoadingMore={isLoadingMoreMessages}
+          onLoadMore={onLoadMoreMessages}
+          className="flex-grow"
+          pinnedMessageIds={pinnedMessageIds}
+          canPin={canPin}
+        />
+      )}
       
       {/* Input area */}
       <div className="px-2 py-1.5 border-t border-border">
