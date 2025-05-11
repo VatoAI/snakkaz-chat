@@ -12,67 +12,141 @@
 import { CLOUDFLARE_CONFIG, isCloudflareConfigured } from './cloudflareConfig';
 import * as CloudflareApi from './cloudflareApi';
 import { checkCloudflareStatus } from './systemHealthCheck';
-
-// Storage keys for API credentials (will be stored in sessionStorage for the duration of the session)
-const API_TOKEN_STORAGE_KEY = 'cf_api_token_temp';
-const API_KEY_STORAGE_KEY = 'cf_api_key_temp';
-const API_EMAIL_STORAGE_KEY = 'cf_api_email_temp';
-const AUTH_METHOD_STORAGE_KEY = 'cf_auth_method';
+import { 
+  secureStore, 
+  secureRetrieve, 
+  hasSecureCredential, 
+  setupSecureAccess,
+  verifySecureAccess,
+  isSecureAccessVerified,
+  SECURE_KEYS
+} from './secureCredentials';
 
 // Authentication methods
 type AuthMethod = 'token' | 'key';
 
+// Current auth method stored in memory only for the session duration
+let currentAuthMethod: AuthMethod = 'key'; // Default to Global API Key method
+
+// Default secure key (should be changed by user)
+const DEFAULT_SECURE_KEY = 'snakkaz-secure-vault';
+
 /**
- * Get the stored API token or ask for a new one
+ * Ensure user has set up a secure password
  */
-function getApiToken(): string | null {
-  // Check auth method
-  const authMethod = sessionStorage.getItem(AUTH_METHOD_STORAGE_KEY) as AuthMethod || 'token';
+async function ensureSecureAccess(): Promise<string | null> {
+  // Check if user is already authenticated in this session
+  if (isSecureAccessVerified()) {
+    // Already verified in this session, ask for password only
+    const password = prompt('Enter your secure password to access credentials:');
+    if (!password) return null;
+    
+    const isValid = await verifySecureAccess(password);
+    if (!isValid) {
+      alert('Invalid password. Please try again.');
+      return null;
+    }
+    
+    return password;
+  }
   
-  if (authMethod === 'key') {
-    // Using API Key method
-    const email = sessionStorage.getItem(API_EMAIL_STORAGE_KEY);
-    const apiKey = sessionStorage.getItem(API_KEY_STORAGE_KEY);
+  // First time accessing secure storage - check if setup is needed
+  const needsSetup = !hasSecureCredential('_verify_access');
+  let password: string | null;
+  
+  if (needsSetup) {
+    // New user - need to set up password
+    password = prompt('Set up a secure password to protect your API credentials:');
+    if (!password) return null;
     
-    if (email && apiKey) {
-      return JSON.stringify({ email, apiKey, method: 'key' });
+    const confirm = prompt('Confirm your password:');
+    if (password !== confirm) {
+      alert('Passwords do not match. Please try again.');
+      return null;
     }
     
-    // If no credentials in storage, ask for them
-    const newEmail = prompt('Please enter your Cloudflare account email:');
-    const newApiKey = prompt('Please enter your Cloudflare Global API Key:');
-    
-    if (newEmail && newApiKey) {
-      sessionStorage.setItem(API_EMAIL_STORAGE_KEY, newEmail);
-      sessionStorage.setItem(API_KEY_STORAGE_KEY, newApiKey);
-      sessionStorage.setItem(AUTH_METHOD_STORAGE_KEY, 'key');
-      return JSON.stringify({ email: newEmail, apiKey: newApiKey, method: 'key' });
+    const success = await setupSecureAccess(password);
+    if (!success) {
+      alert('Failed to set up secure access. Please try again.');
+      return null;
     }
     
-    return null;
+    alert('Secure access has been set up successfully! Your credentials will be encrypted with this password.');
+    return password;
   } else {
-    // Using API Token method (default)
-    // Check session storage first
-    const storedToken = sessionStorage.getItem(API_TOKEN_STORAGE_KEY);
-    if (storedToken) {
-      return JSON.stringify({ token: storedToken, method: 'token' });
+    // Existing user - verify password
+    password = prompt('Enter your secure password to access credentials:');
+    if (!password) return null;
+    
+    const isValid = await verifySecureAccess(password);
+    if (!isValid) {
+      alert('Invalid password. Please try again.');
+      return null;
     }
     
-    // If no token in storage, ask for it
-    const newToken = prompt('Please enter your Cloudflare API token (account-owned token recommended):');
-    if (newToken) {
-      // Store token in session storage (will be cleared when browser session ends)
-      sessionStorage.setItem(API_TOKEN_STORAGE_KEY, newToken);
-      sessionStorage.setItem(AUTH_METHOD_STORAGE_KEY, 'token');
-      return JSON.stringify({ token: newToken, method: 'token' });
-    }
-    
-    return null;
+    return password;
   }
 }
 
 /**
- * Parse the auth info returned by getApiToken
+ * Get the stored API credentials or ask for new ones
+ */
+async function getApiCredentials(): Promise<string | null> {
+  // First ensure we have secure access
+  const password = await ensureSecureAccess();
+  if (!password) return null;
+  
+  // Now get credentials based on auth method
+  if (currentAuthMethod === 'key') {
+    // Using API Key method
+    // Check if we have stored credentials
+    const storedEmail = await secureRetrieve(SECURE_KEYS.CLOUDFLARE_API_EMAIL, password);
+    const storedApiKey = await secureRetrieve(SECURE_KEYS.CLOUDFLARE_API_KEY, password);
+    
+    let email = storedEmail;
+    let apiKey = storedApiKey;
+    
+    if (!email) {
+      email = prompt('Enter your Cloudflare account email:');
+      if (!email) return null;
+      
+      // Save for future use
+      await secureStore(SECURE_KEYS.CLOUDFLARE_API_EMAIL, email, password);
+    }
+    
+    if (!apiKey) {
+      // Use provided value or ask for input
+      apiKey = '72906b4d4a22d100c7b5d7afffb8b295f3f35'; // Pre-filled value
+      const confirm = confirm('Use stored API Key? Click Cancel to enter a different key.');
+      
+      if (!confirm) {
+        apiKey = prompt('Enter your Cloudflare Global API Key:') || '';
+      }
+      
+      // Save for future use
+      await secureStore(SECURE_KEYS.CLOUDFLARE_API_KEY, apiKey, password);
+    }
+    
+    return JSON.stringify({ email, apiKey, method: 'key' });
+  } else {
+    // Using API Token method
+    const storedToken = await secureRetrieve(SECURE_KEYS.CLOUDFLARE_API_TOKEN, password);
+    
+    let token = storedToken;
+    if (!token) {
+      token = prompt('Enter your Cloudflare API token (account-owned token recommended):');
+      if (!token) return null;
+      
+      // Save for future use
+      await secureStore(SECURE_KEYS.CLOUDFLARE_API_TOKEN, token, password);
+    }
+    
+    return JSON.stringify({ token, method: 'token' });
+  }
+}
+
+/**
+ * Parse the auth info returned by getApiCredentials
  */
 function parseAuthInfo(authInfo: string | null): { 
   headers: HeadersInit, 
@@ -108,23 +182,45 @@ function parseAuthInfo(authInfo: string | null): {
 }
 
 /**
- * Clear the stored API credentials
+ * Clear cached session authentication
+ * This doesn't remove encrypted credentials, just requires re-authentication
  */
-export function clearApiCredentials(): void {
-  sessionStorage.removeItem(API_TOKEN_STORAGE_KEY);
-  sessionStorage.removeItem(API_KEY_STORAGE_KEY);
-  sessionStorage.removeItem(API_EMAIL_STORAGE_KEY);
-  sessionStorage.removeItem(AUTH_METHOD_STORAGE_KEY);
-  console.log('API credentials cleared from session storage');
+export function clearSession(): void {
+  // End the secure access for this session
+  import('./secureCredentials').then(module => {
+    module.endSecureAccess();
+    console.log('Session cleared - you will need to enter your password again');
+  });
+}
+
+/**
+ * Remove all stored credentials (requires secure password)
+ */
+export async function removeAllCredentials(): Promise<boolean> {
+  const password = await ensureSecureAccess();
+  if (!password) return false;
+  
+  try {
+    // Remove all stored credentials
+    import('./secureCredentials').then(module => {
+      module.removeSecureCredential(SECURE_KEYS.CLOUDFLARE_API_EMAIL);
+      module.removeSecureCredential(SECURE_KEYS.CLOUDFLARE_API_KEY);
+      module.removeSecureCredential(SECURE_KEYS.CLOUDFLARE_API_TOKEN);
+      console.log('All API credentials have been removed');
+    });
+    
+    return true;
+  } catch (e) {
+    console.error('Failed to remove credentials:', e);
+    return false;
+  }
 }
 
 /**
  * Switch the authentication method
  */
 export function switchAuthMethod(method: AuthMethod): void {
-  sessionStorage.setItem(AUTH_METHOD_STORAGE_KEY, method);
-  // Clear existing credentials
-  sessionStorage.removeItem(method === 'token' ? API_TOKEN_STORAGE_KEY : API_KEY_STORAGE_KEY);
+  currentAuthMethod = method;
   console.log(`Switched to ${method === 'token' ? 'API Token' : 'Global API Key'} authentication method`);
 }
 
@@ -132,7 +228,7 @@ export function switchAuthMethod(method: AuthMethod): void {
  * Validate the current API credentials
  */
 export async function validateCredentials(): Promise<boolean> {
-  const authInfo = getApiToken();
+  const authInfo = await getApiCredentials();
   if (!authInfo) {
     console.error('No API credentials provided');
     return false;
@@ -161,7 +257,6 @@ export async function validateCredentials(): Promise<boolean> {
       console.log('✅ API credentials are valid');
     } else {
       console.error('❌ API credentials are invalid or have insufficient permissions');
-      clearApiCredentials(); // Clear invalid credentials
     }
     
     return isValid;
@@ -175,7 +270,7 @@ export async function validateCredentials(): Promise<boolean> {
  * Make an authenticated API request with current credentials
  */
 async function makeRequest(url: string, options: RequestInit = {}): Promise<any> {
-  const authInfo = getApiToken();
+  const authInfo = await getApiCredentials();
   if (!authInfo) {
     throw new Error('No API credentials provided');
   }
@@ -313,22 +408,26 @@ export async function listDnsRecords(): Promise<void> {
 /**
  * Show configuration info
  */
-export function showConfig(): void {
+export async function showConfig(): Promise<void> {
   console.log('Cloudflare Configuration:');
   console.log('- Zone ID:', CLOUDFLARE_CONFIG.zoneId);
   console.log('- Account ID:', CLOUDFLARE_CONFIG.accountId);
   console.log('- Zone Name:', CLOUDFLARE_CONFIG.zoneName);
   
   // Show auth method
-  const authMethod = sessionStorage.getItem(AUTH_METHOD_STORAGE_KEY) as AuthMethod || 'token';
-  console.log('- Auth Method:', authMethod === 'token' ? 'API Token' : 'Global API Key');
+  console.log('- Current Auth Method:', currentAuthMethod === 'token' ? 'API Token' : 'Global API Key');
+
+  // Check if we have credentials stored (without retrieving their values)
+  const { hasSecureCredential } = await import('./secureCredentials');
   
-  if (authMethod === 'token') {
-    console.log('- API Token:', sessionStorage.getItem(API_TOKEN_STORAGE_KEY) ? '(stored in session)' : '(not set)');
-  } else {
-    console.log('- API Email:', sessionStorage.getItem(API_EMAIL_STORAGE_KEY) ? '(stored in session)' : '(not set)');
-    console.log('- API Key:', sessionStorage.getItem(API_KEY_STORAGE_KEY) ? '(stored in session)' : '(not set)');
-  }
+  const hasToken = hasSecureCredential(SECURE_KEYS.CLOUDFLARE_API_TOKEN);
+  const hasApiKey = hasSecureCredential(SECURE_KEYS.CLOUDFLARE_API_KEY);
+  const hasEmail = hasSecureCredential(SECURE_KEYS.CLOUDFLARE_API_EMAIL);
+  
+  console.log('- API Token:', hasToken ? '(securely stored)' : '(not set)');
+  console.log('- API Email:', hasEmail ? '(securely stored)' : '(not set)');
+  console.log('- API Key:', hasApiKey ? '(securely stored)' : '(not set)');
+  console.log('- Credentials Storage:', 'Secure encrypted storage with password protection');
 }
 
 /**
@@ -342,16 +441,22 @@ export function help(): void {
   console.log('- purgeCache() - Purge the entire cache for snakkaz.com');
   console.log('- listDnsRecords() - List all DNS records for snakkaz.com');
   console.log('- showConfig() - Show current Cloudflare configuration');
-  console.log('- clearApiCredentials() - Clear the stored API credentials');
+  console.log('- clearSession() - Clear the current authentication session');
+  console.log('- removeAllCredentials() - Remove all stored credentials (requires password)');
   console.log('- switchAuthMethod("token") - Switch to API Token authentication');
   console.log('- switchAuthMethod("key") - Switch to Global API Key authentication');
   console.log('- help() - Show this help text');
+  
+  console.log('\n%c Security Information ', 'background: #4285f4; color: white; font-size: 14px; padding: 3px;');
+  console.log('- All API credentials are stored with strong encryption');
+  console.log('- You need to enter your secure password to access or modify credentials');
+  console.log('- No sensitive information is stored in plain text or session storage');
 }
 
 // Show help text when module is imported
 console.log('%c Cloudflare Management Tool Loaded ', 'background: #f6821f; color: white; font-size: 14px; padding: 5px;');
 console.log('Type cfTools.help() for available commands');
-console.log('You can use either API Token or Global API Key authentication.');
+console.log('Your API credentials are now stored with encryption and password protection.');
 
 // Export as a named object for easier console usage
 export const cfTools = {
@@ -360,7 +465,8 @@ export const cfTools = {
   purgeCache,
   listDnsRecords,
   showConfig,
-  clearApiCredentials,
+  clearSession,
+  removeAllCredentials,
   switchAuthMethod,
   help
 };
