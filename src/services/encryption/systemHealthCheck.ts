@@ -163,47 +163,145 @@ export function testCloudflareAnalytics() {
  * Check if Cloudflare DNS is properly configured
  * This helps validate that nameserver changes have propagated
  */
-export function checkCloudflareStatus(): Promise<{success: boolean, details?: any}> {
-  console.log('Checking Cloudflare DNS status...');
+/**
+ * Check if Cloudflare DNS and services are properly configured for the domain
+ * Also verifies SSL status and key Cloudflare protections
+ * @returns Promise resolving to status object with success flag and details
+ */
+export function checkCloudflareStatus(): Promise<{success: boolean, details?: Record<string, any>}> {
+  console.log('Checking Cloudflare DNS and service status...');
   
   // Try to check if we're behind Cloudflare by looking for CF specific headers
   return fetch('https://www.snakkaz.com/cdn-cgi/trace', { 
     method: 'GET',
     cache: 'no-store'
   })
-    .then(response => response.text())
-    .then(text => {
+    .then(response => {
+      // Check if Cloudflare-specific headers are present
+      const cfRay = response.headers.get('cf-ray');
+      const cfCache = response.headers.get('cf-cache-status');
+      const hasCloudflareHeaders = !!cfRay;
+      
+      return response.text().then(text => {
+        return { text, cfRay, cfCache, hasCloudflareHeaders };
+      });
+    })
+    .then(({ text, cfRay, cfCache, hasCloudflareHeaders }) => {
       // Parse the trace data into key-value pairs
       const traceData = text.split('\n').reduce((acc, line) => {
         const [key, value] = line.split('=');
         if (key && value) acc[key.trim()] = value.trim();
         return acc;
-      }, {});
+      }, {} as Record<string, string>);
       
-      const isCloudflareDns = text.includes('cf-ray=') || text.includes('colo=');
+      const isCloudflareDns = hasCloudflareHeaders || text.includes('cf-ray=') || text.includes('colo=');
+      
+      // Check if Security Level is properly configured
+      const securityLevel = traceData.securityLevel || 'unknown';
+      
       if (isCloudflareDns) {
         console.log('✅ Cloudflare DNS is properly configured');
         console.log('Cloudflare datacenter:', traceData.colo || 'Unknown');
-        console.log('CF-Ray ID:', traceData.ray || 'Unknown');
+        console.log('CF-Ray ID:', cfRay || traceData.ray || 'Unknown');
+        console.log('Cache status:', cfCache || 'Unknown');
+        console.log('Security level:', securityLevel);
+        
         return { 
           success: true, 
-          details: traceData 
+          details: {
+            ...traceData,
+            cfRay,
+            cfCache,
+            securityLevel,
+            ssl: traceData.tls || 'Unknown',
+            waf: securityLevel !== 'unknown' && securityLevel !== 'off'
+          }
         };
       } else {
         console.log('❌ Cloudflare DNS is not active yet (propagation may take 24-48 hours)');
-        return { 
-          success: false,
-          details: { message: 'DNS propagation in progress' }
-        };
+        
+        // Let's try to check if we can at least resolve the domain
+        return checkDomainReachable()
+          .then(isReachable => {
+            return { 
+              success: false,
+              details: { 
+                message: 'DNS propagation in progress',
+                domainReachable: isReachable,
+                recommendation: 'Verify Cloudflare nameservers are properly configured in domain registrar'
+              }
+            };
+          });
       }
     })
     .catch(error => {
       console.error('Error checking Cloudflare status:', error);
-      return { 
-        success: false, 
-        details: { error: error.message || 'Unknown error' } 
-      };
+      
+      // Try to run more diagnostic checks
+      return runCloudflareNetworkDiagnostics()
+        .then(diagnosticResults => {
+          return { 
+            success: false, 
+            details: { 
+              error: error.message || 'Unknown error',
+              networkDiagnostics: diagnosticResults
+            } 
+          };
+        })
+        .catch(() => {
+          // If diagnostics also fail, just return the original error
+          return { 
+            success: false, 
+            details: { error: error.message || 'Unknown error' } 
+          };
+        });
     });
+}
+
+/**
+ * Check if the domain is at least reachable
+ */
+async function checkDomainReachable(): Promise<boolean> {
+  try {
+    const response = await fetch('https://www.snakkaz.com', { 
+      method: 'HEAD',
+      cache: 'no-store',
+      // @ts-ignore - Ignore timeout which is not in the type but works in most browsers
+      timeout: 5000 
+    });
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Run additional network diagnostics for Cloudflare
+ */
+async function runCloudflareNetworkDiagnostics(): Promise<any> {
+  const results = {
+    dns: false,
+    connectivity: false,
+    ssl: false,
+    suggestions: [] as string[]
+  };
+  
+  try {
+    // Test basic connectivity to Cloudflare
+    await fetch('https://cloudflare.com', { method: 'HEAD' });
+    results.connectivity = true;
+  } catch {
+    results.suggestions.push('Check your internet connection');
+  }
+  
+  // Test if domain resolves at all
+  if (await checkDomainReachable()) {
+    results.dns = true;
+  } else {
+    results.suggestions.push('Verify domain registration and DNS configuration');
+  }
+  
+  return results;
 }
 
 /**
