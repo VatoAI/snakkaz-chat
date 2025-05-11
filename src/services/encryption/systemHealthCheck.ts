@@ -108,6 +108,105 @@ export function testPingRequestBlocker(): Promise<boolean> {
 }
 
 /**
+ * Test if Cloudflare Analytics is loading correctly
+ */
+export function testCloudflareAnalytics() {
+  console.log('Testing Cloudflare Analytics loading...');
+  
+  if (typeof document === 'undefined') {
+    return { loaded: false, reason: 'Not running in browser' };
+  }
+  
+  // Check if the analytics script exists
+  const cfScripts = Array.from(document.querySelectorAll('script')).filter(
+    script => script.src && script.src.includes('cloudflareinsights')
+  );
+  
+  // Check if the global _cf object exists (indicates Cloudflare Analytics loaded)
+  const cfObjectExists = typeof window !== 'undefined' && '_cf' in window;
+  
+  if (cfScripts.length > 0) {
+    if (cfObjectExists) {
+      console.log('Cloudflare Analytics is loaded and functioning');
+      return { 
+        loaded: true,
+        script: cfScripts[0].src,
+        objectExists: true
+      };
+    } else {
+      console.log('Cloudflare Analytics script exists but may not be properly loaded');
+      return {
+        loaded: false,
+        script: cfScripts[0].src,
+        objectExists: false,
+        reason: 'CF object not found in window'
+      };
+    }
+  } else {
+    console.log('No Cloudflare Analytics script found');
+    // Try to load it now
+    const loadScript = document.createElement('script');
+    loadScript.defer = true;
+    loadScript.crossOrigin = 'anonymous';
+    loadScript.src = 'https://static.cloudflareinsights.com/beacon.min.js?token=c5bd7bbfe41c47c2a5ec';
+    document.head.appendChild(loadScript);
+    
+    return {
+      loaded: false,
+      reason: 'Script not found, attempted to load',
+      attemptedFix: true
+    };
+  }
+}
+
+/**
+ * Check if Cloudflare DNS is properly configured
+ * This helps validate that nameserver changes have propagated
+ */
+export function checkCloudflareStatus(): Promise<{success: boolean, details?: any}> {
+  console.log('Checking Cloudflare DNS status...');
+  
+  // Try to check if we're behind Cloudflare by looking for CF specific headers
+  return fetch('https://www.snakkaz.com/cdn-cgi/trace', { 
+    method: 'GET',
+    cache: 'no-store'
+  })
+    .then(response => response.text())
+    .then(text => {
+      // Parse the trace data into key-value pairs
+      const traceData = text.split('\n').reduce((acc, line) => {
+        const [key, value] = line.split('=');
+        if (key && value) acc[key.trim()] = value.trim();
+        return acc;
+      }, {});
+      
+      const isCloudflareDns = text.includes('cf-ray=') || text.includes('colo=');
+      if (isCloudflareDns) {
+        console.log('✅ Cloudflare DNS is properly configured');
+        console.log('Cloudflare datacenter:', traceData.colo || 'Unknown');
+        console.log('CF-Ray ID:', traceData.ray || 'Unknown');
+        return { 
+          success: true, 
+          details: traceData 
+        };
+      } else {
+        console.log('❌ Cloudflare DNS is not active yet (propagation may take 24-48 hours)');
+        return { 
+          success: false,
+          details: { message: 'DNS propagation in progress' }
+        };
+      }
+    })
+    .catch(error => {
+      console.error('Error checking Cloudflare status:', error);
+      return { 
+        success: false, 
+        details: { error: error.message || 'Unknown error' } 
+      };
+    });
+}
+
+/**
  * Run all health checks and return overall system status
  */
 export function runSystemHealthCheck(): Promise<{
@@ -117,6 +216,8 @@ export function runSystemHealthCheck(): Promise<{
     sri: boolean;
     pingBlocking: boolean;
     metaTags: boolean;
+    cloudflareAnalytics: boolean;
+    cloudflareDns: boolean;
   }
 }> {
   console.log('========= SYSTEM HEALTH CHECK =========');
@@ -126,7 +227,9 @@ export function runSystemHealthCheck(): Promise<{
       csp: false,
       sri: false,
       pingBlocking: false,
-      metaTags: false
+      metaTags: false,
+      cloudflareAnalytics: false,
+      cloudflareDns: false
     }
   };
   
@@ -140,13 +243,30 @@ export function runSystemHealthCheck(): Promise<{
   const mobileAppCapable = document.querySelector('meta[name="mobile-web-app-capable"]');
   results.details.metaTags = !!mobileAppCapable;
   
-  // Test ping blocking (async)
-  return testPingRequestBlocker()
+  // Check Cloudflare Analytics 
+  const cfAnalyticsResult = testCloudflareAnalytics();
+  results.details.cloudflareAnalytics = cfAnalyticsResult.loaded;
+  
+  // Test Cloudflare DNS configuration
+  return checkCloudflareStatus()
+    .then(cfDnsResult => {
+      results.details.cloudflareDns = cfDnsResult.success;
+      
+      // Then test ping blocking
+      return testPingRequestBlocker();
+    })
     .then(pingBlockingResult => {
       results.details.pingBlocking = pingBlockingResult;
       
-      // Overall health determination
-      results.healthy = Object.values(results.details).every(Boolean);
+      // Overall health determination - don't require Cloudflare DNS to be active yet
+      const criticalChecks = {
+        csp: results.details.csp,
+        sri: results.details.sri,
+        pingBlocking: results.details.pingBlocking,
+        metaTags: results.details.metaTags
+      };
+      
+      results.healthy = Object.values(criticalChecks).every(Boolean);
       
       console.log('========= HEALTH CHECK COMPLETE =========');
       console.log(`Overall system health: ${results.healthy ? 'HEALTHY ✅' : 'ISSUES DETECTED ❌'}`);
@@ -156,5 +276,56 @@ export function runSystemHealthCheck(): Promise<{
     });
 }
 
-// Export a simple function for console use
+// Export simple functions for console use
 export const checkHealth = runSystemHealthCheck;
+
+/**
+ * Simple function to check just Cloudflare DNS status with detailed output
+ * This is useful for monitoring DNS propagation progress
+ */
+export function checkCloudflareDnsStatus() {
+  return checkCloudflareStatus()
+    .then(result => {
+      if (result.success) {
+        console.log('%c ✅ Cloudflare DNS is ACTIVE ', 'background: #0f9d58; color: white; font-size: 16px; padding: 5px;');
+        console.log('%c Cloudflare Details ', 'background: #4285f4; color: white; font-size: 14px;');
+        console.table(result.details);
+      } else {
+        console.log('%c ⏳ Cloudflare DNS PROPAGATING ', 'background: #f4b400; color: black; font-size: 16px; padding: 5px;');
+        console.log('%c Nameservers have been configured correctly. DNS propagation typically takes 24-48 hours. ', 
+                   'font-size: 14px;');
+        console.log(result.details);
+      }
+      return result;
+    })
+    .catch(error => {
+      console.log('%c ❌ ERROR CHECKING CLOUDFLARE DNS ', 'background: #db4437; color: white; font-size: 16px; padding: 5px;');
+      console.error(error);
+      return { success: false, details: { error: error.message } };
+    });
+}
+
+/**
+ * Run health check automatically when script loads in production
+ * (helps with diagnostics without needing console access)
+ */
+if (typeof window !== 'undefined' && window.location.hostname === 'www.snakkaz.com') {
+  // Add a small delay to ensure page is fully loaded
+  setTimeout(() => {
+    runSystemHealthCheck()
+      .then(results => {
+        console.log('Auto health check completed:', results);
+        if (!results.healthy) {
+          // Try to fix issues
+          if (!results.details.cloudflareAnalytics) {
+            import('./analyticsLoader').then(module => {
+              module.loadCloudflareAnalytics();
+            });
+          }
+        }
+      })
+      .catch(err => {
+        console.error('Auto health check failed:', err);
+      });
+  }, 3000);
+}

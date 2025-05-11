@@ -20,6 +20,18 @@ export function fixDeprecatedMetaTags() {
     mobileCapableTag.setAttribute('content', appleCapableTag.getAttribute('content') || 'yes');
     document.head.appendChild(mobileCapableTag);
     console.log('Added mobile-web-app-capable meta tag');
+  } else if (!appleCapableTag && !document.querySelector('meta[name="mobile-web-app-capable"]')) {
+    // Add both tags if neither exists
+    const appleTag = document.createElement('meta');
+    appleTag.setAttribute('name', 'apple-mobile-web-app-capable');
+    appleTag.setAttribute('content', 'yes');
+    document.head.appendChild(appleTag);
+    
+    const mobileTag = document.createElement('meta');
+    mobileTag.setAttribute('name', 'mobile-web-app-capable');
+    mobileTag.setAttribute('content', 'yes');
+    document.head.appendChild(mobileTag);
+    console.log('Added both mobile-web-app-capable meta tags');
   }
   
   // Add CORS meta tag to help with some third-party resources

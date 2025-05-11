@@ -50,6 +50,7 @@ export function initializeSnakkazChat() {
   
   // Initialize analytics safely
   initializeAnalytics();
+  initializeAnalytics();
   
   // Log initialization complete
   console.log('Snakkaz Chat initialized with security and fallback solutions');

@@ -46,6 +46,12 @@ function removeSriIntegrityChecks() {
     const scriptEl = script as HTMLScriptElement;
     console.log(`Removing integrity check for script: ${scriptEl.src}`);
     scriptEl.removeAttribute('integrity');
+    
+    // Force set crossorigin attribute to allow CORS
+    if (scriptEl.src && (scriptEl.src.includes('cloudflareinsights.com') || 
+        scriptEl.src.includes('cloudflare'))) {
+      scriptEl.crossOrigin = 'anonymous';
+    }
   });
   
   // Handle link tags (CSS) with integrity attributes
@@ -99,6 +105,7 @@ export function buildCspPolicy() {
       'docs.snakkaz.com', 
       'analytics.snakkaz.com',
       'https://*.snakkaz.com',
+      'https://www.snakkaz.com',
       'https://dash.snakkaz.com',
       'https://business.snakkaz.com', 
       'https://docs.snakkaz.com',
@@ -138,9 +145,9 @@ export function buildCspPolicy() {
     // Connect (API calls) - critical for Supabase and snakkaz subdomains
     `connect-src 'self' ${domains.supabase.join(' ')} ${domains.storage.join(' ')} ${domains.app.join(' ')} ${domains.cdn.join(' ')} 
      wss://*.supabase.co https://*.supabase.co https://*.gpteng.co 
-     https://*.snakkaz.com https://dash.snakkaz.com https://business.snakkaz.com https://docs.snakkaz.com https://analytics.snakkaz.com 
+     https://*.snakkaz.com https://www.snakkaz.com https://dash.snakkaz.com https://business.snakkaz.com https://docs.snakkaz.com https://analytics.snakkaz.com 
      https://dash.snakkaz.com/ping https://business.snakkaz.com/ping https://docs.snakkaz.com/ping https://analytics.snakkaz.com/ping 
-     https://static.cloudflareinsights.com`,
+     https://static.cloudflareinsights.com https://cloudflareinsights.com`,
     
     // Media
     "media-src 'self' blob:",
