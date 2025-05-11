@@ -5,6 +5,8 @@ import { AuthProvider, useAuth } from './hooks/useAuth';
 import { Toaster } from "@/components/ui/toaster";
 import { ErrorBoundary } from './components/ErrorBoundary';
 
+// Updated with Cloudflare security fixes and CSP improvements for chat functionality
+
 // Lazy load components
 const Login = lazy(() => import("@/pages/Login"));
 const Register = lazy(() => import("@/pages/Register"));
