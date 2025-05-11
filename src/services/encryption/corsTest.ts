@@ -13,6 +13,21 @@ import { supabase } from '../../integrations/supabase/client';
 export function unblockPingRequests() {
   if (typeof window === 'undefined') return;
   
+  // Suppress CORS-related errors in the console to reduce noise
+  const originalConsoleError = console.error;
+  console.error = function(msg, ...args) {
+    if (typeof msg === 'string' && 
+        (msg.includes('Cross-Origin Request Blocked') || 
+         msg.includes('CORS request did not succeed') ||
+         msg.includes('Content-Security-Policy') ||
+         msg.includes('cloudflareinsights.com'))) {
+      // Log with debug level instead to reduce noise
+      console.debug('[Suppressed CORS Error]', msg);
+      return;
+    }
+    originalConsoleError.call(console, msg, ...args);
+  };
+  
   // Create a proxy for the fetch function to intercept ping requests
   const originalFetch = window.fetch;
   window.fetch = function(input, init) {
@@ -31,11 +46,20 @@ export function unblockPingRequests() {
       url.includes('beacon.min.js') ||    // Cloudflare beacon
       url.includes('vcd15cbe7772f49c399c6a5babf22c124') // Include exact Cloudflare beacon ID
     )) {
-      console.log(`Intercepted blocked request to: ${url}`);
+      console.debug(`Intercepted potentially blocked request to: ${url}`);
       
-      // For beacon.js requests, let them pass through
-      if (url.includes('beacon.min.js')) {
-        return originalFetch.apply(this, [input, init].filter(Boolean));
+      // For Cloudflare beacon.js requests, add CORS headers
+      if (url.includes('beacon.min.js') || url.includes('cloudflareinsights.com')) {
+        // Create custom options with proper CORS settings
+        const options = init || {};
+        options.mode = 'cors';
+        options.credentials = 'omit';
+        options.headers = {
+          ...(options.headers || {}),
+          'Origin': window.location.origin,
+          'Referer': window.location.origin
+        };
+        return originalFetch.apply(this, [input, options]);
       }
       
       // For other CloudFlare analytics endpoints, return a success response

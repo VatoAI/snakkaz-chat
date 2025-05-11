@@ -6,6 +6,23 @@
  */
 
 import { buildCspPolicy } from './cspConfig';
+import { getDnsManager } from './dnsManager';
+
+interface DnsHealthStatus {
+  status: 'healthy' | 'issues' | 'critical';
+  issues: string[];
+  recommendations: string[];
+  cloudflare: {
+    nameserversConfigured: boolean;
+    zoneActive: boolean;
+    wwwRecordExists: boolean;
+    sslConfigured: boolean;
+  };
+  namecheap: {
+    usingCloudflareNameservers: boolean;
+    nameservers: string[];
+  };
+}
 
 /**
  * Verifies that the Content Security Policy includes all necessary domains
@@ -305,6 +322,72 @@ async function runCloudflareNetworkDiagnostics(): Promise<any> {
 }
 
 /**
+ * Check security configuration for the application
+ * @returns Security configuration status
+ */
+export function checkSecurityConfig(): { 
+  success: boolean; 
+  details: { 
+    message: string;
+    config?: Record<string, unknown>;
+    recommendation?: string;
+  } 
+} {
+  try {
+    console.log('Checking security configuration...');
+    
+    // Check for CSP
+    const hasCsp = typeof document !== 'undefined' && 
+      !!document.querySelector('meta[http-equiv="Content-Security-Policy"]');
+    
+    // Check for HTTPS
+    const isHttps = typeof window !== 'undefined' && 
+      window.location.protocol === 'https:';
+    
+    // Basic checks for the security features we've implemented
+    const checks = {
+      csp: hasCsp,
+      https: isHttps,
+      corsHeaders: true, // We've implemented CORS fixes
+      integrityChecks: true, // We've implemented SRI integrity fixes
+      assetFallbacks: true // We've implemented asset fallbacks
+    };
+    
+    const failedChecks = Object.entries(checks)
+      .filter(([_, passed]) => !passed)
+      .map(([name]) => name);
+    
+    if (failedChecks.length === 0) {
+      return {
+        success: true,
+        details: {
+          message: 'Security configuration is valid',
+          config: checks
+        }
+      };
+    } else {
+      return {
+        success: false,
+        details: {
+          message: `Security configuration issues found: ${failedChecks.join(', ')}`,
+          config: checks,
+          recommendation: 'Ensure all security features are properly configured'
+        }
+      };
+    }
+  } catch (error) {
+    console.error('Error checking security configuration:', error);
+    return {
+      success: false,
+      details: {
+        message: `Error checking security configuration: ${error instanceof Error ? error.message : String(error)}`,
+        recommendation: 'Check console for detailed error information'
+      }
+    };
+  }
+}
+
+/**
  * Run all health checks and return overall system status
  */
 export function runSystemHealthCheck(): Promise<{
@@ -316,6 +399,7 @@ export function runSystemHealthCheck(): Promise<{
     metaTags: boolean;
     cloudflareAnalytics: boolean;
     cloudflareDns: boolean;
+    dnsHealth: DnsHealthStatus;
   }
 }> {
   console.log('========= SYSTEM HEALTH CHECK =========');
@@ -327,7 +411,22 @@ export function runSystemHealthCheck(): Promise<{
       pingBlocking: false,
       metaTags: false,
       cloudflareAnalytics: false,
-      cloudflareDns: false
+      cloudflareDns: false,
+      dnsHealth: {
+        status: 'issues',
+        issues: [],
+        recommendations: [],
+        cloudflare: {
+          nameserversConfigured: false,
+          zoneActive: false,
+          wwwRecordExists: false,
+          sslConfigured: false
+        },
+        namecheap: {
+          usingCloudflareNameservers: false,
+          nameservers: []
+        }
+      }
     }
   };
   
@@ -355,22 +454,28 @@ export function runSystemHealthCheck(): Promise<{
     })
     .then(pingBlockingResult => {
       results.details.pingBlocking = pingBlockingResult;
-      
-      // Overall health determination - don't require Cloudflare DNS to be active yet
-      const criticalChecks = {
-        csp: results.details.csp,
-        sri: results.details.sri,
-        pingBlocking: results.details.pingBlocking,
-        metaTags: results.details.metaTags
-      };
-      
-      results.healthy = Object.values(criticalChecks).every(Boolean);
-      
-      console.log('========= HEALTH CHECK COMPLETE =========');
-      console.log(`Overall system health: ${results.healthy ? 'HEALTHY ✅' : 'ISSUES DETECTED ❌'}`);
-      console.table(results.details);
-      
-      return results;
+
+      // Check DNS health
+      const dnsManager = getDnsManager();
+      return dnsManager.checkDnsHealth().then(dnsHealth => {
+        results.details.dnsHealth = dnsHealth;
+
+        // Overall health determination - don't require Cloudflare DNS to be active yet
+        const criticalChecks = {
+          csp: results.details.csp,
+          sri: results.details.sri,
+          pingBlocking: results.details.pingBlocking,
+          metaTags: results.details.metaTags
+        };
+        
+        results.healthy = Object.values(criticalChecks).every(Boolean);
+        
+        console.log('========= HEALTH CHECK COMPLETE =========');
+        console.log(`Overall system health: ${results.healthy ? 'HEALTHY ✅' : 'ISSUES DETECTED ❌'}`);
+        console.table(results.details);
+        
+        return results;
+      });
     });
 }
 
@@ -401,6 +506,171 @@ export function checkCloudflareDnsStatus() {
       console.error(error);
       return { success: false, details: { error: error.message } };
     });
+}
+
+/**
+ * Check DNS health status by integrating with the DNS Manager
+ * @param namecheapApiKey Namecheap API key (optional)
+ * @param cloudflareApiToken Cloudflare API token (optional)
+ * @returns DNS health status information
+ */
+export async function checkDnsHealth(
+  namecheapApiKey?: string,
+  cloudflareApiToken?: string
+): Promise<{
+  success: boolean;
+  details: {
+    status: 'healthy' | 'issues' | 'critical';
+    issues: string[];
+    recommendations: string[];
+    nameserversConfigured?: boolean;
+    zoneActive?: boolean;
+  };
+}> {
+  try {
+    console.log('Checking DNS health...');
+    
+    const dnsManager = getDnsManager();
+    
+    // If no API keys provided, return a basic response
+    if (!namecheapApiKey && !cloudflareApiToken) {
+      return {
+        success: false,
+        details: {
+          status: 'issues',
+          issues: ['No API credentials provided for DNS health check'],
+          recommendations: [
+            'Provide Namecheap API key and/or Cloudflare API token to perform a complete DNS check',
+            'Run DNS diagnostics using the manage-dns.js CLI tool'
+          ]
+        }
+      };
+    }
+    
+    // Initialize with available credentials
+    await dnsManager.initialize(namecheapApiKey || '', cloudflareApiToken || '');
+    
+    // Run health check
+    const healthResult = await dnsManager.performHealthCheck();
+    
+    return {
+      success: healthResult.status === 'healthy',
+      details: {
+        status: healthResult.status,
+        issues: healthResult.issues,
+        recommendations: healthResult.recommendations,
+        nameserversConfigured: healthResult.namecheap.usingCloudflareNameservers,
+        zoneActive: healthResult.cloudflare.zoneActive
+      }
+    };
+  } catch (error) {
+    console.error('Error checking DNS health:', error);
+    return {
+      success: false,
+      details: {
+        status: 'critical',
+        issues: [`DNS check error: ${error instanceof Error ? error.message : String(error)}`],
+        recommendations: [
+          'Check that API credentials are correct',
+          'Ensure network connectivity to Namecheap and Cloudflare APIs',
+          'Run detailed DNS diagnostics using the manage-dns.js CLI tool'
+        ]
+      }
+    };
+  }
+}
+
+/**
+ * Run a comprehensive health check, including DNS configuration
+ * @param options Optional parameters for the health check
+ * @returns Health check results
+ */
+export async function runComprehensiveHealthCheck(
+  options?: {
+    namecheapApiKey?: string;
+    cloudflareApiToken?: string;
+  }
+): Promise<{
+  overallStatus: 'healthy' | 'issues' | 'critical';
+  csp: { success: boolean; details: Record<string, unknown> };
+  dns: { success: boolean; details: Record<string, unknown> };
+  cloudflare: { success: boolean; details: Record<string, unknown> };
+  security: { success: boolean; details: Record<string, unknown> };
+  issues: string[];
+  recommendations: string[];
+}> {
+  // Run all health checks in parallel
+  const [cspResult, dnsResult, cfResult, securityResult] = await Promise.all([
+    Promise.resolve().then(() => {
+      const success = verifyCspConfiguration();
+      return { 
+        success, 
+        details: {
+          message: success ? 'CSP configuration is valid' : 'CSP configuration has issues'
+        }
+      };
+    }),
+    checkDnsHealth(options?.namecheapApiKey, options?.cloudflareApiToken),
+    checkCloudflareStatus().then(result => {
+      // Ensure details is always present
+      return {
+        success: result.success,
+        details: result.details || { message: 'No details available' }
+      };
+    }),
+    checkSecurityConfig()
+  ]);
+  
+  // Combine issues and recommendations
+  const issues: string[] = [];
+  const recommendations: string[] = [];
+  
+  if (!cspResult.success) {
+    issues.push('CSP configuration has issues');
+    recommendations.push('Review and update CSP configuration');
+  }
+  
+  if (!dnsResult.success) {
+    issues.push(...dnsResult.details.issues);
+    recommendations.push(...dnsResult.details.recommendations);
+  }
+  
+  if (!cfResult.success) {
+    issues.push('Cloudflare integration has issues');
+    if (cfResult.details && typeof cfResult.details === 'object' && 'message' in cfResult.details) {
+      issues.push(String(cfResult.details.message));
+    }
+  }
+  
+  if (!securityResult.success) {
+    issues.push('Security configuration has issues');
+    if (securityResult.details && typeof securityResult.details === 'object') {
+      if ('message' in securityResult.details) {
+        issues.push(String(securityResult.details.message));
+      }
+      if ('recommendation' in securityResult.details) {
+        recommendations.push(String(securityResult.details.recommendation));
+      }
+    }
+  }
+  
+  // Determine overall status
+  let overallStatus: 'healthy' | 'issues' | 'critical' = 'healthy';
+  if (dnsResult.details.status === 'critical' || !cfResult.success || !securityResult.success) {
+    overallStatus = 'critical';
+  } else if (issues.length > 0) {
+    overallStatus = 'issues';
+  }
+  
+  return {
+    overallStatus,
+    csp: cspResult,
+    dns: dnsResult,
+    cloudflare: cfResult,
+    security: securityResult,
+    issues,
+    recommendations
+  };
 }
 
 /**

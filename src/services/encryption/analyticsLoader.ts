@@ -13,13 +13,19 @@ function removeSriIntegrityAttributes() {
   try {
     // Handle script tags with integrity attributes
     const scripts = document.querySelectorAll('script[integrity]');
-    scripts.forEach(script => {
+    scripts.forEach((script) => {
       script.removeAttribute('integrity');
       
       // For Cloudflare scripts, also set crossorigin and other attributes
-      if (script.src && script.src.includes('cloudflare')) {
-        script.setAttribute('crossorigin', 'anonymous');
-        script.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
+      const scriptEl = script as HTMLScriptElement;
+      if (scriptEl.src && scriptEl.src.includes('cloudflare')) {
+        scriptEl.setAttribute('crossorigin', 'anonymous');
+        scriptEl.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
+        
+        // Fix for Safari - force reload the script
+        const originalSrc = scriptEl.src;
+        scriptEl.src = '';
+        setTimeout(() => { scriptEl.src = originalSrc; }, 10);
       }
     });
     
@@ -31,23 +37,23 @@ function removeSriIntegrityAttributes() {
     
     // Specifically look for Cloudflare Analytics scripts by URL pattern
     const cfScripts = document.querySelectorAll('script[src*="cloudflareinsights.com"]');
-    cfScripts.forEach(script => {
+    cfScripts.forEach((script) => {
       script.removeAttribute('integrity');
       script.setAttribute('crossorigin', 'anonymous');
       script.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
+      script.setAttribute('defer', ''); // Always defer to avoid blocking
       
       // Update the beacon data if it exists
       const beaconData = script.getAttribute('data-cf-beacon');
       if (beaconData) {
         try {
           const beaconConfig = JSON.parse(beaconData);
-          // Add SPA and domain settings if missing
-          if (!beaconConfig.spa) beaconConfig.spa = true;
-          if (!beaconConfig.spaMode) beaconConfig.spaMode = "auto";
-          if (!beaconConfig.cookieDomain) beaconConfig.cookieDomain = "snakkaz.com";
+          // Add SPA support flag and proper referrer policy
+          beaconConfig.spa = true;
+          beaconConfig.token = beaconConfig.token || 'c5bd7bbfe41c47c2a5ec'; // Use default token if not set
           script.setAttribute('data-cf-beacon', JSON.stringify(beaconConfig));
         } catch (e) {
-          console.debug('Could not parse beacon data', e);
+          console.warn('Failed to parse Cloudflare beacon data', e);
         }
       }
     });

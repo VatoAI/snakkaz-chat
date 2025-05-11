@@ -21,6 +21,11 @@ Dette modulet er utviklet for å løse kritiske problemer i Snakkaz Chat-applika
    - Feil i Safari og eldre nettlesere
    - Fallback for manglende funksjoner
 
+5. **DNS og Cloudflare Integrasjon**
+   - Automatisk DNS-konfigurasjon gjennom Namecheap API
+   - Cloudflare DNS og sikkerhetstiltak
+   - E2E-krypterte connections til subdomener
+
 ## 🚀 Kom i gang
 
 For å integrere sikkerhet- og krypteringsmodulen i prosjektet ditt:
@@ -104,6 +109,76 @@ Hvis du opplever problemer med implementasjonen, kan du kjøre diagnostikktesten
 
 Alternativt kan du åpne testfilen `csp-test.html` for å kjøre diagnostikk med en visuell grensesnitt.
 
+## 🌐 DNS og Cloudflare Integrasjon
+
+Snakkaz Chat inkluderer en omfattende løsning for DNS-håndtering som integrerer både Namecheap og Cloudflare:
+
+### DNS Manager (`dnsManager.ts`)
+
+En helhetlig løsning for å håndtere DNS-konfigurasjonen:
+
+```typescript
+import { getDnsManager } from './services/encryption/dnsManager';
+
+// Initialiser DNS Manager
+const dnsManager = getDnsManager();
+await dnsManager.initialize('namecheap-api-key', 'cloudflare-api-token');
+
+// Sjekk DNS-helse
+const dnsHealth = await dnsManager.performHealthCheck();
+
+// Automatisk løsning av DNS-problemer
+if (dnsHealth.status !== 'healthy') {
+  const fixResult = await dnsManager.autoFix();
+}
+```
+
+### Namecheap API Integrasjon (`namecheapApi.ts`)
+
+Integrerer med Namecheap API for å automatisere DNS-oppsett:
+
+```typescript
+import { createNamecheapApi, getClientIp } from './services/encryption/namecheapApi';
+
+// Opprett en Namecheap API-instans
+const clientIp = await getClientIp();
+const namecheapApi = createNamecheapApi('api-user', 'api-key', 'username', clientIp);
+
+// Sett Cloudflare nameservers
+await namecheapApi.setCloudflareNameservers();
+```
+
+### DNS Status Widget
+
+Legg til en DNS-statuswidget i dashbordet:
+
+```typescript
+import { createDnsStatusWidget } from './services/encryption/dnsManager';
+
+// Legg til widget i dashbordet
+await createDnsStatusWidget('dns-widget-container', 'namecheap-api-key', 'cloudflare-api-token');
+```
+
+### DNS Administrasjonsverktøy (`manage-dns.js`)
+
+Et CLI-verktøy for DNS-administrasjon:
+
+```bash
+# Kjør DNS-administrasjonsverktøyet
+node src/services/encryption/manage-dns.js
+```
+
+### Utvidet Deployment Script (`deploy-snakkaz-with-dns-check.sh`)
+
+En forbedret deploymentscript som inkluderer DNS-sjekk og -fiks:
+
+```bash
+# Kjør deployment med DNS-sjekk
+./deploy-snakkaz-with-dns-check.sh
+```
+
+Se [DNS-README.md](./DNS-README.md) og [DNS-MANAGEMENT-GUIDE.md](./DNS-MANAGEMENT-GUIDE.md) for mer detaljert informasjon.
+
 ## 📋 Sjekkliste for implementasjon
 
 - [ ] Legg til `setupSnakkazSecurity()` tidlig i applikasjonens oppstart
@@ -111,6 +186,8 @@ Alternativt kan du åpne testfilen `csp-test.html` for å kjøre diagnostikk med
 - [ ] Test at CSP-konfigurasjonen tillater alle nødvendige domener
 - [ ] Verfiser at CORS-problemer er løst ved å teste API-tilkoblinger
 - [ ] Sjekk at applikasjonen fungerer i forskjellige nettlesere
+- [ ] Konfigurer DNS med Namecheap og Cloudflare for sikker tilkobling
+- [ ] Bruk DNS-statusindikatoren for å overvåke DNS-helse
 
 ## 🔐 E2EE-funksjonalitet
 
@@ -130,8 +207,3 @@ const e2eeResults = await testGroupE2EE();
 ## 🌐 Produksjonsanbefalinger
 
 For produksjonsmiljø bør du:
-
-1. Implementere CSP via HTTP-headers i stedet for meta-tags
-2. Inkludere alle nødvendige domener i allow-listen i CSP-policyen
-3. Teste grundig i alle målnettlesere
-4. Ha lokale fallback-alternativer for alle kritiske eksterne ressurser

@@ -8,6 +8,8 @@
 // Map of original assets to local/fallback alternatives
 const fallbackAssets: Record<string, string> = {
   'https://www.snakkaz.com/assets/supabase-client-8CdlZEUY.js': '/assets/vendor/supabase-client.js',
+  'https://snakkaz.com/images/auth-bg.jpg': '/assets/images/auth-bg.jpg',
+  'https://www.snakkaz.com/images/auth-bg.jpg': '/assets/images/auth-bg.jpg',
   // Add other assets here as needed
 };
 
@@ -18,7 +20,7 @@ export function registerAssetFallbackHandlers() {
   // Only run in browser environment
   if (typeof window === 'undefined') return;
 
-  // Add error handling for script loading
+  // Add error handling for asset loading
   document.addEventListener('error', (event) => {
     const target = event.target as HTMLElement;
     
@@ -27,8 +29,24 @@ export function registerAssetFallbackHandlers() {
       const fallbackSrc = getFallbackForAsset(target.src);
       
       if (fallbackSrc) {
-        console.log(`Loading fallback for: ${target.src}`);
+        console.log(`Loading fallback for script: ${target.src}`);
         target.src = fallbackSrc;
+        event.preventDefault();
+      }
+    }
+    
+    // Handle image loading errors
+    if (target instanceof HTMLImageElement && target.src) {
+      const fallbackSrc = getFallbackForAsset(target.src);
+      
+      if (fallbackSrc) {
+        console.log(`Loading fallback for image: ${target.src}`);
+        target.src = fallbackSrc;
+        event.preventDefault();
+      } else if (target.src.includes('auth-bg.jpg')) {
+        // Special handling for auth-bg.jpg
+        console.log(`Using default fallback for auth background`);
+        target.src = '/assets/images/auth-bg.jpg';
         event.preventDefault();
       }
     }

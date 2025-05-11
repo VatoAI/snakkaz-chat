@@ -31,11 +31,17 @@ export function initializeSnakkazChat() {
   // Apply immediate fixes for critical issues
   console.log('Initializing Snakkaz Chat security and compatibility fixes...');
   
-  // Apply CSP early
+  // Apply CSP early - this is critical for security
   applyCspPolicy();
   
   // Fix missing resources (like auth-bg.jpg)
   fixMissingResources();
+  
+  // Register asset fallback handlers - must come early to catch any loading errors
+  registerAssetFallbackHandlers();
+  
+  // Preload critical assets to prevent 404 errors
+  preloadLocalAssets();
   
   // Apply browser compatibility fixes
   applyBrowserCompatibilityFixes();
@@ -52,11 +58,20 @@ export function initializeSnakkazChat() {
   // Fix module import issues in older browsers
   fixModuleImportIssues();
   
-  // Register asset fallback handlers
-  registerAssetFallbackHandlers();
-  
   // Fix Cloudflare Analytics integration specifically - this is a critical fix
   fixCloudflareAnalyticsIntegration();
+  
+  // Initialize analytics after fixing integration issues
+  initializeAnalytics();
+  
+  // Check Cloudflare activation status - helps diagnose DNS propagation issues
+  checkCloudflareActivation().then(active => {
+    if (!active) {
+      console.warn('Cloudflare is not fully active yet - some features may be limited until DNS propagation completes');
+    } else {
+      console.log('Cloudflare integration is active and working');
+    }
+  });
   
   // Preload local assets for faster fallbacks
   preloadLocalAssets();
