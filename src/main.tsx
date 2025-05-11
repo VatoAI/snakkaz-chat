@@ -7,8 +7,14 @@ import './index.css';
 import { initializeExternalServices, initializeErrorHandling } from './utils/serviceConnector';
 import './utils/externalScripts'; // This auto-initializes
 
+// Import security initialization for Snakkaz Chat
+import { initializeSnakkazChat } from './services/encryption/initialize';
+
 // Initialize error handlers as early as possible to prevent console errors
 initializeErrorHandling();
+
+// Initialize Snakkaz Chat security features
+initializeSnakkazChat();
 
 // PWA registration function
 async function registerServiceWorker() {
