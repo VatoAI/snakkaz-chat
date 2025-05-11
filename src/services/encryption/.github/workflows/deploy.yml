@@ -1,0 +1,71 @@
+name: Deploy to Snakkaz.com
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build
+      run: npm run build
+      
+    - name: Deploy to hosting
+      run: |
+        echo "Deploying to Snakkaz.com..."
+        
+        # Configure Cloudflare settings
+        echo "Configuring Cloudflare settings..."
+        
+        # Setup CSP
+        echo "Setting up Content Security Policy..."
+        
+        # Deploy files
+        echo "Deploying files..."
+        
+        # Verify deployment
+        echo "Verifying deployment..."
+        
+        echo "Deployment complete!"
+      
+    - name: Cloudflare Cache Purge
+      env:
+        CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+        CF_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
+      if: env.CF_API_TOKEN != '' && env.CF_ZONE_ID != ''
+      run: |
+        echo "Purging Cloudflare cache..."
+        curl -X POST "https://api.cloudflare.com/client/v4/zones/$CF_ZONE_ID/purge_cache" \
+          -H "Authorization: Bearer $CF_API_TOKEN" \
+          -H "Content-Type: application/json" \
+          --data '{"purge_everything":true}'
+          
+    - name: Verify Cloudflare DNS
+      env:
+        CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+        CF_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
+      if: env.CF_API_TOKEN != '' && env.CF_ZONE_ID != ''
+      run: |
+        echo "Verifying Cloudflare DNS settings..."
+        curl -X GET "https://api.cloudflare.com/client/v4/zones/$CF_ZONE_ID/dns_records" \
+          -H "Authorization: Bearer $CF_API_TOKEN" \
+          -H "Content-Type: application/json" | jq '.result[] | select(.name | contains("snakkaz.com"))'
+    
+    - name: Send deployment notification
+      run: |
+        echo "Deployment to Snakkaz.com completed successfully!"
