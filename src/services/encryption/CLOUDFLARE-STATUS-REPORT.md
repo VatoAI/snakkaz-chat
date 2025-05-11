@@ -51,15 +51,45 @@ Cloudflare Analytics has been integrated with the following improvements:
 3. Error handling for CORS-related issues
 4. Automatic retry mechanism for failed loading attempts
 
+## API Integration
+
+API credentials have been configured for programmatic access to Cloudflare:
+
+- Zone ID: bba5fb2c80aede33ac2c22f8f99110d3
+- Account ID: 0785388bb3883d3a10ab7f60a7a4968a
+
+These credentials enable:
+- Automated cache purging
+- DNS record management
+- Analytics data retrieval
+- Zone configuration
+
+### Management Tools
+
+A Cloudflare management tool has been implemented for easy console-based operations:
+
+- File: `/src/services/encryption/cloudflareManagement.ts`
+- Browser usage: `import("/src/services/encryption/cloudflareManagement.js").then(m => window.cfTools = m.cfTools)`
+- Available commands: 
+  - `cfTools.purgeCache()` - Purge CDN cache
+  - `cfTools.testConnection()` - Test API connectivity
+  - `cfTools.listDnsRecords()` - List DNS records
+  - `cfTools.help()` - Show all commands
+
 ## Next Steps
 
-1. Configure additional Cloudflare features in the dashboard:
+1. Create an API Token in Cloudflare Dashboard:
+   - Go to User Profile > API Tokens
+   - Create token with "Zone:Cache Purge" and "Zone:DNS:Edit" permissions
+   - Use token with the management tools
+
+2. Configure additional Cloudflare features in the dashboard:
    - Page Rules
    - Cache configuration
    - Security settings (WAF, DDoS protection)
    - Performance optimization
 
-2. Monitor site performance and analytics:
+3. Monitor site performance and analytics:
    - Review Cloudflare Analytics data
    - Check for any remaining CSP or CORS issues
    - Verify site loading speed improvements

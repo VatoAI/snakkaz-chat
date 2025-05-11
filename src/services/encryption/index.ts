@@ -29,6 +29,11 @@ export { testGroupE2EE } from './e2eeTestUtility';
 // Testing og diagnostikk
 export { runDiagnosticTest, testBrowserCompatibility } from './diagnosticTest';
 
+// Cloudflare integrasjon
+export { CLOUDFLARE_CONFIG, isCloudflareConfigured } from './cloudflareConfig';
+export { cfTools } from './cloudflareManagement';
+export * as CloudflareApi from './cloudflareApi';
+
 // Nettleserfiks
 export { applyBrowserCompatibilityFixes, fixModuleImportIssues } from './browserFixes';
 
