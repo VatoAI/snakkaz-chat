@@ -34,6 +34,19 @@ export { CLOUDFLARE_CONFIG, isCloudflareConfigured } from './cloudflareConfig';
 export { cfTools } from './cloudflareManagement';
 export * as CloudflareApi from './cloudflareApi';
 
+// Enhanced Cloudflare security
+export {
+  enhancedEncrypt,
+  enhancedDecrypt,
+  setupSessionTimeout,
+  checkSessionTimeout,
+  resetSessionTimeout,
+  recordFailedAuthAttempt,
+  resetAuthAttempts,
+  isAuthLocked,
+  getLockoutRemainingMinutes
+} from './securityEnhancements';
+
 // Nettleserfiks
 export { applyBrowserCompatibilityFixes, fixModuleImportIssues } from './browserFixes';
 
