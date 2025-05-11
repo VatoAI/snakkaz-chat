@@ -52,7 +52,7 @@ export function fixDeprecatedMetaTags() {
         // Add cloudflareinsights.com to connect-src if it's missing
         const newCspContent = cspContent.replace(
           /(connect-src\s+[^;]+)/, 
-          '$1 https://static.cloudflareinsights.com'
+          '$1 https://static.cloudflareinsights.com cloudflareinsights.com *.cloudflareinsights.com'
         );
         
         // Only update if it actually changed

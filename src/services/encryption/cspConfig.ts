@@ -54,6 +54,16 @@ function removeSriIntegrityChecks() {
     }
   });
   
+  // Also handle all Cloudflare scripts even if they don't have integrity
+  const cfScripts = document.querySelectorAll('script[src*="cloudflare"]');
+  cfScripts.forEach(script => {
+    const scriptEl = script as HTMLScriptElement;
+    if (!scriptEl.hasAttribute('crossorigin')) {
+      scriptEl.crossOrigin = 'anonymous';
+      console.log(`Adding crossorigin attribute for Cloudflare script: ${scriptEl.src}`);
+    }
+  });
+  
   // Handle link tags (CSS) with integrity attributes
   const links = document.querySelectorAll('link[integrity]');
   links.forEach(link => {
@@ -121,6 +131,8 @@ export function buildCspPolicy() {
       '*.cloudflareinsights.com', 
       'static.cloudflareinsights.com', 
       'https://static.cloudflareinsights.com',
+      'https://cloudflareinsights.com',
+      'cloudflareinsights.com',
       'cdn.gpteng.co'
     ],
   };
@@ -131,7 +143,7 @@ export function buildCspPolicy() {
     "default-src 'self'",
     
     // Scripts - limit to self and trusted CDNs if needed
-    `script-src 'self' 'unsafe-inline' 'unsafe-eval' ${domains.app.join(' ')} ${domains.cdn.join(' ')}`,
+    `script-src 'self' 'unsafe-inline' 'unsafe-eval' ${domains.app.join(' ')} ${domains.cdn.join(' ')} https://static.cloudflareinsights.com cloudflareinsights.com *.cloudflareinsights.com https://cdn.gpteng.co`,
     
     // Styles
     "style-src 'self' 'unsafe-inline'",
@@ -147,7 +159,7 @@ export function buildCspPolicy() {
      wss://*.supabase.co https://*.supabase.co https://*.gpteng.co 
      https://*.snakkaz.com https://www.snakkaz.com https://dash.snakkaz.com https://business.snakkaz.com https://docs.snakkaz.com https://analytics.snakkaz.com 
      https://dash.snakkaz.com/ping https://business.snakkaz.com/ping https://docs.snakkaz.com/ping https://analytics.snakkaz.com/ping 
-     https://static.cloudflareinsights.com https://cloudflareinsights.com`,
+     https://static.cloudflareinsights.com https://cloudflareinsights.com cloudflareinsights.com *.cloudflareinsights.com`,
     
     // Media
     "media-src 'self' blob:",

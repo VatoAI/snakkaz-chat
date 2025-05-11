@@ -21,9 +21,10 @@ const EXTERNAL_SCRIPTS: ExternalScript[] = [
         async: true,
         defer: true,
         attributes: {
-            'data-cf-beacon': '{"token": "your-token-here"}'
+            'data-cf-beacon': '{"token": "your-token-here"}',
+            'crossorigin': 'anonymous'
         },
-        enabled: import.meta.env.PROD // Only enable in production by default
+        enabled: true // Enable for all environments to ensure proper testing
     }
 ];
 
