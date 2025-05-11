@@ -64,7 +64,7 @@ export function fixCloudflareAnalyticsIntegration() {
       
       // Add Cloudflare domains to connect-src
       const newCspContent = cspContent.replace(
-        /(connect-src\\s+[^;]+)/, 
+        /(connect-src\s+[^;]+)/, 
         '$1 https://static.cloudflareinsights.com cloudflareinsights.com *.cloudflareinsights.com'
       );
       
