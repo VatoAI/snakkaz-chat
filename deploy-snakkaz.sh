@@ -64,8 +64,9 @@ read -r cloudflare_token
 if [ -n "$cloudflare_token" ]; then
   # Lag midlertidig script for å sjekke Cloudflare konfigurasjon med API token
   cat > check-cloudflare-temp.js <<EOF
-const { cfTools } = require('./src/services/encryption/configure-cloudflare.js');
+import { cfTools } from './src/services/encryption/configure-cloudflare.js';
 
+// Wrap in an async function to use top-level await
 async function checkCloudflare() {
   try {
     cfTools.setApiToken('$cloudflare_token');
@@ -118,7 +119,7 @@ EOF
 
   # Kjør sjekk
   echo "Sjekker Cloudflare konfigurasjon..."
-  if node check-cloudflare-temp.js; then
+  if node --experimental-json-modules check-cloudflare-temp.js; then
     echo "✅ Cloudflare konfigurasjon er OK."
   else
     echo "⚠️ Det er problemer med Cloudflare konfigurasjonen."
