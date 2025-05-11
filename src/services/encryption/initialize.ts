@@ -10,20 +10,32 @@ import { registerAssetFallbackHandlers, preloadLocalAssets } from './assetFallba
 import { runDiagnosticTest } from './diagnosticTest';
 import { unblockPingRequests, fixCloudflareCorsSecurity } from './corsTest';
 import { applyBrowserCompatibilityFixes, fixModuleImportIssues } from './browserFixes';
-import { initializeAnalytics } from './analyticsLoader';
+import { initializeAnalytics, triggerCloudflarePageview } from './analyticsLoader';
 import { fixDeprecatedMetaTags } from './metaTagFixes';
-import { fixCloudflareAnalyticsIntegration } from './cloudflareHelper';
+import { fixCloudflareAnalyticsIntegration, fixMissingResources, checkCloudflareActivation } from './cloudflareHelper';
+
+// Track initialization state
+let isInitialized = false;
 
 /**
  * Initialize Snakkaz Chat application
  * Should be called at the start of your application
  */
 export function initializeSnakkazChat() {
+  // Prevent double initialization
+  if (isInitialized) {
+    console.log('Snakkaz Chat already initialized');
+    return;
+  }
+  
   // Apply immediate fixes for critical issues
   console.log('Initializing Snakkaz Chat security and compatibility fixes...');
   
   // Apply CSP early
   applyCspPolicy();
+  
+  // Fix missing resources (like auth-bg.jpg)
+  fixMissingResources();
   
   // Apply browser compatibility fixes
   applyBrowserCompatibilityFixes();
@@ -53,7 +65,19 @@ export function initializeSnakkazChat() {
   addNetworkErrorHandling();
   
   // Initialize analytics safely
-  initializeAnalytics();
+  setTimeout(() => {
+    // Check Cloudflare activation first
+    checkCloudflareActivation().then(active => {
+      if (active) {
+        console.log('Cloudflare is active, initializing analytics');
+        initializeAnalytics();
+      } else {
+        console.log('Cloudflare not active yet, deferring analytics initialization');
+        // Retry after 1 minute
+        setTimeout(initializeAnalytics, 60 * 1000);
+      }
+    });
+  }, 1500);
   
   // Multiple re-application of fixes to catch any dynamic DOM changes
   const reapplyFixes = () => {
@@ -73,6 +97,9 @@ export function initializeSnakkazChat() {
     
     // Re-unblock ping requests in case new event handlers were added
     unblockPingRequests();
+    
+    // Fix missing resources again
+    fixMissingResources();
   };
   
   // Apply fixes after initial render
@@ -84,22 +111,51 @@ export function initializeSnakkazChat() {
   }
   
   // Apply fixes one more time after all resources are loaded
-  window.addEventListener('load', reapplyFixes);
+  window.addEventListener('load', () => {
+    reapplyFixes();
+    // Trigger manual Cloudflare pageview
+    triggerCloudflarePageview();
+  });
   
   // Set up a mutation observer to detect dynamic script additions
   const observer = new MutationObserver((mutations) => {
+    let hasNewScripts = false;
+    let hasNewLinks = false;
+    
     for (const mutation of mutations) {
       if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-        // Check if any scripts were added
-        const hasNewScripts = Array.from(mutation.addedNodes).some(
-          node => node.nodeName === 'SCRIPT' || node.nodeName === 'LINK'
-        );
-        
-        if (hasNewScripts) {
-          reapplyFixes();
-          break;
+        // Check if any scripts or links were added
+        for (let i = 0; i < mutation.addedNodes.length; i++) {
+          const node = mutation.addedNodes[i];
+          if (node.nodeType === Node.ELEMENT_NODE) {
+            const element = node as Element;
+            
+            if (element.tagName === 'SCRIPT') {
+              hasNewScripts = true;
+              // Handle script immediately
+              if (element.hasAttribute('integrity')) {
+                element.removeAttribute('integrity');
+              }
+              if ((element as HTMLScriptElement).src && 
+                  (element as HTMLScriptElement).src.includes('cloudflare')) {
+                (element as HTMLScriptElement).crossOrigin = 'anonymous';
+                element.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
+              }
+            }
+            
+            if (element.tagName === 'LINK' && element.hasAttribute('integrity')) {
+              hasNewLinks = true;
+              element.removeAttribute('integrity');
+            }
+          }
         }
       }
+    }
+    
+    // Only re-apply full fixes if necessary
+    if (hasNewScripts || hasNewLinks) {
+      console.log('New scripts or links detected, re-applying fixes');
+      reapplyFixes();
     }
   });
   
@@ -108,6 +164,29 @@ export function initializeSnakkazChat() {
     childList: true,
     subtree: true
   });
+  
+  // Track route changes for SPA to trigger analytics events
+  if (typeof window !== 'undefined' && 'history' in window) {
+    const originalPushState = history.pushState;
+    const originalReplaceState = history.replaceState;
+    
+    history.pushState = function(...args) {
+      originalPushState.apply(this, args);
+      triggerCloudflarePageview();
+    };
+    
+    history.replaceState = function(...args) {
+      originalReplaceState.apply(this, args);
+      triggerCloudflarePageview();
+    };
+    
+    window.addEventListener('popstate', () => {
+      triggerCloudflarePageview();
+    });
+  }
+  
+  // Mark as initialized
+  isInitialized = true;
   
   // Log initialization complete
   console.log('Snakkaz Chat initialized with security and fallback solutions');
@@ -149,6 +228,17 @@ function addNetworkErrorHandling() {
         console.log('Cloudflare Insights failed to load - this is non-critical');
         // Prevent error from propagating
         event.preventDefault();
+        return true;
+      }
+      
+      // Check for auth-bg.jpg which is known to 404
+      if (resourceUrl && resourceUrl.includes('auth-bg.jpg')) {
+        console.log('auth-bg.jpg failed to load - hiding element');
+        if (event.target instanceof HTMLImageElement) {
+          event.target.style.display = 'none';
+        }
+        event.preventDefault();
+        return true;
       }
       
       // Check for Supabase client errors

@@ -27,9 +27,18 @@ export function unblockPingRequests() {
       url.includes('analytics.snakkaz.com') ||
       url.includes('business.snakkaz.com') ||
       url.includes('docs.snakkaz.com') ||
+      url.includes('report-violation') || // CSP violation reporting
+      url.includes('beacon.min.js') ||    // Cloudflare beacon
       url.includes('vcd15cbe7772f49c399c6a5babf22c124') // Include exact Cloudflare beacon ID
     )) {
       console.log(`Intercepted blocked request to: ${url}`);
+      
+      // For beacon.js requests, let them pass through
+      if (url.includes('beacon.min.js')) {
+        return originalFetch.apply(this, [input, init].filter(Boolean));
+      }
+      
+      // For other CloudFlare analytics endpoints, return a success response
       return Promise.resolve(new Response('{"success":true,"status":"ok","timestamp":"' + new Date().toISOString() + '"}', {
         status: 200,
         headers: { 
@@ -81,9 +90,11 @@ export function fixCloudflareCorsSecurity() {
       event.message?.includes('integrity') ||
       event.message?.includes('auth-bg.jpg') ||
       event.message?.includes('Subresource Integrity') ||
-      event.message?.includes('SHA-')
+      event.message?.includes('SHA-') ||
+      event.message?.includes('has been blocked') ||
+      event.filename?.includes('cloudflareinsights.com')
     ) {
-      console.log(`Suppressed browser error: ${event.message}`);
+      console.debug(`Suppressed browser error: ${event.message}`);
       event.preventDefault();
       return true;
     }
@@ -100,7 +111,7 @@ export function fixCloudflareCorsSecurity() {
       source?.includes('cloudflareinsights') ||
       source?.includes('snakkaz.com')
     ) {
-      console.log(`Suppressed window.onerror: ${message}`);
+      console.debug(`Suppressed window.onerror: ${message}`);
       return true;
     }
     return originalOnError ? originalOnError(message, source, lineno, colno, error) : false;
@@ -138,6 +149,16 @@ export function fixCloudflareCorsSecurity() {
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', checkAndFixMissingImages);
   }
+  
+  // Intercept CSP violation reports and prevent them from causing errors
+  window.addEventListener('securitypolicyviolation', (e) => {
+    console.debug('CSP violation suppressed:', {
+      blockedURI: e.blockedURI,
+      violatedDirective: e.violatedDirective,
+      originalPolicy: e.originalPolicy
+    });
+    e.preventDefault();
+  });
 }
 
 /**

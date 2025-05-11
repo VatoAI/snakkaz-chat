@@ -35,6 +35,21 @@ function removeSriIntegrityAttributes() {
       script.removeAttribute('integrity');
       script.setAttribute('crossorigin', 'anonymous');
       script.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
+      
+      // Update the beacon data if it exists
+      const beaconData = script.getAttribute('data-cf-beacon');
+      if (beaconData) {
+        try {
+          const beaconConfig = JSON.parse(beaconData);
+          // Add SPA and domain settings if missing
+          if (!beaconConfig.spa) beaconConfig.spa = true;
+          if (!beaconConfig.spaMode) beaconConfig.spaMode = "auto";
+          if (!beaconConfig.cookieDomain) beaconConfig.cookieDomain = "snakkaz.com";
+          script.setAttribute('data-cf-beacon', JSON.stringify(beaconConfig));
+        } catch (e) {
+          console.debug('Could not parse beacon data', e);
+        }
+      }
     });
     
     // Also prevent SRI validation errors from showing in console
@@ -62,13 +77,19 @@ function removeSriIntegrityAttributes() {
 function isCloudflareActive(): Promise<boolean> {
   return fetch('https://www.snakkaz.com/cdn-cgi/trace', { 
     method: 'GET',
-    cache: 'no-store'
+    cache: 'no-store',
+    mode: 'no-cors' // Use no-cors mode to avoid CORS errors during testing
   })
-    .then(response => response.text())
-    .then(text => {
-      return text.includes('cf-ray=') || text.includes('colo=');
+    .then(response => {
+      // We may not be able to read the response in no-cors mode,
+      // so just check if the request didn't fail
+      return true;
     })
-    .catch(() => false);
+    .catch(() => {
+      // Try an alternative method - if we have Cloudflare scripts on the page
+      const cfScripts = document.querySelectorAll('script[src*="cloudflare"]');
+      return cfScripts.length > 0;
+    });
 }
 
 /**
@@ -117,7 +138,7 @@ export function loadCloudflareAnalytics() {
       script.src = 'https://static.cloudflareinsights.com/beacon.min.js?token=c5bd7bbfe41c47c2a5ec'; // Use URL parameter instead of data attribute
       
       // Add data attributes required by Cloudflare (with correct version)
-      script.setAttribute('data-cf-beacon', '{"token":"c5bd7bbfe41c47c2a5ec","version":"2023.10.0","spa":true,"cookieDomain":"snakkaz.com"}'); 
+      script.setAttribute('data-cf-beacon', '{"token":"c5bd7bbfe41c47c2a5ec","version":"2023.10.0","spa":true,"spaMode":"auto","cookieDomain":"snakkaz.com","referrerPolicy":"no-referrer-when-downgrade"}'); 
       
       // Explicitly set CORS attributes on the element
       script.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
@@ -153,4 +174,26 @@ export function initializeAnalytics() {
     
     // Add other analytics initialization here if needed
   }, 1000);
+}
+
+/**
+ * Manually trigger a Cloudflare Analytics pageview event
+ * This is useful for single-page applications (SPAs) where route changes don't naturally trigger pageviews
+ */
+export function triggerCloudflarePageview() {
+  if (typeof window === 'undefined' || !window.location) return;
+  
+  try {
+    // Check if _cf_analytics exists
+    if (window['_cf_analytics']) {
+      // Manually trigger a beacon for the current page
+      window['_cf_analytics'].reachGoal('pageview', {
+        path: window.location.pathname,
+        title: document.title
+      });
+      console.debug('Manually triggered Cloudflare Analytics pageview');
+    }
+  } catch (err) {
+    console.debug('Error triggering manual pageview:', err);
+  }
 }

@@ -24,6 +24,25 @@ check_cf_basic() {
   else
     echo "❌ Cloudflare ser ikke ut til å være aktivt."
     echo "   Ingen CF-Ray header funnet i responsen."
+    
+    # Sjekk om nameservere er satt riktig
+    echo
+    echo "🔍 Sjekker nameservere for snakkaz.com..."
+    ns_result=$(dig NS snakkaz.com +short)
+    
+    if echo "$ns_result" | grep -q "cloudflare.com"; then
+      echo "✅ Cloudflare nameservere er konfigurert korrekt:"
+      echo "$ns_result"
+      echo "   DNS-propagering kan ta opptil 48 timer."
+    else
+      echo "❌ Cloudflare nameservere er IKKE konfigurert korrekt."
+      echo "   Fant følgende nameservere:"
+      echo "$ns_result"
+      echo
+      echo "   Nameservere må endres til: kyle.ns.cloudflare.com og vita.ns.cloudflare.com"
+      echo "   Følg instruksjonene i CLOUDFLARE-DNS-GUIDE.md"
+    fi
+    
     return 1
   fi
 }
@@ -119,6 +138,28 @@ check_security_headers() {
   fi
 }
 
+# Sjekk Cloudflare Analytics
+check_cf_analytics() {
+  echo
+  echo "📊 Sjekker Cloudflare Analytics..."
+  
+  # Sjekk etter Cloudflare Analytics beacon script
+  analytics_content=$(curl -s https://www.snakkaz.com | grep -o 'cloudflareinsights.com/beacon')
+  
+  if [[ -n "$analytics_content" ]]; then
+    echo "✅ Cloudflare Analytics script funnet på hjemmesiden"
+  else
+    echo "❌ Cloudflare Analytics script ikke funnet på hjemmesiden"
+    echo "   Dette kan bety at Cloudflare Analytics ikke er konfigurert,"
+    echo "   eller at det er blokkert av CSP-policyen."
+    echo
+    echo "   Løsning: Sjekk at disse endringene er implementert:"
+    echo "   1. Oppdater analyticsLoader.ts"
+    echo "   2. Oppdater cspConfig.ts for å tillate cloudflareinsights.com"
+    echo "   3. Sjekk at fixCloudflareAnalyticsIntegration() kjøres"
+  fi
+}
+
 # Kjør alle sjekker
 run_all_checks() {
   check_cf_basic
@@ -126,6 +167,7 @@ run_all_checks() {
   check_dns
   check_cdn_cache
   check_security_headers
+  check_cf_analytics
   
   echo
   echo "======================================"

@@ -51,6 +51,7 @@ function removeSriIntegrityChecks() {
     if (scriptEl.src && (scriptEl.src.includes('cloudflareinsights.com') || 
         scriptEl.src.includes('cloudflare'))) {
       scriptEl.crossOrigin = 'anonymous';
+      scriptEl.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
     }
   });
   
@@ -60,6 +61,7 @@ function removeSriIntegrityChecks() {
     const scriptEl = script as HTMLScriptElement;
     if (!scriptEl.hasAttribute('crossorigin')) {
       scriptEl.crossOrigin = 'anonymous';
+      scriptEl.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
       console.log(`Adding crossorigin attribute for Cloudflare script: ${scriptEl.src}`);
     }
   });
@@ -85,6 +87,14 @@ function removeSriIntegrityChecks() {
                 : (element as HTMLLinkElement).href;
               console.log(`Removing integrity check for dynamically added element: ${url}`);
               element.removeAttribute('integrity');
+              
+              // If this is a Cloudflare script, add CORS attributes
+              if (element.tagName === 'SCRIPT' && 
+                  (element as HTMLScriptElement).src &&
+                  (element as HTMLScriptElement).src.includes('cloudflare')) {
+                (element as HTMLScriptElement).crossOrigin = 'anonymous';
+                element.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
+              }
             }
           }
         });
@@ -108,32 +118,24 @@ export function buildCspPolicy() {
     supabase: [supabaseUrl, '*.supabase.co', '*.supabase.in', 'https://*.supabase.co', 'wss://*.supabase.co'],
     storage: ['*.amazonaws.com', 'storage.googleapis.com'], // Common storage providers
     app: [
-      '*.snakkaz.com', 
-      'www.snakkaz.com', 
-      'dash.snakkaz.com', 
-      'business.snakkaz.com', 
-      'docs.snakkaz.com', 
-      'analytics.snakkaz.com',
-      'https://*.snakkaz.com',
-      'https://www.snakkaz.com',
-      'https://dash.snakkaz.com',
-      'https://business.snakkaz.com', 
-      'https://docs.snakkaz.com',
-      'https://analytics.snakkaz.com',
-      'https://dash.snakkaz.com/ping',
-      'https://business.snakkaz.com/ping', 
-      'https://docs.snakkaz.com/ping',
-      'https://analytics.snakkaz.com/ping'
+      // Comprehensive list including all possible subdomain variants with both HTTP and HTTPS
+      '*.snakkaz.com', 'https://*.snakkaz.com', 'http://*.snakkaz.com',
+      'www.snakkaz.com', 'https://www.snakkaz.com', 'http://www.snakkaz.com',
+      'dash.snakkaz.com', 'https://dash.snakkaz.com', 'http://dash.snakkaz.com',
+      'business.snakkaz.com', 'https://business.snakkaz.com', 'http://business.snakkaz.com',
+      'docs.snakkaz.com', 'https://docs.snakkaz.com', 'http://docs.snakkaz.com', 
+      'analytics.snakkaz.com', 'https://analytics.snakkaz.com', 'http://analytics.snakkaz.com',
+      'api.snakkaz.com', 'https://api.snakkaz.com', 'http://api.snakkaz.com',
+      'static.snakkaz.com', 'https://static.snakkaz.com', 'http://static.snakkaz.com',
+      'cdn.snakkaz.com', 'https://cdn.snakkaz.com', 'http://cdn.snakkaz.com'
     ],
     cdn: [
       'cdn.pngtree.com', 
-      '*.gpteng.co', 
-      '*.cloudflareinsights.com', 
-      'static.cloudflareinsights.com', 
-      'https://static.cloudflareinsights.com',
-      'https://cloudflareinsights.com',
-      'cloudflareinsights.com',
-      'cdn.gpteng.co'
+      '*.gpteng.co', 'https://*.gpteng.co', 'http://*.gpteng.co',
+      '*.cloudflareinsights.com', 'https://*.cloudflareinsights.com', 'http://*.cloudflareinsights.com',
+      'static.cloudflareinsights.com', 'https://static.cloudflareinsights.com', 'http://static.cloudflareinsights.com',
+      'cloudflareinsights.com', 'https://cloudflareinsights.com', 'http://cloudflareinsights.com',
+      'cdn.gpteng.co', 'https://cdn.gpteng.co', 'http://cdn.gpteng.co'
     ],
   };
   
@@ -143,13 +145,13 @@ export function buildCspPolicy() {
     "default-src 'self'",
     
     // Scripts - limit to self and trusted CDNs if needed
-    `script-src 'self' 'unsafe-inline' 'unsafe-eval' ${domains.app.join(' ')} ${domains.cdn.join(' ')} https://static.cloudflareinsights.com cloudflareinsights.com *.cloudflareinsights.com https://cdn.gpteng.co`,
+    `script-src 'self' 'unsafe-inline' 'unsafe-eval' ${domains.app.join(' ')} ${domains.cdn.join(' ')}`,
     
     // Styles
     "style-src 'self' 'unsafe-inline'",
     
     // Images
-    `img-src 'self' data: blob: ${domains.storage.join(' ')} ${domains.supabase.join(' ')}`,
+    `img-src 'self' data: blob: ${domains.storage.join(' ')} ${domains.supabase.join(' ')} ${domains.app.join(' ')} ${domains.cdn.join(' ')}`,
     
     // Fonts
     "font-src 'self' data:",
@@ -157,18 +159,7 @@ export function buildCspPolicy() {
     // Connect (API calls) - critical for Supabase and snakkaz subdomains
     `connect-src 'self' ${domains.supabase.join(' ')} ${domains.storage.join(' ')} ${domains.app.join(' ')} ${domains.cdn.join(' ')} 
      wss://*.supabase.co https://*.supabase.co https://*.gpteng.co 
-     https://*.snakkaz.com http://*.snakkaz.com https://www.snakkaz.com http://www.snakkaz.com 
-     https://dash.snakkaz.com http://dash.snakkaz.com 
-     https://business.snakkaz.com http://business.snakkaz.com 
-     https://docs.snakkaz.com http://docs.snakkaz.com 
-     https://analytics.snakkaz.com http://analytics.snakkaz.com 
-     https://dash.snakkaz.com/ping http://dash.snakkaz.com/ping 
-     https://business.snakkaz.com/ping http://business.snakkaz.com/ping 
-     https://docs.snakkaz.com/ping http://docs.snakkaz.com/ping 
-     https://analytics.snakkaz.com/ping http://analytics.snakkaz.com/ping 
-     https://static.cloudflareinsights.com http://static.cloudflareinsights.com 
-     https://cloudflareinsights.com http://cloudflareinsights.com 
-     cloudflareinsights.com *.cloudflareinsights.com`,
+     https://*.snakkaz.com http://*.snakkaz.com`,
     
     // Media
     "media-src 'self' blob:",
@@ -189,7 +180,10 @@ export function buildCspPolicy() {
     "base-uri 'self'",
     
     // Frame ancestors (prevents clickjacking)
-    "frame-ancestors 'self'"
+    "frame-ancestors 'self'",
+    
+    // Add report-to directive for CSP violations (useful for debugging)
+    "report-uri https://www.snakkaz.com/api/csp-report"
   ].join('; ');
 }
 
@@ -262,7 +256,8 @@ export function testContentSecurityPolicy() {
     { type: 'connect-src', domain: '*.supabase.in' },
     { type: 'img-src', domain: '*.amazonaws.com' },
     { type: 'img-src', domain: 'storage.googleapis.com' },
-    { type: 'script-src', domain: 'cdn.jsdelivr.net' }
+    { type: 'connect-src', domain: '*.snakkaz.com' },
+    { type: 'connect-src', domain: 'cloudflareinsights.com' }
   ];
   
   // Check if each required domain is included in the CSP

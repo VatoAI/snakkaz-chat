@@ -55,14 +55,96 @@ fi
 # Kjør Cloudflare sikkerhetssjekker først
 echo
 echo "🔒 Kjører Cloudflare sikkerhetskontroll..."
-echo "   Bruker check-cloudflare-status.sh for en fullstendig sjekk..."
 
-# Kjør Cloudflare-sjekken som et separat skript
-if [ -f "check-cloudflare-status.sh" ]; then
-  ./check-cloudflare-status.sh
+# Spør om Cloudflare API token for å kunne kjøre avanserte sjekker
+echo "Skriv inn Cloudflare API token for å sjekke DNS og konfigurasjon"
+echo "(Du kan hoppe over dette ved å trykke Enter):"
+read -r cloudflare_token
+
+if [ -n "$cloudflare_token" ]; then
+  # Lag midlertidig script for å sjekke Cloudflare konfigurasjon med API token
+  cat > check-cloudflare-temp.js <<EOF
+const { cfTools } = require('./src/services/encryption/configure-cloudflare.js');
+
+async function checkCloudflare() {
+  try {
+    cfTools.setApiToken('$cloudflare_token');
+    const report = await cfTools.checkSetup();
+    
+    console.log("\n===== Cloudflare Status Report =====");
+    
+    if (report.tokenValid) {
+      console.log('✅ API token er gyldig');
+    } else {
+      console.log('❌ API token er ugyldig');
+      return false;
+    }
+    
+    if (report.zoneActive) {
+      console.log('✅ Zone er aktiv');
+    } else {
+      console.log('⚠️ Zone er ikke aktiv. Sjekk nameservers i Namecheap');
+    }
+    
+    if (report.wwwRecordExists) {
+      console.log('✅ www record finnes');
+    } else {
+      console.log('⚠️ www record eksisterer ikke');
+    }
+    
+    if (report.sslConfigured) {
+      console.log('✅ SSL er konfigurert');
+    } else {
+      console.log('⚠️ SSL er ikke korrekt konfigurert');
+    }
+    
+    if (report.alwaysHttps) {
+      console.log('✅ Always Use HTTPS er aktivert');
+    } else {
+      console.log('⚠️ Always Use HTTPS er ikke aktivert');
+    }
+    
+    return report.tokenValid;
+  } catch (error) {
+    console.error('Feil ved sjekk av Cloudflare konfigurasjon:', error);
+    return false;
+  }
+}
+
+checkCloudflare().then(success => {
+  process.exit(success ? 0 : 1);
+});
+EOF
+
+  # Kjør sjekk
+  echo "Sjekker Cloudflare konfigurasjon..."
+  if node check-cloudflare-temp.js; then
+    echo "✅ Cloudflare konfigurasjon er OK."
+  else
+    echo "⚠️ Det er problemer med Cloudflare konfigurasjonen."
+    echo "   Vil du fortsette likevel? (y/n)"
+    read -r continue_anyway
+    
+    if [[ $continue_anyway != "y" ]]; then
+      echo "Deployment avbrutt."
+      rm check-cloudflare-temp.js
+      exit 1
+    fi
+  fi
+  
+  # Rydd opp midlertidig fil
+  rm check-cloudflare-temp.js
 else
-  echo "⚠️  check-cloudflare-status.sh ble ikke funnet."
-  echo "   Fortsetter uten Cloudflare-sjekk..."
+  echo "⚠️ Hopper over detaljert Cloudflare-sjekk."
+  echo "   Fortsetter med enkel sjekk..."
+  
+  # Kjør enkel Cloudflare-sjekk
+  if [ -f "check-cloudflare-status.sh" ]; then
+    ./check-cloudflare-status.sh
+  else
+    echo "⚠️ check-cloudflare-status.sh ble ikke funnet."
+    echo "   Fortsetter uten Cloudflare-sjekk..."
+  fi
 fi
 
 echo
