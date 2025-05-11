@@ -457,7 +457,7 @@ export function runSystemHealthCheck(): Promise<{
 
       // Check DNS health
       const dnsManager = getDnsManager();
-      return dnsManager.checkDnsHealth().then(dnsHealth => {
+      return dnsManager.performHealthCheck().then(dnsHealth => {
         results.details.dnsHealth = dnsHealth;
 
         // Overall health determination - don't require Cloudflare DNS to be active yet
