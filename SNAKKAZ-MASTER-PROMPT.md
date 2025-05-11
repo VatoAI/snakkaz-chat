@@ -9,7 +9,7 @@
 - **Startdato**: Mai 2025
 - **Status**: Under utvikling
 
-## VIKTIG: BRANCH-KONTROLL
+## VIKTIG: BRANCH-KONTROLL OG NAVIGASJON
 Før enhver utvikling eller deployment, verifiser alltid at du jobber på hovedbranchen (main):
 
 ```bash
@@ -22,6 +22,22 @@ git status
 # Hent siste endringer fra remote repository
 git pull origin main
 ```
+
+### Prosjektnavigasjon
+For å navigere i prosjektet, bruk alltid absolutte stier fra prosjektroten:
+
+```bash
+# Gå til prosjektroten
+cd /workspaces/snakkaz-chat
+
+# Navigere til src-mappen
+cd /workspaces/snakkaz-chat/src
+
+# Eksempel på å gå til komponentmappen
+cd /workspaces/snakkaz-chat/src/components
+```
+
+**Viktig:** Når du jobber med filer, sørg alltid for å navigere til rootmappen først før du begynner å utforske strukturen. Unngå relative stier når du navigerer mellom forskjellige deler av prosjektet.
 
 Alle endringer skal gjøres direkte på main-branch for korrekt deployment til www.snakkaz.com.
 
@@ -40,6 +56,43 @@ Alle endringer skal gjøres direkte på main-branch for korrekt deployment til w
 - Realtime-funksjonalitet for chatmeldinger
 - Cloudflare for edge-caching, sikkerhet, og CDN
 - Cloudflare DNS-oppsett med nameservers kyle.ns.cloudflare.com og vita.ns.cloudflare.com
+
+### Prosjektstruktur og Filorganisering
+Det er viktig å forstå prosjektets filstruktur for effektiv utvikling:
+
+```
+/src
+  /assets           # Bilder, ikoner, og andre ressurser
+  /components       # UI-komponenter organisert etter funksjonalitet
+    /admin          # Admin-dashboards og komponenter
+    /auth           # Autentisering-relaterte komponenter
+    /chat           # Chat-relaterte komponenter
+      /global       # Global chat-komponenter
+      /group        # Gruppechat-komponenter 
+      /private      # Privat chat-komponenter
+      /header       # Chat header-komponenter
+      /message      # Meldingskomponenter
+    /ui             # Generelle UI-komponenter
+  /contexts         # React contexts for tilstandshåndtering
+  /features         # Funksjonalitets-moduler og logikk
+    /auth
+    /chat
+    /groups
+  /hooks            # Custom React hooks
+    /chat           # Chat-relaterte hooks (inkludert pinning hooks)
+    /message        # Melding-relaterte hooks
+  /integrations     # Tredjepartsintegrasjoner
+    /supabase       # Supabase klient og tilkoblingsoppsett
+  /lib              # Hjelpefunksjoner og verktøy
+  /pages            # React Router-sider
+  /services         # Tjenester og businesslogikk
+    /encryption     # Krypteringstjenester
+  /types            # TypeScript typedefinisjon-filer
+  /utils            # Hjelpeverktøy og nyttefunksjoner
+    /encryption     # Krypteringsverktøy
+```
+
+Vær nøye med å plassere nye filer i riktig kategori og struktur.
 
 ### Sikkerhet
 - End-to-End Encryption via encryptionService.ts med AES-GCM kryptering

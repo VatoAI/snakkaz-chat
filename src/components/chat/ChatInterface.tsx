@@ -4,16 +4,33 @@ import ChatMessageList from './ChatMessageList';
 import { ChatHeader } from './header/ChatHeader';
 import { UploadProgress } from './message/UploadProgress';
 import { UserStatus } from '@/types/presence';
+import PinnedMessages from './PinnedMessages';
+import { DecryptedMessage } from '@/types/message.d';
+
+// Define UserProfile directly in the file to avoid import issues
+interface UserProfile {
+  id: string;
+  username: string;
+  avatar_url: string | null;
+  [key: string]: unknown;
+}
 
 interface ChatInterfaceProps {
-  messages: Array<any>;
+  messages: Array<DecryptedMessage>;
   currentUserId: string;
-  userProfiles?: Record<string, any>;
+  userProfiles?: Record<string, UserProfile>;
   newMessage: string;
   onNewMessageChange: (message: string) => void;
   onSendMessage: (text: string, mediaFile?: File) => Promise<void>;
-  onEditMessage?: (message: any) => void;
+  onEditMessage?: (message: DecryptedMessage) => void;
   onDeleteMessage?: (messageId: string) => void;
+  onPinMessage?: (messageId: string) => Promise<void>;
+  onUnpinMessage?: (messageId: string) => Promise<void>;
+  pinnedMessages?: Array<DecryptedMessage>;
+  showPinnedMessages?: boolean;
+  chatId?: string;
+  chatType?: 'private' | 'group' | 'global';
+  encryptionKey?: string;
   isLoading?: boolean;
   recipientInfo?: {
     name: string;
@@ -25,7 +42,7 @@ interface ChatInterfaceProps {
   onBackToList?: () => void;
   ttl?: number;
   onTtlChange?: (ttl: number) => void;
-  editingMessage?: any;
+  editingMessage?: DecryptedMessage | null;
   onCancelEdit?: () => void;
   uploadingMedia?: {
     file: File;
@@ -35,6 +52,8 @@ interface ChatInterfaceProps {
   hasMoreMessages?: boolean;
   isLoadingMoreMessages?: boolean;
   onLoadMoreMessages?: () => void;
+  canPin?: boolean;
+  pinnedMessageIds?: Set<string>;
 }
 
 const ChatInterface: React.FC<ChatInterfaceProps> = ({
@@ -46,6 +65,13 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   onSendMessage,
   onEditMessage,
   onDeleteMessage,
+  onPinMessage,
+  onUnpinMessage,
+  pinnedMessages = [],
+  showPinnedMessages = true,
+  chatId,
+  chatType = 'private',
+  encryptionKey,
   isLoading = false,
   recipientInfo,
   isDirectMessage = false,
@@ -57,9 +83,12 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   uploadingMedia,
   hasMoreMessages = false,
   isLoadingMoreMessages = false,
-  onLoadMoreMessages
+  onLoadMoreMessages,
+  canPin = true,
+  pinnedMessageIds = new Set<string>()
 }) => {
   const [isUploadingMedia, setIsUploadingMedia] = useState(false);
+  const [pinnedSectionVisible, setPinnedSectionVisible] = useState(true);
   
   const handleSendMessage = async (text: string, mediaFile?: File) => {
     if (mediaFile) {
@@ -74,6 +103,24 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       setIsUploadingMedia(false);
     }
   };
+
+  // Handle message pin/unpin actions
+  const handlePinMessage = async (messageId: string) => {
+    if (onPinMessage) {
+      await onPinMessage(messageId);
+    }
+  };
+
+  const handleUnpinMessage = async (messageId: string) => {
+    if (onUnpinMessage) {
+      await onUnpinMessage(messageId);
+    }
+  };
+
+  // Toggle pinned messages visibility
+  const togglePinnedMessages = () => {
+    setPinnedSectionVisible(!pinnedSectionVisible);
+  };
   
   return (
     <div className="flex flex-col h-full bg-background">
@@ -83,6 +130,20 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           recipientInfo={recipientInfo}
           isDirectMessage={isDirectMessage}
           onBackToList={onBackToList}
+          pinnedCount={pinnedMessages.length}
+          onTogglePinnedMessages={togglePinnedMessages}
+          showPinnedBadge={showPinnedMessages && pinnedMessages.length > 0}
+        />
+      )}
+
+      {/* Pinned messages section */}
+      {showPinnedMessages && pinnedSectionVisible && pinnedMessages.length > 0 && (
+        <PinnedMessages
+          chatId={chatId || ''}
+          chatType={chatType}
+          encryptionKey={encryptionKey}
+          onUnpin={canPin ? handleUnpinMessage : undefined}
+          canUnpin={canPin}
         />
       )}
       
@@ -93,11 +154,15 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         userProfiles={userProfiles}
         onEdit={onEditMessage}
         onDelete={onDeleteMessage}
+        onPin={canPin ? handlePinMessage : undefined}
+        chatType={chatType}
         isLoading={isLoading}
         hasMoreMessages={hasMoreMessages}
         isLoadingMore={isLoadingMoreMessages}
         onLoadMore={onLoadMoreMessages}
         className="flex-grow"
+        pinnedMessageIds={pinnedMessageIds}
+        canPin={canPin}
       />
       
       {/* Input area */}

@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { Phone, Video, MoreVertical } from 'lucide-react';
+import { Phone, Video, MoreVertical, Pin } from 'lucide-react';
 import { AppHeader } from './AppHeader';
 import { UserAvatar } from './UserAvatar';
 import { HeaderActionButton } from './HeaderActionButton';
@@ -15,12 +14,18 @@ interface ChatHeaderProps {
   };
   isDirectMessage: boolean;
   onBackToList?: () => void;
+  pinnedCount?: number;
+  onTogglePinnedMessages?: () => void;
+  showPinnedBadge?: boolean;
 }
 
 export const ChatHeader: React.FC<ChatHeaderProps> = ({
   recipientInfo,
   isDirectMessage,
-  onBackToList
+  onBackToList,
+  pinnedCount = 0,
+  onTogglePinnedMessages,
+  showPinnedBadge = false
 }) => {
   // Function to get status text
   const getStatusText = (status?: UserStatus, isOnline?: boolean): string => {
@@ -62,6 +67,22 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
   // Create action buttons based on chat type
   const actionButtons = (
     <>
+      {/* Pinned messages toggle */}
+      {showPinnedBadge && onTogglePinnedMessages && (
+        <div className="relative">
+          <HeaderActionButton 
+            icon={<Pin className="h-5 w-5" />} 
+            label={`Festede meldinger (${pinnedCount})`}
+            onClick={onTogglePinnedMessages}
+          />
+          {pinnedCount > 0 && (
+            <div className="absolute -top-1 -right-1 bg-cybergold-500 text-cyberdark-900 text-xs rounded-full w-4 h-4 flex items-center justify-center">
+              {pinnedCount > 9 ? '9+' : pinnedCount}
+            </div>
+          )}
+        </div>
+      )}
+      
       {isDirectMessage && (
         <>
           <HeaderActionButton 

@@ -1,20 +1,34 @@
-
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { ChatMessage } from './ChatMessage';
-import { cx, theme } from '../lib/theme';
+import { cx } from '../lib/theme';
 import { Loader2 } from 'lucide-react';
+import { DecryptedMessage } from '@/types/message.d';
+
+// Define UserProfile directly in the file to avoid import issues
+interface UserProfile {
+  id: string;
+  username: string;
+  avatar_url: string | null;
+  [key: string]: unknown;
+}
 
 interface ChatMessageListProps {
-  messages: Array<any>;
+  messages: Array<DecryptedMessage>;
   currentUserId: string;
-  userProfiles?: Record<string, any>;
-  onEdit?: (message: any) => void;
+  userProfiles?: Record<string, UserProfile>;
+  onEdit?: (message: DecryptedMessage) => void;
   onDelete?: (messageId: string) => void;
+  onPin?: (messageId: string) => Promise<void>;
+  onCopy?: (content: string) => void;
+  onShare?: (message: DecryptedMessage) => void;
   isLoading?: boolean;
   hasMoreMessages?: boolean;
   isLoadingMore?: boolean;
   onLoadMore?: () => void;
   className?: string;
+  chatType?: 'private' | 'group' | 'global';
+  pinnedMessageIds?: Set<string>;
+  canPin?: boolean;
 }
 
 const ChatMessageList: React.FC<ChatMessageListProps> = ({
@@ -23,14 +37,21 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
   userProfiles = {},
   onEdit,
   onDelete,
+  onPin,
+  onCopy,
+  onShare,
   isLoading = false,
   hasMoreMessages = false,
   isLoadingMore = false,
   onLoadMore,
   className = '',
+  chatType = 'private',
+  pinnedMessageIds = new Set(),
+  canPin = true,
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [copyMessageSuccess, setCopyMessageSuccess] = useState<string | null>(null);
   
   // Scroll to bottom when new messages arrive
   useEffect(() => {
@@ -72,6 +93,34 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
       container.removeEventListener('scroll', handleScroll);
     };
   }, [hasMoreMessages, isLoadingMore, onLoadMore]);
+
+  // Handle copy message
+  const handleCopyMessage = (content: string) => {
+    if (onCopy) {
+      onCopy(content);
+    } else {
+      // Default copy behavior if onCopy not provided
+      navigator.clipboard.writeText(content)
+        .then(() => {
+          setCopyMessageSuccess('Copied to clipboard');
+          setTimeout(() => setCopyMessageSuccess(null), 2000);
+        })
+        .catch(err => {
+          console.error('Failed to copy message:', err);
+        });
+    }
+  };
+
+  // Handle share message
+  const handleShareMessage = (message: DecryptedMessage) => {
+    if (onShare) {
+      onShare(message);
+    } else {
+      // Default share behavior if onShare not provided
+      console.log('Share message:', message);
+      // Could implement a basic share dialog here
+    }
+  };
   
   return (
     <div 
@@ -85,15 +134,28 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
         </div>
       )}
       
+      {/* Copy success notification */}
+      {copyMessageSuccess && (
+        <div className="fixed top-4 right-4 bg-cybergold-600 text-cyberdark-900 px-3 py-2 rounded shadow-lg z-50 animate-fadeIn">
+          {copyMessageSuccess}
+        </div>
+      )}
+      
       {/* Messages */}
       {messages.map((message) => (
         <ChatMessage
           key={message.id}
           message={message}
-          isCurrentUser={message.sender_id === currentUserId || message.senderId === currentUserId}
+          isCurrentUser={message.sender_id === currentUserId}
           userProfiles={userProfiles}
           onEdit={onEdit ? () => onEdit(message) : undefined}
           onDelete={onDelete ? () => onDelete(message.id) : undefined}
+          onPin={onPin ? () => onPin(message.id) : undefined}
+          onCopy={handleCopyMessage}
+          onShare={onShare ? () => handleShareMessage(message) : undefined}
+          isPinned={pinnedMessageIds.has(message.id)}
+          canPin={canPin}
+          chatType={chatType}
         />
       ))}
       
