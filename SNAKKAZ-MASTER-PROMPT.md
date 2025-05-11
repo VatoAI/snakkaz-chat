@@ -48,12 +48,17 @@ Alle endringer skal gjøres direkte på main-branch for korrekt deployment til w
 - Shadcn UI-komponenter for design
 - Bruker kontekst-API for tilstandshåndtering (ChatContext.tsx)
 - Komponent-hierarki:
-  * Hovedapp → AuthContainer → Chat → [GroupList | ChatInterface]
+  * Hovedapp → AuthContainer → Chat → [GlobalChatContainer | PrivateChatDetailView | GroupChatView]
+  * ChatInterface → [ChatMessageList, PinnedMessages] → [ChatMessage]
 - Vite som build-system og utviklingsserver
 
 ### Backend og Databaser
 - Supabase for backend (authentication, database, storage)
-- Realtime-funksjonalitet for chatmeldinger
+- Realtime-funksjonalitet for chatmeldinger via Supabase subscriptions
+- Database-tabeller for meldinger med pin-støtte:
+  * `global_chat_messages`: Global chat med pinned, pinned_by, pinned_at felt
+  * `private_chat_messages`: Privat chat med pinned, pinned_by, pinned_at felt
+  * `group_chat_messages`: Gruppechat med pinned, pinned_by, pinned_at felt
 - Cloudflare for edge-caching, sikkerhet, og CDN
 - Cloudflare DNS-oppsett med nameservers kyle.ns.cloudflare.com og vita.ns.cloudflare.com
 
@@ -68,10 +73,15 @@ Det er viktig å forstå prosjektets filstruktur for effektiv utvikling:
     /auth           # Autentisering-relaterte komponenter
     /chat           # Chat-relaterte komponenter
       /global       # Global chat-komponenter
+        - GlobalChatContainer.tsx  # Global chat med pin-støtte
       /group        # Gruppechat-komponenter 
+        - GroupChatView.tsx        # Gruppechat med pin-støtte
       /private      # Privat chat-komponenter
+        - PrivateChatDetailView.tsx # Privat chat med pin-støtte
+      - PinnedMessages.tsx         # Komponent for visning av pinnede meldinger
+      - ChatInterface.tsx          # Hovedgrensesnitt for chat med pin-integrasjon
+      - ChatMessage.tsx            # Meldingskomponent med pin-interaksjon
       /header       # Chat header-komponenter
-      /message      # Meldingskomponenter
     /ui             # Generelle UI-komponenter
   /contexts         # React contexts for tilstandshåndtering
   /features         # Funksjonalitets-moduler og logikk
@@ -80,6 +90,8 @@ Det er viktig å forstå prosjektets filstruktur for effektiv utvikling:
     /groups
   /hooks            # Custom React hooks
     /chat           # Chat-relaterte hooks (inkludert pinning hooks)
+      - usePinMessage.ts    # Håndterer pin/unpin-funksjonalitet
+      - useChatPin.ts       # Administrerer pinnede meldinger med realtime-støtte
     /message        # Melding-relaterte hooks
   /integrations     # Tredjepartsintegrasjoner
     /supabase       # Supabase klient og tilkoblingsoppsett
@@ -115,6 +127,53 @@ Vær nøye med å plassere nye filer i riktig kategori og struktur.
 - Meldinger krypteres før de sendes til Supabase
 - Nøkkelutveksling via Supabase secure channels
 - Flertrinnsprosess for gruppekryptering implementert i groupChatService.ts
+
+## PIN-FUNKSJONALITET
+
+Snakkaz Chat har implementert en komplett pin-funksjonalitet for å fremheve viktige meldinger i alle chat-typer.
+
+### Komponentoversikt
+- **PinnedMessages.tsx**: Viser pinnede meldinger i en egen seksjon
+- **usePinMessage.ts**: Håndterer pinning/unpinning av meldinger
+- **useChatPin.ts**: Administrerer pinnede meldinger med realtime-subscriptions
+
+### Integrasjon
+1. **Global Chat**: 
+   - Implementert i `GlobalChatContainer.tsx`
+   - Alle brukere kan se pinnede meldinger
+   - Realtime-oppdateringer via Supabase-subscriptions
+
+2. **Privat Chat**:
+   - Implementert i `PrivateChatDetailView.tsx`
+   - Støtter E2EE for krypterte pins
+   - Kun deltakere i chatten kan se og administrere pins
+
+3. **Gruppe Chat**:
+   - Implementert i `GroupChatView.tsx`
+   - Rollebasert tilgangskontroll for pin-administrasjon
+   - Gruppeadministratorer kan administrere pins
+
+### Sikkerhetsaspekter
+- Pinnede meldinger respekterer E2EE-systemet
+- Encryptionkey brukes for å dekryptere pinnede meldinger
+- Pinnede metadata (pinned_by, pinned_at) er også kryptert i private/gruppe-chatter
+
+### Mobile støtte
+- Responsive design fungerer på alle enheter
+- Dedikerte mobile komponenter i `/components/mobile/pin/` er for PIN-kode sikkerhet (ikke relatert til meldingspin)
+- Fremtidige forbedringer planlegges for touch-vennlig pin-interaksjon
+
+### Database-struktur
+Alle meldingstabeller har følgende felt for pin-funksjonalitet:
+- `pinned`: Boolean som indikerer om meldingen er pinnet
+- `pinned_by`: Bruker-ID til den som pinnet meldingen
+- `pinned_at`: Tidsstempel for når meldingen ble pinnet
+
+### Brukergrensesnittdetaljer
+- Pin-ikon vises på pinnede meldinger
+- Dedikert seksjon for pinnede meldinger i toppen av chat
+- Pin-handlingsknapp i meldingsinteraksjonsmenyen
+- Animasjon ved pinning/unpinning
 
 ## UTFØRTE OPPGAVER OG UTVIKLINGSMILESTONES
 
@@ -379,20 +438,32 @@ initializeSnakkazChat();
    - Lagt til Cloudflare cache-tømming etter deployment
    - Bedre validering og betinget utføring basert på tilgjengelige hemmeligheter
 
+### Implementerte funksjoner
+1. **Pin-funksjonalitet:**
+   - Implementert i alle tre chattyper (global, privat, gruppe)
+   - Tett integrert med E2EE-systemet for krypterte pins
+   - Støtter for ulike meldingstyper (tekst, bilde, fil, lenke)
+   - Realtime oppdateringer via Supabase-subscriptions
+
+2. **Chat-systemer:**
+   - Global chat med pin-støtte via `GlobalChatContainer.tsx`
+   - Privat chat med pin-støtte via `PrivateChatDetailView.tsx`
+   - Gruppechat med pin-støtte via `GroupChatView.tsx`
+
 ### Planlagte neste steg
 1. **Chatfunksjonalitet:**
-   - Forbedre eksisterende privat chat-system 
-   - Implementere fullstendig gruppechat-funksjonalitet basert på `GroupList.tsx`
-   - Legge til moderasjonsfunksjoner for global chat
+   - Mobile forbedringer for pin-funksjonalitet
+   - Forbedre moderasjonsfunksjoner for global chat
+   - Implementere pin-søk og sortering
 
 2. **Supabase-integrasjon:**
-   - Sette opp Realtime-kanaler for alle chattyper
-   - Optimalisere databasestruktur 
-   - Implementere RLS (Row Level Security)
+   - Optimalisere databasestruktur for pins
+   - Forbedre RLS (Row Level Security) for pins basert på brukerroller
+   - Implementere analytikk for pin-bruk
 
 3. **UI-forbedringer:**
-   - Forbedre responsivt design
-   - Standardisere designsystem
+   - Forbedre responsivt design for pins på mobile enheter
+   - Standardisere pin-designelementer
 
 ---
 
@@ -415,6 +486,34 @@ For å jobbe systematisk fremover:
 
 ---
 
+## EFFEKTIV ARBEIDSMETODE
+
+For å jobbe mer effektivt med dette prosjektet, følg disse retningslinjene:
+
+1. **Utforske kodebasen:**
+   ```bash
+   # Alltid start med å sjekke prosjektroten
+   cd /workspaces/snakkaz-chat
+   
+   # Bruk find/grep for å finne relevant kode
+   find src -type f -name "*.tsx" | grep -i "chat"
+   grep -r "pinnedMessages" --include="*.tsx" src/
+   ```
+
+2. **Debugging med console.log:**
+   ```tsx
+   console.log('Debug pinnedMessages:', pinnedMessages);
+   ```
+
+3. **Testing av endringer:**
+   ```bash
+   # Start utviklingsserveren
+   npm run dev
+   
+   # Kjør tester
+   npm test
+   ```
+
 Dette dokumentet skal brukes som referansepunkt for alle som jobber med Snakkaz Chat-prosjektet. Det bør oppdateres jevnlig med ny informasjon om prosjektstatus, arkitekturendringer og implementasjonsdetaljer.
 
-**Sist oppdatert: 11. mai 2025**
+**Sist oppdatert: 11. mai 2025 - Oppdatert med komplett pin-funksjonalitet**
