@@ -7,6 +7,7 @@
 
 import { buildCspPolicy } from './cspConfig';
 import { getDnsManager } from './dnsManager';
+import { getCspHealthStatus, initCspReporting } from './cspReporting';
 
 interface DnsHealthStatus {
   status: 'healthy' | 'issues' | 'critical';
@@ -22,6 +23,33 @@ interface DnsHealthStatus {
     usingCloudflareNameservers: boolean;
     nameservers: string[];
   };
+}
+
+/**
+ * Interface for CSP violation reports
+ */
+interface CspViolationReport {
+  documentURI: string;
+  referrer: string;
+  blockedURI: string;
+  violatedDirective: string;
+  effectiveDirective: string;
+  originalPolicy: string;
+  disposition: string;
+  sourceFile?: string;
+  lineNumber?: number;
+  columnNumber?: number;
+  statusCode?: number;
+}
+
+/**
+ * Interface for CSP health data from cspReporting.ts
+ */
+interface CspHealthData {
+  status: 'healthy' | 'issues' | 'critical';
+  violations: CspViolationReport[];
+  summary: string;
+  recommendedActions: string[];
 }
 
 /**
@@ -46,9 +74,10 @@ export function verifyCspConfiguration(): boolean {
     'business.snakkaz.com', 
     'docs.snakkaz.com',
     'analytics.snakkaz.com',
-    'dash.snakkaz.com/ping',
-    'business.snakkaz.com/ping',
-    'docs.snakkaz.com/ping',
+    'static.cloudflareinsights.com',
+    'cloudflareinsights.com',
+    '*.cloudflareinsights.com',
+    'cdn.gpteng.co',
     'analytics.snakkaz.com/ping',
     '*.supabase.co',
     'cdn.gpteng.co',
@@ -73,6 +102,167 @@ export function verifyCspConfiguration(): boolean {
   
   console.log('CSP configuration looks good!');
   return true;
+}
+
+/**
+ * Comprehensive CSP health check
+ * Analyzes current CSP configuration, recent violations, and provides recommendations
+ */
+export async function checkCspHealth(): Promise<{
+  status: 'healthy' | 'issues' | 'critical';
+  summary: string;
+  issues: string[];
+  recommendations: string[];
+  cspPresent: boolean;
+  reportingEnabled: boolean;
+  violationCount: number;
+  missingDomains: string[];
+}> {
+  console.log('Running comprehensive CSP health check...');
+  
+  // Check if CSP exists
+  let currentCsp = '';
+  let cspPresent = false;
+  let reportingEnabled = false;
+  
+  if (typeof document !== 'undefined') {
+    const cspTag = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
+    if (cspTag) {
+      cspPresent = true;
+      currentCsp = cspTag.getAttribute('content') || '';
+      
+      // Check if reporting is enabled
+      reportingEnabled = currentCsp.includes('report-uri') || currentCsp.includes('report-to');
+    }
+  }
+  
+  // Get CSP violation data if available
+  let violationData: CspHealthData = { 
+    status: 'healthy',
+    violations: [],
+    summary: 'No violation data available',
+    recommendedActions: []
+  };
+  
+  try {
+    // If in browser and CSP reporting is initialized
+    if (typeof document !== 'undefined' && typeof getCspHealthStatus === 'function') {
+      violationData = getCspHealthStatus();
+    }
+  } catch (error) {
+    console.error('Error getting CSP violation data:', error);
+  }
+  
+  // Check for required domains in CSP
+  const requiredDomains = [
+    'dash.snakkaz.com',
+    'business.snakkaz.com', 
+    'docs.snakkaz.com',
+    'analytics.snakkaz.com',
+    'static.cloudflareinsights.com',
+    'cloudflareinsights.com',
+    '*.cloudflareinsights.com',
+    'cdn.gpteng.co',
+    'wss://*.supabase.co',
+    '*.supabase.co',
+    '*.supabase.in',
+    'storage.googleapis.com'
+  ];
+  
+  const missingDomains = requiredDomains.filter(domain => {
+    // For wildcard domains, check the base domain
+    if (domain.includes('*')) {
+      const baseDomain = domain.split('*')[1];
+      return !currentCsp.includes(baseDomain);
+    }
+    return !currentCsp.includes(domain);
+  });
+  
+  // Collect all issues
+  const issues: string[] = [];
+  
+  if (!cspPresent) {
+    issues.push('Content Security Policy is not defined');
+  }
+  
+  if (!reportingEnabled && cspPresent) {
+    issues.push('CSP reporting is not enabled');
+  }
+  
+  if (missingDomains.length > 0) {
+    issues.push(`CSP is missing required domains: ${missingDomains.join(', ')}`);
+  }
+  
+  // Include any CSP violation issues
+  if (violationData.violations.length > 0) {
+    issues.push(violationData.summary);
+    
+    // Group violations by directive for better analysis
+    const directiveViolations: Record<string, string[]> = {};
+    violationData.violations.forEach(violation => {
+      const directive = violation.effectiveDirective || violation.violatedDirective;
+      if (!directiveViolations[directive]) {
+        directiveViolations[directive] = [];
+      }
+      
+      // Add blocked URI if not already in the list
+      const blockedURI = violation.blockedURI;
+      if (!directiveViolations[directive].includes(blockedURI)) {
+        directiveViolations[directive].push(blockedURI);
+      }
+    });
+    
+    // Add detailed info about violations
+    Object.entries(directiveViolations).forEach(([directive, blockedURIs]) => {
+      issues.push(`Directive '${directive}' blocked: ${blockedURIs.join(', ')}`);
+    });
+  }
+  
+  // Determine status based on issues
+  let status: 'healthy' | 'issues' | 'critical' = 'healthy';
+  if (!cspPresent || missingDomains.length > 3) {
+    status = 'critical';
+  } else if (issues.length > 0 || violationData.status !== 'healthy') {
+    status = 'issues';
+  }
+  
+  // Generate recommendations
+  const recommendations: string[] = [];
+  
+  if (!cspPresent) {
+    recommendations.push('Add a Content Security Policy meta tag to the HTML head');
+    recommendations.push('Run "npm run build:csp" to ensure CSP is injected during build');
+  }
+  
+  if (!reportingEnabled && cspPresent) {
+    recommendations.push('Enable CSP reporting by adding report-uri directive');
+    recommendations.push('Initialize CSP reporting with initCspReporting()');
+  }
+  
+  if (missingDomains.length > 0) {
+    recommendations.push(`Update CSP to include missing domains: ${missingDomains.join(', ')}`);
+  }
+  
+  // Include any recommendations from violation data
+  recommendations.push(...violationData.recommendedActions);
+  
+  // Summary
+  const summary = status === 'healthy'
+    ? 'CSP is properly configured and functioning well'
+    : status === 'issues'
+      ? `CSP has ${issues.length} issue(s) that should be addressed`
+      : 'CSP has critical issues that require immediate attention';
+      
+  return {
+    status,
+    summary,
+    issues,
+    recommendations,
+    cspPresent,
+    reportingEnabled,
+    violationCount: violationData.violations.length,
+    missingDomains
+  };
 }
 
 /**
@@ -185,7 +375,7 @@ export function testCloudflareAnalytics() {
  * Also verifies SSL status and key Cloudflare protections
  * @returns Promise resolving to status object with success flag and details
  */
-export function checkCloudflareStatus(): Promise<{success: boolean, details?: Record<string, any>}> {
+export function checkCloudflareStatus(): Promise<{success: boolean, details?: Record<string, unknown>}> {
   console.log('Checking Cloudflare DNS and service status...');
   
   // Try to check if we're behind Cloudflare by looking for CF specific headers
@@ -286,7 +476,7 @@ async function checkDomainReachable(): Promise<boolean> {
     const response = await fetch('https://www.snakkaz.com', { 
       method: 'HEAD',
       cache: 'no-store',
-      // @ts-ignore - Ignore timeout which is not in the type but works in most browsers
+      // @ts-expect-error - Ignore timeout which is not in the type but works in most browsers
       timeout: 5000 
     });
     return response.ok;
@@ -298,7 +488,7 @@ async function checkDomainReachable(): Promise<boolean> {
 /**
  * Run additional network diagnostics for Cloudflare
  */
-async function runCloudflareNetworkDiagnostics(): Promise<any> {
+async function runCloudflareNetworkDiagnostics(): Promise<Record<string, unknown>> {
   const results = {
     dns: false,
     connectivity: false,

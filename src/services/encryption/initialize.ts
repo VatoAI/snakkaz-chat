@@ -13,6 +13,7 @@ import { applyBrowserCompatibilityFixes, fixModuleImportIssues } from './browser
 import { initializeAnalytics, triggerCloudflarePageview } from './analyticsLoader';
 import { fixDeprecatedMetaTags } from './metaTagFixes';
 import { fixCloudflareAnalyticsIntegration, fixMissingResources, checkCloudflareActivation } from './cloudflareHelper';
+import { initCspReporting } from './cspReporting';
 
 // Track initialization state
 let isInitialized = false;
@@ -127,7 +128,37 @@ export function initializeSnakkazChat() {
     
     // Fix missing resources again
     fixMissingResources();
+    
+    // Check CSP health if in development mode
+    if (process.env.NODE_ENV !== 'production') {
+      import('./systemHealthCheck').then(module => {
+        if (module.checkCspHealth) {
+          module.checkCspHealth().then(result => {
+            if (result.status !== 'healthy') {
+              console.warn('CSP Health Check Issues:', result.issues);
+              console.info('CSP Recommendations:', result.recommendations);
+            }
+          }).catch(err => {
+            console.error('Failed to run CSP health check:', err);
+          });
+        }
+      }).catch(err => {
+        console.error('Failed to import systemHealthCheck:', err);
+      });
+    }
   };
+  
+  // Initialize CSP reporting
+  try {
+    console.log('Initializing CSP violation reporting...');
+    initCspReporting({
+      reportToEndpoint: 'https://analytics.snakkaz.com/csp-report',
+      logToConsole: true,
+      logToAnalytics: true
+    });
+  } catch (error) {
+    console.error('Failed to initialize CSP reporting:', error);
+  }
   
   // Apply fixes after initial render
   setTimeout(reapplyFixes, 500);
@@ -142,6 +173,17 @@ export function initializeSnakkazChat() {
     reapplyFixes();
     // Trigger manual Cloudflare pageview
     triggerCloudflarePageview();
+    
+    // Add our CSP testing tools to the window object for debugging
+    if (process.env.NODE_ENV !== 'production') {
+      import('./cspTests').then(module => {
+        // @ts-expect-error - Dynamically adding to window object
+        window.runSnakkazTests = module.default || module.runSnakkazTests;
+        console.log('CSP testing tools available. Run window.runSnakkazTests() to test CSP configuration');
+      }).catch(err => {
+        console.error('Failed to load CSP testing tools:', err);
+      });
+    }
   });
   
   // Set up a mutation observer to detect dynamic script additions
