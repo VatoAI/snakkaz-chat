@@ -12,7 +12,6 @@ export default defineConfig(({ mode }) => ({
     mode === 'development' && componentTagger(),
     snakkazCspPlugin({
       debug: mode === 'development',
-      cloudflareToken: 'c5bd7bbfe41c47c2a5ec',
       // Legg til ekstra CSP-direktiver hvis nødvendig
       additionalDirectives: {
         // For eksempel: 'img-src': ['ytterligere.domene.no']

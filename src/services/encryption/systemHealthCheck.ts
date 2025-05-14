@@ -6,21 +6,13 @@
  */
 
 import { buildCspPolicy } from './cspConfig';
-import { getDnsManager } from './dnsManager';
 import { getCspHealthStatus, initCspReporting } from './cspReporting';
 
 interface DnsHealthStatus {
   status: 'healthy' | 'issues' | 'critical';
   issues: string[];
   recommendations: string[];
-  cloudflare: {
-    nameserversConfigured: boolean;
-    zoneActive: boolean;
-    wwwRecordExists: boolean;
-    sslConfigured: boolean;
-  };
   namecheap: {
-    usingCloudflareNameservers: boolean;
     nameservers: string[];
   };
 }

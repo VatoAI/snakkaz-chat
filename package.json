@@ -16,6 +16,7 @@
     "test": "echo \"Warning: no test specified\" && exit 0",
     "prepare-deploy": "npm run build:prod && node scripts/prepare-deploy.js",
     "build:csp": "npm run build:prod && ./src/services/encryption/inject-csp.sh",
+    "build:nocf": "npm run build:prod && ./src/services/encryption/inject-csp.sh",
     "clean": "rimraf dist"
   },
   "dependencies": {

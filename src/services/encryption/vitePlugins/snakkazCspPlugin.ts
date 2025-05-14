@@ -2,7 +2,7 @@
  * Snakkaz CSP Plugin
  * 
  * This plugin ensures that our Content Security Policy (CSP) is correctly applied
- * during Vite builds and that Cloudflare Analytics is properly initialized.
+ * during Vite builds.
  */
 
 import type { Plugin, HtmlTagDescriptor } from 'vite';
@@ -17,11 +17,6 @@ export interface SnakkazCspPluginOptions {
   debug?: boolean;
   
   /**
-   * Cloudflare beacon token
-   */
-  cloudflareToken?: string;
-  
-  /**
    * Additional CSP directives to add
    */
   additionalDirectives?: Record<string, string[]>;
@@ -33,14 +28,13 @@ export interface SnakkazCspPluginOptions {
 export function snakkazCspPlugin(options: SnakkazCspPluginOptions = {}): Plugin {
   const {
     debug = false,
-    cloudflareToken = 'c5bd7bbfe41c47c2a5ec',
     additionalDirectives = {}
   } = options;
   
   // Default CSP directives
   const defaultDirectives: Record<string, string[]> = {
     'default-src': ["'self'"],
-    'script-src': ["'self'", "'unsafe-inline'", "'unsafe-eval'", 'cdn.gpteng.co', '*.cloudflareinsights.com', 'static.cloudflareinsights.com'],
+    'script-src': ["'self'", "'unsafe-inline'", "'unsafe-eval'", 'cdn.gpteng.co'],
     'style-src': ["'self'", "'unsafe-inline'"],
     'img-src': ["'self'", 'data:', 'blob:', '*.amazonaws.com', 'storage.googleapis.com', '*.supabase.co', '*.supabase.in'],
     'font-src': ["'self'", 'data:'],
@@ -56,9 +50,6 @@ export function snakkazCspPlugin(options: SnakkazCspPluginOptions = {}): Plugin 
       'business.snakkaz.com', 
       'docs.snakkaz.com',
       'analytics.snakkaz.com',
-      'static.cloudflareinsights.com',
-      'cloudflareinsights.com',
-      '*.cloudflareinsights.com',
       'cdn.gpteng.co',
       'https://cdn.gpteng.co'
     ],
@@ -101,17 +92,6 @@ export function snakkazCspPlugin(options: SnakkazCspPluginOptions = {}): Plugin 
           attrs: {
             'http-equiv': 'Content-Security-Policy',
             content: cspPolicy
-          },
-          injectTo: 'head'
-        },
-        {
-          tag: 'script',
-          attrs: {
-            defer: true,
-            crossorigin: 'anonymous',
-            referrerpolicy: 'no-referrer-when-downgrade',
-            src: 'https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015',
-            'data-cf-beacon': `{"token":"${cloudflareToken}","version":"2023.10.0","spa":true,"spaMode":"auto","cookieDomain":"snakkaz.com","referrerPolicy":"no-referrer-when-downgrade"}`
           },
           injectTo: 'head'
         }

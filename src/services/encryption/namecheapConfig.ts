@@ -1,9 +1,11 @@
 /**
  * Namecheap API Configuration for Snakkaz Chat
  * 
- * This file contains the configuration settings for the Namecheap API integration.
- * IMPORTANT: This file is for development only. In production, these values should be 
- * loaded from environment variables or a secure vault.
+ * Dette filen inneholder konfigurasjonsinnstillingene for Namecheap API-integrasjonen.
+ * VIKTIG: Denne filen er kun for utvikling. I produksjon bør disse verdiene
+ * lastes fra miljøvariabler eller et sikkert hvelv.
+ * 
+ * Oppdatert: 14. mai 2025
  */
 
 /**
@@ -16,9 +18,9 @@ export const namecheapConfig = {
   // Sandbox environment (for testing)
   sandbox: {
     apiUrl: 'https://api.sandbox.namecheap.com/xml.response',
-    apiUser: 'your-api-username', // Replace with your sandbox API username
-    apiKey: '', // Add your sandbox API key here
-    username: 'your-username', // Replace with your sandbox username
+    apiUser: 'SnakkaZ', // Replace with your sandbox API username
+    apiKey: '43cb18d3efb3412584149435e1549db7', // Add your sandbox API key here
+    username: 'SnakkaZ', // Replace with your sandbox username
   },
   
   // Production environment
@@ -29,19 +31,18 @@ export const namecheapConfig = {
     username: process.env.NAMECHEAP_USERNAME || '',
   },
   
-  // Default Cloudflare nameservers to set for Snakkaz
-  cloudflareNameservers: [
-    'kyle.ns.cloudflare.com',
-    'vita.ns.cloudflare.com'
+  // Namecheap's egne nameservere (ikke Cloudflare lenger)
+  nameservers: [
+    'dns1.registrar-servers.com',
+    'dns2.registrar-servers.com'
   ],
   
-  // DNS records to create when using Namecheap's default DNS
-  // (Only used if not using Cloudflare as the DNS provider)
+  // DNS records konfigurert i Namecheap
   defaultDnsRecords: [
     {
       hostname: '@',
       type: 'A' as const,
-      address: '76.76.21.21', // Update with your actual server IP
+      address: '185.158.133.1', // Basert på nåværende konfigurasjon
       ttl: 300
     },
     {
@@ -51,15 +52,27 @@ export const namecheapConfig = {
       ttl: 300
     },
     {
-      hostname: 'api',
-      type: 'A' as const,
-      address: '76.76.21.21', // Update with your actual API server IP
+      hostname: 'dash',
+      type: 'CNAME' as const,
+      address: 'snakkaz.com.',
       ttl: 300
     },
     {
-      hostname: 'chat',
-      type: 'A' as const,
-      address: '76.76.21.21', // Update with your actual chat server IP
+      hostname: 'business',
+      type: 'CNAME' as const,
+      address: 'snakkaz.com.',
+      ttl: 300
+    },
+    {
+      hostname: 'docs',
+      type: 'CNAME' as const,
+      address: 'snakkaz.com.',
+      ttl: 300
+    },
+    {
+      hostname: 'analytics',
+      type: 'CNAME' as const,
+      address: 'snakkaz.com.',
       ttl: 300
     }
   ]

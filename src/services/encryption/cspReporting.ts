@@ -43,7 +43,7 @@ export function initCspReporting(options: {
   const { 
     reportToEndpoint = 'https://analytics.snakkaz.com/csp-report', 
     logToConsole = true,
-    logToAnalytics = true
+    logToAnalytics = false // Deaktivert for å fjerne Cloudflare-avhengighet
   } = options;
   
   // Only run in browser environment
