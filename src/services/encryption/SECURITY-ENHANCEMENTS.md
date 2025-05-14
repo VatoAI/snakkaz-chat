@@ -1,3 +1,4 @@
+
 # Security Enhancements for Cloudflare Integration
 
 This document summarizes the security enhancements implemented for the Cloudflare integration in the Snakkaz Chat application.
