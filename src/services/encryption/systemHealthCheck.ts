@@ -315,7 +315,7 @@ export function testCloudflareAnalytics() {
   
   // Check if the analytics script exists
   const cfScripts = Array.from(document.querySelectorAll('script')).filter(
-    script => script.src && script.src.includes('cloudflareinsights')
+    script => script.src && script.src.includes('gpteng.co')
   );
   
   // Check if the global _cf object exists (indicates Cloudflare Analytics loaded)
@@ -344,7 +344,7 @@ export function testCloudflareAnalytics() {
     const loadScript = document.createElement('script');
     loadScript.defer = true;
     loadScript.crossOrigin = 'anonymous';
-    loadScript.src = 'https://static.cloudflareinsights.com/beacon.min.js?token=c5bd7bbfe41c47c2a5ec';
+    loadScript.src = 'https://cdn.gpteng.co/analytics.js?token=c5bd7bbfe41c47c2a5ec';
     document.head.appendChild(loadScript);
     
     return {

@@ -2,15 +2,17 @@
  * CSP and CORS Fixes for Snakkaz Chat
  * 
  * This module provides fixes for Content Security Policy issues
- * and CORS problems with Cloudflare Analytics and ping requests.
+ * and CORS problems with cross-domain requests and ping endpoints.
+ * 
+ * Updated: May 14, 2025 - Removed Cloudflare dependencies
  */
 
 /**
  * Fix Content Security Policy specifically for the issues seen in the console
  * This addresses the following issues:
- * 1. CORS issues with cloudflareinsights.com
+ * 1. CORS issues with cross-domain requests to Snakkaz subdomains
  * 2. CSP blocking of ping requests to snakkaz.com subdomains
- * 3. Integrity hash mismatches
+ * 3. Integrity hash mismatches with external scripts
  */
 export function applyEmergencyCspFixes(): void {
   if (typeof document === 'undefined') return;
@@ -28,13 +30,13 @@ export function applyEmergencyCspFixes(): void {
     
     cspContent = `
       default-src 'self';
-      script-src 'self' 'unsafe-inline' 'unsafe-eval' *.snakkaz.com *.cloudflareinsights.com static.cloudflareinsights.com;
+      script-src 'self' 'unsafe-inline' 'unsafe-eval' *.snakkaz.com *.gpteng.co cdn.gpteng.co;
       style-src 'self' 'unsafe-inline';
       img-src 'self' data: blob: *.amazonaws.com storage.googleapis.com *.supabase.co *.supabase.in;
       connect-src 'self' *.supabase.co wss://*.supabase.co *.amazonaws.com storage.googleapis.com
                   *.snakkaz.com dash.snakkaz.com business.snakkaz.com docs.snakkaz.com analytics.snakkaz.com
-                  static.cloudflareinsights.com cloudflareinsights.com *.cloudflareinsights.com
-                  https://cdn.gpteng.co;
+                  mcp.snakkaz.com help.snakkaz.com
+                  https://cdn.gpteng.co *.gpteng.co;
       font-src 'self' data:;
       media-src 'self' blob:;
       object-src 'none';
@@ -52,23 +54,31 @@ export function applyEmergencyCspFixes(): void {
     // Update existing CSP tag to include necessary domains
     let updatedCsp = cspContent;
     
-    // Make sure Cloudflare domains are in connect-src
+    // Make sure all Snakkaz subdomains are in connect-src
     if (!updatedCsp.includes('connect-src') || 
-        !updatedCsp.includes('cloudflareinsights.com')) {
+        !updatedCsp.includes('mcp.snakkaz.com') || 
+        !updatedCsp.includes('help.snakkaz.com')) {
       if (updatedCsp.includes('connect-src')) {
         // Add to existing connect-src
         updatedCsp = updatedCsp.replace(
           /(connect-src\s+[^;]+)/,
-          '$1 static.cloudflareinsights.com cloudflareinsights.com *.cloudflareinsights.com'
+          '$1 mcp.snakkaz.com help.snakkaz.com *.gpteng.co cdn.gpteng.co'
         );
       } else {
         // Add new connect-src directive
-        updatedCsp += "; connect-src 'self' static.cloudflareinsights.com cloudflareinsights.com";
+        updatedCsp += "; connect-src 'self' *.snakkaz.com mcp.snakkaz.com help.snakkaz.com *.gpteng.co";
       }
     }
     
     // Add missing Snakkaz domains to connect-src
-    const snakkazDomains = ['dash.snakkaz.com', 'business.snakkaz.com', 'docs.snakkaz.com', 'analytics.snakkaz.com'];
+    const snakkazDomains = [
+      'dash.snakkaz.com', 
+      'business.snakkaz.com', 
+      'docs.snakkaz.com', 
+      'analytics.snakkaz.com',
+      'mcp.snakkaz.com',
+      'help.snakkaz.com'
+    ];
     snakkazDomains.forEach(domain => {
       if (!updatedCsp.includes(domain)) {
         updatedCsp = updatedCsp.replace(
@@ -84,25 +94,25 @@ export function applyEmergencyCspFixes(): void {
     }
   }
   
-  // Make sure scripts can load from Cloudflare
-  fixCloudflareScriptLoading();
+  // Make sure scripts can load from external domains
+  fixExternalScriptLoading();
 }
 
 /**
- * Fix Cloudflare script loading issues
- * This specifically addresses the integrity hash mismatch errors
+ * Fix external script loading issues
+ * This addresses integrity hash mismatch errors with external scripts
  */
-function fixCloudflareScriptLoading() {
-  // Find any Cloudflare scripts and remove integrity attributes
+function fixExternalScriptLoading() {
+  // Find any external scripts with integrity issues and fix them
   const scripts = document.querySelectorAll('script');
   scripts.forEach(script => {
     const scriptEl = script as HTMLScriptElement;
     
     if (scriptEl.src && (
-      scriptEl.src.includes('cloudflare') || 
-      scriptEl.src.includes('beacon.min.js')
+      scriptEl.src.includes('gpteng.co') || 
+      scriptEl.src.includes('analytics.js')
     )) {
-      console.log(`Fixing Cloudflare script: ${scriptEl.src}`);
+      console.log(`Fixing external script: ${scriptEl.src}`);
       
       // Remove integrity attribute
       if (scriptEl.hasAttribute('integrity')) {
@@ -112,12 +122,6 @@ function fixCloudflareScriptLoading() {
       // Add crossorigin and referrer policy
       scriptEl.setAttribute('crossorigin', 'anonymous');
       scriptEl.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
-      
-      // Use the exact URL from the error message if it's the beacon script
-      if (scriptEl.src.includes('beacon.min.js') && 
-          !scriptEl.src.includes('vcd15cbe7772f49c399c6a5babf22c1241717689176015')) {
-        scriptEl.src = 'https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015';
-      }
     }
   });
   
@@ -129,8 +133,9 @@ function fixCloudflareScriptLoading() {
             (node as Element).tagName === 'SCRIPT') {
           const script = node as HTMLScriptElement;
           if (script.src && (
-            script.src.includes('cloudflare') || 
-            script.src.includes('beacon.min.js')
+            script.src.includes('gpteng.co') || 
+            script.src.includes('analytics.js') ||
+            script.src.includes('snakkaz.com')
           )) {
             if (script.hasAttribute('integrity')) {
               script.removeAttribute('integrity');
@@ -171,8 +176,8 @@ export function fixPingRequests() {
       }));
     }
     
-    // Special handling for Cloudflare Analytics
-    if (url && url.includes('cloudflareinsights.com')) {
+    // Special handling for Analytics endpoints
+    if (url && (url.includes('analytics.snakkaz.com') || url.includes('gpteng.co'))) {
       const options = init || {};
       options.mode = 'cors';
       options.credentials = 'omit';

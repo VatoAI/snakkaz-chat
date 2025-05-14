@@ -256,7 +256,7 @@ export function testContentSecurityPolicy() {
     { type: 'img-src', domain: '*.amazonaws.com' },
     { type: 'img-src', domain: 'storage.googleapis.com' },
     { type: 'connect-src', domain: '*.snakkaz.com' },
-    { type: 'connect-src', domain: 'cloudflareinsights.com' }
+    { type: 'connect-src', domain: 'mcp.snakkaz.com' }
   ];
   
   // Check if each required domain is included in the CSP
