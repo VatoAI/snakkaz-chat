@@ -212,3 +212,17 @@ export function createNamecheapDnsManager(config: NamecheapApiConfig): Namecheap
 export function createDnsRecord(type: DnsRecord['type'], host: string, value: string, ttl?: number, priority?: number): DnsRecord {
   return { type, host, value, ttl, priority };
 }
+
+/**
+ * Create required DNS records for Supabase verification
+ * This replaces the Cloudflare-specific verification records with standard ones
+ */
+export function createSupabaseVerificationRecords(domain: string, supabaseProjectRef: string): DnsRecord[] {
+  return [
+    // CNAME record for www pointing to Supabase project
+    createDnsRecord('CNAME', 'www', `${supabaseProjectRef}.supabase.co`),
+    
+    // Optional TXT record for domain verification
+    createDnsRecord('TXT', '_supabase-verification', `verification=${supabaseProjectRef}`)
+  ];
+}
