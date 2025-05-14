@@ -47,22 +47,21 @@ function removeSriIntegrityChecks() {
     console.log(`Removing integrity check for script: ${scriptEl.src}`);
     scriptEl.removeAttribute('integrity');
     
-    // Force set crossorigin attribute to allow CORS
-    if (scriptEl.src && (scriptEl.src.includes('cloudflareinsights.com') || 
-        scriptEl.src.includes('cloudflare'))) {
+    // Force set crossorigin attribute to allow CORS for external scripts
+    if (scriptEl.src && scriptEl.src.includes('gpteng.co')) {
       scriptEl.crossOrigin = 'anonymous';
       scriptEl.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
     }
   });
   
-  // Also handle all Cloudflare scripts even if they don't have integrity
-  const cfScripts = document.querySelectorAll('script[src*="cloudflare"]');
-  cfScripts.forEach(script => {
+  // Handle all external scripts that might need CORS attributes
+  const externalScripts = document.querySelectorAll('script[src*="gpteng"]');
+  externalScripts.forEach(script => {
     const scriptEl = script as HTMLScriptElement;
     if (!scriptEl.hasAttribute('crossorigin')) {
       scriptEl.crossOrigin = 'anonymous';
       scriptEl.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
-      console.log(`Adding crossorigin attribute for Cloudflare script: ${scriptEl.src}`);
+      console.log(`Adding crossorigin attribute for external script: ${scriptEl.src}`);
     }
   });
   
@@ -88,10 +87,11 @@ function removeSriIntegrityChecks() {
               console.log(`Removing integrity check for dynamically added element: ${url}`);
               element.removeAttribute('integrity');
               
-              // If this is a Cloudflare script, add CORS attributes
+              // If this is an external script, add CORS attributes
               if (element.tagName === 'SCRIPT' && 
                   (element as HTMLScriptElement).src &&
-                  (element as HTMLScriptElement).src.includes('cloudflare')) {
+                  ((element as HTMLScriptElement).src.includes('gpteng.co') || 
+                   (element as HTMLScriptElement).src.includes('external-domain'))) {
                 (element as HTMLScriptElement).crossOrigin = 'anonymous';
                 element.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
               }
@@ -132,9 +132,6 @@ export function buildCspPolicy() {
     cdn: [
       'cdn.pngtree.com', 
       '*.gpteng.co', 'https://*.gpteng.co', 'http://*.gpteng.co',
-      '*.cloudflareinsights.com', 'https://*.cloudflareinsights.com', 'http://*.cloudflareinsights.com',
-      'static.cloudflareinsights.com', 'https://static.cloudflareinsights.com', 'http://static.cloudflareinsights.com',
-      'cloudflareinsights.com', 'https://cloudflareinsights.com', 'http://cloudflareinsights.com',
       'cdn.gpteng.co', 'https://cdn.gpteng.co', 'http://cdn.gpteng.co'
     ],
   };
@@ -160,7 +157,8 @@ export function buildCspPolicy() {
     `connect-src 'self' ${domains.supabase.join(' ')} ${domains.storage.join(' ')} ${domains.app.join(' ')} ${domains.cdn.join(' ')} 
      wss://*.supabase.co https://*.supabase.co https://*.gpteng.co https://cdn.gpteng.co
      https://*.snakkaz.com http://*.snakkaz.com dash.snakkaz.com business.snakkaz.com docs.snakkaz.com analytics.snakkaz.com
-     https://static.cloudflareinsights.com cloudflareinsights.com *.cloudflareinsights.com`,
+     mcp.snakkaz.com https://mcp.snakkaz.com http://mcp.snakkaz.com
+     help.snakkaz.com https://help.snakkaz.com http://help.snakkaz.com`,
     
     // Media
     "media-src 'self' blob:",

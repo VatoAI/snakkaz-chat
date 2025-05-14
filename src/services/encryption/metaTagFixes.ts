@@ -3,6 +3,9 @@
  * 
  * This module fixes various meta tag issues and warnings
  * that might appear in the browser console.
+ * 
+ * Updated: May 14, 2025 - Updated to remove Cloudflare dependencies
+ * and ensure all Snakkaz subdomains are properly included.
  */
 
 /**
@@ -42,23 +45,23 @@ export function fixDeprecatedMetaTags() {
     document.head.appendChild(corsTag);
   }
   
-  // Fix Content-Security-Policy meta tag if it exists but doesn't include cloudflareinsights
+  // Fix Content-Security-Policy meta tag if it exists but doesn't include new subdomains
   const cspTag = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
   if (cspTag) {
     const cspContent = cspTag.getAttribute('content') || '';
     
-    if (!cspContent.includes('cloudflareinsights.com')) {
+    if (!cspContent.includes('mcp.snakkaz.com') || !cspContent.includes('help.snakkaz.com')) {
       try {
-        // Add cloudflareinsights.com to connect-src if it's missing
+        // Add missing Snakkaz subdomains to connect-src
         const newCspContent = cspContent.replace(
           /(connect-src\s+[^;]+)/, 
-          '$1 https://static.cloudflareinsights.com cloudflareinsights.com *.cloudflareinsights.com'
+          '$1 mcp.snakkaz.com https://mcp.snakkaz.com help.snakkaz.com https://help.snakkaz.com'
         );
         
         // Only update if it actually changed
         if (newCspContent !== cspContent) {
           cspTag.setAttribute('content', newCspContent);
-          console.log('Updated CSP meta tag to include Cloudflare Insights');
+          console.log('Updated CSP meta tag to include all Snakkaz subdomains');
         }
       } catch (error) {
         console.warn('Failed to update CSP meta tag:', error);

@@ -5,6 +5,8 @@
  * 1. A client-side handler for CSP violation reports
  * 2. Integration with the system health check
  * 3. Logging and analytics for CSP violations
+ * 
+ * Updated: May 14, 2025 - Removed Cloudflare dependencies
  */
 
 interface CspViolationReport {
@@ -76,14 +78,23 @@ export function initCspReporting(options: {
       console.warn('CSP violation:', report);
     }
     
-    // Log to analytics if enabled
-    if (logToAnalytics && window.gtag) {
+    // Log to analytics if enabled - using custom analytics instead of gtag
+    if (logToAnalytics && typeof window !== 'undefined') {
       try {
-        window.gtag('event', 'csp_violation', {
-          event_category: 'security',
-          event_label: `${report.violatedDirective} | ${report.blockedURI}`,
-          non_interaction: true
-        });
+        // Send to our custom analytics endpoint
+        const analyticsEndpoint = 'https://analytics.snakkaz.com/events';
+        fetch(analyticsEndpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            eventType: 'csp_violation',
+            category: 'security',
+            label: `${report.violatedDirective} | ${report.blockedURI}`,
+            nonInteraction: true
+          }),
+          // Use keepalive to ensure the request completes even if the page navigates away
+          keepalive: true
+        }).catch(e => console.error('Analytics request failed:', e));
       } catch (error) {
         console.error('Failed to send CSP violation to analytics:', error);
       }

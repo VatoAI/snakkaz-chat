@@ -65,15 +65,13 @@ export function verifyCspConfiguration(): boolean {
     'dash.snakkaz.com',
     'business.snakkaz.com', 
     'docs.snakkaz.com',
-    'analytics.snakkaz.com',
-    'static.cloudflareinsights.com',
-    'cloudflareinsights.com',
-    '*.cloudflareinsights.com',
+    'analytics.snakkaz.com', 
+    'mcp.snakkaz.com',
+    'help.snakkaz.com',
     'cdn.gpteng.co',
     'analytics.snakkaz.com/ping',
     '*.supabase.co',
-    'cdn.gpteng.co',
-    'static.cloudflareinsights.com'
+    'cdn.gpteng.co'
   ];
   
   const missingDomains = [];
@@ -151,9 +149,8 @@ export async function checkCspHealth(): Promise<{
     'business.snakkaz.com', 
     'docs.snakkaz.com',
     'analytics.snakkaz.com',
-    'static.cloudflareinsights.com',
-    'cloudflareinsights.com',
-    '*.cloudflareinsights.com',
+    'mcp.snakkaz.com',
+    'help.snakkaz.com',
     'cdn.gpteng.co',
     'wss://*.supabase.co',
     '*.supabase.co',

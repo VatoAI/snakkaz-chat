@@ -6,14 +6,14 @@
  * Updated version without Cloudflare dependencies.
  */
 
-import { applyCspPolicy } from './security/cspConfig';
-import { registerAssetFallbackHandlers, preloadLocalAssets } from './utils/assetFallback';
-import { runDiagnosticTest } from './security/diagnosticTest';
-import { unblockRequests, fixCorsSecurity } from './security/corsConfig';
-import { applyBrowserCompatibilityFixes, fixModuleImportIssues } from './utils/browserFixes';
-import { fixDeprecatedMetaTags } from './utils/metaTagFixes';
-import { initCspReporting } from './security/cspReporting';
-import { applySecurityEnhancements } from './security/securityEnhancements';
+import { applyCspPolicy } from './encryption/cspConfig';
+import { registerAssetFallbackHandlers, preloadLocalAssets } from './encryption/assetFallback';
+import { runDiagnosticTest } from './encryption/diagnosticTest';
+import { unblockRequests, fixCorsSecurity } from './encryption/corsTest';
+import { applyBrowserCompatibilityFixes, fixModuleImportIssues } from './encryption/browserFixes';
+import { fixDeprecatedMetaTags } from './encryption/metaTagFixes';
+import { initCspReporting } from './encryption/cspReporting';
+import { applySecurityEnhancements } from './encryption/securityEnhancements';
 
 // Track initialization state
 let isInitialized = false;
@@ -34,7 +34,7 @@ export function initializeSnakkazChat() {
   
   try {
     // Import the emergency fixes from cspFixes.ts
-    import('./security/cspFixes').then(module => {
+    import('./encryption/cspFixes').then(module => {
       console.log('Applying emergency CSP fixes...');
       module.applyAllCspFixes();
     }).catch(err => {
