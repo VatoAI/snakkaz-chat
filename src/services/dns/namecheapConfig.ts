@@ -1,115 +1,98 @@
 /**
- * Namecheap API Configuration
+ * Namecheap API Configuration for Snakkaz Chat
  * 
- * This module provides configuration settings for the Namecheap API.
- * Replaces Cloudflare configuration.
+ * Dette filen inneholder konfigurasjonsinnstillingene for Namecheap API-integrasjonen.
+ * VIKTIG: Denne filen er kun for utvikling. I produksjon bør disse verdiene
+ * lastes fra miljøvariabler eller et sikkert hvelv.
+ * 
+ * Oppdatert: 14. mai 2025
  */
-
-interface NamecheapConfig {
-  /**
-   * Namecheap API User (usually the same as username)
-   */
-  apiUser: string;
-  
-  /**
-   * Namecheap API Key from account settings
-   */
-  apiKey: string;
-  
-  /**
-   * Namecheap account username
-   */
-  username: string;
-  
-  /**
-   * Client IP address (must be whitelisted in Namecheap API settings)
-   */
-  clientIp: string;
-  
-  /**
-   * Default TTL (Time To Live) for DNS records in seconds
-   */
-  defaultTtl: number;
-  
-  /**
-   * Whether to use the Namecheap sandbox/test environment
-   */
-  useSandbox: boolean;
-  
-  /**
-   * Domains managed through this API
-   */
-  managedDomains: string[];
-}
 
 /**
- * Default configuration for Namecheap API
- * 
- * Note: You must set apiUser, apiKey, username, and clientIp
- * in a secure manner, not directly in code.
+ * Namecheap API Configuration
  */
-export const namecheapConfig: NamecheapConfig = {
-  apiUser: process.env.NAMECHEAP_API_USER || '',
-  apiKey: process.env.NAMECHEAP_API_KEY || '',
-  username: process.env.NAMECHEAP_USERNAME || '',
-  clientIp: process.env.NAMECHEAP_CLIENT_IP || '',
-  defaultTtl: 1800, // 30 minutes
-  useSandbox: process.env.NODE_ENV !== 'production',
-  managedDomains: [
-    'snakkaz.com',
-    'dash.snakkaz.com',
-    'business.snakkaz.com',
-    'docs.snakkaz.com',
-    'analytics.snakkaz.com'
+export const namecheapConfig = {
+  // Domain name to manage
+  domain: 'snakkaz.com',
+  
+  // Sandbox environment (for testing)
+  sandbox: {
+    apiUrl: 'https://api.sandbox.namecheap.com/xml.response',
+    apiUser: 'SnakkaZ', // Replace with your sandbox API username
+    apiKey: '43cb18d3efb3412584149435e1549db7', // Add your sandbox API key here
+    username: 'SnakkaZ', // Replace with your sandbox username
+  },
+  
+  // Production environment
+  production: {
+    apiUrl: 'https://api.namecheap.com/xml.response',
+    apiUser: process.env.NAMECHEAP_API_USER || '', 
+    apiKey: process.env.NAMECHEAP_API_KEY || '',
+    username: process.env.NAMECHEAP_USERNAME || '',
+  },
+  
+  // Namecheap's egne nameservere (ikke Cloudflare lenger)
+  nameservers: [
+    'dns1.registrar-servers.com',
+    'dns2.registrar-servers.com'
+  ],
+  
+  // DNS records konfigurert i Namecheap
+  defaultDnsRecords: [
+    {
+      hostname: '@',
+      type: 'A' as const,
+      address: '185.158.133.1', // Basert på nåværende konfigurasjon
+      ttl: 300
+    },
+    {
+      hostname: 'www',
+      type: 'CNAME' as const,
+      address: 'snakkaz.com.',
+      ttl: 300
+    },
+    {
+      hostname: 'dash',
+      type: 'CNAME' as const,
+      address: 'snakkaz.com.',
+      ttl: 300
+    },
+    {
+      hostname: 'business',
+      type: 'CNAME' as const,
+      address: 'snakkaz.com.',
+      ttl: 300
+    },
+    {
+      hostname: 'docs',
+      type: 'CNAME' as const,
+      address: 'snakkaz.com.',
+      ttl: 300
+    },
+    {
+      hostname: 'analytics',
+      type: 'CNAME' as const,
+      address: 'snakkaz.com.',
+      ttl: 300
+    }
   ]
 };
 
 /**
- * Configure the Namecheap API with environment variables or settings
+ * Get Namecheap configuration based on environment
+ * @param useProduction Whether to use production or sandbox environment
+ * @returns Namecheap API configuration
  */
-export function configureNamecheapApi(config: Partial<NamecheapConfig> = {}): NamecheapConfig {
-  // Combine default config with provided config
-  const mergedConfig = {
-    ...namecheapConfig,
-    ...config
-  };
-  
-  // Validate the configuration
-  const requiredFields = ['apiUser', 'apiKey', 'username', 'clientIp'];
-  const missingFields = requiredFields.filter(field => !mergedConfig[field as keyof NamecheapConfig]);
-  
-  if (missingFields.length > 0) {
-    console.warn(`Namecheap API configuration missing required fields: ${missingFields.join(', ')}`);
-    console.warn('Please set these values through environment variables or configuration');
-  }
-  
-  return mergedConfig;
+export function getNamecheapConfig(useProduction = false) {
+  return useProduction ? namecheapConfig.production : namecheapConfig.sandbox;
 }
 
 /**
- * Get a secure configuration for Namecheap API from environment or secure storage
+ * Validates if the Namecheap configuration is complete
+ * @param useProduction Whether to check production or sandbox configuration
+ * @returns True if configuration is valid
  */
-export async function getSecureNamecheapConfig(): Promise<NamecheapConfig> {
-  try {
-    // Try to load from secure storage if available
-    let secureConfig = namecheapConfig;
-    
-    // If process.env is available (Node.js environment)
-    if (typeof process !== 'undefined' && process.env) {
-      secureConfig = {
-        ...secureConfig,
-        apiUser: process.env.NAMECHEAP_API_USER || secureConfig.apiUser,
-        apiKey: process.env.NAMECHEAP_API_KEY || secureConfig.apiKey,
-        username: process.env.NAMECHEAP_USERNAME || secureConfig.username,
-        clientIp: process.env.NAMECHEAP_CLIENT_IP || secureConfig.clientIp
-      };
-    }
-    
-    return secureConfig;
-  } catch (error) {
-    console.error('Failed to load secure Namecheap configuration:', error);
-    
-    // Return default config as fallback
-    return namecheapConfig;
-  }
+export function isNamecheapConfigValid(useProduction = false): boolean {
+  const config = useProduction ? namecheapConfig.production : namecheapConfig.sandbox;
+  return !!(config.apiUser && config.apiKey && config.username);
 }

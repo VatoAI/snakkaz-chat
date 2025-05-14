@@ -20,7 +20,8 @@ export interface SnakkazCspPluginOptions {
 }
 
 /**
- * Create a Vite plugin that injects CSP meta tags and Cloudflare Analytics
+ * Create a Vite plugin that injects CSP meta tags
+ * Updated version without Cloudflare references
  */
 export function snakkazCspPlugin(options: SnakkazCspPluginOptions = {}): Plugin {
   const {
