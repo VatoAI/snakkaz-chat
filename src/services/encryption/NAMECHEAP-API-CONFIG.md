@@ -19,10 +19,23 @@ For å løse dette problemet, følg denne steg-for-steg guiden:
 2. Sjekk at denne nøyaktig matcher det som vises på API Access-siden
 3. Hvis nøkkelen er feil, oppdater filen `namecheapConfig.ts`
 
-### 3. Legg til din IP-adresse på whitelist
-1. Din nåværende IP er: **20.61.126.209**
-2. På API Access-siden, klikk på "EDIT" ved siden av "Whitelisted IPs"
-3. Legg til IP-adressen din og klikk "Done"
+### 3. Legg til IP-adresser på whitelist
+Namecheap tillater maks 20 IP-adresser i whitelist. Du bør legge til følgende IP-adresser:
+
+#### Supabase-servere:
+1. **172.64.149.246** (Supabase-server 1)
+2. **104.18.38.10** (Supabase-server 2)
+
+#### Snakkaz-server:
+3. **185.158.133.1** (Hovedserver for Snakkaz)
+
+#### MCP-server:
+4. **185.158.133.1** (Samme IP som hovedserveren, men for MCP-subdomenet)
+
+#### Din nåværende utviklingsmiljø:
+5. **20.61.126.209** (Din gjeldende IP-adresse)
+
+På API Access-siden, klikk på "EDIT" ved siden av "Whitelisted IPs", legg til IP-adressene over, og klikk "Done".
 
 ### 4. Test API-tilgangen på nytt
 Etter å ha gjort endringene over, kjør følgende kommando for å teste tilkoblingen:
@@ -38,11 +51,12 @@ En vellykket respons vil inneholde `Status="OK"` og informasjon om domenet.
 ## Vanlige problemer
 1. **API ikke aktivert**: Sørg for at bryteren er "On"
 2. **Feil API-nøkkel**: Dobbeltsjekk nøkkelen mot det som vises i Namecheap
-3. **IP ikke whitelistet**: Sjekk at riktig IP er lagt til i whitelisten
+3. **IP ikke whitelistet**: Sjekk at alle nødvendige IP-adresser er lagt til i whitelisten
 4. **Sandbox vs. Production**: Vi bruker sandbox-miljøet for testing
+5. **Begrensning på 20 IP-adresser**: Namecheap tillater kun 20 IP-adresser på whitelist
 
 ## Teknisk informasjon
-- Din IP-adresse: **20.61.126.209**
 - API-bruker: **SnakkaZ**
 - API-nøkkel: **43cb18d3efb341258414943ce1549db7**
 - Domene: **snakkaz.com**
+- Supabase-prosjekt-ID: **wqpoozpbceucynsojmbk**

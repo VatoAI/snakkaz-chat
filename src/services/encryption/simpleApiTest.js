@@ -40,14 +40,12 @@ async function testNamecheapApi() {
     console.log("Making API request to URL:");
     console.log(url);
     
-    try {
-      const response = await fetch(url);
-      console.log("Response status:", response.status);
-      const text = await response.text();
+    const response = await fetch(url);
+    console.log("Response status:", response.status);
+    const text = await response.text();
     
-    
-      console.log("API Response:");
-      console.log(text);
+    console.log("API Response:");
+    console.log(text);
       
       if (text.includes("<Status>OK</Status>")) {
         console.log("\n✅ API connection successful!");
