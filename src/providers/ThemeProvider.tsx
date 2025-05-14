@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { Theme } from '../services/encryption/themeService';
+import { Theme } from '../utils/themeService';
 
 // Define the context type
 interface ThemeContextType {

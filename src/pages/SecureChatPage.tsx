@@ -7,9 +7,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChatProvider, useChat } from '../services/encryption/ChatContext';
-import { GroupList } from '../services/encryption/GroupList';
-import { ChatInterface } from '../services/encryption/ChatInterface';
+import { ChatProvider, useChat } from '../contexts/ChatContext';
+import { GroupList } from '../components/chat/GroupList';
+import { ChatInterface } from '../components/chat/ChatInterface';
 import { Button } from '../components/ui/button';
 import { supabase } from '../integrations/supabase/client';
 import { Loader2, ArrowLeft } from 'lucide-react';

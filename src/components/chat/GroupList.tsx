@@ -27,7 +27,7 @@ import { Label } from '../../components/ui/label';
 import { Avatar } from '../../components/ui/avatar';
 import { Shield, Plus, Users, Settings, Loader2, Search, Lock, MessageSquare } from 'lucide-react';
 import { format } from 'date-fns';
-import { GroupSecurityLevel, Group } from '../../services/encryption/groupChatService';
+import { GroupSecurityLevel, Group } from '../../services/api/groupChatService';
 import { AuthButton } from './LoginButton';
 
 // CSS Animasjoner

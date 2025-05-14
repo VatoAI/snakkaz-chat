@@ -9,14 +9,14 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider } from './providers/AuthProvider';
 import { ThemeProvider } from './providers/ThemeProvider';
 import { Toaster } from './components/ui/toaster';
-import { ChatProvider } from './services/encryption/ChatContext';
+import { ChatProvider } from './contexts/ChatContext';
 
 // Pages
 import Login from './pages/Login';
 import Register from './pages/Register';
 import SecureChatPage from './pages/SecureChatPage';
 import ChatSettingsPage from './pages/ChatSettingsPage';
-import SecureMessageViewer from './services/encryption/SecureMessageViewer';
+import SecureMessageViewer from './components/chat/SecureMessageViewer';
 import NotFoundPage from './pages/NotFoundPage';
 
 // Layout components

@@ -8,8 +8,8 @@ import { initializeExternalServices, initializeErrorHandling } from './utils/ser
 import './utils/externalScripts'; // This auto-initializes
 
 // Import security initialization for Snakkaz Chat
-import { initializeSnakkazChat } from './services/encryption/initialize';
-import { applyAllCspFixes } from './services/encryption/cspFixes';
+import { initializeSnakkazChat } from './services/initialize';
+import { applyAllCspFixes } from './services/security/cspFixes';
 
 // Initialize error handlers as early as possible to prevent console errors
 initializeErrorHandling();
