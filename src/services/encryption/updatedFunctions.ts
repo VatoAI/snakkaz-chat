@@ -22,7 +22,7 @@ export function testAnalytics() {
       return { 
         loaded: true,
         script: analyticsScripts[0].src,
-        objectExists: true
+        objectExists: true|
       };
     } else {
       console.log('Analytics script exists but may not be properly loaded');

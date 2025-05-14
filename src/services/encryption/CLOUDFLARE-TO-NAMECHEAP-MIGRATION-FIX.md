@@ -40,8 +40,8 @@ This document summarizes the changes made to fix the Snakkaz Chat application af
 ## Next Steps
 1. Monitor the application for any remaining CSP violations
 2. Complete validation once DNS propagation finishes (expected by May 16, 2025)
-3. Consider updating the cspFixes.ts file which still contains Cloudflare references
-4. Implement a more comprehensive runtime test to verify subdomain connectivity
+3. Run the verification script regularly to confirm proper operation
+4. Implement a comprehensive runtime test to verify subdomain connectivity
 
 ## Notes
 - These changes have removed all explicit dependencies on Cloudflare services

@@ -304,47 +304,47 @@ export function testPingRequestBlocker(): Promise<boolean> {
 }
 
 /**
- * Test if Namecheap Analytics is loading correctly
+ * Test if Cloudflare Analytics is loading correctly
  */
-export function testNamecheapAnalytics() {
-  console.log('Testing Namecheap Analytics loading...');
+export function testCloudflareAnalytics() {
+  console.log('Testing Cloudflare Analytics loading...');
   
   if (typeof document === 'undefined') {
     return { loaded: false, reason: 'Not running in browser' };
   }
   
   // Check if the analytics script exists
-  const analyticsScripts = Array.from(document.querySelectorAll('script')).filter(
+  const cfScripts = Array.from(document.querySelectorAll('script')).filter(
     script => script.src && script.src.includes('gpteng.co')
   );
   
-  // Check if the global snakkazAnalytics object exists (indicates Namecheap Analytics loaded)
-  const analyticsObjectExists = typeof window !== 'undefined' && 'snakkazAnalytics' in window;
+  // Check if the global _cf object exists (indicates Cloudflare Analytics loaded)
+  const cfObjectExists = typeof window !== 'undefined' && '_cf' in window;
   
-  if (analyticsScripts.length > 0) {
-    if (analyticsObjectExists) {
-      console.log('Namecheap Analytics is loaded and functioning');
+  if (cfScripts.length > 0) {
+    if (cfObjectExists) {
+      console.log('Cloudflare Analytics is loaded and functioning');
       return { 
         loaded: true,
-        script: analyticsScripts[0].src,
+        script: cfScripts[0].src,
         objectExists: true
       };
     } else {
-      console.log('Namecheap Analytics script exists but may not be properly loaded');
+      console.log('Cloudflare Analytics script exists but may not be properly loaded');
       return {
         loaded: false,
-        script: analyticsScripts[0].src,
+        script: cfScripts[0].src,
         objectExists: false,
         reason: 'CF object not found in window'
       };
     }
   } else {
-    console.log('No Namecheap Analytics script found');
+    console.log('No Cloudflare Analytics script found');
     // Try to load it now
     const loadScript = document.createElement('script');
     loadScript.defer = true;
     loadScript.crossOrigin = 'anonymous';
-    loadScript.src = 'https://analytics.snakkaz.com/tracker.js';
+    loadScript.src = 'https://cdn.gpteng.co/analytics.js?token=c5bd7bbfe41c47c2a5ec';
     document.head.appendChild(loadScript);
     
     return {
@@ -356,34 +356,34 @@ export function testNamecheapAnalytics() {
 }
 
 /**
- * Check if Namecheap DNS is properly configured
+ * Check if Cloudflare DNS is properly configured
  * This helps validate that nameserver changes have propagated
  */
 /**
- * Check if Namecheap DNS and services are properly configured for the domain
- * Also verifies SSL status and key Namecheap protections
+ * Check if Cloudflare DNS and services are properly configured for the domain
+ * Also verifies SSL status and key Cloudflare protections
  * @returns Promise resolving to status object with success flag and details
  */
-export function checkNamecheapStatus(): Promise<{success: boolean, details?: Record<string, unknown>}> {
-  console.log('Checking Namecheap DNS and service status...');
+export function checkCloudflareStatus(): Promise<{success: boolean, details?: Record<string, unknown>}> {
+  console.log('Checking Cloudflare DNS and service status...');
   
-  // Try to check if we're behind Namecheap by looking for CF specific headers
-  return fetch('https://www.snakkaz.com/api/dns-check', { 
+  // Try to check if we're behind Cloudflare by looking for CF specific headers
+  return fetch('https://www.snakkaz.com/cdn-cgi/trace', { 
     method: 'GET',
     cache: 'no-store'
   })
     .then(response => {
-      // Check if Namecheap-specific headers are present
-      const ncRay = response.headers.get('nc-ray');
-      const ncCache = response.headers.get('nc-cache-status');
-      const hasNamecheapHeaders = !!ncRay;
+      // Check if Cloudflare-specific headers are present
+      const cfRay = response.headers.get('cf-ray');
+      const cfCache = response.headers.get('cf-cache-status');
+      const hasCloudflareHeaders = !!cfRay;
       
       return response.text().then(text => {
-        return { text, ncRay: ncRay || '', ncCache: ncCache || '', hasNamecheapHeaders };
+        return { text, cfRay: cfRay || '', cfCache: cfCache || '', hasCloudflareHeaders };
       });
     })
-    .then((result: { text: string, ncRay: string, ncCache: string, hasNamecheapHeaders: boolean }) => {
-      const { text, ncRay, ncCache, hasNamecheapHeaders } = result;
+    .then((result: { text: string, cfRay: string, cfCache: string, hasCloudflareHeaders: boolean }) => {
+      const { text, cfRay, cfCache, hasCloudflareHeaders } = result;
       // Parse the trace data into key-value pairs
       const traceData = text.split('\n').reduce((acc, line) => {
         const [key, value] = line.split('=');
@@ -391,33 +391,33 @@ export function checkNamecheapStatus(): Promise<{success: boolean, details?: Rec
         return acc;
       }, {} as Record<string, string>);
       
-      const isNamecheapDns = hasNamecheapHeaders || text.includes('nc-ray=') || text.includes('region=');
+      const isCloudflareDns = hasCloudflareHeaders || text.includes('cf-ray=') || text.includes('colo=');
       
       // Check if Security Level is properly configured
       const securityLevel = traceData.securityLevel || 'unknown';
       
-      if (isNamecheapDns) {
-        console.log('✅ Namecheap DNS is properly configured');
-        console.log('Namecheap datacenter:', traceData.colo || 'Unknown');
-        console.log('NC-Ray ID:', ncRay || traceData.ray || 'Unknown');
-        console.log('Cache status:', ncCache || 'Unknown');
+      if (isCloudflareDns) {
+        console.log('✅ Cloudflare DNS is properly configured');
+        console.log('Cloudflare datacenter:', traceData.colo || 'Unknown');
+        console.log('CF-Ray ID:', cfRay || traceData.ray || 'Unknown');
+        console.log('Cache status:', cfCache || 'Unknown');
         console.log('Security level:', securityLevel);
         
         return { 
           success: true, 
           details: {
-            message: 'Namecheap DNS is properly configured',
+            message: 'Cloudflare DNS is properly configured',
             domainReachable: true,
             recommendation: 'No action needed',
-            ncRay,
-            ncCache,
+            cfRay,
+            cfCache,
             securityLevel,
             ssl: traceData.tls || 'Unknown',
             waf: securityLevel !== 'unknown' && securityLevel !== 'off'
           }
         };
       } else {
-        console.log('❌ Namecheap DNS is not active yet (propagation may take 24-48 hours)');
+        console.log('❌ Cloudflare DNS is not active yet (propagation may take 24-48 hours)');
         
         // Let's try to check if we can at least resolve the domain
         return checkDomainReachable()
@@ -427,17 +427,17 @@ export function checkNamecheapStatus(): Promise<{success: boolean, details?: Rec
               details: { 
                 message: 'DNS propagation in progress',
                 domainReachable: isReachable,
-                recommendation: 'Verify Namecheap nameservers are properly configured in domain registrar'
+                recommendation: 'Verify Cloudflare nameservers are properly configured in domain registrar'
               }
             };
           });
       }
     })
     .catch(error => {
-      console.error('Error checking Namecheap status:', error);
+      console.error('Error checking Cloudflare status:', error);
       
       // Try to run more diagnostic checks
-      return runNamecheapNetworkDiagnostics()
+      return runCloudflareNetworkDiagnostics()
         .then(diagnosticResults => {
           return { 
             success: false, 
@@ -475,9 +475,9 @@ async function checkDomainReachable(): Promise<boolean> {
 }
 
 /**
- * Run additional network diagnostics for Namecheap
+ * Run additional network diagnostics for Cloudflare
  */
-async function runNamecheapNetworkDiagnostics(): Promise<Record<string, unknown>> {
+async function runCloudflareNetworkDiagnostics(): Promise<Record<string, unknown>> {
   const results = {
     dns: false,
     connectivity: false,
@@ -486,8 +486,8 @@ async function runNamecheapNetworkDiagnostics(): Promise<Record<string, unknown>
   };
   
   try {
-    // Test basic connectivity to Namecheap
-    await fetch('https://namecheap.com', { method: 'HEAD' });
+    // Test basic connectivity to Cloudflare
+    await fetch('https://cloudflare.com', { method: 'HEAD' });
     results.connectivity = true;
   } catch {
     results.suggestions.push('Check your internet connection');
@@ -579,8 +579,8 @@ export function runSystemHealthCheck(): Promise<{
     sri: boolean;
     pingBlocking: boolean;
     metaTags: boolean;
-    namecheapAnalytics: boolean;
-    namecheapDns: boolean;
+    cloudflareAnalytics: boolean;
+    cloudflareDns: boolean;
     dnsHealth: DnsHealthStatus;
   }
 }> {
@@ -592,20 +592,20 @@ export function runSystemHealthCheck(): Promise<{
       sri: false,
       pingBlocking: false,
       metaTags: false,
-      namecheapAnalytics: false,
-      namecheapDns: false,
+      cloudflareAnalytics: false,
+      cloudflareDns: false,
       dnsHealth: {
         status: 'issues',
         issues: [],
         recommendations: [],
-        namecheap: {
+        cloudflare: {
           nameserversConfigured: false,
           zoneActive: false,
           wwwRecordExists: false,
           sslConfigured: false
         },
         namecheap: {
-          usingNamecheapNameservers: false,
+          usingCloudflareNameservers: false,
           nameservers: []
         }
       }
@@ -622,14 +622,14 @@ export function runSystemHealthCheck(): Promise<{
   const mobileAppCapable = document.querySelector('meta[name="mobile-web-app-capable"]');
   results.details.metaTags = !!mobileAppCapable;
   
-  // Check Namecheap Analytics 
-  const snakkazAnalyticsResult = testNamecheapAnalytics();
-  results.details.namecheapAnalytics = snakkazAnalyticsResult.loaded;
+  // Check Cloudflare Analytics 
+  const cfAnalyticsResult = testCloudflareAnalytics();
+  results.details.cloudflareAnalytics = cfAnalyticsResult.loaded;
   
-  // Test Namecheap DNS configuration
-  return checkNamecheapStatus()
-    .then(ncDnsResult => {
-      results.details.namecheapDns = ncDnsResult.success;
+  // Test Cloudflare DNS configuration
+  return checkCloudflareStatus()
+    .then(cfDnsResult => {
+      results.details.cloudflareDns = cfDnsResult.success;
       
       // Then test ping blocking
       return testPingRequestBlocker();
@@ -645,21 +645,21 @@ export function runSystemHealthCheck(): Promise<{
           status: (dnsHealth.status as 'healthy' | 'issues' | 'critical'),
           issues: dnsHealth.issues || [],
           recommendations: dnsHealth.recommendations || [],
-          namecheap: dnsHealth.namecheap || {
+          cloudflare: dnsHealth.cloudflare || {
             nameserversConfigured: false,
             zoneActive: false,
             wwwRecordExists: false,
             sslConfigured: false
           },
           namecheap: dnsHealth.namecheap || {
-            usingNamecheapNameservers: false,
+            usingCloudflareNameservers: false,
             nameservers: []
           }
         };
         
         results.details.dnsHealth = typedDnsHealth;
 
-        // Overall health determination - don't require Namecheap DNS to be active yet
+        // Overall health determination - don't require Cloudflare DNS to be active yet
         const criticalChecks = {
           csp: results.details.csp,
           sri: results.details.sri,
@@ -682,18 +682,18 @@ export function runSystemHealthCheck(): Promise<{
 export const checkHealth = runSystemHealthCheck;
 
 /**
- * Simple function to check just Namecheap DNS status with detailed output
+ * Simple function to check just Cloudflare DNS status with detailed output
  * This is useful for monitoring DNS propagation progress
  */
-export function checkNamecheapDnsStatus() {
-  return checkNamecheapStatus()
+export function checkCloudflareDnsStatus() {
+  return checkCloudflareStatus()
     .then(result => {
       if (result.success) {
-        console.log('%c ✅ Namecheap DNS is ACTIVE ', 'background: #0f9d58; color: white; font-size: 16px; padding: 5px;');
-        console.log('%c Namecheap Details ', 'background: #4285f4; color: white; font-size: 14px;');
+        console.log('%c ✅ Cloudflare DNS is ACTIVE ', 'background: #0f9d58; color: white; font-size: 16px; padding: 5px;');
+        console.log('%c Cloudflare Details ', 'background: #4285f4; color: white; font-size: 14px;');
         console.table(result.details);
       } else {
-        console.log('%c ⏳ Namecheap DNS PROPAGATING ', 'background: #f4b400; color: black; font-size: 16px; padding: 5px;');
+        console.log('%c ⏳ Cloudflare DNS PROPAGATING ', 'background: #f4b400; color: black; font-size: 16px; padding: 5px;');
         console.log('%c Nameservers have been configured correctly. DNS propagation typically takes 24-48 hours. ', 
                    'font-size: 14px;');
         console.log(result.details);
@@ -701,7 +701,7 @@ export function checkNamecheapDnsStatus() {
       return result;
     })
     .catch(error => {
-      console.log('%c ❌ ERROR CHECKING NAMECHEAP DNS ', 'background: #db4437; color: white; font-size: 16px; padding: 5px;');
+      console.log('%c ❌ ERROR CHECKING CLOUDFLARE DNS ', 'background: #db4437; color: white; font-size: 16px; padding: 5px;');
       console.error(error);
       return { success: false, details: { error: error.message } };
     });
@@ -710,12 +710,12 @@ export function checkNamecheapDnsStatus() {
 /**
  * Check DNS health status by integrating with the DNS Manager
  * @param namecheapApiKey Namecheap API key (optional)
- * @param namecheapApiToken Namecheap API token (optional)
+ * @param cloudflareApiToken Cloudflare API token (optional)
  * @returns DNS health status information
  */
 export async function checkDnsHealth(
   namecheapApiKey?: string,
-  namecheapApiToken?: string
+  cloudflareApiToken?: string
 ): Promise<{
   success: boolean;
   details: {
@@ -732,14 +732,14 @@ export async function checkDnsHealth(
     const dnsManager = getDnsManager();
     
     // If no API keys provided, return a basic response
-    if (!namecheapApiKey && !namecheapApiToken) {
+    if (!namecheapApiKey && !cloudflareApiToken) {
       return {
         success: false,
         details: {
           status: 'issues',
           issues: ['No API credentials provided for DNS health check'],
           recommendations: [
-            'Provide Namecheap API key and/or Namecheap API token to perform a complete DNS check',
+            'Provide Namecheap API key and/or Cloudflare API token to perform a complete DNS check',
             'Run DNS diagnostics using the manage-dns.js CLI tool'
           ]
         }
@@ -747,7 +747,7 @@ export async function checkDnsHealth(
     }
     
     // Initialize with available credentials
-    await dnsManager.initialize(namecheapApiKey || '', namecheapApiToken || '');
+    await dnsManager.initialize(namecheapApiKey || '', cloudflareApiToken || '');
     
     // Run health check
     const healthResult = await dnsManager.performHealthCheck();
@@ -758,8 +758,8 @@ export async function checkDnsHealth(
         status: healthResult.status,
         issues: healthResult.issues,
         recommendations: healthResult.recommendations,
-        nameserversConfigured: healthResult.namecheap.usingNamecheapNameservers,
-        zoneActive: healthResult.namecheap.zoneActive
+        nameserversConfigured: healthResult.namecheap.usingCloudflareNameservers,
+        zoneActive: healthResult.cloudflare.zoneActive
       }
     };
   } catch (error) {
@@ -771,7 +771,7 @@ export async function checkDnsHealth(
         issues: [`DNS check error: ${error instanceof Error ? error.message : String(error)}`],
         recommendations: [
           'Check that API credentials are correct',
-          'Ensure network connectivity to Namecheap and Namecheap APIs',
+          'Ensure network connectivity to Namecheap and Cloudflare APIs',
           'Run detailed DNS diagnostics using the manage-dns.js CLI tool'
         ]
       }
@@ -787,19 +787,19 @@ export async function checkDnsHealth(
 export async function runComprehensiveHealthCheck(
   options?: {
     namecheapApiKey?: string;
-    namecheapApiToken?: string;
+    cloudflareApiToken?: string;
   }
 ): Promise<{
   overallStatus: 'healthy' | 'issues' | 'critical';
   csp: { success: boolean; details: Record<string, unknown> };
   dns: { success: boolean; details: Record<string, unknown> };
-  namecheap: { success: boolean; details: Record<string, unknown> };
+  cloudflare: { success: boolean; details: Record<string, unknown> };
   security: { success: boolean; details: Record<string, unknown> };
   issues: string[];
   recommendations: string[];
 }> {
   // Run all health checks in parallel
-  const [cspResult, dnsResult, ncResult, securityResult] = await Promise.all([
+  const [cspResult, dnsResult, cfResult, securityResult] = await Promise.all([
     Promise.resolve().then(() => {
       const success = verifyCspConfiguration();
       return { 
@@ -809,8 +809,8 @@ export async function runComprehensiveHealthCheck(
         }
       };
     }),
-    checkDnsHealth(options?.namecheapApiKey, options?.namecheapApiToken),
-    checkNamecheapStatus().then(result => {
+    checkDnsHealth(options?.namecheapApiKey, options?.cloudflareApiToken),
+    checkCloudflareStatus().then(result => {
       // Ensure details is always present
       return {
         success: result.success,
@@ -834,10 +834,10 @@ export async function runComprehensiveHealthCheck(
     recommendations.push(...dnsResult.details.recommendations);
   }
   
-  if (!ncResult.success) {
-    issues.push('Namecheap integration has issues');
-    if (ncResult.details && typeof ncResult.details === 'object' && 'message' in ncResult.details) {
-      issues.push(String(ncResult.details.message));
+  if (!cfResult.success) {
+    issues.push('Cloudflare integration has issues');
+    if (cfResult.details && typeof cfResult.details === 'object' && 'message' in cfResult.details) {
+      issues.push(String(cfResult.details.message));
     }
   }
   
@@ -855,7 +855,7 @@ export async function runComprehensiveHealthCheck(
   
   // Determine overall status
   let overallStatus: 'healthy' | 'issues' | 'critical' = 'healthy';
-  if (dnsResult.details.status === 'critical' || !ncResult.success || !securityResult.success) {
+  if (dnsResult.details.status === 'critical' || !cfResult.success || !securityResult.success) {
     overallStatus = 'critical';
   } else if (issues.length > 0) {
     overallStatus = 'issues';
@@ -865,7 +865,7 @@ export async function runComprehensiveHealthCheck(
     overallStatus,
     csp: cspResult,
     dns: dnsResult,
-    namecheap: ncResult,
+    cloudflare: cfResult,
     security: securityResult,
     issues,
     recommendations
@@ -884,9 +884,9 @@ if (typeof window !== 'undefined' && window.location.hostname === 'www.snakkaz.c
         console.log('Auto health check completed:', results);
         if (!results.healthy) {
           // Try to fix issues
-          if (!results.details.namecheapAnalytics) {
+          if (!results.details.cloudflareAnalytics) {
             import('./analyticsLoader').then(module => {
-              module.loadNamecheapAnalytics();
+              module.loadCloudflareAnalytics();
             });
           }
         }
