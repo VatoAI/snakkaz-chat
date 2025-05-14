@@ -46,10 +46,16 @@ export const namecheapConfig = {
       ttl: 300
     },
     {
+      hostname: 'mcp',
+      type: 'A' as const,
+      address: '185.158.133.1', // Samme IP som hoveddomenet
+      ttl: 300
+    },
+    {
       hostname: 'www',
       type: 'CNAME' as const,
-      address: 'snakkaz.com.',
-      ttl: 300
+      address: 'project-wqpoozpbceucynsojmbk.supabase.co', // Supabase prosjekt
+      ttl: 1800
     },
     {
       hostname: 'dash',
@@ -74,6 +80,12 @@ export const namecheapConfig = {
       type: 'CNAME' as const,
       address: 'snakkaz.com.',
       ttl: 300
+    },
+    {
+      hostname: '_supabase-verification',
+      type: 'TXT' as const,
+      address: 'verification=project-wqpoozpbceucynsojmbk',
+      ttl: 1800
     }
   ]
 };

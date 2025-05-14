@@ -20,6 +20,12 @@ test_domain() {
     
     echo -e "${YELLOW}Testing $domain (forventet: $expected_type oppføring)${NC}"
     
+    # Sjekk om dig er installert
+    if ! command -v dig &> /dev/null; then
+        echo -e "${RED}✗ Feil: 'dig' kommando ikke funnet. Installerer...${NC}"
+        apt-get update -qq && apt-get install -y dnsutils > /dev/null
+    fi
+    
     # Utfør DNS-oppslag
     if [ "$expected_type" == "A" ]; then
         result=$(dig +short A $domain)
@@ -72,8 +78,15 @@ test_website() {
     
     echo -e "${YELLOW}Testing tilgjengelighet av $domain${NC}"
     
+    # Sjekk om curl er installert
+    if ! command -v curl &> /dev/null; then
+        echo -e "${RED}✗ Feil: 'curl' kommando ikke funnet. Installerer...${NC}"
+        apt-get update -qq && apt-get install -y curl > /dev/null
+    fi
+    
     # Bruk curl for å sjekke om nettstedet svarer
-    status_code=$(curl -s -o /dev/null -w "%{http_code}" https://$domain)
+    # Legg til --insecure for å unngå SSL-sertifikatproblemer og timeout på 5 sekunder
+    status_code=$(curl -s -o /dev/null -w "%{http_code}" --insecure --max-time 5 https://$domain)
     
     if [ "$status_code" -ge 200 ] && [ "$status_code" -lt 400 ]; then
         echo -e "${GREEN}✓ OK: $domain er tilgjengelig (statuskode: $status_code)${NC}"

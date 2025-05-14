@@ -74,6 +74,18 @@ export const namecheapConfig = {
       type: 'CNAME' as const,
       address: 'snakkaz.com.',
       ttl: 300
+    },
+    {
+      hostname: 'mcp',
+      type: 'CNAME' as const,
+      address: 'snakkaz.com.',
+      ttl: 300
+    },
+    {
+      hostname: 'help',
+      type: 'CNAME' as const,
+      address: 'snakkaz.com.',
+      ttl: 300
     }
   ]
 };

@@ -216,13 +216,44 @@ export function createDnsRecord(type: DnsRecord['type'], host: string, value: st
 /**
  * Create required DNS records for Supabase verification
  * This replaces the Cloudflare-specific verification records with standard ones
+ * 
+ * @param domain - The root domain name (e.g., 'snakkaz.com')
+ * @param supabaseProjectRef - The Supabase project reference ID (e.g., 'project-wqpoozpbceucynsojmbk')
+ * @returns Array of DNS records for Supabase verification
  */
-export function createSupabaseVerificationRecords(domain: string, supabaseProjectRef: string): DnsRecord[] {
+export function createSupabaseVerificationRecords(domain: string, supabaseProjectRef: string = 'project-wqpoozpbceucynsojmbk'): DnsRecord[] {
   return [
     // CNAME record for www pointing to Supabase project
     createDnsRecord('CNAME', 'www', `${supabaseProjectRef}.supabase.co`),
     
-    // Optional TXT record for domain verification
+    // TXT record for domain verification
     createDnsRecord('TXT', '_supabase-verification', `verification=${supabaseProjectRef}`)
   ];
+}
+
+/**
+ * Create standard DNS records for Snakkaz Chat
+ * Sets up all required subdomains for the application
+ * 
+ * @param domain - The root domain name (e.g., 'snakkaz.com')
+ * @param serverIp - The server IP address for A records
+ * @returns Complete set of DNS records for the domain
+ */
+export function createStandardDnsRecords(domain: string, serverIp: string = '185.158.133.1'): DnsRecord[] {
+  // Start with Supabase verification records
+  const records = createSupabaseVerificationRecords(domain);
+  
+  // Add root domain A record
+  records.push(createDnsRecord('A', '@', serverIp));
+  
+  // Add MCP subdomain A record
+  records.push(createDnsRecord('A', 'mcp', serverIp));
+  
+  // Add standard CNAME records for subdomains
+  const subdomains = ['dash', 'business', 'docs', 'analytics'];
+  subdomains.forEach(subdomain => {
+    records.push(createDnsRecord('CNAME', subdomain, domain));
+  });
+  
+  return records;
 }

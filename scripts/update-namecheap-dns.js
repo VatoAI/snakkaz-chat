@@ -1,12 +1,37 @@
 /**
  * Script for å oppdatere DNS-oppføringer i Namecheap
  * 
- * Dette scriptet bruker Namecheap API for å legge til de manglende
- * CNAME-oppføringene og fjerne Cloudflare-spesifikke oppføringer.
+ * Dette scriptet bruker Namecheap API for å legge til alle nødvendige 
+ * DNS-oppføringer og fjerne Cloudflare-spesifikke oppføringer.
+ * 
+ * Oppdatert: 14. mai 2025
  */
 
 const https = require('https');
 const { DOMParser } = require('xmldom');
+const fs = require('fs');
+const path = require('path');
+
+// Funksjon for å laste miljøvariabler fra .env-fil
+function loadEnv() {
+  try {
+    const envPath = path.resolve(process.cwd(), '.env');
+    if (fs.existsSync(envPath)) {
+      const envContent = fs.readFileSync(envPath, 'utf8');
+      envContent.split('\n').forEach(line => {
+        const match = line.match(/^\s*([\w.-]+)\s*=\s*(.*)?\s*$/);
+        if (match) {
+          process.env[match[1]] = match[2] || '';
+        }
+      });
+    }
+  } catch (error) {
+    console.warn('Advarsel: Kunne ikke laste .env-fil:', error.message);
+  }
+}
+
+// Last miljøvariabler hvis .env-fil finnes
+loadEnv();
 
 // Sjekk om miljøvariabler er satt
 const requiredEnvVars = ['NAMECHEAP_API_USER', 'NAMECHEAP_API_KEY', 'NAMECHEAP_USERNAME', 'NAMECHEAP_CLIENT_IP'];
@@ -14,7 +39,7 @@ const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
 
 if (missingEnvVars.length > 0) {
   console.error('Feil: Manglende miljøvariabler:', missingEnvVars.join(', '));
-  console.error('Sett disse variablene før du kjører scriptet.');
+  console.error('Sett disse variablene i .env-filen eller som miljøvariabler før du kjører scriptet.');
   process.exit(1);
 }
 
@@ -25,7 +50,8 @@ const config = {
   username: process.env.NAMECHEAP_USERNAME,
   clientIp: process.env.NAMECHEAP_CLIENT_IP,
   baseUrl: 'https://api.namecheap.com/xml.response',
-  domain: 'snakkaz.com'
+  domain: 'snakkaz.com',
+  supabaseProject: 'project-wqpoozpbceucynsojmbk'
 };
 
 // DNS-oppføringer vi ønsker å ha
@@ -34,8 +60,9 @@ const desiredRecords = [
   { Type: 'A', Host: '@', Address: '185.158.133.1', TTL: '300' },
   { Type: 'A', Host: 'mcp', Address: '185.158.133.1', TTL: '300' },
   
-  // Beholde www CNAME for Supabase
-  { Type: 'CNAME', Host: 'www', Address: 'project-wqpoozpbceucynsojmbk.supabase.co', TTL: '1800' },
+  // Supabase-relaterte oppføringer
+  { Type: 'CNAME', Host: 'www', Address: `${config.supabaseProject}.supabase.co`, TTL: '1800' },
+  { Type: 'TXT', Host: '_supabase-verification', Address: `verification=${config.supabaseProject}`, TTL: '1800' },
   
   // Legg til manglende subdomener
   { Type: 'CNAME', Host: 'dash', Address: 'snakkaz.com', TTL: '1800' },

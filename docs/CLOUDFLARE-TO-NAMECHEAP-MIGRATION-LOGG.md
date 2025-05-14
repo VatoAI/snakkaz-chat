@@ -14,8 +14,10 @@ Dato: 14.05.2025
 - [x] Renset Cloudflare-referanser i kodebasen
 - [x] Opprettet verktøy for Namecheap DNS-håndtering
 - [x] Oppdatert CSP-konfigurasjonen uten Cloudflare-referanser
-- [ ] Lagt til alle nødvendige CNAME-oppføringer i Namecheap
-- [ ] Fullført testing av DNS-oppføringer
+- [x] Lagt til alle nødvendige DNS-oppføringer i konfigurasjonen
+- [x] Forbedret test-skript for DNS-verifikasjon
+- [x] Lagt til Supabase-verifiseringsoppføringer
+- [ ] Kjørt update-namecheap-dns.js for å implementere endringene
 - [ ] Verifisert at Supabase-integrasjonen fungerer
 
 ## 1. Identifisere Cloudflare-relaterte filer
