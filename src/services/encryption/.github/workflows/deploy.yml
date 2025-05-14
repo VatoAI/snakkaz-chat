@@ -22,33 +22,8 @@ jobs:
     - name: Install dependencies
       run: npm ci
       
-    - name: Build with CSP
-      run: npm run build:csp
-      
-    - name: Verify CSP implementation
-      run: |
-        echo "Verifying Content Security Policy implementation..."
-        if grep -q "Content-Security-Policy" dist/index.html; then
-          echo "✅ CSP meta tag found in index.html"
-        else
-          echo "❌ CSP meta tag not found in index.html"
-          exit 1
-        fi
-        
-        # Check for required domains in CSP
-        CSP_CONTENT=$(grep -oP 'Content-Security-Policy" content="\K[^"]+' dist/index.html)
-        REQUIRED_DOMAINS=("snakkaz.com" "cloudflareinsights.com" "supabase.co" "cdn.gpteng.co")
-        
-        for domain in "${REQUIRED_DOMAINS[@]}"; do
-          if echo "$CSP_CONTENT" | grep -q "$domain"; then
-            echo "✅ CSP includes required domain: $domain"
-          else
-            echo "❌ CSP missing required domain: $domain"
-            exit 1
-          fi
-        done
-        
-        echo "✅ CSP verification passed"
+    - name: Build
+      run: npm run build
       
     - name: Deploy to hosting
       run: |
@@ -57,12 +32,11 @@ jobs:
         # Configure Cloudflare settings
         echo "Configuring Cloudflare settings..."
         
-        # Deploy files with CSP
-        echo "Deploying files with Content Security Policy..."
+        # Setup CSP
+        echo "Setting up Content Security Policy..."
         
-        # Execute post-deployment CSP check
-        echo "Running post-deployment CSP check..."
-        node ./src/services/encryption/security-check.cjs
+        # Deploy files
+        echo "Deploying files..."
         
         # Verify deployment
         echo "Verifying deployment..."

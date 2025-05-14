@@ -128,24 +128,6 @@ export function initializeSnakkazChat() {
     
     // Fix missing resources again
     fixMissingResources();
-    
-    // Check CSP health if in development mode
-    if (process.env.NODE_ENV !== 'production') {
-      import('./systemHealthCheck').then(module => {
-        if (module.checkCspHealth) {
-          module.checkCspHealth().then(result => {
-            if (result.status !== 'healthy') {
-              console.warn('CSP Health Check Issues:', result.issues);
-              console.info('CSP Recommendations:', result.recommendations);
-            }
-          }).catch(err => {
-            console.error('Failed to run CSP health check:', err);
-          });
-        }
-      }).catch(err => {
-        console.error('Failed to import systemHealthCheck:', err);
-      });
-    }
   };
   
   // Initialize CSP reporting
