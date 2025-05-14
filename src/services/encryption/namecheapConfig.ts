@@ -19,7 +19,7 @@ export const namecheapConfig = {
   sandbox: {
     apiUrl: 'https://api.sandbox.namecheap.com/xml.response',
     apiUser: 'SnakkaZ', // Replace with your sandbox API username
-    apiKey: '43cb18d3efb3412584149435e1549db7', // Add your sandbox API key here
+    apiKey: '43cb18d3efb341258414943ce1549db7', // Updated API key (May 14, 2025)
     username: 'SnakkaZ', // Replace with your sandbox username
   },
   
