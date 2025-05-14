@@ -6,17 +6,17 @@
  */
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase } from '../../integrations/supabase/client';
+import { supabase } from '../integrations/supabase/client';
 import { 
   GroupChatService, 
   GroupMessage, 
   Group, 
   GroupRole,
   GroupSecurityLevel 
-} from '../encryption/groupChatService';
-import { MediaUploadService } from '../encryption/mediaUploadService';
-import { EncryptionService } from '../encryption/encryptionService';
-import * as GroupE2EE from '../../utils/encryption/group-e2ee';
+} from '../services/api/groupChatService';
+import { MediaUploadService } from '../services/api/mediaUploadService';
+import { EncryptionService } from '../utils/encryption/encryptionService';
+import * as GroupE2EE from '../utils/encryption/group-e2ee';
 import { User } from '@supabase/supabase-js';
 
 // Create services

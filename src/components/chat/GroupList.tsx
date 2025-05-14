@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { useChat } from '../../services/encryption/ChatContext';
+import { useChat } from '../../contexts/ChatContext';
 import { Button } from '../../components/ui/button';
 import { 
   Dialog, 
