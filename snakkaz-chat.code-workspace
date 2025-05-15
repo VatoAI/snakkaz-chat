@@ -1,0 +1,23 @@
+# Snakkaz Chat Workspace Root
+{
+  "folders": [
+    {
+      "path": "."
+    }
+  ],
+  "settings": {
+    "terminal.integrated.cwd": "/workspaces/snakkaz-chat",
+    "window.title": "Snakkaz Chat [${activeEditorShort}] - Root: ${workspaceFolder}",
+    "files.exclude": {
+      "node_modules": true
+    },
+    "search.exclude": {
+      "node_modules": true,
+      "dist": true,
+      "*.lockb": true
+    },
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "typescript.preferences.importModuleSpecifier": "non-relative"
+  }
+}
