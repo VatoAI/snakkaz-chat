@@ -1,29 +1,33 @@
 {
   "name": "Snakkaz Chat Development",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:18",
   "workspaceFolder": "/workspaces/snakkaz-chat",
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/snakkaz-chat,type=bind,consistency=cached",
-  "remoteUser": "codespace",
+  "forwardPorts": [3000, 5173],
+  "postCreateCommand": "npm install",
+  "settings": {
+    "terminal.integrated.defaultProfile.linux": "bash",
+    "terminal.integrated.cwd": "/workspaces/snakkaz-chat"
+  },
   "customizations": {
     "vscode": {
       "extensions": [
-        "dbaeumer.vscode-eslint",
+        "dbaeumer.vscode-eslint", 
         "esbenp.prettier-vscode",
-        "GitHub.copilot"
+        "bradlc.vscode-tailwindcss",
+        "ms-vscode.vscode-typescript-next"
       ],
       "settings": {
-        "terminal.integrated.defaultProfile.linux": "bash",
-        "terminal.integrated.profiles.linux": {
-          "bash": {
-            "path": "bash",
-            "icon": "terminal-bash",
-            "args": ["-l"]
-          }
-        },
         "files.exclude": {
           "node_modules": true
+        },
+        "workbench.startupEditor": "none",
+        "workbench.colorTheme": "Default Dark Modern",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+          "source.fixAll.eslint": true
         }
       }
     }
-  },
-  "postStartCommand": "cd /workspaces/snakkaz-chat && echo 'Navigert til prosjektets rot-katalog' > /tmp/workspace-startup.log"
+  }
 }
