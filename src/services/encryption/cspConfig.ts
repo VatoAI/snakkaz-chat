@@ -158,13 +158,15 @@ export function buildCspPolicy() {
      wss://*.supabase.co https://*.supabase.co https://*.gpteng.co https://cdn.gpteng.co
      https://*.snakkaz.com http://*.snakkaz.com dash.snakkaz.com business.snakkaz.com docs.snakkaz.com analytics.snakkaz.com
      mcp.snakkaz.com https://mcp.snakkaz.com http://mcp.snakkaz.com
-     help.snakkaz.com https://help.snakkaz.com http://help.snakkaz.com`,
+     help.snakkaz.com https://help.snakkaz.com http://help.snakkaz.com
+    `,
     
     // Media
     "media-src 'self' blob:",
     
-    // Object/embed restrictions
-    "object-src 'none'",
+
+-ø
+o-ægu    "object-src 'none'",
     
     // Frame restrictions
     "frame-src 'self'",
