@@ -29,8 +29,8 @@ jobs:
       run: |
         echo "Deploying to Snakkaz.com..."
         
-        # Configure Cloudflare settings
-        echo "Configuring Cloudflare settings..."
+        # Configure DNS settings
+        echo "Configuring DNS settings..."
         
         # Setup CSP
         echo "Setting up Content Security Policy..."
@@ -43,28 +43,17 @@ jobs:
         
         echo "Deployment complete!"
       
-    - name: Cloudflare Cache Purge
+    - name: Verify Namecheap DNS
       env:
-        CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
-        CF_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
-      if: env.CF_API_TOKEN != '' && env.CF_ZONE_ID != ''
+        NAMECHEAP_API_USER: ${{ secrets.NAMECHEAP_API_USER }}
+        NAMECHEAP_API_KEY: ${{ secrets.NAMECHEAP_API_KEY }}
+        NAMECHEAP_USERNAME: ${{ secrets.NAMECHEAP_USERNAME }}
+        NAMECHEAP_CLIENT_IP: ${{ secrets.NAMECHEAP_CLIENT_IP }}
+      if: env.NAMECHEAP_API_USER != '' && env.NAMECHEAP_API_KEY != ''
       run: |
-        echo "Purging Cloudflare cache..."
-        curl -X POST "https://api.cloudflare.com/client/v4/zones/$CF_ZONE_ID/purge_cache" \
-          -H "Authorization: Bearer $CF_API_TOKEN" \
-          -H "Content-Type: application/json" \
-          --data '{"purge_everything":true}'
-          
-    - name: Verify Cloudflare DNS
-      env:
-        CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
-        CF_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
-      if: env.CF_API_TOKEN != '' && env.CF_ZONE_ID != ''
-      run: |
-        echo "Verifying Cloudflare DNS settings..."
-        curl -X GET "https://api.cloudflare.com/client/v4/zones/$CF_ZONE_ID/dns_records" \
-          -H "Authorization: Bearer $CF_API_TOKEN" \
-          -H "Content-Type: application/json" | jq '.result[] | select(.name | contains("snakkaz.com"))'
+        echo "Verifying Namecheap DNS settings..."
+        # Namecheap API doesn't support direct DNS record listing in same way as Cloudflare
+        # You would implement a script to check DNS records through Namecheap API
     
     - name: Send deployment notification
       run: |

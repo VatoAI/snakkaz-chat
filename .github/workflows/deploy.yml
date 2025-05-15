@@ -34,8 +34,6 @@ jobs:
           FTP_SERVER_CHECK: ${{ secrets.FTP_SERVER != '' }}
           FTP_USER_CHECK: ${{ secrets.FTP_USERNAME != '' }}
           FTP_PASS_CHECK: ${{ secrets.FTP_PASSWORD != '' }}
-          CF_ZONE_ID_CHECK: ${{ secrets.CLOUDFLARE_ZONE_ID != '' }}
-          CF_API_TOKEN_CHECK: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}
         run: |
           if [[ "$SUPABASE_URL_CHECK" != "true" ]]; then
             echo "Error: SUPABASE_URL secret is missing"
@@ -50,14 +48,6 @@ jobs:
           if [[ "$FTP_SERVER_CHECK" != "true" ]]; then
             echo "Error: FTP_SERVER secret is missing"
             missing_secrets=true
-          fi
-          
-          if [[ "$CF_ZONE_ID_CHECK" != "true" ]]; then
-            echo "Warning: CLOUDFLARE_ZONE_ID secret is missing. Cache purging will be skipped."
-          fi
-          
-          if [[ "$CF_API_TOKEN_CHECK" != "true" ]]; then
-            echo "Warning: CLOUDFLARE_API_TOKEN secret is missing. Cache purging will be skipped."
           fi
           
           if [[ "$FTP_USER_CHECK" != "true" ]]; then
@@ -119,27 +109,8 @@ jobs:
           server-dir: ${{ secrets.SERVER_DIR || '/' }}
           dangerous-clean-slate: false
       
-      - name: Purge Cloudflare Cache
-        if: success() && env.CF_ZONE_ID_CHECK == 'true' && env.CF_API_TOKEN_CHECK == 'true'
-        run: |
-          echo "Purging Cloudflare cache for faster content delivery..."
-          response=$(curl -s -w "\n%{http_code}" -X POST "https://api.cloudflare.com/client/v4/zones/${{ secrets.CLOUDFLARE_ZONE_ID }}/purge_cache" \
-            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
-            -H "Content-Type: application/json" \
-            --data '{"purge_everything":true}')
-          
-          status_code=$(echo "$response" | tail -n1)
-          response_body=$(echo "$response" | sed '$d')
-          
-          echo "Cloudflare API Status Code: $status_code"
-          
-          if [[ $status_code -eq 200 ]]; then
-            echo "Successfully purged Cloudflare cache"
-          else
-            echo "Failed to purge cache. Response:"
-            echo "$response_body"
-            echo "This is non-critical, continuing deployment."
-          fi
+      # Namecheap doesn't have a cache purging API like Cloudflare
+      # This section has been removed as part of the migration from Cloudflare to Namecheap
       
       - name: Create deployment summary
         if: success()
@@ -151,14 +122,5 @@ jobs:
           echo "- **URL:** https://www.snakkaz.com" >> $GITHUB_STEP_SUMMARY
           echo "- **Deployed at:** $(date)" >> $GITHUB_STEP_SUMMARY
           echo "- **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          if [[ "$CF_ZONE_ID_CHECK" == "true" && "$CF_API_TOKEN_CHECK" == "true" ]]; then
-            echo "- **Cloudflare cache:** Purged" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "- **Cloudflare cache:** Not purged (missing configuration)" >> $GITHUB_STEP_SUMMARY
-          fi
-          else
-            echo "- **Cloudflare cache:** Not purged (missing configuration)" >> $GITHUB_STEP_SUMMARY
-          fi
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Remember to verify that the site is working correctly!" >> $GITHUB_STEP_SUMMARY
