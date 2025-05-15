@@ -1,0 +1,10 @@
+# Snakkaz Chat Custom Bash Profile
+# Dette skriptet endrer standardmappen til /workspaces/snakkaz-chat når en terminal åpnes
+
+# Sjekk om vi er i en terminal og at HOME er satt
+if [ -n "$TERM" ] && [ -n "$HOME" ]; then
+  cd /workspaces/snakkaz-chat
+  echo "Navigert til prosjektets rot: $(pwd)"
+  echo "Velkommen til Snakkaz Chat-prosjektet!"
+  echo "For å se tilgjengelige kommandoer, skriv 'npm run'"
+fi
