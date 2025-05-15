@@ -6,7 +6,7 @@
  * Updated version without Cloudflare dependencies.
  */
 
-import { applyCspPolicy } from './encryption/cspConfig';
+import { applyCspPolicy } from './security/cspConfig';
 import { registerAssetFallbackHandlers, preloadLocalAssets } from './encryption/assetFallback';
 import { runDiagnosticTest } from './encryption/diagnosticTest';
 import { unblockRequests, fixCorsSecurity } from './encryption/corsTest';

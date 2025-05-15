@@ -164,9 +164,8 @@ export function buildCspPolicy() {
     // Media
     "media-src 'self' blob:",
     
-
--ø
-o-ægu    "object-src 'none'",
+    // Object restrictions
+    "object-src 'none'",
     
     // Frame restrictions
     "frame-src 'self'",
