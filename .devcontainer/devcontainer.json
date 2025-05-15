@@ -1,0 +1,29 @@
+{
+  "name": "Snakkaz Chat Development",
+  "workspaceFolder": "/workspaces/snakkaz-chat",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/snakkaz-chat,type=bind,consistency=cached",
+  "remoteUser": "codespace",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "GitHub.copilot"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "terminal.integrated.profiles.linux": {
+          "bash": {
+            "path": "bash",
+            "icon": "terminal-bash",
+            "args": ["-l"]
+          }
+        },
+        "files.exclude": {
+          "node_modules": true
+        }
+      }
+    }
+  },
+  "postStartCommand": "cd /workspaces/snakkaz-chat && echo 'Navigert til prosjektets rot-katalog' > /tmp/workspace-startup.log"
+}
