@@ -1,10 +1,10 @@
 #!/bin/bash
 #
-# Deploy Snakkaz Chat til www.snakkaz.com med DNS og Cloudflare sjekk
+# Deploy Snakkaz Chat til www.snakkaz.com med DNS sjekk
 #
 # Dette skriptet hjelper med å utføre en enkel deploy av Snakkaz Chat til snakkaz.com
 # gjennom å bruke GitHub Actions workflow som er definert i `.github/workflows/deploy.yml`.
-# Inkluderer DNS-sjekk for Namecheap og Cloudflare integrasjon.
+# Inkluderer DNS-sjekk for Namecheap integrasjon.
 #
 
 echo "🚀 Snakkaz Chat Deployment Tool 🚀"
@@ -53,9 +53,9 @@ if [[ $continue_deploy != "y" ]]; then
   exit 0
 fi
 
-# Kjør DNS og Cloudflare sikkerhetssjekker først
+# Kjør DNS sikkerhetssjekker først
 echo
-echo "🔒 Kjører DNS og Cloudflare sikkerhetskontroll..."
+echo "🔒 Kjører DNS sikkerhetskontroll..."
 
 # Verify CSP configuration
 echo "🔒 Sjekker Content Security Policy (CSP) konfigurasjon..."
@@ -65,7 +65,7 @@ if grep -q "Content-Security-Policy" index.html; then
   echo "✅ CSP meta tag funnet i index.html"
 else
   echo "⚠️ ADVARSEL: CSP meta tag mangler i index.html!"
-  echo "   Dette kan forårsake CORS-feil og blokkere Cloudflare Analytics."
+  echo "   Dette kan forårsake CORS-feil."
   echo "   Vil du fortsette likevel? (y/n)"
   read -r continue_without_csp
   if [[ $continue_without_csp != "y" ]]; then
@@ -90,12 +90,8 @@ else
   echo "   Dette kan blokkere kommunikasjon med dash.snakkaz.com og business.snakkaz.com"
 fi
 
-# Spør om API tokens for å kunne kjøre avanserte sjekker
-echo "Skriv inn Cloudflare API token for å sjekke DNS og konfigurasjon"
-echo "(Du kan hoppe over dette ved å trykke Enter):"
-read -r cloudflare_token
-
-echo "Vil du også sjekke Namecheap DNS konfigurasjon? (y/n)"
+# Sjekk Namecheap DNS konfigurasjon
+echo "Vil du sjekke Namecheap DNS konfigurasjon? (y/n)"
 read -r check_namecheap
 
 if [[ $check_namecheap == "y" ]]; then
@@ -108,88 +104,112 @@ fi
 if [ -n "$cloudflare_token" ]; then
   # Lag midlertidig script for å sjekke DNS konfigurasjon
   cat > check-dns-temp.js <<EOF
-import { getDnsManager } from './src/services/encryption/dnsManager.js';
+// Script for å sjekke DNS konfigurasjon
+import dns from 'dns';
+import { promisify } from 'util';
 
-// Wrap in an async function to use top-level await
-async function checkDnsAndCloudflare() {
+const lookupAsync = promisify(dns.lookup);
+const resolveCnameAsync = promisify(dns.resolveCname);
+
+async function checkDnsConfiguration() {
   try {
-    const dnsManager = getDnsManager(true);
+    console.log("\n===== Namecheap DNS Status Sjekk =====");
     
-    // Initialize with API keys
-    await dnsManager.initialize('${namecheap_key}', '${cloudflare_token}');
-    
-    // Run health check
-    const health = await dnsManager.performHealthCheck();
-    
-    console.log("\n===== DNS & Cloudflare Status Report =====");
-    
-    // Overall status
-    switch (health.status) {
-      case 'healthy':
-        console.log('✅ DNS STATUS: HEALTHY');
-        break;
-      case 'issues':
-        console.log('⚠️ DNS STATUS: ISSUES DETECTED');
-        break;
-      case 'critical':
-        console.log('❌ DNS STATUS: CRITICAL ISSUES');
-        break;
+    // Sjekk hoveddomenet
+    console.log("\nSjekker snakkaz.com...");
+    try {
+      const mainResult = await lookupAsync('snakkaz.com');
+      console.log(`✅ snakkaz.com resolver til IP: ${mainResult.address}`);
+    } catch (err) {
+      console.log(`❌ Kunne ikke løse snakkaz.com: ${err.message}`);
     }
     
-    console.log('\nNAMECHEAP CONFIGURATION:');
-    console.log(\`Using Cloudflare nameservers: \${health.namecheap.usingCloudflareNameservers ? 'Yes ✅' : 'No ❌'}\`);
-    console.log(\`Current nameservers: \${health.namecheap.nameservers.join(', ')}\`);
-    
-    console.log('\nCLOUDFLARE CONFIGURATION:');
-    console.log(\`Zone active: \${health.cloudflare.zoneActive ? 'Yes ✅' : 'No ❌'}\`);
-    console.log(\`www record exists: \${health.cloudflare.wwwRecordExists ? 'Yes ✅' : 'No ❌'}\`);
-    console.log(\`SSL configured: \${health.cloudflare.sslConfigured ? 'Yes ✅' : 'No ❌'}\`);
-    
-    // Issues
-    if (health.issues.length > 0) {
-      console.log('\nISSUES DETECTED:');
-      health.issues.forEach((issue, index) => {
-        console.log(\`\${index + 1}. \${issue}\`);
-      });
+    // Sjekk www subdomene
+    console.log("\nSjekker www.snakkaz.com...");
+    try {
+      const wwwCname = await resolveCnameAsync('www.snakkaz.com');
+      console.log(`✅ www.snakkaz.com har CNAME: ${wwwCname[0]}`);
+    } catch (err) {
+      try {
+        const wwwResult = await lookupAsync('www.snakkaz.com');
+        console.log(`✅ www.snakkaz.com resolver til IP: ${wwwResult.address}`);
+      } catch (err2) {
+        console.log(`❌ Kunne ikke løse www.snakkaz.com: ${err2.message}`);
+      }
     }
     
-    // Auto-fix option if issues detected
-    if (health.status !== 'healthy') {
-      console.log("\nWould you like to attempt to automatically fix these issues? (y/n)");
+    // Sjekk subdomener
+    const subdomains = ['dash', 'business', 'docs', 'analytics', 'help', 'mcp'];
+    
+    console.log("\nSjekker subdomener...");
+    for (const sub of subdomains) {
+      const subdomain = `${sub}.snakkaz.com`;
+      console.log(`\nSjekker ${subdomain}...`);
       
-      // This is just a placeholder - user will need to respond to the prompt in terminal
-      return false; // Let the shell script handle the decision
+      try {
+        const cnameResult = await resolveCnameAsync(subdomain);
+        console.log(`✅ ${subdomain} har CNAME: ${cnameResult[0]}`);
+      } catch (err) {
+        try {
+          const ipResult = await lookupAsync(subdomain);
+          console.log(`✅ ${subdomain} resolver til IP: ${ipResult.address}`);
+        } catch (err2) {
+          console.log(`❌ Kunne ikke løse ${subdomain}: ${err2.message}`);
+          console.log('   Dette subdomenet kan kreve DNS-konfigurasjon i Namecheap.');
+        }
+      }
     }
     
-    return health.status === 'healthy';
+    console.log("\n===== DNS Sjekk Oppsummering =====");
+    console.log("Anbefalt DNS konfigurasjon i Namecheap:");
+    console.log("1. A record for @ -> 185.158.133.1");
+    console.log("2. A record for mcp -> 185.158.133.1");
+    console.log("3. CNAME for www -> snakkaz.com");
+    console.log("4. CNAME for dash -> snakkaz.com");
+    console.log("5. CNAME for business -> snakkaz.com");
+    console.log("6. CNAME for docs -> snakkaz.com");
+    console.log("7. CNAME for analytics -> snakkaz.com");
+    console.log("8. CNAME for help -> snakkaz.com");
+    
+    console.log("\nMerk: DNS endringer kan ta 15 minutter til 48 timer å propagere fullt ut.");
+    
+    return true;
   } catch (error) {
-    console.error('Error checking DNS and Cloudflare configuration:', error);
+    console.error('Error checking DNS configuration:', error);
     return false;
   }
 }
 
-checkDnsAndCloudflare().then(isHealthy => {
-  process.exit(isHealthy ? 0 : 1);
-});
+// Kjør DNS sjekk
+checkDnsConfiguration();
 EOF
 
-  # Kjør sjekk
-  echo "Sjekker DNS og Cloudflare konfigurasjon..."
-  if node --experimental-modules check-dns-temp.js; then
-    echo "✅ DNS og Cloudflare konfigurasjon er OK."
-  else
-    echo "⚠️ Det er problemer med DNS eller Cloudflare konfigurasjonen."
-    echo "   Vil du prøve å fikse problemene automatisk? (y/n)"
-    read -r fix_problems
-    
-    if [[ $fix_problems == "y" ]]; then
-      echo "Forsøker å fikse DNS og Cloudflare problemer..."
-      
-      # Lag midlertidig script for å fikse problemer
-      cat > fix-dns-temp.js <<EOF
-import { getDnsManager } from './src/services/encryption/dnsManager.js';
+  # Kjør DNS sjekk script
+  echo "🔍 Kjører DNS sjekk..."
+  node --input-type=module check-dns-temp.js
+  
+  # Spør brukeren om de vil fortsette
+  echo
+  echo "📋 Vil du fortsette med deployment basert på DNS-sjekken ovenfor? (y/n)"
+  read -r continue_after_dns_check
+  
+  if [[ $continue_after_dns_check != "y" ]]; then
+    echo "Deployment avbrutt etter DNS-sjekk."
+    rm check-dns-temp.js
+    exit 0
+  fi
+  
+  # Fjern midlertidig script
+  rm check-dns-temp.js
+fi
 
-async function fixDnsAndCloudflare() {
+# Kjør setup-subdomain-htaccess.sh hvis den finnes
+if [ -f "scripts/setup-subdomain-htaccess.sh" ]; then
+  echo "🌐 Setter opp subdomene konfigurasjoner..."
+  bash scripts/setup-subdomain-htaccess.sh
+else
+  echo "⚠️ scripts/setup-subdomain-htaccess.sh ikke funnet, hopper over subdomain setup."
+fi
   try {
     const dnsManager = getDnsManager(true);
     
