@@ -33,7 +33,7 @@ function applyEnvironmentPatch() {
   if (typeof window !== 'undefined') {
     // Create a safe process object if it doesn't exist
     if (!window.process) {
-      window.process = { env: {} } as unknown as Window['process'];
+      window.process = { env: {} } as any;
     }
     // Create a safe env object if it doesn't exist
     if (!window.process.env) {

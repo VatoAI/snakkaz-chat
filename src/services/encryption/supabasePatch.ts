@@ -7,7 +7,7 @@
  * UPDATED: Now uses the singleton pattern to avoid multiple GoTrueClient instances
  */
 
-import { supabase } from '@/lib/supabaseClient';
+import { supabase as supabaseInstance } from '@/lib/supabaseClient';
 
 // For configuration diagnostics - use import.meta.env for consistency
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
@@ -24,7 +24,7 @@ if (import.meta.env.DEV && !ENV_CHECK) {
 }
 
 // Export the singleton Supabase client - no need to create a new instance
-export const supabaseClient = supabase;
+export const supabaseClient = supabaseInstance;
 
 // IMPORTANT: Export a function that returns the singleton to avoid breaking existing code
 export const createSupabaseClient = () => {
@@ -36,13 +36,13 @@ export const createSupabaseClient = () => {
     );
   }
   
-  return supabase;
+  return supabaseInstance;
 };
 
 // Configuration verification function - useful for debugging
 export const verifySupabaseConfig = () => {
   try {
-    const isConfigValid = !!supabase && ENV_CHECK;
+    const isConfigValid = !!supabaseInstance && ENV_CHECK;
     
     if (import.meta.env.DEV) {
       console.log('Supabase config verification result:', isConfigValid ? 'Valid ✓' : 'Invalid ✗');
@@ -76,3 +76,70 @@ export const getEnhancedSupabaseOptions = () => ({
 
 // Call verification on import for early detection of issues
 verifySupabaseConfig();
+
+// Create a Supabase client with enhanced options
+export const initializeSupabaseClient = () => {
+  try {
+    return supabaseInstance;
+  } catch (error) {
+    console.error('Failed to initialize Supabase client:', error);
+    // Provide a fallback client that logs errors but doesn't crash the app
+    return createFallbackClient();
+  }
+};
+
+// Create a fallback client that logs errors instead of crashing
+function createFallbackClient() {
+  const errorHandler = () => {
+    const error = new Error('Supabase client not properly initialized');
+    console.error('Supabase API call failed:', error);
+    return Promise.reject(error);
+  };
+  
+  // This is a mock client that logs errors for all operations
+  return {
+    from: () => ({ 
+      select: errorHandler,
+      insert: errorHandler,
+      update: errorHandler,
+      delete: errorHandler,
+      eq: errorHandler,
+      // ...other query methods
+    }),
+    auth: {
+      getUser: errorHandler,
+      getSession: errorHandler,
+      signIn: errorHandler,
+      signOut: errorHandler,
+      onAuthStateChange: () => ({ 
+        data: { subscription: { unsubscribe: () => {} } }
+      })
+    },
+    storage: { from: () => ({ 
+      upload: errorHandler, 
+      getPublicUrl: () => ({ data: { publicUrl: '' } })
+    }) },
+    function: { invoke: errorHandler },
+    channel: () => ({
+      on: () => ({ subscribe: () => ({}) }),
+      subscribe: () => ({})
+    }),
+    removeChannel: () => {}
+  };
+}
+
+// Export the configured client
+export const supabase = initializeSupabaseClient();
+
+// Export a utility to test the connection
+export const testConnection = async () => {
+  try {
+    const { error } = await supabaseInstance.from('profiles').select('*').limit(1);
+    if (error) {
+      return { success: false, error: error.message };
+    }
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err?.message || 'Unknown error' };
+  }
+};
