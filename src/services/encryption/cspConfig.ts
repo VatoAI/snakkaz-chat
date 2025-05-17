@@ -100,6 +100,28 @@ function setupCspViolationMonitoring() {
 }
 
 /**
+ * Get Supabase domain from environment variables or defaults
+ */
+function getSupabaseDomain() {
+  // Try to extract from environment
+  const envUrl = typeof window !== 'undefined' && 
+    window['env'] && 
+    window['env'].SUPABASE_URL;
+    
+  if (envUrl) {
+    try {
+      const url = new URL(envUrl);
+      return url.origin;
+    } catch {
+      // Parsing failed, continue to default
+    }
+  }
+  
+  // Default domain if env not available
+  return 'https://wqpoozpbceucynsojmbk.supabase.co';
+}
+
+/**
  * Build CSP string with appropriate directives
  */
 export function buildCspPolicy() {
@@ -123,28 +145,54 @@ export function buildCspPolicy() {
   
   // App domains
   const appDomains = [
-    '*.snakkaz.com', 'https://*.snakkaz.com', 'http://*.snakkaz.com',
-    'www.snakkaz.com', 'https://www.snakkaz.com', 'http://www.snakkaz.com',
-    'dash.snakkaz.com', 'https://dash.snakkaz.com', 'http://dash.snakkaz.com',
-    'business.snakkaz.com', 'https://business.snakkaz.com', 'http://business.snakkaz.com',
-    'docs.snakkaz.com', 'https://docs.snakkaz.com', 'http://docs.snakkaz.com', 
-    'analytics.snakkaz.com', 'https://analytics.snakkaz.com', 'http://analytics.snakkaz.com',
-    'api.snakkaz.com', 'https://api.snakkaz.com', 'http://api.snakkaz.com',
-    'static.snakkaz.com', 'https://static.snakkaz.com', 'http://static.snakkaz.com',
-    'cdn.snakkaz.com', 'https://cdn.snakkaz.com', 'http://cdn.snakkaz.com'
+    '*.snakkaz.com', 
+    'https://*.snakkaz.com', 
+    'http://*.snakkaz.com',
+    'www.snakkaz.com', 
+    'https://www.snakkaz.com', 
+    'http://www.snakkaz.com',
+    'dash.snakkaz.com', 
+    'https://dash.snakkaz.com', 
+    'http://dash.snakkaz.com',
+    'business.snakkaz.com', 
+    'https://business.snakkaz.com', 
+    'http://business.snakkaz.com',
+    'docs.snakkaz.com', 
+    'https://docs.snakkaz.com', 
+    'http://docs.snakkaz.com', 
+    'analytics.snakkaz.com', 
+    'https://analytics.snakkaz.com', 
+    'http://analytics.snakkaz.com',
+    'api.snakkaz.com', 
+    'https://api.snakkaz.com', 
+    'http://api.snakkaz.com',
+    'static.snakkaz.com', 
+    'https://static.snakkaz.com', 
+    'http://static.snakkaz.com',
+    'cdn.snakkaz.com', 
+    'https://cdn.snakkaz.com', 
+    'http://cdn.snakkaz.com'
   ].join(' ');
   
   // CDN domains
   const cdnDomains = [
     'cdn.pngtree.com',
-    '*.gpteng.co', 'https://*.gpteng.co', 'http://*.gpteng.co',
-    'cdn.gpteng.co', 'https://cdn.gpteng.co', 'http://cdn.gpteng.co'
+    '*.gpteng.co', 
+    'https://*.gpteng.co', 
+    'http://*.gpteng.co',
+    'cdn.gpteng.co', 
+    'https://cdn.gpteng.co', 
+    'http://cdn.gpteng.co'
   ].join(' ');
   
   // Additional connect domains
   const additionalConnectDomains = [
-    'mcp.snakkaz.com', 'https://mcp.snakkaz.com', 'http://mcp.snakkaz.com',
-    'help.snakkaz.com', 'https://help.snakkaz.com', 'http://help.snakkaz.com'
+    'mcp.snakkaz.com', 
+    'https://mcp.snakkaz.com', 
+    'http://mcp.snakkaz.com',
+    'help.snakkaz.com', 
+    'https://help.snakkaz.com', 
+    'http://help.snakkaz.com'
   ].join(' ');
   
   // Build CSP
@@ -153,19 +201,19 @@ export function buildCspPolicy() {
     "default-src 'self'",
     
     // Scripts - limit to self and trusted CDNs if needed
-    `script-src 'self' 'unsafe-inline' 'unsafe-eval' ${appDomains} ${cdnDomains}`,
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' " + appDomains + " " + cdnDomains,
     
     // Styles
     "style-src 'self' 'unsafe-inline'",
     
     // Images
-    `img-src 'self' data: blob: ${storageDomains} ${supabaseDomains} ${appDomains} ${cdnDomains}`,
+    "img-src 'self' data: blob: " + storageDomains + " " + supabaseDomains + " " + appDomains + " " + cdnDomains,
     
     // Fonts
     "font-src 'self' data:",
     
     // Connect (API calls) - critical for Supabase and snakkaz subdomains
-    `connect-src 'self' ${supabaseDomains} ${storageDomains} ${appDomains} ${cdnDomains} ${additionalConnectDomains}`,
+    "connect-src 'self' " + supabaseDomains + " " + storageDomains + " " + appDomains + " " + cdnDomains + " " + additionalConnectDomains,
     
     // Media
     "media-src 'self' blob:",
@@ -194,28 +242,8 @@ export function buildCspPolicy() {
 }
 
 /**
- * Get Supabase domain from environment variables or defaults
+ * Export a testing function
  */
-function getSupabaseDomain() {
-  // Try to extract from environment
-  const envUrl = typeof window !== 'undefined' && 
-    window['env'] && 
-    window['env'].SUPABASE_URL;
-    
-  if (envUrl) {
-    try {
-      const url = new URL(envUrl);
-      return url.origin;
-    } catch {
-      // Parsing failed, continue to default
-    }
-  }
-  
-  // Default domain if env not available
-  return 'https://wqpoozpbceucynsojmbk.supabase.co';
-}
-
-// Export a testing function
 export function testCsp() {
   console.log('CSP Policy:', buildCspPolicy());
   
