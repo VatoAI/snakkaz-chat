@@ -5,9 +5,10 @@ import * as Encryption from '../lib/encryption';
 import { createClient } from '@supabase/supabase-js';
 
 // Supabase-konfigurasjon
-// Merk: I en produksjonsapp bør disse være miljøvariabler
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://your-project.supabase.co';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'your-anon-key';
+// Bruker miljøvariabler med fallback til standardverdier
+import { ENV } from '@/utils/env/environmentFix';
+const supabaseUrl = ENV.SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL || 'https://your-project.supabase.co';
+const supabaseAnonKey = ENV.SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY || 'your-anon-key';
 
 // Type-definisjoner
 interface UserKeys {

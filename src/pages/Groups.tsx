@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from './hooks/useAuth';
 import useEncryption from './hooks/useEncryption';
 import { createClient } from '@supabase/supabase-js';
-import Link from 'next/link';
+import { Link } from 'react-router-dom';
 
 // Supabase-konfigurasjon
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://your-project.supabase.co';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'your-anon-key';
+import { ENV } from '@/utils/env/environmentFix';
+const supabaseUrl = ENV.SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL || 'https://your-project.supabase.co';
+const supabaseAnonKey = ENV.SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY || 'your-anon-key';
 
 // Type definisjoner
 interface Group {
@@ -259,7 +260,7 @@ const Groups: React.FC = () => {
       // Formater medlemslisten
       const formattedMembers = members?.map(m => ({
         user_id: m.user_id,
-        username: m.users?.username || 'Ukjent bruker',
+        username: m.users?.[0]?.username || 'Ukjent bruker',
         role: m.role as 'admin' | 'member',
         joined_at: m.joined_at
       })) || [];
@@ -282,7 +283,7 @@ const Groups: React.FC = () => {
     return (
       <div className="p-4">
         <h1 className="text-2xl font-bold mb-4">Grupper</h1>
-        <p>Du må være <Link href="/Login" className="text-blue-500 underline">logget inn</Link> for å se grupper.</p>
+        <p>Du må være <Link to="/Login" className="text-blue-500 underline">logget inn</Link> for å se grupper.</p>
       </div>
     );
   }
@@ -400,7 +401,7 @@ const Groups: React.FC = () => {
             {selectedGroup.is_member && (
               <div className="mb-4">
                 <Link 
-                  href={`/chat/ChatPage?groupId=${selectedGroup.id}`}
+                  to={`/chat/ChatPage?groupId=${selectedGroup.id}`}
                   className="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded inline-block"
                 >
                   Gå til gruppechat
@@ -455,7 +456,7 @@ const Groups: React.FC = () => {
                 
                 {group.is_member ? (
                   <Link 
-                    href={`/chat/ChatPage?groupId=${group.id}`}
+                    to={`/chat/ChatPage?groupId=${group.id}`}
                     className="bg-green-500 hover:bg-green-600 text-white py-1 px-3 rounded text-sm"
                   >
                     Chat
