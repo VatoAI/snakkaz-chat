@@ -8,6 +8,7 @@
    - Fjernet Cloudflare Analytics-script fra index.html
    - Oppdatert CSP-policy for å fjerne Cloudflare-domener
    - Fikset syntax-feil i cspConfig.ts som forårsaket GitHub Actions build-feil
+   - Håndtert FTP-timeout ved deployment med økt timeout-verdi og forbedret logging
 
 2. **Sikkerhetsforbedringer:**
    - Sesjonstimeout-mekanisme i `securityEnhancements.ts`

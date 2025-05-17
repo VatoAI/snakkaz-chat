@@ -108,6 +108,9 @@ jobs:
           local-dir: ./dist/
           server-dir: ${{ secrets.SERVER_DIR || '/' }}
           dangerous-clean-slate: false
+          timeout: 180000  # Øker timeout til 3 minutter (fra standard 30 sekunder)
+          protocol: ftp   # Eksplisitt angir FTP-protokoll (i tilfelle FTPS forårsaker problemer)
+          log-level: verbose  # Mer detaljert logging for bedre feilsøking
       
       # Namecheap doesn't have a cache purging API like Cloudflare
       # This section has been removed as part of the migration from Cloudflare to Namecheap
