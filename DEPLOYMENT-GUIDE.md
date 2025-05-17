@@ -7,8 +7,24 @@ Dette dokumentet gir en enkel trinn-for-trinn guide til å deploye Snakkaz Chat 
 1. Du har tilgang til GitHub-repositoriet for Snakkaz Chat
 2. Du har konfigurert nødvendige hemmeligheter i GitHub:
    - `SUPABASE_URL` og `SUPABASE_ANON_KEY`
-   - `FTP_SERVER`, `FTP_USERNAME`, `FTP_PASSWORD` 
-   - `CLOUDFLARE_ZONE_ID` og `CLOUDFLARE_API_TOKEN`
+   - `FTP_SERVER`, `FTP_USERNAME`, `FTP_PASSWORD`, `SERVER_DIR`
+   
+   > **Merk:** Etter migreringen fra Cloudflare til Namecheap trenger du ikke lenger:
+   > - `CLOUDFLARE_ZONE_ID` og `CLOUDFLARE_API_TOKEN`
+
+## Namecheap FTP-konfigurasjon
+
+Etter migreringen til Namecheap hosting, skal følgende FTP-informasjon brukes:
+
+- **FTP Server**: `premium123.web-hosting.com`
+- **FTP Username**: `SnakkaZ@snakkaz.com` (eller annen FTP-konto du har opprettet)
+- **FTP Password**: Passordet du satte ved oppretting av FTP-kontoen
+- **Server Directory**: `/home/snakqsqe/`
+
+For å generere GitHub Secrets for FTP-oppsett, kan du kjøre:
+```bash
+./generate-github-secrets.sh
+```
 
 ## Deployment-prosess
 

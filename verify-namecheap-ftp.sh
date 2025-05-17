@@ -36,25 +36,29 @@ fi
 
 # Test FTP-tilkobling med timeout
 echo "📡 Tester tilkobling til $FTP_SERVER..."
-timeout 15s bash -c "echo -e 'user $FTP_USERNAME $FTP_PASSWORD\nquit' | ftp -n $FTP_SERVER 2>&1" > ftp-test-output.txt
+echo "FTP_SERVER=$FTP_SERVER, FTP_USERNAME=$FTP_USERNAME"
+timeout 15s bash -c "echo -e 'user $FTP_USERNAME $FTP_PASSWORD\nquit' | ftp -vn $FTP_SERVER 2>&1" > ftp-test-output.txt
 
 if [ $? -eq 0 ]; then
     if grep -q "230" ftp-test-output.txt; then
         echo "✅ FTP-tilkobling vellykket!"
         echo "✅ Innlogging til $FTP_SERVER med bruker $FTP_USERNAME fungerer."
-        rm -f ftp-test-output.txt
+        echo "Detaljert respons:"
+        cat ftp-test-output.txt
     else
         echo "❌ FTP-tilkobling mislyktes. Feil ved innlogging."
         echo "Sjekk brukernavnet og passordet i .env-filen."
+        echo "Detaljert feilmelding:"
         cat ftp-test-output.txt
-        rm -f ftp-test-output.txt
+        # Ikke slett filen, slik at vi kan se den senere
         exit 1
     fi
 else
     echo "❌ FTP-tilkobling tidsavbrutt eller mislyktes."
     echo "Sjekk at serveren $FTP_SERVER er tilgjengelig og at port 21 er åpen."
+    echo "Detaljert feilmelding:"
     cat ftp-test-output.txt
-    rm -f ftp-test-output.txt
+    # Ikke slett filen, slik at vi kan se den senere
     exit 1
 fi
 
