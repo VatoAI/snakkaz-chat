@@ -13,13 +13,12 @@
     <!-- Content Security Policy -->
     <meta http-equiv="Content-Security-Policy" content="
       default-src 'self';
-      script-src 'self' 'unsafe-inline' 'unsafe-eval' cdn.gpteng.co *.cloudflareinsights.com static.cloudflareinsights.com;
+      script-src 'self' 'unsafe-inline' 'unsafe-eval' cdn.gpteng.co;
       style-src 'self' 'unsafe-inline';
       img-src 'self' data: blob: *.amazonaws.com storage.googleapis.com *.supabase.co *.supabase.in;
       font-src 'self' data:;
       connect-src 'self' *.supabase.co *.supabase.in wss://*.supabase.co *.amazonaws.com storage.googleapis.com 
                   *.snakkaz.com dash.snakkaz.com business.snakkaz.com docs.snakkaz.com analytics.snakkaz.com
-                  static.cloudflareinsights.com cloudflareinsights.com *.cloudflareinsights.com
                   cdn.gpteng.co https://cdn.gpteng.co;
       media-src 'self' blob:;
       object-src 'none';
@@ -30,8 +29,6 @@
     <title>SnakkaZ Chat</title>
     <!-- Lovable Select Script - DO NOT REMOVE -->
     <script src="https://cdn.gpteng.co/gptengineer.js" type="module" crossorigin="anonymous" referrerpolicy="no-referrer-when-downgrade"></script>
-    <!-- Cloudflare Analytics - Fixed Version -->
-    <script defer crossorigin="anonymous" src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" data-cf-beacon='{"token":"c5bd7bbfe41c47c2a5ec","version":"2023.10.0","spa":true,"spaMode":"auto","cookieDomain":"snakkaz.com","referrerPolicy":"no-referrer-when-downgrade"}'></script>
   </head>
   <body>
     <div id="root"></div>

@@ -9,11 +9,12 @@
 import { applyCspPolicy } from './security/cspConfig';
 import { registerAssetFallbackHandlers, preloadLocalAssets } from './encryption/assetFallback';
 import { runDiagnosticTest } from './encryption/diagnosticTest';
-import { unblockRequests, fixCorsSecurity } from './encryption/corsTest';
+import { unblockPingRequests } from './encryption/corsTest';
+import { fixCorsSecurity } from './security/corsConfig';
 import { applyBrowserCompatibilityFixes, fixModuleImportIssues } from './encryption/browserFixes';
 import { fixDeprecatedMetaTags } from './encryption/metaTagFixes';
 import { initCspReporting } from './encryption/cspReporting';
-import { applySecurityEnhancements } from './encryption/securityEnhancements';
+import { applySecurityEnhancements } from './security/securityEnhancements';
 
 // Track initialization state
 let isInitialized = false;
@@ -41,7 +42,7 @@ export function initializeSnakkazChat() {
       console.error('Failed to apply emergency CSP fixes:', err);
       // Fall back to standard fixes if the import fails
       applyCspPolicy();
-      unblockRequests();
+      unblockPingRequests();
       fixCorsSecurity();
     });
   } catch (error) {

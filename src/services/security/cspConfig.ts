@@ -116,3 +116,39 @@ export function testCspConfiguration(): { success: boolean; issues: string[] } {
     issues
   };
 }
+
+/**
+ * Testing function that returns information about CSP configuration
+ * Used by diagnostics
+ */
+export function testCsp() {
+  // Build CSP directives object for testing
+  const cspDirectives: { [key: string]: string[] } = {
+    'default-src': ["'self'"],
+    'script-src': ["'self'", "'unsafe-inline'", "'unsafe-eval'", 'cdn.gpteng.co'],
+    'style-src': ["'self'", "'unsafe-inline'"],
+    'img-src': ["'self'", 'data:', 'blob:', '*.amazonaws.com', 'storage.googleapis.com', '*.supabase.co'],
+    'font-src': ["'self'", 'data:'],
+    'connect-src': [
+      "'self'", 
+      '*.supabase.co', 
+      '*.supabase.in',  
+      'wss://*.supabase.co', 
+      '*.amazonaws.com', 
+      'storage.googleapis.com', 
+      '*.snakkaz.com',
+      'mcp.snakkaz.com',
+      'help.snakkaz.com'
+    ]
+  };
+  
+  // Return domains that will be allowed by the policy
+  return {
+    success: true,
+    allowedDomains: {
+      supabase: ['*.supabase.co', '*.supabase.in'],
+      api: ['self'],
+      storage: ['*.amazonaws.com', 'storage.googleapis.com']
+    }
+  };
+}

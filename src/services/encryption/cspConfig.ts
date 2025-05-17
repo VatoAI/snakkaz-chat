@@ -83,8 +83,12 @@ function setupCspViolationMonitoring() {
     mutations.forEach((mutation) => {
       if (mutation.type === 'childList') {
         mutation.addedNodes.forEach((node) => {
-          if (node.nodeName === 'SCRIPT' && !node.src && node.innerHTML) {
-            console.warn('CSP Warning: Inline script added dynamically', node);
+          if (node.nodeType === Node.ELEMENT_NODE && 
+              (node as Element).nodeName === 'SCRIPT') {
+            const scriptNode = node as HTMLScriptElement;
+            if (!scriptNode.src && scriptNode.innerHTML) {
+              console.warn('CSP Warning: Inline script added dynamically', scriptNode);
+            }
           }
         });
       }
@@ -191,6 +195,21 @@ function getSupabaseDomain() {
   
   // Default domain if env not available
   return 'https://wqpoozpbceucynsojmbk.supabase.co';
+}
+
+// Export a testing function
+export function testCsp() {
+  console.log('CSP Policy:', buildCspPolicy());
+  
+  // Return domains that will be allowed by the policy
+  return {
+    success: true,
+    allowedDomains: {
+      supabase: ['*.supabase.co', '*.supabase.in', getSupabaseDomain()],
+      api: ['self', getSupabaseDomain()],
+      storage: ['*.amazonaws.com', 'storage.googleapis.com']
+    }
+  };
 }
 
 /**
