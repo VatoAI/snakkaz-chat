@@ -76,3 +76,79 @@ export const getEnhancedSupabaseOptions = () => ({
 
 // Call verification on import for early detection of issues
 verifySupabaseConfig();
+        },
+        fetch: (url, options) => {
+          // Add credentials mode for CORS
+          return fetch(url, {
+            ...options,
+            credentials: 'include' // This is important for CORS with cookies
+          });
+        }
+      }
+    });
+    
+  } catch (error) {
+    console.error('Failed to initialize Supabase client:', error);
+    // Provide a fallback client that logs errors but doesn't crash the app
+    return createFallbackClient();
+  }
+};
+
+// Create a fallback client that logs errors instead of crashing
+function createFallbackClient() {
+  const errorHandler = () => {
+    const error = new Error('Supabase client not properly initialized');
+    console.error('Supabase API call failed:', error);
+    return Promise.reject(error);
+  };
+  
+  // This is a mock client that logs errors for all operations
+  return {
+    from: () => ({ 
+      select: errorHandler,
+      insert: errorHandler,
+      update: errorHandler,
+      delete: errorHandler,
+      eq: errorHandler,
+      // ...other query methods
+    }),
+    auth: {
+      getUser: errorHandler,
+      getSession: errorHandler,
+      signIn: errorHandler,
+      signOut: errorHandler,
+      onAuthStateChange: () => ({ 
+        data: { subscription: { unsubscribe: () => {} } }
+      })
+    },
+    storage: { from: () => ({ 
+      upload: errorHandler, 
+      getPublicUrl: () => ({ data: { publicUrl: '' } })
+    }) },
+    function: { invoke: errorHandler },
+    channel: () => ({
+      on: () => ({ subscribe: () => ({}) }),
+      subscribe: () => ({})
+    }),
+    removeChannel: () => {}
+  };
+}
+
+// Export the configured client
+export const supabase = createSupabaseClient();
+
+// Export a utility to test the connection
+export const testConnection = async () => {
+  try {
+    // Use getUser instead of getSession for better compatibility
+    const { data, error } = await supabase.auth.getUser();
+    if (error) throw error;
+    return { success: true, data };
+  } catch (error) {
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Unknown error',
+      suggestion: 'Check your network connection, CORS configuration, and Supabase project settings.'
+    };
+  }
+};

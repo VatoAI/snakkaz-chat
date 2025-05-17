@@ -14,16 +14,6 @@
 // Flag to track if environment patch has been applied
 let envPatchApplied = false;
 
-// Define a partial Process type for the browser environment
-declare global {
-  interface Window {
-    process?: Partial<NodeJS.Process> & {
-      env?: Record<string, any>;
-      [key: string]: any;
-    };
-  }
-}
-
 // Apply global shim for process.env to prevent errors in browser
 function applyEnvironmentPatch() {
   if (envPatchApplied) {
@@ -33,7 +23,7 @@ function applyEnvironmentPatch() {
   if (typeof window !== 'undefined') {
     // Create a safe process object if it doesn't exist
     if (!window.process) {
-      window.process = {} as Partial<NodeJS.Process>;
+      window.process = {};
     }
     
     // Create a safe env object if it doesn't exist
@@ -101,3 +91,20 @@ export const ENV = {
 
 // Export the patch function in case it needs to be applied later
 export const ensureEnvironmentPatch = applyEnvironmentPatch;
+export function getEnvironmentVariable(name: string, fallback: string = ''): string {
+  if (typeof window !== 'undefined' && 'process' in window) {
+    // @ts-ignore - Vi ignorerer TypeScript-advarsler her
+    return window.process.env[name] || import.meta.env['VITE_' + name] || fallback;
+  }
+  
+  // Fallback til Vite's import.meta.env
+  return import.meta.env['VITE_' + name] || fallback;
+}
+
+// Eksporter et objekt med alle miljøvariabler for enklere bruk
+export const ENV = {
+  NODE_ENV: import.meta.env.MODE === 'production' ? 'production' : 'development',
+  SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL || '',
+  SUPABASE_ANON_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY || '',
+  // Legg til flere miljøvariabler her ved behov
+};
