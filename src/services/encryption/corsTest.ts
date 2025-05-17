@@ -19,8 +19,7 @@ export function unblockPingRequests() {
     if (typeof msg === 'string' && 
         (msg.includes('Cross-Origin Request Blocked') || 
          msg.includes('CORS request did not succeed') ||
-         msg.includes('Content-Security-Policy') ||
-         msg.includes('cloudflareinsights.com'))) {
+         msg.includes('Content-Security-Policy'))) {
       // Log with debug level instead to reduce noise
       console.debug('[Suppressed CORS Error]', msg);
       return;
@@ -36,31 +35,16 @@ export function unblockPingRequests() {
     // Check if this is a ping request to Snakkaz subdomains
     if (url && (
       (url.includes('/ping') && url.includes('snakkaz.com')) || 
-      url.includes('cloudflareinsights.com') ||
       url.includes('cdn.gpteng.co') ||
       url.includes('dash.snakkaz.com') ||
       url.includes('analytics.snakkaz.com') ||
       url.includes('business.snakkaz.com') ||
       url.includes('docs.snakkaz.com') ||
-      url.includes('report-violation') || // CSP violation reporting
-      url.includes('beacon.min.js') ||    // Cloudflare beacon
-      url.includes('vcd15cbe7772f49c399c6a5babf22c1241717689176015') // Include exact Cloudflare beacon ID from error message
+      url.includes('report-violation') // CSP violation reporting
     )) {
       console.debug(`Intercepted potentially blocked request to: ${url}`);
       
-      // For Cloudflare beacon.js requests, add CORS headers
-      if (url.includes('beacon.min.js') || url.includes('cloudflareinsights.com')) {
-        // Create custom options with proper CORS settings
-        const options = init || {};
-        options.mode = 'cors';
-        options.credentials = 'omit';
-        options.headers = {
-          ...(options.headers || {}),
-          'Origin': window.location.origin,
-          'Referer': window.location.origin
-        };
-        return originalFetch.apply(this, [input, options]);
-      }
+      // No special handling needed for specific scripts (Cloudflare references removed)
       
       // For other CloudFlare analytics endpoints, return a success response
       return Promise.resolve(new Response('{"success":true,"status":"ok","timestamp":"' + new Date().toISOString() + '"}', {
@@ -85,7 +69,6 @@ export function unblockPingRequests() {
     // Check if this is a ping request
     if (typeof url === 'string' && (
       (url.includes('/ping') && url.includes('snakkaz.com')) ||
-      url.includes('cloudflareinsights.com') ||
       url.includes('cdn.gpteng.co')
     )) {
       // For ping requests, modify to a safe URL
@@ -99,36 +82,14 @@ export function unblockPingRequests() {
 }
 
 /**
- * Fix Cloudflare Analytics CORS and SRI security issues
+ * Handles security and connection issues (Cloudflare references removed)
  * This suppresses errors and enables correct loading
  */
-export function fixCloudflareCorsSecurity() {
+export function fixSecurityIssues() {
   if (typeof window === 'undefined') return;
   
-  // Fix the specific Cloudflare Analytics script with the correct URL
-  const fixCloudflareScript = () => {
-    // Find any existing Cloudflare scripts
-    const scripts = document.querySelectorAll('script[src*="cloudflareinsights.com"]');
-    scripts.forEach(script => {
-      // Update to the exact URL from the error message
-      const scriptEl = script as HTMLScriptElement;
-      if (scriptEl.src.includes('beacon.min.js')) {
-        scriptEl.src = 'https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015';
-        scriptEl.removeAttribute('integrity');
-        scriptEl.setAttribute('crossorigin', 'anonymous');
-        scriptEl.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
-        console.log('Updated Cloudflare Analytics script URL to match version');
-      }
-    });
-  };
-  
-  // Run the fix when the DOM is ready
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', fixCloudflareScript);
-  } else {
-    fixCloudflareScript();
-  }
-  
+  // No need to fix Cloudflare scripts anymore
+
   // Suppress CORS errors in the console
   window.addEventListener('error', (event) => {
     if (
@@ -140,8 +101,7 @@ export function fixCloudflareCorsSecurity() {
       event.message?.includes('Subresource Integrity') ||
       event.message?.includes('SHA-') ||
       event.message?.includes('has been blocked') ||
-      event.message?.includes('match the content') || // Add specific error from logs
-      event.filename?.includes('cloudflareinsights.com')
+      event.message?.includes('match the content') // Add specific error from logs
     ) {
       console.debug(`Suppressed browser error: ${event.message}`);
       event.preventDefault();
@@ -157,7 +117,6 @@ export function fixCloudflareCorsSecurity() {
       message?.toString().includes('CORS') || 
       message?.toString().includes('Cross-Origin') ||
       message?.toString().includes('integrity') || 
-      source?.includes('cloudflareinsights') ||
       source?.includes('snakkaz.com')
     ) {
       console.debug(`Suppressed window.onerror: ${message}`);

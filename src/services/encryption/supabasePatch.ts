@@ -13,15 +13,15 @@
 import { createClient } from '@supabase/supabase-js';
 
 // For configuration diagnostics
-const SUPABASE_URL = process.env.SUPABASE_URL || 'https://your-project-ref.supabase.co';
-const ENV_CHECK = !!process.env.SUPABASE_URL && !!process.env.SUPABASE_ANON_KEY;
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://your-project-ref.supabase.co';
+const ENV_CHECK = !!import.meta.env.VITE_SUPABASE_URL && !!import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 // Helper to log config issues during development
-if (process.env.NODE_ENV === 'development' && !ENV_CHECK) {
+if (import.meta.env.DEV && !ENV_CHECK) {
   console.warn(
     'Supabase configuration issue detected! Ensure you have set the following environment variables:\n' +
-    '- SUPABASE_URL\n' + 
-    '- SUPABASE_ANON_KEY\n\n' +
+    '- VITE_SUPABASE_URL\n' + 
+    '- VITE_SUPABASE_ANON_KEY\n\n' +
     'Add these to your .env file or environment variables.'
   );
 }
@@ -29,8 +29,8 @@ if (process.env.NODE_ENV === 'development' && !ENV_CHECK) {
 // Initialize the Supabase client with better config and error handling
 export const createSupabaseClient = () => {
   try {
-    const supabaseUrl = process.env.SUPABASE_URL || '';
-    const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || '';
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
     
     // Validate config
     if (!supabaseUrl || !supabaseAnonKey) {

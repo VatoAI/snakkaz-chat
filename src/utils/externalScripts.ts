@@ -14,18 +14,9 @@ interface ExternalScript {
 }
 
 // Script configurations
+// All Cloudflare references removed since we no longer use Cloudflare
 const EXTERNAL_SCRIPTS: ExternalScript[] = [
-    {
-        id: 'cloudflare-insights',
-        src: 'https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015',
-        async: true,
-        defer: true,
-        attributes: {
-            'data-cf-beacon': '{"token": "your-token-here"}',
-            'crossorigin': 'anonymous'
-        },
-        enabled: true // Enable for all environments to ensure proper testing
-    }
+    // You can add other external scripts here if needed
 ];
 
 /**
@@ -50,7 +41,6 @@ export function loadExternalScripts(): void {
 function setupErrorFilters(): void {
     // Create a list of domains to filter errors for
     const domainsToFilter = [
-        'cloudflareinsights.com',
         'business.snakkaz.com',
         'docs.snakkaz.com',
         'ai-dash.snakkaz.com',

@@ -1,3 +1,6 @@
+// Import environment fix first to ensure process.env is available
+import './utils/env/environmentFix';
+
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
@@ -16,6 +19,9 @@ initializeErrorHandling();
 
 // Apply the emergency CSP fixes first to prevent loading issues
 applyAllCspFixes();
+
+// Log environment setup
+console.log('Snakkaz Chat environment initialized');
 
 // Initialize Snakkaz Chat security features
 initializeSnakkazChat();
