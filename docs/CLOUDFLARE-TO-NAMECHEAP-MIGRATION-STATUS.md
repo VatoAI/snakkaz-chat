@@ -53,9 +53,10 @@ This document tracks the progress of migrating Snakkaz Chat's DNS management fro
 
 1. ✅ Complete DNS propagation (DNS should be fully propagated as of May 17, 2025)
 2. 🔍 Investigate why subdomains return 403 errors:
-   - Verify web server configuration for each subdomain
-   - Check SSL certificate coverage for all subdomains
-   - Ensure proper virtual host configuration
+   - ✅ Verified DNS settings for subdomains
+   - ✅ Set up subdomain directories in cPanel (May 17, 2025)
+   - ⬜ Check SSL certificate coverage for all subdomains (in progress)
+   - ⬜ Test subdomains after configuration
 3. ✅ Fix GitHub Actions build failures:
    - ✅ Fixed syntax error in cspConfig.ts by removing template literals and restructuring code
    - ✅ Fixed potential character encoding issues in the file
@@ -63,17 +64,20 @@ This document tracks the progress of migrating Snakkaz Chat's DNS management fro
 4. 🔍 Fix GitHub Actions deployment failures:
    - ✅ Identified FTP timeout issue during deployment
    - ✅ Modified GitHub Actions workflow with increased timeout and verbose logging
-   - ⬜ Test deployment after fixes
-3. 🔍 Fix remaining Cloudflare script references:
+   - ✅ Purchased and set up Namecheap Stellar Plus hosting package (May 17, 2025)
+   - ⬜ Configure FTP access in cPanel
+   - ⬜ Add FTP credentials to GitHub repository secrets
+   - ⬜ Test deployment after hosting setup
+5. 🔍 Fix remaining Cloudflare script references:
    - ✅ Removed Cloudflare analytics script from index.html
    - ✅ Removed Cloudflare domains from CSP policy
    - ✅ Added local environment variables for Supabase
    - ⬜ Check for additional Cloudflare references in build output
-4. 📝 Update final documentation:
+6. 📝 Update final documentation:
    - Add performance metrics comparing before/after migration
    - Document any remaining issues or quirks
    - Create runbooks for common DNS management tasks
-5. 🧪 Conduct final testing:
+7. 🧪 Conduct final testing:
    - Load testing on new DNS configuration
    - Security testing without Cloudflare WAF
    - Cross-browser compatibility testing
@@ -90,6 +94,47 @@ This document tracks the progress of migrating Snakkaz Chat's DNS management fro
 | analytics | CNAME       | snakkaz.com. | ⚠️ 403 Error |
 | mcp       | CNAME       | snakkaz.com. | ⚠️ 403 Error |
 | help      | CNAME       | snakkaz.com. | ⚠️ 403 Error |
+
+## Namecheap Hosting Setup
+
+This section tracks our Namecheap hosting setup progress:
+
+1. **Purchase Hosting Package**:
+   - ✅ Selected Stellar Plus plan ($34.88/year) - Completed May 17, 2025
+   - ✅ Features: Unlimited storage, bandwidth, and subdomains
+   - ✅ Hosting is now ACTIVE for snakkaz.com
+   - Note: SSL and security services to be added after initial setup
+
+2. **Access and Configure cPanel**:
+   - ✅ Successfully purchased and activated Stellar Plus hosting
+   - ✅ Hosting linked to snakkaz.com domain
+   - ✅ Configured subdomain directories in cPanel (May 17, 2025)
+   - ⬜ Set up SSL certificates for all subdomains (in progress - PositiveSSL being installed)
+   - ⬜ Test web server configuration after setup
+
+3. **Set Up FTP for GitHub Actions**:
+   - ⬜ Access FTP Accounts section in cPanel
+   - ⬜ Add the following secrets to GitHub repository:
+     - FTP_SERVER: premium123.web-hosting.com (Server Hostname)
+     - FTP_USERNAME: (create or find in cPanel > FTP Accounts)
+     - FTP_PASSWORD: (create or find in cPanel > FTP Accounts)
+     - SERVER_DIR: (typically "/")
+
+4. **Configure Subdomains in cPanel**:
+   - ✅ Created subdomain entries for: dash, business, docs, analytics, mcp, help (May 17, 2025)
+   - ✅ Pointed each subdomain to appropriate directory under /subdomains/[name]
+   - ⬜ Set up redirects if needed (may not be necessary)
+
+5. **SSL Certificate Setup**:
+   - ✅ Accessed cPanel > Security > SSL/TLS Status (May 17, 2025)
+   - ✅ Found free PositiveSSL installation in progress by Namecheap
+   - ⬜ Verify certificate coverage for all subdomains after installation completes
+   - ⬜ Consider wildcard certificate (*.snakkaz.com) if needed for all subdomains
+   
+6. **Security Setup (Optional)**:
+   - Add SiteLock protection after hosting is confirmed
+   - Access via Namecheap dashboard > Manage Hosting > Security options
+   - This replaces some security features previously handled by Cloudflare
 
 ## Troubleshooting 403 Errors
 
