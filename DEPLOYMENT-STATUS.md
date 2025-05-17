@@ -31,11 +31,16 @@
    - Implementere fullstendig gruppechat-funksjonalitet basert på `GroupList.tsx`
    - Legge til moderasjonsfunksjoner for global chat
 
-2. **Supabase-integrasjon:**
+2. **Supabase-integrasjon og optimalisering:**
    - Sette opp Realtime-kanaler for alle chattyper
    - Optimalisere databasestruktur 
    - Implementere RLS (Row Level Security)
-
+   - Fikse "function search path mutable" sikkerhetsadvarsler
+   - Forbedre RLS-policyenes ytelse ved å bruke `(select auth.uid())`
+   - Konsolidere dupliserte permissive policies for bedre ytelse
+   - Legge til manglende indekser på fremmednøkler
+   - Aktivere "leaked password protection" i Supabase Auth
+   
 3. **UI-forbedringer:**
    - Forbedre responsivt design
    - Standardisere designsystem
