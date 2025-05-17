@@ -33,34 +33,28 @@ function applyEnvironmentPatch() {
   if (typeof window !== 'undefined') {
     // Create a safe process object if it doesn't exist
     if (!window.process) {
-      window.process = {} as Partial<NodeJS.Process>;
+      window.process = { env: {} } as unknown as Window['process'];
     }
-    
     // Create a safe env object if it doesn't exist
     if (!window.process.env) {
       window.process.env = {};
     }
-    
     // Set NODE_ENV based on Vite mode
     window.process.env.NODE_ENV = import.meta.env.MODE === 'production' ? 'production' : 'development';
-    
     // Map all VITE_ environment variables to process.env.*
     Object.entries(import.meta.env).forEach(([key, value]) => {
       if (key.startsWith('VITE_')) {
         window.process.env[key.replace('VITE_', '')] = value;
       }
     });
-    
     // Also map the original VITE_ variables to process.env
     Object.entries(import.meta.env).forEach(([key, value]) => {
       window.process.env[key] = value;
     });
-    
     // Log that patch is activated in development environment
     if (import.meta.env.DEV) {
       console.log('✅ Environment compatibility patch applied: process.env is now available');
     }
-    
     // Mark patch as applied
     envPatchApplied = true;
   }
