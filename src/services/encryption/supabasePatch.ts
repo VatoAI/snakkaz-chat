@@ -4,16 +4,13 @@
  * This module provides corrected configuration for the Supabase client
  * to resolve CORS and API connection issues.
  * 
- * HOW TO USE:
- * 1. Copy the corrected client setup from this file
- * 2. Replace the existing client setup in src/integrations/supabase/client.ts
- * 3. Ensure environment variables are properly set
+ * UPDATED: Now uses the singleton pattern to avoid multiple GoTrueClient instances
  */
 
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabaseClient';
 
-// For configuration diagnostics
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://your-project-ref.supabase.co';
+// For configuration diagnostics - use import.meta.env for consistency
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
 const ENV_CHECK = !!import.meta.env.VITE_SUPABASE_URL && !!import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 // Helper to log config issues during development
@@ -26,29 +23,59 @@ if (import.meta.env.DEV && !ENV_CHECK) {
   );
 }
 
-// Initialize the Supabase client with better config and error handling
+// Export the singleton Supabase client - no need to create a new instance
+export const supabaseClient = supabase;
+
+// IMPORTANT: Export a function that returns the singleton to avoid breaking existing code
 export const createSupabaseClient = () => {
+  // Warn about deprecated usage in development
+  if (import.meta.env.DEV) {
+    console.warn(
+      'The createSupabaseClient() function is deprecated and will be removed in a future version.\n' +
+      'Please import the supabase client directly from @/lib/supabaseClient instead.'
+    );
+  }
+  
+  return supabase;
+};
+
+// Configuration verification function - useful for debugging
+export const verifySupabaseConfig = () => {
   try {
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+    const isConfigValid = !!supabase && ENV_CHECK;
     
-    // Validate config
-    if (!supabaseUrl || !supabaseAnonKey) {
-      throw new Error('Supabase configuration is missing. Check your environment variables.');
+    if (import.meta.env.DEV) {
+      console.log('Supabase config verification result:', isConfigValid ? 'Valid ✓' : 'Invalid ✗');
+      
+      if (!isConfigValid) {
+        console.warn('Supabase configuration is incomplete or invalid. Check your environment variables.');
+      }
     }
     
-    // Create client with custom fetch options for CORS handling
-    return createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        autoRefreshToken: true,
-        persistSession: true,
-        detectSessionInUrl: true
-      },
-      // Set headers needed for CORS
-      global: {
-        headers: {
-          'X-Client-Info': 'snakkaz-chat',
-          'Content-Type': 'application/json'
+    return isConfigValid;
+  } catch (error) {
+    console.error('Error verifying Supabase configuration:', error);
+    return false;
+  }
+};
+
+// Security enhancement options
+export const getEnhancedSupabaseOptions = () => ({
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true
+  },
+  global: {
+    headers: {
+      'X-Client-Info': 'snakkaz-chat',
+      'Content-Type': 'application/json'
+    }
+  }
+});
+
+// Call verification on import for early detection of issues
+verifySupabaseConfig();
         },
         fetch: (url, options) => {
           // Add credentials mode for CORS

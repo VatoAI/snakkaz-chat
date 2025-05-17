@@ -1,16 +1,16 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabaseClient'; // Import the singleton client
 import { useToast } from '@/hooks/use-toast';
 import { Session, User } from '@supabase/supabase-js';
 
-// Importer typene fra .ts-filen
+// Import types from .ts file
 import { AuthContextType } from './useAuth.d';
 
-// Opprett Auth Context
+// Create Auth Context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Auth Provider komponent
+// Auth Provider component
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -20,7 +20,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Sjekk om brukeren allerede er innlogget
+    // Check if user is already logged in
     const checkUser = async () => {
       setLoading(true);
       
@@ -36,17 +36,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setUser(data.session.user);
         }
       } catch (error) {
-        console.error('Feil ved innlasting av bruker:', error);
-        setError('Kunne ikke laste inn brukerprofil');
+        console.error('Error loading user:', error);
+        setError('Could not load user profile');
       } finally {
         setLoading(false);
       }
     };
 
-    // Kjør initialsjekk
+    // Run initial check
     checkUser();
 
-    // Set opp lytter for auth-endringer
+    // Set up listener for auth changes
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (session) {

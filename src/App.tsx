@@ -1,11 +1,16 @@
 
-import React, { Suspense, lazy } from 'react';
-import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import React, { Suspense, lazy, useEffect } from 'react';
+import { Routes, Route, Navigate, useLocation, BrowserRouter } from "react-router-dom";
 import { AuthProvider, useAuth } from './hooks/useAuth';
 import { Toaster } from "@/components/ui/toaster";
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { supabase } from '@/lib/supabaseClient';
+import { verifySupabaseConfig } from '@/services/encryption/supabasePatch';
 
-// Updated with Cloudflare security fixes and CSP improvements for chat functionality
+// Ensure Supabase config is valid before proceeding
+useEffect(() => {
+  verifySupabaseConfig();
+}, []);
 
 // Lazy load components
 const Login = lazy(() => import("@/pages/Login"));
@@ -23,6 +28,27 @@ const LoadingSpinner = () => (
     <div className="flex flex-col items-center">
       <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-cybergold-500 mb-4"></div>
       <p className="text-cybergold-400">Laster inn...</p>
+    </div>
+  </div>
+);
+
+// Error component for the ErrorBoundary
+const FallbackErrorComponent = ({ error, resetErrorBoundary }) => (
+  <div className="h-screen flex items-center justify-center bg-cyberdark-950">
+    <div className="flex flex-col items-center max-w-md p-6 bg-cyberdark-900 rounded-lg shadow-lg">
+      <h2 className="text-xl text-cybergold-400 mb-4">Noe gikk galt</h2>
+      <p className="text-white mb-4">
+        Vi beklager, men det har oppstått en feil. Vennligst prøv igjen eller kontakt support hvis problemet vedvarer.
+      </p>
+      <div className="bg-cyberdark-800 p-4 rounded mb-4 overflow-auto max-h-36">
+        <code className="text-red-400 text-sm">{error.message || 'Ukjent feil'}</code>
+      </div>
+      <button
+        onClick={resetErrorBoundary}
+        className="px-4 py-2 bg-cybergold-600 hover:bg-cybergold-700 text-black font-medium rounded"
+      >
+        Prøv igjen
+      </button>
     </div>
   </div>
 );
