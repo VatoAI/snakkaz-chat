@@ -9,6 +9,7 @@
  * 2. Call applyCspPolicy() early in your application initialization
  * 
  * NOTE: This file is deprecated. Please use the version in ../security/cspConfig.ts instead.
+ * Fixed: GitHub Actions build issues - May 17, 2025
  */
 
 /**
