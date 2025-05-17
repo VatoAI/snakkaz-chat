@@ -106,28 +106,46 @@ export function buildCspPolicy() {
   // Extract domain from environment or use default
   const supabaseUrl = getSupabaseDomain();
   
-  // List of domains needed for the application
-  const domains = {
-    supabase: [supabaseUrl, '*.supabase.co', '*.supabase.in', 'https://*.supabase.co', 'wss://*.supabase.co'],
-    storage: ['*.amazonaws.com', 'storage.googleapis.com'], // Common storage providers
-    app: [
-      // Comprehensive list including all possible subdomain variants with both HTTP and HTTPS
-      '*.snakkaz.com', 'https://*.snakkaz.com', 'http://*.snakkaz.com',
-      'www.snakkaz.com', 'https://www.snakkaz.com', 'http://www.snakkaz.com',
-      'dash.snakkaz.com', 'https://dash.snakkaz.com', 'http://dash.snakkaz.com',
-      'business.snakkaz.com', 'https://business.snakkaz.com', 'http://business.snakkaz.com',
-      'docs.snakkaz.com', 'https://docs.snakkaz.com', 'http://docs.snakkaz.com', 
-      'analytics.snakkaz.com', 'https://analytics.snakkaz.com', 'http://analytics.snakkaz.com',
-      'api.snakkaz.com', 'https://api.snakkaz.com', 'http://api.snakkaz.com',
-      'static.snakkaz.com', 'https://static.snakkaz.com', 'http://static.snakkaz.com',
-      'cdn.snakkaz.com', 'https://cdn.snakkaz.com', 'http://cdn.snakkaz.com'
-    ],
-    cdn: [
-      'cdn.pngtree.com', 
-      '*.gpteng.co', 'https://*.gpteng.co', 'http://*.gpteng.co',
-      'cdn.gpteng.co', 'https://cdn.gpteng.co', 'http://cdn.gpteng.co'
-    ],
-  };
+  // Supabase domains
+  const supabaseDomains = [
+    supabaseUrl, 
+    '*.supabase.co', 
+    '*.supabase.in', 
+    'https://*.supabase.co', 
+    'wss://*.supabase.co'
+  ].join(' ');
+  
+  // Storage domains
+  const storageDomains = [
+    '*.amazonaws.com',
+    'storage.googleapis.com'
+  ].join(' ');
+  
+  // App domains
+  const appDomains = [
+    '*.snakkaz.com', 'https://*.snakkaz.com', 'http://*.snakkaz.com',
+    'www.snakkaz.com', 'https://www.snakkaz.com', 'http://www.snakkaz.com',
+    'dash.snakkaz.com', 'https://dash.snakkaz.com', 'http://dash.snakkaz.com',
+    'business.snakkaz.com', 'https://business.snakkaz.com', 'http://business.snakkaz.com',
+    'docs.snakkaz.com', 'https://docs.snakkaz.com', 'http://docs.snakkaz.com', 
+    'analytics.snakkaz.com', 'https://analytics.snakkaz.com', 'http://analytics.snakkaz.com',
+    'api.snakkaz.com', 'https://api.snakkaz.com', 'http://api.snakkaz.com',
+    'static.snakkaz.com', 'https://static.snakkaz.com', 'http://static.snakkaz.com',
+    'cdn.snakkaz.com', 'https://cdn.snakkaz.com', 'http://cdn.snakkaz.com'
+  ].join(' ');
+  
+  // CDN domains
+  const cdnDomains = [
+    'cdn.pngtree.com',
+    '*.gpteng.co', 'https://*.gpteng.co', 'http://*.gpteng.co',
+    'cdn.gpteng.co', 'https://cdn.gpteng.co', 'http://cdn.gpteng.co'
+  ].join(' ');
+  
+  // Additional connect domains
+  const additionalConnectDomains = [
+    'mcp.snakkaz.com', 'https://mcp.snakkaz.com', 'http://mcp.snakkaz.com',
+    'help.snakkaz.com', 'https://help.snakkaz.com', 'http://help.snakkaz.com'
+  ].join(' ');
   
   // Build CSP
   return [
@@ -135,19 +153,19 @@ export function buildCspPolicy() {
     "default-src 'self'",
     
     // Scripts - limit to self and trusted CDNs if needed
-    `script-src 'self' 'unsafe-inline' 'unsafe-eval' ${domains.app.join(' ')} ${domains.cdn.join(' ')}`,
+    `script-src 'self' 'unsafe-inline' 'unsafe-eval' ${appDomains} ${cdnDomains}`,
     
     // Styles
     "style-src 'self' 'unsafe-inline'",
     
     // Images
-    `img-src 'self' data: blob: ${domains.storage.join(' ')} ${domains.supabase.join(' ')} ${domains.app.join(' ')} ${domains.cdn.join(' ')}`,
+    `img-src 'self' data: blob: ${storageDomains} ${supabaseDomains} ${appDomains} ${cdnDomains}`,
     
     // Fonts
     "font-src 'self' data:",
     
     // Connect (API calls) - critical for Supabase and snakkaz subdomains
-    `connect-src 'self' ${domains.supabase.join(' ')} ${domains.storage.join(' ')} ${domains.app.join(' ')} ${domains.cdn.join(' ')} wss://*.supabase.co https://*.supabase.co https://*.gpteng.co https://cdn.gpteng.co https://*.snakkaz.com http://*.snakkaz.com dash.snakkaz.com business.snakkaz.com docs.snakkaz.com analytics.snakkaz.com mcp.snakkaz.com https://mcp.snakkaz.com http://mcp.snakkaz.com help.snakkaz.com https://help.snakkaz.com http://help.snakkaz.com`,
+    `connect-src 'self' ${supabaseDomains} ${storageDomains} ${appDomains} ${cdnDomains} ${additionalConnectDomains}`,
     
     // Media
     "media-src 'self' blob:",
