@@ -77,6 +77,18 @@ export const getEnhancedSupabaseOptions = () => ({
 // Call verification on import for early detection of issues
 verifySupabaseConfig();
 
+// Create a Supabase client with enhanced options
+export const initializeSupabaseClient = () => {
+  try {
+    // Always return the singleton instance from lib/supabaseClient
+    return supabaseInstance;
+  } catch (error) {
+    console.error('Failed to initialize Supabase client:', error);
+    // Provide a fallback client that logs errors but doesn't crash the app
+    return createFallbackClient();
+  }
+};
+
 // Export a utility to test the connection
 export const testConnection = async () => {
   try {
@@ -85,10 +97,50 @@ export const testConnection = async () => {
       return { success: false, error: error.message };
     }
     return { success: true };
-  } catch (err) {
-    return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
+  } catch (err: any) {
+    return { success: false, error: err?.message || 'Unknown error' };
   }
 };
 
+// Create a fallback client that logs errors instead of crashing
+function createFallbackClient() {
+  const errorHandler = () => {
+    const error = new Error('Supabase client not properly initialized');
+    console.error('Supabase API call failed:', error);
+    return Promise.reject(error);
+  };
+  
+  // This is a mock client that logs errors for all operations
+  return {
+    from: () => ({ 
+      select: errorHandler,
+      insert: errorHandler,
+      update: errorHandler,
+      delete: errorHandler,
+      eq: errorHandler,
+      // ...other query methods
+    }),
+    auth: {
+      getUser: errorHandler,
+      getSession: errorHandler,
+      signIn: errorHandler,
+      signOut: errorHandler,
+      onAuthStateChange: () => ({ 
+        data: { subscription: { unsubscribe: () => {} } }
+      })
+    },
+    storage: { from: () => ({ 
+      upload: errorHandler, 
+      getPublicUrl: () => ({ data: { publicUrl: '' } })
+    }) },
+    function: { invoke: errorHandler },
+    channel: () => ({
+      on: () => ({ subscribe: () => ({}) }),
+      subscribe: () => ({})
+    }),
+    removeChannel: () => {}
+  };
+}
+
 // Export the configured client
-export const supabase = supabaseInstance;
+export const supabase = initializeSupabaseClient();
