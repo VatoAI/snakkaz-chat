@@ -4,7 +4,7 @@
 
 SnakkaZ Chat er en moderne, sikker og sosial chat-app bygget for fremtiden. Appen kombinerer avansert kryptering, AI-drevne funksjoner og et unikt cyberpunk-inspirert design for å gi brukerne en trygg, morsom og engasjerende kommunikasjonsopplevelse.
 
-> Sist oppdatert: 19. mai 2025 - Migrert fra Cloudflare til Namecheap hosting, implementert subdomain-struktur og forbedret SSL-sikkerhet
+> Sist oppdatert: 19. mai 2025 - Fullført migrering fra Cloudflare til Namecheap hosting, implementert komplett subdomain-struktur og forbedret sikkerhet
 
 ### Hovedfunksjoner
 - **Sanntids chat** med støtte for grupper og private meldinger
@@ -18,11 +18,11 @@ SnakkaZ Chat er en moderne, sikker og sosial chat-app bygget for fremtiden. Appe
 - **Responsivt cyberpunk-design** med smooth neon-effekter
 
 ### Siste forbedringer (19. mai 2025)
-- **Migrert til Namecheap hosting** - Komplett migrering fra Cloudflare
-- **Implementert subdomene-struktur** - Separate subdomener for ulike deler av applikasjonen
-- **Forbedret Supabase-integrasjon** - Singleton-pattern og optimaliserte databasespørringer
-- **Oppdatert CSS-håndtering** - Erstatet manglende bildefiler med CSS-baserte løsninger
-- **Fikset miljøvariabel-håndtering** - Ny robust løsning for process.env i nettleseren
+- **Fullført migrering til Namecheap hosting** - Komplett migrering fra Cloudflare med alle filer og subdomain-struktur
+- **Optimalisert server-oppsett** - Konfigurert .htaccess-regler for SPA-routing og sikkerhet
+- **Implementert subdomain-routing** - Full støtte for dash.snakkaz.com, business.snakkaz.com, docs.snakkaz.com, osv.
+- **Forbedret sikkerhetskonfigurasjon** - Strenge CSP-regler og sikkerhetsheadere
+- **Forenklet deploy-prosess** - Ny FTP-opplastingsscript med forbedret feilhåndtering
 
 ### Tidligere forbedringer (10. mai 2025)
 - **Implementert gruppe-E2EE** - Fullført ende-til-ende kryptering for gruppesamtaler

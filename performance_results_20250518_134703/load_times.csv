@@ -1,0 +1,9 @@
+domain,url,connect_time,time_to_first_byte,total_time
+snakkaz.com,https://snakkaz.com,0.158357,0.000000,0.318343
+www.snakkaz.com,https://www.snakkaz.com,0.156405,0.000000,0.319029
+dash.snakkaz.com,https://dash.snakkaz.com,0.155585,0.000000,0.316710
+business.snakkaz.com,https://business.snakkaz.com,0.158931,0.000000,0.318816
+docs.snakkaz.com,https://docs.snakkaz.com,0.162610,0.000000,0.329488
+analytics.snakkaz.com,https://analytics.snakkaz.com,0.155034,0.000000,0.317206
+mcp.snakkaz.com,https://mcp.snakkaz.com,0.158665,0.000000,0.319518
+help.snakkaz.com,https://help.snakkaz.com,0.155824,0.000000,0.316897

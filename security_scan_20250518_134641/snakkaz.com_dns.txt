@@ -1,0 +1,4 @@
+20 mx3-hosting.jellyfish.systems.
+10 mx2-hosting.jellyfish.systems.
+5 mx1-hosting.jellyfish.systems.
+"v=spf1 +a +mx +ip4:162.0.229.212 +ip4:162.0.229.214 include:spf.web-hosting.com ~all"

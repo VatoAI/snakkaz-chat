@@ -90,31 +90,32 @@ elif command -v lftp &> /dev/null; then
 
 # Fallback to standard ftp command
 else
-  echo -e "${GUL}Laster opp med standard ftp-kommando...${INGEN}"
+  echo -e "${GUL}Laster opp med curl ftps (mer kompatibel med Namecheap)...${INGEN}"
   
-  cd dist
+  # Lag en liste over filer og mapper som skal lastes opp
+  find dist -type f | while read FILE; do
+    # Får relativ sti
+    RELATIVE_PATH="${FILE#dist/}"
+    REMOTE_PATH="$FTP_REMOTE_DIR/$RELATIVE_PATH"
+    REMOTE_DIR=$(dirname "$REMOTE_PATH")
+    
+    # Opprett alle nødvendige mapper på forhånd
+    echo -e "Oppretter mappe $REMOTE_DIR..."
+    curl -s --ftp-create-dirs -u "$FTP_USER:$FTP_PASS" "ftp://$FTP_HOST/$REMOTE_DIR/" || true
+    
+    # Last opp filen
+    echo -e "Laster opp $RELATIVE_PATH..."
+    curl -T "$FILE" -u "$FTP_USER:$FTP_PASS" "ftp://$FTP_HOST/$REMOTE_PATH"
+    
+    # Viser status
+    if [ $? -eq 0 ]; then
+      echo -e "${GRONN}✓ Lastet opp $RELATIVE_PATH${INGEN}"
+    else
+      echo -e "${ROD}✗ Feilet å laste opp $RELATIVE_PATH${INGEN}"
+    fi
+  done
   
-  # Create a temporary file with FTP commands
-  FTP_COMMANDS=$(mktemp)
-  cat > "$FTP_COMMANDS" << EOL
-open $FTP_HOST
-user $FTP_USER $FTP_PASS
-binary
-prompt off
-cd $FTP_REMOTE_DIR
-mput *
-bye
-EOL
-  
-  # Execute FTP commands
-  ftp -n < "$FTP_COMMANDS"
-  
-  # Remove temporary file
-  rm "$FTP_COMMANDS"
-  
-  cd ..
-  
-  echo -e "${GRONN}✓ Opplasting fullført med standard ftp${INGEN}"
+  echo -e "${GRONN}✓ Opplasting fullført med curl${INGEN}"
 fi
 
 echo

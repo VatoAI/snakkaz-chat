@@ -1,13 +1,93 @@
-Connected to premium123.web-hosting.com.
-220---------- Welcome to Pure-FTPd [privsep] [TLS] ----------
-220-You are user number 3 of 45 allowed.
-220-Local time is now 13:20. Server port: 21.
-220-This is a private system - No anonymous login
-220-IPv6 connections are also welcome on this server.
-220 You will be disconnected after 15 minutes of inactivity.
-331 User SnakkaZ@snakkaz.com OK. Password required
-230 OK. Current restricted directory is /
-Remote system type is UNIX.
-Using binary mode to transfer files.
-221-Goodbye. You uploaded 0 and downloaded 0 kbytes.
-221 Logout.
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0*   Trying 162.0.229.213:21...
+* TCP_NODELAY set
+* Connected to premium123.web-hosting.com (162.0.229.213) port 21 (#0)
+< 220---------- Welcome to Pure-FTPd [privsep] [TLS] ----------
+< 220-You are user number 2 of 45 allowed.
+< 220-Local time is now 09:43. Server port: 21.
+< 220-This is a private system - No anonymous login
+< 220-IPv6 connections are also welcome on this server.
+< 220 You will be disconnected after 15 minutes of inactivity.
+> USER SnakkaZ@snakkaz.com
+< 331 User SnakkaZ@snakkaz.com OK. Password required
+> PASS Snakkaz2025!
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0< 230 OK. Current restricted directory is /
+> PWD
+< 257 "/" is your current location
+* Entry path is '/'
+* Request has same path as previous transfer
+> EPSV
+* Connect data stream passively
+* ftp_perform ends with SECONDARY: 0
+< 229 Extended Passive mode OK (|||12042|)
+*   Trying 162.0.229.213:12042...
+* TCP_NODELAY set
+* Connecting to 162.0.229.213 (162.0.229.213) port 12042
+* Connected to premium123.web-hosting.com (162.0.229.213) port 21 (#0)
+> TYPE A
+< 200 TYPE is now ASCII
+> LIST
+< 150 Accepted data connection
+* Maxdownload = -1
+  0     0    0     0    0     0      0      0 --:--:--  0:00:01 --:--:--     0{ [4100 bytes data]
+* Remembering we are in dir ""
+< 226-Options: -a -l 
+< 226 55 matches total
+100  4100    0  4100    0     0   2781      0 --:--:--  0:00:01 --:--:--  2779
+* Connection #0 to host premium123.web-hosting.com left intact
+-rw-r--r--    1 snakqsqe   snakqsqe           90 May 17 12:53  _routes.json_
+drwxr-xr-x   27 snakqsqe   snakqsqe         4096 May 18 05:55 .
+drwxr-xr-x   27 snakqsqe   snakqsqe         4096 May 18 05:55 ..
+-rw-r--r--    1 snakqsqe   snakqsqe           18 May 17 09:35 .bash_logout
+-rw-r--r--    1 snakqsqe   snakqsqe          141 May 17 09:35 .bash_profile
+-rw-r--r--    1 snakqsqe   snakqsqe          376 May 17 09:35 .bashrc
+drwxrwx--x    5 snakqsqe   snakqsqe         4096 May 17 12:00 .cagefs
+drwxr-xr-x    3 snakqsqe   snakqsqe         4096 May 17 09:35 .caldav
+drwxr-xr-x    2 snakqsqe   snakqsqe         4096 May 18 08:19 .cl.selector
+drwx------    6 snakqsqe   snakqsqe         4096 May 18 05:45 .cpanel
+-rw-r--r--    1 snakqsqe   snakqsqe        12505 May 18 04:46 .ftp-deploy-sync-state.json
+-rw-------    1 snakqsqe   snakqsqe           12 May 17 12:23 .ftpquota
+-rw-r--r--    1 snakqsqe   snakqsqe          139 May 17 09:35 .gemrc
+drwx------    2 snakqsqe   snakqsqe         4096 May 17 10:38 .gnupg
+-rw-r--r--    1 snakqsqe   snakqsqe          214 May 17 12:53 .htaccess
+drwxr-x---    2 snakqsqe   99               4096 May 17 09:35 .htpasswds
+-rw-rw----    1 snakqsqe   snakqsqe          106 May 17 10:00 .imunify_patch_id
+-rw-r--r--    1 0          0                1815 May 18 05:55 .last.inodes
+-rw-------    1 snakqsqe   snakqsqe          571 May 18 05:43 .lastlogin
+-rw-rw----    1 snakqsqe   snakqsqe          102 May 17 10:00 .myimunify_id
+drwx--x--x    3 0          0                4096 May 17 09:35 .nc_plugin
+drwx--x--x    5 snakqsqe   snakqsqe         4096 May 17 09:39 .softaculous
+drwx------    2 snakqsqe   snakqsqe         4096 May 17 09:35 .spamassassin
+-rw-r--r--    1 snakqsqe   snakqsqe            0 May 17 09:35 .spamassassinboxenable
+-rw-r--r--    1 snakqsqe   snakqsqe            0 May 17 09:35 .spamassassinenable
+drwx------    2 snakqsqe   snakqsqe         4096 May 18 05:06 .ssh
+drwx------    2 snakqsqe   snakqsqe         4096 May 17 12:22 .subaccounts
+-rw-r--r--    1 snakqsqe   snakqsqe           62 May 17 12:53 _redirects
+-rw-r--r--    1 snakqsqe   snakqsqe           85 May 17 12:53 _routes.json
+drwxr-xr-x    2 snakqsqe   snakqsqe         4096 May 18 04:46 assets
+drwxr-x---    3 snakqsqe   12               4096 May 18 04:58 etc
+-rw-r--r--    1 snakqsqe   snakqsqe        15086 May 17 12:53 favicon.ico
+drwxr-xr-x    2 snakqsqe   snakqsqe         4096 May 17 12:53 icons
+-rw-r--r--    1 snakqsqe   snakqsqe         2544 May 18 04:46 index.html
+drwxr-xr-x    2 snakqsqe   snakqsqe         4096 May 17 12:53 logos
+drwx------    2 snakqsqe   snakqsqe         4096 May 18 08:12 logs
+drwxr-xr-x    2 snakqsqe   snakqsqe         4096 May 17 12:53 lovable-uploads
+drwxrws---    2 99         snakqsqe         4096 May 17 09:36 lscache
+drwxr-x--x   10 snakqsqe   snakqsqe         4096 May 18 01:46 mail
+-rw-r--r--    1 snakqsqe   snakqsqe         1590 May 17 12:53 manifest.json
+-rw-r--r--    1 snakqsqe   snakqsqe         2639 May 17 12:53 offline.html
+-rw-r--r--    1 snakqsqe   snakqsqe       722678 May 17 12:53 og-image.png
+-rw-r--r--    1 snakqsqe   snakqsqe         3253 May 17 12:53 placeholder.svg
+drwxr-x---    3 snakqsqe   snakqsqe         4096 May 17 09:35 public_ftp
+drwxr-x---    5 snakqsqe   99               4096 May 18 09:36 public_html
+-rw-r--r--    1 snakqsqe   snakqsqe          160 May 17 12:53 robots.txt
+-rw-r--r--    1 snakqsqe   snakqsqe         9941 May 17 12:53 service-worker.js
+-rw-r--r--    1 snakqsqe   snakqsqe          924 May 17 12:53 sitemap.xml
+-rw-r--r--    1 snakqsqe   snakqsqe      1101428 May 17 12:53 snakkaz-logo.png
+-rw-r--r--    1 snakqsqe   snakqsqe           64 May 17 12:53 snakkaz-premium-logo.png
+drwxr-xr-x    5 snakqsqe   snakqsqe         4096 May 17 10:13 ssl
+drwxr-x---    8 snakqsqe   99               4096 May 17 10:13 subdomains
+drwxr-xr-x    2 snakqsqe   snakqsqe         4096 May 17 12:53 thumbnails
+drwxr-xr-x    6 snakqsqe   snakqsqe         4096 May 18 08:12 tmp
+lrwxrwxrwx    1 snakqsqe   snakqsqe           11 May 17 09:35 www -> public_html
