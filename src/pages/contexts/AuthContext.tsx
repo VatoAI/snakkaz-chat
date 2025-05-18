@@ -1,5 +1,7 @@
 // Using singleton Supabase client to prevent "Multiple GoTrueClient instances" warning
 import { supabase } from '@/lib/supabaseClient';
+// Using singleton Supabase client to prevent "Multiple GoTrueClient instances" warning
+import { supabase } from '@/lib/supabaseClient';
 import React, { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { createClient, SupabaseClient, User as SupabaseUser } from '@supabase/supabase-js';
 
@@ -41,7 +43,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  // REPLACED: const supabase = createClient(supabaseUrl, supabaseAnonKey);
+  // REPLACED: // REPLACED: const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
   // Konverter Supabase-bruker til vår applikasjons brukertype
   const formatUser = async (supabaseUser: SupabaseUser | null): Promise<User | null> => {
