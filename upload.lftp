@@ -1,0 +1,11 @@
+open -u SnakkaZ@snakkaz.com,Snakkaz2025! premium123.web-hosting.com
+set ssl:verify-certificate no
+set ftp:ssl-allow yes
+set ftp:ssl-protect-data yes
+set ftp:ssl-protect-list yes
+set net:timeout 10
+set net:max-retries 3
+set net:reconnect-interval-base 5
+set net:reconnect-interval-multiplier 1
+mirror -R dist/ public_html --no-perms --parallel=5
+bye
