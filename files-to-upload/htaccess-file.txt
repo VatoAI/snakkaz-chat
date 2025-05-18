@@ -1,0 +1,71 @@
+# Last opp denne filen som .htaccess i public_html-mappen på serveren
+
+# MIME-type konfigurering for Snakkaz Chat
+# Løser problemer med JavaScript-moduler og andre ressurser
+
+# Sett riktige MIME-typer
+<IfModule mod_mime.c>
+    # JavaScript
+    AddType application/javascript .js
+    AddType application/javascript .mjs
+    AddType text/javascript .js .mjs
+    
+    # JSON
+    AddType application/json .json
+    
+    # CSS
+    AddType text/css .css
+    
+    # Bilder
+    AddType image/svg+xml .svg
+    AddType image/svg+xml .svgz
+    AddType image/png .png
+    AddType image/jpeg .jpg .jpeg
+    AddType image/gif .gif
+    
+    # Fonter
+    AddType font/woff .woff
+    AddType font/woff2 .woff2
+    AddType font/ttf .ttf
+    AddType font/otf .otf
+</IfModule>
+
+# Tving riktige MIME-typer
+<FilesMatch "\.js$">
+    ForceType application/javascript
+</FilesMatch>
+<FilesMatch "\.mjs$">
+    ForceType application/javascript
+</FilesMatch>
+<FilesMatch "\.css$">
+    ForceType text/css
+</FilesMatch>
+
+# SSL-konfigurasjon og HTTPS-omdirigering
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{HTTPS} !=on
+    RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+</IfModule>
+
+# Deaktiver MIME-sniffing
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+</IfModule>
+
+# Konfigurering for Single Page Application (SPA)
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    # Hvis forespørselen ikke er for en eksisterende fil/mappe
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    # Omdiriger til index.html
+    RewriteRule ^ index.html [L]
+</IfModule>
+
+# Aktiver CORS for ressursfiler
+<IfModule mod_headers.c>
+    <FilesMatch "\.(js|mjs|css|json|woff|woff2|ttf|svg|png|jpg|jpeg|gif|ico)$">
+        Header set Access-Control-Allow-Origin "*"
+    </FilesMatch>
+</IfModule>
