@@ -20,6 +20,13 @@ This document tracks the progress of migrating Snakkaz Chat's DNS management fro
    - Created /docs/NAMECHEAP-DNS-ANALYSIS.md
    - Created /src/services/dns/README.md
    - Added .env.example
+5. ✅ Verified domain is using Namecheap nameservers:
+   - dns1.namecheaphosting.com
+   - dns2.namecheaphosting.com
+6. ✅ Documented complete DNS configuration in /docs/DNS-CONFIGURATION.md:
+   - Server IP: 162.0.229.214
+   - Hosting plan: Namecheap Stellar Plus (expires May 16, 2026)
+   - All subdomains properly configured
 5. ✅ Added all required DNS entries in Namecheap control panel:
    - A record for @ (root domain)
    - CNAME records for www, dash, business, docs, analytics

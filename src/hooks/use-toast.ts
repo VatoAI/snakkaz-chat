@@ -42,10 +42,13 @@ export const useToast = () => {
   
   // Set up the singleton toast function for non-component use
   React.useEffect(() => {
-    toastSingleton = toast;
-    return () => {
-      toastSingleton = null;
-    };
+    // Make sure we're in a browser context before setting up
+    if (typeof window !== 'undefined') {
+      toastSingleton = toast;
+      return () => {
+        toastSingleton = null;
+      };
+    }
   }, [toast]);
 
   const dismiss = React.useCallback((id: string) => {

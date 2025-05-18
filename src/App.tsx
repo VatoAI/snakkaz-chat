@@ -7,11 +7,6 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { supabase } from '@/lib/supabaseClient';
 import { verifySupabaseConfig } from '@/services/encryption/supabasePatch';
 
-// Ensure Supabase config is valid before proceeding
-useEffect(() => {
-  verifySupabaseConfig();
-}, []);
-
 // Lazy load components
 const Login = lazy(() => import("@/pages/Login"));
 const Register = lazy(() => import("@/pages/Register"));
@@ -89,6 +84,11 @@ const PublicOnlyRoute = ({ children }: { children: JSX.Element }) => {
 };
 
 function App() {
+  // Ensure Supabase config is valid when the app initializes
+  useEffect(() => {
+    verifySupabaseConfig();
+  }, []);
+
   return (
     <ErrorBoundary>
       <AuthProvider>

@@ -7,7 +7,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const PORT = 8080;
+const PORT = process.env.PORT || 8080;
 const DIST_DIR = path.join(__dirname, 'dist');
 
 // Mapping av filendelser til MIME-typer
@@ -89,8 +89,18 @@ function serveFile(filePath, res) {
 }
 
 // Start serveren
+server.on('error', (error) => {
+  if (error.code === 'EADDRINUSE') {
+    console.error(`\n${PORT} er allerede i bruk. Prøv en annen port med: PORT=xxxx node server.mjs`);
+  } else {
+    console.error(`\nServerfeil: ${error.message}`);
+  }
+  process.exit(1);
+});
+
 server.listen(PORT, () => {
   console.log(`\n==== Snakkaz Chat Server ====`);
   console.log(`Server kjører på http://localhost:${PORT}`);
   console.log(`Trykk Ctrl+C for å stoppe serveren`);
+  console.log(`Server IP fra DNS: 162.0.229.214`);
 });

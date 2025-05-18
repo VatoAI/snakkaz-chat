@@ -330,6 +330,8 @@ echo
 echo -e "${BLA}1. Oppdater FTP-detaljer i .env-filen med faktiske verdier${INGEN}"
 echo -e "${BLA}2. Kjør opplastingsskriptet:${INGEN}"
 echo -e "   ${GUL}./upload-to-namecheap.sh${INGEN}"
+echo -e "${BLA}3. Sett opp SSL-sertifikater med:${INGEN}"
+echo -e "   ${GUL}./setup-ssl-certificates.sh${INGEN}"
 echo
 echo -e "${GUL}For å teste lokalt før opplasting, kjør:${INGEN}"
 echo -e "   ${GUL}node server.mjs${INGEN}"
@@ -338,6 +340,9 @@ echo
 echo -e "${GRONN}Dine filer er også tilgjengelige i:${INGEN}"
 echo -e "1. ${GUL}./dist/${INGEN} - Bygde filer"
 echo -e "2. ${GUL}./snakkaz-dist.zip${INGEN} - Komprimert versjon for manuell opplasting via cPanel"
+echo
+echo -e "${ROD}VIKTIG:${INGEN} Du må sette opp SSL-sertifikater på Namecheap for at appen skal fungere"
+echo -e "Se ./setup-ssl-certificates.sh for veiledning om oppsett av SSL-sertifikater"
 echo
 
 # Spør om brukeren vil kjøre serveren lokalt
