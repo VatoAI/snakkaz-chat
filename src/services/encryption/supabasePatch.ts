@@ -80,6 +80,7 @@ verifySupabaseConfig();
 // Create a Supabase client with enhanced options
 export const initializeSupabaseClient = () => {
   try {
+    // Always return the singleton instance from lib/supabaseClient
     return supabaseInstance;
   } catch (error) {
     console.error('Failed to initialize Supabase client:', error);

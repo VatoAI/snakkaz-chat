@@ -72,11 +72,17 @@ if command -v ncftp &> /dev/null; then
 elif command -v lftp &> /dev/null; then
   echo -e "${GUL}Laster opp med lftp (robust FTP-klient)...${INGEN}"
   
-  lftp -c "
+  lftp -d -c "
   set ftp:ssl-allow true;
   set ssl:verify-certificate no;
+  set net:timeout 120;
+  set net:max-retries 3;
+  set net:reconnect-interval-base 5;
+  set net:reconnect-interval-multiplier 1;
   open ftp://$FTP_USER:$FTP_PASS@$FTP_HOST;
-  mirror -R dist/ $FTP_REMOTE_DIR;
+  lcd dist;
+  cd $FTP_REMOTE_DIR;
+  mirror -R --parallel=1 --use-cache --verbose ./;
   bye
   "
   

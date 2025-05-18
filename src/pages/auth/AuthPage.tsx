@@ -104,7 +104,7 @@ const AuthPage = () => {
         {!isMobile && !isTablet && (
           <div className="hidden lg:flex lg:flex-1 bg-cyberdark-900 relative overflow-hidden">
             <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-cyberdark-900/90 to-transparent z-10"></div>
-            <div className="absolute inset-0 w-full h-full bg-[url('/images/auth-bg.jpg')] bg-cover bg-center opacity-60"></div>
+            <div className="absolute inset-0 w-full h-full bg-auth opacity-60"></div>
             <div className="relative z-20 p-12 flex flex-col justify-center">
               <h2 className="text-4xl font-bold text-cybergold-300 mb-4">Sikker Kommunikasjon</h2>
               <p className="text-xl text-cybergold-400 max-w-md">

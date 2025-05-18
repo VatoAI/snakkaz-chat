@@ -25,8 +25,8 @@ import Download from "./Download"; // Fix the import path
 // Auth components
 import AuthPage from "./auth/AuthPage";
 
-// Note: Toaster component import was causing errors, commenting it out until we find the correct path
-// import { Toaster } from "@/components/ui/toaster";
+// Import Toaster component
+import { Toaster } from "@/components/ui/toaster";
 
 function App() {
   return (
@@ -56,8 +56,8 @@ function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
         
-        {/* Temporarily commenting out due to import issues */}
-        {/* <Toaster /> */}
+        {/* Add Toaster for notifications */}
+        <Toaster />
       </AuthProvider>
     </Router>
   );

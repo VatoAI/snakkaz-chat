@@ -33,8 +33,7 @@ export function applyCspPolicy(): void {
       'analytics.snakkaz.com',
       'mcp.snakkaz.com',
       'help.snakkaz.com',
-      'cdn.gpteng.co',
-      'https://cdn.gpteng.co'
+      'cdn.gpteng.co'
     ],
     'media-src': ["'self'", 'blob:'],
     'object-src': ["'none'"],
@@ -137,6 +136,10 @@ export function testCsp() {
       '*.amazonaws.com', 
       'storage.googleapis.com', 
       '*.snakkaz.com',
+      'dash.snakkaz.com',
+      'business.snakkaz.com',
+      'docs.snakkaz.com',
+      'analytics.snakkaz.com',
       'mcp.snakkaz.com',
       'help.snakkaz.com'
     ]
