@@ -88,6 +88,19 @@ export const initializeSupabaseClient = () => {
   }
 };
 
+// Export a utility to test the connection
+export const testConnection = async () => {
+  try {
+    const { error } = await supabaseInstance.from('profiles').select('*').limit(1);
+    if (error) {
+      return { success: false, error: error.message };
+    }
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err?.message || 'Unknown error' };
+  }
+};
+
 // Create a fallback client that logs errors instead of crashing
 function createFallbackClient() {
   const errorHandler = () => {
@@ -130,16 +143,3 @@ function createFallbackClient() {
 
 // Export the configured client
 export const supabase = initializeSupabaseClient();
-
-// Export a utility to test the connection
-export const testConnection = async () => {
-  try {
-    const { error } = await supabaseInstance.from('profiles').select('*').limit(1);
-    if (error) {
-      return { success: false, error: error.message };
-    }
-    return { success: true };
-  } catch (err: any) {
-    return { success: false, error: err?.message || 'Unknown error' };
-  }
-};
