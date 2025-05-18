@@ -81,14 +81,41 @@ jobs:
           
       - name: Add .htaccess file
         run: |
-          echo '<IfModule mod_rewrite.c>
+          cat > dist/.htaccess << EOF
+          # Force HTTPS
+          RewriteEngine On
+          RewriteCond %{HTTPS} off
+          RewriteRule (.*) https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+          
+          # Handle SPA routing by redirecting to index.html
+          <IfModule mod_rewrite.c>
             RewriteEngine On
             RewriteBase /
             RewriteRule ^index\.html$ - [L]
             RewriteCond %{REQUEST_FILENAME} !-f
             RewriteCond %{REQUEST_FILENAME} !-d
             RewriteRule . /index.html [L]
-          </IfModule>' > dist/.htaccess
+          </IfModule>
+          
+          # Set correct MIME types
+          <IfModule mod_mime.c>
+            AddType text/css .css
+            AddType text/javascript .js
+            AddType application/javascript .mjs
+            AddType application/json .json
+            AddType image/svg+xml .svg
+            AddType image/x-icon .ico
+            AddType application/font-woff .woff
+            AddType application/font-woff2 .woff2
+            AddType application/vnd.ms-fontobject .eot
+            AddType application/x-font-ttf .ttf
+          </IfModule>
+          
+          # Enable CORS
+          <IfModule mod_headers.c>
+            Header set Access-Control-Allow-Origin "*"
+          </IfModule>
+          EOF
       
       - name: Validate build output
         run: |
@@ -98,32 +125,93 @@ jobs:
           fi
           echo "Build validation successful"
           
-      - name: Deploy to web server
-        id: deploy
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ./dist/
-          server-dir: ${{ secrets.SERVER_DIR || '/' }}
-          dangerous-clean-slate: false
-          timeout: 180000  # Øker timeout til 3 minutter (fra standard 30 sekunder)
-          protocol: ftp   # Eksplisitt angir FTP-protokoll (i tilfelle FTPS forårsaker problemer)
-          log-level: verbose  # Mer detaljert logging for bedre feilsøking
+      - name: Install lftp
+        run: sudo apt-get update && sudo apt-get install -y lftp
+
+      - name: Create LFTP script
+        run: |
+          cat > upload.lftp << EOF
+          open -u ${{ secrets.FTP_USERNAME }},${{ secrets.FTP_PASSWORD }} ${{ secrets.FTP_SERVER }}
+          set ssl:verify-certificate no
+          set ftp:ssl-allow yes
+          set ftp:ssl-protect-data yes
+          set ftp:ssl-protect-list yes
+          set net:timeout 30
+          set net:max-retries 5
+          set net:reconnect-interval-base 5
+          set net:reconnect-interval-multiplier 1
+          mirror -R dist/ ${{ secrets.SERVER_DIR || 'public_html' }} --no-perms --parallel=3
+          bye
+          EOF
+          
+      - name: Deploy using LFTP
+        id: deploy-lftp
+        run: |
+          echo "Starting LFTP deployment with secure connection..."
+          lftp -f upload.lftp
+          echo "LFTP deployment completed"
+        continue-on-error: true
+        timeout-minutes: 5
+        
+      - name: Check if LFTP deployment succeeded
+        id: check-lftp
+        run: echo "lftp_succeeded=${{ steps.deploy-lftp.outcome == 'success' }}" >> $GITHUB_ENV
+        
+      - name: Fallback - Upload .htaccess via curl
+        if: env.lftp_succeeded != 'true'
+        run: |
+          echo "LFTP deployment failed, attempting fallback with curl for .htaccess file..."
+          curl -v -T dist/.htaccess --user "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/${{ secrets.SERVER_DIR || 'public_html' }}/.htaccess"
+          echo "Direct curl upload of .htaccess completed"
+        
+      - name: Fallback - Check if cURL to FTP is possible
+        if: env.lftp_succeeded != 'true'
+        id: check-curl-ftp
+        run: |
+          echo "Testing direct FTP access with curl..."
+          if curl -v --user "${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}" "ftp://${{ secrets.FTP_SERVER }}/" --max-time 10; then
+            echo "curl_ftp_works=true" >> $GITHUB_ENV
+            echo "Direct FTP access with curl works"
+          else
+            echo "curl_ftp_works=false" >> $GITHUB_ENV
+            echo "Direct FTP access with curl failed"
+          fi
       
       # Namecheap doesn't have a cache purging API like Cloudflare
       # This section has been removed as part of the migration from Cloudflare to Namecheap
       
-      - name: Create deployment summary
-        if: success()
+      - name: Add deployment summary with diagnostics
+        if: always()
         run: |
-          echo "# 🚀 Deploy completed successfully" >> $GITHUB_STEP_SUMMARY
+          echo "# 📊 Deployment Status Report" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Deployment details" >> $GITHUB_STEP_SUMMARY
+          echo "### Deployment Details" >> $GITHUB_STEP_SUMMARY
           echo "- **Environment:** Production" >> $GITHUB_STEP_SUMMARY
           echo "- **URL:** https://www.snakkaz.com" >> $GITHUB_STEP_SUMMARY
           echo "- **Deployed at:** $(date)" >> $GITHUB_STEP_SUMMARY
           echo "- **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [[ "${{ env.lftp_succeeded }}" == "true" ]]; then
+            echo "### ✅ Primary Deployment (LFTP)" >> $GITHUB_STEP_SUMMARY
+            echo "LFTP deployment completed successfully." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### ❌ Primary Deployment (LFTP)" >> $GITHUB_STEP_SUMMARY
+            echo "LFTP deployment failed." >> $GITHUB_STEP_SUMMARY
+            
+            if [[ "${{ env.curl_ftp_works }}" == "true" ]]; then
+              echo "### ✅ Fallback Test (curl FTP)" >> $GITHUB_STEP_SUMMARY
+              echo "Direct FTP access with curl was successful." >> $GITHUB_STEP_SUMMARY
+            else
+              echo "### ❌ Fallback Test (curl FTP)" >> $GITHUB_STEP_SUMMARY
+              echo "Direct FTP access with curl also failed." >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "**Possible issues:**" >> $GITHUB_STEP_SUMMARY
+              echo "- IP restrictions on the Namecheap server" >> $GITHUB_STEP_SUMMARY
+              echo "- GitHub Actions IPs are blocked" >> $GITHUB_STEP_SUMMARY
+              echo "- FTP protocol issues or configuration problems" >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
+          
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Remember to verify that the site is working correctly!" >> $GITHUB_STEP_SUMMARY
