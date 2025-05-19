@@ -1,0 +1,58 @@
+name: Cleanup Supabase Preview
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  cleanup-preview:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Validate required secrets
+        env:
+          SUPABASE_ACCESS_TOKEN_CHECK: ${{ secrets.SUPABASE_ACCESS_TOKEN != '' }}
+          SUPABASE_PROJECT_ID_CHECK: ${{ secrets.SUPABASE_PROJECT_ID != '' }}
+        run: |
+          if [[ "$SUPABASE_ACCESS_TOKEN_CHECK" != "true" || "$SUPABASE_PROJECT_ID_CHECK" != "true" ]]; then
+            echo "Missing required secrets. Cannot delete preview branch."
+            exit 1
+          fi
+          
+          echo "All required secrets are available."
+      
+      - name: Install Supabase CLI
+        run: |
+          curl -L https://github.com/supabase/cli/releases/latest/download/supabase_linux_amd64.tar.gz | tar -xz
+          chmod +x supabase
+      
+      - name: Delete Preview Branch
+        run: |
+          # Set Supabase access token
+          ./supabase login --token ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          
+          # Get the branch ID from PR number
+          BRANCH_ID="pr-${{ github.event.pull_request.number }}"
+          
+          echo "Deleting Supabase preview branch: $BRANCH_ID"
+          ./supabase db branch delete "$BRANCH_ID" --project-id ${{ secrets.SUPABASE_PROJECT_ID }} --no-verify-jwt
+          
+          echo "Preview branch deleted: $BRANCH_ID"
+      
+      - name: Comment on PR
+        uses: actions/github-script@v5
+        with:
+          script: |
+            const branchId = 'pr-${{ github.event.pull_request.number }}';
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## 🧹 Supabase Preview Branch Deleted
+              
+              The Supabase preview branch \`${branchId}\` has been deleted as this PR is now closed.`
+            });

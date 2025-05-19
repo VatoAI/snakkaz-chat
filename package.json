@@ -17,7 +17,14 @@
     "prepare-deploy": "npm run build:prod && node scripts/prepare-deploy.js",
     "build:csp": "npm run build:prod && ./src/services/encryption/inject-csp.sh",
     "build:nocf": "npm run build:prod && ./src/services/encryption/inject-csp.sh",
-    "clean": "rimraf dist"
+    "clean": "rimraf dist",
+    "supabase:start": "./supabase-preview.sh start",
+    "supabase:stop": "./supabase-preview.sh stop",
+    "supabase:status": "./supabase-preview.sh status",
+    "supabase:setup": "./supabase-preview.sh setup",
+    "supabase:link": "./supabase-preview.sh link",
+    "supabase:db-reset": "./supabase-preview.sh db-reset",
+    "dev:with-supabase": "npm run supabase:start && npm run dev"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

@@ -1,0 +1,142 @@
+name: Supabase Preview
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  supabase-preview:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Validate required secrets
+        env:
+          SUPABASE_ACCESS_TOKEN_CHECK: ${{ secrets.SUPABASE_ACCESS_TOKEN != '' }}
+          SUPABASE_PROJECT_ID_CHECK: ${{ secrets.SUPABASE_PROJECT_ID != '' }}
+        run: |
+          if [[ "$SUPABASE_ACCESS_TOKEN_CHECK" != "true" ]]; then
+            echo "Error: SUPABASE_ACCESS_TOKEN secret is missing"
+            missing_secrets=true
+          fi
+          
+          if [[ "$SUPABASE_PROJECT_ID_CHECK" != "true" ]]; then
+            echo "Error: SUPABASE_PROJECT_ID secret is missing"
+            missing_secrets=true
+          fi
+          
+          if [[ "$missing_secrets" == "true" ]]; then
+            echo "Missing required secrets. Cannot create preview branch."
+            echo "You need to set the following secrets in GitHub repository settings:"
+            echo "- SUPABASE_ACCESS_TOKEN: Access token from Supabase"
+            echo "- SUPABASE_PROJECT_ID: Your Supabase project ID"
+            exit 1
+          fi
+          
+          echo "All required secrets are available."
+      
+      - name: Install Supabase CLI
+        run: |
+          curl -L https://github.com/supabase/cli/releases/latest/download/supabase_linux_amd64.tar.gz | tar -xz
+          chmod +x supabase
+      
+      - name: Create and Deploy Preview Branch
+        id: create-preview
+        run: |
+          # Set Supabase access token
+          ./supabase login --token ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          
+          # Get the PR number or use a timestamp for workflow dispatch
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            BRANCH_ID="pr-${{ github.event.pull_request.number }}"
+          else
+            BRANCH_ID="manual-$(date +%Y%m%d%H%M%S)"
+          fi
+          
+          # Create a Supabase branch
+          echo "Creating Supabase preview branch: $BRANCH_ID"
+          PREVIEW_URL=$(./supabase db branch create "$BRANCH_ID" --project-id ${{ secrets.SUPABASE_PROJECT_ID }} --no-verify-jwt)
+          
+          # Extract the DB connection string
+          if [[ $PREVIEW_URL =~ "Connection string: "(postgres:[^\']*) ]]; then
+            DB_URL="${BASH_REMATCH[1]}"
+            echo "db_url=$DB_URL" >> $GITHUB_OUTPUT
+            echo "branch_id=$BRANCH_ID" >> $GITHUB_OUTPUT
+            echo "Preview branch created successfully: $BRANCH_ID"
+            echo "Connection string: $DB_URL"
+          else
+            echo "Failed to extract connection string from output"
+            exit 1
+          fi
+      
+      - name: Run Migrations on Preview Branch
+        run: |
+          # Apply migrations to the preview branch
+          echo "Applying migrations to preview branch..."
+          ./supabase db push --db-url "${{ steps.create-preview.outputs.db_url }}"
+      
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v5
+        with:
+          script: |
+            const branchId = '${{ steps.create-preview.outputs.branch_id }}';
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## 🔵 Supabase Preview Branch Created
+              
+              A Supabase preview branch has been created for this PR: \`${branchId}\`
+              
+              ### How to use this preview:
+              
+              1. Run this command to link to the preview branch:
+              ```bash
+              ./supabase-preview.sh link
+              ```
+              
+              2. When prompted, enter your Supabase project reference ID
+              
+              3. Run your application with the preview environment:
+              ```bash
+              SUPABASE_BRANCH=${branchId} npm run dev
+              ```
+              
+              The preview branch will be automatically deleted when this PR is closed.`
+            });
+      
+      - name: Output Preview URL (for workflow_dispatch)
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          echo "## 🔵 Supabase Preview Branch Created" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Branch ID: \`${{ steps.create-preview.outputs.branch_id }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### How to use this preview:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "1. Run this command to link to the preview branch:" >> $GITHUB_STEP_SUMMARY
+          echo "```bash" >> $GITHUB_STEP_SUMMARY
+          echo "./supabase-preview.sh link" >> $GITHUB_STEP_SUMMARY
+          echo "```" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "2. When prompted, enter your Supabase project reference ID" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "3. Run your application with the preview environment:" >> $GITHUB_STEP_SUMMARY
+          echo "```bash" >> $GITHUB_STEP_SUMMARY
+          echo "SUPABASE_BRANCH=${{ steps.create-preview.outputs.branch_id }} npm run dev" >> $GITHUB_STEP_SUMMARY
+          echo "```" >> $GITHUB_STEP_SUMMARY
