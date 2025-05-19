@@ -11,13 +11,10 @@ import { supabase } from '@/lib/supabaseClient';
  * serveren har det korrekte sertifikatet.
  */
 
-import { createClient } from '@supabase/supabase-js';
+// Using singleton Supabase client to prevent "Multiple GoTrueClient instances" warning
+import { supabase } from '@/lib/supabaseClient';
 import { supabasePinnedFetch } from '@/utils/security/network/certificate-pinning';
 import { useToast } from '@/hooks/use-toast';
-
-// Hent miljøvariabler
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
 // Vi kan ikke bruke hooks direkte, så vi oppretter en enkel toast-funksjon
 const showToast = (title: string, description: string, variant: 'default' | 'destructive' = 'default') => {
@@ -45,8 +42,8 @@ const secureOptions = {
   }
 };
 
-// Opprett den sikre klienten
-export const secureSupabase = createClient(supabaseUrl, supabaseAnonKey, secureOptions);
+// Use the singleton instance instead of creating a new one
+export const secureSupabase = supabase;
 
 // Sikker autentisering med ekstra validering
 export async function secureSignIn(email: string, password: string) {

@@ -8,11 +8,11 @@
 import { applyCspPolicy } from './cspConfig';
 import { registerAssetFallbackHandlers, preloadLocalAssets } from './assetFallback';
 import { runDiagnosticTest } from './diagnosticTest';
-import { unblockPingRequests, fixCloudflareCorsSecurity } from './corsTest';
+import { unblockPingRequests } from './corsTest';
+import { fixCorsSecurity } from '../security/corsConfig';
 import { applyBrowserCompatibilityFixes, fixModuleImportIssues } from './browserFixes';
-import { initializeAnalytics, triggerCloudflarePageview } from './analyticsLoader';
+import { initializeAnalytics } from './analyticsLoader';
 import { fixDeprecatedMetaTags } from './metaTagFixes';
-import { fixCloudflareAnalyticsIntegration, fixMissingResources, checkCloudflareActivation } from './cloudflareHelper';
 import { initCspReporting } from './cspReporting';
 
 // Track initialization state
@@ -42,16 +42,13 @@ export function initializeSnakkazChat() {
       // Fall back to standard fixes if the import fails
       applyCspPolicy();
       unblockPingRequests();
-      fixCloudflareCorsSecurity();
+      fixCorsSecurity();
     });
   } catch (error) {
     console.error('Error importing emergency fixes:', error);
     // Apply traditional fixes as fallback
     applyCspPolicy();
   }
-  
-  // Fix missing resources (like auth-bg.jpg)
-  fixMissingResources();
   
   // Register asset fallback handlers - must come early to catch any loading errors
   registerAssetFallbackHandlers();
@@ -71,20 +68,8 @@ export function initializeSnakkazChat() {
   // Fix module import issues in older browsers
   fixModuleImportIssues();
   
-  // Fix Cloudflare Analytics integration specifically - this is a critical fix
-  fixCloudflareAnalyticsIntegration();
-  
-  // Initialize analytics after fixing integration issues
+  // Initialize analytics
   initializeAnalytics();
-  
-  // Check Cloudflare activation status - helps diagnose DNS propagation issues
-  checkCloudflareActivation().then(active => {
-    if (!active) {
-      console.warn('Cloudflare is not fully active yet - some features may be limited until DNS propagation completes');
-    } else {
-      console.log('Cloudflare integration is active and working');
-    }
-  });
   
   // Preload local assets for faster fallbacks
   preloadLocalAssets();
@@ -94,17 +79,8 @@ export function initializeSnakkazChat() {
   
   // Initialize analytics safely
   setTimeout(() => {
-    // Check Cloudflare activation first
-    checkCloudflareActivation().then(active => {
-      if (active) {
-        console.log('Cloudflare is active, initializing analytics');
-        initializeAnalytics();
-      } else {
-        console.log('Cloudflare not active yet, deferring analytics initialization');
-        // Retry after 1 minute
-        setTimeout(initializeAnalytics, 60 * 1000);
-      }
-    });
+    // Initialize analytics without Cloudflare dependency
+    initializeAnalytics();
   }, 1500);
   
   // Multiple re-application of fixes to catch any dynamic DOM changes
@@ -117,17 +93,11 @@ export function initializeSnakkazChat() {
     // Fix meta tags again
     fixDeprecatedMetaTags();
     
-    // Fix Cloudflare CORS security issues again
-    fixCloudflareCorsSecurity();
-    
-    // Fix Cloudflare Analytics integration specifically
-    fixCloudflareAnalyticsIntegration();
+    // Fix CORS security issues again
+    fixCorsSecurity();
     
     // Re-unblock ping requests in case new event handlers were added
     unblockPingRequests();
-    
-    // Fix missing resources again
-    fixMissingResources();
   };
   
   // Initialize CSP reporting
@@ -153,8 +123,6 @@ export function initializeSnakkazChat() {
   // Apply fixes one more time after all resources are loaded
   window.addEventListener('load', () => {
     reapplyFixes();
-    // Trigger manual Cloudflare pageview
-    triggerCloudflarePageview();
     
     // Add our CSP testing tools to the window object for debugging
     if (process.env.NODE_ENV !== 'production') {
@@ -223,16 +191,16 @@ export function initializeSnakkazChat() {
     
     history.pushState = function(...args) {
       originalPushState.apply(this, args);
-      triggerCloudflarePageview();
+      // Route changed - can add analytics or tracking here if needed
     };
     
     history.replaceState = function(...args) {
       originalReplaceState.apply(this, args);
-      triggerCloudflarePageview();
+      // Route changed - can add analytics or tracking here if needed
     };
     
     window.addEventListener('popstate', () => {
-      triggerCloudflarePageview();
+      // Route changed with back/forward - can add analytics or tracking here if needed
     });
   }
   

@@ -152,7 +152,10 @@ self.addEventListener('fetch', (event) => {
           // Cache den nye versjonen
           const responseToCache = response.clone();
           caches.open(CACHE_NAME).then(cache => {
-            cache.put(event.request, responseToCache);
+            // Skip caching for HEAD requests
+            if (event.request.method === 'GET') {
+              cache.put(event.request, responseToCache);
+            }
           }).catch(error => log('Kunne ikke cache navigasjons-svar:', error));
           
           return response;
@@ -184,7 +187,10 @@ self.addEventListener('fetch', (event) => {
                 .then(networkResponse => {
                   if (networkResponse && networkResponse.status === 200) {
                     caches.open(CACHE_NAME).then(cache => {
-                      cache.put(event.request, networkResponse.clone());
+                      // Skip caching for HEAD requests
+                      if (event.request.method === 'GET') {
+                        cache.put(event.request, networkResponse.clone());
+                      }
                     }).catch(error => log('Kunne ikke oppdatere cache:', error));
                   }
                 })
