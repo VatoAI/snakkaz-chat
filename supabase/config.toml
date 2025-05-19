@@ -1,0 +1,15 @@
+# Supabase configuration
+project_id = "snakkaz-chat"
+
+[api]
+port = 8000
+schemas = ["public", "storage"]
+
+[db]
+port = 5432
+
+[auth]
+site_url = "http://localhost:5173"
+
+[studio]
+port = 8001

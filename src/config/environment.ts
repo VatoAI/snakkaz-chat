@@ -13,3 +13,34 @@ export const environment = {
     baseUrl: import.meta.env.PROD ? 'https://www.snakkaz.com' : 'http://localhost:5173',
   }
 };
+
+/**
+ * Check and update Supabase Preview status
+ * This function checks if we're connected to a Supabase preview branch
+ * and updates the environment configuration accordingly
+ */
+export function checkSupabasePreviewStatus() {
+  try {
+    // Check if we're using a preview branch (typically set by GitHub Actions workflow)
+    const previewBranch = 
+      typeof process !== 'undefined' && 
+      process.env && 
+      process.env.SUPABASE_BRANCH;
+    
+    if (previewBranch) {
+      console.log(`Using Supabase Preview branch: ${previewBranch}`);
+      // Update the environment config
+      environment.supabase.preview = {
+        enabled: true,
+        branch: previewBranch
+      };
+      return true;
+    } else {
+      console.log('Using main Supabase instance');
+      return false;
+    }
+  } catch (error) {
+    console.error('Failed to check Supabase Preview status:', error);
+    return false;
+  }
+}
