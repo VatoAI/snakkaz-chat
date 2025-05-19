@@ -3,9 +3,10 @@ import React, { Suspense, lazy, useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation, BrowserRouter } from "react-router-dom";
 import { AuthProvider, useAuth } from './hooks/useAuth';
 import { Toaster } from "@/components/ui/toaster";
-import { ErrorBoundary } from './components/ErrorBoundary';
+import { RootErrorBoundary } from './components/error/RootErrorBoundary';
 import { supabase } from '@/lib/supabaseClient';
 import { verifySupabaseConfig } from '@/services/encryption/supabasePatch';
+import { setupGlobalErrorHandlers } from './utils/error/errorHandling';
 
 // Lazy load components
 const Login = lazy(() => import("@/pages/Login"));
@@ -86,11 +87,15 @@ const PublicOnlyRoute = ({ children }: { children: JSX.Element }) => {
 function App() {
   // Ensure Supabase config is valid when the app initializes
   useEffect(() => {
+    // Set up global error handlers
+    setupGlobalErrorHandlers();
+    
+    // Verify Supabase configuration
     verifySupabaseConfig();
   }, []);
 
   return (
-    <ErrorBoundary>
+    <RootErrorBoundary>
       <AuthProvider>
         <Suspense fallback={<LoadingSpinner />}>
           <Routes>
@@ -141,7 +146,7 @@ function App() {
         
         <Toaster />
       </AuthProvider>
-    </ErrorBoundary>
+    </RootErrorBoundary>
   );
 }
 

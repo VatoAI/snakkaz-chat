@@ -11,9 +11,8 @@ import './assets/update-notification.css'; // Import update notification styles
 import { initializeExternalServices, initializeErrorHandling } from './utils/serviceConnector';
 import './utils/externalScripts'; // This auto-initializes
 
-// Import security initialization for Snakkaz Chat
-import { initializeSnakkazChat } from './services/initialize';
-import { applyAllCspFixes } from './services/security/cspFixes';
+// Import security initialization for Snakkaz Chat - SIMPLIFIED VERSION
+import { initializeSnakkazChat, applyAllCspFixes } from './services/simplified-initialize';
 
 // Initialize error handlers as early as possible to prevent console errors
 initializeErrorHandling();
@@ -24,15 +23,17 @@ applyAllCspFixes();
 // Log environment setup
 console.log('Snakkaz Chat environment initialized');
 
-// Initialize Snakkaz Chat security features
+// Initialize Snakkaz Chat security features with the simplified implementation
 initializeSnakkazChat();
 
 // PWA registration function
 async function registerServiceWorker() {
   if ('serviceWorker' in navigator) {
     try {
-      // Use the improved service worker
-      const registration = await navigator.serviceWorker.register('/service-worker.js');
+      // Use stable service worker
+      const registration = await navigator.serviceWorker.register('/service-worker.js', {
+        scope: '/'
+      });
       console.log('Improved Service Worker registered with scope:', registration.scope);
 
       // Check for updates

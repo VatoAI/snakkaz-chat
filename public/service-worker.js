@@ -1,15 +1,13 @@
-// Snakkaz Chat App Service Worker - Optimalisert for mobilbruk og produksjon
-const CACHE_VERSION = '2';
+// Snakkaz Chat App Service Worker - Simplified and Robust Version
+const CACHE_VERSION = '3';
 const CACHE_NAME = 'snakkaz-cache-v' + CACHE_VERSION;
 const OFFLINE_URL = '/offline.html';
 
-// Ressurser som skal caches ved installasjon
+// Assets to cache on installation
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
   '/offline.html',
-  '/snakkaz-logo.png',
-  '/favicon.ico',
   '/manifest.json',
   '/icons/snakkaz-icon-192.png',
   '/icons/snakkaz-icon-512.png',
@@ -17,7 +15,7 @@ const ASSETS_TO_CACHE = [
   '/assets/index.js'
 ];
 
-// Logger for feilsøking, deaktiveres i produksjon
+// Quieter logging for production
 const DEBUG = false;
 const log = (...args) => {
   if (DEBUG) {
@@ -25,92 +23,107 @@ const log = (...args) => {
   }
 };
 
-// Installer service worker og cache nødvendige ressurser
+// Install event - cache essential assets
 self.addEventListener('install', (event) => {
-  log('Installerer');
+  log('Installing service worker');
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      log('Cache åpnet, legger til filer');
-      return cache.addAll(ASSETS_TO_CACHE)
-        .then(() => log('Alle ressurser cachet'))
-        .catch(error => {
-          log('Feil ved caching av ressurser:', error);
-          // Fortsett med serviceworker selv om noen filer ikke kunne caches
-          return Promise.resolve();
-        });
-    })
+    caches.open(CACHE_NAME)
+      .then((cache) => {
+        log('Caching essential assets');
+        return cache.addAll(ASSETS_TO_CACHE);
+      })
+      .catch(error => {
+        console.error('Error during service worker install:', error);
+        // Don't block installation even if caching fails
+        return Promise.resolve();
+      })
+      .then(() => {
+        log('Service worker installed');
+        return self.skipWaiting();
+      })
   );
-  self.skipWaiting();
 });
 
-// Aktiverer service worker og fjerner gamle cacher
+// Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
-  log('Aktiverer');
+  log('Activating service worker');
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.filter(cacheName => {
-          // Fjern alle caches som begynner med 'snakkaz-cache-' men ikke er den gjeldende versjonen
-          return cacheName.startsWith('snakkaz-cache-') && cacheName !== CACHE_NAME;
-        }).map((cacheName) => {
-          log('Fjerner gammel cache:', cacheName);
-          return caches.delete(cacheName);
-        })
-      );
-    }).then(() => {
-      log('Serviceworker er nå aktiv');
-      return self.clients.claim();
-    })
+    caches.keys()
+      .then((cacheNames) => {
+        return Promise.all(
+          cacheNames.filter(cacheName => {
+            return cacheName.startsWith('snakkaz-cache-') && cacheName !== CACHE_NAME;
+          }).map((cacheName) => {
+            log('Removing old cache:', cacheName);
+            return caches.delete(cacheName);
+          })
+        );
+      })
+      .then(() => {
+        log('Service worker activated');
+        return self.clients.claim();
+      })
+      .catch(error => {
+        console.error('Error during service worker activation:', error);
+        // Continue activation even if cache cleanup fails
+        return self.clients.claim();
+      })
   );
 });
 
-// Håndter fetch-events - server fra cache hvis tilgjengelig, ellers fra nettverket
+// Fetch event - network-first strategy with fallback to cache
 self.addEventListener('fetch', (event) => {
-  // Skip non-GET requests
+  // Don't handle non-GET requests at all
   if (event.request.method !== 'GET') {
     return;
   }
   
-  // Handle fetch event
+  // Don't try to handle requests for other domains
+  const url = new URL(event.request.url);
+  if (url.origin !== location.origin) {
+    return;
+  }
+  
+  // Special handling for HTML navigation requests - network first
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .catch(() => {
+          log('Navigation fetch failed, falling back to offline page');
+          return caches.match(OFFLINE_URL);
+        })
+    );
+    return;
+  }
+  
+  // For all other GET requests - try network first, fall back to cache
   event.respondWith(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.match(event.request).then((cachedResponse) => {
-        // Hvis ressursen finnes i cache, returner den
-        if (cachedResponse) {
-          log('Serving from cache:', event.request.url);
-          return cachedResponse;
+    fetch(event.request)
+      .then(response => {
+        // Clone the response to put one copy in cache
+        const responseToCache = response.clone();
+        
+        // Only cache successful responses
+        if (response.ok) {
+          caches.open(CACHE_NAME)
+            .then(cache => {
+              cache.put(event.request, responseToCache);
+            })
+            .catch(error => {
+              log('Failed to cache response:', error);
+            });
         }
         
-        // Ellers, gå til nettverket
-        return fetch(event.request).then((networkResponse) => {
-          // Hvis vi får respons og den er OK, cache den for fremtidig bruk
-          if (networkResponse && networkResponse.status === 200) {
-            // Clone the response since it can only be consumed once
-            const responseToCache = networkResponse.clone();
-            
-            // Skip caching for HEAD requests (previously fixed issue)
-            if (event.request.method === 'GET') {
-              cache.put(event.request, responseToCache);
-            }
-          }
-          
-          return networkResponse;
-        }).catch((error) => {
-          log('Fetch failed, falling back to offline page:', error);
-          
-          // Hvis nettverket feiler og vi har en offline-side, returner den
-          if (event.request.mode === 'navigate') {
-            return cache.match(OFFLINE_URL);
-          }
-          
-          return new Response('Network error', { status: 408, headers: { 'Content-Type': 'text/plain' } });
-        });
-      });
-    })
+        return response;
+      })
+      .catch(() => {
+        log('Fetch failed, checking cache');
+        return caches.match(event.request);
+      })
   );
 });
 
-// Skip waiting when asked
+// Handle message events (like skipWaiting)
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
