@@ -2,6 +2,8 @@
 import { supabase } from '@/lib/supabaseClient';
 // Using singleton Supabase client to prevent "Multiple GoTrueClient instances" warning
 import { supabase } from '@/lib/supabaseClient';
+// Using singleton Supabase client to prevent "Multiple GoTrueClient instances" warning
+import { supabase } from '@/lib/supabaseClient';
 import { createClient } from '@supabase/supabase-js';
 
 // Bruk miljøvariabler for å hente Supabase-innstillinger
@@ -9,7 +11,7 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://your-supabase-
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'your-anon-key';
 
 // Opprett Supabase-klienten
-export // REPLACED: // REPLACED: const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+export // REPLACED: // REPLACED: // REPLACED: const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,

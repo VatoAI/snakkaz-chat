@@ -205,7 +205,10 @@ self.addEventListener('fetch', (event) => {
               // Cache for fremtidig bruk
               const responseToCache = response.clone();
               caches.open(CACHE_NAME).then(cache => {
-                cache.put(event.request, responseToCache);
+                // Skip caching for HEAD requests
+                if (event.request.method === 'GET') {
+                  cache.put(event.request, responseToCache);
+                }
               }).catch(error => log('Kunne ikke cache statisk ressurs:', error));
               
               return response;

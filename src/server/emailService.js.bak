@@ -1,5 +1,3 @@
-// Using singleton Supabase client to prevent "Multiple GoTrueClient instances" warning
-const { supabase } = require('@/lib/supabaseClient');
 // emailService.js
 // This file contains the API endpoints for managing premium user email accounts
 
@@ -10,7 +8,7 @@ const { isOperationPermitted } = require('../middleware/apiSecurityMiddleware');
 // Initialize Supabase client
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
-// REPLACED: const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // cPanel API configuration
 const cPanelConfig = {

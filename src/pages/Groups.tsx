@@ -2,6 +2,8 @@
 import { supabase } from '@/lib/supabaseClient';
 // Using singleton Supabase client to prevent "Multiple GoTrueClient instances" warning
 import { supabase } from '@/lib/supabaseClient';
+// Using singleton Supabase client to prevent "Multiple GoTrueClient instances" warning
+import { supabase } from '@/lib/supabaseClient';
 import React, { useState, useEffect } from 'react';
 import { useAuth } from './hooks/useAuth';
 import useEncryption from './hooks/useEncryption';
@@ -35,7 +37,7 @@ interface Member {
 const Groups: React.FC = () => {
   const { user } = useAuth();
   const { hasKeys, encryptForGroup } = useEncryption();
-  // REPLACED: // REPLACED: const supabase = createClient(supabaseUrl, supabaseAnonKey);
+  // REPLACED: // REPLACED: // REPLACED: const supabase = createClient(supabaseUrl, supabaseAnonKey);
   
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);

@@ -1,5 +1,3 @@
-// Using singleton Supabase client to prevent "Multiple GoTrueClient instances" warning
-const { supabase } = require('@/lib/supabaseClient');
 /**
  * Authentication middleware for the API routes
  * This middleware verifies the user's authentication status and premium subscription
@@ -10,7 +8,7 @@ const { createClient } = require('@supabase/supabase-js');
 // Initialize Supabase client
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
-// REPLACED: const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 /**
  * Check if the user is authenticated

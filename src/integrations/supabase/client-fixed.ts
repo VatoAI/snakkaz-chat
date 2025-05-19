@@ -2,6 +2,8 @@
 import { supabase } from '@/lib/supabaseClient';
 // Using singleton Supabase client to prevent "Multiple GoTrueClient instances" warning
 import { supabase } from '@/lib/supabaseClient';
+// Using singleton Supabase client to prevent "Multiple GoTrueClient instances" warning
+import { supabase } from '@/lib/supabaseClient';
 /**
  * Supabase Client with Environment Fix
  * 
