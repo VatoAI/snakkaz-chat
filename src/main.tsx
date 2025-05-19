@@ -11,10 +11,16 @@ import './assets/update-notification.css'; // Import update notification styles
 import { initializeExternalServices, initializeErrorHandling } from './utils/serviceConnector';
 import './utils/externalScripts'; // This auto-initializes
 
+// Import error monitoring
+import { initErrorMonitoring } from './utils/error/errorMonitoring';
+
 // Import security initialization for Snakkaz Chat - SIMPLIFIED VERSION
 import { initializeSnakkazChat, applyAllCspFixes } from './services/simplified-initialize';
 
-// Initialize error handlers as early as possible to prevent console errors
+// Initialize error monitoring as early as possible
+initErrorMonitoring();
+
+// Initialize error handlers from service connector
 initializeErrorHandling();
 
 // Apply the emergency CSP fixes first to prevent loading issues
