@@ -1,79 +1,79 @@
 # Supabase Preview for Snakkaz Chat
 
-Dette dokumentet gir informasjon om hvordan man bruker Supabase preview-miljøer for lokal utvikling og testing.
+This document provides information on how to use Supabase preview environments for local development and testing.
 
-## Lokal utvikling med Supabase
+## Local Development with Supabase
 
-For lokal utvikling kan du kjøre Supabase lokalt ved å bruke følgende kommandoer:
+For local development, you can run Supabase locally using the following commands:
 
 ```bash
-# Initialisere Supabase-prosjekt (første gang)
+# Initialize Supabase project (first time only)
 npm run supabase:setup
 
-# Starte lokal Supabase-instans
+# Start local Supabase instance
 npm run supabase:start
 
-# Kjøre applikasjon med lokal Supabase
+# Run the application with local Supabase
 npm run dev:with-supabase
 
-# Sjekke status for lokal Supabase
+# Check status of local Supabase
 npm run supabase:status
 
-# Stoppe lokal Supabase-instans
+# Stop local Supabase instance
 npm run supabase:stop
 ```
 
-## Preview-miljøer for Pull Requests
+## Preview Environments for Pull Requests
 
-Når en pull request opprettes mot main-branch, vil GitHub Actions automatisk opprette en Supabase preview-branch. Dette gir et isolert testmiljø spesifikt for den pull requesten.
+When a pull request is created against the main branch, GitHub Actions will automatically create a Supabase preview branch. This provides an isolated test environment specific to that pull request.
 
-### Hvordan bruke Preview-miljøer:
+### How to Use Preview Environments:
 
-1. Opprett en pull request mot main-branch
-2. GitHub Actions vil opprette en Supabase preview-branch
-3. En kommentar på pull requesten vil inneholde instruksjoner for hvordan man kobler til preview-miljøet
-4. Når pull requesten lukkes, vil preview-branchen slettes automatisk
+1. Create a pull request against the main branch
+2. GitHub Actions will create a Supabase preview branch
+3. A comment on the pull request will contain instructions on how to connect to the preview environment
+4. When the pull request is closed, the preview branch will be automatically deleted
 
-### Manuell oppsett av Preview:
+### Manual Setup of Preview:
 
 ```bash
-# Link til eksisterende Supabase-prosjekt
+# Link to existing Supabase project
 ./supabase-preview.sh link
-# Følg instruksjonene og skriv inn prosjekt-referansen når du blir bedt om det
+# Follow the instructions and enter your project reference ID when prompted
 
-# Kjør applikasjonen med miljøvariabel for branch
-SUPABASE_BRANCH=branch-navn npm run dev
+# Run the application with the preview branch environment
+SUPABASE_BRANCH=branch-name npm run dev
 ```
 
-### Administrere databaseskjema:
+### Managing Database Schema:
 
 ```bash
-# Hente skjema fra remote prosjekt
+# Pull schema from remote project
 ./supabase-preview.sh db-pull
 
-# Dytte lokale endringer til remote prosjekt
+# Push local changes to remote project
 ./supabase-preview.sh db-push
 
-# Tilbakestille lokal database (sletter data!)
+# Reset local database (deletes data!)
 ./supabase-preview.sh db-reset
 ```
 
-## Nødvendige GitHub Secrets
+## Required GitHub Secrets
 
-For at Supabase preview-workflowen skal fungere ordentlig, må følgende secrets være satt i GitHub-repositoriet:
+For the Supabase preview workflow to function properly, the following secrets must be set in your GitHub repository:
 
-- `SUPABASE_ACCESS_TOKEN`: Din Supabase-tilgangstoken
-- `SUPABASE_PROJECT_ID`: Din Supabase-prosjekt-ID
+- `SUPABASE_ACCESS_TOKEN`: Your Supabase access token
+- `SUPABASE_PROJECT_ID`: Your Supabase project ID
 
-Du kan finne disse i Supabase-dashbordet ditt.
+You can obtain these from your Supabase dashboard.
 
-## Feilsøking
+## Troubleshooting
 
-Hvis du støter på problemer med Supabase preview:
+If you encounter issues with the Supabase preview:
 
-1. Sørg for at Docker kjører (nødvendig for lokal Supabase)
-2. Sjekk at alle nødvendige GitHub-secrets er konfigurert
-3. Verifiser at Supabase CLI er kjørbar (`chmod +x supabase`)
-4. Prøv å kjøre `./supabase-preview.sh status` for å sjekke nåværende tilstand
+1. Ensure Docker is running (required for local Supabase)
+2. Check that all necessary GitHub secrets are configured
+3. Verify that the Supabase CLI is executable (`chmod +x supabase`)
+4. Try running `./supabase-preview.sh status` to check the current state
 
-For mer hjelp, se [Supabase CLI-dokumentasjonen](https://supabase.com/docs/reference/cli).
+For more help, see the [Supabase CLI documentation](https://supabase.com/docs/reference/cli).
