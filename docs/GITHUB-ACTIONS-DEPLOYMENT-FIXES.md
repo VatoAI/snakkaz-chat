@@ -12,7 +12,50 @@ The GitHub Actions deployment workflow was failing with a "530 Login authenticat
 
 ## Solution Implementation
 
-### 1. Switch to LFTP for More Robust FTP/FTPS Connections
+### 1. Non-FTP Deployment via cPanel API (Recommended)
+
+After discovering that FTP-based methods can be problematic with Namecheap hosting, we've created an entirely new workflow that uses the cPanel API instead of FTP:
+
+```yaml
+name: Deploy Snakkaz Chat via cPanel (No FTP)
+
+jobs:
+  build-and-deploy:
+    # ... [Build steps remain the same] ...
+    
+    steps:
+      # ... [Other steps] ...
+      
+      # Deploy via cPanel API instead of FTP
+      - name: Deploy .htaccess via cPanel API
+        id: deploy-htaccess
+        run: |
+          echo "Uploading .htaccess file via cPanel API..."
+          # Uses HTTP POST to upload directly to cPanel
+      
+      - name: Create ZIP archive of the dist directory
+        run: |
+          echo "Creating ZIP archive of the dist directory..."
+          cd dist
+          zip -r ../snakkaz-dist.zip .
+      
+      - name: Upload ZIP via cPanel API
+        id: deploy-zip
+        run: |
+          echo "Uploading ZIP file via cPanel API..."
+          curl -k -w "\nHTTP Status: %{http_code}\n" \
+            -u "${{ secrets.CPANEL_USERNAME }}:${{ secrets.CPANEL_PASSWORD }}" \
+            -F "file=@snakkaz-dist.zip" \
+            "https://${{ secrets.CPANEL_URL }}/execute/Fileman/upload_files?dir=/public_html"
+```
+
+This approach has several advantages:
+- Uses HTTP/HTTPS instead of FTP (less likely to be blocked by firewalls)
+- More reliable as it uses standard web protocols
+- Handles larger files better through ZIP compression
+- Includes server-side extraction
+
+### 2. LFTP for More Robust FTP/FTPS Connections (Alternative)
 
 We modified the GitHub Actions workflow to use `lftp` instead of the standard FTP Deploy Action. LFTP provides better support for:
 - Explicit SSL/TLS connections
