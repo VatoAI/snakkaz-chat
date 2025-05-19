@@ -32,41 +32,7 @@ const MIME_TYPES = {
   '.txt': 'text/plain'
 };
 
-// Opprett HTTP-server
-const server = http.createServer((req, res) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
-  
-  // Normaliser URL
-  let url = req.url;
-  
-  // Håndter root URL
-  if (url === '/') {
-    url = '/index.html';
-  }
-
-  // Sett sammen full filsti
-  const filePath = path.join(DIST_DIR, url);
-  
-  // Sjekk om filen finnes
-  fs.access(filePath, fs.constants.F_OK, (err) => {
-    if (err) {
-      // Filen finnes ikke - prøv å serve index.html for SPA routing
-      if (!url.includes('.')) {
-        const indexPath = path.join(DIST_DIR, 'index.html');
-        serveFile(indexPath, res);
-        return;
-      }
-      
-      // Hvis det er en fil som skulle eksistere, returner 404
-      res.statusCode = 404;
-      res.end(`Filen finnes ikke: ${url}`);
-      return;
-    }
-    
-    // Filen finnes, serve den
-    serveFile(filePath, res);
-  });
-});
+// (Fjernet duplisert HTTP-serveropprettelse, Express brukes nedenfor)
 
 function serveFile(filePath, res) {
   const extname = String(path.extname(filePath)).toLowerCase();

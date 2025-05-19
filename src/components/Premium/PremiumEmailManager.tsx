@@ -34,7 +34,7 @@ interface EmailAccount {
 }
 
 export default function PremiumEmailManager() {
-  const { user, isLoading, isPremium } = useAuth()
+  const { user, isPremium } = useAuth()
   const { toast } = useToast()
   const [emails, setEmails] = useState<EmailAccount[]>([])
   const [isLoadingEmails, setIsLoadingEmails] = useState(false)
@@ -214,6 +214,9 @@ export default function PremiumEmailManager() {
     })
   }
 
+  // Combine loading states for user and emails
+  const isLoading = isLoadingEmails || !user;
+
   // If user is not premium, show upgrade message
   if (!isPremium && !isLoading) {
     return (
@@ -235,14 +238,14 @@ export default function PremiumEmailManager() {
           </div>
         </CardContent>
       </Card>
-    )
-  }
-
   // Loading state
-  if (isLoading || !user) {
+  if (isLoading) {
     return (
       <div className="flex justify-center py-8">
         <RefreshCw size={24} className="animate-spin" />
+      </div>
+    )
+  }
       </div>
     )
   }

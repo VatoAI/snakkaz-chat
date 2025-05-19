@@ -22,6 +22,18 @@ if [ -f ".env" ]; then
     source .env
 fi
 
+# Sjekk om ENABLE_PREMIUM_EMAIL er satt
+if [ -z "$ENABLE_PREMIUM_EMAIL" ]; then
+    read -p "Vil du aktivere premium e-postfunksjonen? (ja/nei): " ENABLE_EMAIL
+    if [[ "$ENABLE_EMAIL" =~ ^[Jj][Aa]$ ]]; then
+        ENABLE_PREMIUM_EMAIL="true"
+        echo "ENABLE_PREMIUM_EMAIL=true" >> .env
+    else
+        ENABLE_PREMIUM_EMAIL="false"
+        echo "ENABLE_PREMIUM_EMAIL=false" >> .env
+    fi
+fi
+
 # Sett opp cPanel API token detaljer
 if [ -z "$CPANEL_USERNAME" ] || [ -z "$CPANEL_API_TOKEN" ] || [ -z "$CPANEL_DOMAIN" ]; then
     echo -e "${YELLOW}Trenger cPanel API token detaljer:${NC}"
@@ -42,6 +54,41 @@ if [ -z "$CPANEL_USERNAME" ] || [ -z "$CPANEL_API_TOKEN" ] || [ -z "$CPANEL_DOMA
         echo "CPANEL_API_TOKEN=$CPANEL_API_TOKEN" >> .env
         echo "CPANEL_DOMAIN=$CPANEL_DOMAIN" >> .env
         echo "REMOTE_DIR=$REMOTE_DIR" >> .env
+    fi
+fi
+
+# Verifiser sikkerhetssjiktet for e-post API hvis premium e-post er aktivert
+if [ "$ENABLE_PREMIUM_EMAIL" = "true" ]; then
+    echo -e "${YELLOW}Verifiserer e-post API sikkerhetssjikt...${NC}"
+    
+    if [ ! -f "src/middleware/apiSecurityMiddleware.js" ]; then
+        echo -e "${RED}ADVARSEL: API sikkerhetssjikt mangler!${NC}"
+        echo -e "src/middleware/apiSecurityMiddleware.js ble ikke funnet."
+        echo -e "Dette er påkrevd for sikker bruk av cPanel API token."
+        read -p "Vil du fortsette likevel? Dette anbefales ikke. (ja/nei): " CONTINUE_UNSECURE
+        
+        if [[ ! "$CONTINUE_UNSECURE" =~ ^[Jj][Aa]$ ]]; then
+            echo -e "${RED}Deployment avbrutt av sikkerhetshensyn.${NC}"
+            exit 1
+        fi
+        
+        echo -e "${RED}Fortsetter uten sikkerhetssjikt - IKKE ANBEFALT!${NC}"
+    else
+        echo -e "${GREEN}✓ API sikkerhetssjikt funnet${NC}"
+    fi
+    
+    # Teste cPanel API token tilgang
+    echo -e "${YELLOW}Tester cPanel API token tilgang...${NC}"
+    ./test-cpanel-email-api.sh
+    
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}cPanel API token test mislyktes!${NC}"
+        read -p "Vil du fortsette likevel? (ja/nei): " CONTINUE_API_ISSUE
+        
+        if [[ ! "$CONTINUE_API_ISSUE" =~ ^[Jj][Aa]$ ]]; then
+            echo -e "${RED}Deployment avbrutt på grunn av API tilgangsproblemer.${NC}"
+            exit 1
+        fi
     fi
 fi
 
