@@ -41,12 +41,12 @@ export function applyCspPolicy(): void {
     'worker-src': ["'self'", 'blob:'],
     'form-action': ["'self'"],
     'base-uri': ["'self'"],
-    'frame-ancestors': ["'self'"],
-    'report-uri': ['https://www.snakkaz.com/api/csp-report']
+    'frame-ancestors': ["'self'"]
+    // Removed report-uri directive as it's deprecated and endpoint doesn't exist
   };
 
   // Build CSP string
-  let cspString = Object.entries(cspDirectives)
+  const cspString = Object.entries(cspDirectives)
     .map(([directive, sources]) => `${directive} ${sources.join(' ')}`)
     .join('; ');
 

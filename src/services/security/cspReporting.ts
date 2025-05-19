@@ -38,7 +38,7 @@ export function initCspReporting(options: {
   logToAnalytics?: boolean;
 } = {}): void {
   const { 
-    reportToEndpoint = 'https://analytics.snakkaz.com/csp-report', 
+    reportToEndpoint = '', // Removed non-existent endpoint
     logToConsole = true,
     logToAnalytics = false // Disabled to remove Cloudflare dependency
   } = options;

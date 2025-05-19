@@ -43,7 +43,7 @@ export function initCspReporting(options: {
   logToAnalytics?: boolean;
 } = {}): void {
   const { 
-    reportToEndpoint = 'https://analytics.snakkaz.com/csp-report', 
+    reportToEndpoint = '', // Removed non-existent endpoint
     logToConsole = true,
     logToAnalytics = false // Deaktivert for å fjerne Cloudflare-avhengighet
   } = options;
@@ -117,6 +117,9 @@ export function initCspReporting(options: {
  * Update CSP meta tag with reporting directives
  */
 function updateCspWithReporting(reportUri: string): void {
+  // Skip if reportUri is empty
+  if (!reportUri) return;
+  
   const cspTag = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
   if (!cspTag) return;
   

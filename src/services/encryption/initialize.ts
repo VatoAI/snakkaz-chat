@@ -134,9 +134,9 @@ export function initializeSnakkazChat() {
   try {
     console.log('Initializing CSP violation reporting...');
     initCspReporting({
-      reportToEndpoint: 'https://analytics.snakkaz.com/csp-report',
+      reportToEndpoint: '', // Removed non-existent endpoint
       logToConsole: true,
-      logToAnalytics: true
+      logToAnalytics: false
     });
   } catch (error) {
     console.error('Failed to initialize CSP reporting:', error);

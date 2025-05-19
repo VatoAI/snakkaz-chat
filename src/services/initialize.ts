@@ -62,7 +62,7 @@ export function initializeSnakkazChat() {
   // Set up CSP reporting (now without Cloudflare dependency)
   try {
     initCspReporting({
-      reportToEndpoint: 'https://analytics.snakkaz.com/csp-report',
+      reportToEndpoint: '', // Removed non-existent endpoint
       logToConsole: true,
       // Analytics logging disabled to remove Cloudflare dependency
       logToAnalytics: false
