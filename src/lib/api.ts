@@ -6,6 +6,7 @@
  * - Standardisert feilhåndtering
  * - Retry-logikk for midlertidige nettverksfeil
  * - Felles respons-formatering
+ * - API caching for forbedret ytelse
  * 
  * All kommunikasjon med backend bør gå gjennom disse funksjonene.
  */
@@ -13,12 +14,25 @@ import { supabase } from '@/integrations/supabase/client';
 import { performanceMonitor } from '@/services/performanceMonitor';
 import { errorReporting, ErrorCategory, ErrorSeverity } from '@/services/errorReporting';
 
+// Importere API caching funksjonalitet
+import { cachedFetch, clearApiCache, clearApiCacheByPattern } from '@/utils/data-fetching/api-cache';
+
 // Standardkonfigurasjon for API-kall
 const API_CONFIG = {
   maxRetries: 3,
   retryDelay: 1000, // ms
   timeout: 15000, // 15 sekunder
+  enableCache: true, // Aktiver caching som standard
+  cacheMaxAge: 5 * 60 * 1000, // 5 minutter standard cache tid
 };
+
+// Cache nøkkelgenerator for supabase kall
+const generateCacheKey = (tableName: string, query: any, options: any) => {
+  return `${tableName}:${JSON.stringify(query)}:${JSON.stringify(options)}`;
+};
+
+// Export cache kontroll funksjoner
+export { clearApiCache, clearApiCacheByPattern };
 
 /**
  * Generisk respons-type for API-kall
@@ -46,23 +60,77 @@ const createTimeout = (ms: number) => {
 /**
  * Wrapper for Supabase select med ytelsesovervåking
  */
-export async function fetchData<T = any>(
+export async function fetchData<T = unknown>(
   tableName: string,
-  query: any,
+  query: unknown,
   options: {
     retries?: number;
     timeout?: number;
     metricName?: string;
+    enableCache?: boolean;
+    cacheMaxAge?: number;
+    cacheBustKey?: string;
   } = {}
 ): Promise<ApiResponse<T>> {
   const startTime = performance.now();
   const retries = options.retries ?? API_CONFIG.maxRetries;
   const timeout = options.timeout ?? API_CONFIG.timeout;
   const metricName = options.metricName ?? `fetch:${tableName}`;
+  const enableCache = options.enableCache ?? API_CONFIG.enableCache;
+  const cacheMaxAge = options.cacheMaxAge ?? API_CONFIG.cacheMaxAge;
+  
+  // Generate a cache key for this request
+  const cacheKey = generateCacheKey(tableName, query, options);
   
   let currentTry = 0;
   let lastError: Error | null = null;
+  let isCached = false;
   
+  // Check cache if enabled
+  if (enableCache) {
+    try {
+      // Try to get from cache using the utility from api-cache.ts
+      const cachedResult = await cachedFetch<{ data: T; error: Error | null }>(
+        cacheKey,
+        async () => {
+          // This function will be called if the cache misses
+          const result = await Promise.race([
+            query,
+            createTimeout(timeout)
+          ]);
+          return result;
+        },
+        { maxAge: cacheMaxAge, cacheBustKey: options.cacheBustKey }
+      );
+      
+      if (cachedResult) {
+        isCached = true;
+        const duration = performance.now() - startTime;
+        
+        // Log performance for cached response
+        performanceMonitor.measureApiCall(`${metricName}:cached`, duration, {
+          table: tableName,
+          success: !cachedResult.error,
+          cached: true
+        });
+        
+        return {
+          data: cachedResult.data,
+          error: cachedResult.error,
+          status: cachedResult.error ? 500 : 200,
+          metadata: {
+            processingTime: duration,
+            cached: true
+          }
+        };
+      }
+    } catch (err) {
+      // If cache mechanism fails, continue with normal fetch
+      console.warn('Cache mechanism failed:', err);
+    }
+  }
+  
+  // Normal fetch with retry logic
   while (currentTry <= retries) {
     try {
       currentTry++;
@@ -82,6 +150,20 @@ export async function fetchData<T = any>(
         retries: currentTry - 1
       });
       
+      // Cache the successful result if enabled
+      if (enableCache && !result.error) {
+        try {
+          // Store in cache using our utility
+          await cachedFetch(cacheKey, async () => result, { 
+            maxAge: cacheMaxAge,
+            storeOnly: true
+          });
+        } catch (err) {
+          // Just log if caching fails
+          console.warn('Failed to store in cache:', err);
+        }
+      }
+      
       // Returner resultatet
       return {
         data: result.data,
@@ -89,7 +171,8 @@ export async function fetchData<T = any>(
         status: result.error ? (result.error.code === 'PGRST116' ? 404 : 500) : 200,
         metadata: {
           processingTime: duration,
-          retries: currentTry - 1
+          retries: currentTry - 1,
+          cached: false
         }
       };
     } catch (error) {

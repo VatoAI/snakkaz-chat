@@ -5,6 +5,7 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
+import './assets/update-notification.css'; // Import update notification styles
 
 // Import our service connector and error handling utilities
 import { initializeExternalServices, initializeErrorHandling } from './utils/serviceConnector';
@@ -30,8 +31,9 @@ initializeSnakkazChat();
 async function registerServiceWorker() {
   if ('serviceWorker' in navigator) {
     try {
-      const registration = await navigator.serviceWorker.register('/service-worker.js');
-      console.log('Service Worker registered with scope:', registration.scope);
+      // Use the improved service worker
+      const registration = await navigator.serviceWorker.register('/service-worker-improved.js');
+      console.log('Improved Service Worker registered with scope:', registration.scope);
 
       // Check for updates
       registration.addEventListener('updatefound', () => {
@@ -42,7 +44,24 @@ async function registerServiceWorker() {
           newWorker.addEventListener('statechange', () => {
             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
               console.log('New Service Worker installed, ready to take over');
-              // You could show a toast notification here about the update
+              // Show notification about update
+              const updateNotification = document.createElement('div');
+              updateNotification.className = 'update-notification';
+              updateNotification.innerHTML = `
+                <div class="update-banner">
+                  <p>En ny versjon av appen er tilgjengelig!</p>
+                  <button id="update-now">Oppdater nå</button>
+                </div>
+              `;
+              document.body.appendChild(updateNotification);
+              
+              // Add event listener for the update button
+              document.getElementById('update-now')?.addEventListener('click', () => {
+                if (newWorker.state === 'installed') {
+                  newWorker.postMessage({ type: 'SKIP_WAITING' });
+                }
+                window.location.reload();
+              });
             }
           });
         }
@@ -51,6 +70,17 @@ async function registerServiceWorker() {
       // Check if there's an existing controller, indicating PWA is already installed
       if (navigator.serviceWorker.controller) {
         console.log('PWA already installed and active');
+        
+        // Add listener for controlling service worker changes
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          console.log('New service worker controller, reloading page for fresh content');
+          window.location.reload();
+        });
+        
+        // Set up messaging for existing service workers
+        navigator.serviceWorker.ready.then((registration) => {
+          console.log('Service worker is ready');
+        });
       }
     } catch (error) {
       console.error('Service Worker registration failed:', error);

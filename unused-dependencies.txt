@@ -1,0 +1,26 @@
+Need to install the following packages:
+depcheck@1.4.7
+Ok to proceed? (y) Unused dependencies
+* @supabase/auth-helpers-react
+* @supabase/auth-ui-react
+* @supabase/auth-ui-shared
+* @tanstack/react-query
+* react-error-boundary
+* web-streams-polyfill
+Unused devDependencies
+* @tailwindcss/typography
+* @vitejs/plugin-react-swc
+* autoprefixer
+* postcss
+* rimraf
+* rollup-plugin-visualizer
+* supabase
+* vite-plugin-html
+* vite-plugin-pwa
+Missing dependencies
+* express: ./server.js
+* body-parser: ./server.js
+* cors: ./server.js
+* xmldom: ./src/scripts/complete-namecheap-migration.js
+* some-ui-library: ./src/pages/chat/AIChatPage.tsx
+* nanoid: ./src/hooks/useDirectMessageSubmit.ts
