@@ -7,18 +7,51 @@ Dette dokumentet gir en enkel trinn-for-trinn guide til å deploye Snakkaz Chat 
 1. Du har tilgang til GitHub-repositoriet for Snakkaz Chat
 2. Du har konfigurert nødvendige hemmeligheter i GitHub:
    - `SUPABASE_URL` og `SUPABASE_ANON_KEY`
-   - `FTP_SERVER`, `FTP_USERNAME`, `FTP_PASSWORD`, `SERVER_DIR`
+   - **cPanel API Token metode (anbefalt)**: 
+     - `CPANEL_USERNAME`, `CPANEL_API_TOKEN`, `CPANEL_DOMAIN`
+   - **Eldre FTP metode (ikke anbefalt)**:
+     - `FTP_SERVER`, `FTP_USERNAME`, `FTP_PASSWORD`, `SERVER_DIR`
    
    > **Merk:** Etter migreringen fra Cloudflare til Namecheap trenger du ikke lenger:
    > - `CLOUDFLARE_ZONE_ID` og `CLOUDFLARE_API_TOKEN`
 
-## Namecheap FTP-konfigurasjon
+## Anbefalt: cPanel API Token Deployment
 
-Etter migreringen til Namecheap hosting, skal følgende FTP-informasjon brukes:
+Den anbefalte metoden for deployment er å bruke cPanel API Tokens istedenfor FTP. Dette gir:
+- Bedre sikkerhet (ingen behov for å lagre cPanel passordet)
+- Mer pålitelig deployment (unngår FTP-relaterte problemer)
+- Ikke påvirket av IP-restriksjoner (et vanlig problem med FTP)
+
+### Sette opp cPanel API Token
+
+1. Kjør oppsettsscriptet for å generere nødvendig konfigurasjon:
+   ```bash
+   ./setup-cpanel-token-deployment.sh
+   ```
+
+2. Følg instruksjonene for å lage og konfigurere API token i cPanel
+   - Logg inn på cPanel > Security > Manage API Tokens
+   - Klikk "Create" og gi tokenet et navn (f.eks. "GithubDeployment")
+   - Kopier tokenet og bruk det i oppsettsscriptet
+
+3. Legg til de genererte hemmelighetene i GitHub repository settings:
+   - `CPANEL_USERNAME`: Din cPanel-brukernavn
+   - `CPANEL_API_TOKEN`: API-tokenet du genererte i cPanel
+   - `CPANEL_DOMAIN`: cPanel domenet (f.eks. premium123.web-hosting.com)
+
+4. Bruk `deploy-cpanel-token.yml` workflow for deployment
+
+Se `docs/CPANEL-API-TOKEN-DEPLOYMENT.md` for mer detaljert informasjon.
+
+## Alternativ: Namecheap FTP-konfigurasjon
+
+Hvis du fortsatt ønsker å bruke FTP-metoden (ikke anbefalt), kan følgende FTP-informasjon brukes:
 
 - **FTP Server**: `premium123.web-hosting.com`
 - **FTP Username**: `SnakkaZ@snakkaz.com` (eller annen FTP-konto du har opprettet)
 - **FTP Password**: Passordet du satte ved oppretting av FTP-kontoen
+
+> **Merk:** FTP-metoden kan være upålitelig på grunn av IP-restriksjoner. Se `docs/FTP-ACCESS-DENIED-ERROR.md` for mer informasjon.
 - **Server Directory**: `/home/snakqsqe/`
 
 For å generere GitHub Secrets for FTP-oppsett, kan du kjøre:

@@ -1,6 +1,9 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const express = require('express');
+const bodyParser = require('body-parser');
+const cors = require('cors');
 
 const PORT = 8080;
 const DIST_DIR = path.join(__dirname, 'dist');
@@ -83,9 +86,32 @@ function serveFile(filePath, res) {
   });
 }
 
+// Create Express app for API routes
+const app = express();
+
+// Middleware
+app.use(cors());
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
+// API Routes
+app.use('/api/emails', require('./src/server/api/emailRoutes'));
+
+// Serve static files using existing handler
+app.use(express.static(DIST_DIR));
+
+// For any other GET request, serve index.html (SPA routing)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(DIST_DIR, 'index.html'));
+});
+
+// Create server
+const server = http.createServer(app);
+
 // Start serveren
 server.listen(PORT, () => {
   console.log(`\n==== Snakkaz Chat Server ====`);
   console.log(`Server kjører på http://localhost:${PORT}`);
+  console.log(`API routes tilgjengelig på http://localhost:${PORT}/api/`);
   console.log(`Trykk Ctrl+C for å stoppe serveren`);
 });

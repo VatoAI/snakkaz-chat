@@ -1,0 +1,309 @@
+name: Deploy Snakkaz Chat via cPanel API Token
+
+# Run when code is pushed to main branch or manually triggered
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+        continue-on-error: false
+      
+      # Verify that required secrets exist
+      - name: Validate required secrets
+        env:
+          SUPABASE_URL_CHECK: ${{ secrets.SUPABASE_URL != '' }}
+          SUPABASE_KEY_CHECK: ${{ secrets.SUPABASE_ANON_KEY != '' }}
+          CPANEL_USER_CHECK: ${{ secrets.CPANEL_USERNAME != '' }}
+          CPANEL_TOKEN_CHECK: ${{ secrets.CPANEL_API_TOKEN != '' }}
+          CPANEL_DOMAIN_CHECK: ${{ secrets.CPANEL_DOMAIN != '' }}
+        run: |
+          if [[ "$SUPABASE_URL_CHECK" != "true" ]]; then
+            echo "Error: SUPABASE_URL secret is missing"
+            missing_secrets=true
+          fi
+          
+          if [[ "$SUPABASE_KEY_CHECK" != "true" ]]; then
+            echo "Error: SUPABASE_ANON_KEY secret is missing"
+            missing_secrets=true
+          fi
+          
+          if [[ "$CPANEL_USER_CHECK" != "true" ]]; then
+            echo "Error: CPANEL_USERNAME secret is missing"
+            missing_secrets=true
+          fi
+          
+          if [[ "$CPANEL_TOKEN_CHECK" != "true" ]]; then
+            echo "Error: CPANEL_API_TOKEN secret is missing"
+            missing_secrets=true
+          fi
+          
+          if [[ "$CPANEL_DOMAIN_CHECK" != "true" ]]; then
+            echo "Error: CPANEL_DOMAIN secret is missing"
+            missing_secrets=true
+          fi
+          
+          if [[ "$missing_secrets" == "true" ]]; then
+            echo "Missing required secrets. Cannot proceed with deployment."
+            exit 1
+          fi
+          
+          echo "All required secrets are available."
+        
+      - name: Build project
+        run: |
+          echo "Starting build process with required environment variables"
+          npm run build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          VITE_APP_URL: 'https://www.snakkaz.com'
+          VITE_API_ENDPOINT: 'https://api.snakkaz.com'
+          VITE_APP_ENV: 'production'
+          VITE_BUILD_TIME: ${{ github.run_id }}
+          
+      - name: Add .htaccess file
+        run: |
+          cat > dist/.htaccess << EOF
+          # Force HTTPS
+          RewriteEngine On
+          RewriteCond %{HTTPS} off
+          RewriteRule (.*) https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+          
+          # Handle SPA routing by redirecting to index.html
+          <IfModule mod_rewrite.c>
+            RewriteEngine On
+            RewriteBase /
+            RewriteRule ^index\.html$ - [L]
+            RewriteCond %{REQUEST_FILENAME} !-f
+            RewriteCond %{REQUEST_FILENAME} !-d
+            RewriteRule . /index.html [L]
+          </IfModule>
+          
+          # Set correct MIME types
+          <IfModule mod_mime.c>
+            AddType text/css .css
+            AddType text/javascript .js
+            AddType application/javascript .mjs
+            AddType application/json .json
+            AddType image/svg+xml .svg
+            AddType image/x-icon .ico
+            AddType application/font-woff .woff
+            AddType application/font-woff2 .woff2
+            AddType application/vnd.ms-fontobject .eot
+            AddType application/x-font-ttf .ttf
+          </IfModule>
+          
+          # Enable CORS
+          <IfModule mod_headers.c>
+            Header set Access-Control-Allow-Origin "*"
+          </IfModule>
+          EOF
+      
+      - name: Validate build output
+        run: |
+          if [ ! -f "dist/index.html" ]; then
+            echo "Error: Build failed, index.html not found in dist folder"
+            exit 1
+          fi
+          echo "Build validation successful"
+      
+      # Step 1: Deploy .htaccess file first via cPanel API with token
+      - name: Deploy .htaccess via cPanel API Token
+        id: deploy-htaccess
+        run: |
+          echo "Uploading .htaccess file via cPanel API Token..."
+          
+          # Test API token connection
+          echo "Testing cPanel API token connection..."
+          TEST_RESPONSE=$(curl -s -H "Authorization: cpanel ${{ secrets.CPANEL_USERNAME }}:${{ secrets.CPANEL_API_TOKEN }}" \
+                         "https://${{ secrets.CPANEL_DOMAIN }}:2083/execute/Fileman/list_files?dir=%2Fpublic_html")
+          
+          if echo "$TEST_RESPONSE" | grep -q "error"; then
+            echo "❌ API token test failed!"
+            echo "Error: $(echo "$TEST_RESPONSE" | grep -o '\"error\":\"[^\"]*\"')"
+            echo "htaccess_success=false" >> $GITHUB_ENV
+          else
+            echo "✅ API token test successful!"
+            
+            # Upload .htaccess file
+            HTACCESS_RESPONSE=$(curl -s -H "Authorization: cpanel ${{ secrets.CPANEL_USERNAME }}:${{ secrets.CPANEL_API_TOKEN }}" \
+                             -F "dir=/public_html" \
+                             -F "file=@dist/.htaccess" \
+                             -F "overwrite=1" \
+                             "https://${{ secrets.CPANEL_DOMAIN }}:2083/execute/Fileman/upload_files")
+            
+            if echo "$HTACCESS_RESPONSE" | grep -q "errors"; then
+              echo "❌ .htaccess file upload failed!"
+              echo "Error: $(echo "$HTACCESS_RESPONSE" | grep -o '\"errors\":\[[^\]]*\]')"
+              echo "htaccess_success=false" >> $GITHUB_ENV
+            else
+              echo "✅ .htaccess uploaded successfully!"
+              echo "htaccess_success=true" >> $GITHUB_ENV
+            fi
+          fi
+      
+      # Step 2: Create a ZIP file of the dist directory
+      - name: Create ZIP archive of the dist directory
+        run: |
+          echo "Creating ZIP archive of the dist directory..."
+          cd dist
+          zip -r ../snakkaz-dist.zip .
+          cd ..
+          echo "ZIP archive created: snakkaz-dist.zip"
+      
+      # Step 3: Upload the ZIP file via cPanel API with token
+      - name: Upload ZIP via cPanel API Token
+        id: deploy-zip
+        run: |
+          echo "Uploading ZIP file via cPanel API Token..."
+          
+          ZIP_RESPONSE=$(curl -s -H "Authorization: cpanel ${{ secrets.CPANEL_USERNAME }}:${{ secrets.CPANEL_API_TOKEN }}" \
+                      -F "dir=/public_html" \
+                      -F "file=@snakkaz-dist.zip" \
+                      -F "overwrite=1" \
+                      "https://${{ secrets.CPANEL_DOMAIN }}:2083/execute/Fileman/upload_files")
+          
+          if echo "$ZIP_RESPONSE" | grep -q "errors"; then
+            echo "❌ ZIP file upload failed!"
+            echo "Error: $(echo "$ZIP_RESPONSE" | grep -o '\"errors\":\[[^\]]*\]')"
+            echo "zip_upload_success=false" >> $GITHUB_ENV
+          else
+            echo "✅ ZIP file uploaded successfully!"
+            echo "zip_upload_success=true" >> $GITHUB_ENV
+          fi
+      
+      # Step 4: Create an extraction script
+      - name: Create extraction script
+        if: env.zip_upload_success == 'true'
+        run: |
+          echo "Creating extraction script..."
+          cat > extract.php << EOF
+          <?php
+          // Extraction script for Snakkaz Chat deployment
+          \$zip = new ZipArchive;
+          \$res = \$zip->open('snakkaz-dist.zip');
+          if (\$res === TRUE) {
+            echo "Extracting ZIP file...\n";
+            // Extract to the public_html directory
+            \$zip->extractTo('.');
+            \$zip->close();
+            echo "✅ Extraction successful! Removing temporary files...\n";
+            unlink('snakkaz-dist.zip'); // Remove ZIP file after extraction
+            unlink('extract.php'); // Self-delete this script for security
+          } else {
+            echo "❌ Failed to extract ZIP file! Error code: \$res\n";
+          }
+          ?>
+          EOF
+          
+          echo "Extraction script created: extract.php"
+      
+      # Step 5: Upload the extraction script
+      - name: Upload extraction script
+        if: env.zip_upload_success == 'true'
+        run: |
+          echo "Uploading extraction script..."
+          
+          SCRIPT_RESPONSE=$(curl -s -H "Authorization: cpanel ${{ secrets.CPANEL_USERNAME }}:${{ secrets.CPANEL_API_TOKEN }}" \
+                         -F "dir=/public_html" \
+                         -F "file=@extract.php" \
+                         -F "overwrite=1" \
+                         "https://${{ secrets.CPANEL_DOMAIN }}:2083/execute/Fileman/upload_files")
+          
+          if echo "$SCRIPT_RESPONSE" | grep -q "errors"; then
+            echo "❌ Extraction script upload failed!"
+            echo "Error: $(echo "$SCRIPT_RESPONSE" | grep -o '\"errors\":\[[^\]]*\]')"
+            echo "script_upload_success=false" >> $GITHUB_ENV
+          else
+            echo "✅ Extraction script uploaded successfully!"
+            echo "script_upload_success=true" >> $GITHUB_ENV
+          fi
+      
+      # Step 6: Execute the extraction script
+      - name: Execute extraction script
+        if: env.script_upload_success == 'true'
+        run: |
+          echo "Executing extraction script..."
+          EXTRACT_RESULT=$(curl -s "https://www.snakkaz.com/extract.php")
+          echo "$EXTRACT_RESULT"
+          
+          if echo "$EXTRACT_RESULT" | grep -q "successful"; then
+            echo "✅ Extraction script executed successfully!"
+            echo "extraction_success=true" >> $GITHUB_ENV
+          else
+            echo "❌ Failed to execute extraction script or results unclear"
+            echo "extraction_success=false" >> $GITHUB_ENV
+          fi
+      
+      # Create a detailed deployment summary
+      - name: Add deployment summary with diagnostics
+        if: always()
+        run: |
+          echo "# 📊 cPanel Deployment Status Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Deployment Details" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment:** Production" >> $GITHUB_STEP_SUMMARY
+          echo "- **URL:** https://www.snakkaz.com" >> $GITHUB_STEP_SUMMARY
+          echo "- **Deployed at:** $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # .htaccess upload status
+          if [[ "${{ env.htaccess_success }}" == "true" ]]; then
+            echo "### ✅ .htaccess File" >> $GITHUB_STEP_SUMMARY
+            echo ".htaccess file uploaded successfully." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### ❌ .htaccess File" >> $GITHUB_STEP_SUMMARY
+            echo ".htaccess file upload failed." >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # ZIP upload status
+          if [[ "${{ env.zip_upload_success }}" == "true" ]]; then
+            echo "### ✅ Application ZIP" >> $GITHUB_STEP_SUMMARY
+            echo "Application ZIP file uploaded successfully." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### ❌ Application ZIP" >> $GITHUB_STEP_SUMMARY
+            echo "Application ZIP file upload failed." >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Extraction script status
+          if [[ "${{ env.script_upload_success }}" == "true" ]]; then
+            echo "### ✅ Extraction Script" >> $GITHUB_STEP_SUMMARY
+            echo "Extraction script uploaded successfully." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### ❌ Extraction Script" >> $GITHUB_STEP_SUMMARY
+            echo "Extraction script upload failed or was not attempted." >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Extraction execution status
+          if [[ "${{ env.extraction_success }}" == "true" ]]; then
+            echo "### ✅ Extraction Process" >> $GITHUB_STEP_SUMMARY
+            echo "Files extracted successfully on the server." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### ❌ Extraction Process" >> $GITHUB_STEP_SUMMARY
+            echo "File extraction failed or was not attempted." >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔍 Post-Deployment Verification" >> $GITHUB_STEP_SUMMARY
+          echo "1. Check if the site loads at https://www.snakkaz.com" >> $GITHUB_STEP_SUMMARY
+          echo "2. Verify CSS and JavaScript files load correctly" >> $GITHUB_STEP_SUMMARY
+          echo "3. Test site navigation to ensure SPA routing works" >> $GITHUB_STEP_SUMMARY
+          echo "4. Check that temporary files were automatically cleaned up" >> $GITHUB_STEP_SUMMARY
