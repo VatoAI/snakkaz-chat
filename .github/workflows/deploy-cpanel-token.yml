@@ -33,6 +33,7 @@ jobs:
           CPANEL_USER_CHECK: ${{ secrets.CPANEL_USERNAME != '' }}
           CPANEL_TOKEN_CHECK: ${{ secrets.CPANEL_API_TOKEN != '' }}
           CPANEL_DOMAIN_CHECK: ${{ secrets.CPANEL_DOMAIN != '' }}
+          EMAIL_CONFIG_CHECK: ${{ secrets.ENABLE_PREMIUM_EMAIL != '' }}
         run: |
           if [[ "$SUPABASE_URL_CHECK" != "true" ]]; then
             echo "Error: SUPABASE_URL secret is missing"
@@ -59,12 +60,36 @@ jobs:
             missing_secrets=true
           fi
           
+          if [[ "$EMAIL_CONFIG_CHECK" != "true" ]]; then
+            echo "Error: ENABLE_PREMIUM_EMAIL secret is missing"
+            missing_secrets=true
+          fi
+          
           if [[ "$missing_secrets" == "true" ]]; then
             echo "Missing required secrets. Cannot proceed with deployment."
             exit 1
           fi
           
           echo "All required secrets are available."
+        
+      # Check that the API security layer is in place
+      - name: Verify security implementation
+        run: |
+          echo "Verifying API security implementation..."
+          
+          if [ ! -f "src/middleware/apiSecurityMiddleware.js" ]; then
+            echo "❌ ERROR: API security layer is missing!"
+            echo "The apiSecurityMiddleware.js file must be present for secure cPanel API access"
+            exit 1
+          fi
+          
+          if ! grep -q "isOperationPermitted" "src/server/emailService.js"; then
+            echo "❌ ERROR: Email service is not using the secure API wrapper!"
+            echo "Make sure emailService.js implements the security checks"
+            exit 1
+          fi
+          
+          echo "✅ API security layer verification passed"
         
       - name: Build project
         run: |

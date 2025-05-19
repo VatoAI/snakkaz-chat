@@ -35,8 +35,19 @@ const checkAuth = async (req, res, next) => {
       });
     }
 
-    // Add the user to the request object
-    req.user = user;
+    // Get user role from the database
+    const { data: userProfile, error: profileError } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+    
+    // Add the user and role to the request object
+    req.user = {
+      ...user,
+      role: userProfile?.role || 'user' // Default to 'user' if no role is found
+    };
+    
     next();
   } catch (error) {
     console.error('Authentication error:', error);
@@ -60,6 +71,13 @@ const checkPremium = async (req, res, next) => {
   }
 
   try {
+    // Admin users bypass premium check
+    if (req.user.role === 'admin') {
+      req.isAdmin = true;
+      next();
+      return;
+    }
+    
     // Check if the user has an active premium subscription
     const { data: subscription, error } = await supabase
       .from('subscriptions')
@@ -77,6 +95,7 @@ const checkPremium = async (req, res, next) => {
 
     // Add subscription info to the request
     req.subscription = subscription;
+    req.isAdmin = false;
     next();
   } catch (error) {
     console.error('Premium check error:', error);
@@ -87,7 +106,31 @@ const checkPremium = async (req, res, next) => {
   }
 };
 
+/**
+ * Check if the user has admin privileges
+ */
+const checkAdmin = async (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({
+      success: false,
+      message: 'User not authenticated'
+    });
+  }
+
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({
+      success: false,
+      message: 'This operation requires administrator privileges'
+    });
+  }
+
+  // Mark as admin for downstream handlers
+  req.isAdmin = true;
+  next();
+};
+
 module.exports = {
   checkAuth,
-  checkPremium
+  checkPremium,
+  checkAdmin
 };
