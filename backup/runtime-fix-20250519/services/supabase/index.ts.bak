@@ -1,0 +1,170 @@
+// Using singleton Supabase client to prevent "Multiple GoTrueClient instances" warning
+import { supabase } from '@/lib/supabaseClient';
+// Using singleton Supabase client to prevent "Multiple GoTrueClient instances" warning
+import { supabase } from '@/lib/supabaseClient';
+import { createClient } from '@supabase/supabase-js';
+
+// Bruk miljøvariabler for å hente Supabase-innstillinger
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://your-supabase-url.supabase.co';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'your-anon-key';
+
+// Opprett Supabase-klienten
+export // REPLACED: // REPLACED: const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+  },
+});
+
+// Hjelpefunksjoner for gruppeoperasjoner
+export const groupService = {
+  // Hent alle grupper for en bruker
+  async getUserGroups(userId: string) {
+    const { data, error } = await supabase
+      .from('group_members')
+      .select('group_id')
+      .eq('user_id', userId);
+    
+    if (error) throw error;
+    
+    const groupIds = data.map(item => item.group_id);
+    if (groupIds.length === 0) return [];
+    
+    const { data: groups, error: groupsError } = await supabase
+      .from('groups')
+      .select('*')
+      .in('id', groupIds);
+    
+    if (groupsError) throw groupsError;
+    return groups;
+  },
+  
+  // Opprett en ny gruppe
+  async createGroup(groupData: any) {
+    const { data, error } = await supabase
+      .from('groups')
+      .insert([{
+        name: groupData.name,
+        description: groupData.description,
+        is_private: groupData.isPrivate,
+        password: groupData.password,
+        is_encrypted: groupData.isEncrypted,
+        created_by: groupData.userId
+      }])
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+  
+  // Bli med i en gruppe
+  async joinGroup(groupId: string, userId: string, password?: string) {
+    // Sjekk om gruppen er privat og krever passord
+    const { data: group, error: groupError } = await supabase
+      .from('groups')
+      .select('is_private, password')
+      .eq('id', groupId)
+      .single();
+    
+    if (groupError) throw groupError;
+    
+    if (group.is_private && group.password !== password) {
+      throw new Error('Feil passord');
+    }
+    
+    // Legg til brukeren som medlem
+    const { error } = await supabase
+      .from('group_members')
+      .insert([{
+        group_id: groupId,
+        user_id: userId,
+        role: 'member'
+      }]);
+    
+    if (error) throw error;
+    return true;
+  },
+  
+  // Forlat en gruppe
+  async leaveGroup(groupId: string, userId: string) {
+    const { error } = await supabase
+      .from('group_members')
+      .delete()
+      .eq('group_id', groupId)
+      .eq('user_id', userId);
+    
+    if (error) throw error;
+    return true;
+  },
+  
+  // Hent meldinger for en gruppe
+  async getGroupMessages(groupId: string) {
+    const { data, error } = await supabase
+      .from('group_messages')
+      .select('*')
+      .eq('group_id', groupId)
+      .order('created_at');
+    
+    if (error) throw error;
+    return data || [];
+  },
+  
+  // Send en melding til en gruppe
+  async sendMessage(messageData: any) {
+    const { data, error } = await supabase
+      .from('group_messages')
+      .insert([{
+        group_id: messageData.groupId,
+        sender_id: messageData.senderId,
+        content: messageData.text,
+        media: messageData.media,
+        ttl: messageData.ttl
+      }])
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  }
+};
+
+// Hjelpefunksjoner for meldinger
+export const messageService = {
+  // Hent meldinger mellom to brukere
+  async getDirectMessages(userId: string, otherUserId: string) {
+    const { data, error } = await supabase
+      .from('direct_messages')
+      .select('*')
+      .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
+      .or(`sender_id.eq.${otherUserId},receiver_id.eq.${otherUserId}`)
+      .order('created_at');
+    
+    if (error) throw error;
+    return data || [];
+  },
+  
+  // Send en direktemelding til en annen bruker
+  async sendDirectMessage(messageData: any) {
+    const { data, error } = await supabase
+      .from('direct_messages')
+      .insert([{
+        sender_id: messageData.senderId,
+        receiver_id: messageData.receiverId,
+        content: messageData.text,
+        media: messageData.media,
+        ttl: messageData.ttl
+      }])
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  }
+};
+
+export default {
+  supabase,
+  groupService,
+  messageService
+};

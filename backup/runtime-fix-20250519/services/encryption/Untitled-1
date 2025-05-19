@@ -1,0 +1,4 @@
+import { runDiagnosticTest } from './services/encryption/diagnosticTest';
+
+// Kjør i konsollen eller i en testfunksjon
+runDiagnosticTest().then(results => console.log('Test resultater:', results));
