@@ -132,7 +132,7 @@ function updateCspWithReporting(reportUri: string): void {
   }
   
   // Set up a report-to endpoint for newer browsers
-  if (!cspContent.includes('report-to')) {
+  if (!cspContent.includes('report-to') && reportUri) {
     const reportGroup = 'csp-endpoint';
     
     // Add reporting endpoint configuration
