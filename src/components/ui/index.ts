@@ -1,6 +1,8 @@
 /**
  * Index-fil for UI-komponenter
  * Forenkler imports ved å eksportere alle UI-komponenter fra ett sted
+ * 
+ * Now includes dynamic imports for better code splitting and performance
  */
 
 // Re-eksporterer alle UI-komponenter for enklere import
@@ -40,3 +42,6 @@ export * from './toast';
 export * from './toaster';
 export * from './tooltip';
 export * from './use-toast';
+
+// Export dynamically loaded components
+export * from './dynamic-ui';

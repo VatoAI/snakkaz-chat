@@ -27,6 +27,12 @@ Vi har implementert kodeoppsplitting ved å:
 - **Implementere en LoadingFallback-komponent** som vises når komponenter lastes
 - **Dekoble rute-komponenter** fra hovedapplikasjonen
 - **Implementere hjelpeverktøy** for lazy-lasting i `/utils/lazy-loading/index.ts`
+- **Implementere avanserte dynamiske imports** med `/utils/dynamic-import.tsx`
+- **Skape komponent-spesifikke dynamiske lastere** for admin, charts, UI og chat
+- **Definere optimale chunk-inndelinger** i vite.config.ts
+- **Implementere intelligent preloading** basert på brukernavigasjon
+
+For detaljert informasjon om bundelstørrelse-optimaliseringer, se [BUNDLE-SIZE-OPTIMIZATION.md](BUNDLE-SIZE-OPTIMIZATION.md).
 
 ### 3. API-caching og dataoptimalisering
 

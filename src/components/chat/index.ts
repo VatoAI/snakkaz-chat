@@ -13,3 +13,6 @@ export { useGroups } from './hooks/useGroups';
 export { usePresence } from './hooks/usePresence';
 export { useChatState } from './hooks/useChatState';
 export { useGroupInvites } from './hooks/useGroupInvites';
+
+// Export dynamic components for code splitting optimization
+export * from './dynamic-chat';

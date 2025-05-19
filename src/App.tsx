@@ -21,7 +21,7 @@ const Login = lazy(() => import("@/pages/Login"));
 const Register = lazy(() => import("@/pages/Register"));
 const ForgotPassword = lazy(() => import("@/pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
-const Chat = lazy(() => import("@/pages/Chat"));
+const Chat = lazy(() => import("@/pages/OptimizedChat"));
 
 // Loading component
 const LoadingSpinner = () => (
@@ -97,6 +97,15 @@ function App() {
     
     // Verify Supabase configuration
     verifySupabaseConfig();
+    
+    // Preload some components that will likely be needed soon
+    // This improves perceived performance by loading them in the background
+    if (localStorage.getItem('supabase.auth.token')) {
+      // If user is likely logged in, preload profile and settings
+      setTimeout(() => {
+        preloadProfileComponents();
+      }, 3000);
+    }
   }, []);
 
   return (
