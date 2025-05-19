@@ -8,15 +8,20 @@ import { supabase } from '@/lib/supabaseClient';
 import { verifySupabaseConfig } from '@/services/encryption/supabasePatch';
 import { setupGlobalErrorHandlers } from './utils/error/errorHandling';
 
-// Lazy load components
+// Import dynamically loaded feature pages
+import { 
+  ProfilePage, 
+  SettingsPage, 
+  GroupChatPage,
+  preloadProfileComponents
+} from '@/features/dynamic-features';
+
+// Lazy load components for initial routes
 const Login = lazy(() => import("@/pages/Login"));
 const Register = lazy(() => import("@/pages/Register"));
 const ForgotPassword = lazy(() => import("@/pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
 const Chat = lazy(() => import("@/pages/Chat"));
-const Profile = lazy(() => import("@/pages/Profile"));
-const Settings = lazy(() => import("@/pages/Settings"));
-const GroupChatPage = lazy(() => import("@/pages/GroupChatPage"));
 
 // Loading component
 const LoadingSpinner = () => (
@@ -125,12 +130,12 @@ function App() {
             } />
             <Route path="/profile" element={
               <RequireAuth>
-                <Profile />
+                <ProfilePage />
               </RequireAuth>
             } />
             <Route path="/settings" element={
               <RequireAuth>
-                <Settings />
+                <SettingsPage />
               </RequireAuth>
             } />
             <Route path="/group/:id" element={
