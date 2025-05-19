@@ -55,17 +55,18 @@ allowedUserOps.forEach(op => {
 
 // Test 2: Allowed operations for admin users
 console.log('\nTest 2: Admin-only operations');
-const allowedAdminOps = [
-  'Email/list_pops',
-  'Email/add_pop',
-  'Email/delete_pop',
-  'Email/passwd_pop',
-  'Email/get_pop_quota'
+const adminOnlyOps = [
+  'Email/list_mail_domains',
+  'Email/get_main_account_disk_usage',
+  'Email/validate_email_password',
+  'Email/set_pop_quota'
 ];
 
-allowedAdminOps.forEach(op => {
-  const result = isOperationPermitted(op, true);
-  console.log(`Operation ${op} permitted for admin: ${result ? '✅ YES' : '❌ NO'}`);
+adminOnlyOps.forEach(op => {
+  const resultUser = isOperationPermitted(op, false);
+  const resultAdmin = isOperationPermitted(op, true);
+  console.log(`Operation ${op} permitted for regular user: ${resultUser ? '❌ NOT SECURE' : '✅ BLOCKED'}`);
+  console.log(`Operation ${op} permitted for admin: ${resultAdmin ? '✅ YES' : '❌ NO'}`);
 });
 
 // Test 3: Disallowed operations
@@ -94,11 +95,11 @@ if (allowedUserOps.every(op => isOperationPermitted(op, false)) &&
   console.log('❌ Security layer has issues with user permissions');
 }
 
-if (allowedAdminOps.every(op => isOperationPermitted(op, true)) && 
+if (adminOnlyOps.every(op => isOperationPermitted(op, true)) && 
     disallowedOps.every(op => !isOperationPermitted(op, true))) {
   console.log('✅ Security layer is functioning properly for admin users');
 } else {
-  console.log('❌ Security layer has issues with admin permissions');
+  console.log('❌ Security layer has issues with admin permissions - admin-only operations not properly enabled');
 }
 
 console.log('\n✨ Test completed');
