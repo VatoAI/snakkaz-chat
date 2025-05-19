@@ -1,0 +1,17 @@
+# Return proper JSON for ping files
+<IfModule mod_headers.c>
+    <FilesMatch "ping\.json$|index\.json$">
+        Header set Content-Type "application/json"
+        Header set Access-Control-Allow-Origin "*"
+    </FilesMatch>
+</IfModule>
+
+# Ensure these files are accessible
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    # For /ping path
+    RewriteRule ^ping$ ping.json [L]
+    
+    # For root subdomain access (when accessed directly)
+    RewriteRule ^$ index.json [L]
+</IfModule>

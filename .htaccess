@@ -1,10 +1,17 @@
-# Snakkaz Chat .htaccess
-# For SPA-applikasjoner og React Router
+# Snakkaz Chat Enhanced .htaccess
+# For SPA-applikasjoner og React Router + Subdomain Fix
 
 # Enable rewriting
 <IfModule mod_rewrite.c>
     RewriteEngine On
     RewriteBase /
+    
+    # Handle ping endpoints - Return 200 OK instead of 404
+    # This prevents unnecessary console errors
+    RewriteRule ^(analytics|business|dash|docs)\.snakkaz\.com/ping$ - [R=200,L]
+    
+    # Handle direct subdomain access (without /ping path)
+    RewriteRule ^(analytics|business|dash|docs)\.snakkaz\.com$ - [R=200,L]
     
     # If the requested resource exists as a file or directory, skip rewriting
     RewriteCond %{REQUEST_FILENAME} !-f
@@ -31,6 +38,12 @@
 <IfModule mod_headers.c>
     <FilesMatch "\.(ttf|ttc|otf|eot|woff|woff2|font.css|css|js|json|svg)$">
         Header set Access-Control-Allow-Origin "*"
+    </FilesMatch>
+
+    # Set headers for ping endpoints to prevent 404s
+    <FilesMatch "ping$|index\.json$">
+        Header set Access-Control-Allow-Origin "*"
+        Header set Content-Type "application/json"
     </FilesMatch>
 </IfModule>
 
