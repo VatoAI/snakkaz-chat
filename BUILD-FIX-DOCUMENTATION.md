@@ -6,7 +6,11 @@
    - **Problem**: The component at `src/components/chat/SecureMessageViewer.tsx` was trying to import `EncryptionService` from a local file (`./encryptionService.ts`) that didn't exist in that directory.
    - **Solution**: Created a simplified version of `encryptionService.ts` in the `src/components/chat/` directory with the necessary encryption/decryption methods.
 
-2. **Subdomain Root Access Issue**
+2. **Incorrect Import Paths in API Services**
+   - **Problem**: Services in the `src/services/api/` directory (like groupChatService.ts and mediaUploadService.ts) were trying to import `EncryptionService` and other utilities from local files that didn't exist in the api directory.
+   - **Solution**: Updated the import paths to correctly point to the existing files in the `src/services/encryption/` directory.
+
+3. **Subdomain Root Access Issue**
    - **Problem**: Direct requests to subdomain roots (without /ping path) were returning 404 errors.
    - **Solution**: Created a comprehensive solution to handle both /ping paths and root subdomain access:
      - Enhanced .htaccess configurations
@@ -17,6 +21,7 @@
 
 1. **To Fix Build Error**:
    - `/workspaces/snakkaz-chat/src/components/chat/encryptionService.ts` - Created this file with the necessary encryption functionality
+   - `/workspaces/snakkaz-chat/src/services/api/groupChatService.ts` - Updated import paths to resolve build errors
 
 2. **To Fix Subdomain Root Access**:
    - `/workspaces/snakkaz-chat/fix-subdomain-root-access-simplified.sh` - Script to create fix files

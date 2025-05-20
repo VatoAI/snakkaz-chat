@@ -59,6 +59,7 @@ Snakkaz Chat er en moderne chatteplattform som tilbyr:
 
 1. **Build Error Fix**
    - Løst problem med manglende encryptionService import i SecureMessageViewer.tsx
+   - Korrigert feilaktige importstier i groupChatService.ts
    - Se `BUILD-FIX-DOCUMENTATION.md` for detaljer
 
 2. **Subdomain Root Access Fix**

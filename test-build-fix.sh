@@ -10,8 +10,11 @@ npm run build
 
 # Check if build was successful
 if [ $? -eq 0 ]; then
-  echo "✅ Build successful! The encryptionService fix worked."
-  echo "The build error has been resolved."
+  echo "✅ Build successful! All import fixes worked."
+  echo "Fixed issues:"
+  echo "  - encryptionService import in SecureMessageViewer.tsx"
+  echo "  - Import paths in groupChatService.ts"
+  echo "Build errors resolved successfully."
 else
   echo "❌ Build failed. More investigation needed."
   echo "Check the error messages above for details."

@@ -4,9 +4,9 @@
  * This service handles encrypted group messaging and management
  */
 
-import { EncryptionService, SecurityLevel, EncryptionType } from './encryptionService';
+import { EncryptionService, SecurityLevel, EncryptionType } from '../encryption/encryptionService';
 import * as GroupE2EE from '../../utils/encryption/group-e2ee';
-import { exportKeyToJwk } from './cryptoUtils';
+import { exportKeyToJwk } from '../encryption/cryptoUtils';
 
 // Group member roles
 export enum GroupRole {

@@ -5,7 +5,7 @@
  * including images, videos, and documents.
  */
 
-import { EncryptionService, SecurityLevel, EncryptionType } from './encryptionService';
+import { EncryptionService, SecurityLevel, EncryptionType } from '../encryption/encryptionService';
 import { 
   generateAesKey,
   exportKeyToJwk,
@@ -16,7 +16,7 @@ import {
   KeyType,
   KeyUsage,
   importKeyFromJwk
-} from './cryptoUtils';
+} from '../encryption/cryptoUtils';
 import { supabase } from '../../integrations/supabase/client';
 
 // Define supported media types

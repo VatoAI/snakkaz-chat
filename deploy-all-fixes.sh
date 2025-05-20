@@ -35,6 +35,9 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 echo -e "${GREEN}Build completed successfully!${NC}"
+echo -e "${GREEN}✅ Both import fixes were applied successfully:${NC}"
+echo -e "${GREEN}  - Fixed src/components/chat/SecureMessageViewer.tsx dependency${NC}"
+echo -e "${GREEN}  - Fixed src/services/api/groupChatService.ts import paths${NC}"
 
 # Step 2: Apply subdomain root access fix to the build
 echo -e "\n${BLUE}Step 2: Applying subdomain root access fix${NC}"
