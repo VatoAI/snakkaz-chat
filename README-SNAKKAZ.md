@@ -53,6 +53,40 @@ Snakkaz Chat er en moderne chatteplattform som tilbyr:
    npm run dev
    ```
 
+## Nylige oppdateringer (Mai 2025)
+
+### Feilrettinger
+
+1. **Build Error Fix**
+   - Løst problem med manglende encryptionService import i SecureMessageViewer.tsx
+   - Se `BUILD-FIX-DOCUMENTATION.md` for detaljer
+
+2. **Subdomain Root Access Fix**
+   - Løst 404-feil ved direkte forespørsler til subdomain-røtter
+   - Implementert komplett løsning for både /ping-stier og direkte subdomain-tilgang
+   - Se `SUBDOMAIN-ROOT-ACCESS-FIX.md` for mer informasjon
+
+### Distribusjon
+
+For å distribuere de nylige oppdateringene:
+
+1. Bygg applikasjonen
+   ```bash
+   npm run build
+   ```
+
+2. Deploy til produksjonsserveren
+   ```bash
+   ./deploy-fixed-application.sh
+   ```
+
+3. Verifiser at alle endringene fungerer korrekt
+   - Test subdomain-røtter direkte (f.eks. https://analytics.snakkaz.com/)
+   - Test ping-endpoints (f.eks. https://analytics.snakkaz.com/ping)
+   ```bash
+   npm run dev
+   ```
+
 4. For utvikling med lokal Supabase
    ```bash
    npm run dev:with-supabase
