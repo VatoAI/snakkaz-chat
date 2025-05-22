@@ -20,6 +20,7 @@
 - Ensured all code uses the same Supabase client instance from `supabaseClient.ts`
 
 ### 4. TypeScript Compilation Errors in initialize.ts
+
 - Removed references to non-existent Cloudflare-specific functions:
   - Replaced `fixCloudflareCorsSecurity` with `fixCorsSecurity`
   - Removed `fixMissingResources` function
@@ -27,6 +28,35 @@
   - Removed `triggerCloudflarePageview` function calls
   - Removed `fixCloudflareAnalyticsIntegration` function
 - Simplified analytics initialization
+
+### 5. Fixed Import Path Errors (May 22, 2025)
+
+- Fixed import path errors in several files:
+  - Updated `./cryptoUtils` to `@/services/encryption/cryptoUtils` in encryptionService.ts
+  - Updated `./offlinePageEncryption` to `@/services/encryption/offlinePageEncryption` in encryptionService.ts
+  - Updated `./cryptoUtils` to `@/services/encryption/cryptoUtils` in keyStorageService.ts
+  - Fixed broken comment in keyStorageService.ts
+- Added missing npm packages:
+  - @uppy/react
+  - @uppy/core
+  - @uppy/dashboard
+  - tweetnacl
+  - tweetnacl-util
+- Created fix-build-errors.sh script for automating these fixes in the future
+
+### 5. Fixed Import Path Errors (May 22, 2025)
+- Fixed import path errors in several files:
+  - Updated `./cryptoUtils` to `@/services/encryption/cryptoUtils` in encryptionService.ts
+  - Updated `./offlinePageEncryption` to `@/services/encryption/offlinePageEncryption` in encryptionService.ts
+  - Updated `./cryptoUtils` to `@/services/encryption/cryptoUtils` in keyStorageService.ts
+  - Fixed broken comment in keyStorageService.ts
+- Added missing npm packages:
+  - @uppy/react
+  - @uppy/core
+  - @uppy/dashboard
+  - tweetnacl
+  - tweetnacl-util
+- Created fix-build-errors.sh script for automating these fixes in the future
 
 ## Files Modified
 

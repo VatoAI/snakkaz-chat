@@ -550,6 +550,10 @@ initializeSnakkazChat();
 - ✅ Service Worker HEAD request caching-problemer (løst 19. mai 2025)
 - ✅ Supabase Preview miljø-problemer (løst 19. mai 2025)
 - ✅ Multiple GoTrueClient instances warning (løst 19. mai 2025)
+- ✅ Import path feil i krypteringsmoduler (løst 22. mai 2025)
+- ✅ Manglende npm-pakker for filupplasting og kryptering (løst 22. mai 2025)
+- ✅ Import path feil i krypteringsmoduler (løst 22. mai 2025)
+- ✅ Manglende npm-pakker for filupplasting og kryptering (løst 22. mai 2025)
 
 ## STATUSRAPPORT PER 19. MAI 2025
 
@@ -673,4 +677,5 @@ For å jobbe mer effektivt med dette prosjektet, følg disse retningslinjene:
 
 Dette dokumentet skal brukes som referansepunkt for alle som jobber med Snakkaz Chat-prosjektet. Det bør oppdateres jevnlig med ny informasjon om prosjektstatus, arkitekturendringer og implementasjonsdetaljer.
 
-**Sist oppdatert: 19. mai 2025 - Fikset Service Worker, CSP-warnings, TypeScript-feil, Supabase Preview og Multiple GoTrueClient warnings**
+**Sist oppdatert: 22. mai 2025 - Fikset importstier i krypteringsmoduler og manglende npm-pakker**
+**Tidligere oppdatering: 19. mai 2025 - Fikset Service Worker, CSP-warnings, TypeScript-feil, Supabase Preview og Multiple GoTrueClient warnings**

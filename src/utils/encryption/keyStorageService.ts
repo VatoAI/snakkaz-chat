@@ -1,9 +1,7 @@
 /**
  * Key Storage Service
  * 
- * Provides secure storage a    // Parse JWK and import the key
-    const jwk = JSON.parse(keyData);
-    const key = await importKeyFromJwk(jwk, KeyType.AES_GCM, [KeyUsage.ENCRYPT, KeyUsage.DECRYPT]);retrieval of encryption keys
+ * Provides secure storage and retrieval of encryption keys
  */
 
 import { 
@@ -13,7 +11,7 @@ import {
   importKeyFromJwk,
   KeyType,
   KeyUsage
-} from './cryptoUtils';
+} from '@/services/encryption/cryptoUtils';
 
 // In-memory cache for keys
 const keyCache = new Map<string, CryptoKey>();

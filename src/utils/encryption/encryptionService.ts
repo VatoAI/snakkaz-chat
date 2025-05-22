@@ -5,6 +5,7 @@
  * for the Snakkaz Chat application. Supports different security levels and encryption types.
  */
 
+import { environment } from '../../config/environment';
 import { 
   generateAesKey,
   generateRsaKeyPair,
@@ -24,7 +25,7 @@ import {
   arrayBufferToString,
   KeyType,
   KeyUsage
-} from './cryptoUtils';
+} from '@/services/encryption/cryptoUtils';
 
 // In-memory key cache for the current session
 const keyCache = new Map<string, CryptoKey>();
@@ -164,9 +165,6 @@ export enum EncryptionType {
   FILE = 'FILE',                // For files and attachments
   USER_DATA = 'USER_DATA',      // For user profile data
 }
-
-// Import environment settings for domain-specific configurations
-import { environment } from '../../config/environment';
 
 interface EncryptionResult {
   encryptedData: string;
@@ -729,7 +727,7 @@ export class EncryptionService {
   public async integrateWithOfflineEncryption(pageId: string, pageData: object): Promise<void> {
     try {
       // Import the offlinePageEncryption module dynamically to avoid circular dependencies
-      const { encryptPageForOffline } = await import('./offlinePageEncryption');
+      const { encryptPageForOffline } = await import('@/services/encryption/offlinePageEncryption');
       
       // Only encrypt for offline use if on the custom domain
       if (this.isOnCustomDomain()) {
@@ -766,7 +764,7 @@ export class EncryptionService {
   ): Promise<unknown> {
     try {
       // Import the offlinePageEncryption module dynamically
-      const { decryptOfflinePage } = await import('./offlinePageEncryption');
+      const { decryptOfflinePage } = await import('@/services/encryption/offlinePageEncryption');
       return await decryptOfflinePage(pageId, encryptedData);
     } catch (error) {
       console.error('Failed to decrypt offline page:', error);

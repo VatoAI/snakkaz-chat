@@ -21,6 +21,9 @@
 
 1. **To Fix Build Error**:
    - `/workspaces/snakkaz-chat/src/components/chat/encryptionService.ts` - Created this file with the necessary encryption functionality
+   - `/workspaces/snakkaz-chat/src/utils/encryption/encryptionService.ts` - Fixed import paths for cryptoUtils and offlinePageEncryption
+   - `/workspaces/snakkaz-chat/src/utils/encryption/keyStorageService.ts` - Fixed import paths for cryptoUtils and corrected documentation
+   - Added missing npm packages: @uppy/react, @uppy/core, @uppy/dashboard, tweetnacl, and tweetnacl-util
    - `/workspaces/snakkaz-chat/src/services/api/groupChatService.ts` - Updated import paths to resolve build errors
 
 2. **To Fix Subdomain Root Access**:
