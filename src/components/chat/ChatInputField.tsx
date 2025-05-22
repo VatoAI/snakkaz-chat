@@ -1,9 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Clock, Paperclip, X, Image as ImageIcon, Smile } from 'lucide-react';
+import { Send, Clock, Paperclip, X, Image as ImageIcon, Smile, WifiOff } from 'lucide-react';
 import { cx, theme } from '../lib/theme';
 import { MediaUploader } from './MediaUploader';
 import type { Message as DecryptedMessage } from '@/types/message';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useNetworkStatus } from '@/hooks/use-network-status';
+import { useToast } from '@/hooks/use-toast';
 
 export interface MediaUploaderProps {
   onFileSelect: (file: File) => void;
@@ -49,12 +51,15 @@ export const ChatInputField: React.FC<ChatInputFieldProps> = ({
   onCancelReply
 }) => {
   const isMobile = useIsMobile();
+  const { toast } = useToast();
+  const { online } = useNetworkStatus();
   const [isFocused, setIsFocused] = useState(false);
   const [isMediaPickerOpen, setIsMediaPickerOpen] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState<File | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const inputContainerRef = useRef<HTMLDivElement>(null);
-  
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   // Auto-resize the textarea as the user types
   useEffect(() => {
     if (textareaRef.current) {
@@ -62,14 +67,14 @@ export const ChatInputField: React.FC<ChatInputFieldProps> = ({
       textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 200)}px`;
     }
   }, [value]);
-  
+
   // Auto-focus the textarea when editing begins
   useEffect(() => {
     if (isEditing && textareaRef.current) {
       textareaRef.current.focus();
     }
   }, [isEditing]);
-  
+
   // Scroll to input when focused on mobile
   useEffect(() => {
     if (isFocused && isMobile && inputContainerRef.current) {
@@ -79,7 +84,7 @@ export const ChatInputField: React.FC<ChatInputFieldProps> = ({
       }, 300);
     }
   }, [isFocused, isMobile]);
-  
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     // Only use Enter to submit on desktop - on mobile, users need Enter for newlines
     if (e.key === 'Enter' && !e.shiftKey && !isMobile) {
@@ -87,25 +92,46 @@ export const ChatInputField: React.FC<ChatInputFieldProps> = ({
       handleSubmit();
     }
   };
-  
-  const handleSubmit = async () => {
+
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+
     if (disabled || (!value.trim() && !selectedMedia)) return;
-    
+
+    // Check network status before submitting
+    if (!online) {
+      toast({
+        title: 'Ingen tilkobling',
+        description: 'Kan ikke sende melding uten internettforbindelse. Meldingen din ble lagret som utkast.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
     try {
       await onSubmit(value, selectedMedia || undefined);
       onChange('');
       setSelectedMedia(null);
       setIsMediaPickerOpen(false);
-      
+
       // Defocus input after sending on mobile
       if (isMobile && textareaRef.current) {
         textareaRef.current.blur();
       }
     } catch (error) {
       console.error('Failed to send message:', error);
+      toast({
+        title: 'Sending feilet',
+        description: 'Kunne ikke sende meldingen. Vennligst prøv igjen.',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
-  
+
   const handleMediaSelect = (file: File) => {
     setSelectedMedia(file);
     if (isMobile) {
@@ -113,11 +139,11 @@ export const ChatInputField: React.FC<ChatInputFieldProps> = ({
       setIsMediaPickerOpen(false);
     }
   };
-  
+
   const handleCancelMedia = () => {
     setSelectedMedia(null);
   };
-  
+
   const toggleMediaPicker = () => {
     setIsMediaPickerOpen(prev => !prev);
   };
@@ -146,14 +172,22 @@ export const ChatInputField: React.FC<ChatInputFieldProps> = ({
   );
 
   return (
-    <div 
-      ref={inputContainerRef}
+    <form 
+      onSubmit={handleSubmit}
       className={cx(
         'relative bg-cyberdark-900 rounded-md',
         isMobile ? 'shadow-lg' : theme.shadows.md,
         className
       )}
     >
+      {/* Network status indicator */}
+      {!online && (
+        <div className="bg-red-900/80 text-white text-xs p-1 rounded flex items-center justify-center mb-1">
+          <WifiOff size={12} className="mr-1" />
+          <span>Frakoblet - meldinger vil lagres lokalt</span>
+        </div>
+      )}
+
       {/* TTL Selector - vises bare hvis onTtlChange er gitt */}
       {onTtlChange && (
         <div className={cx(
@@ -276,7 +310,7 @@ export const ChatInputField: React.FC<ChatInputFieldProps> = ({
         {/* Send button */}
         <button
           onClick={handleSubmit}
-          disabled={disabled || (!value.trim() && !selectedMedia)}
+          disabled={disabled || (!value.trim() && !selectedMedia) || isSubmitting}
           className={cx(
             'flex-shrink-0',
             isMobile ? 'p-3 rounded-full mobile-touch-target' : 'p-2 rounded-full',
@@ -308,6 +342,6 @@ export const ChatInputField: React.FC<ChatInputFieldProps> = ({
           />
         </div>
       )}
-    </div>
+    </form>
   );
 };

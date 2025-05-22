@@ -168,6 +168,47 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
         </div>
       )}
       
+      {/* Network status indicator */}
+      {!online && (
+        <div className="sticky top-0 left-0 right-0 z-10 bg-red-900/80 text-white p-2 rounded-md mb-3 backdrop-blur-sm flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <WifiOff size={18} />
+            <span>Mistet tilkobling til server{reconnecting ? ' – forsøker å koble til...' : ''}</span>
+          </div>
+          <Button 
+            size="sm" 
+            variant="destructive" 
+            onClick={forceReconnect} 
+            className="bg-red-700 hover:bg-red-800 text-white"
+            disabled={reconnecting}
+          >
+            {reconnecting ? (
+              <RefreshCw size={16} className="mr-1 animate-spin" />
+            ) : (
+              <RefreshCw size={16} className="mr-1" />
+            )}
+            Koble til på nytt
+          </Button>
+        </div>
+      )}
+
+      {/* Reconnection notification */}
+      {online && wasOffline && (
+        <div className="sticky top-0 left-0 right-0 z-10 bg-green-900/80 text-white p-2 rounded-md mb-3 backdrop-blur-sm flex items-center">
+          <div className="flex items-center gap-2 w-full justify-between">
+            <span>Tilkobling gjenopprettet</span>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={onLoadMore}
+              className="bg-green-700 hover:bg-green-800 text-white"
+            >
+              Oppdater meldinger
+            </Button>
+          </div>
+        </div>
+      )}
+      
       {/* Messages */}
       {messages.map((message) => (
         <ChatMessage
