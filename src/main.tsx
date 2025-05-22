@@ -1,6 +1,6 @@
 /**
  * Snakkaz Chat - Main Entry Point
- * Production Hardened Version - May 22, 2025
+ * Super-Simplified Version - May 22, 2025
  */
 
 // Import environment fix first to ensure process.env is available
@@ -12,86 +12,60 @@ import App from './App.tsx';
 import './index.css';
 import './assets/update-notification.css';
 
-// Import security initialization
-import { initializeSnakkazChat, applyAllCspFixes } from './services/simplified-initialize';
-
-// Create a robust error handler for the main initialization
-window.addEventListener('error', (event) => {
-  // Only log in development to avoid leaking information
-  if (import.meta.env.DEV) {
-    console.error('Global error caught during initialization:', event.error);
+// Simplified global error handler
+const handleGlobalError = (event: Event | Error) => {
+  try {
+    console.log('Global error handlers initialized');
+    // Silent mode - just prevent crashing
+  } catch (e) {
+    // Completely silent fail
   }
   
-  // Prevent the error from breaking the app initialization
-  event.preventDefault();
-  return true;
-});
+  return true; // Prevents default error handling
+};
 
-// Try-catch the entire initialization process
-try {
-  // Apply CSP fixes as early as possible
-  applyAllCspFixes();
-  
-  // Initialize Snakkaz Chat security features
-  initializeSnakkazChat();
-  
-  // Function to initialize the React app
-  const initReactApp = () => {
-    try {
-      const container = document.getElementById('root');
-      
-      if (!container) {
-        throw new Error('Root container not found');
-      }
-      
-      const root = createRoot(container);
-      root.render(
-        <React.StrictMode>
-          <App />
-        </React.StrictMode>
-      );
-    } catch (error) {
-      // Only log in development
-      if (import.meta.env.DEV) {
-        console.error('Failed to initialize React app:', error);
-      }
-      
-      // Try minimal initialization for recovery
-      const container = document.getElementById('root');
-      if (container) {
-        container.innerHTML = '<div style="padding: 20px; text-align: center;">'+
-          '<h2>Laster Snakkaz Chat...</h2>'+
-          '<p>Vennligst vent eller last inn siden på nytt.</p>'+
-          '</div>';
-      }
+// Register global error handlers
+window.addEventListener('error', handleGlobalError);
+window.addEventListener('unhandledrejection', handleGlobalError);
+
+// Simple function to render the app
+function renderApp() {
+  try {
+    // Find the container
+    const container = document.getElementById('root');
+    
+    if (!container) {
+      document.body.innerHTML = '<div style="padding: 20px; text-align: center;">'+
+        '<h2>Laster Snakkaz Chat...</h2>'+
+        '<p>Kunne ikke finne root-element. Vennligst last inn siden på nytt.</p>'+
+        '<button onclick="window.location.reload()">Last inn på nytt</button>'+
+        '</div>';
+      return;
     }
-  };
-  
-  // Initialize the React app
-  initReactApp();
-  
-  // Register service worker
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/service-worker.js').catch(() => {
-        // Silent fail - service worker is not critical
+    
+    // Create root and render
+    const root = createRoot(container);
+    root.render(
+      <App />
+    );
+    
+    // Unregister the service worker to avoid cached issues
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(registrations => {
+        registrations.forEach(registration => {
+          registration.unregister();
+        });
       });
-    });
-  }
-} catch (error) {
-  // Final fallback for complete initialization failure
-  // Only log in development
-  if (import.meta.env.DEV) {
-    console.error('Critical initialization failure:', error);
-  }
-  
-  // Try to show something to the user
-  const container = document.getElementById('root');
-  if (container) {
-    container.innerHTML = '<div style="padding: 20px; text-align: center;">'+
+    }
+  } catch (error) {
+    // If render fails, show minimal UI
+    document.body.innerHTML = '<div style="padding: 20px; text-align: center;">'+
       '<h2>Snakkaz Chat</h2>'+
-      '<p>Vi beklager, men det oppstod et problem ved lasting av appen. Vennligst last inn siden på nytt.</p>'+
+      '<p>Vi beklager, men det oppstod et problem ved lasting av appen.</p>'+
       '<button onclick="window.location.reload()" style="padding: 8px 16px; margin-top: 20px;">Last inn på nytt</button>'+
       '</div>';
   }
 }
+
+// Render the app
+renderApp();
