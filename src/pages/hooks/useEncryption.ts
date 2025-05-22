@@ -1,20 +1,11 @@
-// Using singleton Supabase client to prevent "Multiple GoTrueClient instances" warning
+/**
+ * Encryption Hook for Snakkaz
+ * Using the Supabase singleton client for consistent authentication
+ */
 import { supabase } from '@/lib/supabaseClient';
-// Using singleton Supabase client to prevent "Multiple GoTrueClient instances" warning
-import { supabase } from '@/lib/supabaseClient';
-// Using singleton Supabase client to prevent "Multiple GoTrueClient instances" warning
-import { supabase } from '@/lib/supabaseClient';
-// useEncryption.ts - Hook for å håndtere kryptering i Snakkaz
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './useAuth';
 import * as Encryption from '../lib/encryption';
-import { createClient } from '@supabase/supabase-js';
-
-// Supabase-konfigurasjon
-// Bruker miljøvariabler med fallback til standardverdier
-import { ENV } from '@/utils/env/environmentFix';
-const supabaseUrl = ENV.SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL || 'https://your-project.supabase.co';
-const supabaseAnonKey = ENV.SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY || 'your-anon-key';
 
 // Type-definisjoner
 interface UserKeys {
@@ -41,7 +32,6 @@ interface RawStoredKeys {
 // Hook for å håndtere kryptering
 export function useEncryption() {
   const { user } = useAuth();
-  // REPLACED: // REPLACED: // REPLACED: const supabase = createClient(supabaseUrl, supabaseAnonKey);
   
   // State for krypteringsnøkler
   const [keysState, setKeysState] = useState<KeysState>({

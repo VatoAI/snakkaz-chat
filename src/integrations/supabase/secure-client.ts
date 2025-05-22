@@ -1,20 +1,12 @@
-// Using singleton Supabase client to prevent "Multiple GoTrueClient instances" warning
-import { supabase } from '@/lib/supabaseClient';
-// Using singleton Supabase client to prevent "Multiple GoTrueClient instances" warning
-import { supabase } from '@/lib/supabaseClient';
-// Using singleton Supabase client to prevent "Multiple GoTrueClient instances" warning
-import { supabase } from '@/lib/supabaseClient';
 /**
- * Secure Supabase Client med sertifikat-pinning
+ * Secure Supabase Client with certificate pinning
  * 
- * Denne klienten beskytter mot man-in-the-middle angrep ved å bekrefte at
- * serveren har det korrekte sertifikatet.
+ * This client protects against man-in-the-middle attacks by verifying that
+ * the server has the correct certificate.
  */
 
-// Using singleton Supabase client to prevent "Multiple GoTrueClient instances" warning
 import { supabase } from '@/lib/supabaseClient';
 import { supabasePinnedFetch } from '@/utils/security/network/certificate-pinning';
-import { useToast } from '@/hooks/use-toast';
 
 // Vi kan ikke bruke hooks direkte, så vi oppretter en enkel toast-funksjon
 const showToast = (title: string, description: string, variant: 'default' | 'destructive' = 'default') => {

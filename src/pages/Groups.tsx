@@ -1,19 +1,12 @@
-// Using singleton Supabase client to prevent "Multiple GoTrueClient instances" warning
-import { supabase } from '@/lib/supabaseClient';
-// Using singleton Supabase client to prevent "Multiple GoTrueClient instances" warning
-import { supabase } from '@/lib/supabaseClient';
-// Using singleton Supabase client to prevent "Multiple GoTrueClient instances" warning
-import { supabase } from '@/lib/supabaseClient';
+/**
+ * Groups Component - Manages group chat functionality
+ * Using the Supabase singleton client for consistent authentication
+ */
+import { supabase } from '@/lib/supabaseClient'; 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from './hooks/useAuth';
 import useEncryption from './hooks/useEncryption';
-import { createClient } from '@supabase/supabase-js';
 import { Link } from 'react-router-dom';
-
-// Supabase-konfigurasjon
-import { ENV } from '@/utils/env/environmentFix';
-const supabaseUrl = ENV.SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL || 'https://your-project.supabase.co';
-const supabaseAnonKey = ENV.SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY || 'your-anon-key';
 
 // Type definisjoner
 interface Group {
@@ -37,7 +30,6 @@ interface Member {
 const Groups: React.FC = () => {
   const { user } = useAuth();
   const { hasKeys, encryptForGroup } = useEncryption();
-  // REPLACED: // REPLACED: // REPLACED: const supabase = createClient(supabaseUrl, supabaseAnonKey);
   
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);

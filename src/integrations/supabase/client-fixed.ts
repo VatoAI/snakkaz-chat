@@ -1,158 +1,37 @@
-// Using singleton Supabase client to prevent "Multiple GoTrueClient instances" warning
-import { supabase } from '@/lib/supabaseClient';
-// Using singleton Supabase client to prevent "Multiple GoTrueClient instances" warning
-import { supabase } from '@/lib/supabaseClient';
-// Using singleton Supabase client to prevent "Multiple GoTrueClient instances" warning
-import { supabase } from '@/lib/supabaseClient';
 /**
- * Supabase Client with Environment Fix
+ * DEPRECATED: This file is no longer used.
+ * Please import Supabase client from '@/lib/supabaseClient' instead.
  * 
- * This is an improved version of the Supabase client that handles
- * environment variables correctly in both development and production.
+ * This file is kept for historical reference and will be removed in a future release.
  */
 
-import { createClient } from '@supabase/supabase-js';
-import { environment } from '@/config/environment';
-import { ENV } from '@/utils/env/environmentFix';
+// Re-export the singleton client for backward compatibility
+import { supabase as supabaseClient, getSession, getUser } from '@/lib/supabaseClient';
 
-// Use custom domain if available, otherwise fall back to standard URL
-const supabaseUrl = environment.supabase.customDomain 
-  ? `https://${environment.supabase.customDomain}/api` 
-  : (ENV.SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL || 'https://wqpoozpbceucynsojmbk.supabase.co');
+// Export the client for backward compatibility
+export const supabase = supabaseClient;
 
-const supabaseAnonKey = ENV.SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndxcG9venBiY2V1Y3luc29qbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzk1NjgzMDUsImV4cCI6MjA1NTE0NDMwNX0.vu1s86gQKEPXFleOZ1U2uOjW-kj4k4RAiKTbOuXPUD8';
-
-// Log only in development environment
+// Log deprecation notice in development
 if (import.meta.env.DEV) {
-  console.log('Supabase URL:', supabaseUrl);
-  console.log('Using custom domain:', environment.supabase.customDomain ? 'Yes' : 'No');
-  console.log('Supabase environment setup successful');
+  console.warn(
+    'The file src/integrations/supabase/client-fixed.ts is deprecated.\n' +
+    'Please import the Supabase client from @/lib/supabaseClient instead.'
+  );
 }
 
-// Create the Supabase client with better error handling
-function createRobustClient() {
-  try {
-    return createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        autoRefreshToken: true,
-        persistSession: true,
-        detectSessionInUrl: true
-      },
-      global: {
-        headers: {
-          'X-Client-Info': 'snakkaz-chat'
-        }
-      }
-    });
-  } catch (error) {
-    console.error('Failed to create Supabase client:', error);
-    return createMockClient();
-  }
-}
-
-// Create a mock client to prevent app crashes when credentials are missing
-const createMockClient = () => {
-  console.warn('Using mock Supabase client. Application will have limited functionality.');
-  
-  // Create a proper mock for auth functionality
-  const mockAuth = {
-    getSession: async () => ({ data: { session: null }, error: null }),
-    getUser: async () => ({ data: { user: null }, error: null }),
-    signIn: async () => ({ data: { user: null, session: null }, error: { message: 'Mock auth: Cannot sign in' } }),
-    signUp: async () => ({ data: { user: null, session: null }, error: { message: 'Mock auth: Cannot sign up' } }),
-    signOut: async () => ({ error: null }),
-    // Critical fix for onAuthStateChange
-    onAuthStateChange: (callback: any) => {
-      console.warn('Mock Supabase: onAuthStateChange registered but will not trigger events');
-      // Return an object with a subscription that can be unsubscribed
-      return {
-        data: {
-          subscription: {
-            unsubscribe: () => {
-              console.warn('Mock Supabase: unsubscribe called on mock auth listener');
-            }
-          }
-        }
-      };
-    }
-  };
-
-  // Create basic mocks for commonly used Supabase methods
-  const mockFrom = (table: string) => {
-    const mockQuery = {
-      select: () => mockQuery,
-      insert: () => Promise.resolve({ data: [], error: null }),
-      update: () => Promise.resolve({ data: [], error: null }),
-      delete: () => Promise.resolve({ data: [], error: null }),
-      eq: () => mockQuery,
-      neq: () => mockQuery,
-      gt: () => mockQuery,
-      gte: () => mockQuery,
-      lt: () => mockQuery,
-      lte: () => mockQuery,
-      like: () => mockQuery,
-      ilike: () => mockQuery,
-      in: () => mockQuery,
-      contains: () => mockQuery,
-      containedBy: () => mockQuery,
-      rangeLt: () => mockQuery,
-      rangeGt: () => mockQuery,
-      rangeGte: () => mockQuery,
-      rangeLte: () => mockQuery,
-      rangeAdjacent: () => mockQuery,
-      overlaps: () => mockQuery,
-      textSearch: () => mockQuery,
-      match: () => mockQuery,
-      not: () => mockQuery,
-      or: () => mockQuery,
-      filter: () => mockQuery,
-      order: () => mockQuery,
-      limit: () => mockQuery,
-      range: () => mockQuery,
-      single: () => Promise.resolve({ data: null, error: null }),
-      maybeSingle: () => Promise.resolve({ data: null, error: null }),
-    };
-    
-    return mockQuery;
-  };
-  
-  return {
-    auth: mockAuth,
-    from: mockFrom,
-    storage: {
-      from: () => ({
-        upload: () => Promise.resolve({ data: null, error: null }),
-        download: () => Promise.resolve({ data: null, error: null }),
-        getPublicUrl: () => ({ data: { publicUrl: '' } }),
-      }),
-    },
-    rpc: () => Promise.resolve({ data: null, error: null }),
-    // Mock for fetch
-    rest: {
-      get: () => Promise.resolve({ data: null, error: null }),
-      post: () => Promise.resolve({ data: null, error: null }),
-      put: () => Promise.resolve({ data: null, error: null }),
-      delete: () => Promise.resolve({ data: null, error: null }),
-    },
-    // Critical fix for channel subscriptions
-    channel: () => ({
-      on: () => ({ subscribe: () => ({}) }),
-      subscribe: () => ({}),
-    }),
-    removeChannel: () => {}
-  };
-};
-
-// Create and export the Supabase client
-export const supabase = createRobustClient();
+// Export utility functions
+export { getSession, getUser };
 
 // Export a function to check if the client is properly connected
 export const checkSupabaseConnection = async () => {
   try {
-    const { error } = await supabase.auth.getSession();
+    const { error } = await supabaseClient.auth.getSession();
     return !error;
   } catch (e) {
     console.error('Error checking Supabase connection:', e);
     return false;
   }
 };
+
+// Default export for ESM compatibility
+export default supabaseClient;

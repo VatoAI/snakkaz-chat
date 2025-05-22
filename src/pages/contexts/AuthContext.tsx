@@ -1,15 +1,10 @@
-// Using singleton Supabase client to prevent "Multiple GoTrueClient instances" warning
-import { supabase } from '@/lib/supabaseClient';
-// Using singleton Supabase client to prevent "Multiple GoTrueClient instances" warning
-import { supabase } from '@/lib/supabaseClient';
-// Using singleton Supabase client to prevent "Multiple GoTrueClient instances" warning
+/**
+ * Authentication Context Provider
+ * Using the Supabase singleton client for consistent authentication
+ */
 import { supabase } from '@/lib/supabaseClient';
 import React, { useState, useEffect, createContext, useContext, ReactNode } from 'react';
-import { createClient, SupabaseClient, User as SupabaseUser } from '@supabase/supabase-js';
-
-// Supabase-konfigurasjon
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://your-project.supabase.co';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'your-anon-key';
+import { SupabaseClient, User as SupabaseUser } from '@supabase/supabase-js';
 
 // Utvidet brukertype som inkluderer Supabase-brukerdata og E2EE-metainformasjon
 interface User {
@@ -45,7 +40,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  // REPLACED: // REPLACED: // REPLACED: const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
   // Konverter Supabase-bruker til vår applikasjons brukertype
   const formatUser = async (supabaseUser: SupabaseUser | null): Promise<User | null> => {
