@@ -1,104 +1,111 @@
-/**
- * Performance utilities for Snakkaz Chat
- * Collection of utilities to improve application performance
- */
+export * from './memo-helpers';
 
-// Debounce function to limit the rate at which a function can fire
-export function debounce<T extends (...args: any[]) => any>(
-  func: T,
-  wait: number
-): (...args: Parameters<T>) => void {
-  let timeout: ReturnType<typeof setTimeout> | null = null;
+// Performance tracking
+let startTime = Date.now();
+const performanceMark = (label: string) => {
+  const now = Date.now();
+  console.log(`${label}: ${now - startTime}ms`);
+  startTime = now;
+};
+
+// Performance monitoring for components
+export function trackComponentPerformance(
+  componentName: string,
+  onRender?: () => void
+): { 
+  start: () => void, 
+  end: () => void,
+  renderTime: number
+} {
+  let renderStart = 0;
+  let lastRenderTime = 0;
   
-  return function(...args: Parameters<T>): void {
-    const later = () => {
-      timeout = null;
-      func(...args);
-    };
+  return {
+    start: () => {
+      renderStart = performance.now();
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`${componentName} render started`);
+      }
+    },
     
-    if (timeout) clearTimeout(timeout);
-    timeout = setTimeout(later, wait);
-  };
-}
-
-// Throttle function to ensure a function is called at most once in a specified time period
-export function throttle<T extends (...args: any[]) => any>(
-  func: T,
-  limit: number
-): (...args: Parameters<T>) => void {
-  let inThrottle = false;
-  
-  return function(...args: Parameters<T>): void {
-    if (!inThrottle) {
-      func(...args);
-      inThrottle = true;
-      setTimeout(() => {
-        inThrottle = false;
-      }, limit);
-    }
-  };
-}
-
-// RAF throttle - using requestAnimationFrame for smoother animations
-export function rafThrottle<T extends (...args: any[]) => any>(
-  func: T
-): (...args: Parameters<T>) => void {
-  let throttled = false;
-  
-  return function(...args: Parameters<T>): void {
-    if (!throttled) {
-      throttled = true;
-      requestAnimationFrame(() => {
-        func(...args);
-        throttled = false;
-      });
-    }
-  };
-}
-
-// Measures execution time of a function (for performance debugging)
-export function measureExecutionTime<T extends (...args: any[]) => any>(
-  func: T,
-  funcName: string = 'Function'
-): (...args: Parameters<T>) => ReturnType<T> {
-  return function(...args: Parameters<T>): ReturnType<T> {
-    const start = performance.now();
-    const result = func(...args);
-    const end = performance.now();
-    console.log(`${funcName} took ${end - start}ms to execute`);
-    return result;
-  };
-}
-
-// Image loading optimization - loads images when they're about to enter the viewport
-export function lazyLoadImage(imgElement: HTMLImageElement) {
-  if ('loading' in HTMLImageElement.prototype) {
-    // Browser supports native lazy loading
-    imgElement.loading = 'lazy';
-  } else {
-    // Fallback to IntersectionObserver for older browsers
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          const img = entry.target as HTMLImageElement;
-          if (img.dataset.src) {
-            img.src = img.dataset.src;
-          }
-          observer.unobserve(img);
+    end: () => {
+      const renderEnd = performance.now();
+      lastRenderTime = renderEnd - renderStart;
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`${componentName} rendered in ${lastRenderTime.toFixed(2)}ms`);
+        
+        // Log warning for slow renders
+        if (lastRenderTime > 16) { // 1 frame at 60fps
+          console.warn(`Slow render detected in ${componentName}: ${lastRenderTime.toFixed(2)}ms`);
         }
-      });
-    });
+      }
+      
+      if (onRender) {
+        onRender();
+      }
+    },
     
-    observer.observe(imgElement);
-  }
+    renderTime: lastRenderTime
+  };
 }
 
-// Idle callback wrapper - runs non-critical tasks during browser idle periods
-export function runWhenIdle(callback: () => void, timeout: number = 2000): void {
-  if ('requestIdleCallback' in window) {
-    (window as any).requestIdleCallback(callback, { timeout });
-  } else {
-    // Fallback for browsers that don't support requestIdleCallback
-    setTimeout(callback, 1);
-  }
+// Hook to track component performance
+export function useComponentPerformance(componentName: string) {
+  const perf = trackComponentPerformance(componentName);
+  perf.start();
+  
+  // Use a requestAnimationFrame to track when render is complete
+  React.useEffect(() => {
+    requestAnimationFrame(() => {
+      perf.end();
+    });
+  });
+  
+  return perf;
+}
+
+// Function to create a virtualized list renderer
+export function createVirtualizedRenderer<T>(
+  items: T[],
+  renderItem: (item: T, index: number) => React.ReactNode,
+  itemHeight: number,
+  containerHeight: number,
+  overscan: number = 3
+) {
+  // Calculate which items should be in view
+  const visibleCount = Math.ceil(containerHeight / itemHeight);
+  const totalCount = items.length;
+  
+  return function VirtualizedRenderer(scrollPosition: number) {
+    const startIndex = Math.max(0, Math.floor(scrollPosition / itemHeight) - overscan);
+    const endIndex = Math.min(totalCount - 1, startIndex + visibleCount + 2 * overscan);
+    
+    // Render only the visible items
+    const visibleItems = [];
+    for (let i = startIndex; i <= endIndex; i++) {
+      visibleItems.push(
+        <div
+          key={i}
+          style={{
+            position: 'absolute',
+            top: i * itemHeight,
+            height: itemHeight,
+            left: 0,
+            right: 0
+          }}
+        >
+          {renderItem(items[i], i)}
+        </div>
+      );
+    }
+    
+    return {
+      visibleItems,
+      totalHeight: totalCount * itemHeight,
+      visibleStartIndex: startIndex,
+      visibleEndIndex: endIndex
+    };
+  };
 }

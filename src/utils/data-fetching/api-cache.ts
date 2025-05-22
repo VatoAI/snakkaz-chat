@@ -1,177 +1,87 @@
+import { useState, useEffect } from 'react';
+import useSWR, { SWRConfiguration } from 'swr';
+
+// Global cache for API responses
+const apiCache = new Map<string, { data: any; timestamp: number }>();
+const DEFAULT_CACHE_TIME = 5 * 60 * 1000; // 5 minutes
+
 /**
- * API Caching Utilities for Snakkaz Chat
- * These utilities provide a simple caching layer for API data
+ * Fetcher function with caching
  */
-import { LRUCache } from '../performance/memo-helpers';
-
-// Types
-interface CacheOptions {
-  maxAge?: number;      // Maximum age in milliseconds
-  staleWhileRevalidate?: boolean; // Return stale data while fetching fresh data
-  cacheBustKey?: string; // Key to force cache busting
-}
-
-interface CachedData<T> {
-  data: T;
-  timestamp: number;
-}
-
-// In-memory cache for API responses
-const apiCache = new LRUCache<string, CachedData<any>>(100);
-
-// Enhanced fetch with caching
-export async function cachedFetch<T>(
-  url: string,
-  options: RequestInit = {},
-  cacheOptions: CacheOptions = {}
-): Promise<T> {
-  const cacheKey = generateCacheKey(url, options, cacheOptions.cacheBustKey);
-  const maxAge = cacheOptions.maxAge || 5 * 60 * 1000; // Default: 5 minutes
-  
-  // Check if we have a valid cached response
-  const cachedResponse = apiCache.get(cacheKey);
+async function cachingFetcher(url: string, options?: RequestInit) {
+  // Check cache first
+  const cached = apiCache.get(url);
   const now = Date.now();
   
-  if (cachedResponse && now - cachedResponse.timestamp < maxAge) {
-    return cachedResponse.data;
+  if (cached && (now - cached.timestamp < DEFAULT_CACHE_TIME)) {
+    console.log(`Using cached data for ${url}`);
+    return cached.data;
   }
   
-  // If stale data exists and staleWhileRevalidate is enabled, return stale data and revalidate
-  if (cachedResponse && cacheOptions.staleWhileRevalidate) {
-    // Revalidate in the background
-    fetchAndCache<T>(url, options, cacheKey)
-      .catch(error => console.error('Background revalidation failed:', error));
-    
-    // Return stale data immediately
-    return cachedResponse.data;
+  // If not in cache or expired, fetch fresh data
+  console.log(`Fetching fresh data for ${url}`);
+  const res = await fetch(url, options);
+  
+  if (!res.ok) {
+    throw new Error(`API error: ${res.status}`);
   }
   
-  // No valid cache or no staleWhileRevalidate, fetch fresh data
-  return fetchAndCache<T>(url, options, cacheKey);
-}
-
-// Helper function to fetch and cache data
-async function fetchAndCache<T>(
-  url: string,
-  options: RequestInit,
-  cacheKey: string
-): Promise<T> {
-  const response = await fetch(url, options);
+  const data = await res.json();
   
-  if (!response.ok) {
-    throw new Error(`API request failed: ${response.status} ${response.statusText}`);
-  }
-  
-  const data = await response.json();
-  
-  // Cache the fresh data
-  apiCache.put(cacheKey, {
-    data,
-    timestamp: Date.now()
-  });
+  // Store in cache
+  apiCache.set(url, { data, timestamp: now });
   
   return data;
 }
 
-// Generate a unique cache key for a request
-function generateCacheKey(
-  url: string,
-  options: RequestInit,
-  cacheBustKey?: string
-): string {
-  // Extract relevant parts of the request for the cache key
-  const method = options.method || 'GET';
-  const body = options.body ? JSON.stringify(options.body) : '';
-  const headers = options.headers ? JSON.stringify(options.headers) : '';
-  
-  // Combine parts into a single string
-  const keyParts = [method, url, body, headers];
-  if (cacheBustKey) {
-    keyParts.push(cacheBustKey);
-  }
-  
-  return keyParts.join('|');
-}
-
-// Clear the entire cache
-export function clearApiCache(): void {
-  for (const key of (apiCache as any).cache.keys()) {
-    (apiCache as any).cache.delete(key);
-  }
-}
-
-// Clear specific cache entries by URL pattern
-export function clearApiCacheByPattern(urlPattern: string | RegExp): void {
-  const pattern = typeof urlPattern === 'string'
-    ? new RegExp(urlPattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
-    : urlPattern;
-  
-  for (const key of (apiCache as any).cache.keys()) {
-    const parts = key.split('|');
-    const url = parts[1]; // URL is the second part of our cache key
-    
-    if (pattern.test(url)) {
-      (apiCache as any).cache.delete(key);
+/**
+ * Hook for data fetching with SWR and caching
+ */
+export function useApiData<T>(
+  url: string | null, 
+  options?: RequestInit, 
+  config?: SWRConfiguration
+) {
+  return useSWR<T>(
+    url, 
+    url => cachingFetcher(url, options),
+    { 
+      revalidateOnFocus: false,
+      dedupingInterval: 30000,
+      ...config
     }
+  );
+}
+
+/**
+ * Clear API cache
+ */
+export function clearApiCache(urlPattern?: RegExp) {
+  if (urlPattern) {
+    // Clear only matching URLs
+    for (const key of apiCache.keys()) {
+      if (urlPattern.test(key)) {
+        apiCache.delete(key);
+      }
+    }
+  } else {
+    // Clear entire cache
+    apiCache.clear();
   }
 }
 
-// Hook for React components to use cachedFetch with automatic cleanup
-export function useCachedData<T>(
-  url: string | null,
-  options: RequestInit = {},
-  cacheOptions: CacheOptions = {}
-): { data: T | null; loading: boolean; error: Error | null; refetch: () => Promise<void> } {
-  const [state, setState] = React.useState<{
-    data: T | null;
-    loading: boolean;
-    error: Error | null;
-  }>({
-    data: null,
-    loading: true,
-    error: null
-  });
+/**
+ * Prefetch data and store in cache
+ */
+export async function prefetchApiData(urls: string[], options?: RequestInit) {
+  const results = await Promise.allSettled(
+    urls.map(url => cachingFetcher(url, options))
+  );
   
-  const fetchData = React.useCallback(async () => {
-    if (!url) {
-      setState({ data: null, loading: false, error: null });
-      return;
-    }
-    
-    setState(prev => ({ ...prev, loading: true, error: null }));
-    
-    try {
-      const data = await cachedFetch<T>(url, options, cacheOptions);
-      setState({ data, loading: false, error: null });
-    } catch (error) {
-      setState({ data: null, loading: false, error: error instanceof Error ? error : new Error(String(error)) });
-    }
-  }, [url, JSON.stringify(options), JSON.stringify(cacheOptions)]);
-  
-  React.useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-  
-  const refetch = React.useCallback(async () => {
-    // Force cache busting by adding a timestamp
-    const bustOptions: CacheOptions = {
-      ...cacheOptions,
-      cacheBustKey: Date.now().toString()
-    };
-    
-    setState(prev => ({ ...prev, loading: true, error: null }));
-    
-    try {
-      const data = await cachedFetch<T>(url!, options, bustOptions);
-      setState({ data, loading: false, error: null });
-    } catch (error) {
-      setState(prev => ({ 
-        ...prev, 
-        loading: false, 
-        error: error instanceof Error ? error : new Error(String(error)) 
-      }));
-    }
-  }, [url, options, cacheOptions]);
-  
-  return { ...state, refetch };
+  return results.map((result, index) => ({
+    url: urls[index],
+    success: result.status === 'fulfilled',
+    data: result.status === 'fulfilled' ? result.value : null,
+    error: result.status === 'rejected' ? result.reason : null,
+  }));
 }

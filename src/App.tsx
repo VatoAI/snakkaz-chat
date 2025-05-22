@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { RootErrorBoundary } from './components/error/RootErrorBoundary';
 import { verifySupabaseConfig } from '@/services/encryption/supabasePatch';
 import { setupGlobalErrorHandlers } from './utils/error/errorHandling';
+import { bootstrapSecurityFeatures } from '@/services/security/securityIntegration';
 import { ENV } from './utils/env/environmentFix';
 
 // Import dynamically loaded feature pages
@@ -19,6 +20,7 @@ const Register = lazy(() => import("@/pages/Register"));
 const ForgotPassword = lazy(() => import("@/pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
 const Chat = lazy(() => import("@/pages/OptimizedChat"));
+const Subscription = lazy(() => import("@/pages/Subscription"));
 
 // Loading component
 const LoadingSpinner = () => (
@@ -101,6 +103,20 @@ const preloadComponents = () => {
 };
 
 export default function App() {
+  // Initialize security features
+  useEffect(() => {
+    const initSecurity = async () => {
+      try {
+        await bootstrapSecurityFeatures();
+        console.log('Security features initialized');
+      } catch (error) {
+        console.error('Failed to initialize security features:', error);
+      }
+    };
+    
+    initSecurity();
+  }, []);
+  
   // Try to preload some components
   useEffect(() => {
     preloadComponents();
@@ -145,6 +161,14 @@ export default function App() {
                 element={
                   <RequireAuth>
                     <GroupChatPage />
+                  </RequireAuth>
+                } 
+              />
+              <Route 
+                path="/subscription" 
+                element={
+                  <RequireAuth>
+                    <Subscription />
                   </RequireAuth>
                 } 
               />

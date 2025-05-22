@@ -9,7 +9,8 @@ import {
   Bell,
   Settings,
   User,
-  LogOut
+  LogOut,
+  Crown
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -141,6 +142,12 @@ const MainNav: React.FC = () => {
                 <Link to="/settings" className="flex items-center cursor-pointer">
                   <Settings className="h-4 w-4 mr-2 text-cybergold-500" />
                   Innstillinger
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/subscription" className="flex items-center cursor-pointer">
+                  <Crown className="h-4 w-4 mr-2 text-cybergold-500" />
+                  Premium
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator className="bg-cyberdark-700" />

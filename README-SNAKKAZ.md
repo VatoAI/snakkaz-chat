@@ -152,3 +152,34 @@ Hvis du oppdager sikkerhetsproblemer, vennligst rapporter dem til sikkerhetsteam
 ---
 
 Bygget med ❤️ av Snakkaz-teamet.
+
+## Ytelsesoptimalisering (19. mai 2025)
+
+Snakkaz Chat er optimalisert for høy ytelse med følgende teknikker:
+
+### 1. Bildeoptimlisering
+- Responsive bilder med srcset for ulike skjermstørrelser
+- WebP-format for moderne nettlesere
+- Lazy loading av bilder som ikke er i viewport
+
+### 2. Code Splitting og Lazy Loading
+- Route-basert code splitting
+- Lazy loading av tunge komponenter
+- Suspense for bedre lasting
+
+### 3. State Management
+- Optimalisert rendering med memoization
+- Forbedret useCallback og useMemo med dyp sammenligning
+- Throttling av callback-funksjoner for å redusere rerendering
+
+### 4. Nettverksoptimalisering
+- API response caching
+- SWR-basert datahenting med automatisk revalidering
+- Prefetching av kritiske data
+
+### 5. Forbedret Service Worker
+- Strategibasert caching for ulike ressurstyper
+- Offline støtte med IndexedDB
+- Background syncing for offline-handlinger
+
+Ved å bruke disse teknikkene oppnår vi raskere lasting, bedre responsivitet og en mer robust brukeropplevelse.
