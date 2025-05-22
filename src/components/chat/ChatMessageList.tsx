@@ -1,8 +1,11 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { ChatMessage } from './ChatMessage';
 import { cx } from '../lib/theme';
-import { Loader2 } from 'lucide-react';
+import { Loader2, WifiOff, RefreshCw } from 'lucide-react';
 import { DecryptedMessage } from '@/types/message.d';
+import { useNetworkStatus } from '@/hooks/use-network-status';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 
 // Define UserProfile directly in the file to avoid import issues
 interface UserProfile {
@@ -49,6 +52,30 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
   pinnedMessageIds = new Set(),
   canPin = true,
 }) => {
+  const { toast } = useToast();
+  const { online, wasOffline, reconnecting, forceReconnect } = useNetworkStatus({
+    enablePing: true,
+    pingUrl: '/api/chat/ping',
+    onReconnect: () => {
+      toast({
+        title: 'Tilkoblet igjen',
+        description: 'Du er nå tilkoblet chat-serveren igjen.',
+        variant: 'default'
+      });
+      
+      // Oppdater meldinger når tilkoblingen er gjenopprettet
+      if (onLoadMore && messages.length > 0) {
+        onLoadMore();
+      }
+    },
+    onOffline: () => {
+      toast({
+        title: 'Mistet tilkobling',
+        description: 'Jobber med å gjenopprette forbindelsen...',
+        variant: 'destructive'
+      });
+    }
+  });
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [copyMessageSuccess, setCopyMessageSuccess] = useState<string | null>(null);
