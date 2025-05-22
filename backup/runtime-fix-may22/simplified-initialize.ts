@@ -1,47 +1,63 @@
 /**
- * Snakkaz Chat App Initialization - Highly Simplified Version
+ * Snakkaz Chat App Initialization - Production Hardened Version
  * 
- * This is a simplified version of the initialization to prevent runtime errors
+ * May 22, 2025 - Fixed to prevent production runtime errors
  */
 
 import { applyCspPolicy, applyCspEmergencyFixes } from './security/simplifiedCspConfig';
 
 // Track initialization state
 let isInitialized = false;
+let initializationAttempted = false;
 
 /**
- * Initialize Snakkaz Chat application - ultra simple version
+ * Initialize Snakkaz Chat application with improved error handling
  */
 export function initializeSnakkazChat() {
   // Prevent double initialization
   if (isInitialized) {
-    console.log('Snakkaz Chat already initialized');
     return;
   }
   
+  // If we already tried to initialize but failed, don't retry
+  // This prevents infinite initialization loops
+  if (initializationAttempted) {
+    console.warn('Skipping initialization - previous attempt failed');
+    return;
+  }
+  
+  initializationAttempted = true;
+  
   try {
-    console.log('Initializing Snakkaz Chat with simplified security...');
-    
-    // Apply emergency fixes first
-    applyCspEmergencyFixes();
-    
-    // Then apply the regular policy
-    applyCspPolicy();
-    
-    // Mark as initialized
-    isInitialized = true;
-    
-    console.log('Snakkaz Chat initialization complete');
-  } catch (error) {
-    console.error('Failed to initialize Snakkaz Chat:', error);
-    
-    // Try minimal initialization as fallback
-    try {
-      console.warn('Attempting minimal initialization as fallback...');
-      // Do nothing - just let the app run with default security
-    } catch (e) {
-      // Completely silent fail - we don't want to break the app
+    if (import.meta.env.DEV) {
+      console.log('Initializing Snakkaz Chat with production-hardened security...');
     }
+    
+    // Apply the security features in order of importance
+    setTimeout(() => {
+      try {
+        applyCspEmergencyFixes();
+        applyCspPolicy();
+        
+        // Mark as successfully initialized
+        isInitialized = true;
+        
+        if (import.meta.env.DEV) {
+          console.log('Snakkaz Chat initialization complete');
+        }
+      } catch (error) {
+        if (import.meta.env.DEV) {
+          console.error('Failed during delayed initialization:', error);
+        }
+      }
+    }, 0);
+  } catch (error) {
+    if (import.meta.env.DEV) {
+      console.error('Failed to initialize Snakkaz Chat:', error);
+    }
+    
+    // Still mark as initialized to prevent retries
+    isInitialized = true;
   }
 }
 
@@ -50,8 +66,6 @@ export function initializeSnakkazChat() {
  * This is exported for use in other modules
  */
 export function applyAllCspFixes() {
-  console.log('Applying emergency CSP fixes...');
-  
   try {
     // Apply emergency fixes
     applyCspEmergencyFixes();
@@ -59,8 +73,12 @@ export function applyAllCspFixes() {
     // Apply regular policy
     applyCspPolicy();
     
-    console.log('All CSP fixes have been applied');
+    if (import.meta.env.DEV) {
+      console.log('All CSP fixes have been applied');
+    }
   } catch (error) {
-    console.error('Failed to apply CSP fixes:', error);
+    if (import.meta.env.DEV) {
+      console.error('Failed to apply CSP fixes:', error);
+    }
   }
 }

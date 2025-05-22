@@ -15,7 +15,7 @@ NC='\033[0m' # No Color
 if [ -z "$FTP_HOST" ] || [ -z "$FTP_USER" ] || [ -z "$FTP_PASS" ]; then
   echo -e "${RED}Error: FTP credentials not set.${NC}"
   echo "Please set the following environment variables:"
-  echo "  - FTP_HOST (e.g., server123.namecheaphosting.com)"
+  echo "  - FTP_HOST (e.g., premium123.web-hosting.com)"
   echo "  - FTP_USER (your FTP username)"
   echo "  - FTP_PASS (your FTP password)"
   
