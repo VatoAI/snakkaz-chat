@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { getInitials } from '@/utils/user';
 import { UserStatus } from '@/types/presence';
+import { StatusIndicator } from '@/components/online-users/StatusIndicator';
 
 export interface UserAvatarProps {
   src?: string | null;
@@ -57,18 +58,13 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
       </Avatar>
       
       {status && !isGroup && (
-        <span 
-          className={cn(
-            "absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-cyberdark-900",
-            typeof status === 'string' ? (
-              status === 'online' ? 'bg-green-500' :
-              status === 'away' ? 'bg-amber-500' :
-              status === 'busy' ? 'bg-red-500' :
-              status === 'brb' ? 'bg-purple-500' :
-              'bg-gray-500'
-            ) : 'bg-gray-500'
-          )}
-        />
+        <div className="absolute bottom-0 right-0">
+          <StatusIndicator 
+            status={status as UserStatus} 
+            size="sm"
+            className="rounded-full border-2 border-cyberdark-900 bg-cyberdark-900 p-0.5"
+          />
+        </div>
       )}
     </div>
   );

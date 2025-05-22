@@ -19,11 +19,23 @@ export const statusColors = {
     border: 'border-blue-500',
     glow: 'shadow-[0_0_10px_theme(colors.blue.500)]'
   },
+  away: {
+    primary: 'text-purple-500',
+    bg: 'bg-purple-500',
+    border: 'border-purple-500',
+    glow: 'shadow-[0_0_10px_theme(colors.purple.500)]'
+  },
   offline: {
     primary: 'text-gray-500',
     bg: 'bg-gray-500',
     border: 'border-gray-500',
     glow: 'shadow-[0_0_10px_theme(colors.gray.500)]'
+  },
+  invisible: {
+    primary: 'text-gray-400',
+    bg: 'bg-gray-400',
+    border: 'border-gray-400',
+    glow: 'shadow-[0_0_10px_theme(colors.gray.400)]'
   }
 };
 

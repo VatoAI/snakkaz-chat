@@ -7,6 +7,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ChevronRight, ChevronLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { playSound } from "@/utils/notification-sound";
 
 interface ChatGlobalProps {
   messages: DecryptedMessage[];
@@ -96,11 +97,62 @@ export const ChatGlobal = ({
         },
         (payload) => {
           console.log('New message detected', payload);
+          
           // Update conversations in real-time
-          setRealtimeConversations(prev => {
-            // Process the new message and update conversations
-            return recentConversations; // This should actually integrate the new message
-          });
+          if (payload.new) {
+            const newMessage = payload.new;
+            
+            // Process the new message
+            if (typeof onNewMessage === 'function') {
+              onNewMessage(newMessage as DecryptedMessage);
+              
+              // Play notification sound if message is from someone else
+              if (newMessage.sender_id !== currentUserId) {
+                playSound('message-received');
+              }
+            }
+            
+            // Update conversations list
+            setRealtimeConversations(prev => {
+              const updated = [...prev];
+              const senderUserId = newMessage.sender_id || newMessage.user_id;
+              const isFromCurrentUser = senderUserId === currentUserId;
+              
+              // Find existing conversation
+              const existingIndex = updated.findIndex(c => 
+                c.userId === senderUserId || 
+                (isFromCurrentUser && newMessage.recipient_id === c.userId)
+              );
+              
+              if (existingIndex >= 0) {
+                // Update existing conversation
+                updated[existingIndex] = {
+                  ...updated[existingIndex],
+                  lastActive: new Date().toISOString(),
+                  unreadCount: isFromCurrentUser ? 0 : updated[existingIndex].unreadCount + 1
+                };
+                
+                // Move to the top
+                if (existingIndex > 0) {
+                  const [conversation] = updated.splice(existingIndex, 1);
+                  updated.unshift(conversation);
+                }
+              } else if (!isFromCurrentUser || newMessage.recipient_id) {
+                // Add new conversation
+                const otherUserId = isFromCurrentUser ? newMessage.recipient_id : senderUserId;
+                if (otherUserId) {
+                  updated.unshift({
+                    userId: otherUserId,
+                    username: otherUserId, // Will be updated later with full user info
+                    unreadCount: isFromCurrentUser ? 0 : 1,
+                    lastActive: new Date().toISOString()
+                  });
+                }
+              }
+              
+              return updated;
+            });
+          }
         }
       )
       .subscribe();
@@ -108,7 +160,7 @@ export const ChatGlobal = ({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [currentUserId, recentConversations]);
+  }, [currentUserId, onNewMessage]);
 
   // Update conversations when prop changes
   useEffect(() => {

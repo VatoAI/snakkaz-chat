@@ -3,69 +3,29 @@
  * 
  * PRODUCTION HARDENED VERSION - May 22, 2025
  * 
- * This is the single source of truth for the Supabase client.
- * All components should import from this file to prevent multiple instances.
+ * IMPORTANT: This file is now a wrapper around the new supabase-singleton.ts
+ * Implementation moved to the new file to ensure consistency.
  */
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { SupabaseClient } from '@supabase/supabase-js';
+import { supabase as supabaseSingleton, getSession, getUser } from './supabase-singleton';
 
-// Import environment utility
-import { ENV } from '@/utils/env/environmentFix';
+// Re-export from singleton to maintain compatibility
+export const supabase = supabaseSingleton;
 
-// Direct access to Supabase credentials with fallbacks
-const supabaseUrl = ENV.SUPABASE_URL;
-const supabaseAnonKey = ENV.SUPABASE_ANON_KEY;
-
-// Singleton instance
-let supabaseInstance: SupabaseClient | null = null;
+// Re-export helper functions
+export { getSession, getUser };
 
 /**
- * Get the Supabase client instance (singleton pattern)
- * With improved error handling for production
+ * Backward compatibility function that just returns the singleton
+ * @deprecated Use direct import from supabase-singleton instead
  */
 function getSupabaseClient(): SupabaseClient {
-  if (supabaseInstance) {
-    return supabaseInstance;
-  }
-
-  try {
-    // Validate configuration before creating client
-    if (!supabaseUrl || !supabaseAnonKey) {
-      throw new Error('Missing Supabase configuration');
-    }
-    
-    // Create the Supabase client with production-safe settings
-    supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: false, // More stable in production
-      },
-    });
-    
-    // Test the client connection in development only
-    if (ENV.DEV) {
-      console.log('Supabase client initialized successfully (singleton)');
-    }
-    
-    return supabaseInstance;
-  } catch (error) {
-    // Log error in development only
-    if (ENV.DEV) {
-      console.error('Failed to initialize Supabase client:', error);
-    }
-    
-    // Create minimal client to prevent crashes
-    supabaseInstance = createClient(
-      supabaseUrl || 'https://wqpoozpbceucynsojmbk.supabase.co', 
-      supabaseAnonKey || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndxcG9venBiY2V1Y3luc29qbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzk1NjgzMDUsImV4cCI6MjA1NTE0NDMwNX0.vu1s86gQKEPXFleOZ1U2uOjW-kj4k4RAiKTbOuXPUD8'
-    );
-    
-    return supabaseInstance;
-  }
+  console.warn('getSupabaseClient is deprecated, import directly from supabase-singleton');
+  return supabase;
 }
 
-// Export the singleton instance to prevent multiple instances
-export const supabase = getSupabaseClient();
+// Export the function for backward compatibility
+export { getSupabaseClient };
 
 // Compatibility export for code using the function pattern
 export const createSupabaseClient = () => supabase;

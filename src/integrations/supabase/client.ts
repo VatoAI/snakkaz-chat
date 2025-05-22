@@ -1,7 +1,6 @@
 // Using singleton Supabase client to prevent "Multiple GoTrueClient instances" warning
-import { supabase } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabase-singleton';
 import { environment } from '@/config/environment';
-import { ENV } from '@/utils/env/environmentFix';
 
 // Use custom domain if available, otherwise fall back to standard URL
 const supabaseUrl = environment.supabase.customDomain 
@@ -31,7 +30,7 @@ const createMockClient = () => {
     signUp: async () => ({ data: { user: null, session: null }, error: { message: 'Mock auth: Cannot sign up' } }),
     signOut: async () => ({ error: null }),
     // Critical fix for onAuthStateChange
-    onAuthStateChange: (callback: any) => {
+    onAuthStateChange: (callback: (event: unknown, session: unknown) => void) => {
       console.warn('Mock Supabase: onAuthStateChange registered but will not trigger events');
       // Return an object with a subscription that can be unsubscribed
       return {
