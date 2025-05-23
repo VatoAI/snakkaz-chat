@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../integrations/supabase/client';
+import { supabase } from '@/lib/supabaseClient';
 import { useToast } from '@/hooks/use-toast';
 
 export type AuthContextType = {
@@ -160,6 +160,19 @@ export const useAuth = () => {
 
   const completeTwoFactorAuth = async (user: any) => {
     try {
+      // Mark 2FA as verified in user metadata
+      const { error: updateError } = await supabase.auth.updateUser({
+        data: {
+          two_factor_verified: true,
+          two_factor_verified_at: new Date().toISOString()
+        }
+      });
+
+      if (updateError) {
+        setError(updateError.message);
+        return { success: false, error: updateError.message };
+      }
+      
       setUser(user);
       toast({
         title: "Pålogging vellykket",

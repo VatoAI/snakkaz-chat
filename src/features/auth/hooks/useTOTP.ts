@@ -1,8 +1,8 @@
 import { useState, useCallback } from 'react';
-import * as speakeasy from 'speakeasy';
+import * as OTPAuth from 'otpauth';
 import QRCode from 'qrcode';
-import { supabase } from '../../../lib/supabase';
-import { useAuth } from '../AuthContext';
+import { supabase } from '@/lib/supabaseClient';
+import { useAuth } from '../hooks/useAuth';
 
 interface TOTPSecret {
   secret: string;
@@ -26,35 +26,69 @@ export const useTOTP = (): TOTPHookReturn => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Helper function to generate backup codes - defined first to avoid dependency issues
+  const generateBackupCodes = useCallback((): string[] => {
+    const codes: string[] = [];
+    for (let i = 0; i < 8; i++) {
+      // Generate 8-character alphanumeric backup codes
+      const code = Math.random().toString(36).substring(2, 10).toUpperCase();
+      codes.push(code);
+    }
+    return codes;
+  }, []);
 
   const setupTOTP = useCallback(async (): Promise<TOTPSecret> => {
     if (!user) throw new Error('Bruker ikke logget inn');
 
-    const secret = speakeasy.generateSecret({
-      name: `Snakkaz Chat (${user.email})`,
+    // Generate a random secret key
+    const secret = OTPAuth.Secret.fromHex(Array.from(
+      { length: 32 }, 
+      () => Math.floor(Math.random() * 16).toString(16)
+    ).join(''));
+    
+    // Create a TOTP object
+    const totp = new OTPAuth.TOTP({
       issuer: 'Snakkaz Chat',
-      length: 32,
+      label: user.email || 'user',
+      algorithm: 'SHA1',
+      digits: 6,
+      period: 30,
+      secret: secret
     });
-
-    const qrCodeUrl = await QRCode.toDataURL(secret.otpauth_url!);
+    
+    // Generate URI for QR code
+    const uri = totp.toString();
+    
+    // Generate QR code
+    const qrCodeUrl = await QRCode.toDataURL(uri);
     const backupCodes = generateBackupCodes();
 
     return {
-      secret: secret.base32!,
+      secret: secret.base32,
       qrCodeUrl,
-      manualEntryKey: secret.base32!.match(/.{1,4}/g)?.join(' ') || secret.base32!,
+      manualEntryKey: secret.base32.match(/.{1,4}/g)?.join(' ') || secret.base32,
       backupCodes,
     };
-  }, [user]);
+  }, [user, generateBackupCodes]);
 
   const verifyTOTP = useCallback((token: string, secret: string): boolean => {
     try {
-      return speakeasy.totp.verify({
-        secret,
-        encoding: 'base32',
-        token: token.replace(/\s/g, ''),
-        window: 2, // Allow 1 step before and after current time
+      // Create a new TOTP object with the stored secret
+      const totp = new OTPAuth.TOTP({
+        issuer: 'Snakkaz Chat',
+        label: 'user',
+        algorithm: 'SHA1',
+        digits: 6,
+        period: 30,
+        secret: OTPAuth.Secret.fromBase32(secret)
       });
+      
+      // Clean up the token and verify
+      const cleanToken = token.replace(/\s/g, '');
+      
+      // Window = 1 means check one step before and after 
+      return totp.validate({ token: cleanToken, timestamp: Date.now(), window: 1 }) !== null;
     } catch (err) {
       console.error('TOTP verification error:', err);
       return false;
@@ -96,7 +130,7 @@ export const useTOTP = (): TOTPHookReturn => {
     } finally {
       setLoading(false);
     }
-  }, [user, verifyTOTP]);
+  }, [user, verifyTOTP, generateBackupCodes]);
 
   const disableTOTP = useCallback(async () => {
     if (!user) return { success: false, error: 'Bruker ikke logget inn' };
@@ -127,16 +161,6 @@ export const useTOTP = (): TOTPHookReturn => {
       setLoading(false);
     }
   }, [user]);
-
-  const generateBackupCodes = useCallback((): string[] => {
-    const codes: string[] = [];
-    for (let i = 0; i < 8; i++) {
-      // Generate 8-character alphanumeric backup codes
-      const code = Math.random().toString(36).substring(2, 10).toUpperCase();
-      codes.push(code);
-    }
-    return codes;
-  }, []);
 
   const verifyBackupCode = useCallback(async (code: string) => {
     if (!user) return { success: false, error: 'Bruker ikke logget inn' };

@@ -24,6 +24,7 @@ const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 // Layout components (not lazy loaded as they're critical for app structure)
 import AppLayout from './components/layout/AppLayout';
 import AuthGuard from './components/auth/AuthGuard';
+import TwoFactorAuthGuard from './features/auth/guards/TwoFactorAuthGuard';
 
 // Loading fallback
 const LoadingFallback = () => (
@@ -48,24 +49,27 @@ const AppRouter = () => {
               
               {/* Protected routes */}
               <Route element={<AuthGuard />}>
-                <Route element={<AppLayout />}>
-                  {/* Main app routes */}
-                  <Route path="/" element={<Navigate to="/secure-chat" replace />} />
-                  
-                  {/* Secure Chat */}
-                  <Route path="/secure-chat" element={
-                    <ChatProvider>
-                      <SecureChatPage />
-                    </ChatProvider>
-                  } />
-                  <Route path="/secure-chat/:groupId" element={
-                    <ChatProvider>
-                      <SecureChatPage />
-                    </ChatProvider>
-                  } />
-                  
-                  {/* Settings */}
-                  <Route path="/settings" element={<ChatSettingsPage />} />
+                {/* Additional 2FA check for authenticated routes */}
+                <Route element={<TwoFactorAuthGuard />}>
+                  <Route element={<AppLayout />}>
+                    {/* Main app routes */}
+                    <Route path="/" element={<Navigate to="/secure-chat" replace />} />
+                    
+                    {/* Secure Chat */}
+                    <Route path="/secure-chat" element={
+                      <ChatProvider>
+                        <SecureChatPage />
+                      </ChatProvider>
+                    } />
+                    <Route path="/secure-chat/:groupId" element={
+                      <ChatProvider>
+                        <SecureChatPage />
+                      </ChatProvider>
+                    } />
+                    
+                    {/* Settings */}
+                    <Route path="/settings" element={<ChatSettingsPage />} />
+                  </Route>
                 </Route>
               </Route>
               

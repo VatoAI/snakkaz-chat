@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ShieldCheck, AlertCircle, KeyRound, Smartphone } from "lucide-react";
 import { useTOTP } from '../hooks/useTOTP';
+import { useAuth } from '../hooks/useAuth';
 
 interface TOTPVerificationProps {
   secret?: string;
@@ -28,6 +29,7 @@ export const TOTPVerification: React.FC<TOTPVerificationProps> = ({
   const [activeTab, setActiveTab] = useState<'totp' | 'backup'>('totp');
 
   const { verifyTOTP, verifyBackupCode } = useTOTP();
+  const { user, completeTwoFactorAuth } = useAuth();
 
   const handleTOTPVerification = async () => {
     if (!secret) {
@@ -47,7 +49,17 @@ export const TOTPVerification: React.FC<TOTPVerificationProps> = ({
       const isValid = verifyTOTP(verificationCode, secret);
       
       if (isValid) {
-        onVerificationSuccess();
+        // Complete the 2FA verification process
+        if (user) {
+          const result = await completeTwoFactorAuth(user);
+          if (result.success) {
+            onVerificationSuccess();
+          } else {
+            setError(result.error || 'Feil under verifisering av 2FA sesjon');
+          }
+        } else {
+          setError('Brukersesjon mangler');
+        }
       } else {
         setError('Ugyldig verifiseringskode. Prøv igjen.');
       }
@@ -71,7 +83,17 @@ export const TOTPVerification: React.FC<TOTPVerificationProps> = ({
       const result = await verifyBackupCode(backupCode);
       
       if (result.success) {
-        onVerificationSuccess();
+        // Complete the 2FA verification process
+        if (user) {
+          const authResult = await completeTwoFactorAuth(user);
+          if (authResult.success) {
+            onVerificationSuccess();
+          } else {
+            setError(authResult.error || 'Feil under verifisering av 2FA sesjon');
+          }
+        } else {
+          setError('Brukersesjon mangler');
+        }
       } else {
         setError(result.error || 'Ugyldig backup-kode');
       }

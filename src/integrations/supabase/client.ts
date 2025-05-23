@@ -15,9 +15,7 @@ export { supabase, getSession, getUser };
 
 // Logging only in development environment
 if (import.meta.env.DEV) {
-  console.log('Supabase URL:', supabaseUrl);
-  console.log('Using custom domain:', environment.supabase.customDomain ? 'Yes' : 'No');
-  console.log('Supabase Key (first 10 chars):', supabaseAnonKey?.substring(0, 10) + '...');
+  console.log('Supabase client re-exported from singleton:', !!supabase);
 }
 
 /**

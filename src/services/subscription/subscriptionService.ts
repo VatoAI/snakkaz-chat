@@ -69,11 +69,15 @@ class SubscriptionService {
         .order('price', { ascending: true });
       
       if (error) {
-        console.error('Error fetching subscription plans:', error);
+        // Reduce noise from repeated 406 errors - only log once per session
+        if (!globalThis._subscriptionErrorLogged) {
+          console.warn('⚠️ Database schema fix needed: subscription_plans table missing');
+          console.info('📋 Apply fix: Copy CRITICAL-DATABASE-FIX.sql to Supabase SQL Editor');
+          globalThis._subscriptionErrorLogged = true;
+        }
         
         // If table doesn't exist, provide fallback plans
         if (error.code === 'PGRST116' || error.code === 'PGRST200') {
-          console.warn('Subscription_plans table may be missing, using fallback plans');
           
           // Return fallback plans
           return [
@@ -135,12 +139,13 @@ class SubscriptionService {
       if (error) {
         // PGRST116 is "no rows returned" which is not a true error
         if (error.code !== 'PGRST116') {
-          console.error('Error fetching user subscription:', error);
-          
-          // If there's a relationship error, tables might be missing
-          if (error.code === 'PGRST200') {
-            console.warn('Subscription tables may be missing or have incorrect schema');
-            console.info('Run ./fix-subscription-schema.sh to fix database schema');
+          // Reduce noise from repeated 406 errors - only log once per session
+          if (!globalThis._subscriptionTableErrorLogged && error.code === 'PGRST200') {
+            console.warn('⚠️ Database schema fix needed: subscription foreign key relationship missing');
+            console.info('📋 Apply fix: Copy CRITICAL-DATABASE-FIX.sql to Supabase SQL Editor');
+            globalThis._subscriptionTableErrorLogged = true;
+          } else if (error.code !== 'PGRST200') {
+            console.error('Error fetching user subscription:', error);
           }
         }
         return null;

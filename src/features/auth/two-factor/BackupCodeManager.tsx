@@ -7,6 +7,7 @@ import { useTOTP } from '../hooks/useTOTP';
 import { useAuth } from '@/hooks/useAuth';
 import { Loader2, Download, RefreshCw, AlertTriangle, Shield, Copy } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/lib/supabaseClient';
 
 export const BackupCodeManager: React.FC = () => {
   const { generateBackupCodes, loading } = useTOTP();
@@ -16,11 +17,28 @@ export const BackupCodeManager: React.FC = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
-  const loadBackupCodes = useCallback(() => {
-    if (user?.user_metadata?.backup_codes) {
-      setBackupCodes(user.user_metadata.backup_codes);
+  const loadBackupCodes = useCallback(async () => {
+    try {
+      // Get the most up-to-date user data from Supabase
+      const { data, error } = await supabase.auth.getUser();
+      
+      if (error || !data.user) {
+        console.error("Failed to fetch backup codes:", error);
+        return;
+      }
+      
+      // Use the freshly fetched data to get backup codes
+      const codes = data.user.user_metadata?.backup_codes || [];
+      setBackupCodes(codes);
+    } catch (err) {
+      console.error("Error loading backup codes:", err);
+      toast({
+        variant: "destructive",
+        title: "Feil ved lasting",
+        description: "Kunne ikke laste sikkerhetskodene. Prøv igjen senere.",
+      });
     }
-  }, [user?.user_metadata?.backup_codes]);
+  }, [toast]);
 
   useEffect(() => {
     loadBackupCodes();
@@ -30,12 +48,26 @@ export const BackupCodeManager: React.FC = () => {
     setIsGenerating(true);
     try {
       const newCodes = generateBackupCodes();
+      
+      // Save the new backup codes to user metadata
+      const { error: updateError } = await supabase.auth.updateUser({
+        data: {
+          backup_codes: newCodes,
+          backup_codes_generated_at: new Date().toISOString()
+        }
+      });
+      
+      if (updateError) {
+        throw new Error(updateError.message);
+      }
+      
       setBackupCodes(newCodes);
       toast({
         title: "Nye sikkerhetskoder generert",
         description: "Dine nye sikkerhetskoder er klare. Lagre dem på et sikkert sted.",
       });
     } catch (error) {
+      console.error("Error generating backup codes:", error);
       toast({
         variant: "destructive",
         title: "Feil ved generering",
