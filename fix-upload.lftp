@@ -1,0 +1,32 @@
+# Start med å åpne tilkoblingen
+open -u SnakkaZ@snakkaz.com,Snakkaz2025! premium123.web-hosting.com
+
+# Debug-modus for å se alle kommandoer
+debug 3
+
+# SSL/TLS-innstillinger
+set ssl:verify-certificate no
+set ftp:ssl-allow yes
+set ftp:ssl-protect-data yes
+set ftp:ssl-force no
+set ftp:passive-mode yes
+
+# Nettverkstilkoblingsinnstillinger
+set net:timeout 60
+set net:max-retries 5
+set net:reconnect-interval-base 5
+set net:reconnect-interval-multiplier 1
+
+# Fil overføringsinnstillinger
+set ftp:use-feat yes
+set ftp:use-mdtm yes
+set ftp:use-size yes
+
+# Last opp .htaccess først
+put -O public_html fixed_htaccess.txt -o .htaccess
+
+# Last opp dist-mappen (med mindre parallelitet for mer pålitelighet)
+mirror -R dist/ public_html --parallel=3 --only-newer --no-perms
+
+# Avslutt
+bye
