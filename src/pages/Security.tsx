@@ -10,19 +10,28 @@ import { useAuth } from "@/hooks/useAuth";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { Copy, Check, RefreshCw, Share2 } from "lucide-react";
+import { Copy, Check, RefreshCw, Share2, Shield, ShieldCheck } from "lucide-react";
+import { TOTPSetup } from "@/features/auth/two-factor/TOTPSetup";
+import { BackupCodeManager } from "@/features/auth/two-factor/BackupCodeManager";
+import { useTOTP } from "@/features/auth/hooks/useTOTP";
 
 export default function Security() {
     const { toast } = useToast();
     const { user } = useAuth();
+    const { disableTOTP, loading: totpLoading } = useTOTP();
     const [loading, setLoading] = useState<boolean>(false);
     const [copied, setCopied] = useState<boolean>(false);
     const [showQRCode, setShowQRCode] = useState<boolean>(false);
+    const [showTOTPSetup, setShowTOTPSetup] = useState<boolean>(false);
+    const [showBackupCodes, setShowBackupCodes] = useState<boolean>(false);
 
     const [pin2FA, setPin2FA] = useState<string>("");
     const [pinEnabled, setPinEnabled] = useState<boolean>(false);
     const [bioEnabled, setBioEnabled] = useState<boolean>(false);
     const [backupEnabled, setBackupEnabled] = useState<boolean>(true);
+
+    // Check if user has TOTP enabled
+    const totpEnabled = user?.user_metadata?.totp_enabled || false;
 
     // Simulering av en token for sharing
     const securityToken = "snakkaz-" + Math.random().toString(36).substring(2, 10);
@@ -65,6 +74,38 @@ export default function Security() {
         setShowQRCode(true);
     };
 
+    const handleTOTPSetupComplete = (secret: string, backupCodes: string[]) => {
+        setShowTOTPSetup(false);
+        toast({
+            title: "2FA aktivert!",
+            description: "To-faktor autentisering er nå aktivert for din konto.",
+        });
+    };
+
+    const handleTOTPSetupCancel = () => {
+        setShowTOTPSetup(false);
+    };
+
+    const handleBackupCodesClose = () => {
+        setShowBackupCodes(false);
+    };
+
+    const handleDisableTOTP = async () => {
+        const result = await disableTOTP();
+        if (result.success) {
+            toast({
+                title: "2FA deaktivert",
+                description: "To-faktor autentisering er deaktivert.",
+            });
+        } else {
+            toast({
+                title: "Feil",
+                description: result.error || "Kunne ikke deaktivere 2FA",
+                variant: "destructive",
+            });
+        }
+    };
+
     return (
         <div className="container py-10">
             <div className="mb-8">
@@ -81,74 +122,157 @@ export default function Security() {
                 </TabsList>
 
                 <TabsContent value="2fa">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>To-faktor autentisering</CardTitle>
-                            <CardDescription>
-                                Sikre kontoen din med et ekstra lag beskyttelse
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
+                    {showTOTPSetup ? (
+                        <TOTPSetup
+                            userId={user?.id || ''}
+                            userEmail={user?.email || ''}
+                            onSetupComplete={handleTOTPSetupComplete}
+                            onCancel={handleTOTPSetupCancel}
+                        />
+                    ) : showBackupCodes ? (
+                        <div className="space-y-4">
                             <div className="flex items-center justify-between">
-                                <div>
-                                    <Label>PIN-basert sikkerhet</Label>
-                                    <p className="text-sm text-muted-foreground">
-                                        Krev PIN-kode hver gang du logger inn
-                                    </p>
-                                </div>
-                                <Switch
-                                    checked={pinEnabled}
-                                    onCheckedChange={setPinEnabled}
-                                />
-                            </div>
-
-                            {!pinEnabled && (
-                                <div className="space-y-2">
-                                    <Label htmlFor="pin-code">Lag en PIN-kode</Label>
-                                    <Input
-                                        id="pin-code"
-                                        type="password"
-                                        value={pin2FA}
-                                        onChange={(e) => setPin2FA(e.target.value)}
-                                        placeholder="Minst 6 tegn"
-                                        className="max-w-xs"
-                                    />
-                                    <Button
-                                        onClick={handleEnablePin}
-                                        disabled={loading || pin2FA.length < 6}
-                                    >
-                                        {loading ? "Aktiverer..." : "Aktiver PIN"}
-                                    </Button>
-                                </div>
-                            )}
-
-                            <Separator />
-
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <Label>Biometrisk sikkerhet</Label>
-                                    <p className="text-sm text-muted-foreground">
-                                        Bruk fingeravtrykk eller ansiktsgjenkjenning
-                                    </p>
-                                </div>
-                                <Switch
-                                    checked={bioEnabled}
-                                    onCheckedChange={setBioEnabled}
-                                />
-                            </div>
-
-                            {!bioEnabled && (
-                                <Button variant="outline">
-                                    Konfigurer biometrisk sikkerhet
+                                <h2 className="text-xl font-semibold">Backup-koder for 2FA</h2>
+                                <Button 
+                                    variant="outline" 
+                                    onClick={handleBackupCodesClose}
+                                >
+                                    Tilbake
                                 </Button>
-                            )}
-                        </CardContent>
-                        <CardFooter>
-                            <p className="text-xs text-muted-foreground">
-                                Sist endret: {new Date().toLocaleDateString()}
-                            </p>
-                        </CardFooter>
-                    </Card>
+                            </div>
+                            <BackupCodeManager />
+                        </div>
+                    ) : (
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    {totpEnabled ? (
+                                        <>
+                                            <ShieldCheck className="h-5 w-5 text-green-500" />
+                                            To-faktor autentisering aktivert
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Shield className="h-5 w-5 text-yellow-500" />
+                                            To-faktor autentisering
+                                        </>
+                                    )}
+                                </CardTitle>
+                                <CardDescription>
+                                    {totpEnabled 
+                                        ? "Din konto er beskyttet med to-faktor autentisering"
+                                        : "Sikre kontoen din med et ekstra lag beskyttelse"
+                                    }
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-6">
+                                {totpEnabled ? (
+                                    <>
+                                        <div className="p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800">
+                                            <div className="flex items-center gap-2 text-green-700 dark:text-green-400">
+                                                <ShieldCheck className="h-4 w-4" />
+                                                <span className="font-medium">2FA er aktivert</span>
+                                            </div>
+                                            <p className="text-sm text-green-600 dark:text-green-500 mt-1">
+                                                Din konto er beskyttet med TOTP-basert to-faktor autentisering.
+                                            </p>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <Button 
+                                                variant="outline" 
+                                                onClick={handleDisableTOTP}
+                                                disabled={totpLoading}
+                                            >
+                                                {totpLoading ? "Deaktiverer..." : "Deaktiver 2FA"}
+                                            </Button>
+                                            <Button variant="outline" onClick={() => setShowBackupCodes(true)}>
+                                                Vis backup-koder
+                                            </Button>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="p-4 bg-yellow-50 dark:bg-yellow-950/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                                            <div className="flex items-center gap-2 text-yellow-700 dark:text-yellow-400">
+                                                <Shield className="h-4 w-4" />
+                                                <span className="font-medium">2FA ikke aktivert</span>
+                                            </div>
+                                            <p className="text-sm text-yellow-600 dark:text-yellow-500 mt-1">
+                                                Vi anbefaler sterkt å aktivere to-faktor autentisering for økt sikkerhet.
+                                            </p>
+                                        </div>
+                                        <Button 
+                                            onClick={() => setShowTOTPSetup(true)}
+                                            className="w-full"
+                                        >
+                                            Aktiver to-faktor autentisering
+                                        </Button>
+                                    </>
+                                )}
+
+                                <Separator />
+
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <Label>PIN-basert sikkerhet</Label>
+                                        <p className="text-sm text-muted-foreground">
+                                            Krev PIN-kode hver gang du logger inn
+                                        </p>
+                                    </div>
+                                    <Switch
+                                        checked={pinEnabled}
+                                        onCheckedChange={setPinEnabled}
+                                    />
+                                </div>
+
+                                {!pinEnabled && (
+                                    <div className="space-y-2">
+                                        <Label htmlFor="pin-code">Lag en PIN-kode</Label>
+                                        <Input
+                                            id="pin-code"
+                                            type="password"
+                                            value={pin2FA}
+                                            onChange={(e) => setPin2FA(e.target.value)}
+                                            placeholder="Minst 6 tegn"
+                                            className="max-w-xs"
+                                        />
+                                        <Button
+                                            onClick={handleEnablePin}
+                                            disabled={loading || pin2FA.length < 6}
+                                        >
+                                            {loading ? "Aktiverer..." : "Aktiver PIN"}
+                                        </Button>
+                                    </div>
+                                )}
+
+                                <Separator />
+
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <Label>Biometrisk sikkerhet</Label>
+                                        <p className="text-sm text-muted-foreground">
+                                            Bruk fingeravtrykk eller ansiktsgjenkjenning
+                                        </p>
+                                    </div>
+                                    <Switch
+                                        checked={bioEnabled}
+                                        onCheckedChange={setBioEnabled}
+                                    />
+                                </div>
+
+                                {!bioEnabled && (
+                                    <Button variant="outline">
+                                        Konfigurer biometrisk sikkerhet
+                                    </Button>
+                                )}
+                            </CardContent>
+                            <CardFooter>
+                                <p className="text-xs text-muted-foreground">
+                                    Sist endret: {new Date().toLocaleDateString()}
+                                </p>
+                            </CardFooter>
+                        </Card>
+                    )}
                 </TabsContent>
 
                 <TabsContent value="qrcode">

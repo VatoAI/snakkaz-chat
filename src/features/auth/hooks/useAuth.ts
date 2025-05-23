@@ -119,9 +119,24 @@ export const useAuth = () => {
           title: "Pålogging mislyktes",
           description: error.message,
         });
-        return;
+        return { success: false, requiresTwoFactor: false };
       }
 
+      // Check if user has 2FA enabled
+      const user = data.user;
+      const totpEnabled = user?.user_metadata?.totp_enabled || false;
+
+      if (totpEnabled) {
+        // Return user data and indicate 2FA is required
+        return { 
+          success: false, 
+          requiresTwoFactor: true, 
+          user,
+          totpSecret: user.user_metadata?.totp_secret 
+        };
+      }
+
+      // No 2FA required, complete login
       setUser(data.user);
       toast({
         title: "Pålogging vellykket",
@@ -129,6 +144,7 @@ export const useAuth = () => {
       });
 
       navigate('/chat');
+      return { success: true, requiresTwoFactor: false };
     } catch (err: any) {
       setError(err.message || 'Det oppstod en feil under pålogging');
       toast({
@@ -136,8 +152,25 @@ export const useAuth = () => {
         title: "Pålogging mislyktes",
         description: err.message || 'Det oppstod en feil under pålogging',
       });
+      return { success: false, requiresTwoFactor: false };
     } finally {
       setLoading(false);
+    }
+  };
+
+  const completeTwoFactorAuth = async (user: any) => {
+    try {
+      setUser(user);
+      toast({
+        title: "Pålogging vellykket",
+        description: "Du er nå logget inn med to-faktor autentisering.",
+      });
+
+      navigate('/chat');
+      return { success: true };
+    } catch (err: any) {
+      setError(err.message || 'Det oppstod en feil under 2FA pålogging');
+      return { success: false, error: err.message };
     }
   };
 
@@ -166,6 +199,7 @@ export const useAuth = () => {
     signIn,
     signUp,
     signOut,
+    completeTwoFactorAuth,
     loading,
     error,
   };
