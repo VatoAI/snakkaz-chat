@@ -60,8 +60,12 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+// Initialize payment-subscription connector
+require('./src/server/paymentSubscriptionConnector');
+
 // API Routes
-app.use('/api/emails', require('./src/server/api/emailRoutes'));
+app.use('/api/premium/emails', require('./src/server/api/emailRoutes'));
+app.use('/api/payments', require('./src/server/api/paymentRoutes'));
 
 // Serve static files using existing handler
 app.use(express.static(DIST_DIR));

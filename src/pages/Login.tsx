@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Lock, Mail, AlertCircle } from 'lucide-react';
+import { Lock, Mail, AlertCircle, Info as InfoIcon } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const formSchema = z.object({
@@ -166,10 +166,33 @@ const Login: React.FC = () => {
               </Link>
             </div>
             
-            <div className="text-center text-sm text-cybergold-500 mt-2">
-              <Link to="/info" className="font-medium text-cybergold-400 hover:underline underline-offset-4">
-                Mer om Snakkaz Chat
-              </Link>
+            <div className="mt-4 p-3 bg-cyberdark-800/80 border border-cybergold-500/20 rounded-lg">
+              <div className="flex flex-col space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <InfoIcon className="h-4 w-4 text-cybergold-400 mr-2" />
+                    <span className="text-sm text-cybergold-300">Ny her? Les hvorfor Snakkaz er ditt beste valg</span>
+                  </div>
+                  <Link 
+                    to="/info" 
+                    className="px-3 py-1 rounded bg-cybergold-600/30 text-xs font-medium text-cybergold-400 hover:bg-cybergold-600/40 transition-colors"
+                  >
+                    Les mer
+                  </Link>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <Mail className="h-4 w-4 text-blue-400 mr-2" />
+                    <span className="text-sm text-blue-300">Få din egen @snakkaz.com e-post med Pro-abonnement!</span>
+                  </div>
+                  <Link 
+                    to="/info#premium-email" 
+                    className="px-3 py-1 rounded bg-blue-600/30 text-xs font-medium text-blue-400 hover:bg-blue-600/40 transition-colors"
+                  >
+                    Les mer
+                  </Link>
+                </div>
+              </div>
             </div>
           </CardFooter>
         </Card>

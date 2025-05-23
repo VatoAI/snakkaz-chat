@@ -258,10 +258,19 @@ const Register: React.FC = () => {
               </Link>
             </div>
             
-            <div className="text-center text-sm text-cybergold-500">
-              <Link to="/info" className="font-medium text-cybergold-400 hover:underline underline-offset-4">
-                Mer om Snakkaz Chat
-              </Link>
+            <div className="mt-4 p-3 bg-cyberdark-800/80 border border-cybergold-500/20 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <Shield className="h-4 w-4 text-green-400 mr-2" />
+                  <span className="text-sm text-cybergold-300">Hvorfor velge Snakkaz framfor andre apper?</span>
+                </div>
+                <Link 
+                  to="/info" 
+                  className="px-3 py-1 rounded bg-cybergold-600/30 text-xs font-medium text-cybergold-400 hover:bg-cybergold-600/40 transition-colors"
+                >
+                  Se fordeler
+                </Link>
+              </div>
             </div>
           </CardFooter>
         </Card>

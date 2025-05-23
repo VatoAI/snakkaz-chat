@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, Settings, Users, AlertCircle, BarChart, Shield, Globe } from "lucide-react";
+import { ChevronLeft, Settings, Users, AlertCircle, BarChart, Shield, Globe, CreditCard } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { AdminApiKeySection } from "@/components/AdminApiKeySection";
 import { AdminLogoSection } from "@/components/AdminLogoSection";
@@ -16,6 +16,7 @@ import AdminUsersManager from "@/components/admin/AdminUsersManager";
 import { AdminErrorLogs } from "@/components/admin/AdminErrorLogs";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
 import ExternalServicesStatus from "@/components/admin/ExternalServicesStatus";
+import { PaymentVerificationPanel } from "@/components/admin/PaymentVerificationPanel";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
@@ -167,7 +168,7 @@ const Admin = () => {
           </div>
           
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
-            <TabsList className="grid w-full grid-cols-3 md:grid-cols-7 bg-cyberdark-900">
+            <TabsList className="grid w-full grid-cols-3 md:grid-cols-8 bg-cyberdark-900">
               <TabsTrigger value="dashboard">
                 <BarChart className="h-4 w-4 mr-2" />
                 Dashboard
@@ -175,6 +176,10 @@ const Admin = () => {
               <TabsTrigger value="users">
                 <Users className="h-4 w-4 mr-2" />
                 Brukere
+              </TabsTrigger>
+              <TabsTrigger value="payments">
+                <CreditCard className="h-4 w-4 mr-2" />
+                Betalinger
               </TabsTrigger>
               <TabsTrigger value="general">
                 <Settings className="h-4 w-4 mr-2" />
@@ -204,6 +209,10 @@ const Admin = () => {
             
             <TabsContent value="users" className="space-y-6">
               <AdminUsersManager />
+            </TabsContent>
+            
+            <TabsContent value="payments" className="space-y-6">
+              <PaymentVerificationPanel />
             </TabsContent>
             
             <TabsContent value="general" className="space-y-6">

@@ -173,6 +173,26 @@ const Index = () => {
           <Header />
 
           {/* Hero Section */}
+          <div className="w-full max-w-4xl mx-auto mb-6 px-4">
+            <div className="bg-gradient-to-r from-cyberdark-800/80 to-cyberblue-900/30 rounded-lg border border-cyberblue-500/30 p-4 flex flex-col sm:flex-row items-center justify-between">
+              <div className="flex items-center mb-4 sm:mb-0">
+                <Shield className="h-6 w-6 text-green-400 mr-3" />
+                <div>
+                  <h3 className="font-medium text-white">Hvorfor Snakkaz?</h3>
+                  <p className="text-sm text-gray-300">Rask | Sikker | Brukervennlig | Lønnsom</p>
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate('/info')}
+                className="border-cyberblue-500/30 text-cyberblue-400 hover:bg-cyberblue-900/20"
+              >
+                <Info size={14} className="mr-1" /> Les mer
+              </Button>
+            </div>
+          </div>
+
           <div className="mt-8 mb-12">
             <div className="max-w-4xl mx-auto text-center">
               <div className="mb-6 flex justify-center">
@@ -235,6 +255,16 @@ const Index = () => {
                 <Badge variant="outline" className="bg-cyberdark-800/80 border-red-500/30 py-1.5">
                   <Clock size={14} className="mr-1 text-red-500" /> Selvdestruerende Meldinger
                 </Badge>
+              </div>
+              
+              <div className="mt-4">
+                <Button
+                  onClick={() => navigate('/info')}
+                  variant="outline"
+                  className="border-cyan-500/30 text-cyan-400 hover:bg-cyan-900/20"
+                >
+                  <Info size={16} className="mr-2" /> Mer om hvorfor velge Snakkaz
+                </Button>
               </div>
             </div>
           </div>
