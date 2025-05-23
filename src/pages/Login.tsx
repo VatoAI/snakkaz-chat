@@ -43,7 +43,7 @@ const Login: React.FC = () => {
     try {
       await signIn(values.email, values.password);
       // Siden useAuth håndterer navigering, trenger vi ikke gjøre det her
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Login error:', error);
       setErrorMessage('Kunne ikke logge inn. Sjekk e-post og passord.');
     } finally {
@@ -163,6 +163,12 @@ const Login: React.FC = () => {
               Har du ikke en konto?{' '}
               <Link to="/register" className="font-medium text-cybergold-400 hover:underline underline-offset-4">
                 Registrer deg
+              </Link>
+            </div>
+            
+            <div className="text-center text-sm text-cybergold-500 mt-2">
+              <Link to="/info" className="font-medium text-cybergold-400 hover:underline underline-offset-4">
+                Mer om Snakkaz Chat
               </Link>
             </div>
           </CardFooter>

@@ -1,6 +1,9 @@
 import { SecurityLevel } from './security';
 import { User } from './message';
 
+// Group member role type
+export type GroupRole = 'admin' | 'moderator' | 'member' | 'premium';
+
 export interface Group {
   id: string;
   name: string;
@@ -18,7 +21,7 @@ export interface GroupMember {
   id: string;
   group_id: string;
   user_id: string;
-  role: string;
+  role: GroupRole;
   joined_at: string;
   can_write: boolean;
   userId?: string; // For backward compatibility

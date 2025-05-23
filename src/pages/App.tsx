@@ -2,6 +2,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./hooks/useAuth.tsx";
+import NotificationProvider from "@/providers/NotificationProvider";
 
 // Layouts
 import Layout from "./Layout";
@@ -32,32 +33,34 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <Routes>
-          {/* Authentication routes */}
-          <Route path="/login" element={<AuthPage />} />
-          <Route path="/register" element={<AuthPage />} />
+        <NotificationProvider>
+          <Routes>
+            {/* Authentication routes */}
+            <Route path="/login" element={<AuthPage />} />
+            <Route path="/register" element={<AuthPage />} />
+            
+            {/* Main app layout */}
+            <Route path="/" element={<Layout />}>
+              <Route index element={<Index />} />
+              <Route path="chat" element={<Chat />} />
+              <Route path="chat/:id" element={<ChatPage />} />
+              <Route path="safechat/:id" element={<SafeChatPage />} />
+              <Route path="groups" element={<Groups />} />
+              <Route path="profile" element={<Profile />} />
+              <Route path="settings" element={<Settings />} />
+              <Route path="security" element={<Security />} />
+              <Route path="info" element={<Info />} />
+              <Route path="admin" element={<Admin />} />
+              <Route path="download" element={<Download />} />
+            </Route>
+            
+            {/* 404 page */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
           
-          {/* Main app layout */}
-          <Route path="/" element={<Layout />}>
-            <Route index element={<Index />} />
-            <Route path="chat" element={<Chat />} />
-            <Route path="chat/:id" element={<ChatPage />} />
-            <Route path="safechat/:id" element={<SafeChatPage />} />
-            <Route path="groups" element={<Groups />} />
-            <Route path="profile" element={<Profile />} />
-            <Route path="settings" element={<Settings />} />
-            <Route path="security" element={<Security />} />
-            <Route path="info" element={<Info />} />
-            <Route path="admin" element={<Admin />} />
-            <Route path="download" element={<Download />} />
-          </Route>
-          
-          {/* 404 page */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-        
-        {/* Add Toaster for notifications */}
-        <Toaster />
+          {/* Add Toaster for notifications */}
+          <Toaster />
+        </NotificationProvider>
       </AuthProvider>
     </Router>
   );

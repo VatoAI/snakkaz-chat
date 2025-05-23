@@ -12,6 +12,9 @@ import App from './App.tsx';
 import './index.css';
 import './assets/update-notification.css';
 
+// Import the preview-fix utilities - the App component will initialize them
+import '@/utils/supabase/preview-fix';
+
 // Simplified global error handler
 const handleGlobalError = (event: Event | Error) => {
   try {

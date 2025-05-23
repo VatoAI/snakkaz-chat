@@ -1,53 +1,57 @@
-import { showNotification, playNotificationSound } from './sound-manager';
-import { isInQuietHours } from './quiet-hours';
 import type { NotificationSettings } from '@/types/notification';
+import { DEFAULT_NOTIFICATION_SETTINGS } from '@/services/notification';
+import { StorageKeys } from '@/types/storage';
+
+// Sound file paths
+const SOUND_FILES = {
+  'default': '/sounds/notification.mp3',
+  'ping': '/sounds/ping.mp3',
+  'pop': '/sounds/pop.mp3',
+  'chime': '/sounds/chime.mp3',
+  'bell': '/sounds/bell.mp3',
+  'message-received': '/sounds/message.mp3',
+  'message-sent': '/sounds/message-sent.mp3',
+  'mention': '/sounds/mention.mp3',
+  'call-incoming': '/sounds/call.mp3',
+};
 
 // Cached audio elements for better performance
 const audioCache: Record<string, HTMLAudioElement> = {};
 
-// Preload notification sounds for instant playback
-export function preloadNotificationSounds() {
-  const sounds = [
-    { id: 'message-received', path: '/sounds/message.mp3' },
-    { id: 'message-sent', path: '/sounds/message-sent.mp3' },
-    { id: 'mention', path: '/sounds/mention.mp3' },
-    { id: 'call-incoming', path: '/sounds/call.mp3' },
-    { id: 'notification', path: '/sounds/notification.mp3' }
-  ];
-  
-  sounds.forEach(sound => {
-    if (!audioCache[sound.id]) {
-      const audio = new Audio(sound.path);
-      audio.preload = 'auto';
-      audioCache[sound.id] = audio;
-      
-      // Trigger load but suppress errors
-      audio.load();
+/**
+ * Preload notification sounds for instant playback
+ */
+export function preloadNotificationSounds(): void {
+  Object.entries(SOUND_FILES).forEach(([id, path]) => {
+    if (!audioCache[id]) {
+      try {
+        const audio = new Audio(path);
+        audio.preload = 'auto';
+        audioCache[id] = audio;
+        
+        // Trigger load but suppress errors
+        audio.load();
+      } catch (error) {
+        console.error(`Failed to preload sound: ${id}`, error);
+      }
     }
   });
 }
 
-// Get settings from localStorage or use defaults
+/**
+ * Get notification settings from localStorage
+ */
 export function getNotificationSettings(): NotificationSettings {
-  const savedSettings = localStorage.getItem('notificationSettings');
+  const savedSettings = localStorage.getItem(StorageKeys.NOTIFICATION_SETTINGS);
   if (savedSettings) {
     try {
-      return JSON.parse(savedSettings);
+      return { ...DEFAULT_NOTIFICATION_SETTINGS, ...JSON.parse(savedSettings) };
     } catch (e) {
       console.error('Failed to parse notification settings', e);
     }
   }
   
-  // Default settings
-  return {
-    soundEnabled: true,
-    soundVolume: 0.5,
-    vibrationEnabled: true,
-    quietHoursEnabled: false,
-    quietHoursStart: "22:00",
-    quietHoursEnd: "07:00",
-    customSoundId: "soft-chime"
-  };
+  return DEFAULT_NOTIFICATION_SETTINGS;
 }
 
 // Save settings to localStorage

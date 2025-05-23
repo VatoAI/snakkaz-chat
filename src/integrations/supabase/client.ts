@@ -10,6 +10,9 @@
  */
 import { createClient } from '@supabase/supabase-js';
 import { supabase, getSession, getUser } from '@/lib/supabaseClient'; // Import from the standard location
+
+// Re-export the Supabase client instance for backward compatibility
+export { supabase, getSession, getUser };
 import { environment } from '@/config/environment';
 import { ENV } from '@/utils/env/environmentFix';
 

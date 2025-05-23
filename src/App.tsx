@@ -8,6 +8,7 @@ import { verifySupabaseConfig } from '@/services/encryption/supabasePatch';
 import { setupGlobalErrorHandlers } from './utils/error/errorHandling';
 import { bootstrapSecurityFeatures } from '@/services/security/securityIntegration';
 import { ENV } from './utils/env/environmentFix';
+import { initializePreview, shouldShowPreviewNotice, getPreviewDisplayInfo } from '@/utils/supabase/preview-fix';
 
 // Import dynamically loaded feature pages
 const ProfilePage = lazy(() => import("@/pages/Profile"));
@@ -102,19 +103,38 @@ const preloadComponents = () => {
   }
 };
 
+// Import the PreviewBanner component
+import { PreviewBanner } from '@/components/preview/PreviewIndicator';
+import { DeveloperTools } from '@/components/preview/DeveloperTools';
+
 export default function App() {
-  // Initialize security features
+  // Track if we're in a preview environment
+  const [isPreviewEnv, setIsPreviewEnv] = useState(false);
+  
+  // Initialize security features and Supabase preview environment
   useEffect(() => {
-    const initSecurity = async () => {
+    const initApp = async () => {
       try {
+        // Initialize security features
         await bootstrapSecurityFeatures();
         console.log('Security features initialized');
+        
+        // Verify Supabase configuration
+        verifySupabaseConfig();
+        
+        // Initialize preview environment if applicable
+        const previewStatus = await initializePreview();
+        setIsPreviewEnv(shouldShowPreviewNotice());
+        
+        if (previewStatus.enabled) {
+          console.log('Running in Supabase preview environment:', previewStatus.branch);
+        }
       } catch (error) {
-        console.error('Failed to initialize security features:', error);
+        console.error('Failed to initialize application:', error);
       }
     };
     
-    initSecurity();
+    initApp();
   }, []);
   
   // Try to preload some components
@@ -126,6 +146,7 @@ export default function App() {
     <SuperSimpleErrorBoundary>
       <BrowserRouter>
         <AuthProvider>
+          {isPreviewEnv && <PreviewBanner />}
           <Suspense fallback={<LoadingSpinner />}>
             <Routes>
               <Route path="/login" element={<Login />} />
@@ -177,6 +198,7 @@ export default function App() {
             </Routes>
           </Suspense>
           <Toaster />
+          <DeveloperTools />
         </AuthProvider>
       </BrowserRouter>
     </SuperSimpleErrorBoundary>

@@ -7,7 +7,7 @@
  */
 
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import { Group, GroupMember } from "@/types/group";
+import { Group, GroupMember, GroupRole } from "@/types/group";
 import { DecryptedMessage } from "@/types/message";
 import { SecurityLevel, toSecurityLevel } from "@/types/security";
 import { WebRTCManager } from "@/utils/webrtc";
@@ -24,7 +24,8 @@ import { useGroupEncryption } from "./hooks/useGroupEncryption";
 import { Button } from "@/components/ui/button";
 import { 
   Shield, Lock, AlertTriangle, Crown, 
-  Star, ArrowRight, Users, KeyRound 
+  Star, ArrowRight, Users, KeyRound, 
+  BarChart4, FileText, MessageSquare
 } from "lucide-react";
 import { 
   Dialog, DialogContent, DialogDescription, DialogHeader, 
@@ -33,6 +34,7 @@ import {
 import { PremiumMembershipCard } from "./PremiumMembershipCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { GroupMembersList } from "./GroupMembersList";
+import { GroupMemberRoleManager } from "./GroupMemberRoleManager";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { Badge } from "@/components/ui/badge";
 import { useEnhancedOfflineMessages } from "@/hooks/use-enhanced-offline-messages";
@@ -43,12 +45,20 @@ import {
   rotateGroupKey 
 } from "@/services/encryption/groupMessageEncryption";
 import indexedDBStorage, { IndexedDBStorage } from "@/utils/storage/indexedDB";
+import { GroupPollSystem } from "./GroupPollSystem";
+import { GroupFilesManager } from "./GroupFilesManager";
+import { hasRolePermission, getRolePermissions } from "@/utils/group-roles";
 
 interface EnhancedGroupChatProps {
   group: Group;
   currentUserId: string;
   onBack: () => void;
-  userProfiles?: Record<string, unknown>;
+  userProfiles?: Record<string, { 
+    username?: string;
+    full_name?: string;
+    avatar_url?: string;
+    status?: string;
+  }>;
 }
 
 /**
@@ -66,6 +76,8 @@ export function EnhancedGroupChat({
   const [isEncrypting, setIsEncrypting] = useState<boolean>(false);
   const [showEncryptionDialog, setShowEncryptionDialog] = useState<boolean>(false);
   const [rotatingKey, setRotatingKey] = useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState<string>("messages");
+  const [isRoleManagerOpen, setIsRoleManagerOpen] = useState(false);
   
   // Hooks for group chat and encryption
   const { online } = useNetworkStatus();
@@ -95,6 +107,17 @@ export function EnhancedGroupChat({
     group,
     currentUserId
   });
+  
+  // Get the current user's role
+  const currentUserMember = members.find(member => member.user_id === currentUserId);
+  const currentUserRole = currentUserMember?.role as GroupRole || 'member';
+  const userPermissions = useMemo(() => getRolePermissions(currentUserRole), [currentUserRole]);
+  
+  // Role-based permission checks
+  const canManageRoles = useMemo(() => hasRolePermission(currentUserRole, 'admin'), [currentUserRole]);
+  const canModerate = useMemo(() => hasRolePermission(currentUserRole, 'moderator'), [currentUserRole]);
+  const canCreatePolls = useMemo(() => hasRolePermission(currentUserRole, 'moderator'), [currentUserRole]);
+  const canManageFiles = useMemo(() => hasRolePermission(currentUserRole, 'moderator'), [currentUserRole]);
   
   // Enhanced offline message handling with IndexedDB support
   const { 
@@ -321,6 +344,12 @@ export function EnhancedGroupChat({
       )}
     </div>
   );
+
+  // Get user avatar 
+  const getUserAvatar = (userId: string) => {
+    // This is a placeholder. In a real app, fetch from userProfiles or a default
+    return "https://api.dicebear.com/7.x/avataaars/svg?seed=" + userId;
+  };
   
   // Render the group chat component
   return (
@@ -388,121 +417,190 @@ export function EnhancedGroupChat({
         </div>
       </div>
       
-      {/* Messages area */}
-      <div className="flex-grow overflow-hidden">
-        {messages.length === 0 && !isLoading ? (
-          <GroupChatEmptyState
-            groupName={group.name}
-            connectionState={connectionState}
-            securityLevel={securityLevel}
-            isAdmin={isAdmin}
-            isPremium={isPremium}
-            isPremiumMember={isPremiumMember}
-            memberCount={members.length}
-            onShowInvite={() => {}}
-            onShowPremium={() => {}}
-            isPageEncryptionEnabled={isPageEncryptionEnabled}
-          />
-        ) : (
-          <DirectMessageList
-            messages={processedMessages}
-            currentUserId={currentUserId}
-            peerIsTyping={false}
-            isMessageRead={() => true}
-            connectionState={connectionState}
-            dataChannelState={dataChannelState}
-            usingServerFallback={usingServerFallback}
-            onEditMessage={() => {}}
-            onDeleteMessage={() => {}}
-            securityLevel={securityLevel}
-            isPageEncrypted={isPageEncryptionEnabled}
-            isPremiumMember={isPremiumMember}
-            isMobile={isMobile}
-          />
-        )}
-      </div>
-      
-      {/* Message input */}
-      <div className="p-2 bg-cyberdark-900/50 border-t border-cyberdark-800">
-        <DirectMessageForm
-          onSendMessage={handleSendMessage}
-          usingServerFallback={usingServerFallback}
-          sendError={null}
-          isLoading={isLoading}
-          newMessage=""
-          onChangeMessage={() => {}}
-          connectionState={connectionState}
-          dataChannelState={dataChannelState}
-          editingMessage={null}
-          onCancelEdit={() => {}}
-          securityLevel={securityLevel}
-        />
-        
-        {/* Offline message counter */}
-        {pendingCount > 0 && (
-          <div className="mt-1 px-2 flex justify-between items-center">
-            <span className="text-xs text-cybergold-500">
-              {pendingCount} unsent message{pendingCount !== 1 ? 's' : ''}
-            </span>
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-6 text-xs"
-              onClick={syncOfflineMessages}
-              disabled={!online || isSyncing}
+      {/* Tabs for different sections */}
+      <div className="bg-cyberdark-900/50 border-b border-cyberdark-800">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="bg-transparent w-full justify-start h-auto px-2 pb-1 pt-2">
+            <TabsTrigger 
+              value="messages" 
+              className="data-[state=active]:bg-cyberdark-800 data-[state=active]:text-cybergold-400 h-8 text-sm rounded-md"
             >
-              {isSyncing ? 'Sending...' : 'Send now'}
-            </Button>
-          </div>
-        )}
-      </div>
-      
-      {/* Encryption info dialog */}
-      <Dialog open={showEncryptionDialog} onOpenChange={setShowEncryptionDialog}>
-        <DialogContent className="bg-cyberdark-900 border-cyberdark-700 text-cybergold-200">
-          <DialogHeader>
-            <DialogTitle className="text-cybergold-100">End-to-End Encryption</DialogTitle>
-            <DialogDescription className="text-cybergold-400">
-              Secure your group communications with strong encryption
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4">
-            <p>
-              End-to-end encryption ensures that only group members can read messages. 
-              Messages are encrypted on your device before being sent.
-            </p>
-            
-            <div className="bg-cyberdark-950 p-4 rounded-md">
-              <h4 className="text-cybergold-100 font-medium mb-2">Key Security Features:</h4>
-              <ul className="space-y-2 text-sm">
-                <li className="flex items-start">
-                  <Shield className="h-4 w-4 mr-2 mt-0.5 text-cybergold-500" />
-                  <span>Messages are encrypted and decrypted locally on your device</span>
-                </li>
-                <li className="flex items-start">
-                  <Shield className="h-4 w-4 mr-2 mt-0.5 text-cybergold-500" />
-                  <span>Keys are securely stored and never shared with the server</span>
-                </li>
-                <li className="flex items-start">
-                  <Shield className="h-4 w-4 mr-2 mt-0.5 text-cybergold-500" />
-                  <span>Regular key rotation ensures forward secrecy</span>
-                </li>
-              </ul>
+              <MessageSquare className="h-4 w-4 mr-1.5" />
+              Messages
+            </TabsTrigger>
+            <TabsTrigger 
+              value="polls" 
+              className="data-[state=active]:bg-cyberdark-800 data-[state=active]:text-cybergold-400 h-8 text-sm rounded-md"
+            >
+              <BarChart4 className="h-4 w-4 mr-1.5" />
+              Polls
+            </TabsTrigger>
+            <TabsTrigger 
+              value="files" 
+              className="data-[state=active]:bg-cyberdark-800 data-[state=active]:text-cybergold-400 h-8 text-sm rounded-md"
+            >
+              <FileText className="h-4 w-4 mr-1.5" />
+              Files
+            </TabsTrigger>
+            <TabsTrigger 
+              value="members" 
+              className="data-[state=active]:bg-cyberdark-800 data-[state=active]:text-cybergold-400 h-8 text-sm rounded-md"
+            >
+              <Users className="h-4 w-4 mr-1.5" />
+              Members
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Messages Tab */}
+          <TabsContent value="messages" className="flex-grow overflow-hidden m-0 p-0">
+            <div className="flex flex-col h-full">
+              <div className="flex-grow overflow-hidden">
+                {messages.length === 0 && !isLoading ? (
+                  <GroupChatEmptyState
+                    groupName={group.name}
+                    connectionState={connectionState}
+                    securityLevel={securityLevel}
+                    isAdmin={isAdmin}
+                    isPremium={isPremium}
+                    isPremiumMember={isPremiumMember}
+                    memberCount={members.length}
+                    onShowInvite={() => {}}
+                    onShowPremium={() => {}}
+                    isPageEncryptionEnabled={isPageEncryptionEnabled}
+                  />
+                ) : (
+                  <DirectMessageList
+                    messages={processedMessages}
+                    currentUserId={currentUserId}
+                    peerIsTyping={false}
+                    isMessageRead={() => true}
+                    connectionState={connectionState}
+                    dataChannelState={dataChannelState}
+                    usingServerFallback={usingServerFallback}
+                    onEditMessage={() => {}}
+                    onDeleteMessage={() => {}}
+                    securityLevel={securityLevel}
+                    isPageEncrypted={isPageEncryptionEnabled}
+                    isPremiumMember={isPremiumMember}
+                    isMobile={isMobile}
+                  />
+                )}
+              </div>
+              
+              <div className="p-2 bg-cyberdark-900/50 border-t border-cyberdark-800">
+                <DirectMessageForm
+                  onSendMessage={handleSendMessage}
+                  usingServerFallback={usingServerFallback}
+                  sendError={null}
+                  isLoading={isLoading}
+                  newMessage=""
+                  onChangeMessage={() => {}}
+                  connectionState={connectionState}
+                  dataChannelState={dataChannelState}
+                  editingMessage={null}
+                  onCancelEdit={() => {}}
+                  securityLevel={securityLevel}
+                />
+                
+                {/* Offline message counter */}
+                {pendingCount > 0 && (
+                  <div className="mt-1 px-2 flex justify-between items-center">
+                    <span className="text-xs text-cybergold-500">
+                      {pendingCount} unsent message{pendingCount !== 1 ? 's' : ''}
+                    </span>
+                    
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 text-xs"
+                      onClick={syncOfflineMessages}
+                      disabled={!online || isSyncing}
+                    >
+                      {isSyncing ? 'Sending...' : 'Send now'}
+                    </Button>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          </TabsContent>
           
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowEncryptionDialog(false)}>Close</Button>
-            {!encryptionEnabled && (
-              <Button onClick={toggleEncryption} disabled={isEncrypting}>
-                {isEncrypting ? 'Enabling...' : 'Enable Encryption'}
-              </Button>
-            )}
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          {/* Polls Tab */}
+          <TabsContent value="polls" className="m-0 p-4 overflow-y-auto max-h-[calc(100vh-14rem)]">
+            <GroupPollSystem 
+              groupId={group.id}
+              currentUserId={currentUserId}
+              isAdmin={canManageRoles}
+              canCreatePolls={canCreatePolls}
+            />
+          </TabsContent>
+          
+          {/* Files Tab */}
+          <TabsContent value="files" className="m-0 p-4 overflow-y-auto max-h-[calc(100vh-14rem)]">
+            <GroupFilesManager
+              groupId={group.id}
+              currentUserId={currentUserId}
+              isAdmin={canManageRoles}
+              canManageFiles={canManageFiles}
+              isPremium={isPremium}
+              groupName={group.name}
+            />
+          </TabsContent>
+          
+          {/* Members Tab */}
+          <TabsContent value="members" className="m-0 p-4 overflow-y-auto max-h-[calc(100vh-14rem)]">
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-semibold text-cybergold-200 flex items-center">
+                  <Users className="mr-2 h-5 w-5 text-cybergold-400" />
+                  Group Members
+                </h3>
+                
+                {canManageRoles && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-cybergold-500/30 text-cybergold-400 hover:bg-cybergold-950/30"
+                    onClick={() => setIsRoleManagerOpen(true)}
+                  >
+                    Manage Roles
+                  </Button>
+                )}
+              </div>
+              
+              <GroupMembersList
+                members={members}
+                currentUserId={currentUserId}
+                userProfiles={userProfiles}
+                isAdmin={canManageRoles}
+                groupId={group.id}
+                onMemberUpdated={() => {
+                  toast({
+                    title: "Member role updated",
+                    description: "The changes have been saved successfully",
+                  });
+                }}
+                isMobile={isMobile}
+              />
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
+
+      {/* Member Role Manager Dialog */}
+      <GroupMemberRoleManager
+        isOpen={isRoleManagerOpen}
+        onClose={() => setIsRoleManagerOpen(false)}
+        members={members}
+        currentUserId={currentUserId}
+        userProfiles={userProfiles}
+        groupId={group.id}
+        onMemberUpdated={() => {
+          toast({
+            title: "Member roles updated",
+            description: "The changes have been saved successfully",
+          });
+        }}
+      />
     </div>
   );
 }

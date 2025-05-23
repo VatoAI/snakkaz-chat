@@ -7,7 +7,7 @@
  */
 
 import { applyCspPolicy } from './security/cspConfig';
-import { registerAssetFallbackHandlers, preloadLocalAssets } from './encryption/assetFallback';
+import { registerAssetFallbackHandlers, preloadLocalAssets } from '@/utils/assetFallback';
 import { runDiagnosticTest } from './encryption/diagnosticTest';
 import { unblockPingRequests } from './encryption/corsTest';
 import { fixCorsSecurity } from './security/corsConfig';
@@ -91,6 +91,17 @@ export function initializeSnakkazChat() {
     applySecurityEnhancements();
   } catch (error) {
     console.error('Failed to apply security enhancements:', error);
+  }
+  
+  // Initialize notifications system
+  try {
+    import('./notification').then(module => {
+      module.initializeNotifications();
+    }).catch(err => {
+      console.error('Failed to initialize notifications:', err);
+    });
+  } catch (error) {
+    console.error('Error initializing notifications:', error);
   }
   
   // Run diagnostics tests in development mode

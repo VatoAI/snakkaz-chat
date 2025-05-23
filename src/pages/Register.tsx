@@ -80,9 +80,9 @@ const Register: React.FC = () => {
       
       // Reseteer skjemaet etter vellykket registrering
       form.reset();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Registration error:', error);
-      setErrorMessage(error.message || 'Kunne ikke registrere konto. Prøv igjen senere.');
+      setErrorMessage(error instanceof Error ? error.message : 'Kunne ikke registrere konto. Prøv igjen senere.');
     } finally {
       setIsLoading(false);
     }
@@ -250,11 +250,17 @@ const Register: React.FC = () => {
               </form>
             </Form>
           </CardContent>
-          <CardFooter className="flex justify-center">
+          <CardFooter className="flex flex-col space-y-4">
             <div className="text-center text-sm text-cybergold-500">
               Har du allerede en konto?{' '}
               <Link to="/" className="font-medium text-cybergold-400 hover:underline underline-offset-4">
                 Logg inn
+              </Link>
+            </div>
+            
+            <div className="text-center text-sm text-cybergold-500">
+              <Link to="/info" className="font-medium text-cybergold-400 hover:underline underline-offset-4">
+                Mer om Snakkaz Chat
               </Link>
             </div>
           </CardFooter>

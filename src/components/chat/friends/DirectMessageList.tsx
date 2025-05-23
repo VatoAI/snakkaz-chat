@@ -1,7 +1,7 @@
 import { useRef, useEffect } from "react";
 import { DecryptedMessage } from "@/types/message";
 import { MessageGroup } from "@/components/message/MessageGroup";
-import { UserStatus } from "@/types/presence";
+import type { UserStatus } from "@/types/presence";
 
 interface DirectMessageListProps {
   messages: DecryptedMessage[];
@@ -48,7 +48,7 @@ export const DirectMessageList = ({
 
   const getUserStatus = (userId: string): UserStatus => {
     const isOnline = true; // This would be replaced with actual status logic
-    return isOnline ? UserStatus.ONLINE : UserStatus.OFFLINE;
+    return isOnline ? 'online' : 'offline';
   };
 
   const groupedMessages: Record<string, DecryptedMessage[]> = {};
