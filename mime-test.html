@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snakkaz MIME Type Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #1a73e8;
+        }
+        .result {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        button {
+            padding: 8px 16px;
+            background-color: #1a73e8;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Snakkaz MIME Type Test</h1>
+    <p>Denne siden tester om dine JavaScript og CSS filer serveres med korrekte MIME-typer.</p>
+    
+    <button id="testButton">Start Test</button>
+    
+    <div id="results"></div>
+    
+    <script>
+        document.getElementById('testButton').addEventListener('click', async () => {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<p>Tester MIME-typer...</p>';
+            
+            const filesToTest = [
+                { url: '/assets/index-DQJNfLon.js', expectedType: 'application/javascript', description: 'JavaScript fil' },
+                { url: '/assets/index-GRqizV24.css', expectedType: 'text/css', description: 'CSS fil' }
+            ];
+            
+            let results = '';
+            
+            for (const file of filesToTest) {
+                try {
+                    const response = await fetch(file.url, { method: 'HEAD' });
+                    const contentType = response.headers.get('content-type');
+                    const isCorrect = contentType && contentType.includes(file.expectedType);
+                    
+                    results += `
+                        <div class="result ${isCorrect ? 'success' : 'error'}">
+                            <strong>${file.description}:</strong> ${file.url}<br>
+                            <strong>Faktisk MIME-type:</strong> ${contentType || 'Ikke funnet'}<br>
+                            <strong>Forventet MIME-type:</strong> ${file.expectedType}<br>
+                            <strong>Status:</strong> ${isCorrect ? '✓ KORREKT' : '✗ FEIL'}
+                        </div>
+                    `;
+                } catch (error) {
+                    results += `
+                        <div class="result error">
+                            <strong>${file.description}:</strong> ${file.url}<br>
+                            <strong>Feil:</strong> ${error.message}<br>
+                            <strong>Status:</strong> ✗ KUNNE IKKE TESTE
+                        </div>
+                    `;
+                }
+            }
+            
+            resultsDiv.innerHTML = results;
+        });
+    </script>
+</body>
+</html>
