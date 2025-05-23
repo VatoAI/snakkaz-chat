@@ -62,17 +62,58 @@ class SubscriptionService {
    * @returns {Promise<SubscriptionPlan[]>} The list of subscription plans
    */
   async getSubscriptionPlans(): Promise<SubscriptionPlan[]> {
-    const { data, error } = await supabase
-      .from('subscription_plans')
-      .select('*')
-      .order('price', { ascending: true });
-    
-    if (error) {
-      console.error('Error fetching subscription plans:', error);
+    try {
+      const { data, error } = await supabase
+        .from('subscription_plans')
+        .select('*')
+        .order('price', { ascending: true });
+      
+      if (error) {
+        console.error('Error fetching subscription plans:', error);
+        
+        // If table doesn't exist, provide fallback plans
+        if (error.code === 'PGRST116' || error.code === 'PGRST200') {
+          console.warn('Subscription_plans table may be missing, using fallback plans');
+          
+          // Return fallback plans
+          return [
+            {
+              id: 'basic',
+              name: 'Basic',
+              price: 0,
+              interval: 'monthly',
+              features: {
+                'e2ee': true,
+                'extended_storage': false,
+                'premium_groups': false
+              }
+            },
+            {
+              id: 'premium',
+              name: 'Premium',
+              price: 5.99,
+              interval: 'monthly',
+              features: {
+                'e2ee': true,
+                'extended_storage': true,
+                'premium_groups': true,
+                'advanced_security': true,
+                'file_sharing': true
+              },
+              badge_text: 'Popular',
+              highlighted: true
+            }
+          ] as SubscriptionPlan[];
+        }
+        
+        return [];
+      }
+      
+      return data as SubscriptionPlan[];
+    } catch (err) {
+      console.error('Exception fetching subscription plans:', err);
       return [];
     }
-    
-    return data as SubscriptionPlan[];
   }
 
   /**
@@ -83,21 +124,33 @@ class SubscriptionService {
   async getUserSubscription(userId: string): Promise<Subscription | null> {
     if (!userId) return null;
 
-    const { data, error } = await supabase
-      .from('subscriptions')
-      .select('*, subscription_plans(*)')
-      .eq('user_id', userId)
-      .eq('status', 'active')
-      .single();
-    
-    if (error) {
-      if (error.code !== 'PGRST116') { // PGRST116 is "no rows returned" which is not a true error
-        console.error('Error fetching user subscription:', error);
+    try {
+      const { data, error } = await supabase
+        .from('subscriptions')
+        .select('*, subscription_plans(*)')
+        .eq('user_id', userId)
+        .eq('status', 'active')
+        .single();
+      
+      if (error) {
+        // PGRST116 is "no rows returned" which is not a true error
+        if (error.code !== 'PGRST116') {
+          console.error('Error fetching user subscription:', error);
+          
+          // If there's a relationship error, tables might be missing
+          if (error.code === 'PGRST200') {
+            console.warn('Subscription tables may be missing or have incorrect schema');
+            console.info('Run ./fix-subscription-schema.sh to fix database schema');
+          }
+        }
+        return null;
       }
+      
+      return data as Subscription;
+    } catch (err) {
+      console.error('Exception fetching subscription:', err);
       return null;
     }
-    
-    return data as Subscription;
   }
 
   /**
@@ -108,8 +161,20 @@ class SubscriptionService {
   async hasActivePremium(userId: string): Promise<boolean> {
     if (!userId) return false;
     
-    const subscription = await this.getUserSubscription(userId);
-    return !!subscription;
+    try {
+      const subscription = await this.getUserSubscription(userId);
+      
+      // If database error or missing tables, assume basic functionality
+      if (subscription === null) {
+        console.info('No subscription found, using fallback basic features');
+        return false;
+      }
+      
+      return !!subscription;
+    } catch (error) {
+      console.error('Error checking active premium:', error);
+      return false;
+    }
   }
 
   /**

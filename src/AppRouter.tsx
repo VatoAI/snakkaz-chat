@@ -16,6 +16,7 @@ import { ChatProvider } from './contexts/ChatContext';
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
 const SecureChatPage = lazy(() => import('./pages/SecureChatPage'));
+const ChatPage = lazy(() => import('./pages/chat/ChatPage')); // Add imported ChatPage
 const ChatSettingsPage = lazy(() => import('./pages/ChatSettingsPage'));
 const SecureMessageViewer = lazy(() => import('./components/chat/SecureMessageViewer'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));

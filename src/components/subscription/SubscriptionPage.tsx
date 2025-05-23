@@ -11,6 +11,24 @@ import { Separator } from "@/components/ui/separator";
 export const SubscriptionPage = () => {
   const { isPremium, subscription } = useAuth();
 
+  const [dbError, setDbError] = React.useState(false);
+  
+  React.useEffect(() => {
+    // Check if any console errors contain PGRST200 (relationship error)
+    const originalConsoleError = console.error;
+    console.error = (...args) => {
+      const errorMessage = args.join(' ');
+      if (errorMessage.includes('PGRST200') && errorMessage.includes('subscription')) {
+        setDbError(true);
+      }
+      originalConsoleError(...args);
+    };
+    
+    return () => {
+      console.error = originalConsoleError;
+    };
+  }, []);
+  
   return (
     <div className="container py-10 max-w-6xl">
       <div className="mb-8 text-center">
@@ -19,6 +37,26 @@ export const SubscriptionPage = () => {
           Manage your subscription and access premium features
         </p>
       </div>
+      
+      {dbError && (
+        <div className="bg-yellow-900/30 border border-yellow-800 rounded-md p-4 mb-6">
+          <div className="flex items-center">
+            <AlertCircle className="h-5 w-5 text-yellow-500 mr-2" />
+            <h3 className="text-yellow-500 font-medium">Database Setup Required</h3>
+          </div>
+          <p className="mt-2 text-yellow-300/80 text-sm">
+            The subscription tables are not properly set up in the database. 
+            Run <code className="bg-black/30 px-1 py-0.5 rounded">./fix-subscription-schema.sh</code> to fix this issue.
+          </p>
+          <Button 
+            variant="outline" 
+            className="mt-3 border-yellow-800 bg-yellow-900/20 text-yellow-500 hover:bg-yellow-900/40"
+            onClick={() => setDbError(false)}
+          >
+            Dismiss
+          </Button>
+        </div>
+      )}
 
       <Tabs defaultValue="subscription" className="space-y-6">
         <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
