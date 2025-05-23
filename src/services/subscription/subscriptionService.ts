@@ -63,24 +63,13 @@ class SubscriptionService {
    */
   async getSubscriptionPlans(): Promise<SubscriptionPlan[]> {
     try {
-      // Log in development to verify headers
-      if (import.meta.env.DEV) {
-        console.log('Fetching subscription plans...');
-      }
-      
       const { data, error } = await supabase
         .from('subscription_plans')
         .select('*')
         .order('price', { ascending: true });
       
       if (error) {
-        // Log additional information about 406 errors
-        if (error.message?.includes('406') || error.message?.includes('Not Acceptable')) {
-          console.error('406 Not Acceptable error detected - this is likely a header issue:', error);
-          console.info('Make sure the Supabase client has proper Accept: application/json headers');
-        } else {
-          console.error('Error fetching subscription plans:', error);
-        }
+        console.error('Error fetching subscription plans:', error);
         
         // If table doesn't exist, provide fallback plans
         if (error.code === 'PGRST116' || error.code === 'PGRST200') {
@@ -136,11 +125,6 @@ class SubscriptionService {
     if (!userId) return null;
 
     try {
-      // Log in development to verify headers
-      if (import.meta.env.DEV) {
-        console.log('Fetching user subscription for userId:', userId);
-      }
-
       const { data, error } = await supabase
         .from('subscriptions')
         .select('*, subscription_plans(*)')
@@ -151,13 +135,7 @@ class SubscriptionService {
       if (error) {
         // PGRST116 is "no rows returned" which is not a true error
         if (error.code !== 'PGRST116') {
-          // Log additional information about 406 errors
-          if (error.message?.includes('406') || error.message?.includes('Not Acceptable')) {
-            console.error('406 Not Acceptable error detected - this is likely a header issue:', error);
-            console.info('Make sure the Supabase client has proper Accept: application/json headers');
-          } else {
-            console.error('Error fetching user subscription:', error);
-          }
+          console.error('Error fetching user subscription:', error);
           
           // If there's a relationship error, tables might be missing
           if (error.code === 'PGRST200') {

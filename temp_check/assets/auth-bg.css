@@ -1,0 +1,7 @@
+.bg-auth {
+  background-color: #2a2a2a;
+  background-image: linear-gradient(45deg, #1a1a1a 25%, transparent 25%, transparent 75%, #1a1a1a 75%, #1a1a1a), 
+  linear-gradient(45deg, #1a1a1a 25%, transparent 25%, transparent 75%, #1a1a1a 75%, #1a1a1a);
+  background-size: 60px 60px;
+  background-position: 0 0, 30px 30px;
+}
