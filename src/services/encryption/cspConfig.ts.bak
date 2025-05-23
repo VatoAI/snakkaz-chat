@@ -238,7 +238,7 @@ export function buildCspPolicy() {
     "frame-ancestors 'self'",
     
     // Add report-to directive for CSP violations (useful for debugging)
-    "report-uri https://www.snakkaz.com/api/csp-report"
+    "report-to https://www.snakkaz.com/api/csp-report"
   ].join('; ');
 }
 
