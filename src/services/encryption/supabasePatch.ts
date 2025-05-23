@@ -69,7 +69,8 @@ export const getEnhancedSupabaseOptions = () => ({
   global: {
     headers: {
       'X-Client-Info': 'snakkaz-chat',
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
     }
   }
 });

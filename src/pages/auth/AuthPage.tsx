@@ -6,7 +6,7 @@ import { RegisterForm } from "./RegisterForm";
 import { DownloadSection } from "./DownloadSection";
 import { useDeviceDetection } from "@/hooks/useDeviceDetection";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Shield, Download, ArrowRight } from "lucide-react";
+import { Shield, Download, ArrowRight, InfoIcon, Mail } from "lucide-react";
 
 const AuthPage = () => {
   const [activeTab, setActiveTab] = useState<"login" | "register" | "download">("login");
@@ -155,13 +155,44 @@ const AuthPage = () => {
         )}
       </div>
       
-      {/* Bunn-info for mobil */}
-      {isMobile && (
-        <div className="p-4 text-center text-sm text-cybergold-500">
-          <p>SnakkaZ - Sikker kommunikasjon © 2025</p>
-          <p className="mt-1">Ende-til-ende kryptert med Perfect Forward Secrecy</p>
+      {/* Informasjonslenke og bunn-info */}
+      <div className={`${isMobile ? "p-4" : "p-6"} text-center`}>
+        <div className="mb-4 bg-cyberdark-800/80 border border-cybergold-500/20 rounded-lg p-3 max-w-md mx-auto">
+          <div className="flex flex-col space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <Shield className="h-4 w-4 text-cybergold-400 mr-2" />
+                <span className="text-sm text-cybergold-300">Hvorfor velge Snakkaz framfor andre apper?</span>
+              </div>
+              <button 
+                onClick={() => navigate("/info")} 
+                className="px-3 py-1 rounded bg-cybergold-600/30 text-xs font-medium text-cybergold-400 hover:bg-cybergold-600/40 transition-colors"
+              >
+                Les mer
+              </button>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <Mail className="h-4 w-4 text-blue-400 mr-2" />
+                <span className="text-sm text-blue-300">Få din egen @snakkaz.com e-post med Pro-abonnement!</span>
+              </div>
+              <button 
+                onClick={() => navigate("/info#premium-email")}
+                className="px-3 py-1 rounded bg-blue-600/30 text-xs font-medium text-blue-400 hover:bg-blue-600/40 transition-colors"
+              >
+                Les mer
+              </button>
+            </div>
+          </div>
         </div>
-      )}
+        
+        {isMobile && (
+          <div className="text-sm text-cybergold-500">
+            <p>SnakkaZ - Sikker kommunikasjon © 2025</p>
+            <p className="mt-1">Ende-til-ende kryptert med Perfect Forward Secrecy</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
