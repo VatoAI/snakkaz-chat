@@ -13,13 +13,12 @@
     # Handle direct subdomain access (without /ping path)
     RewriteRule ^(analytics|business|dash|docs)\.snakkaz\.com$ - [R=200,L]
     
-    # Allow PHP files to be processed normally (for extraction scripts)
-    RewriteRule \.php$ - [L]
-    
     # If the requested resource exists as a file or directory, skip rewriting
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-l
+    # Don't rewrite PHP files - let them execute normally
+    RewriteCond %{REQUEST_URI} !\.php$
     
     # Otherwise, rewrite all requests to the index.html file
     RewriteRule ^ index.html [QSA,L]

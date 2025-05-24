@@ -116,10 +116,10 @@ jobs:
             RewriteEngine On
             RewriteBase /
             RewriteRule ^index\.html$ - [L]
-            # Allow PHP files to be processed normally (for extraction scripts)
-            RewriteRule \.php$ - [L]
             RewriteCond %{REQUEST_FILENAME} !-f
             RewriteCond %{REQUEST_FILENAME} !-d
+            # Don't rewrite PHP files - let them execute normally
+            RewriteCond %{REQUEST_URI} !\.php$
             RewriteRule . /index.html [L]
           </IfModule>
           
