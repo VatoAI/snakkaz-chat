@@ -108,9 +108,10 @@ const GroupChatView: React.FC<GroupChatViewProps> = ({
         const memberIds = membersData.map(member => member.user_id);
         setGroupMembers(memberIds);
         
-        // Check if current user is admin or moderator
+        // Check if current user is admin or moderator and set permissions
         if (user) {
-          const currentUserRole = membersData.find(m => m.user_id === user.id)?.role;
+          const currentUserRole = membersData.find(m => m.user_id === user.id)?.role || 'member';
+          setUserRole(currentUserRole);
           setCanUserEditPins(currentUserRole === 'admin' || currentUserRole === 'moderator');
         }
       }
@@ -579,14 +580,27 @@ const GroupChatView: React.FC<GroupChatViewProps> = ({
           </div>
         </div>
         
-        {canUserEditPins && (
+        <div className="flex items-center space-x-2">
+          {/* Invitasjonsknapp - vises til alle gruppemedlemmer */}
           <button 
             className="text-gray-400 hover:text-cybergold-400"
-            onClick={handleGroupSettingsClick}
+            onClick={handleInviteClick}
+            title="Invite members"
           >
-            <Settings size={20} />
+            <Users size={20} />
           </button>
-        )}
+
+          {/* Innstillingsknapp - vises kun til admin/moderator */}
+          {canUserEditPins && (
+            <button 
+              className="text-gray-400 hover:text-cybergold-400"
+              onClick={handleGroupSettingsClick}
+              title="Group settings"
+            >
+              <Settings size={20} />
+            </button>
+          )}
+        </div>
       </div>
       
       <ChatInterface
@@ -623,15 +637,15 @@ const GroupChatView: React.FC<GroupChatViewProps> = ({
         <GroupSettingsPanel 
           groupId={groupId}
           onClose={() => setShowSettingsPanel(false)}
-          onGroupUpdated={fetchGroupDetails}
+          onSaved={fetchGroupDetails}
         />
       )}
       
       {showInvitePanel && groupId && (
         <GroupInvitePanel 
           groupId={groupId}
+          isOpen={showInvitePanel}
           onClose={() => setShowInvitePanel(false)}
-          onGroupUpdated={fetchGroupDetails}
         />
       )}
     </div>
