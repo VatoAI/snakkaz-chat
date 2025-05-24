@@ -1,9 +1,10 @@
 name: Deploy Snakkaz Chat via cPanel API Token
 
-# Run when code is pushed to main branch or manually triggered
-on:
-  push:
-    branches:
+# Run when code is pushed to main branch or manually trig      - name: Add .htaccess file
+        run: |
+          # Copy our improved .htaccess file to dist folder
+          cp .htaccess dist/.htaccess
+          echo "✅ Copied improved .htaccess file with PHP support"    branches:
       - main
   workflow_dispatch:  # Allow manual triggering
 
@@ -105,41 +106,9 @@ jobs:
           
       - name: Add .htaccess file
         run: |
-          cat > dist/.htaccess << EOF
-          # Force HTTPS
-          RewriteEngine On
-          RewriteCond %{HTTPS} off
-          RewriteRule (.*) https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
-          
-          # Handle SPA routing by redirecting to index.html
-          <IfModule mod_rewrite.c>
-            RewriteEngine On
-            RewriteBase /
-            RewriteRule ^index\.html$ - [L]
-            RewriteCond %{REQUEST_FILENAME} !-f
-            RewriteCond %{REQUEST_FILENAME} !-d
-            RewriteRule . /index.html [L]
-          </IfModule>
-          
-          # Set correct MIME types
-          <IfModule mod_mime.c>
-            AddType text/css .css
-            AddType text/javascript .js
-            AddType application/javascript .mjs
-            AddType application/json .json
-            AddType image/svg+xml .svg
-            AddType image/x-icon .ico
-            AddType application/font-woff .woff
-            AddType application/font-woff2 .woff2
-            AddType application/vnd.ms-fontobject .eot
-            AddType application/x-font-ttf .ttf
-          </IfModule>
-          
-          # Enable CORS
-          <IfModule mod_headers.c>
-            Header set Access-Control-Allow-Origin "*"
-          </IfModule>
-          EOF
+          # Copy our improved .htaccess file to dist folder
+          cp .htaccess dist/.htaccess
+          echo "✅ Copied improved .htaccess file with PHP support"
       
       - name: Validate build output
         run: |
