@@ -28,8 +28,11 @@ import {
   Lock,
   Key,
   Smartphone,
-  LogOut
+  LogOut,
+  Crown,
+  ExternalLink
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 // Define types for settings object
 interface NotificationSettings {
@@ -58,7 +61,7 @@ interface SettingsState {
 }
 
 const Settings = () => {
-  const { user, signOut } = useAuth();
+  const { user, signOut, isPremium } = useAuth();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('general');
   
@@ -98,7 +101,7 @@ const Settings = () => {
       });
     }
   };
-  
+
   const updateSetting = (category: keyof SettingsState, setting: string, value: string | boolean | number) => {
     setSettings(prev => {
       if (category === 'notifications' || category === 'privacy' || category === 'security') {
@@ -149,9 +152,16 @@ const Settings = () => {
       <main className="container max-w-4xl py-8 px-4">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold text-cybergold-400">Innstillinger</h1>
-          <Badge variant="outline" className="border-cybergold-600 text-cybergold-400">
-            {user?.email}
-          </Badge>
+          <div className="flex items-center gap-2">
+            {isPremium && (
+              <Badge className="bg-gradient-to-r from-cybergold-600 to-cybergold-400 text-cyberdark-900 flex items-center gap-1">
+                <Crown className="h-3 w-3" /> Premium
+              </Badge>
+            )}
+            <Badge variant="outline" className="border-cybergold-600 text-cybergold-400">
+              {user?.email}
+            </Badge>
+          </div>
         </div>
         
         <Card className="bg-cyberdark-900 border-cyberdark-700">
@@ -221,45 +231,69 @@ const Settings = () => {
               
               <div>
                 <h2 className="text-lg font-medium text-cybergold-300 mb-4">Språk</h2>
-                <Select 
-                  value={settings.language} 
-                  onValueChange={updateLanguage}
-                >
-                  <SelectTrigger className="w-full sm:w-1/3 bg-cyberdark-800 border-cyberdark-700">
-                    <SelectValue placeholder="Velg språk" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-cyberdark-800 border-cyberdark-700">
-                    <SelectItem value="no">Norsk</SelectItem>
-                    <SelectItem value="en">English</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="max-w-xs">
+                  <Select value={settings.language} onValueChange={updateLanguage}>
+                    <SelectTrigger className="bg-cyberdark-800 border-cyberdark-700">
+                      <SelectValue placeholder="Velg språk" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="no">Norsk</SelectItem>
+                      <SelectItem value="en">English</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               
               <Separator className="bg-cyberdark-700" />
               
               <div>
-                <h2 className="text-lg font-medium text-cybergold-300 mb-4">Konto</h2>
+                <h2 className="text-lg font-medium text-cybergold-300 mb-4">Profil og E-post</h2>
                 <div className="space-y-4">
-                  <Button 
-                    variant="outline" 
-                    className="bg-cyberdark-800 border-cyberdark-700 w-full sm:w-auto"
-                    onClick={() => toast({
-                      title: "Eksporter data",
-                      description: "Dataeksport er under utvikling."
-                    })}
-                  >
-                    Eksporter data
-                  </Button>
+                  <p className="text-cybergold-500">
+                    Administrer profilen din og e-postinnstillinger fra profilsiden din.
+                  </p>
                   
-                  <Button 
-                    variant="destructive" 
-                    className="w-full sm:w-auto"
-                    onClick={handleSignOut}
-                  >
-                    <LogOut className="h-4 w-4 mr-2" />
-                    Logg ut
-                  </Button>
+                  <div className="space-y-2">
+                    {isPremium && (
+                      <div className="bg-cybergold-600/10 border border-cybergold-600/20 rounded-md p-4 mb-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Crown className="h-5 w-5 text-cybergold-400" />
+                          <h3 className="text-md font-medium text-cybergold-400">Premium E-post</h3>
+                        </div>
+                        <p className="text-cybergold-500 mb-3">
+                          Som premium-bruker har du tilgang til @snakkaz.com e-postadresser. 
+                          Du kan administrere dine e-postadresser fra profilsiden din.
+                        </p>
+                        <Button asChild variant="outline" className="bg-cyberdark-800 border-cyberdark-700">
+                          <Link to="/profile">
+                            Administrer e-postadresser
+                            <Mail className="ml-2 h-4 w-4" />
+                          </Link>
+                        </Button>
+                      </div>
+                    )}
+                    
+                    <Button asChild variant="outline" className="bg-cyberdark-800 border-cyberdark-700">
+                      <Link to="/profile">
+                        Gå til profilside
+                      </Link>
+                    </Button>
+                  </div>
                 </div>
+              </div>
+              
+              <Separator className="bg-cyberdark-700" />
+              
+              <div className="pt-2">
+                <h2 className="text-lg font-medium text-cybergold-300 mb-4">Konto</h2>
+                <Button 
+                  variant="destructive" 
+                  className="bg-red-900/20 hover:bg-red-900/40 border-red-900/50 text-red-400"
+                  onClick={handleSignOut}
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Logg ut
+                </Button>
               </div>
             </TabsContent>
             
@@ -496,6 +530,12 @@ const Settings = () => {
                 />
                 <h2 className="text-2xl font-bold text-cybergold-400">Snakkaz Chat</h2>
                 <p className="text-cybergold-600">Versjon 1.0.0</p>
+                
+                {isPremium && (
+                  <Badge className="mt-2 bg-gradient-to-r from-cybergold-600 to-cybergold-400 text-cyberdark-900">
+                    Premium abonnement aktivt
+                  </Badge>
+                )}
               </div>
               
               <div className="space-y-4 max-w-2xl mx-auto">
@@ -504,6 +544,38 @@ const Settings = () => {
                 </p>
                 
                 <Separator className="bg-cyberdark-700" />
+                
+                {isPremium && (
+                  <>
+                    <div className="bg-cybergold-600/10 border border-cybergold-600/20 rounded-md p-4">
+                      <h3 className="text-lg font-medium text-cybergold-400 flex items-center gap-2 mb-2">
+                        <Crown className="h-5 w-5" /> Premium Funksjoner
+                      </h3>
+                      <ul className="space-y-2 text-cybergold-500">
+                        <li className="flex items-center gap-2">
+                          <Mail className="h-4 w-4 text-cybergold-400 flex-shrink-0" /> 
+                          <span>@snakkaz.com e-postadresser</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <Lock className="h-4 w-4 text-cybergold-400 flex-shrink-0" /> 
+                          <span>Forbedret ende-til-ende-kryptering</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <Shield className="h-4 w-4 text-cybergold-400 flex-shrink-0" /> 
+                          <span>Premium grupper med utvidede sikkerhetsfunksjoner</span>
+                        </li>
+                      </ul>
+                      <div className="mt-3">
+                        <Button variant="outline" className="bg-cyberdark-800 border-cyberdark-700" asChild>
+                          <Link to="/profile">
+                            Administrer premium-funksjoner
+                          </Link>
+                        </Button>
+                      </div>
+                    </div>
+                    <Separator className="bg-cyberdark-700" />
+                  </>
+                )}
                 
                 <div>
                   <h3 className="text-lg font-medium text-cybergold-300 mb-2">Kontakt</h3>
