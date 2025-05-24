@@ -555,76 +555,78 @@ initializeSnakkazChat();
 - ✅ Import path feil i krypteringsmoduler (løst 22. mai 2025)
 - ✅ Manglende npm-pakker for filupplasting og kryptering (løst 22. mai 2025)
 
-## STATUSRAPPORT PER 19. MAI 2025
+## STATUSRAPPORT PER 24. MAI 2025
+
+### Kritiske deployment-fikser (24. mai 2025)
+1. **Fikset extraction script deployment-feil:**
+   - Løst "❌ Failed to execute extraction script or results unclear" feil i GitHub Actions
+   - Lagt til manglende "✅ Extraction successful" og "DEPLOYMENT COMPLETE" meldinger i `improved-extract.php`
+   - Oppdatert GitHub Actions workflows (`deploy-cpanel-token.yml` og `deploy-cpanel.yml`) med korrekt pattern matching
+   - Verifisert at både success patterns blir gjenkjent i deployment workflow
+
+2. **Komplett fjerning av Lovable/GPT Engineer avhengigheter:**
+   - Fjernet alle `<script src="https://cdn.gpteng.co/gptengineer.js">` referanser fra HTML
+   - Renset alle `cdn.gpteng.co` referanser fra Content Security Policy i 6+ sikkerhetsfiler
+   - Fjernet `lovable-tagger` dependency fra `package.json` og `vite.config.ts`
+   - Oppdatert alle bildereferanser fra `/lovable-uploads/` til `/snakkaz-logo.png`
+   - Fikset CSP injection-problemer i flere sikkerhetstjenester
+   - Verifisert at applikasjonen bygger og kjører uten Lovable-avhengigheter
+
+3. **GitHub Actions workflow forbedringer:**
+   - Forbedret extraction script pattern matching i workflows
+   - Lagt til bedre feilhåndtering og diagnostikk
+   - Opprettet deployment monitoring script (`monitor-deployment.sh`)
+   - Trigget ny deployment for å teste fixes
+
+4. **Build og sikkerhetsforbedringer:**
+   - Ny clean build uten Lovable referanser (build hash: `index-BThXBval.js`)
+   - Fikset CSP konfigurasjoner på tvers av flere filer
+   - Ryddet opp i backup-filer (.bak files)
+   - Verifisert at alle sikkerhetspolicies er konsistente
+
+### Løste problemer (24. mai 2025)
+- ✅ **Extraction script deployment-feil** - Fikset manglende success patterns i `improved-extract.php`
+- ✅ **Lovable script cleanup** - Komplett fjerning av alle Lovable/GPT Engineer referanser
+- ✅ **CSP policy cleanup** - Fjernet alle `cdn.gpteng.co` referanser fra sikkerhetskonfigurasjoner
+- ✅ **Build process verification** - Bekreftet at applikasjonen bygger uten Lovable-avhengigheter
+- ✅ **GitHub Actions pattern matching** - Oppdatert workflows for korrekt success detection
+
+### Pågående deployment-status
+- 🔄 **Deployment monitoring**: Trigger ny deployment for å teste extraction script fixes
+- ⏳ **Site verification**: Venter på at GitHub Actions skal deploye oppdatert versjon
+- ⏳ **Mail system integration**: Roundcube installert på https://mail.snakkaz.com - må fikse 406 subscription errors
+
+### Identifiserte mail-system problemer som må fikses:
+1. **406 subscription errors** synlige i browser console
+2. **CSP reporting issues** som fortsatt forekommer  
+3. **Mail.snakkaz.com integration** med Snakkaz chat app må fullføres
 
 ### Siste endringer
-1. **Fikset Service Worker-problemer:**
-   - Løst problemer med HEAD-requests som førte til cachingerror
-   - Forbedret håndtering av service worker caching
-   - Implementert bedre feilhåndtering for nettverksressurser
+1. **Fikset extraction script deployment-feil:**
+   - Løst "❌ Failed to execute extraction script or results unclear" feil i GitHub Actions
+   - Lagt til manglende "✅ Extraction successful" og "DEPLOYMENT COMPLETE" meldinger i `improved-extract.php`
+   - Oppdatert GitHub Actions workflows (`deploy-cpanel-token.yml` og `deploy-cpanel.yml`) med korrekt pattern matching
+   - Verifisert at både success patterns blir gjenkjent i deployment workflow
 
-2. **Løst CSP-advarsler:**
-   - Fjernet utdaterte report-uri-direktiver
-   - Oppdatert til moderne report-to-format
-   - Fjernet duplikat CSP meta tag
-   - Håndterer tomme rapporteringsendepunkter trygt
+2. **Komplett fjerning av Lovable/GPT Engineer avhengigheter:**
+   - Fjernet alle `<script src="https://cdn.gpteng.co/gptengineer.js">` referanser fra HTML
+   - Renset alle `cdn.gpteng.co` referanser fra Content Security Policy i 6+ sikkerhetsfiler
+   - Fjernet `lovable-tagger` dependency fra `package.json` og `vite.config.ts`
+   - Oppdatert alle bildereferanser fra `/lovable-uploads/` til `/snakkaz-logo.png`
+   - Fikset CSP injection-problemer i flere sikkerhetstjenester
+   - Verifisert at applikasjonen bygger og kjører uten Lovable-avhengigheter
 
-3. **Fikset Multiple GoTrueClient-advarsler:**
-   - Implementert korrekt singleton-mønster for Supabase-klient
-   - Fjernet duplikat klient-initialisering
-   - Konsolidert alle Supabase-tilkoblinger
+3. **GitHub Actions workflow forbedringer:**
+   - Forbedret extraction script pattern matching i workflows
+   - Lagt til bedre feilhåndtering og diagnostikk
+   - Opprettet deployment monitoring script (`monitor-deployment.sh`)
+   - Trigget ny deployment for å teste fixes
 
-4. **Løst TypeScript-kompileringsfeil:**
-   - Fjernet referanser til ikke-eksisterende Cloudflare-funksjoner
-   - Forenklet analyseinitialiseringen
-   - Rengjort kodebasen for ubrukte funksjoner
-
-5. **Fikset Supabase Preview-problemer:**
-   - Oppdatert mappestruktur for Supabase
-   - Implementert Preview-status sjekk og håndtering
-   - Forbedret feilhåndtering for Preview-miljøer
-   - Lagt til testscripter for Preview-funksjonalitet
-   - Implementert forbedrede sikkerhetssjekker i `cloudflareSecurityCheck.ts`
-   - Lagt til grundigere DNS-validering og propagerings-testing
-   - Implementert SSL/TLS-validering for Cloudflare-beskyttelse
-
-2. **Sikkerhetsforbedringer:**
-   - Sesjonstimeout-mekanisme i `securityEnhancements.ts`
-   - Ratelimiting for autentiseringsforsøk
-   - Kontolås etter mislykkede forsøk
-   - Forbedret kryptering med tilleggs-entropi
-
-3. **Optimalisert CI/CD:**
-   - Forbedret feilhåndtering i `deploy.yml`
-   - Lagt til Cloudflare cache-tømming etter deployment
-   - Bedre validering og betinget utføring basert på tilgjengelige hemmeligheter
-
-### Implementerte funksjoner
-1. **Pin-funksjonalitet:**
-   - Implementert i alle tre chattyper (global, privat, gruppe)
-   - Tett integrert med E2EE-systemet for krypterte pins
-   - Støtter for ulike meldingstyper (tekst, bilde, fil, lenke)
-   - Realtime oppdateringer via Supabase-subscriptions
-
-2. **Chat-systemer:**
-   - Global chat med pin-støtte via `GlobalChatContainer.tsx`
-   - Privat chat med pin-støtte via `PrivateChatDetailView.tsx`
-   - Gruppechat med pin-støtte via `GroupChatView.tsx`
-
-### Planlagte neste steg
-1. **Chatfunksjonalitet:**
-   - Mobile forbedringer for pin-funksjonalitet
-   - Forbedre moderasjonsfunksjoner for global chat
-   - Implementere pin-søk og sortering
-
-2. **Supabase-integrasjon:**
-   - Optimalisere databasestruktur for pins
-   - Forbedre RLS (Row Level Security) for pins basert på brukerroller
-   - Implementere analytikk for pin-bruk
-
-3. **UI-forbedringer:**
-   - Forbedre responsivt design for pins på mobile enheter
-   - Standardisere pin-designelementer
+4. **Build og sikkerhetsforbedringer:**
+   - Ny clean build uten Lovable referanser (build hash: `index-BThXBval.js`)
+   - Fikset CSP konfigurasjoner på tvers av flere filer
+   - Ryddet opp i backup-filer (.bak files)
+   - Verifisert at alle sikkerhetspolicies er konsistente
 
 ---
 
@@ -677,5 +679,4 @@ For å jobbe mer effektivt med dette prosjektet, følg disse retningslinjene:
 
 Dette dokumentet skal brukes som referansepunkt for alle som jobber med Snakkaz Chat-prosjektet. Det bør oppdateres jevnlig med ny informasjon om prosjektstatus, arkitekturendringer og implementasjonsdetaljer.
 
-**Sist oppdatert: 22. mai 2025 - Fikset importstier i krypteringsmoduler og manglende npm-pakker**
-**Tidligere oppdatering: 19. mai 2025 - Fikset Service Worker, CSP-warnings, TypeScript-feil, Supabase Preview og Multiple GoTrueClient warnings**
+**Sist oppdatert: 24. mai 2025 - Kritiske deployment-fikser og statusoppdateringer**
