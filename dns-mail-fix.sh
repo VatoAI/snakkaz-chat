@@ -19,6 +19,11 @@ fi
 echo "Checking DNS settings for $DOMAIN..."
 echo
 
+# Also check the alternative domain
+ALT_DOMAIN="snakka.com"
+echo "Also checking alternative domain: $ALT_DOMAIN"
+echo
+
 # Check A record for mail subdomain
 echo "=== A Record for mail.$DOMAIN ==="
 host_result=$(host mail.$DOMAIN 2>&1)
@@ -157,6 +162,34 @@ echo "If mail.$DOMAIN is not working, try direct connection to hosting provider:
 echo "- Webmail: https://premium123.web-hosting.com:2096/"
 echo "- IMAP: premium123.web-hosting.com (port 993)"
 echo "- SMTP: premium123.web-hosting.com (port 587)"
+echo
+
+# Check alternative domain MX records
+echo "=== Alternative Domain Check: $ALT_DOMAIN ==="
+alt_mx_result=$(host -t MX $ALT_DOMAIN 2>&1)
+if echo "$alt_mx_result" | grep -q "mail exchanger"; then
+  echo "✅ MX records found for $ALT_DOMAIN:"
+  echo "   $alt_mx_result"
+  
+  # Check if MX record points to mail subdomain
+  if echo "$alt_mx_result" | grep -q "mail.snakkaz.com"; then
+    echo "✅ MX record correctly points to mail.snakkaz.com"
+  else
+    echo "⚠️ MX record doesn't point to mail.snakkaz.com"
+    echo "   Current configuration may work but consider updating"
+  fi
+else
+  echo "❌ MX records missing for $ALT_DOMAIN"
+  echo
+  echo "Recommendation:"
+  echo "   Add MX record for $ALT_DOMAIN pointing to mail.snakkaz.com"
+  echo "   Login to your DNS provider and add:"
+  echo "   Type: MX"
+  echo "   Host: @"
+  echo "   Value: mail.snakkaz.com"
+  echo "   Priority: 10"
+  echo "   TTL: 3600"
+fi
 echo
 
 echo "DNS check complete!"

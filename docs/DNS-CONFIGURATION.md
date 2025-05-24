@@ -2,14 +2,22 @@
 
 ## Domain Information
 - Primary domain: snakkaz.com
+- Alternative domain: snakka.com
 - Server IP: 162.0.229.214
 - Nameservers:
   - dns1.namecheaphosting.com
   - dns2.namecheaphosting.com
-- MX Records: 
-  - Priority 5: mx1-hosting.jellyfish.systems
-  - Priority 10: mx2-hosting.jellyfish.systems
-  - Priority 20: mx3-hosting.jellyfish.systems
+
+## MX Records Configuration
+
+### snakkaz.com MX Records:
+- Priority 5: mx1-hosting.jellyfish.systems
+- Priority 10: **mail.snakkaz.com** ✅
+- Priority 10: mx2-hosting.jellyfish.systems
+- Priority 20: mx3-hosting.jellyfish.systems
+
+### snakka.com MX Records:
+- Priority 10: **mail.snakkaz.com** ✅ (Added May 24, 2025)
 
 ## Configured Subdomains
 The following subdomains are configured on the Namecheap hosting:
