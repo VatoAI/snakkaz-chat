@@ -14,6 +14,8 @@ import { DecryptedMessage } from '@/types/message';
 import { UserProfile } from '@/types/profile';
 import { GroupChat } from '@/types/chat';
 import { Loader, Settings, Users, ArrowLeft } from 'lucide-react';
+import GroupSettingsPanel from './GroupSettingsPanel';
+import GroupInvitePanel from './GroupInvitePanel';
 
 interface GroupChatViewProps {
   groupId: string;
@@ -54,6 +56,11 @@ const GroupChatView: React.FC<GroupChatViewProps> = ({
   const [isLoadingMoreMessages, setIsLoadingMoreMessages] = useState(false);
   const [oldestMessageDate, setOldestMessageDate] = useState<string | null>(null);
   const [canUserEditPins, setCanUserEditPins] = useState(false);
+  
+  // Nye state variabler for FASE 2 gruppechat-administrasjon
+  const [showSettingsPanel, setShowSettingsPanel] = useState(false);
+  const [showInvitePanel, setShowInvitePanel] = useState(false);
+  const [userRole, setUserRole] = useState<string>('member');
   
   const { user } = useAuth();
   const { toast } = useToast();
@@ -505,10 +512,39 @@ const GroupChatView: React.FC<GroupChatViewProps> = ({
   
   // Handle group settings click
   const handleGroupSettingsClick = () => {
-    if (onGroupSettingsClick && groupId) {
-      onGroupSettingsClick(groupId);
-    }
+    setShowSettingsPanel(true);
   };
+  
+  // Handle invite click
+  const handleInviteClick = () => {
+    setShowInvitePanel(true);
+  };
+  
+  // Fetch user role
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      if (!user?.id || !groupId) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('group_members')
+          .select('role')
+          .eq('group_id', groupId)
+          .eq('user_id', user.id)
+          .single();
+          
+        if (error) throw error;
+        
+        if (data) {
+          setUserRole(data.role);
+        }
+      } catch (error) {
+        console.error('Error fetching user role:', error);
+      }
+    };
+    
+    fetchUserRole();
+  }, [groupId, user?.id]);
   
   // Loading state
   if (isLoading) {
@@ -582,6 +618,22 @@ const GroupChatView: React.FC<GroupChatViewProps> = ({
         canPin={canUserEditPins}
         pinnedMessageIds={pinnedMessageIds}
       />
+      
+      {showSettingsPanel && groupId && (
+        <GroupSettingsPanel 
+          groupId={groupId}
+          onClose={() => setShowSettingsPanel(false)}
+          onGroupUpdated={fetchGroupDetails}
+        />
+      )}
+      
+      {showInvitePanel && groupId && (
+        <GroupInvitePanel 
+          groupId={groupId}
+          onClose={() => setShowInvitePanel(false)}
+          onGroupUpdated={fetchGroupDetails}
+        />
+      )}
     </div>
   );
 };
