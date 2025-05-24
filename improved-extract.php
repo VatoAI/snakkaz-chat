@@ -15,6 +15,14 @@ error_reporting(E_ALL);
 
 echo "=== Snakkaz Chat Extraction Script ===\n\n";
 
+// Log server information for debugging
+echo "Server Information:\n";
+echo "PHP Version: " . phpversion() . "\n";
+echo "Server Software: " . $_SERVER['SERVER_SOFTWARE'] . "\n";
+echo "ZipArchive Available: " . (class_exists('ZipArchive') ? 'Yes' : 'No') . "\n";
+echo "Current Directory: " . getcwd() . "\n";
+echo "Disk Free Space: " . round(disk_free_space('.')/1024/1024) . " MB\n\n";
+
 // Check if ZIP file exists
 if (!file_exists('snakkaz-dist.zip')) {
     echo "ERROR: snakkaz-dist.zip file not found!\n";
@@ -47,8 +55,15 @@ if ($res === TRUE) {
     // Count files before extraction
     $filesBefore = count(glob('*')) + count(glob('.*')) - 2; // Exclude . and ..
     
-    // Extract all files
-    $zip->extractTo('.');
+    // Extract all files - with error handling
+    $extract_result = $zip->extractTo('.');
+    if (!$extract_result) {
+        echo "❌ Failed to extract files from ZIP archive.\n";
+        echo "Error: " . error_get_last()['message'] . "\n";
+        $zip->close();
+        exit(1);
+    }
+    
     $zip->close();
     
     // Count files after extraction
@@ -56,6 +71,29 @@ if ($res === TRUE) {
     $filesExtracted = $filesAfter - $filesBefore;
     
     echo "✅ Extraction successful! Extracted $filesExtracted new files/directories.\n";
+    
+    // Fix permissions for web access
+    echo "Setting proper file permissions...\n";
+    chmod("index.html", 0644);
+    chmod(".htaccess", 0644);
+    
+    // If assets directory exists, set it recursively to 755 for directories, 644 for files
+    if (file_exists('assets') && is_dir('assets')) {
+        $iterator = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator('assets'),
+            RecursiveIteratorIterator::SELF_FIRST
+        );
+        
+        foreach ($iterator as $item) {
+            // Skip dots
+            if ($item->isDir() && !$iterator->isDot()) {
+                chmod($item->getPathname(), 0755);
+            } elseif (!$item->isDir()) {
+                chmod($item->getPathname(), 0644);
+            }
+        }
+        echo "✅ Permissions set for assets directory\n";
+    }
     
     // Verify key files exist
     $requiredFiles = ['index.html', '.htaccess', 'assets'];
@@ -73,12 +111,25 @@ if ($res === TRUE) {
         echo "⚠️ Some required files are missing: " . implode(', ', $missing) . "\n";
     }
     
-    // Delete extraction script for security
+    // Attempt to clean up automatically
     echo "Cleaning up...\n";
-    echo "NOTE: After verification, please delete this extract.php script and the ZIP file.\n";
+    if (is_writable('snakkaz-dist.zip')) {
+        if (unlink('snakkaz-dist.zip')) {
+            echo "✅ ZIP file deleted automatically\n";
+        } else {
+            echo "⚠️ Could not delete ZIP file automatically\n";
+        }
+    } else {
+        echo "⚠️ ZIP file not writable, cannot delete automatically\n";
+    }
+    
+    echo "NOTE: Please delete this extract.php script after verification\n";
     
     echo "\n=== DEPLOYMENT COMPLETE ===\n";
     echo "Snakkaz Chat has been successfully deployed!\n";
+    
+    // Add a simple test link for quick verification
+    echo "\nVerify your site is working: <a href=\"/\">Open Snakkaz Chat</a>\n";
 } else {
     echo "❌ Failed to extract ZIP file!\n";
     echo "Error code: $res\n";

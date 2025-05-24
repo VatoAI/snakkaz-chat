@@ -229,7 +229,7 @@ jobs:
           
           echo "Response: $RESPONSE"
           
-          if [ $EXIT_CODE -eq 0 ] && [[ "$RESPONSE" == *"Extraction successful"* ]]; then
+          if [ $EXIT_CODE -eq 0 ] && [[ "$RESPONSE" == *"✅ Extraction successful"* || "$RESPONSE" == *"DEPLOYMENT COMPLETE"* ]]; then
             echo "✅ Extraction script executed successfully!"
             echo "extraction_success=true" >> $GITHUB_ENV
           else
