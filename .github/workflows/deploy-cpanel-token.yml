@@ -116,8 +116,8 @@ jobs:
             RewriteEngine On
             RewriteBase /
             RewriteRule ^index\.html$ - [L]
-            # Exclude PHP files from rewriting (for extraction scripts)
-            RewriteCond %{REQUEST_URI} !\.(php)$
+            # Allow PHP files to be processed normally (for extraction scripts)
+            RewriteRule \.php$ - [L]
             RewriteCond %{REQUEST_FILENAME} !-f
             RewriteCond %{REQUEST_FILENAME} !-d
             RewriteRule . /index.html [L]
