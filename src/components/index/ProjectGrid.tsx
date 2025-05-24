@@ -28,7 +28,7 @@ export const ProjectGrid = () => {
           textShadow: '-5px 0 15px rgba(26,157,255,0.4), 5px 0 15px rgba(214,40,40,0.4)',
         }}
       >
-        Lovable Prosjekter
+        SnakkaZ Prosjekter
       </h1>
       
       <CategorySection title="Kommunikasjon" category="chat" projects={projects} />

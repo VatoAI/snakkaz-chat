@@ -120,7 +120,7 @@ export const ProjectCard = ({ title, description, previewUrl, githubUrl, categor
     }
 
     // Otherwise use the remote URL
-    return `${previewUrl.replace('https://', 'https://thumbnail--').replace('.lovable.app', '.lovable.app')}/thumbnail.png?t=${refreshKey}&cache=${new Date().getTime()}`;
+    return `${previewUrl}/thumbnail.png?t=${refreshKey}&cache=${new Date().getTime()}`;
   };
 
   const failbackUrl = "/snakkaz-logo.png";

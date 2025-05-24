@@ -57,7 +57,7 @@ export function PremiumUser({ isPremium, onUpgrade }: PremiumUserProps) {
                     <div className="flex justify-center">
                         <div className="w-32 h-32 relative">
                             <img 
-                                src="/lovable-uploads/4402f982-40f7-49ac-8d9a-bb8bb64fc2bf.png" 
+                                src="/snakkaz-logo.png" 
                                 alt="SnakkaZ Premium" 
                                 className="w-full h-full object-contain" 
                             />

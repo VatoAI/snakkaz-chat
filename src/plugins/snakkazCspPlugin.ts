@@ -32,7 +32,7 @@ export function snakkazCspPlugin(options: SnakkazCspPluginOptions = {}): Plugin 
   // Default CSP directives
   const defaultDirectives: Record<string, string[]> = {
     'default-src': ["'self'"],
-    'script-src': ["'self'", "'unsafe-inline'", "'unsafe-eval'", 'cdn.gpteng.co'],
+    'script-src': ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
     'style-src': ["'self'", "'unsafe-inline'"],
     'img-src': ["'self'", 'data:', 'blob:', '*.amazonaws.com', 'storage.googleapis.com', '*.supabase.co', '*.supabase.in'],
     'font-src': ["'self'", 'data:'],
@@ -47,9 +47,7 @@ export function snakkazCspPlugin(options: SnakkazCspPluginOptions = {}): Plugin 
       'dash.snakkaz.com',
       'business.snakkaz.com', 
       'docs.snakkaz.com',
-      'analytics.snakkaz.com',
-      'cdn.gpteng.co',
-      'https://cdn.gpteng.co'
+      'analytics.snakkaz.com'
     ],
     'media-src': ["'self'", 'blob:'],
     'object-src': ["'none'"],

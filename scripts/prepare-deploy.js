@@ -1,6 +1,6 @@
 /**
  * Script for å forberede Snakkaz chat-appen for distribusjon
- * Denne filen kopierer nødvendige filer til dist-mappen og forbereder for lovable.dev hosting
+ * Denne filen kopierer nødvendige filer til dist-mappen og forbereder for produksjon
  */
 
 import fs from 'fs';
@@ -44,8 +44,8 @@ try {
     }
   });
 
-  // Opprett en lovable.config.json fil for lovable.dev hosting
-  const lovableConfig = {
+  // Opprett en deployment.config.json fil for produksjon
+  const deploymentConfig = {
     "name": "snakkaz-chat",
     "type": "static",
     "routes": {
@@ -65,10 +65,10 @@ try {
   };
 
   fs.writeFileSync(
-    path.resolve(distDir, 'lovable.config.json'),
-    JSON.stringify(lovableConfig, null, 2)
+    path.resolve(distDir, 'deployment.config.json'),
+    JSON.stringify(deploymentConfig, null, 2)
   );
-  console.log('✅ Opprettet lovable.config.json');
+  console.log('✅ Opprettet deployment.config.json');
 
   console.log('✅ Appen er klar for distribusjon!');
 } catch (error) {

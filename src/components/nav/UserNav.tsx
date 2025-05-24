@@ -161,7 +161,7 @@ export function UserNav() {
                     {isPremium && (
                         <DropdownMenuItem onClick={() => window.open('https://electrum.org/', '_blank')}>
                             <img 
-                                src="/lovable-uploads/4402f982-40f7-49ac-8d9a-bb8bb64fc2bf.png" 
+                                src="/snakkaz-logo.png" 
                                 alt="Electrum" 
                                 className="mr-2 h-4 w-4"
                             />

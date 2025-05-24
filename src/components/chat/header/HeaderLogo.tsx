@@ -40,7 +40,7 @@ export const HeaderLogo = () => {
       className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-cybergold-500/40 shadow-neon-gold overflow-hidden cursor-pointer hover:shadow-neon-intense transition-all duration-300"
     >
       <img 
-        src={isPremium ? "/lovable-uploads/4402f982-40f7-49ac-8d9a-bb8bb64fc2bf.png" : "/snakkaz-logo.png"}
+        src="/snakkaz-logo.png"
         alt="SnakkaZ" 
         className="w-full h-full object-cover p-0.5"
         onError={(e) => {
