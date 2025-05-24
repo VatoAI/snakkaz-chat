@@ -6,6 +6,9 @@
     RewriteEngine On
     RewriteBase /
     
+    # Explicitly allow PHP files to execute - handle them first
+    RewriteRule ^(.+\.php)$ $1 [L]
+    
     # Handle ping endpoints - Return 200 OK instead of 404
     # This prevents unnecessary console errors
     RewriteRule ^(analytics|business|dash|docs)\.snakkaz\.com/ping$ - [R=200,L]
@@ -17,8 +20,6 @@
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-l
-    # Don't rewrite PHP files - let them execute normally
-    RewriteCond %{REQUEST_URI} !\.php$
     
     # Otherwise, rewrite all requests to the index.html file
     RewriteRule ^ index.html [QSA,L]
