@@ -35,7 +35,6 @@ export function unblockPingRequests() {
     // Check if this is a ping request to Snakkaz subdomains
     if (url && (
       (url.includes('/ping') && url.includes('snakkaz.com')) || 
-      url.includes('cdn.gpteng.co') ||
       url.includes('dash.snakkaz.com') ||
       url.includes('analytics.snakkaz.com') ||
       url.includes('business.snakkaz.com') ||
@@ -68,8 +67,7 @@ export function unblockPingRequests() {
   XMLHttpRequest.prototype.open = function(method, url, ...rest) {
     // Check if this is a ping request
     if (typeof url === 'string' && (
-      (url.includes('/ping') && url.includes('snakkaz.com')) ||
-      url.includes('cdn.gpteng.co')
+      (url.includes('/ping') && url.includes('snakkaz.com'))
     )) {
       // For ping requests, modify to a safe URL
       url = 'data:application/json,{"success":true,"status":"ok"}';

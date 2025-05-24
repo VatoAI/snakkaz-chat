@@ -22,8 +22,8 @@ export function applyCspPolicy(): void {
     
     // Script sources - more restricted in production
     'script-src': isDev 
-      ? ["'self'", "'unsafe-inline'", "'unsafe-eval'", 'cdn.gpteng.co']
-      : ["'self'", 'cdn.gpteng.co', 
+      ? ["'self'", "'unsafe-inline'", "'unsafe-eval'"]
+      : ["'self'", 
          // Allow specific hashes for critical inline scripts
          "'sha256-1SuipMDplXoKeoH5h0AccIQrF7qwRCEFPCuoNSA6NrM='",
          "'sha256-hR8LUoFSvUqLEELJErbmI2vwnXpAjz1dpHxy2vpLRKQ='"
@@ -62,8 +62,7 @@ export function applyCspPolicy(): void {
       'docs.snakkaz.com', 
       'analytics.snakkaz.com',
       'mcp.snakkaz.com',
-      'help.snakkaz.com',
-      'cdn.gpteng.co'
+      'help.snakkaz.com'
     ],
     
     // Media sources for audio/video content
@@ -241,8 +240,8 @@ export function testCsp() {
   const cspDirectives: { [key: string]: string[] } = {
     'default-src': ["'self'"],
     'script-src': isDev 
-      ? ["'self'", "'unsafe-inline'", "'unsafe-eval'", 'cdn.gpteng.co']
-      : ["'self'", 'cdn.gpteng.co', 
+      ? ["'self'", "'unsafe-inline'", "'unsafe-eval'"]
+      : ["'self'", 
          "'sha256-1SuipMDplXoKeoH5h0AccIQrF7qwRCEFPCuoNSA6NrM='",
          "'sha256-hR8LUoFSvUqLEELJErbmI2vwnXpAjz1dpHxy2vpLRKQ='"
         ],
@@ -271,8 +270,7 @@ export function testCsp() {
       'docs.snakkaz.com',
       'analytics.snakkaz.com',
       'mcp.snakkaz.com',
-      'help.snakkaz.com',
-      'cdn.gpteng.co'
+      'help.snakkaz.com'
     ],
     'media-src': ["'self'", 'blob:'],
     'object-src': ["'none'"],

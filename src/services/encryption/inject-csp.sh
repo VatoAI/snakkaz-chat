@@ -3,7 +3,7 @@
 # Kjøres etter 'npm run build' for å sikre at CSP blir lagt til i det endelige bygget
 
 DIST_DIR="/workspaces/snakkaz-chat/dist"
-CSP_POLICY="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' cdn.gpteng.co; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: *.amazonaws.com storage.googleapis.com *.supabase.co *.supabase.in; font-src 'self' data:; connect-src 'self' *.supabase.co *.supabase.in wss://*.supabase.co *.amazonaws.com storage.googleapis.com *.snakkaz.com dash.snakkaz.com business.snakkaz.com docs.snakkaz.com analytics.snakkaz.com cdn.gpteng.co https://cdn.gpteng.co; media-src 'self' blob:; object-src 'none'; frame-src 'self'; worker-src 'self' blob:;"
+CSP_POLICY="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: *.amazonaws.com storage.googleapis.com *.supabase.co *.supabase.in; font-src 'self' data:; connect-src 'self' *.supabase.co *.supabase.in wss://*.supabase.co *.amazonaws.com storage.googleapis.com *.snakkaz.com dash.snakkaz.com business.snakkaz.com docs.snakkaz.com analytics.snakkaz.com; media-src 'self' blob:; object-src 'none'; frame-src 'self'; worker-src 'self' blob:;"
 
 echo "🔒 Injiserer CSP i dist/index.html"
 

@@ -73,7 +73,7 @@ function fixMetaTagCsp() {
       // If no CSP meta tag exists, create one with safe defaults
       const meta = document.createElement('meta');
       meta.setAttribute('http-equiv', 'Content-Security-Policy');
-      meta.setAttribute('content', "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' cdn.gpteng.co; style-src 'self' 'unsafe-inline'; connect-src 'self' *.supabase.co *.supabase.in wss://*.supabase.co *.amazonaws.com storage.googleapis.com *.snakkaz.com dash.snakkaz.com business.snakkaz.com docs.snakkaz.com analytics.snakkaz.com cdn.gpteng.co;");
+      meta.setAttribute('content', "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; connect-src 'self' *.supabase.co *.supabase.in wss://*.supabase.co *.amazonaws.com storage.googleapis.com *.snakkaz.com dash.snakkaz.com business.snakkaz.com docs.snakkaz.com analytics.snakkaz.com;");
       
       // Insert at the beginning of head
       const head = document.head || document.getElementsByTagName('head')[0];
@@ -99,9 +99,9 @@ function fixMetaTagCsp() {
             !content.includes("'unsafe-eval'")) {
           
           if (!content.includes("script-src")) {
-            newContent += "; script-src 'self' 'unsafe-inline' 'unsafe-eval' cdn.gpteng.co";
+            newContent += "; script-src 'self' 'unsafe-inline' 'unsafe-eval'";
           } else {
-            newContent = newContent.replace(/(script-src[^;]*)(;|$)/, "$1 'unsafe-inline' 'unsafe-eval' cdn.gpteng.co$2");
+            newContent = newContent.replace(/(script-src[^;]*)(;|$)/, "$1 'unsafe-inline' 'unsafe-eval'$2");
           }
           
           needsUpdate = true;

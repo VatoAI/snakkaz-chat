@@ -43,7 +43,7 @@ function buildCspPolicy(): string {
   // Production-friendly CSP policies
   const policy = {
     'default-src': ["'self'"],
-    'script-src': ["'self'", "'unsafe-inline'", "'unsafe-eval'", "cdn.gpteng.co", "*.snakkaz.com"],
+    'script-src': ["'self'", "'unsafe-inline'", "'unsafe-eval'", "*.snakkaz.com"],
     'style-src': ["'self'", "'unsafe-inline'"],
     'img-src': ["'self'", "data:", "blob:", "*.amazonaws.com", "storage.googleapis.com", 
                "*.supabase.co", "*.supabase.in", "*.snakkaz.com"],
@@ -55,8 +55,7 @@ function buildCspPolicy(): string {
       "wss://*.supabase.co", 
       "*.amazonaws.com",
       "storage.googleapis.com", 
-      "*.snakkaz.com", 
-      "cdn.gpteng.co"
+      "*.snakkaz.com"
     ],
     'media-src': ["'self'", "blob:"],
     'object-src': ["'none'"],
