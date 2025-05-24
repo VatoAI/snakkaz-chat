@@ -1,0 +1,19 @@
+# LFTP deployment script for Snakkaz Chat
+# Generated on Sat May 24 15:37:37 UTC 2025
+
+# Open connection
+open -u "SnakkaZ@snakkaz.com","Snakkaz2025!" "premium123.web-hosting.com"
+
+# Turn on FTPS 
+set ftps:initial-prot ""
+set ftp:ssl-protect-data true
+
+# Set parallel transfer
+set parallel 4
+set xfer:clobber on
+
+# Mirror local dist directory to remote directory
+mirror -R --delete --verbose dist/ "public_html/"
+
+# Exit when done
+bye
