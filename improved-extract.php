@@ -125,6 +125,7 @@ if ($res === TRUE) {
     
     echo "NOTE: Please delete this extract.php script after verification\n";
     
+    echo "\n✅ Extraction successful\n";
     echo "\n=== DEPLOYMENT COMPLETE ===\n";
     echo "Snakkaz Chat has been successfully deployed!\n";
     
