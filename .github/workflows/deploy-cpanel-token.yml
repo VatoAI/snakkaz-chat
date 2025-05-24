@@ -218,27 +218,10 @@ jobs:
       - name: Create extraction script
         if: env.zip_upload_success == 'true'
         run: |
-          echo "Creating extraction script..."
-          cat > extract.php << EOF
-          <?php
-          // Extraction script for Snakkaz Chat deployment
-          \$zip = new ZipArchive;
-          \$res = \$zip->open('snakkaz-dist.zip');
-          if (\$res === TRUE) {
-            echo "Extracting ZIP file...\n";
-            // Extract to the public_html directory
-            \$zip->extractTo('.');
-            \$zip->close();
-            echo "✅ Extraction successful! Removing temporary files...\n";
-            unlink('snakkaz-dist.zip'); // Remove ZIP file after extraction
-            unlink('extract.php'); // Self-delete this script for security
-          } else {
-            echo "❌ Failed to extract ZIP file! Error code: \$res\n";
-          }
-          ?>
-          EOF
-          
-          echo "Extraction script created: extract.php"
+          echo "Creating improved extraction script..."
+          # Use the improved extraction script from the repository
+          cp improved-extract.php extract.php
+          echo "Extraction script created: extract.php (using improved version)"
       
       # Step 5: Upload the extraction script
       - name: Upload extraction script
@@ -269,7 +252,8 @@ jobs:
           EXTRACT_RESULT=$(curl -s "https://www.snakkaz.com/extract.php")
           echo "$EXTRACT_RESULT"
           
-          if echo "$EXTRACT_RESULT" | grep -q "successful"; then
+          # Check for multiple success indicators per DEPLOYMENT-FIX-MAY24-2025.md
+          if [[ "$EXTRACT_RESULT" == *"✅ Extraction successful"* || "$EXTRACT_RESULT" == *"DEPLOYMENT COMPLETE"* ]]; then
             echo "✅ Extraction script executed successfully!"
             echo "extraction_success=true" >> $GITHUB_ENV
           else

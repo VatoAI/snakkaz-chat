@@ -85,8 +85,8 @@ if ($res === TRUE) {
         );
         
         foreach ($iterator as $item) {
-            // Skip dots
-            if ($item->isDir() && !$iterator->isDot()) {
+            // Skip dots and current/parent directory references
+            if ($item->isDir() && !in_array($item->getFilename(), ['.', '..'])) {
                 chmod($item->getPathname(), 0755);
             } elseif (!$item->isDir()) {
                 chmod($item->getPathname(), 0644);
