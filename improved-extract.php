@@ -182,4 +182,8 @@ if ($res === TRUE) {
         }
     }
 }
+
+// Final success message for GitHub Actions workflow
+echo "\n✅ Extraction successful\n";
+echo "DEPLOYMENT COMPLETE\n";
 ?>
