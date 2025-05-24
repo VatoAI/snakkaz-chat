@@ -193,28 +193,13 @@ jobs:
             exit 1
           fi
       
-      # Step 4: Create an extraction script
-      - name: Create extraction script
+      # Step 4: Copy the improved extraction script
+      - name: Copy improved extraction script
         if: env.zip_upload_success == 'true'
         run: |
-          echo "Creating extraction script..."
-          cat > extract.php << EOF
-          <?php
-          // Extraction script for Snakkaz Chat deployment
-          \$zip = new ZipArchive;
-          \$res = \$zip->open('snakkaz-dist.zip');
-          if (\$res === TRUE) {
-            // Extract to the public_html directory
-            \$zip->extractTo('.');
-            \$zip->close();
-            echo "✅ Extraction successful!";
-          } else {
-            echo "❌ Failed to extract ZIP file!";
-          }
-          ?>
-          EOF
-          
-          echo "Extraction script created: extract.php"
+          echo "Using improved extraction script..."
+          cp improved-extract.php extract.php
+          echo "Improved extraction script ready: extract.php"
       
       # Step 5: Upload the extraction script
       - name: Upload extraction script
@@ -238,14 +223,17 @@ jobs:
       - name: Execute extraction script
         if: env.script_upload_success == 'true'
         run: |
-          echo "Executing extraction script..."
-          curl -k "https://www.snakkaz.com/extract.php"
+          echo "Executing improved extraction script..."
+          RESPONSE=$(curl -k "https://www.snakkaz.com/extract.php")
+          EXIT_CODE=$?
           
-          if [ $? -eq 0 ]; then
+          echo "Response: $RESPONSE"
+          
+          if [ $EXIT_CODE -eq 0 ] && [[ "$RESPONSE" == *"Extraction successful"* ]]; then
             echo "✅ Extraction script executed successfully!"
             echo "extraction_success=true" >> $GITHUB_ENV
           else
-            echo "❌ Failed to execute extraction script"
+            echo "❌ Failed to execute extraction script or results unclear"
             echo "extraction_success=false" >> $GITHUB_ENV
           fi
       
@@ -296,7 +284,16 @@ jobs:
           else
             echo "### ❌ Extraction Process" >> $GITHUB_STEP_SUMMARY
             echo "File extraction failed or was not attempted." >> $GITHUB_STEP_SUMMARY
+            echo "Consider checking the server logs or manually running the extraction script." >> $GITHUB_STEP_SUMMARY
           fi
+          
+          # Additional diagnostics
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔧 Troubleshooting Information" >> $GITHUB_STEP_SUMMARY
+          echo "- If deployment fails, check if the extraction script (extract.php) is using our improved version" >> $GITHUB_STEP_SUMMARY
+          echo "- Verify PHP's ZipArchive extension is enabled on the server" >> $GITHUB_STEP_SUMMARY
+          echo "- Check for sufficient permissions in the public_html directory" >> $GITHUB_STEP_SUMMARY
+          echo "- Access https://www.snakkaz.com/extract.php directly to view diagnostic output" >> $GITHUB_STEP_SUMMARY
           
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 🔍 Post-Deployment Verification" >> $GITHUB_STEP_SUMMARY

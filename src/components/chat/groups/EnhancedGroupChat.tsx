@@ -25,7 +25,7 @@ import { Button } from "@/components/ui/button";
 import { 
   Shield, Lock, AlertTriangle, Crown, 
   Star, ArrowRight, Users, KeyRound, 
-  BarChart4, FileText, MessageSquare
+  BarChart4, FileText, MessageSquare, Settings
 } from "lucide-react";
 import { 
   Dialog, DialogContent, DialogDescription, DialogHeader, 
@@ -35,6 +35,7 @@ import { PremiumMembershipCard } from "./PremiumMembershipCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { GroupMembersList } from "./GroupMembersList";
 import { GroupMemberRoleManager } from "./GroupMemberRoleManager";
+import { GroupSettingsPanel } from "./GroupSettingsPanel";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { Badge } from "@/components/ui/badge";
 import { useEnhancedOfflineMessages } from "@/hooks/use-enhanced-offline-messages";
@@ -78,6 +79,7 @@ export function EnhancedGroupChat({
   const [rotatingKey, setRotatingKey] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<string>("messages");
   const [isRoleManagerOpen, setIsRoleManagerOpen] = useState(false);
+  const [showSettingsPanel, setShowSettingsPanel] = useState(false);
   
   // Hooks for group chat and encryption
   const { online } = useNetworkStatus();
@@ -345,11 +347,37 @@ export function EnhancedGroupChat({
     </div>
   );
 
+  // Handler for opening settings panel
+  const handleOpenSettings = () => {
+    setShowSettingsPanel(true);
+  };
+  
+  // Handler for closing settings panel
+  const handleCloseSettings = () => {
+    setShowSettingsPanel(false);
+    // Refresh group data after settings changes
+    loadGroup();
+  };
+
   // Get user avatar 
   const getUserAvatar = (userId: string) => {
     // This is a placeholder. In a real app, fetch from userProfiles or a default
     return "https://api.dicebear.com/7.x/avataaars/svg?seed=" + userId;
   };
+  
+  // Show settings panel if active
+  if (showSettingsPanel) {
+    return (
+      <GroupSettingsPanel
+        group={group}
+        currentUserId={currentUserId}
+        members={members}
+        userProfiles={userProfiles}
+        onClose={handleCloseSettings}
+        refreshGroup={loadGroup}
+      />
+    );
+  }
   
   // Render the group chat component
   return (
@@ -372,6 +400,7 @@ export function EnhancedGroupChat({
         onShowInvite={() => {}}
         onShowPremium={() => {}}
         onShowMembers={() => {}}
+        onOpenSettings={handleOpenSettings}
         isPageEncryptionEnabled={isPageEncryptionEnabled}
         onEnablePageEncryption={enablePageEncryption}
         onEncryptAllMessages={encryptAllMessages}
