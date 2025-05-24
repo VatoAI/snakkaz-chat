@@ -18,6 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Bitcoin, Copy, Download, RefreshCw, Shield } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { ElectrumService } from "@/services/electrumService";
+import { UsbWalletIntegration } from "@/components/payments/UsbWalletIntegration";
 
 interface BitcoinWalletProps {
   userId: string;
@@ -484,7 +485,7 @@ export function BitcoinWallet({ userId, isPremium }: BitcoinWalletProps) {
           <Tabs defaultValue="download" className="w-full">
             <TabsList className="w-full grid grid-cols-2 bg-cyberdark-800">
               <TabsTrigger value="download">Last ned</TabsTrigger>
-              <TabsTrigger value="electrum">Electrum</TabsTrigger>
+              <TabsTrigger value="electrum">Electrum & USB</TabsTrigger>
             </TabsList>
             
             <TabsContent value="download" className="mt-2">
@@ -534,9 +535,60 @@ export function BitcoinWallet({ userId, isPremium }: BitcoinWalletProps) {
                     <li>Skriv inn passordet du opprettet lommeboken med</li>
                   </ol>
                 </div>
+                
+                {/* USB Wallet Integration - Only for premium users */}
+                {isPremium && (
+                  <div className="mt-6 pt-6 border-t border-cyberdark-700">
+                    <h3 className="text-sm font-medium text-white mb-3">USB Lommebok-overføring</h3>
+                    <p className="text-xs text-gray-400 mb-4">
+                      Overfør lommeboken din til en sikker USB-enhet for offline lagring og transaksjonssignering.
+                    </p>
+                    
+                    <UsbWalletIntegration 
+                      userId={userId}
+                      walletId={walletData.id}
+                      onSuccess={(deviceId) => {
+                        toast({
+                          title: "USB-overføring fullført",
+                          description: "Lommeboken din er nå overført til USB-enheten.",
+                        });
+                        fetchWalletData();
+                      }}
+                      onError={(error) => {
+                        toast({
+                          variant: "destructive",
+                          title: "USB-overføringsfeil",
+                          description: error,
+                        });
+                      }}
+                    />
+                  </div>
+                )}
+                
+                {/* Premium feature notice if not premium */}
+                {!isPremium && (
+                  <div className="mt-6 pt-6 border-t border-cyberdark-700">
+                    <div className="p-4 bg-cybergold-900/30 border border-cybergold-600/30 rounded-md">
+                      <h3 className="text-sm font-medium text-cybergold-400 mb-2">Premiumfunksjon: USB-lommebok</h3>
+                      <p className="text-xs text-gray-400">
+                        Oppgrader til premium for å overføre lommeboken din til en sikker USB-enhet for offline lagring og transaksjonssignering.
+                      </p>
+                      <Button 
+                        variant="outline" 
+                        className="mt-3 bg-cybergold-600/20 border-cybergold-600 text-cybergold-400 hover:bg-cybergold-600/40 hover:text-cybergold-300"
+                        size="sm"
+                        onClick={() => window.location.href = '/profile/premium'}
+                      >
+                        Oppgrader til Premium
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             </TabsContent>
           </Tabs>
+
+          {/* USB Wallet Integration has been moved to the Electrum tab */}
         </div>
       </CardContent>
       <CardFooter className="border-t border-cyberdark-700 pt-4">
