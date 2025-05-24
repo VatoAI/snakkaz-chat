@@ -5,7 +5,7 @@
  * allowing users to create polls, vote, and view results in real-time.
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, BarChart, Check, ChevronDown, ChevronUp, X, Clock } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -55,12 +55,14 @@ interface GroupPollSystemProps {
   groupId: string;
   currentUserId: string;
   isAdmin: boolean;
+  canCreatePolls?: boolean;
 }
 
 export function GroupPollSystem({
   groupId,
   currentUserId,
-  isAdmin
+  isAdmin,
+  canCreatePolls = isAdmin // Default to isAdmin if not provided
 }: GroupPollSystemProps) {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [pollQuestion, setPollQuestion] = useState("");
@@ -77,42 +79,8 @@ export function GroupPollSystem({
   
   const { toast } = useToast();
 
-  // Load polls for this group
-  useEffect(() => {
-    fetchPolls();
-    
-    // Set up real-time subscription for poll updates
-    const pollsSubscription = supabase
-      .channel('group-polls')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'group_polls',
-        filter: `group_id=eq.${groupId}`
-      }, () => {
-        fetchPolls();
-      })
-      .subscribe();
-      
-    const votesSubscription = supabase
-      .channel('poll-votes')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'poll_votes',
-      }, () => {
-        fetchPolls();
-      })
-      .subscribe();
-      
-    return () => {
-      pollsSubscription.unsubscribe();
-      votesSubscription.unsubscribe();
-    };
-  }, [groupId]);
-
   // Fetch polls from database
-  const fetchPolls = async () => {
+  const fetchPolls = useCallback(async () => {
     try {
       setIsLoadingPolls(true);
       
@@ -154,7 +122,41 @@ export function GroupPollSystem({
     } finally {
       setIsLoadingPolls(false);
     }
-  };
+  }, [groupId, currentUserId, toast]);
+  
+  // Load polls for this group
+  useEffect(() => {
+    fetchPolls();
+    
+    // Set up real-time subscription for poll updates
+    const pollsSubscription = supabase
+      .channel('group-polls')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'group_polls',
+        filter: `group_id=eq.${groupId}`
+      }, () => {
+        fetchPolls();
+      })
+      .subscribe();
+      
+    const votesSubscription = supabase
+      .channel('poll-votes')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'poll_votes',
+      }, () => {
+        fetchPolls();
+      })
+      .subscribe();
+      
+    return () => {
+      pollsSubscription.unsubscribe();
+      votesSubscription.unsubscribe();
+    };
+  }, [groupId, fetchPolls]);
 
   // Add a new poll option input
   const addOption = () => {

@@ -5,7 +5,7 @@
  * allowing users to upload, organize, and download files within a group.
  */
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -57,6 +57,7 @@ interface GroupFilesManagerProps {
   groupId: string;
   currentUserId: string;
   isAdmin: boolean;
+  canManageFiles?: boolean;
   isPremium: boolean;
   groupName: string;
   maxUploadSize?: number; // in MB
@@ -66,6 +67,7 @@ export function GroupFilesManager({
   groupId,
   currentUserId,
   isAdmin,
+  canManageFiles = isAdmin, // Default to isAdmin if not provided
   isPremium,
   groupName,
   maxUploadSize = isPremium ? 100 : 20 // Default max size: 100MB for premium, 20MB for standard
@@ -95,43 +97,8 @@ export function GroupFilesManager({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  // Load files and folders for this group
-  useEffect(() => {
-    fetchFilesAndFolders();
-    
-    // Set up real-time subscription for file updates
-    const filesSubscription = supabase
-      .channel('group-files')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'group_files',
-        filter: `group_id=eq.${groupId}`
-      }, () => {
-        fetchFilesAndFolders();
-      })
-      .subscribe();
-      
-    const foldersSubscription = supabase
-      .channel('group-folders')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'group_folders',
-        filter: `group_id=eq.${groupId}`
-      }, () => {
-        fetchFilesAndFolders();
-      })
-      .subscribe();
-      
-    return () => {
-      filesSubscription.unsubscribe();
-      foldersSubscription.unsubscribe();
-    };
-  }, [groupId]);
-
   // Fetch files and folders from database
-  const fetchFilesAndFolders = async () => {
+  const fetchFilesAndFolders = useCallback(async () => {
     try {
       setIsLoadingFiles(true);
       
@@ -198,7 +165,42 @@ export function GroupFilesManager({
     } finally {
       setIsLoadingFiles(false);
     }
-  };
+  }, [groupId, toast]);
+  
+  // Load files and folders for this group
+  useEffect(() => {
+    fetchFilesAndFolders();
+    
+    // Set up real-time subscription for file updates
+    const filesSubscription = supabase
+      .channel('group-files')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'group_files',
+        filter: `group_id=eq.${groupId}`
+      }, () => {
+        fetchFilesAndFolders();
+      })
+      .subscribe();
+      
+    const foldersSubscription = supabase
+      .channel('group-folders')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'group_folders',
+        filter: `group_id=eq.${groupId}`
+      }, () => {
+        fetchFilesAndFolders();
+      })
+      .subscribe();
+      
+    return () => {
+      filesSubscription.unsubscribe();
+      foldersSubscription.unsubscribe();
+    };
+  }, [groupId, fetchFilesAndFolders]);
 
   // Handle file selection for upload
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {

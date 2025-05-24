@@ -15,6 +15,11 @@ export interface Group {
   security_level: string;
   write_permissions: string;
   password?: string | null;
+  description?: string;
+  allow_media_sharing?: boolean;
+  allow_link_previews?: boolean;
+  allow_member_invites?: boolean;
+  is_private?: boolean;
 }
 
 export interface GroupMember {

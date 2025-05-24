@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronLeft, Shield, Lock, Users, Download, Upload, RefreshCw } from 'lucide-react';
+import { ChevronLeft, Shield, Lock, Users, Download, Upload, RefreshCw, Settings } from 'lucide-react';
 import { UserAvatar } from '../header/UserAvatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -17,13 +17,19 @@ interface GroupChatHeaderProps {
   onReconnect: () => void;
   securityLevel: string;
   setSecurityLevel: (level: string) => void;
-  userProfiles?: Record<string, any>;
+  userProfiles?: Record<string, { 
+    username?: string;
+    full_name?: string;
+    avatar_url?: string;
+    status?: string;
+  }>;
   isAdmin: boolean;
   isPremium: boolean;
   isPremiumMember: boolean;
   onShowInvite: () => void;
   onShowPremium: () => void;
   onShowMembers: () => void;
+  onOpenSettings: () => void;
   isPageEncryptionEnabled: boolean;
   onEnablePageEncryption: () => void;
   onEncryptAllMessages: () => void;
@@ -48,6 +54,7 @@ export const GroupChatHeader: React.FC<GroupChatHeaderProps> = ({
   onShowInvite,
   onShowPremium,
   onShowMembers,
+  onOpenSettings,
   isPageEncryptionEnabled,
   onEnablePageEncryption,
   onEncryptAllMessages,
@@ -134,6 +141,24 @@ export const GroupChatHeader: React.FC<GroupChatHeaderProps> = ({
             </TooltipTrigger>
             <TooltipContent>
               <p>Inviter medlemmer</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onOpenSettings}
+                className="text-cybergold-400 hover:bg-cyberdark-800"
+              >
+                <Settings className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Gruppeinnstillinger</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>

@@ -115,6 +115,51 @@ export function EnhancedGroupChat({
   const currentUserRole = currentUserMember?.role as GroupRole || 'member';
   const userPermissions = useMemo(() => getRolePermissions(currentUserRole), [currentUserRole]);
   
+  // Function to refresh group data
+  const loadGroup = async () => {
+    try {
+      const { data: updatedGroup, error } = await supabase
+        .from('group_chats')
+        .select(`
+          *,
+          members:group_members(*)
+        `)
+        .eq('id', group.id)
+        .single();
+      
+      if (error) {
+        console.error('Failed to load group data:', error);
+        toast({
+          title: "Failed to refresh group data",
+          description: "Could not load the latest group information",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Update local state with the refreshed group data
+      if (updatedGroup) {
+        Object.assign(group, updatedGroup);
+        
+        // Update direct reference to avoid TypeScript issues
+        if (updatedGroup.members && updatedGroup.members.length > 0 && 
+            JSON.stringify(updatedGroup.members) !== JSON.stringify(members)) {
+          // Refresh the group and dependencies
+          setTimeout(() => {
+            reconnect();
+          }, 100);
+        }
+        
+        toast({
+          title: "Group updated",
+          description: "Group information has been refreshed",
+        });
+      }
+    } catch (error) {
+      console.error('Error loading group data:', error);
+    }
+  };
+  
   // Role-based permission checks
   const canManageRoles = useMemo(() => hasRolePermission(currentUserRole, 'admin'), [currentUserRole]);
   const canModerate = useMemo(() => hasRolePermission(currentUserRole, 'moderator'), [currentUserRole]);
@@ -357,6 +402,12 @@ export function EnhancedGroupChat({
     setShowSettingsPanel(false);
     // Refresh group data after settings changes
     loadGroup();
+    
+    // Show a feedback message
+    toast({
+      title: "Settings updated",
+      description: "Group settings have been applied successfully",
+    });
   };
 
   // Get user avatar 
