@@ -6,7 +6,7 @@
  */
 
 // List of subdomains that should be mocked
-const SUBDOMAINS_TO_MOCK = ['analytics', 'business', 'dash', 'docs'];
+const SUBDOMAINS_TO_MOCK = ['analytics', 'business', 'dash', 'docs', 'www'];
 
 // Create a mock response for ping endpoints and root access
 const createMockResponse = (subdomain, isRoot = false) => {

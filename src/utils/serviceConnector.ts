@@ -22,6 +22,8 @@ const SUPPRESS_DOMAINS = new Set([
     'business.snakkaz.com',
     'docs.snakkaz.com',
     'analytics.snakkaz.com',
+    'www.snakkaz.com',  // Added main www domain
+    'snakkaz.com',      // Added root domain
     'cloudflareinsights.com',
 ]);
 

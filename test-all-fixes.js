@@ -11,10 +11,15 @@
  * Created: May 23, 2025
  */
 
-const fs = require('fs');
-const path = require('path');
-const { execSync } = require('child_process');
-const chalk = require('chalk'); // Assuming chalk is installed
+import fs from 'fs';
+import path from 'path';
+import { execSync } from 'child_process';
+import chalk from 'chalk'; // Assuming chalk is installed
+import { fileURLToPath } from 'url';
+
+// Get the current file's directory
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Define test sections
 const tests = [
@@ -104,7 +109,11 @@ async function runTests() {
     
     // Run command if available
     if (test.command) {
-      const success = runCommand(test.command);
+      // Add --simulate flag for database fix testing
+      const commandToRun = test.name === 'Database Schema Fix' ? 
+        `${test.command} --simulate` : test.command;
+        
+      const success = runCommand(commandToRun);
       
       if (success) {
         console.log(chalk.green('\n✅ Command executed successfully!'));

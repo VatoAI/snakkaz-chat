@@ -56,6 +56,7 @@ export function applyCspPolicy(): void {
       '*.amazonaws.com', 
       'storage.googleapis.com', 
       '*.snakkaz.com', 
+      'www.snakkaz.com',  // Added explicit www subdomain
       'dash.snakkaz.com', 
       'business.snakkaz.com', 
       'docs.snakkaz.com', 
