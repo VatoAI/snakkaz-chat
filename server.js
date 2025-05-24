@@ -63,9 +63,14 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // Initialize payment-subscription connector
 require('./src/server/paymentSubscriptionConnector');
 
+// Initialize Electrum payment system
+const { initializeElectrum } = require('./src/server/electrumInitializer');
+initializeElectrum();
+
 // API Routes
 app.use('/api/premium/emails', require('./src/server/api/emailRoutes'));
 app.use('/api/payments', require('./src/server/api/paymentRoutes'));
+app.use('/api/admin/electrum', require('./src/server/api/electrumAdminRoutes'));
 
 // Serve static files using existing handler
 app.use(express.static(DIST_DIR));
@@ -84,4 +89,15 @@ server.listen(PORT, () => {
   console.log(`Server kjører på http://localhost:${PORT}`);
   console.log(`API routes tilgjengelig på http://localhost:${PORT}/api/`);
   console.log(`Trykk Ctrl+C for å stoppe serveren`);
+});
+
+// Handle shutdown gracefully
+const { shutdownElectrum } = require('./src/server/electrumInitializer');
+process.on('SIGINT', () => {
+  console.log('\nShutting down gracefully...');
+  shutdownElectrum();
+  server.close(() => {
+    console.log('Server closed');
+    process.exit(0);
+  });
 });

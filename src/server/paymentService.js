@@ -43,15 +43,15 @@ class PaymentService {
    */
   async createPaymentRequest(paymentData) {
     try {
-      // Generate a unique Bitcoin address for this payment
-      const bitcoinAddress = await this.generatePaymentAddress();
+      // Generate a unique ID for this payment
+      const paymentId = uuidv4();
       
       // Get current exchange rate
       const btcAmount = await this.convertToBitcoin(paymentData.amount, paymentData.currency);
       
-      // Prepare payment data
-      const payment = {
-        id: uuidv4(),
+      // Initialize payment data
+      let payment = {
+        id: paymentId,
         user_id: paymentData.userId,
         amount: paymentData.amount,
         currency: paymentData.currency,
@@ -59,12 +59,31 @@ class PaymentService {
         product_type: paymentData.productType,
         product_id: paymentData.productId,
         payment_method: paymentData.method || 'bitcoin',
-        bitcoin_address: bitcoinAddress,
         status: 'pending',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours
       };
+      
+      // Use Electrum if enabled
+      if (process.env.ENABLE_ELECTRUM_PAYMENTS === 'true' && paymentData.method === 'bitcoin') {
+        // Generate a unique Bitcoin address via Electrum
+        const { bitcoinElectrumAdapter } = require('./payments/bitcoinElectrumAdapter');
+        const bitcoinData = await bitcoinElectrumAdapter.createPaymentRequest({
+          ...paymentData,
+          id: paymentId,
+        });
+        
+        payment = {
+          ...payment,
+          bitcoin_address: bitcoinData.bitcoin_address,
+          payment_reference: bitcoinData.payment_reference
+        };
+      } else {
+        // Generate a simulated Bitcoin address
+        const bitcoinAddress = await this.generatePaymentAddress();
+        payment.bitcoin_address = bitcoinAddress;
+      }
       
       // Save to database
       const { data, error } = await supabase
@@ -609,14 +628,21 @@ class PaymentService {
    * @returns {string} Bitcoin address
    */
   async generatePaymentAddress() {
-    // In a real implementation, this would integrate with your Bitcoin wallet or payment processor API
-    // For this demonstration, we'll use a dummy address generator
-    
-    // For simulation purposes only
-    const dummyAddressPrefix = 'bc1q';
-    const randomSuffix = crypto.randomBytes(16).toString('hex');
-    
-    return `${dummyAddressPrefix}${randomSuffix}`;
+    try {
+      // Check if Electrum is enabled
+      if (process.env.ENABLE_ELECTRUM_PAYMENTS === 'true') {
+        // We'll actually generate this later through the adapter when creating the payment request
+        return "pending_generation";
+      } else {
+        // For simulation purposes only when Electrum is disabled
+        const dummyAddressPrefix = 'bc1q';
+        const randomSuffix = crypto.randomBytes(16).toString('hex');
+        return `${dummyAddressPrefix}${randomSuffix}`;
+      }
+    } catch (error) {
+      console.error('Error generating Bitcoin address:', error);
+      throw error;
+    }
   }
   
   /**
@@ -683,30 +709,37 @@ class PaymentService {
    */
   async checkBlockchainForPayment(payment) {
     try {
-      // In a real implementation, this would query the Bitcoin blockchain
-      // Through an API or direct node connection
-      
-      // For this demonstration, we'll simulate random transaction discovery
-      // with a probability that increases over time
-      const hoursSinceCreation = (Date.now() - new Date(payment.created_at).getTime()) / (1000 * 60 * 60);
-      
-      // Higher chance of finding a transaction as time passes (for demo purposes)
-      const transactionProbability = Math.min(0.1 + (hoursSinceCreation * 0.1), 0.9);
-      
-      if (Math.random() < transactionProbability) {
-        // Simulate finding a transaction
-        const confirmations = Math.floor(Math.random() * 6) + 1; // 1-6 confirmations
+      // Check if Electrum is enabled
+      if (process.env.ENABLE_ELECTRUM_PAYMENTS === 'true') {
+        // Use the Electrum adapter to check for payment
+        const { bitcoinElectrumAdapter } = require('./payments/bitcoinElectrumAdapter');
+        return await bitcoinElectrumAdapter.checkBlockchainForPayment(payment);
+      } else {
+        // In a real implementation, this would query the Bitcoin blockchain
+        // Through an API or direct node connection
         
-        return {
-          txid: `tx_${crypto.randomBytes(16).toString('hex')}`,
-          amount: payment.btc_amount,
-          confirmations: confirmations,
-          blockHeight: 700000 + Math.floor(Math.random() * 1000),
-          timestamp: Date.now()
-        };
+        // For this demonstration, we'll simulate random transaction discovery
+        // with a probability that increases over time
+        const hoursSinceCreation = (Date.now() - new Date(payment.created_at).getTime()) / (1000 * 60 * 60);
+        
+        // Higher chance of finding a transaction as time passes (for demo purposes)
+        const transactionProbability = Math.min(0.1 + (hoursSinceCreation * 0.1), 0.9);
+        
+        if (Math.random() < transactionProbability) {
+          // Simulate finding a transaction
+          const confirmations = Math.floor(Math.random() * 6) + 1; // 1-6 confirmations
+          
+          return {
+            txid: `tx_${crypto.randomBytes(16).toString('hex')}`,
+            amount: payment.btc_amount,
+            confirmations: confirmations,
+            blockHeight: 700000 + Math.floor(Math.random() * 1000),
+            timestamp: Date.now()
+          };
+        }
+        
+        return null;
       }
-      
-      return null;
     } catch (error) {
       console.error('Error checking blockchain:', error);
       return null;
