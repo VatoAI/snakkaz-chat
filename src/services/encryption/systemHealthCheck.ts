@@ -68,10 +68,8 @@ export function verifyCspConfiguration(): boolean {
     'analytics.snakkaz.com', 
     'mcp.snakkaz.com',
     'help.snakkaz.com',
-    'cdn.gpteng.co',
     'analytics.snakkaz.com/ping',
-    '*.supabase.co',
-    'cdn.gpteng.co'
+    '*.supabase.co'
   ];
   
   const missingDomains = [];
@@ -151,7 +149,6 @@ export async function checkCspHealth(): Promise<{
     'analytics.snakkaz.com',
     'mcp.snakkaz.com',
     'help.snakkaz.com',
-    'cdn.gpteng.co',
     'wss://*.supabase.co',
     '*.supabase.co',
     '*.supabase.in',

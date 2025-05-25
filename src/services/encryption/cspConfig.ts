@@ -181,9 +181,8 @@ export function buildCspPolicy() {
     '*.gpteng.co', 
     'https://*.gpteng.co', 
     'http://*.gpteng.co',
-    'cdn.gpteng.co', 
-    'https://cdn.gpteng.co', 
-    'http://cdn.gpteng.co'
+    'snakkaz.com', 
+    'https://snakkaz.com'
   ].join(' ');
   
   // Additional connect domains

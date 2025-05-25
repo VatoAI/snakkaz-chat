@@ -30,13 +30,13 @@ export function applyEmergencyCspFixes(): void {
     
     cspContent = `
       default-src 'self';
-      script-src 'self' 'unsafe-inline' 'unsafe-eval' *.snakkaz.com *.gpteng.co cdn.gpteng.co;
+      script-src 'self' 'unsafe-inline' 'unsafe-eval' *.snakkaz.com;
       style-src 'self' 'unsafe-inline';
       img-src 'self' data: blob: *.amazonaws.com storage.googleapis.com *.supabase.co *.supabase.in;
       connect-src 'self' *.supabase.co wss://*.supabase.co *.amazonaws.com storage.googleapis.com
                   *.snakkaz.com dash.snakkaz.com business.snakkaz.com docs.snakkaz.com analytics.snakkaz.com
                   mcp.snakkaz.com help.snakkaz.com
-                  https://cdn.gpteng.co *.gpteng.co;
+                  https://snakkaz.com *.snakkaz.com;
       font-src 'self' data:;
       media-src 'self' blob:;
       object-src 'none';
@@ -62,7 +62,7 @@ export function applyEmergencyCspFixes(): void {
         // Add to existing connect-src
         updatedCsp = updatedCsp.replace(
           /(connect-src\s+[^;]+)/,
-          '$1 mcp.snakkaz.com help.snakkaz.com *.gpteng.co cdn.gpteng.co'
+          '$1 mcp.snakkaz.com help.snakkaz.com'
         );
       } else {
         // Add new connect-src directive

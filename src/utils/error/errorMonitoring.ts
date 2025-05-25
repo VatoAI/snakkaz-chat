@@ -18,7 +18,7 @@ const ERROR_CONFIG = {
   
   // Domains to suppress console errors for (typically CDNs, analytics)
   suppressDomains: [
-    'cdn.gpteng.co',
+    'snakkaz.com',
     'analytics.snakkaz.com',
     'googletagmanager.com',
     'google-analytics.com'

@@ -46,7 +46,7 @@ function testCspDefinition() {
     // Sjekk viktige direktiver
     const content = cspMeta.getAttribute('content') || '';
     
-    checkDirective(content, 'script-src', ['cloudflareinsights.com', 'cdn.gpteng.co']);
+    checkDirective(content, 'script-src', ['cloudflareinsights.com']);
     checkDirective(content, 'connect-src', ['snakkaz.com', 'supabase.co', 'cloudflareinsights.com']);
     
   } else {
