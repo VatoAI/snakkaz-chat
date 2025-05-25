@@ -11,6 +11,7 @@ import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
 import './assets/update-notification.css';
+import './styles/custom-emoji.css';
 
 // Import the preview-fix utilities - the App component will initialize them
 import '@/utils/supabase/preview-fix';

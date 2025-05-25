@@ -5,7 +5,9 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Smile, Heart, ThumbsUp, ThumbsDown, Laugh, Frown, PartyPopper, Plus, Settings, Star } from 'lucide-react';
 import { CustomEmojiManager } from '@/components/emoji/CustomEmojiManager';
+import { CustomEmojiDisplay } from '@/components/emoji/CustomEmojiDisplay';
 import { useCustomEmojis, type CustomEmoji } from '@/hooks/useCustomEmojis';
+import { isCustomEmoji as checkCustomEmoji } from '@/utils/customEmojiUtils';
 
 interface MessageReactionsProps {
   messageId: string;
@@ -66,10 +68,13 @@ export const MessageReactions: React.FC<MessageReactionsProps> = ({
   const handleReactionClick = (emoji: string, isCustom = false) => {
     const reaction = reactions[emoji];
     
+    // Determine if this is a custom emoji either by parameter or by checking
+    const isCustomEmoji = isCustom || checkCustomEmoji(emoji, customEmojis);
+    
     if (reaction?.hasReacted) {
-      onReactionRemove?.(messageId, emoji, isCustom);
+      onReactionRemove?.(messageId, emoji, isCustomEmoji);
     } else {
-      onReactionAdd?.(messageId, emoji, isCustom);
+      onReactionAdd?.(messageId, emoji, isCustomEmoji);
     }
     
     setIsOpen(false);
@@ -96,24 +101,8 @@ export const MessageReactions: React.FC<MessageReactionsProps> = ({
 
   const renderEmojiDisplay = (emoji: string, isCustom = false) => {
     if (isCustom) {
-      // For custom emojis, find the emoji data to get the URL
-      const customEmojiData = customEmojis.find(e => 
-        e.shortcode === emoji || e.name === emoji || e.id === emoji
-      );
-      
-      if (customEmojiData) {
-        return (
-          <img 
-            src={customEmojiData.url}
-            alt={customEmojiData.name || customEmojiData.shortcode} 
-            className="w-4 h-4 object-contain"
-            title={`:${customEmojiData.shortcode}:`}
-          />
-        );
-      }
-      
-      // Fallback for custom emojis that aren't found
-      return <span title="Custom emoji">🎨</span>;
+      // For custom emojis, use our CustomEmojiDisplay component
+      return <CustomEmojiDisplay emoji={emoji} size="xs" />;
     }
     return <span>{emoji}</span>;
   };

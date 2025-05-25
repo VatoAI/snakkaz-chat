@@ -25,4 +25,5 @@ export interface DecryptedMessage {
   media_url?: string; 
   media_type?: string;
   ttl?: number;
+  reactions?: Record<string, { count: number; users: string[]; hasReacted: boolean; isCustom?: boolean }>;
 }

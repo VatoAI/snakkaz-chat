@@ -4,6 +4,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { nb } from 'date-fns/locale';
 import { MoreVertical, Edit, Trash, Check, Clock, Pin, Share, Copy } from 'lucide-react';
 import { MessageReactions } from './MessageReactions';
+import { MessageTextWithEmojis } from '@/components/emoji/MessageTextWithEmojis';
 
 // Define UserProfile type to avoid using 'any'
 interface UserProfile {
@@ -27,6 +28,7 @@ interface ChatMessageProps {
   isPinned?: boolean;
   canPin?: boolean;
   chatType?: 'private' | 'group' | 'global';
+  disabled?: boolean;
 }
 
 export const ChatMessage: React.FC<ChatMessageProps> = ({ 
@@ -38,9 +40,12 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   onPin,
   onCopy,
   onShare,
+  onReactionAdd,
+  onReactionRemove,
   isPinned = false,
   canPin = true,
-  chatType = 'private'
+  chatType = 'private',
+  disabled = false
 }) => {
   const [showActions, setShowActions] = useState(false);
   const [pinning, setPinning] = useState(false);
@@ -138,7 +143,13 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
         {/* Message text */}
         {!message.is_deleted ? (
           <div className="text-sm break-words">
-            {message.content}
+            {message.content && (
+              <MessageTextWithEmojis 
+                text={message.content} 
+                emojiSize="sm" 
+                animated={true}
+              />
+            )}
           </div>
         ) : (
           <div className="text-sm italic text-gray-500">
@@ -166,6 +177,18 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
             </span>
           )}
         </div>
+
+        {/* Message Reactions */}
+        {!message.is_deleted && message.id && (
+          <MessageReactions
+            messageId={message.id}
+            reactions={message.reactions}
+            onReactionAdd={onReactionAdd}
+            onReactionRemove={onReactionRemove}
+            disabled={disabled}
+            className="mt-2"
+          />
+        )}
         
         {/* Action buttons */}
         {showActions && !message.is_deleted && (
