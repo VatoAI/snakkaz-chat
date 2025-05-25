@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import MobileMessageList from './MobileMessageList';
 import { ChatInputField } from '@/components/chat/ChatInputField';
+import { EnhancedMessageInput } from '@/components/chat/EnhancedMessageInput';
+import { MobileGestureWrapper } from '@/components/chat/MobileGestures';
 import { ChevronLeft, MoreVertical, Phone, Video } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar } from '@/components/ui/avatar';
@@ -63,6 +65,23 @@ export const MobileChatContainer: React.FC<MobileChatContainerProps> = ({
       await onSendMessage(text, mediaFile);
     } catch (error) {
       console.error('Failed to send message:', error);
+    }
+  };
+
+  // Enhanced message handler for the new input component
+  const handleEnhancedSendMessage = async (message: {
+    text: string;
+    files?: File[];
+    replyTo?: string;
+    mentions?: string[];
+    isVoiceMessage?: boolean;
+  }) => {
+    try {
+      // Handle file uploads (take first file for now, can be extended)
+      const mediaFile = message.files?.[0];
+      await onSendMessage(message.text, mediaFile);
+    } catch (error) {
+      console.error('Failed to send enhanced message:', error);
     }
   };
 
@@ -141,16 +160,22 @@ export const MobileChatContainer: React.FC<MobileChatContainerProps> = ({
 
       {/* Message input */}
       <div className="border-t border-cyberdark-800 bg-cyberdark-900 py-2 px-2 mobile-bottom-safe">
-        <ChatInputField
-          value={messageText}
-          onChange={setMessageText}
-          onSubmit={handleSendMessage}
-          placeholder="Skriv en melding..."
-          isUploading={isUploading}
-          maxMediaSizeMB={10}
-          replyToMessage={replyToMessage}
-          onCancelReply={() => setReplyToMessage(null)}
-        />
+        <MobileGestureWrapper onLongPress={() => {}} onSwipe={() => {}}>
+          <EnhancedMessageInput
+            value={messageText}
+            onChange={setMessageText}
+            onSubmit={handleEnhancedSendMessage}
+            placeholder="Skriv en melding..."
+            disabled={isUploading}
+            availableUsers={[]} // Can be populated with chat partner info
+            maxFileSize={10 * 1024 * 1024} // 10MB
+            allowVoiceMessages={true}
+            allowFileUploads={true}
+            showEmojiShortcuts={true}
+            autoResize={true}
+            className="bg-cyberdark-800/50"
+          />
+        </MobileGestureWrapper>
       </div>
 
       {/* Image viewer modal */}

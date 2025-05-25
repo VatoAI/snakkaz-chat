@@ -106,6 +106,7 @@ const preloadComponents = () => {
 // Import the PreviewBanner component
 import { PreviewBanner } from '@/components/preview/PreviewIndicator';
 import { DeveloperTools } from '@/components/preview/DeveloperTools';
+import { CustomEmojiTest } from '@/components/debug/CustomEmojiTest';
 
 export default function App() {
   // Track if we're in a preview environment
@@ -147,6 +148,7 @@ export default function App() {
       <BrowserRouter>
         <AuthProvider>
           {isPreviewEnv && <PreviewBanner />}
+          <CustomEmojiTest />
           <Suspense fallback={<LoadingSpinner />}>
             <Routes>
               <Route path="/login" element={<Login />} />

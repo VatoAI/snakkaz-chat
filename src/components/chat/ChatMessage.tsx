@@ -3,6 +3,7 @@ import { DecryptedMessage } from '@/types/message.d';
 import { formatDistanceToNow } from 'date-fns';
 import { nb } from 'date-fns/locale';
 import { MoreVertical, Edit, Trash, Check, Clock, Pin, Share, Copy } from 'lucide-react';
+import { MessageReactions } from './MessageReactions';
 
 // Define UserProfile type to avoid using 'any'
 interface UserProfile {
@@ -21,6 +22,8 @@ interface ChatMessageProps {
   onPin?: (id: string) => Promise<void>;
   onCopy?: (content: string) => void;
   onShare?: (message: Partial<DecryptedMessage>) => void;
+  onReactionAdd?: (messageId: string, emoji: string) => void;
+  onReactionRemove?: (messageId: string, emoji: string) => void;
   isPinned?: boolean;
   canPin?: boolean;
   chatType?: 'private' | 'group' | 'global';

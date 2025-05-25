@@ -621,23 +621,25 @@ curl "https://domain:2083/execute/Fileman/extract_files?dir=/public_html&file=sn
 - ✅ **Manual instructions** - Klare steg-for-steg instruksjoner hvis automation feiler
 
 ### Pågående deployment-status (25. mai 2025)
-- ❌ **Live Site Issue**: Site viser gamle Lovable referanser og build hash `index-DZCalXH2.js`
-- ✅ **Source Code Status**: Lokale filer er fullstendig renset for Lovable referanser
-- ✅ **Clean Build Verified**: Ny build `index-BThXBval.js` er ren og klar for deployment
-- 🔄 **Deployment Gap**: cPanel extraction må trigges på nytt for å deploye clean build
-- ⚠️ **API Endpoint Issue**: `/extract.php` returnerer HTML i stedet for extraction script output
+- ✅ **GitHub Actions Completed**: Deployment workflow ferdig (36s, succeeded)
+- ✅ **ZIP Upload Success**: `snakkaz-dist.zip` med clean build uploaded til `/public_html`
+- ❌ **Automatic Extraction Failed**: Alle cPanel API metoder ga "Access denied" (HTTP 403)
+- 🔧 **Manual Step Required**: ZIP file må ekstrakteres manuelt via cPanel File Manager
+- ❌ **Live Site Status**: Viser fortsatt gammel build hash `index-DZCalXH2.js`
+- 🎯 **Ready for Manual Completion**: Clean build `index-BThXBval.js` klar i ZIP, trenger kun manuell ekstraktering
 
 ### Identifiserte problemer som fortsatt må løses:
-1. **Deployment Gap** - Lokale clean builds når ikke live production (gamle deployment synlig)
+1. **GitHub Actions Deployment** - Venter på completion av triggered deployment workflow
 2. **cPanel API extraction** - `/extract.php` endpoint fungerer ikke korrekt, returnerer HTML
-3. **File propagation** - Clean build må re-deployes for å overskrive gamle Lovable-versjon
-4. **Site accessibility** - HTTP 200 errors indikerer deployment issues
+3. **Build Hash Propagation** - Live site må oppdateres fra `index-DZCalXH2.js` til `index-BThXBval.js`
+4. **Site accessibility** - HTTP errors må løses for proper site access
 
 ### Neste prioriterte oppgaver:
-1. 🚀 **Deploy Clean Build** - Trigger ny GitHub Actions deployment med clean `index-BThXBval.js` build  
-2. 🔧 **Fix cPanel Extraction** - Løs `/extract.php` endpoint så den utfører extraction i stedet for å returnere HTML
-3. 🧹 **Verify Live Cleanup** - Bekrefter at Lovable referanser er fjernet fra live site etter ny deployment
-4. 📧 **Mail System Integration** - Løser 406 subscription errors og integrerer mail.snakkaz.com fullstendig
+1. 🔧 **Manual ZIP Extraction** - Logg inn på cPanel og ekstrakterer `snakkaz-dist.zip` manuelt
+2. ✅ **Verify Clean Deployment** - Bekreft at `index-BThXBval.js` vises på live site
+3. 🧹 **Confirm Lovable Cleanup** - Verifiser at alle Lovable referanser er fjernet fra live site
+4. 🔄 **Test Site Functionality** - Full testing av chat og subscription features etter clean deployment
+5. 📧 **Mail System Integration** - Løser 406 subscription errors og integrerer mail.snakkaz.com fullstendig
 
 ### Technical Architecture Updates
 
@@ -655,6 +657,34 @@ curl "https://domain:2083/execute/Fileman/extract_files?dir=/public_html&file=sn
 - ✅ Ingen `cdn.gpteng.co` eller `*.gpteng.co` referanser i output
 - ✅ Alle Lovable/GPT Engineer referanser fjernet fra source
 - ✅ CSP konfigurasjoner cleaned og updated
+- ✅ New build hash generated: `index-BThXBval.js`
+
+**Deployment Progress Tracking (25. mai 2025):**
+- ⏰ **10:47 UTC**: Clean build `index-BThXBval.js` generated locally
+- ⏰ **10:48 UTC**: GitHub Actions deployment triggered via push to main
+- ⏰ **10:51 UTC**: Live site monitoring confirmed old hash `index-DZCalXH2.js` still active
+- 🔄 **Current Status**: Deployment in progress, monitoring script `monitor-live-deployment.sh` active
+- 📊 **Monitoring**: Checking every 60 seconds for hash change on https://snakkaz.com
+
+### Deployment Process Insights (25. mai 2025)
+
+**GitHub Actions Workflow Understanding:**
+- Build process happens in cloud (GitHub runners), not from local dist/
+- Local dist/ correctly in .gitignore as builds are generated on deployment
+- Workflow: `npm ci` → `npm run build` → ZIP creation → cPanel upload → extraction
+- Environment variables injected during cloud build from GitHub secrets
+
+**cPanel API Challenges Identified:**
+1. **extract.php endpoint issue**: Returns HTML instead of executing extraction
+2. **API method reliability**: Multiple fallback methods needed for robust deployment  
+3. **Manual intervention required**: When automated extraction fails
+4. **Propagation timing**: Build hash changes may take time to appear on live site
+
+**Monitoring and Verification Tools:**
+- Created `monitor-live-deployment.sh` for automated deployment tracking
+- Build hash comparison for deployment verification: `index-DZCalXH2.js` → `index-BThXBval.js`
+- Lovable reference cleanup verification via content scanning
+- Progressive monitoring with timeout and fallback to manual verification
 
 ---
 
@@ -707,4 +737,50 @@ For å jobbe mer effektivt med dette prosjektet, følg disse retningslinjene:
 
 Dette dokumentet skal brukes som referansepunkt for alle som jobber med Snakkaz Chat-prosjektet. Det bør oppdateres jevnlig med ny informasjon om prosjektstatus, arkitekturendringer og implementasjonsdetaljer.
 
-**Sist oppdatert: 25. mai 2025 - Kritiske cPanel API deployment-fikser og statusoppdateringer**
+---
+
+## KONTINUERINGSPUNKT - 25. MAI 2025, 11:30 UTC
+
+### Aktuell situasjon ved pause:
+- ✅ **GitHub Actions Completed**: Clean build deployment workflow succeeded (36s)
+- ✅ **ZIP Upload Success**: `snakkaz-dist.zip` med clean build `index-BThXBval.js` uploaded til cPanel
+- ✅ **Monitoring Script Fixed**: `monitor-live-deployment.sh` improved with timeouts and error handling
+- ✅ **Quick Check Script Created**: `quick-deployment-check.sh` for single-time status verification  
+- ❌ **Manual Step Required**: cPanel API extraction failed, ZIP må ekstrakteres manuelt
+- 📊 **Live Site Status**: Viser fortsatt `index-DZCalXH2.js` (gammel versjon)
+- 🎯 **Ready for Completion**: Kun én manuell handling trengs for å fullføre clean deployment
+
+### UMIDDELBARE STEG FOR Å FULLFØRE DEPLOYMENT:
+1. **Logg inn på cPanel**: Gå til https://[domain]:2083
+2. **Åpne File Manager**: Navigate til `/public_html`
+3. **Lokaliser ZIP**: Finn `snakkaz-dist.zip` filen
+4. **Ekstrakterer**: Høyreklikk → "Extract" → "Extract to current directory"
+5. **Cleanup**: Slett `snakkaz-dist.zip` etter vellykket ekstraktering
+6. **Verifiser**: Besøk https://snakkaz.com og sjekk for `index-BThXBval.js`
+
+### Neste steg etter manuell ekstraktering:
+1. **Sjekk deployment**: Kjør `./quick-deployment-check.sh` for umiddelbar status
+2. **Monitor continuous**: Kjør `./monitor-live-deployment.sh` for kontinuerlig overvåkning (forbedret versjon)
+3. **Verifiser hash change**: Sjekk at `index-BThXBval.js` vises på live site
+4. **Test chat system UI/UX**: Fokuser på forbedringer av chat-grensesnitt som forespurt
+5. **Resolve mail integration**: Fiks 406 subscription errors og integrer mail.snakkaz.com
+
+### Monitoring Script Improvements (25. mai 2025, 11:30 UTC):
+**Fixed Issues:**
+- ✅ **Timeout Protection**: Curl commands now have 10-15 second timeouts
+- ✅ **Signal Handling**: Proper SIGINT/SIGTERM handling for graceful exit
+- ✅ **Connectivity Testing**: Pre-check site reachability before monitoring
+- ✅ **Responsive Sleep**: 1-second intervals allow Ctrl+C interrupt
+- ✅ **Error Handling**: Better handling of network failures and edge cases
+
+**Available Scripts:**
+- `./monitor-live-deployment.sh` - Continuous monitoring with 30-second intervals
+- `./quick-deployment-check.sh` - Single-time status check without waiting
+
+### Teknisk bekreftelse ved fullføring:
+- Build hash skal vise: `index-BThXBval.js`
+- Ingen `gpteng.co` eller `lovable` referanser på live site
+- Chat system fungerer normalt
+- Subscription features uten 406 errors
+
+**Sist oppdatert: 25. mai 2025, 11:30 UTC - Monitoring scripts fixed, clean build ready for manual extraction**
