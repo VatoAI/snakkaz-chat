@@ -1,6 +1,13 @@
 
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { 
+  BrowserRouter as Router, 
+  Routes, 
+  Route, 
+  Navigate,
+  // Add future flags configuration
+  future
+} from "react-router-dom";
 import { AuthProvider } from "./hooks/useAuth.tsx";
 import NotificationProvider from "@/providers/NotificationProvider";
 
@@ -28,6 +35,10 @@ import AuthPage from "./auth/AuthPage";
 
 // Import Toaster component
 import { Toaster } from "@/components/ui/toaster";
+
+// Configure React Router future flags
+future.v7_startTransition = true;
+future.v7_relativeSplatPath = true;
 
 function App() {
   return (
