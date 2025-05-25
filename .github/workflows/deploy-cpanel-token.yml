@@ -160,7 +160,7 @@ jobs:
           # Test API token connection
           echo "Testing cPanel API token connection..."
           TEST_RESPONSE=$(curl -s -H "Authorization: cpanel ${{ secrets.CPANEL_USERNAME }}:${{ secrets.CPANEL_API_TOKEN }}" \
-                         "https://${{ secrets.CPANEL_DOMAIN }}:2083/execute/Fileman/list_files?dir=%2Fpublic_html")
+                         "https://${{ secrets.CPANEL_DOMAIN }}:2083/execute/Fileman/list_files?dir=/public_html")
           
           if echo "$TEST_RESPONSE" | grep -q "error"; then
             echo "❌ API token test failed!"
@@ -222,27 +222,24 @@ jobs:
         run: |
           echo "Performing extraction via cPanel API (bypassing server PHP issues)..."
           
-          # Use cPanel file manager API to extract the ZIP file
+          # First, let's try the correct cPanel API format for file extraction
+          # Using proper parameter format and GET request for extraction
           EXTRACT_RESPONSE=$(curl -s -H "Authorization: cpanel ${{ secrets.CPANEL_USERNAME }}:${{ secrets.CPANEL_API_TOKEN }}" \
-                          -X POST \
-                          "https://${{ secrets.CPANEL_DOMAIN }}:2083/execute/Fileman/extract_files" \
-                          -d "dir=%2Fpublic_html&file=snakkaz-dist.zip&type=zip")
+                          "https://${{ secrets.CPANEL_DOMAIN }}:2083/execute/Fileman/extract_files?dir=/public_html&file=snakkaz-dist.zip&type=zip")
           
           echo "cPanel API Response: $EXTRACT_RESPONSE"
           
           # Check if extraction was successful
-          if [[ "$EXTRACT_RESPONSE" == *'"status":1'* ]]; then
+          if [[ "$EXTRACT_RESPONSE" == *'"status":1'* ]] || [[ "$EXTRACT_RESPONSE" == *'"errors":null'* ]]; then
             echo "✅ Extraction successful via cPanel API!"
             echo "extraction_success=true" >> $GITHUB_ENV
             
             # Clean up the ZIP file after successful extraction
             echo "Cleaning up ZIP file..."
             DELETE_RESPONSE=$(curl -s -H "Authorization: cpanel ${{ secrets.CPANEL_USERNAME }}:${{ secrets.CPANEL_API_TOKEN }}" \
-                            -X POST \
-                            "https://${{ secrets.CPANEL_DOMAIN }}:2083/execute/Fileman/delete_files" \
-                            -d "dir=%2Fpublic_html&file=snakkaz-dist.zip")
+                            "https://${{ secrets.CPANEL_DOMAIN }}:2083/execute/Fileman/delete_files?dir=/public_html&file=snakkaz-dist.zip")
             
-            if [[ "$DELETE_RESPONSE" == *'"status":1'* ]]; then
+            if [[ "$DELETE_RESPONSE" == *'"status":1'* ]] || [[ "$DELETE_RESPONSE" == *'"errors":null'* ]]; then
               echo "✅ ZIP file cleaned up successfully"
             else
               echo "⚠️ ZIP file cleanup may have failed, but deployment succeeded"
@@ -250,8 +247,56 @@ jobs:
             
             echo "DEPLOYMENT COMPLETE"
           else
-            echo "❌ Extraction failed via cPanel API"
-            echo "extraction_success=false" >> $GITHUB_ENV
+            echo "❌ Primary extraction method failed, trying alternative approach..."
+            
+            # Fallback: Try using compress_files API in reverse (decompress mode)
+            ALT_EXTRACT_RESPONSE=$(curl -s -H "Authorization: cpanel ${{ secrets.CPANEL_USERNAME }}:${{ secrets.CPANEL_API_TOKEN }}" \
+                                "https://${{ secrets.CPANEL_DOMAIN }}:2083/execute/Compress/extract_files?dir=/public_html&file=snakkaz-dist.zip&type=zip")
+            
+            echo "Alternative API Response: $ALT_EXTRACT_RESPONSE"
+            
+            if [[ "$ALT_EXTRACT_RESPONSE" == *'"status":1'* ]] || [[ "$ALT_EXTRACT_RESPONSE" == *'"errors":null'* ]]; then
+              echo "✅ Alternative extraction method successful!"
+              echo "extraction_success=true" >> $GITHUB_ENV
+              
+              # Clean up the ZIP file
+              DELETE_RESPONSE=$(curl -s -H "Authorization: cpanel ${{ secrets.CPANEL_USERNAME }}:${{ secrets.CPANEL_API_TOKEN }}" \
+                              "https://${{ secrets.CPANEL_DOMAIN }}:2083/execute/Fileman/delete_files?dir=/public_html&file=snakkaz-dist.zip")
+              
+              echo "DEPLOYMENT COMPLETE via alternative method"
+            else
+              echo "❌ Both extraction methods failed"
+              echo "extraction_success=false" >> $GITHUB_ENV
+              echo "Manual extraction required: snakkaz-dist.zip uploaded to /public_html"
+              echo ""
+              echo "📋 Manual steps to complete deployment:"
+              echo "1. Log into cPanel File Manager"
+              echo "2. Navigate to /public_html"
+              echo "3. Right-click on snakkaz-dist.zip"
+              echo "4. Select 'Extract' from the context menu"
+              echo "5. Choose 'Extract to current directory'"
+              echo "6. Delete the snakkaz-dist.zip file after extraction"
+            fi
+          fi
+      
+      # Step 5: Verify deployment success
+      - name: Verify deployment
+        if: env.extraction_success == 'true'
+        run: |
+          echo "Verifying deployment by checking if site is accessible..."
+          
+          # Wait a moment for files to propagate
+          sleep 10
+          
+          # Test if the main site loads
+          SITE_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" https://www.snakkaz.com/ || echo "000")
+          
+          if [[ "$SITE_RESPONSE" == "200" ]]; then
+            echo "✅ Site is accessible and returning HTTP 200"
+            echo "deployment_verified=true" >> $GITHUB_ENV
+          else
+            echo "⚠️ Site returned HTTP $SITE_RESPONSE - may need DNS propagation time"
+            echo "deployment_verified=false" >> $GITHUB_ENV
           fi
       
       # Create a detailed deployment summary
@@ -294,9 +339,22 @@ jobs:
             echo "File extraction via cPanel API failed." >> $GITHUB_STEP_SUMMARY
           fi
           
+          # Site verification status
+          if [[ "${{ env.deployment_verified }}" == "true" ]]; then
+            echo "### ✅ Site Verification" >> $GITHUB_STEP_SUMMARY
+            echo "Site is accessible and returning HTTP 200." >> $GITHUB_STEP_SUMMARY
+          elif [[ "${{ env.deployment_verified }}" == "false" ]]; then
+            echo "### ⚠️ Site Verification" >> $GITHUB_STEP_SUMMARY
+            echo "Site verification failed or incomplete - may need time for propagation." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### ⏳ Site Verification" >> $GITHUB_STEP_SUMMARY
+            echo "Site verification skipped (extraction failed)." >> $GITHUB_STEP_SUMMARY
+          fi
+          
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 🔍 Post-Deployment Verification" >> $GITHUB_STEP_SUMMARY
-          echo "1. Check if the site loads at https://www.snakkaz.com" >> $GITHUB_STEP_SUMMARY
-          echo "2. Verify CSS and JavaScript files load correctly" >> $GITHUB_STEP_SUMMARY
-          echo "3. Test site navigation to ensure SPA routing works" >> $GITHUB_STEP_SUMMARY
-          echo "4. Check that temporary files were automatically cleaned up" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔍 Post-Deployment Actions" >> $GITHUB_STEP_SUMMARY
+          echo "1. **Verify Clean References**: Check that cdn.gpteng.co references are removed" >> $GITHUB_STEP_SUMMARY
+          echo "2. **Test Site Loading**: Visit https://www.snakkaz.com and verify it loads" >> $GITHUB_STEP_SUMMARY
+          echo "3. **Check CSP Headers**: Ensure Content Security Policy is working correctly" >> $GITHUB_STEP_SUMMARY
+          echo "4. **Test Navigation**: Verify SPA routing works properly" >> $GITHUB_STEP_SUMMARY
+          echo "5. **Check Console**: Look for any remaining external CDN errors" >> $GITHUB_STEP_SUMMARY
