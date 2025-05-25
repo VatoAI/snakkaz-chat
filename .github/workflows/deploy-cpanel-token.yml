@@ -216,50 +216,41 @@ jobs:
             echo "zip_upload_success=true" >> $GITHUB_ENV
           fi
       
-      # Step 4: Create an extraction script
-      - name: Create extraction script
+      # Step 4: Execute extraction via cPanel API (bypassing PHP execution issues)
+      - name: Execute extraction via cPanel API
         if: env.zip_upload_success == 'true'
         run: |
-          echo "Creating improved extraction script..."
-          # Use the improved extraction script from the repository
-          cp improved-extract.php extract.php
-          echo "Extraction script created: extract.php (using improved version)"
-      
-      # Step 5: Upload the extraction script
-      - name: Upload extraction script
-        if: env.zip_upload_success == 'true'
-        run: |
-          echo "Uploading extraction script..."
+          echo "Performing extraction via cPanel API (bypassing server PHP issues)..."
           
-          SCRIPT_RESPONSE=$(curl -s -H "Authorization: cpanel ${{ secrets.CPANEL_USERNAME }}:${{ secrets.CPANEL_API_TOKEN }}" \
-                         -F "dir=/public_html" \
-                         -F "file=@extract.php" \
-                         -F "overwrite=1" \
-                         "https://${{ secrets.CPANEL_DOMAIN }}:2083/execute/Fileman/upload_files")
+          # Use cPanel file manager API to extract the ZIP file
+          EXTRACT_RESPONSE=$(curl -s -H "Authorization: cpanel ${{ secrets.CPANEL_USERNAME }}:${{ secrets.CPANEL_API_TOKEN }}" \
+                          -X POST \
+                          "https://${{ secrets.CPANEL_DOMAIN }}:2083/execute/Fileman/extract_files" \
+                          -d "dir=%2Fpublic_html&file=snakkaz-dist.zip&type=zip")
           
-          if echo "$SCRIPT_RESPONSE" | grep -q "errors"; then
-            echo "❌ Extraction script upload failed!"
-            echo "Error: $(echo "$SCRIPT_RESPONSE" | grep -o '\"errors\":\[[^\]]*\]')"
-            echo "script_upload_success=false" >> $GITHUB_ENV
-          else
-            echo "✅ Extraction script uploaded successfully!"
-            echo "script_upload_success=true" >> $GITHUB_ENV
-          fi
-      
-      # Step 6: Execute the extraction script
-      - name: Execute extraction script
-        if: env.script_upload_success == 'true'
-        run: |
-          echo "Executing extraction script..."
-          EXTRACT_RESULT=$(curl -s "https://www.snakkaz.com/extract.php")
-          echo "$EXTRACT_RESULT"
+          echo "cPanel API Response: $EXTRACT_RESPONSE"
           
-          # Check for multiple success indicators per DEPLOYMENT-FIX-MAY24-2025.md
-          if [[ "$EXTRACT_RESULT" == *"✅ Extraction successful"* || "$EXTRACT_RESULT" == *"DEPLOYMENT COMPLETE"* ]]; then
-            echo "✅ Extraction script executed successfully!"
+          # Check if extraction was successful
+          if [[ "$EXTRACT_RESPONSE" == *'"status":1'* ]]; then
+            echo "✅ Extraction successful via cPanel API!"
             echo "extraction_success=true" >> $GITHUB_ENV
+            
+            # Clean up the ZIP file after successful extraction
+            echo "Cleaning up ZIP file..."
+            DELETE_RESPONSE=$(curl -s -H "Authorization: cpanel ${{ secrets.CPANEL_USERNAME }}:${{ secrets.CPANEL_API_TOKEN }}" \
+                            -X POST \
+                            "https://${{ secrets.CPANEL_DOMAIN }}:2083/execute/Fileman/delete_files" \
+                            -d "dir=%2Fpublic_html&file=snakkaz-dist.zip")
+            
+            if [[ "$DELETE_RESPONSE" == *'"status":1'* ]]; then
+              echo "✅ ZIP file cleaned up successfully"
+            else
+              echo "⚠️ ZIP file cleanup may have failed, but deployment succeeded"
+            fi
+            
+            echo "DEPLOYMENT COMPLETE"
           else
-            echo "❌ Failed to execute extraction script or results unclear"
+            echo "❌ Extraction failed via cPanel API"
             echo "extraction_success=false" >> $GITHUB_ENV
           fi
       
@@ -294,22 +285,13 @@ jobs:
             echo "Application ZIP file upload failed." >> $GITHUB_STEP_SUMMARY
           fi
           
-          # Extraction script status
-          if [[ "${{ env.script_upload_success }}" == "true" ]]; then
-            echo "### ✅ Extraction Script" >> $GITHUB_STEP_SUMMARY
-            echo "Extraction script uploaded successfully." >> $GITHUB_STEP_SUMMARY
-          else
-            echo "### ❌ Extraction Script" >> $GITHUB_STEP_SUMMARY
-            echo "Extraction script upload failed or was not attempted." >> $GITHUB_STEP_SUMMARY
-          fi
-          
           # Extraction execution status
           if [[ "${{ env.extraction_success }}" == "true" ]]; then
             echo "### ✅ Extraction Process" >> $GITHUB_STEP_SUMMARY
-            echo "Files extracted successfully on the server." >> $GITHUB_STEP_SUMMARY
+            echo "Files extracted successfully via cPanel API." >> $GITHUB_STEP_SUMMARY
           else
             echo "### ❌ Extraction Process" >> $GITHUB_STEP_SUMMARY
-            echo "File extraction failed or was not attempted." >> $GITHUB_STEP_SUMMARY
+            echo "File extraction via cPanel API failed." >> $GITHUB_STEP_SUMMARY
           fi
           
           echo "" >> $GITHUB_STEP_SUMMARY
