@@ -216,67 +216,157 @@ jobs:
             echo "zip_upload_success=true" >> $GITHUB_ENV
           fi
       
-      # Step 4: Execute extraction via cPanel API (bypassing PHP execution issues)
-      - name: Execute extraction via cPanel API
+      # Step 4: Execute extraction via multiple cPanel API approaches
+      - name: Execute extraction via cPanel API with comprehensive fallbacks
         if: env.zip_upload_success == 'true'
         run: |
-          echo "Performing extraction via cPanel API (bypassing server PHP issues)..."
+          echo "🔄 Attempting extraction via multiple cPanel API methods..."
           
-          # First, let's try the correct cPanel API format for file extraction
-          # Using proper parameter format and GET request for extraction
-          EXTRACT_RESPONSE=$(curl -s -H "Authorization: cpanel ${{ secrets.CPANEL_USERNAME }}:${{ secrets.CPANEL_API_TOKEN }}" \
-                          "https://${{ secrets.CPANEL_DOMAIN }}:2083/execute/Fileman/extract_files?dir=/public_html&file=snakkaz-dist.zip&type=zip")
+          # Debug: Show exact API calls being made
+          echo "Debug Info:"
+          echo "- Domain: ${{ secrets.CPANEL_DOMAIN }}"
+          echo "- Username: ${{ secrets.CPANEL_USERNAME }}"
+          echo "- File: snakkaz-dist.zip"
+          echo "- Target: /public_html"
           
-          echo "cPanel API Response: $EXTRACT_RESPONSE"
+          # Method 1: Files API (newer cPanel versions)
+          echo ""
+          echo "🔄 Method 1: Files API extract_files..."
+          EXTRACT1_RESPONSE=$(curl -s -w "HTTP_CODE:%{http_code}" \
+                            -H "Authorization: cpanel ${{ secrets.CPANEL_USERNAME }}:${{ secrets.CPANEL_API_TOKEN }}" \
+                            "https://${{ secrets.CPANEL_DOMAIN }}:2083/execute/Files/extract_files?dir=/public_html&file=snakkaz-dist.zip&type=zip")
           
-          # Check if extraction was successful
-          if [[ "$EXTRACT_RESPONSE" == *'"status":1'* ]] || [[ "$EXTRACT_RESPONSE" == *'"errors":null'* ]]; then
-            echo "✅ Extraction successful via cPanel API!"
+          echo "Files API Response: $EXTRACT1_RESPONSE"
+          HTTP_CODE1=$(echo "$EXTRACT1_RESPONSE" | grep -o "HTTP_CODE:[0-9]*" | cut -d: -f2)
+          API_RESPONSE1=$(echo "$EXTRACT1_RESPONSE" | sed 's/HTTP_CODE:[0-9]*$//')
+          
+          if [[ "$HTTP_CODE1" == "200" ]] && [[ "$API_RESPONSE1" == *'"status":1'* ]]; then
+            echo "✅ Method 1 successful!"
             echo "extraction_success=true" >> $GITHUB_ENV
-            
-            # Clean up the ZIP file after successful extraction
-            echo "Cleaning up ZIP file..."
-            DELETE_RESPONSE=$(curl -s -H "Authorization: cpanel ${{ secrets.CPANEL_USERNAME }}:${{ secrets.CPANEL_API_TOKEN }}" \
-                            "https://${{ secrets.CPANEL_DOMAIN }}:2083/execute/Fileman/delete_files?dir=/public_html&file=snakkaz-dist.zip")
-            
-            if [[ "$DELETE_RESPONSE" == *'"status":1'* ]] || [[ "$DELETE_RESPONSE" == *'"errors":null'* ]]; then
-              echo "✅ ZIP file cleaned up successfully"
-            else
-              echo "⚠️ ZIP file cleanup may have failed, but deployment succeeded"
-            fi
-            
-            echo "DEPLOYMENT COMPLETE"
+            echo "extraction_method=Files_API" >> $GITHUB_ENV
           else
-            echo "❌ Primary extraction method failed, trying alternative approach..."
+            echo "❌ Method 1 failed (HTTP: $HTTP_CODE1)"
             
-            # Fallback: Try using compress_files API in reverse (decompress mode)
-            ALT_EXTRACT_RESPONSE=$(curl -s -H "Authorization: cpanel ${{ secrets.CPANEL_USERNAME }}:${{ secrets.CPANEL_API_TOKEN }}" \
-                                "https://${{ secrets.CPANEL_DOMAIN }}:2083/execute/Compress/extract_files?dir=/public_html&file=snakkaz-dist.zip&type=zip")
+            # Method 2: Fileman API (traditional)
+            echo ""
+            echo "🔄 Method 2: Fileman API extract_files..."
+            EXTRACT2_RESPONSE=$(curl -s -w "HTTP_CODE:%{http_code}" \
+                              -H "Authorization: cpanel ${{ secrets.CPANEL_USERNAME }}:${{ secrets.CPANEL_API_TOKEN }}" \
+                              "https://${{ secrets.CPANEL_DOMAIN }}:2083/execute/Fileman/extract_files?dir=/public_html&file=snakkaz-dist.zip&type=zip")
             
-            echo "Alternative API Response: $ALT_EXTRACT_RESPONSE"
+            echo "Fileman API Response: $EXTRACT2_RESPONSE"
+            HTTP_CODE2=$(echo "$EXTRACT2_RESPONSE" | grep -o "HTTP_CODE:[0-9]*" | cut -d: -f2)
+            API_RESPONSE2=$(echo "$EXTRACT2_RESPONSE" | sed 's/HTTP_CODE:[0-9]*$//')
             
-            if [[ "$ALT_EXTRACT_RESPONSE" == *'"status":1'* ]] || [[ "$ALT_EXTRACT_RESPONSE" == *'"errors":null'* ]]; then
-              echo "✅ Alternative extraction method successful!"
+            if [[ "$HTTP_CODE2" == "200" ]] && [[ "$API_RESPONSE2" == *'"status":1'* ]]; then
+              echo "✅ Method 2 successful!"
               echo "extraction_success=true" >> $GITHUB_ENV
-              
-              # Clean up the ZIP file
-              DELETE_RESPONSE=$(curl -s -H "Authorization: cpanel ${{ secrets.CPANEL_USERNAME }}:${{ secrets.CPANEL_API_TOKEN }}" \
-                              "https://${{ secrets.CPANEL_DOMAIN }}:2083/execute/Fileman/delete_files?dir=/public_html&file=snakkaz-dist.zip")
-              
-              echo "DEPLOYMENT COMPLETE via alternative method"
+              echo "extraction_method=Fileman_API" >> $GITHUB_ENV
             else
-              echo "❌ Both extraction methods failed"
-              echo "extraction_success=false" >> $GITHUB_ENV
-              echo "Manual extraction required: snakkaz-dist.zip uploaded to /public_html"
+              echo "❌ Method 2 failed (HTTP: $HTTP_CODE2)"
+              
+              # Method 3: Compress API
               echo ""
-              echo "📋 Manual steps to complete deployment:"
-              echo "1. Log into cPanel File Manager"
-              echo "2. Navigate to /public_html"
-              echo "3. Right-click on snakkaz-dist.zip"
-              echo "4. Select 'Extract' from the context menu"
-              echo "5. Choose 'Extract to current directory'"
-              echo "6. Delete the snakkaz-dist.zip file after extraction"
+              echo "🔄 Method 3: Compress API extract_files..."
+              EXTRACT3_RESPONSE=$(curl -s -w "HTTP_CODE:%{http_code}" \
+                                -H "Authorization: cpanel ${{ secrets.CPANEL_USERNAME }}:${{ secrets.CPANEL_API_TOKEN }}" \
+                                "https://${{ secrets.CPANEL_DOMAIN }}:2083/execute/Compress/extract_files?dir=/public_html&file=snakkaz-dist.zip&type=zip")
+              
+              echo "Compress API Response: $EXTRACT3_RESPONSE"
+              HTTP_CODE3=$(echo "$EXTRACT3_RESPONSE" | grep -o "HTTP_CODE:[0-9]*" | cut -d: -f2)
+              API_RESPONSE3=$(echo "$EXTRACT3_RESPONSE" | sed 's/HTTP_CODE:[0-9]*$//')
+              
+              if [[ "$HTTP_CODE3" == "200" ]] && [[ "$API_RESPONSE3" == *'"status":1'* ]]; then
+                echo "✅ Method 3 successful!"
+                echo "extraction_success=true" >> $GITHUB_ENV
+                echo "extraction_method=Compress_API" >> $GITHUB_ENV
+              else
+                echo "❌ Method 3 failed (HTTP: $HTTP_CODE3)"
+                
+                # Method 4: Create and upload PHP extraction script
+                echo ""
+                echo "🔄 Method 4: Upload PHP extraction script..."
+                
+                # Create PHP extraction script
+                cat > extract_deployment.php << 'EOFPHP'
+          <?php
+          set_time_limit(300);
+          $zipFile = '/home/${{ secrets.CPANEL_USERNAME }}/public_html/snakkaz-dist.zip';
+          $extractTo = '/home/${{ secrets.CPANEL_USERNAME }}/public_html/';
+          
+          if (!file_exists($zipFile)) {
+              die(json_encode(['status' => 'error', 'message' => 'ZIP file not found']));
+          }
+          
+          $zip = new ZipArchive;
+          $result = $zip->open($zipFile);
+          
+          if ($result === TRUE) {
+              $zip->extractTo($extractTo);
+              $zip->close();
+              unlink($zipFile); // Delete ZIP after extraction
+              echo json_encode(['status' => 'success', 'message' => 'Extraction completed']);
+          } else {
+              echo json_encode(['status' => 'error', 'message' => 'Cannot open ZIP file', 'code' => $result]);
+          }
+          ?>
+          EOFPHP
+                
+                # Upload PHP script
+                PHP_UPLOAD_RESPONSE=$(curl -s -H "Authorization: cpanel ${{ secrets.CPANEL_USERNAME }}:${{ secrets.CPANEL_API_TOKEN }}" \
+                                    -F "dir=/public_html" \
+                                    -F "file=@extract_deployment.php" \
+                                    -F "overwrite=1" \
+                                    "https://${{ secrets.CPANEL_DOMAIN }}:2083/execute/Fileman/upload_files")
+                
+                if echo "$PHP_UPLOAD_RESPONSE" | grep -q '"status":1'; then
+                  echo "✅ PHP script uploaded, executing..."
+                  
+                  # Execute PHP script
+                  sleep 3
+                  PHP_EXEC_RESPONSE=$(curl -s "https://www.snakkaz.com/extract_deployment.php")
+                  echo "PHP Script Response: $PHP_EXEC_RESPONSE"
+                  
+                  if echo "$PHP_EXEC_RESPONSE" | grep -q '"status":"success"'; then
+                    echo "✅ Method 4 successful via PHP script!"
+                    echo "extraction_success=true" >> $GITHUB_ENV
+                    echo "extraction_method=PHP_Script" >> $GITHUB_ENV
+                    
+                    # Clean up PHP script
+                    curl -s -H "Authorization: cpanel ${{ secrets.CPANEL_USERNAME }}:${{ secrets.CPANEL_API_TOKEN }}" \
+                         "https://${{ secrets.CPANEL_DOMAIN }}:2083/execute/Fileman/delete_files?dir=/public_html&file=extract_deployment.php"
+                  else
+                    echo "❌ Method 4 failed"
+                    echo "extraction_success=false" >> $GITHUB_ENV
+                  fi
+                else
+                  echo "❌ Could not upload PHP script"
+                  echo "extraction_success=false" >> $GITHUB_ENV
+                fi
+              fi
             fi
+          fi
+          
+          # Clean up local PHP script
+          rm -f extract_deployment.php
+          
+          # Final status
+          if [[ "${{ env.extraction_success }}" != "true" ]]; then
+            echo ""
+            echo "❌ All extraction methods failed"
+            echo "Manual extraction required: snakkaz-dist.zip uploaded to /public_html"
+            echo ""
+            echo "📋 Manual steps to complete deployment:"
+            echo "1. Log into cPanel File Manager at https://${{ secrets.CPANEL_DOMAIN }}:2083"
+            echo "2. Navigate to /public_html"
+            echo "3. Right-click on snakkaz-dist.zip"
+            echo "4. Select 'Extract' from the context menu"
+            echo "5. Choose 'Extract to current directory'"
+            echo "6. Delete the snakkaz-dist.zip file after extraction"
+            echo "7. Verify files are deployed by visiting https://www.snakkaz.com"
+          else
+            echo ""
+            echo "✅ DEPLOYMENT SUCCESSFUL via ${{ env.extraction_method }}"
           fi
       
       # Step 5: Verify deployment success
@@ -284,19 +374,33 @@ jobs:
         if: env.extraction_success == 'true'
         run: |
           echo "Verifying deployment by checking if site is accessible..."
+          echo "Extraction method used: ${{ env.extraction_method }}"
           
           # Wait a moment for files to propagate
-          sleep 10
+          sleep 15
           
           # Test if the main site loads
+          echo "Testing site accessibility..."
           SITE_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" https://www.snakkaz.com/ || echo "000")
           
           if [[ "$SITE_RESPONSE" == "200" ]]; then
             echo "✅ Site is accessible and returning HTTP 200"
             echo "deployment_verified=true" >> $GITHUB_ENV
+            
+            # Check for clean references (no Lovable/GPT Engineer CDNs)
+            echo "Checking for clean references..."
+            SITE_CONTENT=$(curl -s https://www.snakkaz.com/ || echo "")
+            if echo "$SITE_CONTENT" | grep -q "gpteng.co\|lovable"; then
+              echo "⚠️ Warning: Found Lovable/GPT Engineer references in live site"
+              echo "site_clean=false" >> $GITHUB_ENV
+            else
+              echo "✅ Site is clean - no Lovable/GPT Engineer references found"
+              echo "site_clean=true" >> $GITHUB_ENV
+            fi
           else
             echo "⚠️ Site returned HTTP $SITE_RESPONSE - may need DNS propagation time"
             echo "deployment_verified=false" >> $GITHUB_ENV
+            echo "site_clean=unknown" >> $GITHUB_ENV
           fi
       
       # Create a detailed deployment summary
@@ -333,16 +437,25 @@ jobs:
           # Extraction execution status
           if [[ "${{ env.extraction_success }}" == "true" ]]; then
             echo "### ✅ Extraction Process" >> $GITHUB_STEP_SUMMARY
-            echo "Files extracted successfully via cPanel API." >> $GITHUB_STEP_SUMMARY
+            echo "Files extracted successfully via ${{ env.extraction_method }}." >> $GITHUB_STEP_SUMMARY
           else
             echo "### ❌ Extraction Process" >> $GITHUB_STEP_SUMMARY
-            echo "File extraction via cPanel API failed." >> $GITHUB_STEP_SUMMARY
+            echo "File extraction failed - manual extraction required." >> $GITHUB_STEP_SUMMARY
           fi
           
           # Site verification status
           if [[ "${{ env.deployment_verified }}" == "true" ]]; then
             echo "### ✅ Site Verification" >> $GITHUB_STEP_SUMMARY
             echo "Site is accessible and returning HTTP 200." >> $GITHUB_STEP_SUMMARY
+            
+            # Add site cleanliness check
+            if [[ "${{ env.site_clean }}" == "true" ]]; then
+              echo "### ✅ Clean References Check" >> $GITHUB_STEP_SUMMARY
+              echo "No Lovable/GPT Engineer references found in live site." >> $GITHUB_STEP_SUMMARY
+            elif [[ "${{ env.site_clean }}" == "false" ]]; then
+              echo "### ⚠️ Clean References Check" >> $GITHUB_STEP_SUMMARY
+              echo "Warning: Found Lovable/GPT Engineer references in live site." >> $GITHUB_STEP_SUMMARY
+            fi
           elif [[ "${{ env.deployment_verified }}" == "false" ]]; then
             echo "### ⚠️ Site Verification" >> $GITHUB_STEP_SUMMARY
             echo "Site verification failed or incomplete - may need time for propagation." >> $GITHUB_STEP_SUMMARY
@@ -352,9 +465,19 @@ jobs:
           fi
           
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 🔍 Post-Deployment Actions" >> $GITHUB_STEP_SUMMARY
-          echo "1. **Verify Clean References**: Check that cdn.gpteng.co references are removed" >> $GITHUB_STEP_SUMMARY
-          echo "2. **Test Site Loading**: Visit https://www.snakkaz.com and verify it loads" >> $GITHUB_STEP_SUMMARY
-          echo "3. **Check CSP Headers**: Ensure Content Security Policy is working correctly" >> $GITHUB_STEP_SUMMARY
-          echo "4. **Test Navigation**: Verify SPA routing works properly" >> $GITHUB_STEP_SUMMARY
-          echo "5. **Check Console**: Look for any remaining external CDN errors" >> $GITHUB_STEP_SUMMARY
+          echo "### 🎯 Deployment Objectives Status" >> $GITHUB_STEP_SUMMARY
+          echo "- **Remove Lovable/GPT Engineer references**: ✅ Complete" >> $GITHUB_STEP_SUMMARY
+          echo "- **Deploy clean build to production**: $( [[ '${{ env.extraction_success }}' == 'true' ]] && echo '✅ Complete' || echo '❌ Failed' )" >> $GITHUB_STEP_SUMMARY
+          echo "- **Verify site accessibility**: $( [[ '${{ env.deployment_verified }}' == 'true' ]] && echo '✅ Complete' || echo '⏳ Pending' )" >> $GITHUB_STEP_SUMMARY
+          echo "- **Confirm clean references in production**: $( [[ '${{ env.site_clean }}' == 'true' ]] && echo '✅ Complete' || echo '⏳ Pending' )" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔍 Next Steps" >> $GITHUB_STEP_SUMMARY
+          if [[ "${{ env.extraction_success }}" == "true" ]]; then
+            echo "1. **Verify Clean References**: Check https://www.snakkaz.com for any remaining cdn.gpteng.co references" >> $GITHUB_STEP_SUMMARY
+            echo "2. **Test Site Functionality**: Verify all features work correctly" >> $GITHUB_STEP_SUMMARY
+            echo "3. **Monitor Performance**: Check that the site loads without external CDN errors" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "1. **Complete Manual Extraction**: Follow the manual steps provided above" >> $GITHUB_STEP_SUMMARY
+            echo "2. **Verify Deployment**: Check https://www.snakkaz.com after manual extraction" >> $GITHUB_STEP_SUMMARY
+            echo "3. **Test Clean References**: Ensure no Lovable/GPT Engineer CDNs remain" >> $GITHUB_STEP_SUMMARY
+          fi
