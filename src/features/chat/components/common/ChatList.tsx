@@ -4,8 +4,8 @@ import { Shield, ShieldCheck, UserCircle, Users } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { nb } from 'date-fns/locale';
 import { useFriendships } from '@/hooks/useFriendships';
-import { useGroups } from '@/hooks/useGroups';
-import { useMessages } from '@/hooks/useMessages';
+import { useGroups } from '../../hooks/useGroups';
+import { useMessages } from '../../hooks/useMessages';
 
 // Type for combined conversations (direct messages and groups)
 type ConversationItem = {

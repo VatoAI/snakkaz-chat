@@ -1,6 +1,6 @@
 
 import React, { useEffect, useRef, useState } from 'react';
-import { ChatMessage } from '../common/ChatMessage';
+import { ChatMessage } from './ChatMessage';
 import { GroupMessage } from '@/types/group';
 import { useAuth } from '@/hooks/useAuth';
 import { Loader2, ChevronDown } from 'lucide-react';

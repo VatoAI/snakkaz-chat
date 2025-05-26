@@ -1,7 +1,7 @@
 
 import React, { useRef, useState } from 'react';
 import { UploadCloud, X, CheckCircle, AlertCircle } from 'lucide-react';
-import { cx, theme } from '@/lib/theme';
+import { cx, theme } from '../lib/theme';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 

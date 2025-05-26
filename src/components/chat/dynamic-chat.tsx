@@ -66,14 +66,14 @@ export const AIFeatures = {
 // Preload chat components based on user activity
 export function preloadChatComponents(componentType: 'direct' | 'group' | 'ai' | 'all') {
   if (componentType === 'direct' || componentType === 'all') {
-    import('@/features/chat/components/common/MessageList');
-    import('@/features/chat/components/common/ChatList');
-    import('@/features/chat/components/common/SecureMessageViewer');
+    import('@/components/chat/MessageList');
+    import('@/components/chat/ChatList');
+    import('@/components/chat/SecureMessageViewer');
   }
   
   if (componentType === 'group' || componentType === 'all') {
-    import('@/features/chat/components/group/GroupMessageList');
-    import('@/features/chat/components/group/GroupList');
+    import('@/components/chat/GroupMessageList');
+    import('@/components/chat/GroupList');
   }
   
   if (componentType === 'ai' || componentType === 'all') {
