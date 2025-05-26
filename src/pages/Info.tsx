@@ -1,7 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, MessageSquare, Shield, Lock, Globe, Home, Zap, Crown, Clock, RefreshCw, Users, Star, Tag, Gift, InfoIcon, HelpCircle, Mail, Heart, Check } from "lucide-react";
+import { ChevronLeft, MessageSquare, Shield, Lock, Globe, Home, Zap, Crown, Clock, RefreshCw, Users, Star, Tag, Gift, InfoIcon, HelpCircle, Mail, Heart, Check, ArrowRight } from "lucide-react";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
 const InfoPage = () => {
   const navigate = useNavigate();
@@ -38,6 +39,84 @@ const InfoPage = () => {
             <Home className="mr-2" size={18} />
             Hjem
           </Button>
+        </div>
+
+        {/* New User Introduction */}
+        <div className="max-w-3xl mx-auto mb-12">
+          <div className="p-6 rounded-xl bg-gradient-to-r from-cyberblue-900/20 to-cyberblue-800/10 border border-cyberblue-700/30">
+            <h2 className="text-2xl font-bold mb-4 text-center text-cyberblue-200">
+              Ny her? Les hvorfor SnakkaZ er ditt beste valg
+            </h2>
+            
+            <p className="mb-6 text-lg text-gray-300 leading-relaxed">
+              Vi forstår at det finnes mange kommunikasjonsplattformer der ute. Det som gjør SnakkaZ 
+              annerledes er vår unike kombinasjon av brukervennlighet, sikkerhet og innovative funksjoner 
+              som virkelig setter brukeren i fokus.
+            </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div className="flex flex-col bg-cyberdark-900/70 p-5 rounded-lg">
+                <h3 className="text-lg font-semibold mb-3 text-cyberblue-300 flex items-center">
+                  <Shield className="mr-2" size={20} />
+                  Sikkerhet uten kompromisser
+                </h3>
+                <p className="text-gray-400 mb-4">
+                  Vi har bygget SnakkaZ fra bunnen med sikkerhet som førsteprioritet. 
+                  Ende-til-ende-kryptering er standard på alle samtaler, og ingen - 
+                  ikke engang vi - kan lese meldingene dine.
+                </p>
+                <ul className="space-y-2 mt-auto">
+                  <li className="flex items-start">
+                    <Check className="text-cyberblue-400 mr-2 flex-shrink-0 mt-1" size={16} />
+                    <span className="text-gray-300">Militærgrads kryptering</span>
+                  </li>
+                  <li className="flex items-start">
+                    <Check className="text-cyberblue-400 mr-2 flex-shrink-0 mt-1" size={16} />
+                    <span className="text-gray-300">Ingen tredjepartslesing av data</span>
+                  </li>
+                  <li className="flex items-start">
+                    <Check className="text-cyberblue-400 mr-2 flex-shrink-0 mt-1" size={16} />
+                    <span className="text-gray-300">Automatisk sletting av data</span>
+                  </li>
+                </ul>
+              </div>
+              
+              <div className="flex flex-col bg-cyberdark-900/70 p-5 rounded-lg">
+                <h3 className="text-lg font-semibold mb-3 text-green-300 flex items-center">
+                  <Zap className="mr-2" size={20} />
+                  Sømløs brukeropplevelse
+                </h3>
+                <p className="text-gray-400 mb-4">
+                  Vi har designet en intuitiv og elegant brukergrensesnitt som er enkel å bruke,
+                  samtidig som den er kraftig nok for de mest krevende brukerne.
+                </p>
+                <ul className="space-y-2 mt-auto">
+                  <li className="flex items-start">
+                    <Check className="text-green-400 mr-2 flex-shrink-0 mt-1" size={16} />
+                    <span className="text-gray-300">Lynrask og responsiv</span>
+                  </li>
+                  <li className="flex items-start">
+                    <Check className="text-green-400 mr-2 flex-shrink-0 mt-1" size={16} />
+                    <span className="text-gray-300">Intuitiv navigasjon</span>
+                  </li>
+                  <li className="flex items-start">
+                    <Check className="text-green-400 mr-2 flex-shrink-0 mt-1" size={16} />
+                    <span className="text-gray-300">Elegant design for alle enheter</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+            
+            <div className="text-center">
+              <Button 
+                className="bg-gradient-to-r from-cyberblue-600 to-cyberblue-500 hover:from-cyberblue-500 hover:to-cyberblue-400 text-white"
+                onClick={() => navigate("/register")}
+              >
+                Kom i gang nå
+                <ArrowRight className="ml-2" size={16} />
+              </Button>
+            </div>
+          </div>
         </div>
 
         <div className="max-w-3xl mx-auto">

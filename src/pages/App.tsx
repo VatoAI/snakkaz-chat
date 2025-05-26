@@ -24,6 +24,7 @@ import Settings from "./Settings";
 import Security from "./Security";
 import Groups from "./Groups";
 import Info from "./Info";
+import Premium from "./Premium";
 import Admin from "./Admin";
 import NotFound from "./NotFound";
 import ChatPage from "./chat/ChatPage";
@@ -61,6 +62,7 @@ function App() {
               <Route path="settings" element={<Settings />} />
               <Route path="security" element={<Security />} />
               <Route path="info" element={<Info />} />
+              <Route path="premium" element={<Premium />} />
               <Route path="admin" element={<Admin />} />
               <Route path="download" element={<Download />} />
             </Route>

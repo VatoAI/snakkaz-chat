@@ -211,73 +211,8 @@ Alle meldingstabeller har følgende felt for pin-funksjonalitet:
 ### Tjenester og Integrasjoner
 - Cloudflare for sikkerhet, caching og CDN
 - Supabase for backend (authentication, database, storage, realtime)
-- lovable.dev for hosting/deployment
 - Namecheap for domene-administrasjon
 - Fremtidige planer for Claude AI-integrasjon
-
-## SUPABASE PREVIEW
-
-Snakkaz Chat bruker Supabase for backend-tjenester, og har støtte for lokale og remote preview-miljøer for utvikling og testing.
-
-### Lokalt Supabase-miljø
-
-For lokal utvikling kan du kjøre Supabase lokalt ved å bruke følgende kommandoer:
-
-```bash
-# Initialisere Supabase-prosjekt (første gang)
-npm run supabase:setup
-
-# Starte lokal Supabase-instans
-npm run supabase:start
-
-# Kjøre applikasjon med lokal Supabase
-npm run dev:with-supabase
-
-# Sjekke status for lokal Supabase
-npm run supabase:status
-
-# Stoppe lokal Supabase-instans
-npm run supabase:stop
-```
-
-### Supabase Preview for Pull Requests
-
-Når en pull request opprettes mot main-branch, vil GitHub Actions automatisk opprette en Supabase preview-branch. Dette gir et isolert testmiljø spesifikt for den pull requesten.
-
-#### Hvordan bruke Preview-miljøer:
-
-1. Opprett en pull request mot main-branch
-2. GitHub Actions vil opprette en Supabase preview-branch
-3. En kommentar på pull requesten vil inneholde instruksjoner for hvordan man kobler til preview-miljøet
-4. Når pull requesten lukkes, vil preview-branchen slettes automatisk
-
-#### Manuell Oppsett av Preview:
-
-```bash
-# Link til eksisterende Supabase-prosjekt
-./supabase-preview.sh link
-# Følg instruksjonene og skriv inn prosjekt-referansen når du blir bedt om det
-
-# Kjør applikasjonen med miljøvariabel for branch
-SUPABASE_BRANCH=branch-navn npm run dev
-```
-
-#### Administrere Databaseskjema:
-
-```bash
-# Hente skjema fra remote prosjekt
-./supabase-preview.sh db-pull
-
-# Dytte lokale endringer til remote prosjekt
-./supabase-preview.sh db-push
-
-# Tilbakestille lokal database (sletter data!)
-./supabase-preview.sh db-reset
-```
-
-Dette preview-systemet lar utviklere teste endringer mot en isolert kopi av databasen før de merges til hovedbranchen.
-
-
 
 ## SUPABASE PREVIEW
 
@@ -756,6 +691,9 @@ Snakkaz Chat har nå implementert et komplett system for håndtering av egendefi
 - **`CustomEmojiDisplay` komponent**: Viser egendefinerte emojier
 - **`MessageTextWithEmojis` komponent**: Behandler tekst med emoji-koder
 - **`customEmojiUtils.ts`**: Hjelpefunksjoner for emoji-håndtering
+- **`EmojiSearch.tsx`**: Søke- og kategoriseringsgrensesnitt for emojier
+- **`emojiSearchUtils.ts`**: Hjelpefunksjoner for emoji-søk og -filtrering
+- **`emojiAnalyticsUtils.ts`**: Verktøy for sporing og analyse av emoji-bruk
 
 ### Funksjonalitet
 - Opplasting av egendefinerte emojier
@@ -764,6 +702,8 @@ Snakkaz Chat har nå implementert et komplett system for håndtering av egendefi
 - Favorittmerking av emojier
 - Kategorisering av emojier
 - Bruksstatistikk for emojier
+- Avansert emoji-søk med relevansrangering
+- Emoji-analytics med brukssporing og trendanalyse
 
 ### Integrasjon
 - Egendefinerte emojier lagres i Supabase
@@ -825,4 +765,62 @@ Snakkaz Chat har nå implementert et komplett system for håndtering av egendefi
 - Chat system fungerer normalt
 - Subscription features uten 406 errors
 
-**Sist oppdatert: 25. mai 2025, 14:45 UTC - Custom emoji system implementert, React Router warnings fixed, ready for testing**
+**Sist oppdatert: 26. mai 2025, 14:45 UTC - Custom emoji system implementert, React Router warnings fixed, prosjektstruktur revidert**
+
+---
+
+## NY STANDARDISERT PROSJEKTSTRUKTUR
+
+For å forbedre oversikten og organisering av prosjektet, har vi definert følgende standardiserte mappestruktur. Dette muliggjør enklere navigering, reduserer duplisering, og skaper en mer konsistent kodebase.
+
+### Hovedmapper
+```
+/workspaces/snakkaz-chat/
+├── docs/              # All dokumentasjon samlet i én mappe
+│   ├── architecture/  # Systemarkitektur og design
+│   ├── deployment/    # Deployment-relatert dokumentasjon
+│   ├── features/      # Feature-dokumentasjon (f.eks. emoji-system)
+│   ├── troubleshooting/ # Feilsøkingsguider
+│   └── development/   # Utviklerveiledninger
+├── scripts/           # Alle shell scripts og verktøy
+│   ├── deployment/    # Deployment-relaterte scripts
+│   ├── migration/     # Database-migrasjonsscripts
+│   ├── verification/  # Verifikasjonsscripts
+│   └── development/   # Utviklingsverktøy/scripts
+├── src/               # Applikasjonskildekode
+│   ├── assets/        # Statiske ressurser
+│   ├── components/    # React-komponenter (UI)
+│   ├── features/      # Feature-moduler med egen struktur
+│   │   ├── auth/      # Autentisering-feature
+│   │   ├── chat/      # Chat-feature
+│   │   ├── emoji/     # Emoji-feature
+│   │   └── groups/    # Grupper-feature
+│   ├── hooks/         # React hooks
+│   ├── integrations/  # Tredjepartsintegrasjoner
+│   ├── pages/         # React Router-sider
+│   ├── services/      # Tjenester og businesslogikk
+│   ├── utils/         # Utility-funksjoner
+│   └── types/         # TypeScript-typer
+└── public/            # Offentlig tilgjengelige filer
+```
+
+### Feature-basert Struktur
+Hver feature-mappe følger en konsistent struktur:
+
+```
+/src/features/emoji/
+├── components/        # Komponentene spesifikk for denne featuren
+├── hooks/             # Hooks relatert til denne featuren
+├── services/          # Tjenester for denne featuren
+├── utils/             # Utility-funksjoner for denne featuren
+├── types.ts           # TypeScript-typer for denne featuren
+└── index.ts           # Eksporterer alle public-facing deler av featuren
+```
+
+Denne strukturen gjør at vi kan:
+1. Organisere koden basert på funksjonsområder (features)
+2. Redusere duplisering på tvers av prosjektet
+3. Gjøre det enklere å finne og forstå kodekomponenter 
+4. Sikre konsistens i hele prosjektet
+
+For implementasjonsplan og strategi for å migrere til denne strukturen, se `docs/architecture/PROJECT-STRUCTURE-MIGRATION.md` for detaljerte steg.
