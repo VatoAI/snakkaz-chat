@@ -1,0 +1,1 @@
+../scripts/deployment/verify-deployment.sh

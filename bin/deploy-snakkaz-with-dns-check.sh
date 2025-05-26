@@ -1,0 +1,1 @@
+../scripts/deployment/deploy-snakkaz-with-dns-check.sh

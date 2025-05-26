@@ -1,0 +1,1 @@
+../scripts/verification/check-dns-mail.sh

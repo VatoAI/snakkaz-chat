@@ -13,14 +13,14 @@ import { initializePreview, shouldShowPreviewNotice, getPreviewDisplayInfo } fro
 // Import dynamically loaded feature pages
 const ProfilePage = lazy(() => import("@/pages/Profile"));
 const SettingsPage = lazy(() => import("@/pages/Settings"));
-const GroupChatPage = lazy(() => import("@/pages/GroupChatPage"));
+const GroupChatPage = lazy(() => import("@/features/chat/components/group/GroupChatPage"));
 
 // Lazy load components for initial routes
 const Login = lazy(() => import("@/pages/Login"));
 const Register = lazy(() => import("@/pages/Register"));
 const ForgotPassword = lazy(() => import("@/pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
-const Chat = lazy(() => import("@/pages/OptimizedChat"));
+const Chat = lazy(() => import("@/features/chat/components/common/OptimizedChat"));
 const Subscription = lazy(() => import("@/pages/Subscription"));
 
 // Loading component

@@ -18,32 +18,32 @@ const ChatComponentLoading = () => (
 
 // Dynamic import for the complex chat feature components
 export const ChatMessageList = createDynamicComponent(
-  () => import('@/components/chat/MessageList'),
+  () => import('@/features/chat/components/common/MessageList'),
   <ChatComponentLoading />
 );
 
 export const GroupMessageList = createDynamicComponent(
-  () => import('@/components/chat/GroupMessageList'),
+  () => import('@/features/chat/components/group/GroupMessageList'),
   <ChatComponentLoading />
 );
 
 export const ChatList = createDynamicComponent(
-  () => import('@/components/chat/ChatList'),
+  () => import('@/features/chat/components/common/ChatList'),
   <ChatComponentLoading />
 );
 
 export const GroupList = createDynamicComponent(
-  () => import('@/components/chat/GroupList'),
+  () => import('@/features/chat/components/group/GroupList'),
   <ChatComponentLoading />
 );
 
 export const MediaUploader = createDynamicComponent(
-  () => import('@/components/chat/MediaUploader'),
+  () => import('@/features/chat/components/MediaUploader'),
   <ChatComponentLoading />
 );
 
 export const SecureMessageViewer = createDynamicComponent(
-  () => import('@/components/chat/SecureMessageViewer'),
+  () => import('@/features/chat/components/common/SecureMessageViewer'),
   <ChatComponentLoading />
 );
 
@@ -66,14 +66,14 @@ export const AIFeatures = {
 // Preload chat components based on user activity
 export function preloadChatComponents(componentType: 'direct' | 'group' | 'ai' | 'all') {
   if (componentType === 'direct' || componentType === 'all') {
-    import('@/components/chat/MessageList');
-    import('@/components/chat/ChatList');
-    import('@/components/chat/SecureMessageViewer');
+    import('@/features/chat/components/common/MessageList');
+    import('@/features/chat/components/common/ChatList');
+    import('@/features/chat/components/common/SecureMessageViewer');
   }
   
   if (componentType === 'group' || componentType === 'all') {
-    import('@/components/chat/GroupMessageList');
-    import('@/components/chat/GroupList');
+    import('@/features/chat/components/group/GroupMessageList');
+    import('@/features/chat/components/group/GroupList');
   }
   
   if (componentType === 'ai' || componentType === 'all') {

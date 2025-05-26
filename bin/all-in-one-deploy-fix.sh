@@ -1,0 +1,1 @@
+../scripts/deployment/all-in-one-deploy-fix.sh

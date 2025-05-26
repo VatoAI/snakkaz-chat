@@ -1,0 +1,49 @@
+/* Update notification styles */
+.update-notification {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  background-color: rgba(0, 0, 0, 0.85);
+  padding: 16px;
+  color: white;
+  animation: slideUp 0.5s ease-out;
+}
+
+.update-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.update-banner p {
+  margin: 0;
+  padding-right: 16px;
+}
+
+#update-now {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.2s;
+}
+
+#update-now:hover {
+  background-color: #45a049;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}

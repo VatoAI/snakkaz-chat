@@ -1,0 +1,1 @@
+../scripts/deployment/setup-cpanel-token-deployment.sh

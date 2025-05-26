@@ -1,0 +1,1 @@
+../scripts/deployment/deploy-fixed-application.sh

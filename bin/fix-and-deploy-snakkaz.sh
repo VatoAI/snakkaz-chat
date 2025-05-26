@@ -1,0 +1,1 @@
+../scripts/deployment/fix-and-deploy-snakkaz.sh
