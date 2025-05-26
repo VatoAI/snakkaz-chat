@@ -6,13 +6,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { EncryptionService } from './encryptionService';
-import { Button } from '../../components/ui/button';
-import { Input } from '../../components/ui/input';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '../../components/ui/card';
+import { EncryptionService } from '@/utils/encryption/encryptionService';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Loader2, Lock, AlertTriangle, Copy, Shield } from 'lucide-react';
-import { useToast } from '../../components/ui/use-toast';
-import * as GroupE2EE from '../../utils/encryption/group-e2ee';
+import { useToast } from '@/hooks/use-toast';
+import * as GroupE2EE from '@/utils/encryption/group-e2ee';
 
 // Encryption service instance
 const encryptionService = new EncryptionService();

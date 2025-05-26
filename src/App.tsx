@@ -21,6 +21,7 @@ const Register = lazy(() => import("@/pages/Register"));
 const ForgotPassword = lazy(() => import("@/pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
 const Chat = lazy(() => import("@/features/chat/components/common/OptimizedChat"));
+const BasicChatPage = lazy(() => import("@/pages/BasicChatPage"));
 const Subscription = lazy(() => import("@/pages/Subscription"));
 
 // Loading component
@@ -157,6 +158,14 @@ export default function App() {
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/info" element={lazy(() => import("@/pages/Info"))} />
               <Route 
+                path="/basic-chat" 
+                element={
+                  <RequireAuth>
+                    <BasicChatPage />
+                  </RequireAuth>
+                } 
+              />
+              <Route 
                 path="/chat/*" 
                 element={
                   <RequireAuth>
@@ -196,8 +205,8 @@ export default function App() {
                   </RequireAuth>
                 } 
               />
-              <Route path="/" element={<Navigate to="/chat" replace />} />
-              <Route path="*" element={<Navigate to="/chat" replace />} />
+              <Route path="/" element={<Navigate to="/basic-chat" replace />} />
+              <Route path="*" element={<Navigate to="/basic-chat" replace />} />
             </Routes>
           </Suspense>
           <Toaster />
