@@ -2,7 +2,7 @@ import { useState, FormEvent } from "react";
 import { Send, X, Shield, Crown, FileUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { SecurityBadge } from "../security/SecurityBadge";
+import { SecurityBadge } from "@/components/chat/security/SecurityBadge";
 import { SecurityLevel } from "@/types/security";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";

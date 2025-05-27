@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { ChatMessage } from './ChatMessage';
-import { cx, theme } from '../lib/theme';
+import { cx, theme } from '@/lib/theme';
 
 interface ChatMessageListProps {
   messages: any[];

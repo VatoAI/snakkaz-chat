@@ -1,5 +1,5 @@
 import React from 'react';
-import { UserAvatar } from '../header/UserAvatar';
+import { UserAvatar } from '@/components/chat/header/UserAvatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { GroupMember, GroupRole } from '@/types/group';

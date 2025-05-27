@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { MoreVertical, Edit, Trash, X, Download, Copy, Eye } from 'lucide-react';
-import { cx, theme } from '../lib/theme';
+import { cx, theme } from '@/lib/theme';
 
 interface ChatMessageProps {
   message: any; // Message object with at least id, content, sender_id

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Image as ImageIcon, X, Clock } from 'lucide-react';
-import { cx, theme } from '../lib/theme';
+import { cx, theme } from '@/lib/theme';
 import { MediaUploader } from './MediaUploader';
 
 interface ChatInputFieldProps {

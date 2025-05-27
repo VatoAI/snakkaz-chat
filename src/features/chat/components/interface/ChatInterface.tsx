@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { cx, theme } from '../lib/theme';
+import { cx, theme } from '@/lib/theme';
 import { ChatMessageList } from './ChatMessageList';
 import { ChatInputField } from './ChatInputField';
 import { ArrowLeft, User, Users, Info } from 'lucide-react';

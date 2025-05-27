@@ -1,6 +1,6 @@
 import React from 'react';
 import { ChevronLeft, Shield, Lock, Users, Download, Upload, RefreshCw, Settings } from 'lucide-react';
-import { UserAvatar } from '../header/UserAvatar';
+import { UserAvatar } from '@/components/chat/header/UserAvatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Group } from '@/types/group';

@@ -1,6 +1,6 @@
 import { useRef, useEffect } from "react";
 import { DecryptedMessage } from "@/types/message";
-import { MessageGroup } from "@/components/message/MessageGroup";
+import { MessageGroup } from "@/features/chat/components/group/MessageGroup";
 import type { UserStatus } from "@/types/presence";
 
 interface DirectMessageListProps {
