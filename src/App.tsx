@@ -20,6 +20,7 @@ const Login = lazy(() => import("@/pages/Login"));
 const Register = lazy(() => import("@/pages/Register"));
 const ForgotPassword = lazy(() => import("@/pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
+const Info = lazy(() => import("@/pages/Info"));
 const Chat = lazy(() => import("@/features/chat/components/common/OptimizedChat"));
 const BasicChatPage = lazy(() => import("@/pages/BasicChatPage"));
 const Subscription = lazy(() => import("@/pages/Subscription"));
@@ -154,7 +155,7 @@ export default function App() {
               <Route path="/register" element={<Register />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
-              <Route path="/info" element={lazy(() => import("@/pages/Info"))} />
+              <Route path="/info" element={<Info />} />
               <Route 
                 path="/basic-chat" 
                 element={

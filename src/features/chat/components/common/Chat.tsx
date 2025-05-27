@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import MainNav from '@/components/navigation/MainNav';
+import { UnifiedNavigation } from '@/components/navigation/UnifiedNavigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -231,7 +231,7 @@ const Chat = () => {
   // Regular desktop layout or mobile chat list
   return (
     <div className="min-h-screen bg-cyberdark-950 text-cybergold-300 pb-16 md:pb-0 md:pt-16">
-      <MainNav />
+      <UnifiedNavigation variant="horizontal" />
       <main className="container max-w-4xl py-8 px-4">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-cybergold-400">Chat</h1>

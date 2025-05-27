@@ -1,14 +1,14 @@
 import React from 'react';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import SimpleChat from '@/components/chat/SimpleChat';
-import MainNav from '@/components/navigation/MainNav';
+import { UnifiedNavigation } from '@/components/navigation/UnifiedNavigation';
 import { Card } from '@/components/ui/card';
 
 const SimpleChatPage: React.FC = () => {
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-background">
-        <MainNav />
+        <UnifiedNavigation variant="horizontal" />
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-4xl mx-auto">
             <div className="mb-6">

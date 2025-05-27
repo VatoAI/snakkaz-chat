@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -17,11 +17,8 @@ import {
   MessageCircle
 } from 'lucide-react';
 
-type NavigationVariant = 'horizontal' | 'vertical' | 'bottom';
+type NavigationVariant = 'horizontal' | 'vertical' | 'bottom' | 'mobile';
 
-/**
- * NavItem type represents a navigation route
- */
 interface NavItem {
   path: string;
   label: string;
@@ -31,7 +28,7 @@ interface NavItem {
   hideOnMobile?: boolean;
 }
 
-interface AppNavigationProps {
+interface UnifiedNavigationProps {
   variant?: NavigationVariant;
   className?: string;
   activeIndicator?: boolean;
@@ -40,7 +37,7 @@ interface AppNavigationProps {
   onItemSelect?: () => void;
 }
 
-export const AppNavigation: React.FC<AppNavigationProps> = ({
+export const UnifiedNavigation: React.FC<UnifiedNavigationProps> = ({
   variant = 'horizontal',
   className,
   activeIndicator = true,
@@ -216,6 +213,7 @@ export const AppNavigation: React.FC<AppNavigationProps> = ({
     variant === 'horizontal' && "flex items-center gap-1 p-0.5",
     variant === 'vertical' && "flex flex-col gap-2 p-0.5",
     variant === 'bottom' && "fixed bottom-0 left-0 right-0 bg-cyberdark-900 border-t border-cyberdark-700 p-2 flex items-center justify-around",
+    variant === 'mobile' && "fixed bottom-0 left-0 right-0 bg-cyberdark-900 border-t border-cyberdark-700 px-2 pt-2 pb-2 mobile-bottom-safe flex items-center justify-around z-50 shadow-lg",
     className
   );
 
@@ -298,8 +296,8 @@ const NavButton: React.FC<NavButtonProps> = ({
     variant === 'vertical' && isActive && "bg-gradient-to-r from-cyberdark-800 to-cyberdark-850",
     variant === 'vertical' && !isActive && "hover:bg-cyberdark-800/40",
     
-    // Bottom variant styling
-    variant === 'bottom' && "flex-col items-center p-2 gap-1",
+    // Bottom/Mobile variant styling
+    (variant === 'bottom' || variant === 'mobile') && "flex-col items-center p-2 gap-1 w-full",
     
     // Compact mode
     compact && "p-1.5",
@@ -312,11 +310,12 @@ const NavButton: React.FC<NavButtonProps> = ({
   
   const iconClasses = cn(
     "transition-transform",
-    variant !== 'bottom' && "group-hover:scale-110",
+    variant !== 'bottom' && variant !== 'mobile' && "group-hover:scale-110",
     compact ? "h-4 w-4" : "h-5 w-5",
     isActive 
       ? (adminButton ? "text-emerald-400" : "text-cybergold-400") 
-      : (adminButton ? "text-emerald-600" : "text-cybergold-600")
+      : (adminButton ? "text-emerald-600" : "text-cybergold-600"),
+    (variant === 'mobile' || variant === 'bottom') && isActive && "animate-pulse-subtle"
   );
   
   const labelClasses = cn(
@@ -325,7 +324,7 @@ const NavButton: React.FC<NavButtonProps> = ({
     isActive 
       ? (adminButton ? "text-emerald-400" : "text-cybergold-400") 
       : (adminButton ? "text-emerald-600" : "text-cybergold-600"),
-    variant === 'bottom' ? "text-xs mt-1" : "",
+    (variant === 'bottom' || variant === 'mobile') ? "text-xs mt-1" : "",
     variant === 'horizontal' && !showLabel && "hidden",
     variant === 'horizontal' && showLabel && "hidden sm:block"
   );
@@ -350,7 +349,7 @@ const NavButton: React.FC<NavButtonProps> = ({
       )}
       
       {/* Active indicator dot (small visual enhancement) */}
-      {isActive && variant !== 'bottom' && (
+      {isActive && (variant !== 'bottom' && variant !== 'mobile') && (
         <div className="absolute -bottom-0.5 left-1/2 transform -translate-x-1/2 w-1 h-1 rounded-full bg-cybergold-400 shadow-[0_0_5px_rgba(218,188,69,0.8)]" />
       )}
       
@@ -364,4 +363,4 @@ const NavButton: React.FC<NavButtonProps> = ({
   );
 };
 
-export default AppNavigation;
+export default UnifiedNavigation;

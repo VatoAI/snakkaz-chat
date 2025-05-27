@@ -6,7 +6,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useMobilePinSecurity } from '@/hooks/useMobilePinSecurity';
 import { AppHeader } from '@/components/chat/header/AppHeader';
-import { MobileNavigation } from '@/components/MobileNavigation';
+import { UnifiedNavigation } from '@/components/navigation/UnifiedNavigation';
 
 interface MobileLayoutProps {
   children: ReactNode;
@@ -154,7 +154,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({ children }) => {
       {/* Bottom navigation - only show on list views, not in chat conversation */}
       {!hideNavigation && (
         <div className="fixed bottom-0 left-0 right-0 z-50">
-          <MobileNavigation />
+          <UnifiedNavigation variant="mobile" />
         </div>
       )}
       

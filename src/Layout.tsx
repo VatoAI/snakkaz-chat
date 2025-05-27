@@ -4,7 +4,7 @@ import { useAuth } from "./hooks/useAuth";
 import { useIsMobile } from "./hooks/use-mobile";
 import MobileLayout from "./components/mobile/MobileLayout";
 import { AppHeader } from "./components/chat/header/AppHeader";
-import AppNavigation from "./components/nav/AppNavigation";
+import { UnifiedNavigation } from "./components/navigation/UnifiedNavigation";
 
 const Layout = () => {
   const { user } = useAuth();
@@ -33,7 +33,7 @@ const Layout = () => {
         showDownloadButton={true}
       >
         <div className="hidden lg:block">
-          <AppNavigation 
+          <UnifiedNavigation 
             variant="horizontal" 
             activeIndicator={true} 
             compact={false}

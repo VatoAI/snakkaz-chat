@@ -6,7 +6,7 @@
  */
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import MainNav from '@/components/navigation/MainNav';
+import { UnifiedNavigation } from '@/components/navigation/UnifiedNavigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -62,7 +62,7 @@ const ChatPage = () => {
   
   return (
     <div className="min-h-screen bg-cyberdark-950 text-white">
-      <MainNav />
+      <UnifiedNavigation variant="horizontal" />
       
       <div className="container mx-auto py-4 px-2 md:px-4">
         <h1 className="text-2xl font-bold text-cybergold-400 mb-6">Chat</h1>
