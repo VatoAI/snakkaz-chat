@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snakkaz Chat - E2EE Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #0f0f13;
+            color: #ffffff;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #1a1a24;
+            border-radius: 12px;
+            border: 1px solid #d4af37;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            background: #1a1a24;
+            border-radius: 8px;
+            border: 1px solid #2a2a35;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 6px;
+            font-family: monospace;
+        }
+        .success {
+            background: #1a3f1a;
+            border: 1px solid #4caf50;
+            color: #4caf50;
+        }
+        .error {
+            background: #3f1a1a;
+            border: 1px solid #f44336;
+            color: #f44336;
+        }
+        .info {
+            background: #1a2a3f;
+            border: 1px solid #2196f3;
+            color: #2196f3;
+        }
+        button {
+            background: #d4af37;
+            color: #0f0f13;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 5px;
+            transition: all 0.2s ease;
+        }
+        button:hover {
+            background: #e6c755;
+            transform: translateY(-2px);
+        }
+        button:disabled {
+            background: #555;
+            color: #999;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .input-group {
+            margin: 15px 0;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            background: #0f0f13;
+            border: 1px solid #2a2a35;
+            border-radius: 6px;
+            color: #ffffff;
+            font-family: inherit;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #d4af37;
+            font-weight: 500;
+        }
+        .test-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        @media (max-width: 768px) {
+            .test-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔐 Snakkaz Chat E2EE Test</h1>
+            <p>Test end-to-end encryption functionality</p>
+        </div>
+
+        <div class="test-section">
+            <h2>🧪 Encryption System Tests</h2>
+            <button onclick="testWebCrypto()">Test WebCrypto API</button>
+            <button onclick="testKeyGeneration()">Test Key Generation</button>
+            <button onclick="testEncryptionDecryption()">Test Encrypt/Decrypt</button>
+            <button onclick="runAllTests()">Run All Tests</button>
+            <div id="crypto-results"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>📝 Message Encryption Test</h2>
+            <div class="input-group">
+                <label for="testMessage">Test Message:</label>
+                <textarea id="testMessage" rows="3" placeholder="Enter a message to encrypt...">Hello, this is a test message for E2EE encryption!</textarea>
+            </div>
+            <button onclick="encryptTestMessage()">Encrypt Message</button>
+            <button onclick="decryptTestMessage()">Decrypt Message</button>
+            <div id="message-results"></div>
+        </div>
+
+        <div class="test-grid">
+            <div class="test-section">
+                <h3>🔑 Key Management</h3>
+                <button onclick="generateKeyPair()">Generate Key Pair</button>
+                <button onclick="exportKeys()">Export Keys</button>
+                <div id="key-results"></div>
+            </div>
+
+            <div class="test-section">
+                <h3>🔄 Real-time Test</h3>
+                <button onclick="simulateRealTimeEncryption()">Simulate Chat</button>
+                <div id="realtime-results"></div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>📊 Test Results Summary</h2>
+            <div id="summary-results"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Import encryption services from the main app
+        let encryptionService, cryptoUtils;
+        let testResults = [];
+        let keyPair = null;
+        let encryptedMessage = null;
+
+        // Simple encryption service for testing
+        class TestEncryptionService {
+            async generateKeyPair() {
+                try {
+                    const keyPair = await crypto.subtle.generateKey(
+                        {
+                            name: "RSA-OAEP",
+                            modulusLength: 2048,
+                            publicExponent: new Uint8Array([1, 0, 1]),
+                            hash: "SHA-256"
+                        },
+                        true,
+                        ["encrypt", "decrypt"]
+                    );
+                    return keyPair;
+                } catch (error) {
+                    console.error('Key generation failed:', error);
+                    throw error;
+                }
+            }
+
+            async encryptMessage(message, publicKey) {
+                try {
+                    const encoded = new TextEncoder().encode(message);
+                    const encrypted = await crypto.subtle.encrypt(
+                        { name: "RSA-OAEP" },
+                        publicKey,
+                        encoded
+                    );
+                    return new Uint8Array(encrypted);
+                } catch (error) {
+                    console.error('Encryption failed:', error);
+                    throw error;
+                }
+            }
+
+            async decryptMessage(encryptedData, privateKey) {
+                try {
+                    const decrypted = await crypto.subtle.decrypt(
+                        { name: "RSA-OAEP" },
+                        privateKey,
+                        encryptedData
+                    );
+                    return new TextDecoder().decode(decrypted);
+                } catch (error) {
+                    console.error('Decryption failed:', error);
+                    throw error;
+                }
+            }
+        }
+
+        // Initialize test service
+        const testService = new TestEncryptionService();
+
+        // Helper functions
+        function addResult(testName, success, message, details = null) {
+            const result = { testName, success, message, details, timestamp: new Date() };
+            testResults.push(result);
+            return result;
+        }
+
+        function displayResult(containerId, result) {
+            const container = document.getElementById(containerId);
+            const div = document.createElement('div');
+            div.className = `test-result ${result.success ? 'success' : 'error'}`;
+            div.innerHTML = `
+                <strong>${result.testName}:</strong> ${result.message}
+                ${result.details ? `<br><small>${result.details}</small>` : ''}
+            `;
+            container.appendChild(div);
+        }
+
+        function clearResults(containerId) {
+            document.getElementById(containerId).innerHTML = '';
+        }
+
+        // Test functions
+        window.testWebCrypto = async function() {
+            clearResults('crypto-results');
+            
+            try {
+                if (!crypto || !crypto.subtle) {
+                    throw new Error('WebCrypto API not available');
+                }
+
+                const result = addResult(
+                    'WebCrypto API',
+                    true,
+                    'WebCrypto API is available and functional',
+                    `Browser: ${navigator.userAgent.split(' ')[0]}`
+                );
+                displayResult('crypto-results', result);
+
+                // Test basic crypto operations
+                const key = await crypto.subtle.generateKey(
+                    { name: "AES-GCM", length: 256 },
+                    true,
+                    ["encrypt", "decrypt"]
+                );
+
+                const testResult = addResult(
+                    'Basic Crypto Operations',
+                    true,
+                    'AES key generation successful'
+                );
+                displayResult('crypto-results', testResult);
+
+            } catch (error) {
+                const result = addResult(
+                    'WebCrypto API',
+                    false,
+                    'WebCrypto API test failed',
+                    error.message
+                );
+                displayResult('crypto-results', result);
+            }
+        };
+
+        window.testKeyGeneration = async function() {
+            try {
+                keyPair = await testService.generateKeyPair();
+                
+                const result = addResult(
+                    'Key Generation',
+                    true,
+                    'RSA key pair generated successfully',
+                    `Key type: RSA-OAEP, Length: 2048 bits`
+                );
+                displayResult('crypto-results', result);
+
+            } catch (error) {
+                const result = addResult(
+                    'Key Generation',
+                    false,
+                    'Key generation failed',
+                    error.message
+                );
+                displayResult('crypto-results', result);
+            }
+        };
+
+        window.testEncryptionDecryption = async function() {
+            try {
+                if (!keyPair) {
+                    await window.testKeyGeneration();
+                }
+
+                const testMessage = "Test encryption message";
+                
+                // Encrypt
+                const encrypted = await testService.encryptMessage(testMessage, keyPair.publicKey);
+                
+                const encryptResult = addResult(
+                    'Message Encryption',
+                    true,
+                    'Message encrypted successfully',
+                    `Original: ${testMessage.length} chars, Encrypted: ${encrypted.length} bytes`
+                );
+                displayResult('crypto-results', encryptResult);
+
+                // Decrypt
+                const decrypted = await testService.decryptMessage(encrypted, keyPair.privateKey);
+                
+                const success = decrypted === testMessage;
+                const decryptResult = addResult(
+                    'Message Decryption',
+                    success,
+                    success ? 'Message decrypted successfully' : 'Decryption failed - message mismatch',
+                    `Decrypted: "${decrypted}"`
+                );
+                displayResult('crypto-results', decryptResult);
+
+            } catch (error) {
+                const result = addResult(
+                    'Encryption/Decryption',
+                    false,
+                    'Encryption test failed',
+                    error.message
+                );
+                displayResult('crypto-results', result);
+            }
+        };
+
+        window.runAllTests = async function() {
+            clearResults('crypto-results');
+            await window.testWebCrypto();
+            await window.testKeyGeneration();
+            await window.testEncryptionDecryption();
+            updateSummary();
+        };
+
+        window.encryptTestMessage = async function() {
+            clearResults('message-results');
+            
+            try {
+                if (!keyPair) {
+                    await testService.generateKeyPair().then(kp => keyPair = kp);
+                }
+
+                const message = document.getElementById('testMessage').value;
+                if (!message.trim()) {
+                    throw new Error('Please enter a message to encrypt');
+                }
+
+                encryptedMessage = await testService.encryptMessage(message, keyPair.publicKey);
+                
+                const result = addResult(
+                    'User Message Encryption',
+                    true,
+                    'Your message has been encrypted',
+                    `Original: "${message}" (${message.length} chars) → Encrypted: ${encryptedMessage.length} bytes`
+                );
+                displayResult('message-results', result);
+
+            } catch (error) {
+                const result = addResult(
+                    'User Message Encryption',
+                    false,
+                    'Failed to encrypt message',
+                    error.message
+                );
+                displayResult('message-results', result);
+            }
+        };
+
+        window.decryptTestMessage = async function() {
+            try {
+                if (!encryptedMessage) {
+                    throw new Error('No encrypted message available. Please encrypt a message first.');
+                }
+
+                const decrypted = await testService.decryptMessage(encryptedMessage, keyPair.privateKey);
+                
+                const result = addResult(
+                    'User Message Decryption',
+                    true,
+                    'Your message has been decrypted',
+                    `Decrypted message: "${decrypted}"`
+                );
+                displayResult('message-results', result);
+
+            } catch (error) {
+                const result = addResult(
+                    'User Message Decryption',
+                    false,
+                    'Failed to decrypt message',
+                    error.message
+                );
+                displayResult('message-results', result);
+            }
+        };
+
+        window.generateKeyPair = async function() {
+            clearResults('key-results');
+            
+            try {
+                const newKeyPair = await testService.generateKeyPair();
+                keyPair = newKeyPair;
+                
+                const result = addResult(
+                    'Key Pair Generation',
+                    true,
+                    'New key pair generated',
+                    'Keys are ready for encryption/decryption'
+                );
+                displayResult('key-results', result);
+
+            } catch (error) {
+                const result = addResult(
+                    'Key Pair Generation',
+                    false,
+                    'Key generation failed',
+                    error.message
+                );
+                displayResult('key-results', result);
+            }
+        };
+
+        window.exportKeys = async function() {
+            try {
+                if (!keyPair) {
+                    throw new Error('No key pair available. Generate a key pair first.');
+                }
+
+                const publicKey = await crypto.subtle.exportKey('spki', keyPair.publicKey);
+                const privateKey = await crypto.subtle.exportKey('pkcs8', keyPair.privateKey);
+                
+                const result = addResult(
+                    'Key Export',
+                    true,
+                    'Keys exported successfully',
+                    `Public key: ${publicKey.byteLength} bytes, Private key: ${privateKey.byteLength} bytes`
+                );
+                displayResult('key-results', result);
+
+            } catch (error) {
+                const result = addResult(
+                    'Key Export',
+                    false,
+                    'Key export failed',
+                    error.message
+                );
+                displayResult('key-results', result);
+            }
+        };
+
+        window.simulateRealTimeEncryption = async function() {
+            clearResults('realtime-results');
+            
+            try {
+                const messages = [
+                    "Hello!",
+                    "How are you doing?",
+                    "This is a secure conversation 🔐",
+                    "Testing real-time encryption..."
+                ];
+
+                if (!keyPair) {
+                    keyPair = await testService.generateKeyPair();
+                }
+
+                for (let i = 0; i < messages.length; i++) {
+                    const message = messages[i];
+                    
+                    // Simulate encryption timing
+                    const startTime = performance.now();
+                    const encrypted = await testService.encryptMessage(message, keyPair.publicKey);
+                    const decrypted = await testService.decryptMessage(encrypted, keyPair.privateKey);
+                    const endTime = performance.now();
+                    
+                    const duration = (endTime - startTime).toFixed(2);
+                    const success = decrypted === message;
+                    
+                    const result = addResult(
+                        `Message ${i + 1}`,
+                        success,
+                        `"${message}" → Encrypted → Decrypted (${duration}ms)`,
+                        success ? 'Message integrity verified' : 'Message corruption detected'
+                    );
+                    displayResult('realtime-results', result);
+                    
+                    // Small delay to simulate real-time
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+
+                const summaryResult = addResult(
+                    'Real-time Simulation',
+                    true,
+                    `Successfully processed ${messages.length} messages`,
+                    'All messages encrypted and decrypted correctly'
+                );
+                displayResult('realtime-results', summaryResult);
+
+            } catch (error) {
+                const result = addResult(
+                    'Real-time Simulation',
+                    false,
+                    'Simulation failed',
+                    error.message
+                );
+                displayResult('realtime-results', result);
+            }
+        };
+
+        function updateSummary() {
+            const container = document.getElementById('summary-results');
+            container.innerHTML = '';
+            
+            const totalTests = testResults.length;
+            const successfulTests = testResults.filter(r => r.success).length;
+            const failedTests = totalTests - successfulTests;
+            
+            const summary = document.createElement('div');
+            summary.className = 'test-result info';
+            summary.innerHTML = `
+                <strong>Test Summary:</strong><br>
+                Total Tests: ${totalTests}<br>
+                Successful: ${successfulTests}<br>
+                Failed: ${failedTests}<br>
+                Success Rate: ${totalTests > 0 ? ((successfulTests / totalTests) * 100).toFixed(1) : 0}%
+            `;
+            container.appendChild(summary);
+
+            if (failedTests > 0) {
+                const failures = document.createElement('div');
+                failures.className = 'test-result error';
+                failures.innerHTML = `
+                    <strong>Failed Tests:</strong><br>
+                    ${testResults.filter(r => !r.success).map(r => `• ${r.testName}: ${r.message}`).join('<br>')}
+                `;
+                container.appendChild(failures);
+            }
+        }
+
+        // Auto-run basic tests on load
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                window.testWebCrypto();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

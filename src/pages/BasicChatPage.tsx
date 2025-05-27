@@ -205,7 +205,7 @@ const BasicChatPage: React.FC = () => {
                     onChange={(e) => setMessage(e.target.value)}
                     onKeyPress={handleKeyPress}
                     placeholder="Skriv en melding..."
-                    className="flex-1 bg-cyberdark-700 border-cyberdark-600 text-cyberdark-100 placeholder:text-cyberdark-400"
+                    className="flex-1"
                   />
                   <Button 
                     onClick={sendMessage}

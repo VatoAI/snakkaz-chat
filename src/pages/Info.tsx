@@ -41,6 +41,63 @@ const InfoPage = () => {
           </Button>
         </div>
 
+        {/* Sikkerhet og Trust-system Hero Section */}
+        <div className="max-w-4xl mx-auto mb-12">
+          <div className="p-8 rounded-xl bg-gradient-to-r from-green-900/30 to-blue-900/30 border border-green-500/30">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold mb-4 text-green-300">
+                🛡️ 100% Sikker & Privat Chat-plattform
+              </h2>
+              <p className="text-xl text-green-200 mb-6">
+                Vi samler IKKE personlig informasjon - Kun politisamarbeid ved barnemisbruk
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+              <div className="bg-cyberdark-900/70 p-5 rounded-lg border border-green-500/20">
+                <div className="flex items-center mb-3">
+                  <Shield className="text-green-400 mr-2" size={24} />
+                  <h3 className="text-lg font-semibold text-green-300">Null Datainnsamling</h3>
+                </div>
+                <p className="text-green-200 text-sm">
+                  Vi samler IKKE personlig informasjon om våre brukere. Din privatliv er hellig.
+                </p>
+              </div>
+              
+              <div className="bg-cyberdark-900/70 p-5 rounded-lg border border-blue-500/20">
+                <div className="flex items-center mb-3">
+                  <Lock className="text-blue-400 mr-2" size={24} />
+                  <h3 className="text-lg font-semibold text-blue-300">E2E Kryptering</h3>
+                </div>
+                <p className="text-blue-200 text-sm">
+                  Alle meldinger er end-to-end kryptert. Kun du og mottakeren kan lese dem.
+                </p>
+              </div>
+              
+              <div className="bg-cyberdark-900/70 p-5 rounded-lg border border-purple-500/20">
+                <div className="flex items-center mb-3">
+                  <Users className="text-purple-400 mr-2" size={24} />
+                  <h3 className="text-lg font-semibold text-purple-300">Trust-system</h3>
+                </div>
+                <p className="text-purple-200 text-sm">
+                  Brukere får trust-ikoner basert på positiv oppførsel: 🆕 → ✅ → 🔷 → 🏆
+                </p>
+              </div>
+            </div>
+            
+            <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-6">
+              <div className="flex items-center mb-3">
+                <Heart className="text-red-400 mr-2" size={20} />
+                <h3 className="text-lg font-semibold text-red-300">Beskyttelse av barn</h3>
+              </div>
+              <p className="text-red-200">
+                Vi har null toleranse for barnemisbruk. Dette er det eneste tilfellet hvor vi samarbeider 
+                med politiet. Alle andre samtaler forblir 100% private.
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* New User Introduction */}
         <div className="max-w-3xl mx-auto mb-12">
           <div className="p-6 rounded-xl bg-gradient-to-r from-cyberblue-900/20 to-cyberblue-800/10 border border-cyberblue-700/30">
@@ -780,6 +837,68 @@ const InfoPage = () => {
               >
                 <Crown className="mr-2" size={16} /> Utforsk premium-abonnementer
               </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Trust-system Forklaring */}
+        <div className="max-w-4xl mx-auto mb-12">
+          <div className="p-8 rounded-xl bg-gradient-to-r from-purple-900/30 to-blue-900/30 border border-purple-500/30">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold mb-4 text-purple-300">
+                🏆 Trust-system: Oppbygg Tillit Over Tid
+              </h2>
+              <p className="text-xl text-purple-200 mb-6">
+                Brukere får synlige trust-ikoner basert på positiv oppførsel i fellesskapet
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <div className="bg-cyberdark-900/70 p-5 rounded-lg border border-yellow-500/20 text-center">
+                <div className="text-4xl mb-3">🆕</div>
+                <h3 className="text-lg font-semibold text-yellow-300 mb-2">Ny bruker</h3>
+                <p className="text-yellow-200 text-sm">
+                  Nye brukere starter her. Vis respekt og følg reglene for å bygge tillit.
+                </p>
+              </div>
+              
+              <div className="bg-cyberdark-900/70 p-5 rounded-lg border border-green-500/20 text-center">
+                <div className="text-4xl mb-3">✅</div>
+                <h3 className="text-lg font-semibold text-green-300 mb-2">Pålitelig</h3>
+                <p className="text-green-200 text-sm">
+                  100+ positive interaksjoner. Respektert medlem av fellesskapet.
+                </p>
+              </div>
+              
+              <div className="bg-cyberdark-900/70 p-5 rounded-lg border border-blue-500/20 text-center">
+                <div className="text-4xl mb-3">🔷</div>
+                <h3 className="text-lg font-semibold text-blue-300 mb-2">Verifisert</h3>
+                <p className="text-blue-200 text-sm">
+                  500+ positive interaksjoner. Høyt ansett og pålitelig bruker.
+                </p>
+              </div>
+              
+              <div className="bg-cyberdark-900/70 p-5 rounded-lg border border-orange-500/20 text-center">
+                <div className="text-4xl mb-3">🏆</div>
+                <h3 className="text-lg font-semibold text-orange-300 mb-2">Community Champion</h3>
+                <p className="text-orange-200 text-sm">
+                  1000+ positive interaksjoner. Fellesskapets mest respekterte medlemmer.
+                </p>
+              </div>
+            </div>
+            
+            <div className="bg-cyberdark-800/50 border border-purple-500/20 rounded-lg p-6">
+              <h3 className="text-lg font-semibold text-purple-300 mb-3 flex items-center">
+                <Users className="mr-2" size={20} />
+                Hvordan bygger jeg tillit?
+              </h3>
+              <ul className="space-y-2 text-purple-200">
+                <li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-400" />Vær respektfull og hyggelig i samtaler</li>
+                <li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-400" />Hjelp andre brukere med spørsmål</li>
+                <li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-400" />Følg fellesskapets regler og retningslinjer</li>
+                <li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-400" />Bidra positivt til gruppesamtaler</li>
+                <li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-400" />Rapporter upassende innhold for å beskytte andre</li>
+              </ul>
             </div>
           </div>
         </div>

@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Lock, Mail, User, AlertCircle } from 'lucide-react';
+import { Lock, Mail, User, AlertCircle, Shield, Users, Check } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const formSchema = z.object({
@@ -258,18 +258,45 @@ const Register: React.FC = () => {
               </Link>
             </div>
             
-            <div className="mt-4 p-3 bg-cyberdark-800/80 border border-cybergold-500/20 rounded-lg">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
+            <div className="mt-4 space-y-3">
+              {/* Sikkerhetsinformasjon */}
+              <div className="p-3 bg-cyberdark-800/80 border border-green-500/20 rounded-lg">
+                <div className="flex items-center mb-2">
                   <Shield className="h-4 w-4 text-green-400 mr-2" />
-                  <span className="text-sm text-cybergold-300">Hvorfor velge Snakkaz framfor andre apper?</span>
+                  <span className="text-sm font-medium text-green-300">100% Sikker & Privat</span>
                 </div>
-                <Link 
-                  to="/info" 
-                  className="px-3 py-1 rounded bg-cybergold-600/30 text-xs font-medium text-cybergold-400 hover:bg-cybergold-600/40 transition-colors"
-                >
-                  Se fordeler
-                </Link>
+                <ul className="space-y-1 text-xs text-green-200">
+                  <li className="flex items-center"><Check className="h-3 w-3 mr-1" />Vi samler IKKE personlig informasjon</li>
+                  <li className="flex items-center"><Check className="h-3 w-3 mr-1" />End-to-end kryptering på alle meldinger</li>
+                  <li className="flex items-center"><Check className="h-3 w-3 mr-1" />Kun politisamarbeid ved barnemisbruk</li>
+                </ul>
+              </div>
+              
+              {/* Trust-system info */}
+              <div className="p-3 bg-cyberdark-800/80 border border-purple-500/20 rounded-lg">
+                <div className="flex items-center mb-2">
+                  <Users className="h-4 w-4 text-purple-400 mr-2" />
+                  <span className="text-sm font-medium text-purple-300">Trust-system</span>
+                </div>
+                <p className="text-xs text-purple-200">
+                  Brukere får trust-ikoner (🆕 → ✅ → 🔷 → 🏆) basert på positiv oppførsel over tid.
+                </p>
+              </div>
+              
+              {/* Sammenligning med andre apper */}
+              <div className="p-3 bg-cyberdark-800/80 border border-cybergold-500/20 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <Shield className="h-4 w-4 text-cybergold-400 mr-2" />
+                    <span className="text-sm text-cybergold-300">Hvorfor velge Snakkaz framfor andre apper?</span>
+                  </div>
+                  <Link 
+                    to="/info" 
+                    className="px-3 py-1 rounded bg-cybergold-600/30 text-xs font-medium text-cybergold-400 hover:bg-cybergold-600/40 transition-colors"
+                  >
+                    Se fordeler
+                  </Link>
+                </div>
               </div>
             </div>
           </CardFooter>

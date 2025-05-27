@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { EnhancedLoginForm } from '@/features/auth/components/EnhancedLoginForm';
 import { Button } from '@/components/ui/button';
-import { UserPlus, Info, Mail } from 'lucide-react';
+import { UserPlus, Info, Mail, Shield, Lock, Users } from 'lucide-react';
 
 const Login: React.FC = () => {
 
@@ -58,6 +58,33 @@ const Login: React.FC = () => {
             <div className="flex flex-col space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
+                  <Shield className="h-4 w-4 text-green-400 mr-2" />
+                  <span className="text-sm text-green-300">100% Sikker - Vi samler IKKE personlig informasjon</span>
+                </div>
+                <div className="px-3 py-1 rounded bg-green-600/30 text-xs font-medium text-green-400">
+                  ✅ Verifisert
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <Lock className="h-4 w-4 text-blue-400 mr-2" />
+                  <span className="text-sm text-blue-300">End-to-end kryptering for alle meldinger</span>
+                </div>
+                <div className="px-3 py-1 rounded bg-blue-600/30 text-xs font-medium text-blue-400">
+                  🔒 Privat
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <Users className="h-4 w-4 text-purple-400 mr-2" />
+                  <span className="text-sm text-purple-300">Trust-system: Brukere blir verifisert over tid</span>
+                </div>
+                <div className="px-3 py-1 rounded bg-purple-600/30 text-xs font-medium text-purple-400">
+                  🏆 Community
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
                   <Info className="h-4 w-4 text-cybergold-400 mr-2" />
                   <span className="text-sm text-cybergold-300">Ny her? Les hvorfor Snakkaz er ditt beste valg</span>
                 </div>
@@ -70,12 +97,12 @@ const Login: React.FC = () => {
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
-                  <Mail className="h-4 w-4 text-blue-400 mr-2" />
-                  <span className="text-sm text-blue-300">Få din egen @snakkaz.com e-post med Pro-abonnement!</span>
+                  <Mail className="h-4 w-4 text-orange-400 mr-2" />
+                  <span className="text-sm text-orange-300">Få din egen @snakkaz.com e-post med Pro!</span>
                 </div>
                 <Link 
                   to="/info#premium-email" 
-                  className="px-3 py-1 rounded bg-blue-600/30 text-xs font-medium text-blue-400 hover:bg-blue-600/40 transition-colors"
+                  className="px-3 py-1 rounded bg-orange-600/30 text-xs font-medium text-orange-400 hover:bg-orange-600/40 transition-colors"
                 >
                   Les mer
                 </Link>
