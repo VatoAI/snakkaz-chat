@@ -27,7 +27,8 @@ async function main() {
     console.log('1️⃣ Testing Supabase Connection...');
     const { data: testData, error: testError } = await supabase
       .from('profiles')
-      .select('count', { count: 'exact', head: true });
+      .select('count(*)')
+      .limit(1);
     
     if (testError) {
       console.log('❌ Supabase connection failed:', testError.message);
