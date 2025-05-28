@@ -135,6 +135,7 @@
     "jest-environment-jsdom": "^29.7.0",
     "node-fetch": "^3.3.2",
     "postcss": "^8.4.47",
+    "puppeteer": "^24.9.0",
     "rimraf": "^5.0.10",
     "rollup-plugin-visualizer": "^5.14.0",
     "sharp": "^0.34.2",

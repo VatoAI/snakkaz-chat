@@ -109,6 +109,80 @@ const preloadComponents = () => {
 import { PreviewBanner } from '@/components/preview/PreviewIndicator';
 import { DeveloperTools } from '@/components/preview/DeveloperTools';
 
+// Subdomain detection utility with enhanced debugging
+const detectSubdomain = () => {
+  const hostname = window.location.hostname;
+  const parts = hostname.split('.');
+  
+  // Check if we're on a subdomain
+  if (parts.length > 2) {
+    const subdomain = parts[0];
+    const allowedSubdomains = ['dash', 'business', 'docs', 'analytics', 'mcp', 'help'];
+    
+    if (allowedSubdomains.includes(subdomain)) {
+      console.log(`🌐 Snakkaz Chat: Detected subdomain "${subdomain}" - configuring app...`);
+      return subdomain;
+    } else {
+      console.log(`⚠️ Snakkaz Chat: Unknown subdomain "${subdomain}" detected`);
+    }
+  } else {
+    console.log(`🏠 Snakkaz Chat: Running on main domain (${hostname})`);
+  }
+  
+  return null;
+};
+
+// Subdomain router component with enhanced functionality
+const SubdomainRouter = () => {
+  const subdomain = detectSubdomain();
+  
+  useEffect(() => {
+    if (subdomain) {
+      // Store subdomain context for the app
+      sessionStorage.setItem('snakkaz_subdomain', subdomain);
+      sessionStorage.setItem('snakkaz_subdomain_timestamp', new Date().toISOString());
+      
+      // Set document title and log configuration
+      switch (subdomain) {
+        case 'dash':
+          document.title = 'Snakkaz Chat - Dashboard';
+          console.log('📊 Dashboard mode activated');
+          break;
+        case 'business':
+          document.title = 'Snakkaz Chat - Business';
+          console.log('💼 Business mode activated');
+          break;
+        case 'docs':
+          document.title = 'Snakkaz Chat - Documentation';
+          console.log('📚 Documentation mode activated');
+          break;
+        case 'analytics':
+          document.title = 'Snakkaz Chat - Analytics';
+          console.log('📈 Analytics mode activated');
+          break;
+        case 'mcp':
+          document.title = 'Snakkaz Chat - MCP';
+          console.log('🔗 MCP mode activated');
+          break;
+        case 'help':
+          document.title = 'Snakkaz Chat - Help';
+          console.log('❓ Help mode activated');
+          break;
+      }
+      
+      // Store subdomain-specific settings
+      sessionStorage.setItem('snakkaz_app_mode', subdomain);
+    } else {
+      // Main domain configuration
+      document.title = 'Snakkaz Chat';
+      sessionStorage.setItem('snakkaz_app_mode', 'main');
+      console.log('🏠 Main app mode activated');
+    }
+  }, [subdomain]);
+  
+  return null; // This component only handles side effects
+};
+
 export default function App() {
   // Track if we're in a preview environment
   const [isPreviewEnv, setIsPreviewEnv] = useState(false);
@@ -148,6 +222,7 @@ export default function App() {
     <SuperSimpleErrorBoundary>
       <BrowserRouter>
         <AuthProvider>
+          <SubdomainRouter />
           {isPreviewEnv && <PreviewBanner />}
           <Suspense fallback={<LoadingSpinner />}>
             <Routes>
@@ -210,6 +285,7 @@ export default function App() {
           </Suspense>
           <Toaster />
           <DeveloperTools />
+          <SubdomainRouter />
         </AuthProvider>
       </BrowserRouter>
     </SuperSimpleErrorBoundary>

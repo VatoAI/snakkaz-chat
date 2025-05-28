@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snakkaz Chat Subdomain Functionality Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 100%);
+            color: #ffffff;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(17, 17, 27, 0.9);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+        h1 {
+            color: #ffd700;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .test-card {
+            background: rgba(26, 26, 46, 0.8);
+            border: 2px solid #333;
+            border-radius: 10px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+        .test-card:hover {
+            border-color: #ffd700;
+            transform: translateY(-2px);
+        }
+        .test-card h3 {
+            color: #ffd700;
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .status {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .status.loading {
+            background: #ffaa00;
+            animation: pulse 1s infinite;
+        }
+        .status.success {
+            background: #00ff00;
+        }
+        .status.error {
+            background: #ff0000;
+        }
+        .test-link {
+            display: inline-block;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #ffd700, #ffaa00);
+            color: #000;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 5px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        .test-link:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
+        }
+        .console-output {
+            background: #000;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #333;
+        }
+        .console-line {
+            margin: 2px 0;
+            padding: 2px 0;
+        }
+        .info { color: #00aaff; }
+        .success { color: #00ff00; }
+        .warning { color: #ffaa00; }
+        .error { color: #ff0000; }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .current-domain {
+            background: rgba(255, 215, 0, 0.1);
+            border: 2px solid #ffd700;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .refresh-btn {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 10px;
+            transition: all 0.3s ease;
+        }
+        .refresh-btn:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌐 Snakkaz Chat Subdomain Test</h1>
+        
+        <div class="current-domain">
+            <h3>📍 Current Location</h3>
+            <p><strong>Domain:</strong> <span id="currentDomain"></span></p>
+            <p><strong>Subdomain:</strong> <span id="detectedSubdomain"></span></p>
+            <p><strong>App Mode:</strong> <span id="appMode"></span></p>
+            <button class="refresh-btn" onclick="detectCurrentSubdomain()">🔄 Refresh Detection</button>
+        </div>
+
+        <div class="test-grid">
+            <div class="test-card">
+                <h3><span class="status loading" id="mainStatus"></span> Main Domain</h3>
+                <p><strong>URL:</strong> www.snakkaz.com</p>
+                <p><strong>Expected:</strong> Main Snakkaz Chat app</p>
+                <a href="https://www.snakkaz.com" class="test-link" target="_blank">🏠 Test Main</a>
+                <div id="mainResult"></div>
+            </div>
+
+            <div class="test-card">
+                <h3><span class="status loading" id="dashStatus"></span> Dashboard</h3>
+                <p><strong>URL:</strong> dash.snakkaz.com</p>
+                <p><strong>Expected:</strong> Dashboard mode with title "Snakkaz Chat - Dashboard"</p>
+                <a href="https://dash.snakkaz.com" class="test-link" target="_blank">📊 Test Dashboard</a>
+                <div id="dashResult"></div>
+            </div>
+
+            <div class="test-card">
+                <h3><span class="status loading" id="businessStatus"></span> Business</h3>
+                <p><strong>URL:</strong> business.snakkaz.com</p>
+                <p><strong>Expected:</strong> Business mode with title "Snakkaz Chat - Business"</p>
+                <a href="https://business.snakkaz.com" class="test-link" target="_blank">💼 Test Business</a>
+                <div id="businessResult"></div>
+            </div>
+
+            <div class="test-card">
+                <h3><span class="status loading" id="docsStatus"></span> Documentation</h3>
+                <p><strong>URL:</strong> docs.snakkaz.com</p>
+                <p><strong>Expected:</strong> Documentation mode with title "Snakkaz Chat - Documentation"</p>
+                <a href="https://docs.snakkaz.com" class="test-link" target="_blank">📚 Test Docs</a>
+                <div id="docsResult"></div>
+            </div>
+
+            <div class="test-card">
+                <h3><span class="status loading" id="analyticsStatus"></span> Analytics</h3>
+                <p><strong>URL:</strong> analytics.snakkaz.com</p>
+                <p><strong>Expected:</strong> Analytics mode with title "Snakkaz Chat - Analytics"</p>
+                <a href="https://analytics.snakkaz.com" class="test-link" target="_blank">📈 Test Analytics</a>
+                <div id="analyticsResult"></div>
+            </div>
+
+            <div class="test-card">
+                <h3><span class="status loading" id="mcpStatus"></span> MCP</h3>
+                <p><strong>URL:</strong> mcp.snakkaz.com</p>
+                <p><strong>Expected:</strong> MCP mode with title "Snakkaz Chat - MCP"</p>
+                <a href="https://mcp.snakkaz.com" class="test-link" target="_blank">🔗 Test MCP</a>
+                <div id="mcpResult"></div>
+            </div>
+
+            <div class="test-card">
+                <h3><span class="status loading" id="helpStatus"></span> Help</h3>
+                <p><strong>URL:</strong> help.snakkaz.com</p>
+                <p><strong>Expected:</strong> Help mode with title "Snakkaz Chat - Help"</p>
+                <a href="https://help.snakkaz.com" class="test-link" target="_blank">❓ Test Help</a>
+                <div id="helpResult"></div>
+            </div>
+        </div>
+
+        <div class="console-output" id="consoleOutput">
+            <div class="console-line info">🌐 Snakkaz Chat Subdomain Test Console</div>
+            <div class="console-line">Initializing subdomain detection tests...</div>
+        </div>
+    </div>
+
+    <script>
+        // Console logging function
+        function log(message, type = 'info') {
+            const console = document.getElementById('consoleOutput');
+            const line = document.createElement('div');
+            line.className = `console-line ${type}`;
+            line.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            console.appendChild(line);
+            console.scrollTop = console.scrollHeight;
+        }
+
+        // Subdomain detection (same as in App.tsx)
+        function detectSubdomain() {
+            const hostname = window.location.hostname;
+            const parts = hostname.split('.');
+            
+            if (parts.length > 2) {
+                const subdomain = parts[0];
+                const allowedSubdomains = ['dash', 'business', 'docs', 'analytics', 'mcp', 'help'];
+                
+                if (allowedSubdomains.includes(subdomain)) {
+                    log(`🌐 Detected subdomain "${subdomain}"`, 'success');
+                    return subdomain;
+                } else {
+                    log(`⚠️ Unknown subdomain "${subdomain}" detected`, 'warning');
+                }
+            } else {
+                log(`🏠 Running on main domain (${hostname})`, 'info');
+            }
+            
+            return null;
+        }
+
+        // Update current domain information
+        function detectCurrentSubdomain() {
+            const hostname = window.location.hostname;
+            const subdomain = detectSubdomain();
+            
+            document.getElementById('currentDomain').textContent = hostname;
+            document.getElementById('detectedSubdomain').textContent = subdomain || 'None (main domain)';
+            
+            // Check sessionStorage for app mode
+            const appMode = sessionStorage.getItem('snakkaz_app_mode') || 'unknown';
+            document.getElementById('appMode').textContent = appMode;
+            
+            // Log additional info
+            log(`Domain: ${hostname}`, 'info');
+            log(`Subdomain: ${subdomain || 'none'}`, 'info');
+            log(`App Mode: ${appMode}`, 'info');
+            
+            if (subdomain) {
+                log(`Expected title: Snakkaz Chat - ${subdomain.charAt(0).toUpperCase() + subdomain.slice(1)}`, 'info');
+            }
+        }
+
+        // Test individual subdomain
+        async function testSubdomain(subdomain, url) {
+            const statusEl = document.getElementById(`${subdomain}Status`);
+            const resultEl = document.getElementById(`${subdomain}Result`);
+            
+            log(`Testing ${subdomain}: ${url}`, 'info');
+            
+            try {
+                const response = await fetch(url, { 
+                    method: 'HEAD',
+                    mode: 'no-cors'
+                });
+                
+                statusEl.className = 'status success';
+                resultEl.innerHTML = '<p style="color: #00ff00;">✅ Accessible</p>';
+                log(`✅ ${subdomain}: Accessible`, 'success');
+                
+            } catch (error) {
+                statusEl.className = 'status error';
+                resultEl.innerHTML = '<p style="color: #ff0000;">❌ Error: ' + error.message + '</p>';
+                log(`❌ ${subdomain}: ${error.message}`, 'error');
+            }
+        }
+
+        // Run all tests
+        async function runAllTests() {
+            log('🚀 Starting comprehensive subdomain tests...', 'info');
+            
+            const tests = [
+                ['main', 'https://www.snakkaz.com'],
+                ['dash', 'https://dash.snakkaz.com'],
+                ['business', 'https://business.snakkaz.com'],
+                ['docs', 'https://docs.snakkaz.com'],
+                ['analytics', 'https://analytics.snakkaz.com'],
+                ['mcp', 'https://mcp.snakkaz.com'],
+                ['help', 'https://help.snakkaz.com']
+            ];
+
+            for (const [subdomain, url] of tests) {
+                await testSubdomain(subdomain, url);
+                await new Promise(resolve => setTimeout(resolve, 500)); // Small delay
+            }
+            
+            log('🎉 All tests completed!', 'success');
+        }
+
+        // Initialize on page load
+        window.addEventListener('load', () => {
+            log('🌐 Subdomain test page loaded', 'success');
+            detectCurrentSubdomain();
+            
+            // Run tests after a short delay
+            setTimeout(runAllTests, 1000);
+            
+            // Check if we have any sessionStorage data from Snakkaz
+            const subdomainData = sessionStorage.getItem('snakkaz_subdomain');
+            const timestamp = sessionStorage.getItem('snakkaz_subdomain_timestamp');
+            
+            if (subdomainData) {
+                log(`📊 Found stored subdomain data: ${subdomainData}`, 'info');
+                if (timestamp) {
+                    log(`⏰ Stored at: ${timestamp}`, 'info');
+                }
+            }
+        });
+
+        // Add event listener for manual refresh
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'F5' || (e.ctrlKey && e.key === 'r')) {
+                log('🔄 Page refresh detected', 'info');
+            }
+        });
+    </script>
+</body>
+</html>
