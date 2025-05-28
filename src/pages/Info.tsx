@@ -1,5 +1,5 @@
 import React from 'react';
-import { Shield, Lock, Users, ArrowRight } from 'lucide-react';
+import { Shield, Lock, Users, ArrowRight, Mail, Star, Crown, CheckCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 
@@ -56,6 +56,161 @@ export const Info: React.FC = () => {
             >
               Logg inn
             </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Premium Email Section */}
+      <div className="container mx-auto px-4 py-12" id="premium-email">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 bg-gradient-to-r from-cybergold-400 via-orange-400 to-cybergold-300 bg-clip-text text-transparent">
+              Premium E-post med @snakkaz.com
+            </h2>
+            <p className="text-cyberdark-200 text-lg max-w-3xl mx-auto">
+              Oppgrader til Premium og få din egen profesjonelle @snakkaz.com e-postadresse som fungerer med alle e-postklienter
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+            {/* Left Column - Features */}
+            <div className="space-y-6">
+              <h3 className="text-2xl font-semibold text-cybergold-300 mb-6">
+                Hva får du med Premium E-post?
+              </h3>
+              
+              <div className="space-y-4">
+                <div className="flex items-start gap-4 p-4 rounded-lg bg-cyberdark-900/50 border border-cybergold-500/20">
+                  <Mail className="text-cybergold-400 mt-1 flex-shrink-0" size={24} />
+                  <div>
+                    <h4 className="font-semibold text-cybergold-200 mb-2">Din egen @snakkaz.com adresse</h4>
+                    <p className="text-cyberdark-300 text-sm">
+                      Få en profesjonell e-postadresse som delnavn@snakkaz.com - perfekt for jobb og personlig bruk
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-4 p-4 rounded-lg bg-cyberdark-900/50 border border-green-500/20">
+                  <CheckCircle className="text-green-400 mt-1 flex-shrink-0" size={24} />
+                  <div>
+                    <h4 className="font-semibold text-green-200 mb-2">Fungerer med alle e-postklienter</h4>
+                    <p className="text-cyberdark-300 text-sm">
+                      Bruk Gmail, Outlook, Apple Mail eller hvilken som helst annen e-postklient via IMAP/SMTP
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-4 p-4 rounded-lg bg-cyberdark-900/50 border border-cyberblue-500/20">
+                  <Lock className="text-cyberblue-400 mt-1 flex-shrink-0" size={24} />
+                  <div>
+                    <h4 className="font-semibold text-cyberblue-200 mb-2">Sikker webmail-tilgang</h4>
+                    <p className="text-cyberdark-300 text-sm">
+                      Tilgang til e-post via webmail på mail.snakkaz.com med SSL-kryptering
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-4 p-4 rounded-lg bg-cyberdark-900/50 border border-purple-500/20">
+                  <Star className="text-purple-400 mt-1 flex-shrink-0" size={24} />
+                  <div>
+                    <h4 className="font-semibold text-purple-200 mb-2">Profesjonell og pålitelig</h4>
+                    <p className="text-cyberdark-300 text-sm">
+                      99.9% oppetid, spam-beskyttelse og daglige sikkerhetskopier
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column - Configuration */}
+            <div className="space-y-6">
+              <h3 className="text-2xl font-semibold text-cybergold-300 mb-6">
+                Enkel konfigurering
+              </h3>
+              
+              <div className="p-6 rounded-lg bg-cyberdark-800/50 border border-cyberdark-600">
+                <h4 className="font-semibold text-cyberdark-100 mb-4">E-postklient innstillinger:</h4>
+                
+                <div className="space-y-4 text-sm">
+                  <div>
+                    <h5 className="font-medium text-cybergold-300 mb-2">Innkommende e-post (IMAP)</h5>
+                    <div className="bg-cyberdark-900/50 p-3 rounded font-mono text-xs space-y-1">
+                      <div>Server: <span className="text-green-400">mail.snakkaz.com</span></div>
+                      <div>Port: <span className="text-green-400">993</span></div>
+                      <div>Sikkerhet: <span className="text-green-400">SSL/TLS</span></div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h5 className="font-medium text-cybergold-300 mb-2">Utgående e-post (SMTP)</h5>
+                    <div className="bg-cyberdark-900/50 p-3 rounded font-mono text-xs space-y-1">
+                      <div>Server: <span className="text-green-400">mail.snakkaz.com</span></div>
+                      <div>Port: <span className="text-green-400">465</span></div>
+                      <div>Sikkerhet: <span className="text-green-400">SSL/TLS</span></div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 p-3 bg-cybergold-900/20 border border-cybergold-500/30 rounded">
+                    <p className="text-xs text-cybergold-300">
+                      <strong>Tips:</strong> Brukernavn og passord får du i din Premium-profil etter oppgradering
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="text-center">
+                <Button 
+                  onClick={() => navigate("/premium")}
+                  className="h-12 px-8 bg-gradient-to-r from-cybergold-600 to-orange-500 hover:from-cybergold-500 hover:to-orange-400 text-black font-semibold"
+                >
+                  <Crown className="mr-2" size={20} />
+                  Oppgrader til Premium
+                </Button>
+                <p className="text-xs text-cyberdark-400 mt-2">
+                  Kun 99 kr/måned • Kan kanselleres når som helst
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Feature Comparison */}
+          <div className="border border-cyberdark-700 rounded-lg overflow-hidden">
+            <div className="bg-cyberdark-800/50 p-4 border-b border-cyberdark-700">
+              <h3 className="text-xl font-semibold text-cyberdark-100">E-post funksjoner sammenligning</h3>
+            </div>
+            <div className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="text-center">
+                  <h4 className="font-semibold text-cyberdark-300 mb-3">Gratis Snakkaz</h4>
+                  <ul className="space-y-2 text-sm text-cyberdark-400">
+                    <li>Kun chat i appen</li>
+                    <li>Ingen e-post</li>
+                    <li>Begrenset lagring</li>
+                  </ul>
+                </div>
+                <div className="text-center border border-cybergold-500/30 rounded-lg p-4 bg-cybergold-900/10">
+                  <h4 className="font-semibold text-cybergold-300 mb-3">
+                    <Crown className="inline mr-1" size={16} />
+                    Premium Snakkaz
+                  </h4>
+                  <ul className="space-y-2 text-sm text-cybergold-200">
+                    <li>✅ @snakkaz.com e-post</li>
+                    <li>✅ Webmail tilgang</li>
+                    <li>✅ IMAP/SMTP støtte</li>
+                    <li>✅ Ubegrenset lagring</li>
+                    <li>✅ Spam beskyttelse</li>
+                  </ul>
+                </div>
+                <div className="text-center">
+                  <h4 className="font-semibold text-cyberdark-300 mb-3">Vanlige e-post tjenester</h4>
+                  <ul className="space-y-2 text-sm text-cyberdark-400">
+                    <li>Kostbar domene</li>
+                    <li>Komplisert oppsett</li>
+                    <li>Mangler integrering</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

@@ -9,7 +9,7 @@
  * and improving error handling.
  */
 
-const { createClient } = require('@supabase/supabase-js');
+import { createClient } from '@supabase/supabase-js';
 
 // Supabase configuration
 const supabaseUrl = 'https://wqpoozpbceucynsojmbk.supabase.co';
@@ -27,8 +27,7 @@ async function main() {
     console.log('1️⃣ Testing Supabase Connection...');
     const { data: testData, error: testError } = await supabase
       .from('profiles')
-      .select('count(*)')
-      .limit(1);
+      .select('count', { count: 'exact', head: true });
     
     if (testError) {
       console.log('❌ Supabase connection failed:', testError.message);
