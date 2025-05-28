@@ -20,24 +20,31 @@
 - ✅ Uploaded .htaccess files for each subdomain
 - ✅ Created main .htaccess with subdomain routing rules
 
-## ⚠️ CURRENT ISSUE
+## ⚠️ CURRENT ISSUE - UPDATED MAY 28, 2025
 
 **Problem**: Subdomains showing Apache/LiteSpeed autoindex instead of Snakkaz Chat application
 
 **Root Cause**: Subdomain document root configuration needs to be set at cPanel level
 
+**Latest Update**: cPanel API extraction methods FAILED with 403 Access Denied errors
+- ❌ Files API: HTTP 403
+- ❌ Fileman API: HTTP 403  
+- ❌ Compress API: HTTP 403
+- ❌ PHP Upload: Failed
+
 **Current Behavior**:
 - `curl -I https://dash.snakkaz.com` returns HTTP 200
 - Content shows directory listing instead of application
 - All subdomain infrastructure is ready, just needs proper routing
+- **NEW**: API automation blocked by hosting provider permissions
 
-## 🔧 REQUIRED NEXT STEPS
+## 🔧 REQUIRED NEXT STEPS - UPDATED MAY 28, 2025
 
-### 1. cPanel Subdomain Configuration
+### 1. MANUAL cPanel Subdomain Configuration (RECOMMENDED)
 - Access cPanel at https://premium123.web-hosting.com:2083
 - Login with credentials: snakqsqe / [password from .env]
 - Navigate to "Subdomains" section
-- Configure document root for each subdomain:
+- **MANUALLY** configure document root for each subdomain:
   - dash.snakkaz.com → /public_html
   - business.snakkaz.com → /public_html
   - docs.snakkaz.com → /public_html
@@ -45,7 +52,10 @@
   - mcp.snakkaz.com → /public_html
   - help.snakkaz.com → /public_html
 
-### 2. Alternative Solutions
+📋 **See `MANUAL-CPANEL-SUBDOMAIN-SETUP.md` for detailed step-by-step guide**
+
+### 2. Alternative Solutions (If Manual Config Blocked)
+- Contact hosting support about subdomain document root permissions
 - Use Cloudflare Page Rules to redirect subdomains to main domain
 - Configure server-level virtual hosts (if available)
 - Use JavaScript-based subdomain detection in the main app
