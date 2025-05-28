@@ -9,8 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 
 const PremiumPage = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const isPremium = user?.premium_level > 0;
+  const { user, isPremium } = useAuth();
   
   return (
     <div className="min-h-screen bg-cyberdark-950 text-white">
@@ -44,50 +43,43 @@ const PremiumPage = () => {
             <Home className="mr-2" size={18} />
             Hjem
           </Button>
-        </div>
-
-        {/* Premium Hero Section */}
+        </div>        {/* Premium Hero Section */}
         <div className="max-w-4xl mx-auto mb-12">
-          <div 
-            className="p-8 rounded-xl mb-8 bg-gradient-to-r from-cyberdark-900/90 via-cyberdark-800/90 to-cyberdark-900/90"
+          <div
+            className="p-8 rounded-xl mb-8 bg-gradient-to-br from-slate-900/95 via-purple-900/90 to-blue-900/95 backdrop-blur-sm"
             style={{
-              borderImage: 'linear-gradient(90deg, #ffd700, #ffb700) 1',
-              border: '2px solid',
-              boxShadow: '0 0 20px rgba(255,215,0,0.15)',
+              borderImage: 'linear-gradient(45deg, #3b82f6, #8b5cf6, #06b6d4) 1',
+              border: '2px solid transparent',
+              backgroundImage: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1), rgba(6, 182, 212, 0.1))',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 30px rgba(59, 130, 246, 0.15)',
             }}
           >
             <div className="flex items-center justify-center mb-6">
-              <Crown className="text-cybergold-400 mr-3" size={32} />
+              <Crown className="text-blue-400 mr-3" size={32} />
               <h2 
-                className="text-2xl md:text-3xl font-semibold"
-                style={{
-                  background: 'linear-gradient(90deg, #ffd700 0%, #ffffff 50%, #ffd700 100%)',
-                  WebkitBackgroundClip: 'text',
-                  backgroundClip: 'text',
-                  color: 'transparent',
-                }}
+                className="text-2xl md:text-3xl font-semibold bg-gradient-to-r from-blue-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent"
               >
                 Oppgrader til Premium
               </h2>
             </div>
             
-            <p className="mb-6 text-lg text-gray-300 leading-relaxed text-center max-w-2xl mx-auto">
+            <p className="mb-6 text-lg text-slate-300 leading-relaxed text-center max-w-2xl mx-auto">
               Lås opp alle avanserte funksjoner, få ubegrenset lagringskapasitet og opplev 
               enda bedre sikkerhet med SnakkaZ Premium. Designet for de som ikke ønsker å 
               inngå kompromisser med sin kommunikasjon.
             </p>
 
             {isPremium ? (
-              <div className="mb-8 p-4 bg-cybergold-900/30 rounded-lg border border-cybergold-500/50 text-center">
-                <Check className="inline-block text-cybergold-400 mb-2" size={24} />
-                <p className="text-cybergold-300 font-medium">
+              <div className="mb-8 p-4 bg-emerald-900/30 rounded-lg border border-emerald-500/50 text-center">
+                <Check className="inline-block text-emerald-400 mb-2" size={24} />
+                <p className="text-emerald-300 font-medium">
                   Du har allerede Premium! Nyt alle våre eksklusive funksjoner.
                 </p>
               </div>
             ) : (
               <div className="flex justify-center mb-8">
                 <Button 
-                  className="bg-gradient-to-r from-cybergold-600 to-cybergold-500 hover:from-cybergold-500 hover:to-cybergold-400 text-black font-bold py-2 px-8 text-lg rounded-full shadow-lg shadow-cybergold-900/30"
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold py-3 px-10 text-lg rounded-full shadow-lg transform hover:scale-105 transition-all duration-200"
                   onClick={() => navigate("/settings?tab=subscription")}
                 >
                   <Crown className="mr-2" size={18} />
@@ -97,29 +89,93 @@ const PremiumPage = () => {
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              <div className="flex flex-col items-center text-center p-5 rounded-lg bg-cyberdark-950/70 border border-cybergold-800/30 hover:border-cybergold-500/30 transition-all">
-                <Shield className="text-cybergold-400 mb-3" size={36} />
-                <h3 className="text-xl font-semibold mb-2 text-cybergold-200">Utvidet sikkerhet</h3>
-                <p className="text-gray-400">
+              <div className="flex flex-col items-center text-center p-6 rounded-lg bg-slate-800/50 border border-blue-500/20 hover:border-blue-400/40 transition-all duration-300 hover:transform hover:scale-105">
+                <Shield className="text-blue-400 mb-3" size={36} />
+                <h3 className="text-xl font-semibold mb-2 text-blue-300">Utvidet sikkerhet</h3>
+                <p className="text-slate-400">
                   Ytterligere sikkerhetslag, avansert E2EE med forlenget nøkkellengde og biometrisk autentisering.
                 </p>
               </div>
               
-              <div className="flex flex-col items-center text-center p-5 rounded-lg bg-cyberdark-950/70 border border-cybergold-800/30 hover:border-cybergold-500/30 transition-all">
-                <Zap className="text-cybergold-400 mb-3" size={36} />
-                <h3 className="text-xl font-semibold mb-2 text-cybergold-200">Ubegrenset lagring</h3>
-                <p className="text-gray-400">
+              <div className="flex flex-col items-center text-center p-6 rounded-lg bg-slate-800/50 border border-purple-500/20 hover:border-purple-400/40 transition-all duration-300 hover:transform hover:scale-105">
+                <Zap className="text-purple-400 mb-3" size={36} />
+                <h3 className="text-xl font-semibold mb-2 text-purple-300">Ubegrenset lagring</h3>
+                <p className="text-slate-400">
                   Ingen lagringsgrenser for meldinger, medier eller filer. Behold alle dine samtaler så lenge du ønsker.
                 </p>
               </div>
               
-              <div className="flex flex-col items-center text-center p-5 rounded-lg bg-cyberdark-950/70 border border-cybergold-800/30 hover:border-cybergold-500/30 transition-all">
-                <Sparkles className="text-cybergold-400 mb-3" size={36} />
-                <h3 className="text-xl font-semibold mb-2 text-cybergold-200">Eksklusive funksjoner</h3>
-                <p className="text-gray-400">
+              <div className="flex flex-col items-center text-center p-6 rounded-lg bg-slate-800/50 border border-cyan-500/20 hover:border-cyan-400/40 transition-all duration-300 hover:transform hover:scale-105">
+                <Sparkles className="text-cyan-400 mb-3" size={36} />
+                <h3 className="text-xl font-semibold mb-2 text-cyan-300">Eksklusive funksjoner</h3>
+                <p className="text-slate-400">
                   Tidlig tilgang til nye funksjoner, tilpassede temaer og utvidede integrasjonsmuligheter.
                 </p>
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Why Premium Section */}
+        <div className="max-w-4xl mx-auto mb-12">
+          <div className="bg-gradient-to-r from-indigo-900/40 to-purple-900/40 rounded-xl p-8 border border-indigo-500/20">
+            <h2 className="text-2xl font-semibold mb-6 text-center text-indigo-300">
+              Hvorfor velge SnakkaZ Premium?
+            </h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div>
+                <h3 className="text-lg font-semibold text-blue-300 mb-4 flex items-center">
+                  <Lock className="mr-2" size={20} />
+                  Maksimal sikkerhet
+                </h3>
+                <ul className="space-y-3 text-slate-300">
+                  <li className="flex items-start">
+                    <Check className="text-green-400 mr-2 mt-1 flex-shrink-0" size={16} />
+                    <span>End-to-end kryptering med 256-bit AES</span>
+                  </li>
+                  <li className="flex items-start">
+                    <Check className="text-green-400 mr-2 mt-1 flex-shrink-0" size={16} />
+                    <span>Biometrisk autentisering for ekstra sikkerhet</span>
+                  </li>
+                  <li className="flex items-start">
+                    <Check className="text-green-400 mr-2 mt-1 flex-shrink-0" size={16} />
+                    <span>Avansert nøkkelrotasjon hver 30. dag</span>
+                  </li>
+                </ul>
+              </div>
+              
+              <div>
+                <h3 className="text-lg font-semibold text-purple-300 mb-4 flex items-center">
+                  <Sparkles className="mr-2" size={20} />
+                  Eksklusiv opplevelse
+                </h3>
+                <ul className="space-y-3 text-slate-300">
+                  <li className="flex items-start">
+                    <Check className="text-green-400 mr-2 mt-1 flex-shrink-0" size={16} />
+                    <span>Ubegrenset lagring av meldinger og medier</span>
+                  </li>
+                  <li className="flex items-start">
+                    <Check className="text-green-400 mr-2 mt-1 flex-shrink-0" size={16} />
+                    <span>Prioritert kundestøtte innen 2 timer</span>
+                  </li>
+                  <li className="flex items-start">
+                    <Check className="text-green-400 mr-2 mt-1 flex-shrink-0" size={16} />
+                    <span>Tidlig tilgang til nye funksjoner</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+            
+            <div className="mt-8 p-4 bg-slate-800/30 rounded-lg border border-emerald-500/30">
+              <div className="flex items-center justify-center mb-2">
+                <Gift className="text-emerald-400 mr-2" size={20} />
+                <span className="text-emerald-300 font-semibold">Spesialtilbud!</span>
+              </div>
+              <p className="text-slate-300 text-center">
+                De første 1000 brukerne får <strong className="text-emerald-400">50% rabatt</strong> på årlige abonnement. 
+                Ikke gå glipp av denne muligheten!
+              </p>
             </div>
           </div>
         </div>
@@ -416,15 +472,15 @@ const PremiumPage = () => {
         
         {/* Call to Action */}
         <div className="max-w-3xl mx-auto mb-12 text-center">
-          <h2 className="text-2xl font-semibold mb-4 text-cybergold-300">
+          <h2 className="text-2xl font-semibold mb-4 text-blue-300">
             Klar til å oppgradere din kommunikasjon?
           </h2>
-          <p className="text-gray-400 mb-6">
+          <p className="text-slate-400 mb-6">
             Bli med tusenvis av brukere som allerede nyter fordelene med SnakkaZ Premium.
             Med vårt enkle oppsett kan du komme i gang på under ett minutt.
           </p>
           <Button 
-            className="bg-gradient-to-r from-cybergold-600 to-cybergold-500 hover:from-cybergold-500 hover:to-cybergold-400 text-black font-bold py-2 px-10 text-lg rounded-full shadow-lg shadow-cybergold-900/30"
+            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold py-3 px-12 text-lg rounded-full shadow-lg transform hover:scale-105 transition-all duration-200"
             onClick={() => navigate("/settings?tab=subscription")}
           >
             <Crown className="mr-2" size={18} />
