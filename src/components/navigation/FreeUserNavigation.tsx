@@ -35,7 +35,7 @@ const FreeUserNavigation: React.FC = () => {
       {/* Header */}
       <div className="p-4 border-b border-cyberdark-700">
         <h1 className="text-xl font-bold text-cyberprimary-100 mb-1">Snakkaz</h1>
-        <p className="text-sm text-cyberdark-300">Gratis Bruker</p>
+        <p className="text-sm text-cyberdark-300">Velkommen!</p>
         {user && (
           <p className="text-xs text-cyberdark-400 mt-1">
             {user.email?.split('@')[0]}

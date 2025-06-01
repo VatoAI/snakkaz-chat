@@ -139,7 +139,7 @@ const BasicChatPage: React.FC = () => {
               <div className="flex items-center gap-2">
                 <Badge variant="outline" className="border-cyberprimary-500/30 text-cyberprimary-300">
                   <Bitcoin className="h-3 w-3 mr-1" />
-                  Gratis Bruker
+                  Chat Medlem
                 </Badge>
               </div>
             </div>

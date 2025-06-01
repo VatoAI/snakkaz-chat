@@ -1,5 +1,5 @@
-// PremiumEmailManager.tsx
-// Component for managing premium email accounts
+// CommunityEmailManager.tsx
+// Component for managing community email accounts
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
@@ -33,7 +33,7 @@ interface EmailAccount {
   created_at: string
 }
 
-export default function PremiumEmailManager() {
+export default function CommunityEmailManager() {
   const { user, isPremium } = useAuth()
   const { toast } = useToast()
   const [emails, setEmails] = useState<EmailAccount[]>([])
@@ -70,7 +70,7 @@ export default function PremiumEmailManager() {
       setError(null)
       
       try {
-        const response = await fetch('/api/premium/emails')
+        const response = await fetch('/api/community/emails')
         const data = await response.json()
         
         if (data.success) {
@@ -126,7 +126,7 @@ export default function PremiumEmailManager() {
     setError(null)
     
     try {
-      const response = await fetch('/api/premium/emails', {
+      const response = await fetch('/api/community/emails', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -179,7 +179,7 @@ export default function PremiumEmailManager() {
     setIsDeleting(username)
     
     try {
-      const response = await fetch(`/api/premium/emails/${username}`, {
+      const response = await fetch(`/api/community/emails/${username}`, {
         method: 'DELETE'
       })
       
@@ -240,7 +240,7 @@ export default function PremiumEmailManager() {
     setResetPasswordError(null)
     
     try {
-      const response = await fetch(`/api/premium/emails/${resetUsername}/password`, {
+      const response = await fetch(`/api/community/emails/${resetUsername}/password`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json'
@@ -296,23 +296,23 @@ export default function PremiumEmailManager() {
   // Combine loading states for user and emails
   const isLoading = isLoadingEmails || !user;
 
-  // If user is not premium, show upgrade message
+  // If user is not a community supporter, show invitation message
   if (!isPremium && !isLoading) {
     return (
       <Card className="w-full max-w-2xl mx-auto">
         <CardHeader>
-          <CardTitle>Premium E-post</CardTitle>
-          <CardDescription>Oppgrader til Premium for å få din egen @snakkaz.com e-postadresse</CardDescription>
+          <CardTitle>Fellesskap E-post</CardTitle>
+          <CardDescription>Støtt felleskapet for å få din egen @snakkaz.com e-postadresse</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col items-center justify-center py-8 space-y-4 text-center">
             <Mail size={64} className="text-muted-foreground" />
             <h3 className="text-lg font-semibold">Få din egen @snakkaz.com e-postadresse</h3>
             <p className="text-muted-foreground">
-              Med et premium-abonnement kan du opprette din egen e-postadresse og bruke den med hvilken som helst e-postklient.
+              Som en del av vårt fellesskap kan du opprette din egen e-postadresse og bruke den med hvilken som helst e-postklient. Dette bidrar til å støtte plattformen.
             </p>
             <Button variant="default" size="lg">
-              Oppgrader til Premium
+              Støtt Felleskapet
             </Button>
           </div>
         </CardContent>
@@ -411,7 +411,7 @@ export default function PremiumEmailManager() {
       <Card className="w-full">
         <CardHeader className="flex flex-row items-start justify-between">
           <div>
-            <CardTitle>Premium E-postadresser</CardTitle>
+            <CardTitle>Fellesskap E-postadresser</CardTitle>
             <CardDescription>Administrer dine @snakkaz.com e-postadresser</CardDescription>
           </div>
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
@@ -425,7 +425,7 @@ export default function PremiumEmailManager() {
               <DialogHeader>
                 <DialogTitle>Opprett ny e-postadresse</DialogTitle>
                 <DialogDescription>
-                  Lag en ny @snakkaz.com e-postadresse for din Premium-konto
+                  Lag en ny @snakkaz.com e-postadresse som støtter vårt fellesskap
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleCreateEmail}>

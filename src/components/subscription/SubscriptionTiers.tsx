@@ -41,7 +41,7 @@ export const SubscriptionTiers = () => {
   };
 
   // Handle payment success
-  const handlePaymentSuccess = async () => {
+  const handleSupportSuccess = async () => {
     if (!user || !selectedPlan) return;
     
     try {
@@ -49,8 +49,8 @@ export const SubscriptionTiers = () => {
       await refreshSubscription();
       
       toast({
-        title: "Subscription Activated",
-        description: `You now have access to ${selectedPlan.name} features!`,
+        title: "Takk for din støtte!",
+        description: `Du støtter nå fellesskapet med ${selectedPlan.name}!`,
         variant: "default",
       });
       
@@ -58,24 +58,24 @@ export const SubscriptionTiers = () => {
     } catch (error) {
       console.error("Failed to create subscription", error);
       toast({
-        title: "Subscription Error",
-        description: "Failed to activate your subscription. Please try again.",
+        title: "Støtte Error",
+        description: "Kunne ikke aktivere din støtte. Prøv igjen.",
         variant: "destructive",
       });
     }
   };
 
   // Handle payment error
-  const handlePaymentError = (errorMessage: string) => {
+  const handleSupportError = (errorMessage: string) => {
     toast({
-      title: "Payment Failed",
+      title: "Støtte mislyktes",
       description: errorMessage,
       variant: "destructive",
     });
   };
 
-  // Start free trial
-  const handleStartTrial = async () => {
+  // Start community support
+  const handleStartSupport = async () => {
     if (!user) return;
     
     try {
@@ -85,8 +85,8 @@ export const SubscriptionTiers = () => {
       if (success) {
         await refreshSubscription();
         toast({
-          title: "Trial Activated",
-          description: "Your 14-day free trial has been activated!",
+          title: "Velkommen til fellesskapet!",
+          description: "Du har nå tilgang til alle funksjonene våre!",
           variant: "default",
         });
       } else {
@@ -95,8 +95,8 @@ export const SubscriptionTiers = () => {
     } catch (error) {
       console.error("Failed to start trial", error);
       toast({
-        title: "Trial Error",
-        description: "Failed to start your trial. Please try again.",
+        title: "Oppstart feilet",
+        description: "Kunne ikke starte din tilgang. Prøv igjen.",
         variant: "destructive",
       });
     } finally {
@@ -107,12 +107,12 @@ export const SubscriptionTiers = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <Loader2 className="h-8 w-8 animate-spin text-cybergold-500" />
+        <Loader2 className="h-8 w-8 animate-spin text-green-500" />
       </div>
     );
   }
 
-  // Render active subscription details if user has one
+  // Render active community support details if user has one
   if (isPremium && subscription) {
     const expiryDate = subscription.current_period_end 
       ? new Date(subscription.current_period_end).toLocaleDateString() 
@@ -122,35 +122,35 @@ export const SubscriptionTiers = () => {
     
     return (
       <div className="space-y-6">
-        <Card className="border-cybergold-500 bg-cyberdark-800">
+        <Card className="border-green-500 bg-slate-800">
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
-              Active Subscription
-              <Badge variant="outline" className="bg-cybergold-700 text-cybergold-100">
-                {subscription.status === 'trial' ? 'TRIAL' : 'ACTIVE'}
+              Aktiv fellesskapsstøtte
+              <Badge variant="outline" className="bg-green-700 text-green-100">
+                {subscription.status === 'trial' ? 'GRATIS TILGANG' : 'SUPPORTER'}
               </Badge>
             </CardTitle>
             <CardDescription>
-              Your {currentPlan?.name || 'Premium'} subscription is active
+              Takk for at du støtter {currentPlan?.name || 'SnakkaZ'} fellesskapet
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
               <div className="flex justify-between">
-                <span className="text-cybergold-400">Plan:</span>
-                <span className="font-medium">{currentPlan?.name || 'Premium'}</span>
+                <span className="text-green-400">Støttenivå:</span>
+                <span className="font-medium">{currentPlan?.name || 'Fellesskapsstøtte'}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-cybergold-400">Status:</span>
-                <span className="font-medium">{subscription.status.charAt(0).toUpperCase() + subscription.status.slice(1)}</span>
+                <span className="text-green-400">Status:</span>
+                <span className="font-medium">{subscription.status === 'trial' ? 'Gratis tilgang' : 'Aktiv støtte'}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-cybergold-400">Renews on:</span>
+                <span className="text-green-400">Fornyelse:</span>
                 <span className="font-medium">{expiryDate}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-cybergold-400">Price:</span>
-                <span className="font-medium">{currentPlan?.price || 0} kr / month</span>
+                <span className="text-green-400">Bidrag:</span>
+                <span className="font-medium">{currentPlan?.price || 0} kr / måned</span>
               </div>
             </div>
           </CardContent>
@@ -163,19 +163,19 @@ export const SubscriptionTiers = () => {
                   await subscriptionService.cancelSubscription(user.id);
                   await refreshSubscription();
                   toast({
-                    title: "Subscription Canceled",
-                    description: "Your subscription has been canceled.",
+                    title: "Støtte avsluttet",
+                    description: "Din støtte til fellesskapet er avsluttet.",
                   });
                 }
               }}
             >
-              Cancel Subscription
+              Avslutt støtte
             </Button>
           </CardFooter>
         </Card>
         
-        <div className="text-sm text-center text-cybergold-500">
-          Your subscription will remain active until {expiryDate}
+        <div className="text-sm text-center text-green-500">
+          Din støtte forblir aktiv til {expiryDate}. Takk for at du hjelper oss bygge et bedre fellesskap!
         </div>
       </div>
     );
@@ -184,9 +184,9 @@ export const SubscriptionTiers = () => {
   return (
     <div className="space-y-8">
       <div className="text-center">
-        <h2 className="text-3xl font-bold tracking-tight text-cybergold-100">Velg Ditt Plan</h2>
-        <p className="mt-2 text-cybergold-400">
-          Finn planen som passer dine behov
+        <h2 className="text-3xl font-bold tracking-tight text-green-100">Støtt fellesskapet</h2>
+        <p className="mt-2 text-green-400">
+          Valgfri støtte som hjelper oss bygge en bedre plattform for alle
         </p>
       </div>
       
@@ -194,23 +194,23 @@ export const SubscriptionTiers = () => {
         {plans.map((plan) => (
           <Card 
             key={plan.id}
-            className={`relative overflow-hidden transition-all ${
-              plan.highlighted ? 'border-2 border-cybergold-500 shadow-lg shadow-cybergold-900/20' : ''
+            className={`relative overflow-hidden transition-all border-green-500/20 hover:border-green-400/40 ${
+              plan.highlighted ? 'border-2 border-green-500 shadow-lg shadow-green-900/20' : ''
             }`}
           >
             {plan.badge_text && (
               <Badge 
-                className="absolute top-4 right-4 bg-cybergold-600 text-xs font-semibold uppercase"
+                className="absolute top-4 right-4 bg-green-600 text-xs font-semibold uppercase"
               >
                 {plan.badge_text}
               </Badge>
             )}
             <CardHeader>
-              <CardTitle>{plan.name}</CardTitle>
-              <CardDescription>{plan.description}</CardDescription>
+              <CardTitle className="text-green-200">{plan.name}</CardTitle>
+              <CardDescription className="text-slate-400">{plan.description}</CardDescription>
               <div className="mt-2">
-                <span className="text-3xl font-bold">{plan.price} kr</span>
-                <span className="text-cybergold-400"> / {plan.interval}</span>
+                <span className="text-3xl font-bold text-green-300">{plan.price} kr</span>
+                <span className="text-green-400"> / {plan.interval}</span>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -222,11 +222,11 @@ export const SubscriptionTiers = () => {
                   return (
                     <div key={feature} className="flex items-center">
                       {enabled ? (
-                        <Check className="h-4 w-4 mr-2 text-cybergold-500" />
+                        <Check className="h-4 w-4 mr-2 text-green-500" />
                       ) : (
-                        <X className="h-4 w-4 mr-2 text-cybergold-800" />
+                        <X className="h-4 w-4 mr-2 text-slate-600" />
                       )}
-                      <span className={!enabled ? "text-cybergold-600" : ""}>
+                      <span className={!enabled ? "text-slate-600" : "text-slate-300"}>
                         {feature.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
                       </span>
                     </div>
@@ -236,10 +236,10 @@ export const SubscriptionTiers = () => {
             </CardContent>
             <CardFooter>
               <Button 
-                className="w-full bg-cybergold-600 hover:bg-cybergold-500 text-black"
+                className="w-full bg-green-600 hover:bg-green-500 text-white"
                 onClick={() => handleSelectPlan(plan)}
               >
-                Velg Plan
+                Støtt med denne
               </Button>
             </CardFooter>
           </Card>
@@ -247,25 +247,27 @@ export const SubscriptionTiers = () => {
       </div>
       
       <div className="text-center">
-        <p className="text-cybergold-400 mb-4">Vil du prøve først? Test våre avanserte funksjoner gratis.</p>
+        <p className="text-green-400 mb-4">
+          Vil du teste alle funksjonene først? Få gratis tilgang og se hva vi bygger sammen.
+        </p>
         <Button 
           variant="outline" 
-          className="border-cybergold-600 text-cybergold-400 hover:text-cybergold-200"
-          onClick={handleStartTrial}
+          className="border-green-600 text-green-400 hover:text-green-200 hover:bg-green-600/10"
+          onClick={handleStartSupport}
           disabled={loading}
         >
           {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-          Start 14-dagers gratis prøving
+          Få gratis tilgang
         </Button>
       </div>
       
-      {/* Payment Dialog */}
+      {/* Support Dialog */}
       <Dialog open={paymentOpen} onOpenChange={setPaymentOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Complete Your Subscription</DialogTitle>
+            <DialogTitle>Støtt fellesskapet</DialogTitle>
             <DialogDescription>
-              {selectedPlan ? `Subscribe to ${selectedPlan.name} for ${selectedPlan.price} kr per ${selectedPlan.interval}` : ''}
+              {selectedPlan ? `Støtt ${selectedPlan.name} med ${selectedPlan.price} kr per ${selectedPlan.interval}` : ''}
             </DialogDescription>
           </DialogHeader>
           
@@ -274,8 +276,8 @@ export const SubscriptionTiers = () => {
               amount={selectedPlan.price} 
               productId={selectedPlan.id}
               productType={selectedPlan.name}
-              onSuccess={handlePaymentSuccess}
-              onError={handlePaymentError}
+              onSuccess={handleSupportSuccess}
+              onError={handleSupportError}
             />
           )}
         </DialogContent>

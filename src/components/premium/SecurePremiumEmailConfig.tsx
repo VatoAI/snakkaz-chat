@@ -1,17 +1,18 @@
+// Community-focused secure email configuration component
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, Lock, Shield, Eye, EyeOff, Mail, CheckCircle, Crown, AlertTriangle } from "lucide-react";
+import { Loader2, Lock, Shield, Eye, EyeOff, Mail, CheckCircle, Heart, AlertTriangle } from "lucide-react";
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
 
-interface SecurePremiumEmailConfigProps {
+interface SecureCommunityEmailConfigProps {
   onClose?: () => void;
 }
 
-export const SecurePremiumEmailConfig: React.FC<SecurePremiumEmailConfigProps> = ({ onClose }) => {
+export const SecureCommunityEmailConfig: React.FC<SecureCommunityEmailConfigProps> = ({ onClose }) => {
   const { user } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -22,7 +23,7 @@ export const SecurePremiumEmailConfig: React.FC<SecurePremiumEmailConfigProps> =
   const [attemptCount, setAttemptCount] = useState(0);
   const [lockoutTime, setLockoutTime] = useState(0);
 
-  // Verify user is premium and authenticated
+  // Verify user is community supporter and authenticated
   useEffect(() => {
     const verifyAccess = async () => {
       setIsVerifying(true);
@@ -38,16 +39,17 @@ export const SecurePremiumEmailConfig: React.FC<SecurePremiumEmailConfigProps> =
           return;
         }
 
-        // Check if user has premium access (simplified check)
+        // Check if user has community support access (simplified check)
         // In production, this should check with backend
-        const isPremium = user.user_metadata?.subscription_status === 'premium' || 
-                         user.email?.endsWith('@snakkaz.com');
+        const isCommunitySupporter = user.user_metadata?.subscription_status === 'premium' || 
+                                    user.user_metadata?.subscription_status === 'community_supporter' ||
+                                    user.email?.endsWith('@snakkaz.com');
         
-        if (!isPremium) {
+        if (!isCommunitySupporter) {
           toast({
             variant: "destructive",
-            title: "Premium kreves",
-            description: "Denne funksjonen krever Premium-abonnement.",
+            title: "Fellesskapsstøtte kreves",
+            description: "Denne funksjonen krever aktiv fellesskapsstøtte.",
           });
           onClose?.();
           return;
@@ -117,12 +119,12 @@ export const SecurePremiumEmailConfig: React.FC<SecurePremiumEmailConfigProps> =
         description: "Du har nå tilgang til e-postkonfigurasjon.",
       });
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       setAttemptCount(prev => prev + 1);
       toast({
         variant: "destructive",
         title: "Verifisering feilet",
-        description: error.message || "Ugyldig legitimasjon. Prøv igjen.",
+        description: error instanceof Error ? error.message : "Ugyldig legitimasjon. Prøv igjen.",
       });
     } finally {
       setIsLoading(false);
@@ -133,8 +135,8 @@ export const SecurePremiumEmailConfig: React.FC<SecurePremiumEmailConfigProps> =
     return (
       <div className="flex items-center justify-center p-8">
         <div className="flex items-center gap-3">
-          <Loader2 className="animate-spin text-cybergold-400" size={24} />
-          <span className="text-cyberdark-200">Verifiserer tilgang...</span>
+          <Loader2 className="animate-spin text-green-400" size={24} />
+          <span className="text-gray-200">Verifiserer tilgang...</span>
         </div>
       </div>
     );
@@ -142,20 +144,20 @@ export const SecurePremiumEmailConfig: React.FC<SecurePremiumEmailConfigProps> =
 
   if (!isAuthenticated) {
     return (
-      <Card className="max-w-md mx-auto bg-cyberdark-900/90 border-cybergold-500/30">
+      <Card className="max-w-md mx-auto bg-green-900/20 border-green-500/30">
         <CardHeader className="text-center">
-          <div className="mx-auto w-16 h-16 bg-cybergold-900/20 rounded-full flex items-center justify-center mb-4">
-            <Shield className="text-cybergold-400" size={32} />
+          <div className="mx-auto w-16 h-16 bg-green-900/20 rounded-full flex items-center justify-center mb-4">
+            <Shield className="text-green-400" size={32} />
           </div>
-          <CardTitle className="text-cybergold-300">Sikkerhetsverifisering</CardTitle>
-          <p className="text-cyberdark-300 text-sm">
+          <CardTitle className="text-green-300">Sikkerhetsverifisering</CardTitle>
+          <p className="text-gray-300 text-sm">
             For å vise sensitive e-postkonfigurasjonsdetaljer, vennligst bekreft din identitet
           </p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSecurityVerification} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-cyberdark-200 mb-2">
+              <label className="block text-sm font-medium text-gray-200 mb-2">
                 Bekreft e-postadresse
               </label>
               <Input
@@ -163,13 +165,13 @@ export const SecurePremiumEmailConfig: React.FC<SecurePremiumEmailConfigProps> =
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="din@epost.no"
-                className="bg-cyberdark-800 border-cyberdark-600 text-white"
+                className="bg-gray-800 border-gray-600 text-white"
                 required
               />
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-cyberdark-200 mb-2">
+              <label className="block text-sm font-medium text-gray-200 mb-2">
                 Bekreft passord
               </label>
               <div className="relative">
@@ -178,13 +180,13 @@ export const SecurePremiumEmailConfig: React.FC<SecurePremiumEmailConfigProps> =
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="bg-cyberdark-800 border-cyberdark-600 text-white pr-10"
+                  className="bg-gray-800 border-gray-600 text-white pr-10"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-cyberdark-400 hover:text-cyberdark-200"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200"
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -203,7 +205,7 @@ export const SecurePremiumEmailConfig: React.FC<SecurePremiumEmailConfigProps> =
             <Button
               type="submit"
               disabled={isLoading || lockoutTime > 0}
-              className="w-full bg-cybergold-600 hover:bg-cybergold-500 text-black font-semibold"
+              className="w-full bg-green-600 hover:bg-green-500 text-white font-semibold"
             >
               {isLoading ? (
                 <div className="flex items-center gap-2">
@@ -234,10 +236,10 @@ export const SecurePremiumEmailConfig: React.FC<SecurePremiumEmailConfigProps> =
             <CheckCircle className="text-green-400" size={20} />
           </div>
           <div>
-            <h2 className="text-xl font-semibold text-cybergold-300">
+            <h2 className="text-xl font-semibold text-green-300">
               E-postkonfigurasjon for {user.email}
             </h2>
-            <p className="text-cyberdark-300 text-sm">Sikker tilgang verifisert</p>
+            <p className="text-gray-300 text-sm">Sikker tilgang verifisert</p>
           </div>
         </div>
         {onClose && (
@@ -249,29 +251,29 @@ export const SecurePremiumEmailConfig: React.FC<SecurePremiumEmailConfigProps> =
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* IMAP Configuration */}
-        <Card className="bg-cyberdark-900/50 border-cyberdark-700">
+        <Card className="bg-gray-900/50 border-gray-700">
           <CardHeader>
-            <CardTitle className="text-cybergold-300 flex items-center gap-2">
+            <CardTitle className="text-green-300 flex items-center gap-2">
               <Mail size={20} />
               Innkommende e-post (IMAP)
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-cyberdark-200">Server</label>
-              <div className="p-3 bg-cyberdark-800 rounded border font-mono text-sm text-green-400">
+              <label className="text-sm font-medium text-gray-200">Server</label>
+              <div className="p-3 bg-gray-800 rounded border font-mono text-sm text-green-400">
                 mail.snakkaz.com
               </div>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-cyberdark-200">Port</label>
-              <div className="p-3 bg-cyberdark-800 rounded border font-mono text-sm text-green-400">
+              <label className="text-sm font-medium text-gray-200">Port</label>
+              <div className="p-3 bg-gray-800 rounded border font-mono text-sm text-green-400">
                 993
               </div>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-cyberdark-200">Sikkerhet</label>
-              <div className="p-3 bg-cyberdark-800 rounded border font-mono text-sm text-green-400">
+              <label className="text-sm font-medium text-gray-200">Sikkerhet</label>
+              <div className="p-3 bg-gray-800 rounded border font-mono text-sm text-green-400">
                 SSL/TLS
               </div>
             </div>
@@ -279,29 +281,29 @@ export const SecurePremiumEmailConfig: React.FC<SecurePremiumEmailConfigProps> =
         </Card>
 
         {/* SMTP Configuration */}
-        <Card className="bg-cyberdark-900/50 border-cyberdark-700">
+        <Card className="bg-gray-900/50 border-gray-700">
           <CardHeader>
-            <CardTitle className="text-cybergold-300 flex items-center gap-2">
+            <CardTitle className="text-green-300 flex items-center gap-2">
               <Mail size={20} />
               Utgående e-post (SMTP)
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-cyberdark-200">Server</label>
-              <div className="p-3 bg-cyberdark-800 rounded border font-mono text-sm text-green-400">
+              <label className="text-sm font-medium text-gray-200">Server</label>
+              <div className="p-3 bg-gray-800 rounded border font-mono text-sm text-green-400">
                 mail.snakkaz.com
               </div>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-cyberdark-200">Port</label>
-              <div className="p-3 bg-cyberdark-800 rounded border font-mono text-sm text-green-400">
+              <label className="text-sm font-medium text-gray-200">Port</label>
+              <div className="p-3 bg-gray-800 rounded border font-mono text-sm text-green-400">
                 465
               </div>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-cyberdark-200">Sikkerhet</label>
-              <div className="p-3 bg-cyberdark-800 rounded border font-mono text-sm text-green-400">
+              <label className="text-sm font-medium text-gray-200">Sikkerhet</label>
+              <div className="p-3 bg-gray-800 rounded border font-mono text-sm text-green-400">
                 SSL/TLS
               </div>
             </div>
@@ -314,19 +316,19 @@ export const SecurePremiumEmailConfig: React.FC<SecurePremiumEmailConfigProps> =
         <Shield className="h-4 w-4 text-amber-400" />
         <AlertDescription className="text-amber-200">
           <strong>Sikkerhetsinfo:</strong> Hold denne informasjonen hemmelig. Del aldri e-postkonfigurasjonen 
-          offentlig eller med andre brukere. Brukernavn og passord får du i din Premium-profil.
+          offentlig eller med andre brukere. Brukernavn og passord får du i din fellesskapsprofil.
         </AlertDescription>
       </Alert>
 
-      <Card className="bg-cybergold-900/10 border-cybergold-500/30">
+      <Card className="bg-green-900/10 border-green-500/30">
         <CardHeader>
-          <CardTitle className="text-cybergold-300 flex items-center gap-2">
-            <Crown size={20} />
-            Premium E-postfunksjoner
+          <CardTitle className="text-green-300 flex items-center gap-2">
+            <Heart size={20} />
+            Fellesskap E-postfunksjoner
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <ul className="space-y-2 text-cyberdark-200">
+          <ul className="space-y-2 text-gray-200">
             <li className="flex items-center gap-2">
               <CheckCircle size={16} className="text-green-400" />
               Ubegrenset lagringsplass
@@ -337,7 +339,7 @@ export const SecurePremiumEmailConfig: React.FC<SecurePremiumEmailConfigProps> =
             </li>
             <li className="flex items-center gap-2">
               <CheckCircle size={16} className="text-green-400" />
-              24/7 teknisk support
+              Felleskapsbasert teknisk støtte
             </li>
             <li className="flex items-center gap-2">
               <CheckCircle size={16} className="text-green-400" />

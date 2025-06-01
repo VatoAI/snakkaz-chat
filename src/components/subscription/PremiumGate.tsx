@@ -16,21 +16,21 @@ interface PremiumGateProps {
 
 /**
  * Component that provides access information for enhanced features
- * Shows children if user has access, otherwise shows upgrade information
+ * Shows children if user has access, otherwise shows friendly information
  */
 export const PremiumGate: React.FC<PremiumGateProps> = ({
   feature,
   children,
   title = 'Avansert Funksjon',
-  description = 'Denne funksjonen er tilgjengelig med en utvidet plan',
+  description = 'Denne funksjonen er tilgjengelig for alle medlemmer',
   redirectOnClick = true
 }) => {
   const { isPremium, subscription } = useAuth();
   const navigate = useNavigate();
 
-  const handleUpgradeClick = () => {
+  const handleLearnMoreClick = () => {
     if (redirectOnClick) {
-      navigate('/subscription');
+      navigate('/info');
     }
   };
 
@@ -39,29 +39,30 @@ export const PremiumGate: React.FC<PremiumGateProps> = ({
     return <>{children}</>;
   }
 
-  // Otherwise show the access information
+  // Otherwise show friendly community information
   return (
-    <Card className="border border-cybergold-900/50 bg-cyberdark-900/50 backdrop-blur-sm">
+    <Card className="border border-cybergold-900/30 bg-cyberdark-900/30 backdrop-blur-sm">
       <CardHeader>
         <div className="flex items-center">
-          <Star className="h-5 w-5 text-cybergold-500 mr-2" />
-          <CardTitle className="text-cybergold-400">{title}</CardTitle>
+          <Star className="h-5 w-5 text-cybergold-400 mr-2" />
+          <CardTitle className="text-cybergold-300">{title}</CardTitle>
         </div>
-        <CardDescription>{description}</CardDescription>
+        <CardDescription className="text-gray-400">{description}</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="text-center py-4">
-          <div className="text-cybergold-300 text-lg">
-            Få tilgang til denne funksjonen med en utvidet plan
+          <div className="text-cybergold-200 text-base">
+            Bli med i fellesskapet for å få tilgang til alle funksjoner
           </div>
         </div>
       </CardContent>
       <CardFooter>
         <Button 
-          onClick={handleUpgradeClick}
-          className="w-full bg-cybergold-600 hover:bg-cybergold-500 text-black"
+          onClick={handleLearnMoreClick}
+          variant="outline"
+          className="w-full border-cybergold-600/50 text-cybergold-300 hover:bg-cybergold-900/30"
         >
-          Se Planer
+          Lær mer
         </Button>
       </CardFooter>
     </Card>
