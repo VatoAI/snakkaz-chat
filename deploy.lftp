@@ -1,5 +1,5 @@
 # LFTP deployment script for Snakkaz Chat
-# Generated on Sat May 24 15:37:37 UTC 2025
+# Generated on Sun Jun  1 12:55:21 UTC 2025
 
 # Open connection
 open -u "SnakkaZ@snakkaz.com","Snakkaz2025!" "premium123.web-hosting.com"
