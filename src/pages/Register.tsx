@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Checkbox } from '@/components/ui/checkbox';
 import { Lock, Mail, User, AlertCircle, Shield, Users, Check } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { MathCaptcha } from '@/components/auth/MathCaptcha';
 
 const formSchema = z.object({
   username: z.string().min(3, {
@@ -50,6 +51,8 @@ const Register: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaValid, setCaptchaValid] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -65,6 +68,12 @@ const Register: React.FC = () => {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsLoading(true);
     setErrorMessage(null);
+
+    if (!captchaValid) {
+      setErrorMessage('Vennligst løs CAPTCHA-utfordringen');
+      setIsLoading(false);
+      return;
+    }
 
     try {
       // Registrer brukeren med brukernavnet inkludert i metadata
@@ -212,6 +221,16 @@ const Register: React.FC = () => {
                     </FormItem>
                   )}
                 />
+                
+                <div className="space-y-2">
+                  <MathCaptcha
+                    onValidation={(valid, token) => {
+                      setCaptchaValid(valid);
+                      setCaptchaToken(token);
+                    }}
+                  />
+                </div>
+                
                 <FormField
                   control={form.control}
                   name="acceptTerms"

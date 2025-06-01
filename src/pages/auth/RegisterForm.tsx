@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { MathCaptcha } from '@/components/auth/MathCaptcha';
 
 interface RegisterFormProps {
   onSuccess: () => void;
@@ -24,6 +25,8 @@ export const RegisterForm = ({ onSuccess }: RegisterFormProps) => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showRequirements, setShowRequirements] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaValid, setCaptchaValid] = useState(false);
   const { toast } = useToast();
 
   const passwordRequirements: PasswordRequirement[] = [
@@ -80,6 +83,15 @@ export const RegisterForm = ({ onSuccess }: RegisterFormProps) => {
       toast({
         title: "Feil",
         description: "Du må fylle inn alle feltene.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!captchaValid) {
+      toast({
+        title: "CAPTCHA påkrevd",
+        description: "Vennligst løs CAPTCHA-utfordringen.",
         variant: "destructive",
       });
       return;
@@ -272,6 +284,15 @@ export const RegisterForm = ({ onSuccess }: RegisterFormProps) => {
         {confirmPassword && password && confirmPassword !== password && (
           <p className="text-xs text-red-500 mt-1">Passordene er ikke like</p>
         )}
+      </div>
+
+      <div className="space-y-2">
+        <MathCaptcha
+          onValidation={(valid, token) => {
+            setCaptchaValid(valid);
+            setCaptchaToken(token);
+          }}
+        />
       </div>
 
       <Button

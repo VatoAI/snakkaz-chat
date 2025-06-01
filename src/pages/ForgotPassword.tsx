@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Mail, AlertCircle, ArrowLeft } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/lib/supabaseClient';
+import { MathCaptcha } from '@/components/auth/MathCaptcha';
 
 const formSchema = z.object({
   email: z.string().email({
@@ -23,6 +24,8 @@ const ForgotPassword: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaValid, setCaptchaValid] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -34,6 +37,12 @@ const ForgotPassword: React.FC = () => {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsLoading(true);
     setErrorMessage(null);
+
+    if (!captchaValid) {
+      setErrorMessage('Vennligst løs CAPTCHA-utfordringen');
+      setIsLoading(false);
+      return;
+    }
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(values.email, {
@@ -142,6 +151,16 @@ const ForgotPassword: React.FC = () => {
                       </FormItem>
                     )}
                   />
+                  
+                  <div className="space-y-2">
+                    <MathCaptcha
+                      onValidation={(valid, token) => {
+                        setCaptchaValid(valid);
+                        setCaptchaToken(token);
+                      }}
+                    />
+                  </div>
+                  
                   <Button
                     type="submit"
                     className="w-full bg-cybergold-600 text-black hover:bg-cybergold-500"

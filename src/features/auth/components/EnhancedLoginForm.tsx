@@ -7,6 +7,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Eye, EyeOff, LogIn, AlertCircle, ShieldCheck } from "lucide-react";
 import { useAuth } from '../hooks/useAuth';
 import { TOTPVerification } from '../two-factor/TOTPVerification';
+import { MathCaptcha } from '@/components/auth/MathCaptcha';
 
 export const EnhancedLoginForm: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -17,6 +18,8 @@ export const EnhancedLoginForm: React.FC = () => {
   const [showTwoFactor, setShowTwoFactor] = useState(false);
   const [pendingUser, setPendingUser] = useState<any>(null);
   const [totpSecret, setTotpSecret] = useState<string>('');
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaValid, setCaptchaValid] = useState(false);
 
   const { signIn, completeTwoFactorAuth } = useAuth();
 
@@ -25,6 +28,11 @@ export const EnhancedLoginForm: React.FC = () => {
     
     if (!email || !password) {
       setError('E-post og passord er påkrevd');
+      return;
+    }
+
+    if (!captchaValid) {
+      setError('Vennligst løs CAPTCHA-utfordringen');
       return;
     }
 
@@ -139,6 +147,15 @@ export const EnhancedLoginForm: React.FC = () => {
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <MathCaptcha
+              onValidation={(valid, token) => {
+                setCaptchaValid(valid);
+                setCaptchaToken(token);
+              }}
+            />
           </div>
 
           {error && (
