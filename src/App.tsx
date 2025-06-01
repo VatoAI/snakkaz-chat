@@ -14,6 +14,8 @@ import { initializePreview, shouldShowPreviewNotice, getPreviewDisplayInfo } fro
 const ProfilePage = lazy(() => import("@/pages/Profile"));
 const SettingsPage = lazy(() => import("@/pages/Settings"));
 const GroupChatPage = lazy(() => import("@/features/chat/components/group/GroupChatPage"));
+const AIChatPage = lazy(() => import("@/features/chat/components/common/AIChatPage"));
+const CreateGroupPage = lazy(() => import("@/pages/CreateGroupPage"));
 
 // Friend-focused pages
 const Friends = lazy(() => import("@/pages/Friends"));
@@ -96,6 +98,24 @@ const RequireAuth = ({ children }) => {
   }
 
   return children;
+};
+
+// Smart redirect component that handles routing based on auth state
+const AuthAwareRedirect = ({ fallback = "/login" }: { fallback?: string }) => {
+  const { user, loading } = useAuth();
+  
+  // Show loading while checking auth
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+  
+  // If user is logged in, go to chat
+  if (user) {
+    return <Navigate to="/chat" replace />;
+  }
+  
+  // If not logged in, go to login
+  return <Navigate to={fallback} replace />;
 };
 
 // Preload components function
@@ -266,7 +286,7 @@ export default function App() {
                 path="/contacts" 
                 element={
                   <RequireAuth>
-                    <Chat />
+                    <Friends />
                   </RequireAuth>
                 } 
               />
@@ -290,7 +310,7 @@ export default function App() {
                 path="/group-chat" 
                 element={
                   <RequireAuth>
-                    <Chat />
+                    <GroupChatPage />
                   </RequireAuth>
                 } 
               />
@@ -298,7 +318,7 @@ export default function App() {
                 path="/ai-chat" 
                 element={
                   <RequireAuth>
-                    <Chat />
+                    <AIChatPage />
                   </RequireAuth>
                 } 
               />
@@ -306,7 +326,7 @@ export default function App() {
                 path="/create-group" 
                 element={
                   <RequireAuth>
-                    <Chat />
+                    <CreateGroupPage />
                   </RequireAuth>
                 } 
               />
@@ -356,9 +376,13 @@ export default function App() {
                 } 
               />
               
-              {/* Default redirects - now more specific */}
-              <Route path="/" element={<Navigate to="/info" replace />} />
-              <Route path="*" element={<Navigate to="/info" replace />} />
+              {/* Default redirects - smart routing based on auth state */}
+              <Route path="/" element={
+                <AuthAwareRedirect />
+              } />
+              <Route path="*" element={
+                <AuthAwareRedirect fallback="/info" />
+              } />
             </Routes>
           </Suspense>
           <Toaster />

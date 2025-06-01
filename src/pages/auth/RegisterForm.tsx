@@ -288,7 +288,7 @@ export const RegisterForm = ({ onSuccess }: RegisterFormProps) => {
 
       <div className="space-y-2">
         <MathCaptcha
-          onValidation={(valid, token) => {
+          onVerificationChange={(valid, token) => {
             setCaptchaValid(valid);
             setCaptchaToken(token);
           }}

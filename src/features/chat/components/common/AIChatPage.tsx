@@ -1,7 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAIChat, type AIMessage, type APIConfig } from '../hooks/ai/useAIChat';
-import { useAuth } from '../../contexts/AuthContext';
-import { Button, Input, Avatar, Spinner, Card, Badge, Switch, Tooltip } from 'some-ui-library'; // Erstatt med din faktiske UI-bibliotek
+import { useAuth } from '@/hooks/useAuth';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Loader2 } from 'lucide-react';
 
 const AIChatPage: React.FC = () => {
   const {
@@ -85,7 +92,7 @@ const AIChatPage: React.FC = () => {
           
           {message.isProcessing ? (
             <div className="flex items-center">
-              <Spinner size="sm" />
+              <Loader2 className="h-4 w-4 animate-spin" />
               <span className="ml-2">Tenker...</span>
             </div>
           ) : (
@@ -254,7 +261,7 @@ const AIChatPage: React.FC = () => {
           <div className="flex justify-between items-center">
             <h2 className="text-xl font-medium">
               {currentChat?.title || 'AI-Assistent'}
-              {isLoading && <Spinner size="sm" className="ml-2" />}
+              {isLoading && <Loader2 className="h-4 w-4 animate-spin ml-2" />}
             </h2>
             
             <Tooltip label="API Innstillinger">
