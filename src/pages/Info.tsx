@@ -60,7 +60,7 @@ export const Info: React.FC = () => {
         </div>
       </div>
 
-      {/* Premium Email Section */}
+      {/* Premium Email Section - Now Secure */}
       <div className="container mx-auto px-4 py-12" id="premium-email">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
@@ -122,39 +122,37 @@ export const Info: React.FC = () => {
               </div>
             </div>
 
-            {/* Right Column - Configuration */}
+            {/* Right Column - Secure Configuration Access */}
             <div className="space-y-6">
               <h3 className="text-2xl font-semibold text-cybergold-300 mb-6">
-                Enkel konfigurering
+                Sikker konfigurering
               </h3>
               
-              <div className="p-6 rounded-lg bg-cyberdark-800/50 border border-cyberdark-600">
-                <h4 className="font-semibold text-cyberdark-100 mb-4">E-postklient innstillinger:</h4>
-                
-                <div className="space-y-4 text-sm">
+              <div className="p-6 rounded-lg bg-cyberdark-800/50 border border-amber-500/30">
+                <div className="flex items-start gap-3 mb-4">
+                  <Shield className="text-amber-400 mt-1" size={20} />
                   <div>
-                    <h5 className="font-medium text-cybergold-300 mb-2">Innkommende e-post (IMAP)</h5>
-                    <div className="bg-cyberdark-900/50 p-3 rounded font-mono text-xs space-y-1">
-                      <div>Server: <span className="text-green-400">mail.snakkaz.com</span></div>
-                      <div>Port: <span className="text-green-400">993</span></div>
-                      <div>Sikkerhet: <span className="text-green-400">SSL/TLS</span></div>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <h5 className="font-medium text-cybergold-300 mb-2">Utgående e-post (SMTP)</h5>
-                    <div className="bg-cyberdark-900/50 p-3 rounded font-mono text-xs space-y-1">
-                      <div>Server: <span className="text-green-400">mail.snakkaz.com</span></div>
-                      <div>Port: <span className="text-green-400">465</span></div>
-                      <div>Sikkerhet: <span className="text-green-400">SSL/TLS</span></div>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 p-3 bg-cybergold-900/20 border border-cybergold-500/30 rounded">
-                    <p className="text-xs text-cybergold-300">
-                      <strong>Tips:</strong> Brukernavn og passord får du i din Premium-profil etter oppgradering
+                    <h4 className="font-semibold text-amber-200 mb-2">Beskyttet informasjon</h4>
+                    <p className="text-cyberdark-300 text-sm">
+                      E-postkonfigurasjonsdetaljer er nå beskyttet og vises kun til verifiserte Premium-brukere.
                     </p>
                   </div>
+                </div>
+                
+                <div className="space-y-3">
+                  <div className="bg-amber-900/20 p-3 rounded border border-amber-500/30">
+                    <p className="text-xs text-amber-300">
+                      <strong>Sikkerhet:</strong> For å beskytte mot misbruk vises server-detaljer kun etter innlogging og identitetsverifisering.
+                    </p>
+                  </div>
+                  
+                  <Button 
+                    onClick={() => navigate("/login")}
+                    className="w-full bg-cyberblue-600 hover:bg-cyberblue-500 text-white font-medium"
+                  >
+                    <Lock className="mr-2" size={16} />
+                    Logg inn for konfigurasjonsdetaljer
+                  </Button>
                 </div>
               </div>
 
