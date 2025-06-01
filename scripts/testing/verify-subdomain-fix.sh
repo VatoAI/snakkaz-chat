@@ -1,121 +1,77 @@
 #!/bin/bash
-# verify-subdomain-fix.sh
-#
-# This script verifies that the subdomain root and ping access fix is working correctly.
 
-# Define colors for output
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-RED='\033[0;31m'
-BLUE='\033[0;34m'
-NC='\033[0m'
+# ===============================================
+# 🎯 POST-CPANEL FIX VERIFICATION SCRIPT
+# ===============================================
+# Run this AFTER making cPanel subdomain changes
 
-echo -e "${BLUE}=====================================================${NC}"
-echo -e "${BLUE}   SNAKKAZ CHAT: SUBDOMAIN FIX VERIFICATION          ${NC}"
-echo -e "${BLUE}=====================================================${NC}"
-echo
+echo "🔍 VERIFYING CPANEL SUBDOMAIN FIX - $(date)"
+echo "=============================================="
 
-# Function to check if a directory and required files exist
-check_directory() {
-    local dir=$1
-    local success=true
+# Test function
+test_subdomain() {
+    local subdomain=$1
+    echo "🌐 Testing $subdomain.snakkaz.com..."
     
-    echo -e "${YELLOW}Checking $dir subdomain directory:${NC}"
+    # Get HTTP status
+    status=$(curl -s -I https://$subdomain.snakkaz.com --connect-timeout 10 | head -1)
     
-    # Check directory
-    if [ -d "$dir" ]; then
-        echo -e "  - Directory: ${GREEN}✓ Exists${NC}"
+    # Get first few lines of content
+    content=$(curl -s https://$subdomain.snakkaz.com --connect-timeout 10 | head -3)
+    
+    echo "   Status: $status"
+    
+    # Check if it's showing Snakkaz app or autoindex
+    if echo "$content" | grep -q "snakkaz-icon"; then
+        echo "   ✅ SUCCESS: Shows Snakkaz application"
+    elif echo "$content" | grep -q "Index of"; then
+        echo "   ❌ FAIL: Still showing autoindex"
     else
-        echo -e "  - Directory: ${RED}✗ Missing${NC}"
-        success=false
+        echo "   ⚠️  UNKNOWN: Unexpected content"
+        echo "   Content preview: $(echo "$content" | head -1)"
     fi
-    
-    # Check ping.json
-    if [ -f "$dir/ping.json" ]; then
-        echo -e "  - ping.json: ${GREEN}✓ Exists${NC}"
-    else
-        echo -e "  - ping.json: ${RED}✗ Missing${NC}"
-        success=false
-    fi
-    
-    # Check index.json
-    if [ -f "$dir/index.json" ]; then
-        echo -e "  - index.json: ${GREEN}✓ Exists${NC}"
-    else
-        echo -e "  - index.json: ${RED}✗ Missing${NC}"
-        success=false
-    fi
-    
-    # Check index.html
-    if [ -f "$dir/index.html" ]; then
-        echo -e "  - index.html: ${GREEN}✓ Exists${NC}"
-    else
-        echo -e "  - index.html: ${RED}✗ Missing${NC}"
-        success=false
-    fi
-    
-    # Check .htaccess
-    if [ -f "$dir/.htaccess" ]; then
-        echo -e "  - .htaccess: ${GREEN}✓ Exists${NC}"
-    else
-        echo -e "  - .htaccess: ${RED}✗ Missing${NC}"
-        success=false
-    fi
-    
-    # Check for RewriteRule in .htaccess
-    if [ -f "$dir/.htaccess" ] && grep -q "RewriteRule \^$" "$dir/.htaccess"; then
-        echo -e "  - Root RewriteRule: ${GREEN}✓ Configured${NC}"
-    else
-        echo -e "  - Root RewriteRule: ${RED}✗ Missing${NC}"
-        success=false
-    fi
-    
-    if [ "$success" = true ]; then
-        echo -e "  ${GREEN}✓ $dir subdomain setup is complete!${NC}"
-    else
-        echo -e "  ${RED}✗ $dir subdomain setup is incomplete${NC}"
-    fi
-    echo
+    echo ""
 }
 
-# Check .htaccess in root directory
-echo -e "${YELLOW}Checking root .htaccess:${NC}"
-if [ -f ".htaccess" ]; then
-    echo -e "  - File: ${GREEN}✓ Exists${NC}"
-    
-    # Check for subdomain root handling
-    if grep -q "RewriteRule \^(analytics|business|dash|docs)\.snakkaz\.com$ -" ".htaccess"; then
-        echo -e "  - Subdomain root handling: ${GREEN}✓ Configured${NC}"
-    else
-        echo -e "  - Subdomain root handling: ${RED}✗ Missing${NC}"
-    fi
-else
-    echo -e "  - File: ${RED}✗ Missing${NC}"
-fi
-echo
+# Test main domain for reference
+echo "📍 REFERENCE - MAIN DOMAIN:"
+echo "----------------------------"
+test_subdomain "www"
 
-# Check if fix-subdomain-pings.js exists and contains root handling
-echo -e "${YELLOW}Checking subdomain handler script:${NC}"
-if [ -f "fix-subdomain-pings.js" ]; then
-    echo -e "  - File: ${GREEN}✓ Exists${NC}"
-    
-    # Check for isRootRequest function
-    if grep -q "isRootRequest" "fix-subdomain-pings.js"; then
-        echo -e "  - Root request handling: ${GREEN}✓ Configured${NC}"
-    else
-        echo -e "  - Root request handling: ${RED}✗ Missing${NC}"
-    fi
-else
-    echo -e "  - File: ${RED}✗ Missing${NC}"
-fi
-echo
+echo "📍 TESTING ALL SUBDOMAINS:"
+echo "----------------------------"
 
-# Check subdomain directories
-for subdomain in analytics business dash docs; do
-    check_directory "$subdomain"
+# Test all subdomains
+SUBDOMAINS=("dash" "business" "docs" "analytics" "mcp" "help")
+
+success_count=0
+total_count=${#SUBDOMAINS[@]}
+
+for subdomain in "${SUBDOMAINS[@]}"; do
+    test_subdomain "$subdomain"
+    
+    # Check if successful
+    content=$(curl -s https://$subdomain.snakkaz.com --connect-timeout 10 | head -3)
+    if echo "$content" | grep -q "snakkaz-icon"; then
+        ((success_count++))
+    fi
 done
 
-echo -e "${BLUE}=====================================================${NC}"
-echo -e "${BLUE}   VERIFICATION COMPLETE                            ${NC}"
-echo -e "${BLUE}=====================================================${NC}"
-echo
+# Summary
+echo "=============================================="
+echo "📊 SUMMARY:"
+echo "   ✅ Success: $success_count/$total_count subdomains"
+echo "   ❌ Failed: $((total_count - success_count))/$total_count subdomains"
+
+if [ $success_count -eq $total_count ]; then
+    echo ""
+    echo "🎉 ALL SUBDOMAINS WORKING! 🎉"
+    echo "✅ Production deployment successful!"
+    echo "✅ Ready to proceed with database optimization"
+else
+    echo ""
+    echo "⚠️  Some subdomains still need configuration"
+    echo "📋 Check the failed subdomains in cPanel"
+fi
+
+echo "=============================================="
