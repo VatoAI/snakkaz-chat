@@ -13,7 +13,7 @@ interface Message {
   text: string;
   user: string;
   timestamp: Date;
-  type: 'user' | 'system' | 'btc';
+  type: 'user' | 'welcome' | 'community';
 }
 
 const BasicChatPage: React.FC = () => {
@@ -23,23 +23,16 @@ const BasicChatPage: React.FC = () => {
     {
       id: '1',
       text: 'Velkommen til Snakkaz Chat! 🚀',
-      user: 'System',
+      user: 'Velkommen',
       timestamp: new Date(),
-      type: 'system'
+      type: 'welcome'
     },
     {
       id: '2',
-      text: 'Her kan du chatte med andre om BTC/NOK trading og mer!',
-      user: 'System',
+      text: 'Del dine tanker, møt nye venner og bygg ekte forbindelser her! 💬',
+      user: 'Fellesskap',
       timestamp: new Date(),
-      type: 'system'
-    },
-    {
-      id: '3',
-      text: 'BTC/NOK rate: 1 BTC = 950,000 NOK 📈',
-      user: 'Trading Bot',
-      timestamp: new Date(),
-      type: 'btc'
+      type: 'community'
     }
   ]);
 
@@ -55,17 +48,17 @@ const BasicChatPage: React.FC = () => {
       setMessages(prev => [...prev, newMessage]);
       setMessage('');
 
-      // Simple bot response for BTC mentions
-      if (message.toLowerCase().includes('btc') || message.toLowerCase().includes('bitcoin')) {
+      // Encourage community interaction instead of bot responses
+      if (message.toLowerCase().includes('hei') || message.toLowerCase().includes('hallo')) {
         setTimeout(() => {
-          const botMessage: Message = {
+          const encouragementMessage: Message = {
             id: (Date.now() + 1).toString(),
-            text: '🤖 Interessert i BTC trading? Oppgrader til Premium for avanserte analyser!',
-            user: 'Trading Bot',
+            text: '👋 Flott at du vil chatte! Inviter venner til å bli med - desto flere, desto morsommere blir det!',
+            user: 'Fellesskap',
             timestamp: new Date(),
-            type: 'btc'
+            type: 'community'
           };
-          setMessages(prev => [...prev, botMessage]);
+          setMessages(prev => [...prev, encouragementMessage]);
         }, 1000);
       }
     }
@@ -171,8 +164,8 @@ const BasicChatPage: React.FC = () => {
                     >
                       <div className="flex items-center gap-2 text-xs text-cyberdark-400">
                         <span className={`font-medium ${
-                          msg.type === 'system' ? 'text-cyberprimary-400' :
-                          msg.type === 'btc' ? 'text-amber-400' :
+                          msg.type === 'welcome' ? 'text-cybergold-400' :
+                          msg.type === 'community' ? 'text-green-400' :
                           'text-cyberdark-300'
                         }`}>
                           {msg.user}
@@ -183,10 +176,10 @@ const BasicChatPage: React.FC = () => {
                         className={`max-w-xs px-4 py-2 rounded-lg ${
                           msg.type === 'user' && msg.user === (user.email?.split('@')[0] || 'Anonym')
                             ? 'bg-cyberprimary-600 text-white ml-auto' :
-                          msg.type === 'system'
-                            ? 'bg-cyberdark-700 text-cyberdark-200 border border-cyberprimary-500/20' :
-                          msg.type === 'btc'
-                            ? 'bg-amber-900/20 text-amber-200 border border-amber-500/20' :
+                          msg.type === 'welcome'
+                            ? 'bg-cybergold-900/20 text-cybergold-200 border border-cybergold-500/20' :
+                          msg.type === 'community'
+                            ? 'bg-green-900/20 text-green-200 border border-green-500/20' :
                             'bg-cyberdark-700 text-cyberdark-200'
                         }`}
                       >

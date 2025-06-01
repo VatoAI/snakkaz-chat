@@ -287,7 +287,7 @@ const Register: React.FC = () => {
                 <ul className="space-y-1 text-xs text-green-200">
                   <li className="flex items-center"><Check className="h-3 w-3 mr-1" />Vi samler IKKE personlig informasjon</li>
                   <li className="flex items-center"><Check className="h-3 w-3 mr-1" />End-to-end kryptering på alle meldinger</li>
-                  <li className="flex items-center"><Check className="h-3 w-3 mr-1" />Kun politisamarbeid ved barnemisbruk</li>
+                  <li className="flex items-center"><Check className="h-3 w-3 mr-1" />Fullt respekt for brukerens privatliv</li>
                 </ul>
               </div>
               

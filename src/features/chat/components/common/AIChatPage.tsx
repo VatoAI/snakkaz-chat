@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useAIChat, type AIMessage, type APIConfig } from '../hooks/ai/useAIChat';
+import { useAIChat, type AIMessage, type APIConfig } from '../../../../pages/hooks/ai/useAIChat';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

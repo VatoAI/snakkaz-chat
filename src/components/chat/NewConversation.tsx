@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSupabaseClient, useUser } from '@supabase/auth-helpers-react';
 import { useToast } from '@/hooks/use-toast';
 import { 
@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { UserAvatar } from '@/components/ui/user-avatar';
+import { UserAvatar } from '@/components/chat/header/UserAvatar';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
@@ -57,9 +57,146 @@ export const NewConversation: React.FC<NewConversationProps> = ({
   const [enableEncryption, setEnableEncryption] = useState(true);
   const [searchMode, setSearchMode] = useState<'all' | 'friends' | 'recent'>('friends');
 
+  const fetchUsers = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      let realUsers: User[] = [];
+      
+      if (searchMode === 'friends') {
+        // Fetch user's friends
+        const { data: friendships, error: friendshipsError } = await supabase
+          .from('friendships')
+          .select(`
+            user_id,
+            friend_id,
+            status
+          `)
+          .or(`user_id.eq.${currentUserId},friend_id.eq.${currentUserId}`)
+          .eq('status', 'accepted');
+          
+        if (friendshipsError) throw friendshipsError;
+        
+        if (friendships && friendships.length > 0) {
+          const friendIds = friendships.map(f => 
+            f.user_id === currentUserId ? f.friend_id : f.user_id
+          );
+          
+          // Fetch friend profiles
+          const { data: friendProfiles, error: profilesError } = await supabase
+            .from('profiles')
+            .select('id, username, full_name, avatar_url')
+            .in('id', friendIds);
+            
+          if (profilesError) throw profilesError;
+          
+          realUsers = friendProfiles?.map(profile => ({
+            id: profile.id,
+            username: profile.username || 'Unknown User',
+            full_name: profile.full_name || undefined,
+            avatar_url: profile.avatar_url || undefined,
+            status: 'offline', // Default status, will be updated by presence
+            lastActive: new Date().toISOString()
+          })) || [];
+        }
+      } else if (searchMode === 'recent') {
+        // Fetch users from recent conversations
+        const { data: recentMessages, error: messagesError } = await supabase
+          .from('messages')
+          .select('sender_id, receiver_id, created_at')
+          .or(`sender_id.eq.${currentUserId},receiver_id.eq.${currentUserId}`)
+          .order('created_at', { ascending: false })
+          .limit(20);
+          
+        if (messagesError) throw messagesError;
+        
+        if (recentMessages && recentMessages.length > 0) {
+          const recentUserIds = [...new Set(
+            recentMessages.map(msg => 
+              msg.sender_id === currentUserId ? msg.receiver_id : msg.sender_id
+            ).filter(id => id && id !== currentUserId)
+          )];
+          
+          // Fetch recent user profiles
+          const { data: recentProfiles, error: recentProfilesError } = await supabase
+            .from('profiles')
+            .select('id, username, full_name, avatar_url')
+            .in('id', recentUserIds);
+            
+          if (recentProfilesError) throw recentProfilesError;
+          
+          realUsers = recentProfiles?.map(profile => ({
+            id: profile.id,
+            username: profile.username || 'Unknown User',
+            full_name: profile.full_name || undefined,
+            avatar_url: profile.avatar_url || undefined,
+            status: 'offline', // Default status, will be updated by presence
+            lastActive: new Date().toISOString()
+          })) || [];
+        }
+      } else {
+        // Fetch all users (excluding current user)
+        const { data: allProfiles, error: allProfilesError } = await supabase
+          .from('profiles')
+          .select('id, username, full_name, avatar_url')
+          .neq('id', currentUserId)
+          .limit(50); // Limit to prevent excessive data
+          
+        if (allProfilesError) throw allProfilesError;
+        
+        realUsers = allProfiles?.map(profile => ({
+          id: profile.id,
+          username: profile.username || 'Unknown User',
+          full_name: profile.full_name || undefined,
+          avatar_url: profile.avatar_url || undefined,
+          status: 'offline', // Default status, will be updated by presence
+          lastActive: new Date().toISOString()
+        })) || [];
+      }
+      
+      // Fetch presence data for all users
+      if (realUsers.length > 0) {
+        const userIds = realUsers.map(user => user.id);
+        const { data: presenceData, error: presenceError } = await supabase
+          .from('user_presence')
+          .select('user_id, status, last_seen')
+          .in('user_id', userIds);
+          
+        if (!presenceError && presenceData) {
+          const presenceMap = presenceData.reduce((acc, presence) => {
+            acc[presence.user_id] = presence;
+            return acc;
+          }, {} as Record<string, { status: string; last_seen: string }>);
+          
+          // Update users with presence data
+          realUsers = realUsers.map(user => ({
+            ...user,
+            status: (presenceMap[user.id]?.status as 'online' | 'offline' | 'away' | 'dnd') || 'offline',
+            lastActive: presenceMap[user.id]?.last_seen || user.lastActive
+          }));
+        }
+      }
+      
+      setUsers(realUsers);
+      setFilteredUsers(realUsers);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load users. Please try again.",
+        variant: "destructive",
+      });
+      
+      // Fallback to empty state with helpful message
+      setUsers([]);
+      setFilteredUsers([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [currentUserId, searchMode, supabase, toast]);
+
   useEffect(() => {
     fetchUsers();
-  }, [currentUserId]);
+  }, [fetchUsers]);
 
   useEffect(() => {
     if (searchQuery.trim()) {
@@ -73,70 +210,6 @@ export const NewConversation: React.FC<NewConversationProps> = ({
       setFilteredUsers(users);
     }
   }, [searchQuery, users]);
-
-  const fetchUsers = async () => {
-    setIsLoading(true);
-    try {
-      // In a real implementation, fetch users from Supabase
-      // For now, let's use demo data
-      const mockUsers: User[] = [
-        {
-          id: "user1",
-          username: "alex_tech",
-          full_name: "Alex Johnson",
-          avatar_url: "/avatars/alex.png",
-          status: "online",
-          lastActive: new Date().toISOString()
-        },
-        {
-          id: "user2",
-          username: "sarah_design",
-          full_name: "Sarah Wilson",
-          avatar_url: "/avatars/sarah.png",
-          status: "offline",
-          lastActive: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString()
-        },
-        {
-          id: "user3",
-          username: "mike_dev",
-          full_name: "Mike Stevens",
-          avatar_url: "/avatars/mike.png",
-          status: "away",
-          lastActive: new Date(Date.now() - 30 * 60 * 1000).toISOString()
-        },
-        {
-          id: "user4",
-          username: "emma_newuser",
-          full_name: "Emma Clarke",
-          avatar_url: "/avatars/emma.png",
-          status: "offline",
-          lastActive: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
-        },
-        {
-          id: "user5",
-          username: "david_code",
-          full_name: "David Martinez",
-          avatar_url: "/avatars/david.png",
-          status: "dnd",
-          lastActive: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString()
-        }
-      ];
-      
-      // Filter out the current user
-      const filtered = mockUsers.filter(user => user.id !== currentUserId);
-      setUsers(filtered);
-      setFilteredUsers(filtered);
-    } catch (error) {
-      console.error("Error fetching users:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load users. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const toggleUserSelection = (user: User) => {
     // For simplicity, let's implement single-user selection

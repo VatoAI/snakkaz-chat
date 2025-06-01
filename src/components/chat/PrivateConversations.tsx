@@ -10,7 +10,7 @@ import {
   CircleUser,
   Loader2
 } from 'lucide-react';
-import { UserAvatar } from '@/components/ui/user-avatar';
+import { UserAvatar } from '@/components/chat/header/UserAvatar';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
@@ -64,81 +64,142 @@ export const PrivateConversations: React.FC<PrivateConversationsProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   
   useEffect(() => {
+    const fetchConversations = async () => {
+      setIsLoading(true);
+      try {
+        // First, get all private chats where current user is a participant
+        const { data: userParticipations, error: participationError } = await supabase
+          .from('participants')
+          .select('chat_id')
+          .eq('user_id', currentUserId);
+
+        if (participationError) {
+          throw participationError;
+        }
+
+        if (!userParticipations || userParticipations.length === 0) {
+          setConversations([]);
+          return;
+        }
+
+        const chatIds = userParticipations.map(p => p.chat_id);
+
+        // Get chat details with participants
+        const { data: chats, error: chatsError } = await supabase
+          .from('private_chats')
+          .select(`
+            id,
+            created_at,
+            is_encrypted
+          `)
+          .in('id', chatIds);
+
+        if (chatsError) {
+          throw chatsError;
+        }
+
+        if (!chats || chats.length === 0) {
+          setConversations([]);
+          return;
+        }
+
+        // For each chat, get the other participant and last message
+        const conversationsData = await Promise.all(
+          chats.map(async (chat) => {
+            // Get other participants (not current user)
+            const { data: participants, error: participantsError } = await supabase
+              .from('participants')
+              .select(`
+                user_id,
+                profiles(
+                  id,
+                  username,
+                  avatar_url
+                )
+              `)
+              .eq('chat_id', chat.id)
+              .neq('user_id', currentUserId);
+
+            if (participantsError || !participants || participants.length === 0) {
+              return null;
+            }
+
+            const otherParticipant = participants[0];
+            if (!otherParticipant.profiles || !Array.isArray(otherParticipant.profiles) || otherParticipant.profiles.length === 0) return null;
+
+            const profile = otherParticipant.profiles[0];
+
+            // Get user presence status
+            const { data: presenceData } = await supabase
+              .from('user_presence')
+              .select('status')
+              .eq('user_id', otherParticipant.user_id)
+              .single();
+
+            // Get last message for this chat
+            const { data: lastMessageData } = await supabase
+              .from('private_chat_messages')
+              .select('content, created_at, is_encrypted')
+              .eq('chat_id', chat.id)
+              .order('created_at', { ascending: false })
+              .limit(1)
+              .single();
+
+            // Get unread count for current user
+            const { data: unreadData } = await supabase
+              .from('private_chat_messages')
+              .select('id')
+              .eq('chat_id', chat.id)
+              .neq('sender_id', currentUserId)
+              .is('read_at', null);
+
+            const conversation: Conversation = {
+              id: chat.id,
+              participant: {
+                id: otherParticipant.user_id,
+                username: profile.username,
+                avatar_url: profile.avatar_url,
+                status: (presenceData?.status as 'online' | 'offline' | 'away' | 'dnd') || 'offline'
+              },
+              lastMessage: lastMessageData ? {
+                content: lastMessageData.content,
+                timestamp: lastMessageData.created_at,
+                isEncrypted: lastMessageData.is_encrypted
+              } : undefined,
+              unreadCount: unreadData?.length || 0,
+              isEncrypted: chat.is_encrypted
+            };
+
+            return conversation;
+          })
+        );
+
+        // Filter out null conversations and sort by last message time
+        const validConversations = conversationsData
+          .filter((conv): conv is Conversation => conv !== null)
+          .sort((a, b) => {
+            const aTime = a.lastMessage?.timestamp || a.id;
+            const bTime = b.lastMessage?.timestamp || b.id;
+            return new Date(bTime).getTime() - new Date(aTime).getTime();
+          });
+
+        setConversations(validConversations);
+      } catch (error) {
+        console.error("Error fetching conversations:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load conversations. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
     if (currentUserId) {
       fetchConversations();
     }
-  }, [currentUserId]);
-
-  const fetchConversations = async () => {
-    setIsLoading(true);
-    try {
-      // In a real implementation, fetch conversations from Supabase
-      // For now, let's use demo data
-      const mockConversations: Conversation[] = [
-        {
-          id: "conv1",
-          participant: {
-            id: "user1",
-            username: "alex_tech",
-            avatar_url: "/avatars/alex.png",
-            status: "online"
-          },
-          lastMessage: {
-            content: "When do you want to meet?",
-            timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-            isEncrypted: false
-          },
-          unreadCount: 2,
-          isPinned: true,
-          isEncrypted: true
-        },
-        {
-          id: "conv2",
-          participant: {
-            id: "user2",
-            username: "sarah_design",
-            avatar_url: "/avatars/sarah.png",
-            status: "offline"
-          },
-          lastMessage: {
-            content: "[Encrypted message]",
-            timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-            isEncrypted: true
-          },
-          unreadCount: 0,
-          isMuted: true,
-          isEncrypted: true
-        },
-        {
-          id: "conv3",
-          participant: {
-            id: "user3",
-            username: "mike_dev",
-            avatar_url: "/avatars/mike.png",
-            status: "away"
-          },
-          lastMessage: {
-            content: "Let me check the code and get back to you",
-            timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-            isEncrypted: false
-          },
-          unreadCount: 0,
-          isEncrypted: false
-        }
-      ];
-
-      setConversations(mockConversations);
-    } catch (error) {
-      console.error("Error fetching conversations:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load conversations. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  }, [currentUserId, supabase, toast]);
 
   const handlePinConversation = (conversationId: string, isPinned: boolean) => {
     setConversations(prevConversations => 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { UnifiedNavigation } from '@/components/navigation/UnifiedNavigation';
 import { useAuth } from '@/hooks/useAuth';
@@ -10,8 +10,31 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MessagesSquare, Users, Bell, Settings, Plus } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
-import MobileChatContainer from '@/components/mobile/MobileChatContainer';
+import { MobileChatContainer } from '@/features/chat/components/interface/MobileChatContainer';
 import { MobileContactList } from '@/components/mobile/MobileContactList';
+import { useSupabaseClient } from '@supabase/auth-helpers-react';
+
+interface ChatItem {
+  id: string;
+  username: string;
+  full_name?: string;
+  avatar_url?: string;
+  lastMessage: string;
+  time: string;
+  isOnline: boolean;
+  unreadCount?: number;
+}
+
+interface Message {
+  id: string;
+  content: string;
+  sender: {
+    id: string;
+    username: string;
+  };
+  timestamp: string;
+  is_edited: boolean;
+}
 
 // Dette er en Chat-side med forbedret mobiltilpasning
 const Chat = () => {
@@ -20,35 +43,217 @@ const Chat = () => {
   const navigate = useNavigate();
   const { conversationId } = useParams();
   const isMobile = useIsMobile();
+  const supabase = useSupabaseClient();
+  
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('messages');
   const username = user?.user_metadata?.username || 'bruker';
   
-  // Mock data for demonstration
-  const [messages, setMessages] = useState<any[]>([]);
-  const [selectedChat, setSelectedChat] = useState<any>(null);
+  // State for real data
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [selectedChat, setSelectedChat] = useState<ChatItem | null>(null);
+  const [chats, setChats] = useState<ChatItem[]>([]);
   const currentUserId = user?.id || null;
 
-  useEffect(() => {
-    // Simuler lasting av meldinger
-    const loadingTimeout = setTimeout(() => {
-      setIsLoading(false);
-      
-      // Generate some mock messages if in a conversation
-      if (conversationId) {
-        const mockMessages = generateMockMessages(conversationId);
-        setMessages(mockMessages);
-        
-        // Set selected chat based on conversation ID
-        const mockChat = mockChats.find(chat => chat.id === conversationId);
-        if (mockChat) {
-          setSelectedChat(mockChat);
-        }
-      }
-    }, 1000);
+  // Fetch messages for a specific chat
+  const fetchMessagesForChat = useCallback(async (chatId: string) => {
+    try {
+      const { data: messagesData, error } = await supabase
+        .from('private_chat_messages')
+        .select(`
+          id,
+          content,
+          sender_id,
+          created_at,
+          is_edited,
+          profiles(username)
+        `)
+        .eq('chat_id', chatId)
+        .order('created_at', { ascending: true })
+        .limit(50);
 
-    return () => clearTimeout(loadingTimeout);
-  }, [conversationId]);
+      if (error) {
+        console.error('Error fetching messages:', error);
+        return;
+      }
+
+      if (messagesData) {
+        const formattedMessages: Message[] = messagesData.map(msg => ({
+          id: msg.id,
+          content: msg.content,
+          sender: {
+            id: msg.sender_id,
+            username: Array.isArray(msg.profiles) ? msg.profiles[0]?.username || 'Unknown' : 'Unknown'
+          },
+          timestamp: msg.created_at,
+          is_edited: msg.is_edited || false
+        }));
+
+        setMessages(formattedMessages);
+      }
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+    }
+  }, [supabase]);
+
+  // Helper function to format time ago
+  const formatTimeAgo = (dateString: string): string => {
+    const now = new Date();
+    const date = new Date(dateString);
+    const diffMs = now.getTime() - date.getTime();
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffHours < 1) return 'now';
+    if (diffHours < 24) return `${diffHours}h`;
+    if (diffDays === 1) return 'yesterday';
+    if (diffDays < 7) return `${diffDays}d`;
+    return date.toLocaleDateString();
+  };
+
+  // Fetch real conversations
+  useEffect(() => {
+    const fetchConversations = async () => {
+      if (!currentUserId) return;
+      
+      setIsLoading(true);
+      try {
+        // Get user's recent conversations from private chats
+        const { data: userParticipations, error: participationError } = await supabase
+          .from('participants')
+          .select('chat_id')
+          .eq('user_id', currentUserId);
+
+        if (participationError) {
+          console.error('Error fetching participations:', participationError);
+          setChats([]);
+          return;
+        }
+
+        if (!userParticipations || userParticipations.length === 0) {
+          setChats([]);
+          return;
+        }
+
+        const chatIds = userParticipations.map(p => p.chat_id);
+
+        // Get chat details
+        const { data: privateChats, error: chatsError } = await supabase
+          .from('private_chats')
+          .select('id, created_at')
+          .in('id', chatIds);
+
+        if (chatsError) {
+          console.error('Error fetching chats:', chatsError);
+          setChats([]);
+          return;
+        }
+
+        if (!privateChats || privateChats.length === 0) {
+          setChats([]);
+          return;
+        }
+
+        // For each chat, get the other participant and last message
+        const conversationsData = await Promise.all(
+          privateChats.map(async (chat) => {
+            // Get other participants
+            const { data: participants, error: participantsError } = await supabase
+              .from('participants')
+              .select(`
+                user_id,
+                profiles(
+                  id,
+                  username,
+                  full_name,
+                  avatar_url
+                )
+              `)
+              .eq('chat_id', chat.id)
+              .neq('user_id', currentUserId);
+
+            if (participantsError || !participants || participants.length === 0) {
+              return null;
+            }
+
+            const otherParticipant = participants[0];
+            if (!otherParticipant.profiles || !Array.isArray(otherParticipant.profiles) || otherParticipant.profiles.length === 0) {
+              return null;
+            }
+
+            const profile = otherParticipant.profiles[0];
+
+            // Get last message
+            const { data: lastMessageData } = await supabase
+              .from('private_chat_messages')
+              .select('content, created_at')
+              .eq('chat_id', chat.id)
+              .order('created_at', { ascending: false })
+              .limit(1)
+              .single();
+
+            // Get user presence
+            const { data: presenceData } = await supabase
+              .from('user_presence')
+              .select('status')
+              .eq('user_id', otherParticipant.user_id)
+              .single();
+
+            // Get unread count
+            const { data: unreadData } = await supabase
+              .from('private_chat_messages')
+              .select('id')
+              .eq('chat_id', chat.id)
+              .neq('sender_id', currentUserId)
+              .is('read_at', null);
+
+            const conversation: ChatItem = {
+              id: chat.id,
+              username: profile.username || 'Unknown User',
+              full_name: profile.full_name || undefined,
+              avatar_url: profile.avatar_url || undefined,
+              lastMessage: lastMessageData?.content || 'No messages yet',
+              time: lastMessageData ? formatTimeAgo(lastMessageData.created_at) : 'New',
+              isOnline: presenceData?.status === 'online',
+              unreadCount: unreadData?.length || 0
+            };
+
+            return conversation;
+          })
+        );
+
+        const validConversations = conversationsData
+          .filter((conv): conv is ChatItem => conv !== null)
+          .sort((a, b) => {
+            // Sort by time - newest first
+            return new Date(b.time).getTime() - new Date(a.time).getTime();
+          });
+
+        setChats(validConversations);
+        
+        // If we're in a specific conversation, set it as selected
+        if (conversationId) {
+          const selectedConversation = validConversations.find(chat => chat.id === conversationId);
+          if (selectedConversation) {
+            setSelectedChat(selectedConversation);
+            await fetchMessagesForChat(conversationId);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching conversations:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load conversations. Please try again.",
+          variant: "destructive",
+        });
+        setChats([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchConversations();
+  }, [currentUserId, conversationId, supabase, toast, fetchMessagesForChat]);
 
   // Navigate to selected conversation
   const handleChatSelect = (chatId: string) => {
@@ -91,104 +296,6 @@ const Chat = () => {
       });
     }
   };
-  
-  // Mock data for demonstration
-  const mockChats = [
-    {
-      id: "chat-1",
-      username: "Alex Smith",
-      avatarColor: "from-cybergold-400 to-cybergold-600",
-      initials: "AS",
-      lastMessage: "Hei! Hvordan går det med Snakkaz-prosjektet?",
-      time: "14:22",
-      isOnline: true
-    },
-    {
-      id: "chat-2",
-      username: "Maja Jensen",
-      avatarColor: "from-purple-400 to-purple-600",
-      initials: "MJ",
-      lastMessage: "Send meg de filene når du har tid!",
-      time: "i går",
-      isOnline: false
-    },
-    {
-      id: "chat-3",
-      username: "Thomas Olsen",
-      avatarColor: "from-blue-400 to-blue-600",
-      initials: "TO",
-      lastMessage: "Kan vi møtes for å diskutere designet?",
-      time: "ons",
-      isOnline: true
-    },
-    {
-      id: "chat-4",
-      username: "Lise Hansen",
-      avatarColor: "from-green-400 to-green-600",
-      initials: "LH",
-      lastMessage: "Takk for hjelpen med koden!",
-      time: "tirs",
-      isOnline: false
-    }
-  ];
-  
-  function generateMockMessages(chatId: string) {
-    const chat = mockChats.find(c => c.id === chatId);
-    if (!chat) return [];
-    
-    return [
-      {
-        id: `${chatId}-msg-1`,
-        sender: {
-          id: chat.id,
-          username: chat.username
-        },
-        content: "Hei! Hvordan går det med deg?",
-        timestamp: new Date(Date.now() - 3600000).toISOString(),
-        is_edited: false
-      },
-      {
-        id: `${chatId}-msg-2`,
-        sender: {
-          id: currentUserId,
-          username: username
-        },
-        content: "Det går bra takk! Jobber med Snakkaz-appen nå. Den begynner å ta form!",
-        timestamp: new Date(Date.now() - 3500000).toISOString(),
-        is_edited: false
-      },
-      {
-        id: `${chatId}-msg-3`,
-        sender: {
-          id: chat.id,
-          username: chat.username
-        },
-        content: "Høres spennende ut! Kan ikke vente med å se den ferdige appen.",
-        timestamp: new Date(Date.now() - 1800000).toISOString(),
-        is_edited: false
-      },
-      {
-        id: `${chatId}-msg-4`,
-        sender: {
-          id: currentUserId,
-          username: username
-        },
-        content: "Jeg jobber med å forbedre mobilvisningen akkurat nå. Det blir mye bedre med nye komponenter.",
-        timestamp: new Date(Date.now() - 900000).toISOString(),
-        is_edited: false
-      },
-      {
-        id: `${chatId}-msg-5`,
-        sender: {
-          id: chat.id,
-          username: chat.username
-        },
-        content: chat.lastMessage,
-        timestamp: new Date(Date.now() - 300000).toISOString(),
-        is_edited: false
-      }
-    ];
-  }
 
   // Mobile-specific layout when in a conversation
   if (isMobile && conversationId && selectedChat) {
@@ -316,27 +423,53 @@ const Chat = () => {
                         </Card>
                       ))}
                     </div>
+                  ) : chats.length === 0 ? (
+                    <div className="text-center py-8">
+                      <p className="text-cybergold-400">Ingen samtaler ennå.</p>
+                      <p className="text-sm text-cybergold-500 mt-2">Start en ny samtale for å komme i gang!</p>
+                    </div>
                   ) : (
                     <div className="space-y-2">
-                      {mockChats.map(chat => (
+                      {chats.map(chat => (
                         <Card 
                           key={chat.id}
                           className="p-4 bg-cyberdark-800/50 border-cyberdark-700 hover:bg-cyberdark-800 cursor-pointer transition-colors"
                           onClick={() => handleChatSelect(chat.id)}
                         >
                           <div className="flex items-center">
-                            <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${chat.avatarColor} flex items-center justify-center mr-3 relative`}>
-                              <span className="text-black font-bold">{chat.initials}</span>
+                            <div className="w-10 h-10 rounded-full flex items-center justify-center mr-3 relative overflow-hidden">
+                              {chat.avatar_url ? (
+                                <img 
+                                  src={chat.avatar_url} 
+                                  alt={chat.username}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-full h-full bg-gradient-to-br from-cybergold-400 to-cybergold-600 flex items-center justify-center">
+                                  <span className="text-black font-bold text-sm">
+                                    {chat.username.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+                                  </span>
+                                </div>
+                              )}
                               {chat.isOnline && (
                                 <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-cyberdark-800"></div>
                               )}
                             </div>
                             <div className="flex-1">
-                              <div className="flex justify-between">
-                                <p className="font-medium text-cybergold-300">{chat.username}</p>
-                                <span className="text-xs text-cybergold-500">{chat.time}</span>
+                              <div className="flex justify-between items-start">
+                                <div className="flex-1">
+                                  <p className="font-medium text-cybergold-300">{chat.full_name || chat.username}</p>
+                                  <p className="text-sm text-cybergold-400 truncate">{chat.lastMessage}</p>
+                                </div>
+                                <div className="text-right ml-2">
+                                  <span className="text-xs text-cybergold-500">{chat.time}</span>
+                                  {chat.unreadCount && chat.unreadCount > 0 && (
+                                    <div className="mt-1 bg-cybergold-600 text-black text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
+                                      {chat.unreadCount > 99 ? '99+' : chat.unreadCount}
+                                    </div>
+                                  )}
+                                </div>
                               </div>
-                              <p className="text-sm text-cybergold-400 truncate">{chat.lastMessage}</p>
                             </div>
                           </div>
                         </Card>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AlertCircle, RefreshCw } from 'lucide-react';
@@ -21,37 +21,57 @@ export const MathCaptcha: React.FC<MathCaptchaProps> = ({
   const [attempts, setAttempts] = useState(0);
   const [isLocked, setIsLocked] = useState(false);
 
+  // Use ref to avoid dependency issues
+  const onVerificationChangeRef = useRef(onVerificationChange);
+  onVerificationChangeRef.current = onVerificationChange;
+
   // Generate new math problem
-  const generateNewProblem = () => {
+  const generateNewProblem = useCallback(() => {
     const newNum1 = Math.floor(Math.random() * 10) + 1;
     const newNum2 = Math.floor(Math.random() * 10) + 1;
     setNum1(newNum1);
     setNum2(newNum2);
     setUserAnswer('');
     setIsCorrect(false);
-    onVerificationChange(false, '');
-  };
-
-  // Initialize with first problem
-  useEffect(() => {
-    generateNewProblem();
+    setAttempts(0);
+    // Call verification change to reset state
+    onVerificationChangeRef.current(false, '');
   }, []);
+
+  // Initialize with first problem only once
+  useEffect(() => {
+    // Inline problem generation to avoid dependency issues
+    const newNum1 = Math.floor(Math.random() * 10) + 1;
+    const newNum2 = Math.floor(Math.random() * 10) + 1;
+    setNum1(newNum1);
+    setNum2(newNum2);
+    setUserAnswer('');
+    setIsCorrect(false);
+    setAttempts(0);
+    onVerificationChangeRef.current(false, '');
+  }, []); // Empty dependency array - only run once on mount
 
   // Check answer whenever user input changes
   useEffect(() => {
-    if (userAnswer) {
-      const correct = parseInt(userAnswer) === (num1 + num2);
-      setIsCorrect(correct);
+    if (!userAnswer) {
+      setIsCorrect(false);
+      onVerificationChangeRef.current(false, '');
+      return;
+    }
+
+    const correct = parseInt(userAnswer) === (num1 + num2);
+    setIsCorrect(correct);
+    
+    if (correct) {
+      // Generate a simple token for verification
+      const token = btoa(`${num1}-${num2}-${userAnswer}-${Date.now()}`);
+      onVerificationChangeRef.current(true, token);
+      setAttempts(0);
+    } else {
+      onVerificationChangeRef.current(false, '');
       
-      if (correct) {
-        // Generate a simple token for verification
-        const token = btoa(`${num1}-${num2}-${userAnswer}-${Date.now()}`);
-        onVerificationChange(true, token);
-        setAttempts(0);
-      } else if (userAnswer.length > 0) {
-        onVerificationChange(false, '');
-        
-        // Track failed attempts
+      // Track failed attempts only when user finishes typing
+      if (userAnswer.length >= 1) {
         const newAttempts = attempts + 1;
         setAttempts(newAttempts);
         
@@ -61,14 +81,23 @@ export const MathCaptcha: React.FC<MathCaptchaProps> = ({
           setTimeout(() => {
             setIsLocked(false);
             setAttempts(0);
-            generateNewProblem();
+            // Use a fresh problem generation without dependency issues
+            const newNum1 = Math.floor(Math.random() * 10) + 1;
+            const newNum2 = Math.floor(Math.random() * 10) + 1;
+            setNum1(newNum1);
+            setNum2(newNum2);
+            setUserAnswer('');
+            setIsCorrect(false);
+            onVerificationChangeRef.current(false, '');
           }, 30000); // 30 second lockout
         }
       }
-    } else {
-      onVerificationChange(false, '');
     }
-  }, [userAnswer, num1, num2, attempts, onVerificationChange]);
+  }, [userAnswer, num1, num2, attempts]);
+
+  const handleRefresh = useCallback(() => {
+    generateNewProblem();
+  }, [generateNewProblem]);
 
   const handleAnswerChange = (value: string) => {
     if (isLocked) return;
@@ -125,7 +154,7 @@ export const MathCaptcha: React.FC<MathCaptchaProps> = ({
         
         <button
           type="button"
-          onClick={generateNewProblem}
+          onClick={handleRefresh}
           disabled={isLoading || isLocked}
           className="p-2 text-cybergold-500 hover:text-cybergold-400 transition-colors disabled:opacity-50"
           title="Ny oppgave"

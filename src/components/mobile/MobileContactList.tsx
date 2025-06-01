@@ -7,6 +7,17 @@ import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useNavigate } from 'react-router-dom';
+import { useSupabaseClient, useUser } from '@supabase/auth-helpers-react';
+import { useToast } from '@/hooks/use-toast';
+
+interface Contact {
+  id: string;
+  name: string;
+  username: string;
+  avatar_url?: string;
+  status: string;
+  isOnline: boolean;
+}
 
 interface MobileContactListProps {
   onContactSelect?: (contactId: string) => void;
@@ -19,81 +30,104 @@ export const MobileContactList: React.FC<MobileContactListProps> = ({
 }) => {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
+  const supabase = useSupabaseClient();
+  const user = useUser();
+  const { toast } = useToast();
+  
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [contacts, setContacts] = useState<Contact[]>([]);
   
-  // Mock contacts data - replace with actual data in real implementation
-  const mockContacts = [
-    {
-      id: 'contact-1',
-      name: 'Alex Smith',
-      avatarColor: 'from-cybergold-400 to-cybergold-600',
-      initials: 'AS',
-      status: 'Tilgjengelig for chat!',
-      isOnline: true
-    },
-    {
-      id: 'contact-2',
-      name: 'Maja Jensen',
-      avatarColor: 'from-purple-400 to-purple-600',
-      initials: 'MJ',
-      status: 'På jobb',
-      isOnline: true
-    },
-    {
-      id: 'contact-3',
-      name: 'Thomas Olsen',
-      avatarColor: 'from-blue-400 to-blue-600',
-      initials: 'TO',
-      status: 'Opptatt - møte',
-      isOnline: false
-    },
-    {
-      id: 'contact-4',
-      name: 'Lise Hansen',
-      avatarColor: 'from-green-400 to-green-600',
-      initials: 'LH',
-      status: 'Ikke forstyrr',
-      isOnline: true
-    },
-    {
-      id: 'contact-5',
-      name: 'Erik Pedersen',
-      avatarColor: 'from-red-400 to-red-600',
-      initials: 'EP',
-      status: '',
-      isOnline: false
-    },
-    {
-      id: 'contact-6',
-      name: 'Kamilla Berg',
-      avatarColor: 'from-pink-400 to-pink-600',
-      initials: 'KB',
-      status: 'På reise - tilbake mandag',
-      isOnline: false
-    },
-    {
-      id: 'contact-7',
-      name: 'Sindre Nilsen',
-      avatarColor: 'from-yellow-400 to-yellow-600',
-      initials: 'SN',
-      status: '',
-      isOnline: true
-    }
-  ];
-  
-  // Simulate loading state
+  // Fetch real contacts from Supabase
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 800);
-    
-    return () => clearTimeout(timer);
-  }, []);
+    const fetchContacts = async () => {
+      if (!user?.id) return;
+      
+      setIsLoading(true);
+      try {
+        // First, get user's friends
+        const { data: friendships, error: friendshipsError } = await supabase
+          .from('friendships')
+          .select(`
+            user_id,
+            friend_id,
+            status
+          `)
+          .or(`user_id.eq.${user.id},friend_id.eq.${user.id}`)
+          .eq('status', 'accepted');
+          
+        if (friendshipsError) throw friendshipsError;
+        
+        if (friendships && friendships.length > 0) {
+          const friendIds = friendships.map(f => 
+            f.user_id === user.id ? f.friend_id : f.user_id
+          );
+          
+          // Fetch friend profiles
+          const { data: friendProfiles, error: profilesError } = await supabase
+            .from('profiles')
+            .select('id, username, full_name, avatar_url')
+            .in('id', friendIds);
+            
+          if (profilesError) throw profilesError;
+          
+          if (friendProfiles) {
+            // Get presence status for each friend
+            const { data: presenceData, error: presenceError } = await supabase
+              .from('user_presence')
+              .select('user_id, status')
+              .in('user_id', friendIds);
+            
+            const presenceMap = presenceData?.reduce((acc, p) => {
+              acc[p.user_id] = p.status;
+              return acc;
+            }, {} as Record<string, string>) || {};
+            
+            const contactList: Contact[] = friendProfiles.map(profile => ({
+              id: profile.id,
+              name: profile.full_name || profile.username || 'Unknown User',
+              username: profile.username || 'unknown',
+              avatar_url: profile.avatar_url || undefined,
+              status: getStatusText(presenceMap[profile.id] || 'offline'),
+              isOnline: presenceMap[profile.id] === 'online'
+            }));
+            
+            setContacts(contactList);
+          }
+        } else {
+          // No friends yet, show empty state
+          setContacts([]);
+        }
+      } catch (error) {
+        console.error("Error fetching contacts:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load contacts. Please try again.",
+          variant: "destructive",
+        });
+        setContacts([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchContacts();
+  }, [user?.id, supabase, toast]);
+  
+  const getStatusText = (status: string): string => {
+    switch (status) {
+      case 'online': return 'Tilgjengelig';
+      case 'away': return 'Borte';
+      case 'dnd': return 'Ikke forstyrr';
+      case 'offline': return 'Offline';
+      default: return 'Ukjent status';
+    }
+  };
   
   // Filter contacts based on search query
-  const filteredContacts = mockContacts.filter(contact => 
-    contact.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredContacts = contacts.filter(contact => 
+    contact.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    contact.username.toLowerCase().includes(searchQuery.toLowerCase())
   );
   
   // Handle contact selection
@@ -168,8 +202,18 @@ export const MobileContactList: React.FC<MobileContactListProps> = ({
                 className="p-3 bg-cyberdark-800/50 border-cyberdark-700 flex items-center cursor-pointer hover:bg-cyberdark-800/80 transition-colors"
                 onClick={() => handleContactSelect(contact.id)}
               >
-                <div className={`relative h-10 w-10 rounded-full bg-gradient-to-br ${contact.avatarColor} flex items-center justify-center mr-3`}>
-                  <span className="text-black font-bold">{contact.initials}</span>
+                <div className="relative h-10 w-10 rounded-full bg-cyberdark-700 flex items-center justify-center mr-3 overflow-hidden">
+                  {contact.avatar_url ? (
+                    <img 
+                      src={contact.avatar_url} 
+                      alt={contact.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-cybergold-300 font-bold text-sm">
+                      {contact.name.substring(0, 2).toUpperCase()}
+                    </span>
+                  )}
                   {contact.isOnline && (
                     <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-cyberdark-800" />
                   )}

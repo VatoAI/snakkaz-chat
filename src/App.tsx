@@ -31,6 +31,9 @@ const Chat = lazy(() => import("@/features/chat/components/common/OptimizedChat"
 const BasicChatPage = lazy(() => import("@/pages/BasicChatPage"));
 const Subscription = lazy(() => import("@/pages/Subscription"));
 
+// Admin components (hidden from public)
+const AdminSecurityPanel = lazy(() => import("@/pages/admin/AdminSecurityPanel"));
+
 // Loading component
 const LoadingSpinner = () => (
   <div className="h-screen flex items-center justify-center bg-cyberdark-950">
@@ -374,6 +377,12 @@ export default function App() {
                     </div>
                   </RequireAuth>
                 } 
+              />
+              
+              {/* Hidden security panel - only accessible by direct URL */}
+              <Route 
+                path="/admin/security" 
+                element={<AdminSecurityPanel />} 
               />
               
               {/* Default redirects - smart routing based on auth state */}

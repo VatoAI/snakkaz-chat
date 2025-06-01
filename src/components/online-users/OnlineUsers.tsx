@@ -154,60 +154,140 @@ export const OnlineUsers = ({
           
           <TabsContent value="messages" className="pt-2 mt-0">
             <div className="space-y-1 max-h-[400px] overflow-y-auto pr-1">
-              {/* Mocked active conversations for now - will be replaced with real data */}
-              {[...Array(5)].map((_, i) => {
-                const mockId = `user-${i+1}`;
-                const mockName = `Bruker ${i+1}`;
-                const mockStatus = i % 3 === 0 ? 'online' : (i % 3 === 1 ? 'busy' : 'offline');
-                const mockUnread = i % 2 === 0 ? i+1 : 0;
-                const mockTime = new Date(Date.now() - (i * 30 * 60 * 1000)).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                
-                return (
-                  <div 
-                    key={mockId}
-                    className={cn(
-                      "flex items-center justify-between py-1 px-2 rounded-md transition-all",
-                      mockUnread > 0 ? "bg-cyberdark-800 border border-cybergold-500/30" : "hover:bg-cyberdark-900",
-                      "cursor-pointer text-white"
-                    )}
-                    onClick={() => handleStartChat(mockId)}
-                  >
-                    <div className="flex items-center gap-1.5">
-                      <div className="relative">
-                        <Avatar className="h-5 w-5">
-                          <AvatarFallback className="text-[10px] bg-cyberdark-800 border border-cybergold-500/30">
-                            {mockName.substring(0, 2).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className={cn(
-                          "absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-cyberdark-950",
-                          getStatusColor(mockStatus)
-                        )} />
-                      </div>
-                      
-                      <div className="flex flex-col">
-                        <div className="flex items-center">
-                          <span className="text-xs truncate max-w-[70px]">
-                            {mockName}
-                          </span>
-                          <span className="text-[9px] text-cyberdark-400 ml-1">
-                            {mockTime}
+              {/* Real conversations from activeConversations prop */}
+              {activeConversations && activeConversations.length > 0 ? (
+                activeConversations.map((conversation) => {
+                  const userProfile = userProfiles[conversation.userId] || { username: null, avatar_url: null };
+                  const displayName = userProfile.username || conversation.userId.substring(0, 8);
+                  const initials = displayName.substring(0, 2).toUpperCase();
+                  const userStatus = userStatuses[conversation.userId] || 'offline';
+                  const unreadCount = unreadCounts[conversation.userId] || 0;
+                  
+                  return (
+                    <div 
+                      key={conversation.userId}
+                      className={cn(
+                        "flex items-center justify-between py-1 px-2 rounded-md transition-all",
+                        unreadCount > 0 ? "bg-cyberdark-800 border border-cybergold-500/30" : "hover:bg-cyberdark-900",
+                        "cursor-pointer text-white"
+                      )}
+                      onClick={() => handleStartChat(conversation.userId)}
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <div className="relative">
+                          <Avatar className="h-5 w-5">
+                            {userProfile.avatar_url ? (
+                              <AvatarImage src={supabase.storage.from('avatars').getPublicUrl(userProfile.avatar_url).data.publicUrl} />
+                            ) : (
+                              <AvatarFallback className="text-[10px] bg-cyberdark-800 border border-cybergold-500/30">
+                                {initials}
+                              </AvatarFallback>
+                            )}
+                          </Avatar>
+                          <div className={cn(
+                            "absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-cyberdark-950",
+                            getStatusColor(userStatus)
+                          )} />
+                        </div>
+                        
+                        <div className="flex flex-col">
+                          <div className="flex items-center">
+                            <span className="text-xs truncate max-w-[70px]">
+                              {displayName}
+                            </span>
+                            <span className="text-[9px] text-cyberdark-400 ml-1">
+                              {conversation.timestamp}
+                            </span>
+                          </div>
+                          <span className="text-[9px] text-cyberdark-300 truncate max-w-[90px]">
+                            {conversation.lastMessage}
                           </span>
                         </div>
-                        <span className="text-[9px] text-cyberdark-300 truncate max-w-[90px]">
-                          {i % 2 === 0 ? 'Hei, hvordan går det?' : 'Kan vi snakkes senere?'}
-                        </span>
                       </div>
+                      
+                      {unreadCount > 0 && (
+                        <div className="bg-cybergold-500 text-cyberdark-900 rounded-full text-[10px] px-1 min-w-[1rem] text-center">
+                          {unreadCount}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
+              ) : (
+                /* Community building prompts when no conversations exist */
+                <div className="space-y-2">
+                  <div className="text-center py-4 text-cyberdark-300">
+                    <MessageSquare className="w-8 h-8 mx-auto mb-2 text-cybergold-500" />
+                    <p className="text-xs mb-1">Ingen samtaler ennå</p>
+                    <p className="text-[10px] text-cyberdark-400 mb-3">Start din første samtale!</p>
+                  </div>
+                  
+                  {/* Community engagement prompts */}
+                  <div className="space-y-1">
+                    <div className="text-[10px] text-cybergold-200 font-medium px-2 mb-1">
+                      💬 Start en samtale:
                     </div>
                     
-                    {mockUnread > 0 && (
-                      <div className="bg-cybergold-500 text-cyberdark-900 rounded-full text-[10px] px-1 min-w-[1rem] text-center">
-                        {mockUnread}
+                    {Object.entries(userPresence)
+                      .filter(([userId, presence]) => 
+                        presence.status !== 'offline' && 
+                        userId !== currentUserId
+                      )
+                      .slice(0, 3)
+                      .map(([userId, presence]) => {
+                        const userProfile = userProfiles[userId] || { username: null, avatar_url: null };
+                        const displayName = userProfile.username || userId.substring(0, 8);
+                        const initials = displayName.substring(0, 2).toUpperCase();
+                        
+                        return (
+                          <div 
+                            key={userId}
+                            className="flex items-center justify-between py-1 px-2 rounded-md hover:bg-cyberdark-900 cursor-pointer text-white transition-all"
+                            onClick={() => handleStartChat(userId)}
+                          >
+                            <div className="flex items-center gap-1.5">
+                              <div className="relative">
+                                <Avatar className="h-4 w-4">
+                                  {userProfile.avatar_url ? (
+                                    <AvatarImage src={supabase.storage.from('avatars').getPublicUrl(userProfile.avatar_url).data.publicUrl} />
+                                  ) : (
+                                    <AvatarFallback className="text-[8px] bg-cyberdark-800 border border-cybergold-500/30">
+                                      {initials}
+                                    </AvatarFallback>
+                                  )}
+                                </Avatar>
+                                <div className={cn(
+                                  "absolute -bottom-0.5 -right-0.5 w-1.5 h-1.5 rounded-full border border-cyberdark-950",
+                                  getStatusColor(presence.status)
+                                )} />
+                              </div>
+                              
+                              <span className="text-[10px] truncate max-w-[60px] text-cybergold-200">
+                                {displayName}
+                              </span>
+                            </div>
+                            
+                            <span className="text-[8px] text-cybergold-400">Si hei!</span>
+                          </div>
+                        );
+                      })
+                    }
+                    
+                    {Object.keys(userPresence).filter(id => 
+                      userPresence[id].status !== 'offline' && id !== currentUserId
+                    ).length === 0 && (
+                      <div className="text-center py-2">
+                        <p className="text-[10px] text-cyberdark-400">
+                          Ingen andre brukere pålogget akkurat nå
+                        </p>
+                        <p className="text-[9px] text-cybergold-300 mt-1">
+                          Kom tilbake senere for å chatte!
+                        </p>
                       </div>
                     )}
                   </div>
-                );
-              })}
+                </div>
+              )}
             </div>
           </TabsContent>
         </Tabs>
