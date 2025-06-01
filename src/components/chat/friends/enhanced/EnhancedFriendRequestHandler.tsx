@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSupabaseClient } from '@supabase/auth-helpers-react';
 import { UserPlus, Check, X, Clock, UserRoundX } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { UserAvatar } from '@/components/ui/user-avatar';
+import { UserAvatar } from '@/components/chat/header/UserAvatar';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';

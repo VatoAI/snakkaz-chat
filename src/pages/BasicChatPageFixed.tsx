@@ -92,7 +92,7 @@ const BasicChatPage: React.FC = () => {
           <CardContent>
             <div className="space-y-4">
               <div className="p-4 bg-cyberdark-700/30 rounded-lg">
-                <h4 className="font-semibold text-cyberprimary-200 mb-2">Gratis Chat Features:</h4>
+                <h4 className="font-semibold text-cyberprimary-200 mb-2">Chat Features:</h4>
                 <ul className="text-sm text-cyberdark-300 space-y-1">
                   <li>• Chat med andre brukere</li>
                   <li>• BTC/NOK diskusjoner</li>
@@ -227,7 +227,7 @@ const BasicChatPage: React.FC = () => {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="font-semibold text-cyberprimary-200 mb-1">Oppgrader til Premium</h3>
+                  <h3 className="font-semibold text-cyberprimary-200 mb-1">Få Utvidet Tilgang</h3>
                   <p className="text-sm text-cyberdark-300">Få tilgang til krypterte meldinger, avanserte BTC-analyser og mer!</p>
                 </div>
                 <Button variant="outline" className="border-cyberprimary-500 text-cyberprimary-300 hover:bg-cyberprimary-500/10">

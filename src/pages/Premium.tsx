@@ -59,21 +59,21 @@ const PremiumPage = () => {
               <h2 
                 className="text-2xl md:text-3xl font-semibold bg-gradient-to-r from-blue-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent"
               >
-                Oppgrader til Premium
+                Utvidet Plan
               </h2>
             </div>
             
             <p className="mb-6 text-lg text-slate-300 leading-relaxed text-center max-w-2xl mx-auto">
-              Lås opp alle avanserte funksjoner, få ubegrenset lagringskapasitet og opplev 
-              enda bedre sikkerhet med SnakkaZ Premium. Designet for de som ikke ønsker å 
-              inngå kompromisser med sin kommunikasjon.
+              Få tilgang til alle avanserte funksjoner, ubegrenset lagringskapasitet og 
+              enda bedre sikkerhet med vår utvidede plan. Designet for de som ønsker 
+              maksimal ytelse og fleksibilitet.
             </p>
 
             {isPremium ? (
               <div className="mb-8 p-4 bg-emerald-900/30 rounded-lg border border-emerald-500/50 text-center">
                 <Check className="inline-block text-emerald-400 mb-2" size={24} />
                 <p className="text-emerald-300 font-medium">
-                  Du har allerede Premium! Nyt alle våre eksklusive funksjoner.
+                  Du har allerede utvidet tilgang! Nyt alle våre eksklusive funksjoner.
                 </p>
               </div>
             ) : (
@@ -83,7 +83,7 @@ const PremiumPage = () => {
                   onClick={() => navigate("/settings?tab=subscription")}
                 >
                   <Crown className="mr-2" size={18} />
-                  Oppgrader nå
+                  Få Utvidet Tilgang
                 </Button>
               </div>
             )}
@@ -183,7 +183,7 @@ const PremiumPage = () => {
         {/* Premium Features */}
         <div className="max-w-4xl mx-auto mb-12">
           <h2 className="text-2xl font-semibold mb-6 text-center text-cybergold-300">
-            Alle Premium-funksjoner
+            Alle Avanserte Funksjoner
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -312,7 +312,7 @@ const PremiumPage = () => {
         {/* Pricing Section */}
         <div className="max-w-4xl mx-auto mb-12">
           <h2 className="text-2xl font-semibold mb-8 text-center text-cybergold-300">
-            Velg din Premium-plan
+            Velg din plan
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

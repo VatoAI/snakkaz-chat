@@ -3,7 +3,7 @@ import { useSupabaseClient } from '@supabase/auth-helpers-react';
 import { PlusCircle, UserPlus, X, Check, UserRoundX, Clock, Search } from 'lucide-react';
 import { UserStatus } from '@/types/presence';
 import { useToast } from '@/hooks/use-toast';
-import { UserAvatar } from '@/components/ui/user-avatar';
+import { UserAvatar } from '@/components/chat/header/UserAvatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {

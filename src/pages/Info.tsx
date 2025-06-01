@@ -16,27 +16,30 @@ export const Info: React.FC = () => {
               Snakkaz Chat
             </h1>
             <p className="text-xl text-cyberdark-200 max-w-2xl mx-auto leading-relaxed">
-              En revolusjonerende chat-plattform som kombinerer kraften av moderne teknologi 
-              med sikkerhet som matcher bankenes standarder og en brukeropplevelse som overgår forventningene.
+              Koble deg til ekte mennesker. Bygg meningsfulle vennskap. 
+              Chat sikkert med venner, familie og nye bekjentskaper med banknivå sikkerhet.
+            </p>
+            <p className="text-lg text-cyberdark-300 mt-4 max-w-xl mx-auto">
+              💫 Inviter venner • 🤝 Bygg nettverk • 🔒 100% privat
             </p>
           </div>
 
           {/* Trust Badges */}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
             <div className="flex flex-col items-center p-4 rounded-xl bg-cyberdark-900/50 border border-green-500/20 backdrop-blur-sm">
-              <Shield className="text-green-400 mb-2" size={32} />
-              <span className="text-sm font-medium text-green-300">100% Sikker</span>
-              <span className="text-xs text-cyberdark-300">Vi samler IKKE data</span>
+              <Users className="text-green-400 mb-2" size={32} />
+              <span className="text-sm font-medium text-green-300">Venn-system</span>
+              <span className="text-xs text-cyberdark-300">Inviter & koble</span>
             </div>
             <div className="flex flex-col items-center p-4 rounded-xl bg-cyberdark-900/50 border border-cyberblue-500/20 backdrop-blur-sm">
               <Lock className="text-cyberblue-400 mb-2" size={32} />
-              <span className="text-sm font-medium text-cyberblue-300">✅ Verifisert</span>
+              <span className="text-sm font-medium text-cyberblue-300">✅ Privat</span>
               <span className="text-xs text-cyberdark-300">E2E Kryptering</span>
             </div>
             <div className="flex flex-col items-center p-4 rounded-xl bg-cyberdark-900/50 border border-purple-500/20 backdrop-blur-sm">
-              <Users className="text-purple-400 mb-2" size={32} />
-              <span className="text-sm font-medium text-purple-300">🏆 Community</span>
-              <span className="text-xs text-cyberdark-300">Trust-system</span>
+              <Shield className="text-purple-400 mb-2" size={32} />
+              <span className="text-sm font-medium text-purple-300">🏆 Sikkert</span>
+              <span className="text-xs text-cyberdark-300">Null datamining</span>
             </div>
           </div>
 
@@ -179,11 +182,11 @@ export const Info: React.FC = () => {
             <div className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="text-center">
-                  <h4 className="font-semibold text-cyberdark-300 mb-3">Gratis Snakkaz</h4>
+                  <h4 className="font-semibold text-cyberdark-300 mb-3">Snakkaz Chat</h4>
                   <ul className="space-y-2 text-sm text-cyberdark-400">
-                    <li>Kun chat i appen</li>
-                    <li>Ingen e-post</li>
-                    <li>Begrenset lagring</li>
+                    <li>Sikker chat i appen</li>
+                    <li>Grunnleggende funksjoner</li>
+                    <li>Standard lagring</li>
                   </ul>
                 </div>
                 <div className="text-center border border-cybergold-500/30 rounded-lg p-4 bg-cybergold-900/10">

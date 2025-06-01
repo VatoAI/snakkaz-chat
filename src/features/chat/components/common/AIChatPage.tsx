@@ -78,7 +78,7 @@ const AIChatPage: React.FC = () => {
         }`}>
           {!isUser && (
             <div className="flex items-center mb-1">
-              <Avatar size="sm" name="AI Assistant" src="/ai-avatar.png" />
+              <Avatar size="sm" name="Venn Assistent" src="/friend-avatar.png" />
               <span className="ml-2 font-medium">AI-Assistent</span>
             </div>
           )}
@@ -280,24 +280,24 @@ const AIChatPage: React.FC = () => {
         <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
           {!currentChat || currentChat.messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center p-4">
-              <Avatar size="xl" name="AI Assistant" src="/ai-avatar.png" className="mb-4" />
-              <h3 className="text-xl font-medium mb-2">AI-Assistent</h3>
+              <Avatar size="xl" name="Chat Assistant" src="/ai-avatar.png" className="mb-4" />
+              <h3 className="text-xl font-medium mb-2">Chat Assistent</h3>
               <p className="text-gray-500 max-w-md mb-4">
-                Hei! Jeg er din personlige assistent. Still meg et spørsmål
-                eller be meg om hjelp med noe.
+                Få hjelp med å finne og koble deg til venner! Still spørsmål om 
+                hvordan du kan bygge meningsfulle forbindelser på Snakkaz.
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2 w-full max-w-md">
-                <Button onClick={() => sendMessage('Hva kan du hjelpe meg med?')}>
-                  Hva kan du hjelpe meg med?
+                <Button onClick={() => sendMessage('Hvordan finner jeg nye venner?')}>
+                  Finn nye venner
                 </Button>
-                <Button onClick={() => sendMessage('Hvordan fungerer Snakkaz?')}>
-                  Hvordan fungerer Snakkaz?
+                <Button onClick={() => sendMessage('Hvordan inviterer jeg venner til Snakkaz?')}>
+                  Inviter venner
                 </Button>
-                <Button onClick={() => sendMessage('Fortell meg om kryptering')}>
-                  Fortell meg om kryptering
+                <Button onClick={() => sendMessage('Hvordan fungerer vennesystemet?')}>
+                  Vennesystem guide
                 </Button>
-                <Button onClick={() => sendMessage('Hva er nye funksjoner i Snakkaz?')}>
-                  Nye funksjoner
+                <Button onClick={() => sendMessage('Hvordan chatter jeg sikkert med venner?')}>
+                  Sikker chat
                 </Button>
               </div>
             </div>

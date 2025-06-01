@@ -92,7 +92,7 @@ const BasicChatPage: React.FC = () => {
           <CardContent>
             <div className="space-y-4">
               <div className="p-4 bg-cyberdark-700/30 rounded-lg">
-                <h4 className="font-semibold text-cyberprimary-200 mb-2">Gratis Chat Features:</h4>
+                <h4 className="font-semibold text-cyberprimary-200 mb-2">Chat Features:</h4>
                 <ul className="text-sm text-cyberdark-300 space-y-1">
                   <li>• Chat med andre brukere</li>
                   <li>• BTC/NOK diskusjoner</li>
@@ -102,13 +102,13 @@ const BasicChatPage: React.FC = () => {
               <div className="p-4 bg-gradient-to-r from-cyberprimary-900/20 to-cybersecondary-900/20 rounded-lg border border-cyberprimary-500/20">
                 <div className="flex items-center gap-2 mb-2">
                   <Crown className="h-4 w-4 text-cyberprimary-400" />
-                  <h4 className="font-semibold text-cyberprimary-200">Premium Features:</h4>
+                  <h4 className="font-semibold text-cyberprimary-200">Avanserte Features:</h4>
                 </div>
                 <ul className="text-sm text-cyberdark-300 space-y-1">
                   <li>• Krypterte private meldinger</li>
                   <li>• Avanserte BTC analyser</li>
                   <li>• Direktehandel funksjoner</li>
-                  <li>• Premium trading signaler</li>
+                  <li>• Utvidede trading signaler</li>
                 </ul>
               </div>
             </div>
@@ -216,7 +216,7 @@ const BasicChatPage: React.FC = () => {
                   </Button>
                 </div>
                 <p className="text-xs text-cyberdark-400 mt-2">
-                  💡 Tip: Skriv "BTC" for trading-tips! Oppgrader til Premium for avanserte funksjoner.
+                  💡 Tip: Skriv "BTC" for trading-tips! Få utvidet tilgang for avanserte funksjoner.
                 </p>
               </div>
             </CardContent>
@@ -227,7 +227,7 @@ const BasicChatPage: React.FC = () => {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="font-semibold text-cyberprimary-200 mb-1">Oppgrader til Premium</h3>
+                  <h3 className="font-semibold text-cyberprimary-200 mb-1">Få Utvidet Tilgang</h3>
                   <p className="text-sm text-cyberdark-300">Få tilgang til krypterte meldinger, avanserte BTC-analyser og mer!</p>
                 </div>
                 <Button variant="outline" className="border-cyberprimary-500 text-cyberprimary-300 hover:bg-cyberprimary-500/10">

@@ -15,6 +15,10 @@ const ProfilePage = lazy(() => import("@/pages/Profile"));
 const SettingsPage = lazy(() => import("@/pages/Settings"));
 const GroupChatPage = lazy(() => import("@/features/chat/components/group/GroupChatPage"));
 
+// Friend-focused pages
+const Friends = lazy(() => import("@/pages/Friends"));
+const FindFriends = lazy(() => import("@/pages/FindFriends"));
+
 // Lazy load components for initial routes
 const Login = lazy(() => import("@/pages/Login"));
 const Register = lazy(() => import("@/pages/Register"));
@@ -226,11 +230,14 @@ export default function App() {
           {isPreviewEnv && <PreviewBanner />}
           <Suspense fallback={<LoadingSpinner />}>
             <Routes>
+              {/* Public routes */}
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/info" element={<Info />} />
+              
+              {/* Protected routes that need authentication */}
               <Route 
                 path="/basic-chat" 
                 element={
@@ -241,6 +248,62 @@ export default function App() {
               />
               <Route 
                 path="/chat/*" 
+                element={
+                  <RequireAuth>
+                    <Chat />
+                  </RequireAuth>
+                } 
+              />
+              <Route 
+                path="/messages" 
+                element={
+                  <RequireAuth>
+                    <Chat />
+                  </RequireAuth>
+                } 
+              />
+              <Route 
+                path="/contacts" 
+                element={
+                  <RequireAuth>
+                    <Chat />
+                  </RequireAuth>
+                } 
+              />
+              <Route 
+                path="/friends" 
+                element={
+                  <RequireAuth>
+                    <Friends />
+                  </RequireAuth>
+                } 
+              />
+              <Route 
+                path="/find-friends" 
+                element={
+                  <RequireAuth>
+                    <FindFriends />
+                  </RequireAuth>
+                } 
+              />
+              <Route 
+                path="/group-chat" 
+                element={
+                  <RequireAuth>
+                    <Chat />
+                  </RequireAuth>
+                } 
+              />
+              <Route 
+                path="/ai-chat" 
+                element={
+                  <RequireAuth>
+                    <Chat />
+                  </RequireAuth>
+                } 
+              />
+              <Route 
+                path="/create-group" 
                 element={
                   <RequireAuth>
                     <Chat />
@@ -279,8 +342,23 @@ export default function App() {
                   </RequireAuth>
                 } 
               />
-              <Route path="/" element={<Navigate to="/basic-chat" replace />} />
-              <Route path="*" element={<Navigate to="/basic-chat" replace />} />
+              <Route 
+                path="/admin" 
+                element={
+                  <RequireAuth>
+                    <div className="min-h-screen bg-cyberdark-950 flex items-center justify-center">
+                      <div className="text-center">
+                        <h1 className="text-2xl text-cybergold-400 mb-4">Admin Panel</h1>
+                        <p className="text-cybergold-300">Admin-funksjonalitet kommer snart</p>
+                      </div>
+                    </div>
+                  </RequireAuth>
+                } 
+              />
+              
+              {/* Default redirects - now more specific */}
+              <Route path="/" element={<Navigate to="/info" replace />} />
+              <Route path="*" element={<Navigate to="/info" replace />} />
             </Routes>
           </Suspense>
           <Toaster />

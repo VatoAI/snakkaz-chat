@@ -184,9 +184,9 @@ export const SubscriptionTiers = () => {
   return (
     <div className="space-y-8">
       <div className="text-center">
-        <h2 className="text-3xl font-bold tracking-tight text-cybergold-100">Choose Your Premium Plan</h2>
+        <h2 className="text-3xl font-bold tracking-tight text-cybergold-100">Velg Ditt Plan</h2>
         <p className="mt-2 text-cybergold-400">
-          Unlock advanced features with a premium subscription
+          Finn planen som passer dine behov
         </p>
       </div>
       
@@ -239,7 +239,7 @@ export const SubscriptionTiers = () => {
                 className="w-full bg-cybergold-600 hover:bg-cybergold-500 text-black"
                 onClick={() => handleSelectPlan(plan)}
               >
-                Subscribe Now
+                Velg Plan
               </Button>
             </CardFooter>
           </Card>
@@ -247,7 +247,7 @@ export const SubscriptionTiers = () => {
       </div>
       
       <div className="text-center">
-        <p className="text-cybergold-400 mb-4">Not ready to commit? Try our premium features for free.</p>
+        <p className="text-cybergold-400 mb-4">Vil du prøve først? Test våre avanserte funksjoner gratis.</p>
         <Button 
           variant="outline" 
           className="border-cybergold-600 text-cybergold-400 hover:text-cybergold-200"
@@ -255,7 +255,7 @@ export const SubscriptionTiers = () => {
           disabled={loading}
         >
           {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-          Start 14-day Free Trial
+          Start 14-dagers gratis prøving
         </Button>
       </div>
       

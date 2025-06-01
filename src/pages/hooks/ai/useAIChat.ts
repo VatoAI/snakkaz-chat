@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 
-// Interface for AI-chatmelding
+// Interface for Friend Assistant chatmelding
 export interface AIMessage {
   id: string;
   role: 'user' | 'assistant';
@@ -10,7 +10,7 @@ export interface AIMessage {
   isProcessing?: boolean;
 }
 
-// Interface for AI-chathistorikk
+// Interface for Friend Assistant chathistorikk
 export interface AIChat {
   id: string;
   title: string;
@@ -41,7 +41,7 @@ interface UseAIChatReturn {
   setApiConfig: (config: Partial<APIConfig>) => void;
 }
 
-// AI-chat hook
+// Friend Assistant chat hook for building connections
 export function useAIChat(): UseAIChatReturn {
   const { user, supabase } = useAuth();
   const [currentChat, setCurrentChat] = useState<AIChat | null>(null);
@@ -104,11 +104,11 @@ export function useAIChat(): UseAIChatReturn {
       if (error) throw error;
       
       // Konverter fra databaseformat til lokalt format
-      const formattedChats: AIChat[] = data.map((chat: any) => ({
-        id: chat.id,
-        title: chat.title || 'Ny samtale',
-        messages: JSON.parse(chat.messages || '[]'),
-        lastUpdated: chat.last_updated
+      const formattedChats: AIChat[] = data.map((chat: Record<string, unknown>) => ({
+        id: String(chat.id),
+        title: String(chat.title || 'Ny samtale'),
+        messages: JSON.parse(String(chat.messages || '[]')),
+        lastUpdated: String(chat.last_updated)
       }));
       
       setChatHistory(formattedChats);
@@ -120,9 +120,9 @@ export function useAIChat(): UseAIChatReturn {
           setCurrentChat(selectedChat);
         }
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Feil ved lasting av AI-chat-historikk:', err);
-      setError(err.message || 'Kunne ikke laste chat-historikk');
+      setError((err as Error).message || 'Kunne ikke laste chat-historikk');
     } finally {
       setIsLoading(false);
     }
@@ -187,9 +187,9 @@ export function useAIChat(): UseAIChatReturn {
       const data = await response.json();
       // This structure might need to be adjusted based on the actual API response format
       return data.choices?.[0]?.message?.content || data.response || 'Ingen respons fra API';
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('API feil:', err);
-      throw new Error(`API feil: ${err.message}`);
+      throw new Error(`API feil: ${(err as Error).message}`);
     }
   };
 
@@ -276,9 +276,9 @@ export function useAIChat(): UseAIChatReturn {
           
           // Her ville du normalt lagre til database
           // await saveChat(finalChat);
-        } catch (err: any) {
-          console.error('AI response error:', err);
-          setError(`Kunne ikke få svar fra AI-assistenten: ${err.message}`);
+        } catch (err: unknown) {
+          console.error('Friend assistant response error:', err);
+          setError(`Kunne ikke få svar fra AI-assistenten: ${(err as Error).message}`);
           
           // Remove the loading assistant message on error
           const errorChat = {
@@ -291,11 +291,11 @@ export function useAIChat(): UseAIChatReturn {
         }
       }, 1500); // Simuler nettverksforsinkelse
       
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Feil ved sending av melding:', err);
-      setError(err.message || 'Kunne ikke sende melding');
+      setError((err as Error).message || 'Kunne ikke sende melding');
     }
-  }, [user, currentChat, createNewChat, apiConfig]);
+  }, [user, currentChat, createNewChat, apiConfig, callCustomAPI]);
 
   // Funksjon for å velge en chat fra historikken
   const selectChat = useCallback((chatId: string) => {
@@ -328,9 +328,9 @@ export function useAIChat(): UseAIChatReturn {
         setCurrentChat(null);
         setSelectedChatId(null);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Feil ved sletting av chat:', err);
-      setError(err.message || 'Kunne ikke slette chat');
+      setError((err as Error).message || 'Kunne ikke slette chat');
     } finally {
       setIsLoading(false);
     }
@@ -351,9 +351,9 @@ export function useAIChat(): UseAIChatReturn {
       setChatHistory([]);
       setCurrentChat(null);
       setSelectedChatId(null);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Feil ved tømming av chat-historikk:', err);
-      setError(err.message || 'Kunne ikke tømme chat-historikk');
+      setError((err as Error).message || 'Kunne ikke tømme chat-historikk');
     } finally {
       setIsLoading(false);
     }

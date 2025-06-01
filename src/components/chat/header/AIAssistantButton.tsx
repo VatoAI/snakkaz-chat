@@ -34,7 +34,7 @@ export const AIAssistantButton = ({ currentUserId }: AIAssistantButtonProps) => 
             </SheetTrigger>
           </TooltipTrigger>
           <TooltipContent side="bottom">
-            <p>AI Assistant</p>
+            <p>Venn Assistent</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
@@ -47,7 +47,7 @@ export const AIAssistantButton = ({ currentUserId }: AIAssistantButtonProps) => 
             <div className="w-8 h-8 rounded-full overflow-hidden border border-cyberred-400/50 flex items-center justify-center bg-cyberdark-800">
               <Bot className="h-5 w-5 text-cyberred-400" />
             </div>
-            <SheetTitle className="cyber-text text-xl text-cyberred-100">AI Assistent</SheetTitle>
+            <SheetTitle className="cyber-text text-xl text-cyberred-100">Venn Assistent</SheetTitle>
           </div>
         </SheetHeader>
         <div className={`mt-4 ${isMobile ? 'h-[80vh]' : 'h-[calc(100vh-120px)]'}`}>

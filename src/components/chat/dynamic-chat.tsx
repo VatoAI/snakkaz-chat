@@ -47,7 +47,7 @@ export const SecureMessageViewer = createDynamicComponent(
   <ChatComponentLoading />
 );
 
-// AI feature components - these can be loaded separately
+// Friend Assistant feature components - these can be loaded separately
 export const AIFeatures = {
   CommandConfirmation: createDynamicComponent(
     () => import('@/components/chat/ai/CommandConfirmationDialog'),

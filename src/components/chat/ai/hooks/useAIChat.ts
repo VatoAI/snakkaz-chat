@@ -18,7 +18,7 @@ interface HelpDetails {
 // Define the command structure
 interface Command {
   action: string;
-  payload: any;
+  payload: Record<string, unknown>;
 }
 
 export const useAIChat = (currentUserId: string) => {
@@ -34,15 +34,15 @@ export const useAIChat = (currentUserId: string) => {
   const sendMessageToAI = async (message: string) => {
     setIsLoading(true);
     try {
-      // Mock AI response for now
+      // Friend-focused assistant response
       const aiMessage: DecryptedMessage = {
         id: Date.now().toString(),
-        content: `AI response to: ${message}`,
+        content: `Venn Assistent svar til: ${message}`,
         created_at: new Date().toISOString(),
         sender: {
-          id: 'ai-assistant',
-          username: 'AI Assistant',
-          full_name: 'AI Assistant',
+          id: 'friend-assistant',
+          username: 'Venn Assistent',
+          full_name: 'Venn Assistent',
           avatar_url: null
         }
       };
@@ -50,7 +50,7 @@ export const useAIChat = (currentUserId: string) => {
       setMessages(prev => [...prev, aiMessage]);
       setError('');
     } catch (err) {
-      setError('Failed to send message to AI');
+      setError('Kunne ikke sende melding til Venn Assistent');
       console.error(err);
     } finally {
       setIsLoading(false);

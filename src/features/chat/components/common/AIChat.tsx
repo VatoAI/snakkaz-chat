@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useAIChat } from './hooks/ai/useAIChat';
+import { useAIChat } from '@/pages/hooks/ai/useAIChat';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -77,7 +77,7 @@ const AIChat: React.FC = () => {
       {/* Sidebar with chat history */}
       <div className="w-64 bg-cyberdark-900 border-r border-cyberdark-700 p-4 flex flex-col hidden md:block">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-cybergold-400">AI-Chat</h2>
+          <h2 className="text-lg font-semibold text-cybergold-400">Venn Assistent</h2>
           <div className="flex gap-2">
             <Button 
               size="icon" 
@@ -149,7 +149,7 @@ const AIChat: React.FC = () => {
       <div className="flex-1 flex flex-col">
         {/* Chat header for mobile */}
         <div className="md:hidden bg-cyberdark-900 border-b border-cyberdark-700 p-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-cybergold-400">AI-Chat</h2>
+          <h2 className="text-lg font-semibold text-cybergold-400">Venn Assistent</h2>
           <div className="flex gap-2">
             <Button 
               size="icon" 
@@ -177,38 +177,38 @@ const AIChat: React.FC = () => {
               <div className="w-16 h-16 rounded-full bg-cybergold-500/10 flex items-center justify-center mb-4">
                 <Bot className="h-8 w-8 text-cybergold-400" />
               </div>
-              <h3 className="text-xl font-medium text-cybergold-300 mb-2">AI-Assistent</h3>
+              <h3 className="text-xl font-medium text-cybergold-300 mb-2">Chat Assistent</h3>
               <p className="text-cybergold-500 max-w-md mb-6">
-                Få hjelp, still spørsmål eller be om informasjon fra din personlige AI-assistent.
+                Få hjelp med å finne venner, koble deg til nye mennesker og bygge meningsfulle relasjoner på Snakkaz.
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-md">
                 <Button 
                   variant="outline" 
                   className="border-cybergold-500/30 text-cybergold-400 hover:bg-cyberdark-800"
-                  onClick={() => sendMessage('Fortell meg om Snakkaz sine sikkerhetsfunksjoner')}
+                  onClick={() => sendMessage('Hvordan finner jeg nye venner på Snakkaz?')}
                 >
-                  Sikkerhetsfunksjoner
+                  Finn venner
                 </Button>
                 <Button 
                   variant="outline"
                   className="border-cybergold-500/30 text-cybergold-400 hover:bg-cyberdark-800"
-                  onClick={() => sendMessage('Sammenlign Snakkaz med andre meldingsapper')}
+                  onClick={() => sendMessage('Hvordan inviterer jeg eksisterende venner?')}
                 >
-                  Sammenlign med andre
+                  Inviter venner
                 </Button>
                 <Button 
                   variant="outline"
                   className="border-cybergold-500/30 text-cybergold-400 hover:bg-cyberdark-800"
-                  onClick={() => sendMessage('Hvordan sender jeg krypterte meldinger?')}
+                  onClick={() => sendMessage('Hvordan fungerer sikker chat med venner?')}
                 >
-                  Krypterte meldinger
+                  Sikker chat
                 </Button>
                 <Button 
                   variant="outline"
                   className="border-cybergold-500/30 text-cybergold-400 hover:bg-cyberdark-800"
-                  onClick={() => sendMessage('Hvordan bruker jeg gruppechat-funksjonene?')}
+                  onClick={() => sendMessage('Hvordan lager jeg grupper med venner?')}
                 >
-                  Gruppechat guide
+                  Lag grupper
                 </Button>
               </div>
             </div>
@@ -231,7 +231,7 @@ const AIChat: React.FC = () => {
                         <Bot className="h-4 w-4 mr-2" />
                       )}
                       <span className="text-xs opacity-70">
-                        {message.role === 'user' ? 'Deg' : 'AI-Assistent'} • {formatTime(message.timestamp)}
+                        {message.role === 'user' ? 'Deg' : 'Venn Assistent'} • {formatTime(message.timestamp)}
                       </span>
                     </div>
                     
@@ -283,9 +283,9 @@ const AIChat: React.FC = () => {
       <Dialog open={showSettings} onOpenChange={setShowSettings}>
         <DialogContent className="bg-cyberdark-900 border-cyberdark-700">
           <DialogHeader>
-            <DialogTitle className="text-cybergold-300">API Innstillinger</DialogTitle>
+            <DialogTitle className="text-cybergold-300">Venn Assistent Innstillinger</DialogTitle>
             <DialogDescription className="text-cybergold-500">
-              Konfigurer tilkoblingen til din foretrukne AI-tjeneste
+              Konfigurer hvordan Venn Assistenten kan hjelpe deg med å finne forbindelser
             </DialogDescription>
           </DialogHeader>
           

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
@@ -14,7 +14,9 @@ import {
   ShieldCheck,
   Settings,
   UserPlus,
-  MessageCircle
+  MessageCircle,
+  Heart,
+  Search
 } from 'lucide-react';
 
 type NavigationVariant = 'horizontal' | 'vertical' | 'bottom' | 'mobile';
@@ -62,13 +64,19 @@ export const UnifiedNavigation: React.FC<UnifiedNavigationProps> = ({
       icon: <Home className="h-5 w-5" />
     },
     {
+      path: '/friends',
+      label: 'Venner',
+      icon: <Heart className="h-5 w-5" />,
+      authRequired: true
+    },
+    {
       path: '/chat',
       label: 'Chat',
       icon: <MessageSquare className="h-5 w-5" />
     },
     {
       path: '/ai-chat',
-      label: 'AI-Chat',
+      label: 'Venn Assistent',
       icon: <Bot className="h-5 w-5" />,
       authRequired: true
     },
@@ -84,6 +92,12 @@ export const UnifiedNavigation: React.FC<UnifiedNavigationProps> = ({
       icon: <UserPlus className="h-5 w-5" />,
       authRequired: true,
       hideOnMobile: true
+    },
+    {
+      path: '/find-friends',
+      label: 'Finn Venner',
+      icon: <Search className="h-5 w-5" />,
+      authRequired: true
     },
     {
       path: '/messages',
@@ -147,15 +161,8 @@ export const UnifiedNavigation: React.FC<UnifiedNavigationProps> = ({
     }
   };
   
-  // Update active indicator position when route changes
-  useEffect(() => {
-    if (activeIndicator) {
-      updateActiveIndicator();
-    }
-  }, [location.pathname, activeIndicator]);
-  
   // Function to update the position of the active indicator
-  const updateActiveIndicator = () => {
+  const updateActiveIndicator = useCallback(() => {
     if (!navRef.current || !activeIndicatorRef.current) return;
     
     const activeButton = navRef.current.querySelector('.nav-active');
@@ -188,7 +195,14 @@ export const UnifiedNavigation: React.FC<UnifiedNavigationProps> = ({
     } else {
       activeIndicatorRef.current.style.opacity = '0';
     }
-  };
+  }, [variant]);
+  
+  // Update active indicator position when route changes
+  useEffect(() => {
+    if (activeIndicator) {
+      updateActiveIndicator();
+    }
+  }, [location.pathname, activeIndicator, updateActiveIndicator]);
 
   // Handle hover events for visual feedback
   const handleNavItemHover = (path: string) => {

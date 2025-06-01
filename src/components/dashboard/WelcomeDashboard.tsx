@@ -31,7 +31,7 @@ const WelcomeDashboard: React.FC = () => {
         <TabsList className="grid grid-cols-3 mb-8">
           <TabsTrigger value="chat">Chat</TabsTrigger>
           <TabsTrigger value="groups">Grupper</TabsTrigger>
-          <TabsTrigger value="ai">AI Assistent</TabsTrigger>
+          <TabsTrigger value="ai">Venn Assistent</TabsTrigger>
         </TabsList>
         
         <TabsContent value="chat" className="space-y-6">
@@ -127,7 +127,7 @@ const WelcomeDashboard: React.FC = () => {
                     Start
                   </Button>
                 </div>
-                <h3 className="text-xl font-medium text-cybergold-300 mb-2">AI Assistent</h3>
+                <h3 className="text-xl font-medium text-cybergold-300 mb-2">Venn Assistent</h3>
                 <p className="text-sm text-cybergold-500">
                   Chat med vår AI-assistent for å få hjelp og svar på spørsmål om Snakkaz Chat og dens funksjoner.
                 </p>
@@ -145,7 +145,7 @@ const WelcomeDashboard: React.FC = () => {
                     Konfigurer
                   </Button>
                 </div>
-                <h3 className="text-xl font-medium text-cybergold-300 mb-2">AI Innstillinger</h3>
+                <h3 className="text-xl font-medium text-cybergold-300 mb-2">Venn Assistent Innstillinger</h3>
                 <p className="text-sm text-cybergold-500">
                   Konfigurer AI-assistenten, juster personverninnstillinger, og sett opp din egen API-nøkkel for Chat AI.
                 </p>

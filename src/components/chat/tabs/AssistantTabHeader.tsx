@@ -22,7 +22,7 @@ export const AssistantTabHeader = ({ isActive }: AssistantTabHeaderProps) => {
           <div className="flex flex-col items-center gap-1">
             <div className="flex items-center gap-2">
               <Bot className="h-4 w-4" />
-              <span>AI Assistant</span>
+              <span>Venn Assistent</span>
               <TabBadge variant="ai">Private</TabBadge>
             </div>
             <span className="hidden sm:block text-xs text-cybergold-400/60 font-normal">
@@ -33,7 +33,7 @@ export const AssistantTabHeader = ({ isActive }: AssistantTabHeaderProps) => {
         </TabsTrigger>
       </TooltipTrigger>
       <TooltipContent className="max-w-xs">
-        <p>Private chat with our AI assistant. Get help with tasks, questions, and more.</p>
+        <p>Privat chat med venn-assistenten. Få hjelp til å finne venner, bygge forbindelser og mer.</p>
       </TooltipContent>
     </Tooltip>
   );
