@@ -28,9 +28,9 @@ class Memory:
     confidence: float = 1.0
     importance: float = 0.5
     access_count: int = 0
-    created_at: datetime = None
-    updated_at: datetime = None
-    last_accessed: datetime = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    last_accessed: Optional[datetime] = None
     ttl_seconds: Optional[int] = None  # Time to live
     context: Optional[str] = None
     source: Optional[str] = None  # Hvor minnet kom fra (chat, system, etc)
@@ -38,7 +38,7 @@ class Memory:
 class MemoryMCPServer:
     def __init__(self):
         self.server = Server("snakkaz-memory-server")
-        self.db_pool = None
+        self.db_pool: Optional[asyncpg.Pool] = None
         self.redis_client = None
         self.openai_client = None
         
@@ -71,9 +71,10 @@ class MemoryMCPServer:
         )
         
         # Registrer pgvector
-        async with self.db_pool.acquire() as conn:
-            await register_vector(conn)
-            await self._create_tables(conn)
+        if self.db_pool:
+            async with self.db_pool.acquire() as conn:
+                await register_vector(conn)
+                await self._create_tables(conn)
         
         # Redis for rask cache - fallback til local hvis ikke tilgjengelig
         try:
@@ -165,7 +166,7 @@ class MemoryMCPServer:
             );
         """)
         
-    async def _generate_embedding(self, text: str) -> List[float]:
+    async def _generate_embedding(self, text: str) -> Optional[List[float]]:
         """Generer vektor-embedding for tekst"""
         if not self.openai_client:
             return None
@@ -261,7 +262,8 @@ class MemoryMCPServer:
             memory.importance = self._calculate_importance(memory)
             
             # Lagre i database
-            async with self.db_pool.acquire() as conn:
+            if self.db_pool:
+                async with self.db_pool.acquire() as conn:
                 result = await conn.fetchrow("""
                     INSERT INTO snakkaz_memories (
                         user_id, memory_type, key, value, embedding,
@@ -341,7 +343,8 @@ class MemoryMCPServer:
             if query:
                 query_embedding = await self._generate_embedding(query)
                 
-                async with self.db_pool.acquire() as conn:
+                if self.db_pool:
+                    async with self.db_pool.acquire() as conn:
                     # Oppdater expired minner
                     await conn.execute("""
                         DELETE FROM snakkaz_memories 
@@ -356,7 +359,7 @@ class MemoryMCPServer:
                     if memory_types:
                         param_count += 1
                         conditions.append(f"memory_type = ANY(${param_count})")
-                        params.append(memory_types)
+                        params.append(memory_types)  # Keep as is - list of strings
                         
                     if query_embedding:
                         param_count += 1
@@ -364,7 +367,7 @@ class MemoryMCPServer:
                             1 - (embedding <=> ${param_count}::vector) > {similarity_threshold}
                         """
                         conditions.append(similarity_condition)
-                        params.append(query_embedding)
+                        params.append(query_embedding)  # Keep as is - list of floats
                         
                     where_clause = " AND ".join(conditions)
                     
@@ -430,6 +433,9 @@ class MemoryMCPServer:
                 
             where_clause = " AND ".join(conditions)
             
+            if not self.db_pool:
+                return {"deleted_count": 0}
+                
             async with self.db_pool.acquire() as conn:
                 deleted = await conn.fetchval(f"""
                     DELETE FROM snakkaz_memories
@@ -494,6 +500,9 @@ class MemoryMCPServer:
     ) -> Dict[str, Any]:
         """Analyser brukerens minnemønstre"""
         try:
+            if not self.db_pool:
+                return {"error": "Database not available"}
+                
             async with self.db_pool.acquire() as conn:
                 # Minnestatistikk
                 stats = await conn.fetchrow("""
@@ -551,6 +560,9 @@ class MemoryMCPServer:
     ) -> Dict[str, Any]:
         """Opprett en samling av relaterte minner"""
         try:
+            if not self.db_pool:
+                return {"error": "Database not available"}
+                
             async with self.db_pool.acquire() as conn:
                 # Opprett samling
                 collection_id = await conn.fetchval("""
@@ -580,6 +592,9 @@ class MemoryMCPServer:
     async def get_admin_overview(self) -> Dict[str, Any]:
         """Admin oversikt over alle brukeres minnebruk"""
         try:
+            if not self.db_pool:
+                return {"error": "Database not available"}
+                
             async with self.db_pool.acquire() as conn:
                 # Totale statistikker
                 total_stats = await conn.fetchrow("""
@@ -744,7 +759,8 @@ class MemoryMCPServer:
         """Periodisk opprydding av utløpte minner"""
         while True:
             try:
-                async with self.db_pool.acquire() as conn:
+                if self.db_pool:
+                    async with self.db_pool.acquire() as conn:
                     deleted = await conn.fetchval("""
                         DELETE FROM snakkaz_memories
                         WHERE expires_at IS NOT NULL AND expires_at < NOW()
@@ -771,14 +787,17 @@ async def main():
     print("📊 Admin dashboard tilgjengelig gjennom MCP tools")
     
     # Start MCP server
+    import sys
     async with server.server.run(
-        transport="stdio",
-        initialization_options=InitializationOptions(
+        sys.stdin.buffer,
+        sys.stdout.buffer,
+        InitializationOptions(
             server_name="snakkaz-memory",
-            server_version="1.0.0"
+            server_version="1.0.0",
+            capabilities={}
         )
     ):
-        await server.server.wait_closed()
+        await asyncio.Event().wait()  # Keep server running
 
 if __name__ == "__main__":
     asyncio.run(main())
