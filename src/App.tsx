@@ -13,6 +13,7 @@ import { initializePreview, shouldShowPreviewNotice, getPreviewDisplayInfo } fro
 // Lazy load components with route-based chunking for optimal performance
 const Login = lazy(() => import("@/pages/Login"));
 const Register = lazy(() => import("@/pages/Register"));
+const EmailConfirmation = lazy(() => import("@/pages/EmailConfirmation"));
 const ForgotPassword = lazy(() => import("@/pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
 const Info = lazy(() => import("@/pages/Info"));
@@ -35,6 +36,9 @@ const FindFriends = lazy(() => import("@/pages/FindFriends"));
 // User management - separate chunk (lazy loaded)
 const ProfilePage = lazy(() => import("@/pages/Profile"));
 const SettingsPage = lazy(() => import("@/pages/Settings"));
+const Dashboard = lazy(() => import("@/pages/Dashboard"));
+const Mail = lazy(() => import("@/pages/Mail"));
+const MCPDashboard = lazy(() => import("@/pages/MCPDashboard"));
 
 // Subscription features - separate chunk
 const Subscription = lazy(() => import("@/pages/Subscription"));
@@ -239,8 +243,13 @@ const SubdomainRouter = () => {
       console.log('🏠 Main app mode activated');
     }
   }, [subdomain]);
+
+  // Handle MCP subdomain routing
+  if (subdomain === 'mcp') {
+    return <MCPDashboard />;
+  }
   
-  return null; // This component only handles side effects
+  return null; // This component only handles side effects for other subdomains
 };
 
 export default function App() {
@@ -289,6 +298,7 @@ export default function App() {
               {/* Public routes */}
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/email-confirmation" element={<EmailConfirmation />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/info" element={<Info />} />
@@ -363,6 +373,22 @@ export default function App() {
                 element={
                   <RequireAuth>
                     <ProfilePage />
+                  </RequireAuth>
+                } 
+              />
+              <Route 
+                path="/dashboard" 
+                element={
+                  <RequireAuth>
+                    <Dashboard />
+                  </RequireAuth>
+                } 
+              />
+              <Route 
+                path="/mail" 
+                element={
+                  <RequireAuth>
+                    <Mail />
                   </RequireAuth>
                 } 
               />

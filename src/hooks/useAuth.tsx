@@ -132,12 +132,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       setSession(data.session);
       setUser(data.user);
-      navigate('/chat');
       
-      toast({
-        title: "Innlogging vellykket",
-        description: "Velkommen tilbake!",
-      });
+      // Check if this is a first-time user
+      const isFirstTimeUser = localStorage.getItem('snakkaz_first_time_user') === 'true';
+      
+      if (isFirstTimeUser) {
+        // Remove the flag and redirect to profile editing
+        localStorage.removeItem('snakkaz_first_time_user');
+        navigate('/profile?firstTime=true');
+        
+        toast({
+          title: "Velkommen til Snakkaz!",
+          description: "Fullfør profilen din for å komme i gang.",
+        });
+      } else {
+        // Existing user, go to dashboard/main page
+        navigate('/dashboard');
+        
+        toast({
+          title: "Innlogging vellykket",
+          description: "Velkommen tilbake!",
+        });
+      }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
       console.error('Innloggingsfeil:', errorMessage);

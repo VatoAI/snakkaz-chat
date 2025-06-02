@@ -16,7 +16,8 @@ import {
   UserPlus,
   MessageCircle,
   Heart,
-  Search
+  Search,
+  Mail
 } from 'lucide-react';
 
 type NavigationVariant = 'horizontal' | 'vertical' | 'bottom' | 'mobile';
@@ -56,28 +57,18 @@ export const UnifiedNavigation: React.FC<UnifiedNavigationProps> = ({
   const navRef = useRef<HTMLDivElement>(null);
   const activeIndicatorRef = useRef<HTMLDivElement | null>(null);
   
-  // Define all navigation items - cleaned up for better UX
+  // Define all navigation items - reorganized with Chat Hub concept
   const navItems: NavItem[] = [
     {
-      path: '/',
-      label: 'Hjem',
-      icon: <Home className="h-5 w-5" />
-    },
-    {
-      path: '/basic-chat',
-      label: 'Chat',
-      icon: <MessageSquare className="h-5 w-5" />
-    },
-    {
-      path: '/friends',
-      label: 'Venner',
-      icon: <Heart className="h-5 w-5" />,
+      path: '/dashboard',
+      label: 'Dashboard',
+      icon: <Home className="h-5 w-5" />,
       authRequired: true
     },
     {
-      path: '/find-friends',
-      label: 'Finn Venner',
-      icon: <Search className="h-5 w-5" />,
+      path: '/basic-chat',
+      label: 'Chat Hub',
+      icon: <MessageSquare className="h-5 w-5" />,
       authRequired: true
     },
     {
@@ -93,16 +84,23 @@ export const UnifiedNavigation: React.FC<UnifiedNavigationProps> = ({
       authRequired: true
     },
     {
-      path: '/create-group',
-      label: 'Ny Gruppe',
-      icon: <UserPlus className="h-5 w-5" />,
-      authRequired: true,
-      hideOnMobile: true
+      path: '/friends',
+      label: 'Venner',
+      icon: <Heart className="h-5 w-5" />,
+      authRequired: true
     },
     {
-      path: '/info',
-      label: 'Info',
-      icon: <Info className="h-5 w-5" />
+      path: '/mail',
+      label: 'Mail',
+      icon: <Mail className="h-5 w-5" />,
+      authRequired: true
+    },
+    {
+      path: '/find-friends',
+      label: 'Finn Venner',
+      icon: <Search className="h-5 w-5" />,
+      authRequired: true,
+      hideOnMobile: true
     },
     {
       path: '/profile',
@@ -114,7 +112,13 @@ export const UnifiedNavigation: React.FC<UnifiedNavigationProps> = ({
       path: '/settings',
       label: 'Innstillinger',
       icon: <Settings className="h-5 w-5" />,
-      authRequired: true
+      authRequired: true,
+      hideOnMobile: true
+    },
+    {
+      path: '/info',
+      label: 'Info',
+      icon: <Info className="h-5 w-5" />
     },
     {
       path: '/admin',
@@ -134,8 +138,8 @@ export const UnifiedNavigation: React.FC<UnifiedNavigationProps> = ({
 
   // Check if a route is active
   const isActive = (path: string) => {
-    if (path === '/') {
-      return location.pathname === path;
+    if (path === '/dashboard') {
+      return location.pathname === '/' || location.pathname === '/dashboard';
     } 
     // For basic-chat, match both basic-chat and legacy chat paths
     else if (path === '/basic-chat' && (location.pathname.startsWith('/basic-chat') || location.pathname.startsWith('/chat'))) {
@@ -217,7 +221,9 @@ export const UnifiedNavigation: React.FC<UnifiedNavigationProps> = ({
     variant === 'horizontal' && "flex items-center gap-1 p-0.5",
     variant === 'vertical' && "flex flex-col gap-2 p-0.5",
     variant === 'bottom' && "fixed bottom-0 left-0 right-0 bg-cyberdark-900 border-t border-cyberdark-700 p-2 flex items-center justify-around",
-    variant === 'mobile' && "fixed bottom-0 left-0 right-0 bg-cyberdark-900 border-t border-cyberdark-700 px-2 pt-2 pb-2 mobile-bottom-safe flex items-center justify-around z-50 shadow-lg",
+    variant === 'mobile' && "fixed bottom-0 left-0 right-0 bg-cyberdark-900 border-t border-cyberdark-700 px-2 pt-3 pb-4 mobile-bottom-safe flex items-center justify-around z-50 shadow-lg backdrop-blur-sm",
+    // Enhanced mobile touch targets
+    (variant === 'mobile' || variant === 'bottom') && "min-h-[60px]",
     className
   );
 
@@ -300,8 +306,9 @@ const NavButton: React.FC<NavButtonProps> = ({
     variant === 'vertical' && isActive && "bg-gradient-to-r from-cyberdark-800 to-cyberdark-850",
     variant === 'vertical' && !isActive && "hover:bg-cyberdark-800/40",
     
-    // Bottom/Mobile variant styling
-    (variant === 'bottom' || variant === 'mobile') && "flex-col items-center p-2 gap-1 w-full",
+    // Bottom/Mobile variant styling - Enhanced for better touch UX
+    (variant === 'bottom' || variant === 'mobile') && "flex-col items-center p-3 gap-1 w-full min-h-[48px] touch-manipulation",
+    (variant === 'bottom' || variant === 'mobile') && "active:scale-95 transition-transform duration-150",
     
     // Compact mode
     compact && "p-1.5",

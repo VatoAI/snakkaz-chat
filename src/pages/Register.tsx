@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -48,11 +48,13 @@ const formSchema = z.object({
 const Register: React.FC = () => {
   const { signUp } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [captchaValid, setCaptchaValid] = useState(false);
+  const [registrationSuccess, setRegistrationSuccess] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -76,16 +78,26 @@ const Register: React.FC = () => {
     }
 
     try {
+      // Store email for potential resend
+      localStorage.setItem('snakkaz_pending_email', values.email);
+      
       // Registrer brukeren med brukernavnet inkludert i metadata
       await signUp(values.email, values.password, {
         username: values.username,
         full_name: '',  // Kan fylles ut senere i profilen
       });
       
+      setRegistrationSuccess(true);
+      
       toast({
         title: 'Registrering vellykket!',
         description: 'Sjekk e-posten din for å bekrefte kontoen.',
       });
+      
+      // Redirect to email confirmation page
+      setTimeout(() => {
+        navigate('/email-confirmation');
+      }, 2000);
       
       // Reseteer skjemaet etter vellykket registrering
       form.reset();

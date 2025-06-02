@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { UnifiedNavigation } from '@/components/navigation/UnifiedNavigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,13 +12,16 @@ import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Camera, Check, Trash2, User, Crown } from 'lucide-react';
+import { Camera, Check, Trash2, User, Crown, ArrowRight } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import PremiumEmailManager from '@/components/Premium/PremiumEmailManager';
 
 const Profile = () => {
   const { user, isPremium } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isFirstTime = searchParams.get('firstTime') === 'true';
   
   // Mock profile data - would be fetched from database in a real app
   const [profile, setProfile] = useState({
@@ -29,9 +33,19 @@ const Profile = () => {
     publicProfile: true
   });
   
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(isFirstTime); // Auto-edit mode for first-time users
   const [editedProfile, setEditedProfile] = useState({ ...profile });
   const [activeTab, setActiveTab] = useState('profile');
+  
+  // Show welcome message for first-time users
+  useEffect(() => {
+    if (isFirstTime) {
+      toast({
+        title: "Velkommen til Snakkaz Chat! 🎉",
+        description: "La oss sette opp profilen din for å komme i gang.",
+      });
+    }
+  }, [isFirstTime, toast]);
   
   const handleEditToggle = () => {
     if (isEditing) {
@@ -41,8 +55,25 @@ const Profile = () => {
         title: "Profil oppdatert",
         description: "Profilendringene dine har blitt lagret.",
       });
+      
+      // If it's a first-time user, redirect to dashboard after saving
+      if (isFirstTime) {
+        setTimeout(() => {
+          toast({
+            title: "Profil fullført! ✅",
+            description: "Du blir nå sendt til hovedsiden.",
+          });
+          navigate('/dashboard');
+        }, 1500);
+      }
     }
     setIsEditing(!isEditing);
+  };
+  
+  const handleSkipProfile = () => {
+    if (isFirstTime) {
+      navigate('/dashboard');
+    }
   };
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -73,8 +104,35 @@ const Profile = () => {
       <UnifiedNavigation variant="horizontal" />
       
       <main className="container max-w-4xl py-8 px-4">
+        {/* First-time user welcome section */}
+        {isFirstTime && (
+          <Card className="mb-6 bg-gradient-to-r from-cybergold-900/20 to-cyberdark-800 border-cybergold-600">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-cybergold-400 mb-2">
+                    Velkommen til Snakkaz Chat! 🎉
+                  </h2>
+                  <p className="text-cybergold-300 mb-4">
+                    La oss sette opp profilen din for å komme i gang med å chatte.
+                  </p>
+                </div>
+                <Button 
+                  variant="outline" 
+                  onClick={handleSkipProfile}
+                  className="border-cybergold-600 text-cybergold-400 hover:bg-cybergold-600/20"
+                >
+                  Hopp over <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+        
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-cybergold-400">Min profil</h1>
+          <h1 className="text-2xl font-bold text-cybergold-400">
+            {isFirstTime ? 'Sett opp profilen din' : 'Min profil'}
+          </h1>
           <div className="flex items-center gap-2">
             {isPremium && (
               <Badge className="bg-gradient-to-r from-cybergold-600 to-cybergold-400 text-cyberdark-900 flex items-center gap-1">
@@ -177,7 +235,7 @@ const Profile = () => {
                       {isEditing ? (
                         <>
                           <Check className="h-4 w-4 mr-2" />
-                          Lagre endringer
+                          {isFirstTime ? 'Fullfør oppsettet' : 'Lagre endringer'}
                         </>
                       ) : (
                         'Rediger profil'
