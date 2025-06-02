@@ -18,7 +18,7 @@ const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
 const Info = lazy(() => import("@/pages/Info"));
 
 // Core chat functionality - separate chunk for main feature
-const Chat = lazy(() => import("@/features/chat/components/common/OptimizedChat"));
+const Chat = lazy(() => import("@/pages/BasicChatPage"));
 const BasicChatPage = lazy(() => import("@/pages/BasicChatPage"));
 
 // AI features - separate chunk (lazy load on demand)
@@ -120,9 +120,9 @@ const AuthAwareRedirect = ({ fallback = "/login" }: { fallback?: string }) => {
     return <LoadingSpinner />;
   }
   
-  // If user is logged in, go to chat
+  // If user is logged in, go to basic chat (proven working)
   if (user) {
-    return <Navigate to="/chat" replace />;
+    return <Navigate to="/basic-chat" replace />;
   }
   
   // If not logged in, go to login
@@ -303,10 +303,18 @@ export default function App() {
                 } 
               />
               <Route 
+                path="/chat" 
+                element={
+                  <RequireAuth>
+                    <Navigate to="/basic-chat" replace />
+                  </RequireAuth>
+                } 
+              />
+              <Route 
                 path="/chat/*" 
                 element={
                   <RequireAuth>
-                    <Chat />
+                    <Navigate to="/basic-chat" replace />
                   </RequireAuth>
                 } 
               />
@@ -314,7 +322,7 @@ export default function App() {
                 path="/messages" 
                 element={
                   <RequireAuth>
-                    <Chat />
+                    <BasicChatPage />
                   </RequireAuth>
                 } 
               />
@@ -429,7 +437,6 @@ export default function App() {
           </Suspense>
           <Toaster />
           <DeveloperTools />
-          <SubdomainRouter />
         </AuthProvider>
       </BrowserRouter>
     </SuperSimpleErrorBoundary>

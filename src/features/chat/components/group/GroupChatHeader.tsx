@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Group } from '@/types/group';
 import { cn } from '@/lib/utils';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 
 interface GroupChatHeaderProps {
   group: Group;
@@ -88,7 +88,7 @@ export const GroupChatHeader: React.FC<GroupChatHeaderProps> = ({
           <div className="ml-2">
             <h3 className="font-medium text-cybergold-300">{group.name}</h3>
             <p className="text-xs text-cybergold-500">
-              {group.memberCount || group.members?.length || 0} medlemmer
+              {group.members?.length || 0} medlemmer
             </p>
           </div>
         </div>
@@ -194,10 +194,3 @@ export const GroupChatHeader: React.FC<GroupChatHeaderProps> = ({
     </div>
   );
 };
-
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"

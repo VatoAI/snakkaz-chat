@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Navigation Test - Snakkaz Chat</title>
+    <style>
+        body {
+            background: #0a0a0a;
+            color: #d4af37;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            margin: 0;
+        }
+        .test-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: #1a1a1a;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #d4af37;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 15px;
+            background: #2a2a2a;
+            border-radius: 5px;
+        }
+        .test-button {
+            padding: 8px 15px;
+            background: #d4af37;
+            color: #000;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #b8941f;
+        }
+        .test-button.danger {
+            background: #c53030;
+            color: white;
+        }
+        .result {
+            margin: 10px 0;
+            padding: 10px;
+            background: #333;
+            border-radius: 4px;
+        }
+        .pass { background: #0f4c0f; }
+        .fail { background: #4c0f0f; }
+        .warning { background: #4c3c0f; }
+        iframe {
+            width: 100%;
+            height: 600px;
+            border: 1px solid #d4af37;
+            border-radius: 5px;
+        }
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+        .nav-test-item {
+            background: #333;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #555;
+        }
+        .nav-test-item.working {
+            border-color: #0f4c0f;
+            background: #0f2f0f;
+        }
+        .nav-test-item.broken {
+            border-color: #4c0f0f;
+            background: #2f0f0f;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        .status-working { background: #00ff00; }
+        .status-broken { background: #ff0000; }
+        .status-unknown { background: #ffff00; }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧭 Navigation System Test - Snakkaz Chat</h1>
+        <p><strong>Dato:</strong> Juni 2, 2025</p>
+        <p><strong>Formål:</strong> Identifiser hvilke navigasjonselementer som ikke fungerer (90% av knappene feiler)</p>
+
+        <div class="test-section">
+            <h2>📊 Live Application Test</h2>
+            <div id="appTestControls">
+                <button class="test-button" onclick="loadApp()">🚀 Last Snakkaz App</button>
+                <button class="test-button" onclick="runNavigationTest()">🔍 Test Navigation</button>
+                <button class="test-button" onclick="highlightElements()">🎯 Highlight Elements</button>
+                <button class="test-button danger" onclick="clearTests()">🧹 Clear Tests</button>
+            </div>
+            <div id="testResults" class="result">Klar for testing...</div>
+        </div>
+
+        <div class="test-section">
+            <h2>🎯 Expected Navigation Elements</h2>
+            <p>Disse elementene bør være tilgjengelige og fungerende:</p>
+            <div class="test-grid" id="expectedNavElements">
+                <!-- Will be populated by JavaScript -->
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>🔍 Live Application Frame</h2>
+            <iframe id="appFrame" src="about:blank"></iframe>
+        </div>
+
+        <div class="test-section">
+            <h2>📋 Detailed Test Results</h2>
+            <div id="detailedResults" class="result">
+                Ingen tester kjørt ennå...
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>🚨 Critical Issues Found</h2>
+            <div id="criticalIssues" class="result">
+                Ingen kritiske problemer funnet ennå...
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>📖 Test Instructions</h2>
+            <ol>
+                <li><strong>Last Snakkaz App:</strong> Laster applikasjonen i iframe</li>
+                <li><strong>Test Navigation:</strong> Systematisk test av alle navigasjonselementer</li>
+                <li><strong>Highlight Elements:</strong> Visuell markering av elementer som ikke fungerer</li>
+                <li><strong>Manual Testing:</strong> Klikk på elementer i iframe for å teste manuelt</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        let testResults = {
+            total: 0,
+            working: 0,
+            broken: 0,
+            elements: []
+        };
+
+        const expectedNavElements = [
+            { path: '/', label: 'Hjem', type: 'main-nav', expected: true },
+            { path: '/chat', label: 'Chat', type: 'main-nav', expected: true },
+            { path: '/friends', label: 'Venner', type: 'main-nav', expected: true },
+            { path: '/ai-chat', label: 'Venn Assistent', type: 'main-nav', expected: true },
+            { path: '/group-chat', label: 'Grupper', type: 'main-nav', expected: true },
+            { path: '/find-friends', label: 'Finn Venner', type: 'main-nav', expected: true },
+            { path: '/messages', label: 'Meldinger', type: 'main-nav', expected: true },
+            { path: '/contacts', label: 'Kontakter', type: 'main-nav', expected: true },
+            { path: '/info', label: 'Info', type: 'main-nav', expected: true },
+            { path: '/profile', label: 'Profil', type: 'main-nav', expected: true },
+            { path: '/settings', label: 'Innstillinger', type: 'main-nav', expected: true },
+            { path: '/register', label: 'Registrer', type: 'auth', expected: true },
+            { path: '/login', label: 'Logg inn', type: 'auth', expected: true },
+            { path: '/subscription', label: 'Abonnement', type: 'premium', expected: true }
+        ];
+
+        function populateExpectedElements() {
+            const container = document.getElementById('expectedNavElements');
+            container.innerHTML = '';
+            
+            expectedNavElements.forEach(element => {
+                const div = document.createElement('div');
+                div.className = 'nav-test-item';
+                div.innerHTML = `
+                    <div>
+                        <span class="status-indicator status-unknown"></span>
+                        <strong>${element.label}</strong>
+                    </div>
+                    <div style="font-size: 12px; color: #888;">
+                        Path: ${element.path}<br>
+                        Type: ${element.type}
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function loadApp() {
+            const frame = document.getElementById('appFrame');
+            frame.src = 'http://localhost:5175';
+            
+            updateTestResults('🚀 Laster Snakkaz Chat applikasjon...');
+            
+            frame.onload = function() {
+                updateTestResults('✅ Applikasjon lastet. Klar for testing.');
+            };
+            
+            frame.onerror = function() {
+                updateTestResults('❌ Kunne ikke laste applikasjon. Sjekk at serveren kjører på localhost:5175');
+            };
+        }
+
+        function runNavigationTest() {
+            const frame = document.getElementById('appFrame');
+            if (!frame.src || frame.src === 'about:blank') {
+                updateTestResults('❌ Last applikasjonen først!');
+                return;
+            }
+
+            updateTestResults('🔍 Starter navigasjonstest...');
+            
+            try {
+                const doc = frame.contentDocument || frame.contentWindow.document;
+                
+                if (!doc) {
+                    updateTestResults('❌ Kan ikke få tilgang til iframe innhold (CORS problemer)');
+                    showCORSInstructions();
+                    return;
+                }
+                
+                testResults = {
+                    total: 0,
+                    working: 0,
+                    broken: 0,
+                    elements: []
+                };
+                
+                // Test navigation buttons
+                testNavigationButtons(doc);
+                
+                // Test regular buttons
+                testRegularButtons(doc);
+                
+                // Test links
+                testLinks(doc);
+                
+                // Update results
+                updateDetailedResults();
+                updateCriticalIssues();
+                
+            } catch (error) {
+                updateTestResults(`❌ Feil under testing: ${error.message}`);
+                showCORSInstructions();
+            }
+        }
+
+        function testNavigationButtons(doc) {
+            const navButtons = doc.querySelectorAll('nav[aria-label="Main Navigation"] button, nav button');
+            
+            navButtons.forEach((button, index) => {
+                const label = button.textContent?.trim() || button.getAttribute('aria-label') || `Nav Button ${index}`;
+                const isWorking = testButtonFunctionality(button);
+                
+                testResults.elements.push({
+                    type: 'navigation',
+                    label: label,
+                    working: isWorking,
+                    element: button
+                });
+                
+                testResults.total++;
+                if (isWorking) testResults.working++;
+                else testResults.broken++;
+            });
+        }
+
+        function testRegularButtons(doc) {
+            const buttons = doc.querySelectorAll('button:not(nav button)');
+            
+            buttons.forEach((button, index) => {
+                const label = button.textContent?.trim() || `Button ${index}`;
+                
+                // Skip hidden or disabled buttons
+                if (button.style.display === 'none' || button.disabled) return;
+                
+                const isWorking = testButtonFunctionality(button);
+                
+                testResults.elements.push({
+                    type: 'button',
+                    label: label,
+                    working: isWorking,
+                    element: button
+                });
+                
+                testResults.total++;
+                if (isWorking) testResults.working++;
+                else testResults.broken++;
+            });
+        }
+
+        function testLinks(doc) {
+            const links = doc.querySelectorAll('a');
+            
+            links.forEach((link, index) => {
+                const label = link.textContent?.trim() || `Link ${index}`;
+                const href = link.getAttribute('href');
+                
+                const isWorking = href && href !== '#' && href !== '';
+                
+                testResults.elements.push({
+                    type: 'link',
+                    label: label,
+                    working: isWorking,
+                    href: href,
+                    element: link
+                });
+                
+                testResults.total++;
+                if (isWorking) testResults.working++;
+                else testResults.broken++;
+            });
+        }
+
+        function testButtonFunctionality(button) {
+            // Check for click handlers
+            if (button.onclick) return true;
+            if (button.getAttribute('onclick')) return true;
+            
+            // Check for React event handlers (they appear as properties starting with __)
+            for (let prop in button) {
+                if (prop.startsWith('__reactEventHandlers') || prop.startsWith('__reactInternalInstance')) {
+                    return true;
+                }
+            }
+            
+            // Check if it's a form submit button
+            if (button.type === 'submit') return true;
+            
+            // Check for data attributes that suggest routing
+            if (button.getAttribute('data-to') || button.getAttribute('data-path')) return true;
+            
+            return false;
+        }
+
+        function highlightElements() {
+            const frame = document.getElementById('appFrame');
+            try {
+                const doc = frame.contentDocument || frame.contentWindow.document;
+                
+                if (!doc) {
+                    updateTestResults('❌ Kan ikke få tilgang til iframe innhold for highlighting');
+                    return;
+                }
+                
+                // Add styles for highlighting
+                const style = doc.createElement('style');
+                style.innerHTML = `
+                    .nav-test-broken {
+                        border: 3px solid red !important;
+                        background: rgba(255, 0, 0, 0.2) !important;
+                        box-shadow: 0 0 10px red !important;
+                    }
+                    .nav-test-working {
+                        border: 3px solid green !important;
+                        background: rgba(0, 255, 0, 0.1) !important;
+                        box-shadow: 0 0 5px green !important;
+                    }
+                `;
+                doc.head.appendChild(style);
+                
+                // Highlight elements based on test results
+                testResults.elements.forEach(item => {
+                    if (item.element) {
+                        item.element.classList.add(item.working ? 'nav-test-working' : 'nav-test-broken');
+                    }
+                });
+                
+                updateTestResults('🎯 Elementer markert! Rødt = ikke fungerer, Grønt = fungerer');
+                
+            } catch (error) {
+                updateTestResults(`❌ Kunne ikke markere elementer: ${error.message}`);
+            }
+        }
+
+        function clearTests() {
+            testResults = { total: 0, working: 0, broken: 0, elements: [] };
+            updateTestResults('🧹 Tester nullstilt');
+            updateDetailedResults();
+            updateCriticalIssues();
+            
+            // Clear highlights
+            try {
+                const frame = document.getElementById('appFrame');
+                const doc = frame.contentDocument || frame.contentWindow.document;
+                if (doc) {
+                    const highlighted = doc.querySelectorAll('.nav-test-broken, .nav-test-working');
+                    highlighted.forEach(el => {
+                        el.classList.remove('nav-test-broken', 'nav-test-working');
+                    });
+                }
+            } catch (error) {
+                // Ignore errors when clearing highlights
+            }
+        }
+
+        function updateTestResults(message) {
+            document.getElementById('testResults').innerHTML = message;
+        }
+
+        function updateDetailedResults() {
+            const container = document.getElementById('detailedResults');
+            
+            if (testResults.total === 0) {
+                container.innerHTML = 'Ingen tester kjørt ennå...';
+                return;
+            }
+            
+            const percentage = Math.round((testResults.working / testResults.total) * 100);
+            
+            let html = `
+                <h3>📊 Test Sammendrag</h3>
+                <p><strong>Total elementer:</strong> ${testResults.total}</p>
+                <p><strong>Fungerende:</strong> ${testResults.working} (${percentage}%)</p>
+                <p><strong>Ikke fungerende:</strong> ${testResults.broken} (${100-percentage}%)</p>
+                <hr>
+                <h4>Detaljerte resultater:</h4>
+            `;
+            
+            const groupedResults = {
+                navigation: testResults.elements.filter(e => e.type === 'navigation'),
+                button: testResults.elements.filter(e => e.type === 'button'),
+                link: testResults.elements.filter(e => e.type === 'link')
+            };
+            
+            Object.entries(groupedResults).forEach(([type, items]) => {
+                if (items.length > 0) {
+                    html += `<h5>${type.toUpperCase()} (${items.length} items):</h5>`;
+                    items.forEach(item => {
+                        const status = item.working ? '✅' : '❌';
+                        html += `<div>${status} ${item.label}</div>`;
+                    });
+                }
+            });
+            
+            container.innerHTML = html;
+        }
+
+        function updateCriticalIssues() {
+            const container = document.getElementById('criticalIssues');
+            
+            const brokenNav = testResults.elements.filter(e => e.type === 'navigation' && !e.working);
+            const brokenButtons = testResults.elements.filter(e => e.type === 'button' && !e.working);
+            
+            if (brokenNav.length === 0 && brokenButtons.length === 0) {
+                container.innerHTML = '✅ Ingen kritiske navigasjonsproblemer funnet!';
+                container.className = 'result pass';
+                return;
+            }
+            
+            let html = '<h3>🚨 Kritiske Problemer:</h3>';
+            
+            if (brokenNav.length > 0) {
+                html += `<h4>Ikke-fungerende hovednavigasjon (${brokenNav.length}):</h4>`;
+                brokenNav.forEach(item => {
+                    html += `<div>❌ ${item.label}</div>`;
+                });
+            }
+            
+            if (brokenButtons.length > 0) {
+                html += `<h4>Ikke-fungerende knapper (${brokenButtons.length}):</h4>`;
+                brokenButtons.forEach(item => {
+                    html += `<div>❌ ${item.label}</div>`;
+                });
+            }
+            
+            container.innerHTML = html;
+            container.className = 'result fail';
+        }
+
+        function showCORSInstructions() {
+            const container = document.getElementById('criticalIssues');
+            container.innerHTML = `
+                <h3>⚠️ CORS Problemer</h3>
+                <p>På grunn av CORS-restriksjoner kan ikke test-scriptet få tilgang til iframe innholdet.</p>
+                <h4>Løsninger:</h4>
+                <ol>
+                    <li><strong>Manuel testing:</strong> Klikk på elementer i iframe over</li>
+                    <li><strong>Browser console:</strong> Åpne Developer Tools på hovedsiden og kjør test</li>
+                    <li><strong>Direct testing:</strong> Gå direkte til <a href="http://localhost:5175" target="_blank">localhost:5175</a></li>
+                </ol>
+                <h4>Test Script for Browser Console:</h4>
+                <pre style="background: #000; padding: 10px; color: #0f0; font-size: 12px;">
+// Kopier og lim inn denne koden i browser console på localhost:5175
+${getTestScript()}
+                </pre>
+            `;
+            container.className = 'result warning';
+        }
+
+        function getTestScript() {
+            return `
+function testNavigation() {
+    const results = { total: 0, working: 0, broken: 0 };
+    
+    // Test navigation buttons
+    document.querySelectorAll('nav button, [role="navigation"] button').forEach(btn => {
+        results.total++;
+        const hasHandler = btn.onclick || btn.getAttribute('onclick') || btn.type === 'submit';
+        if (hasHandler) results.working++;
+        else results.broken++;
+        console.log((hasHandler ? '✅' : '❌'), btn.textContent?.trim() || 'Unnamed button');
+    });
+    
+    // Test regular buttons
+    document.querySelectorAll('button:not(nav button):not([role="navigation"] button)').forEach(btn => {
+        if (btn.style.display === 'none' || btn.disabled) return;
+        results.total++;
+        const hasHandler = btn.onclick || btn.getAttribute('onclick') || btn.type === 'submit';
+        if (hasHandler) results.working++;
+        else results.broken++;
+        console.log((hasHandler ? '✅' : '❌'), btn.textContent?.trim() || 'Unnamed button');
+    });
+    
+    console.log('Navigation Test Results:', results);
+    console.log(\`Working: \${results.working}/\${results.total} (\${Math.round(results.working/results.total*100)}%)\`);
+    
+    return results;
+}
+
+testNavigation();
+            `;
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            populateExpectedElements();
+        });
+    </script>
+</body>
+</html>

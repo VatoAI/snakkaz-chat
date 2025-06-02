@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { ChatInterface } from "@/components/chat/ChatInterface";
+import { ChatInterface } from "@/features/chat/components/ChatInterface";
 import { useMessages } from "@/hooks/useMessages";
 import { useProfiles } from "@/hooks/useProfiles";
 import { usePresence } from "@/hooks/usePresence";

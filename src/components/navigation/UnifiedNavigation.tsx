@@ -70,7 +70,7 @@ export const UnifiedNavigation: React.FC<UnifiedNavigationProps> = ({
       authRequired: true
     },
     {
-      path: '/chat',
+      path: '/basic-chat',
       label: 'Chat',
       icon: <MessageSquare className="h-5 w-5" />
     },
@@ -147,8 +147,8 @@ export const UnifiedNavigation: React.FC<UnifiedNavigationProps> = ({
     if (path === '/') {
       return location.pathname === path;
     } 
-    // For chats, match both root path and anything under /chat
-    else if (path === '/chat' && (location.pathname === '/' || location.pathname.startsWith('/chat'))) {
+    // For basic-chat, match both basic-chat and legacy chat paths
+    else if (path === '/basic-chat' && (location.pathname.startsWith('/basic-chat') || location.pathname.startsWith('/chat'))) {
       return true;
     }
     // For messages, match both /messages and anything under it

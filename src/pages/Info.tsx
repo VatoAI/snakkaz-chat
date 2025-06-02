@@ -2,9 +2,11 @@ import React from 'react';
 import { Shield, Lock, Users, ArrowRight, Mail, Star, Crown, CheckCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { useSubdomainNavigation } from '@/utils/subdomainNavigation';
 
 export const Info: React.FC = () => {
   const navigate = useNavigate();
+  const subdomainNav = useSubdomainNavigation();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-cyberdark-950 via-cyberdark-900 to-cyberdark-800">
@@ -46,14 +48,14 @@ export const Info: React.FC = () => {
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
-              onClick={() => navigate("/register")}
+              onClick={() => subdomainNav.navigate("/register")}
               className="h-12 px-8 text-lg bg-gradient-to-r from-cybergold-500 to-cybergold-400 hover:from-cybergold-400 hover:to-cybergold-300 text-black font-semibold shadow-lg shadow-cybergold-500/25"
             >
               Start sikker chat
               <ArrowRight className="ml-2" size={20} />
             </Button>
             <Button 
-              onClick={() => navigate("/login")}
+              onClick={() => subdomainNav.navigate("/login")}
               variant="outline"
               className="h-12 px-8 text-lg border-cyberblue-500/70 text-cyberblue-400 hover:bg-cyberblue-900/30"
             >
@@ -150,7 +152,7 @@ export const Info: React.FC = () => {
                   </div>
                   
                   <Button 
-                    onClick={() => navigate("/login")}
+                    onClick={() => subdomainNav.navigate("/login")}
                     className="w-full bg-cyberblue-600 hover:bg-cyberblue-500 text-white font-medium"
                   >
                     <Lock className="mr-2" size={16} />
@@ -161,7 +163,7 @@ export const Info: React.FC = () => {
 
               <div className="text-center">
                 <Button 
-                  onClick={() => navigate("/premium")}
+                  onClick={() => subdomainNav.navigate("/premium")}
                   className="h-12 px-8 bg-gradient-to-r from-cybergold-600 to-orange-500 hover:from-cybergold-500 hover:to-orange-400 text-black font-semibold"
                 >
                   <Crown className="mr-2" size={20} />

@@ -22,18 +22,23 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({ children }) => {
   const { isLocked, verifyPin } = useMobilePinSecurity();
   const [pinInput, setPinInput] = useState('');
   
-  // Determine page title based on current URL
+  // Determine page title based on current URL - simplified and cleaner
   useEffect(() => {
-    if (location.pathname.includes('/messages')) {
-      setTitle('Meldinger');
-    } else if (location.pathname.includes('/contacts')) {
-      setTitle('Kontakter');
-    } else if (location.pathname.includes('/settings')) {
-      setTitle('Innstillinger');
-    } else if (location.pathname.includes('/chat/')) {
+    const path = location.pathname;
+    if (path.includes('/basic-chat') || path.includes('/chat')) {
       setTitle('Chat');
-    } else if (location.pathname.includes('/chat')) {
-      setTitle('Samtaler');
+    } else if (path.includes('/friends')) {
+      setTitle('Venner');
+    } else if (path.includes('/ai-chat')) {
+      setTitle('AI Assistent');
+    } else if (path.includes('/global-chat')) {
+      setTitle('Global Chat');
+    } else if (path.includes('/settings')) {
+      setTitle('Innstillinger');
+    } else if (path.includes('/security')) {
+      setTitle('Sikkerhet');
+    } else if (path.includes('/profile')) {
+      setTitle('Profil');
     } else {
       setTitle('SnakkaZ');
     }
@@ -118,47 +123,44 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({ children }) => {
     );
   }
 
-  // Handle menu actions
+  // Handle menu actions - simplified
   const handleMenuOpen = () => setMenuOpen(true);
   const handleAddNew = () => {
-    if (location.pathname === '/messages') {
-      navigate('/new-message');
-    } else if (location.pathname === '/chat') {
-      navigate('/contacts');
+    const path = location.pathname;
+    if (path.includes('/basic-chat') || path.includes('/chat')) {
+      navigate('/friends'); // Navigate to friends to start new chat
+    } else if (path.includes('/friends')) {
+      navigate('/basic-chat'); // Navigate to chat from friends
     }
   };
 
-  // Check if we should hide the navigation (in chat view for example)
-  const hideNavigation = location.pathname.includes('/chat/');
+  // Check if we should hide the navigation (in individual chat view)
+  const hideNavigation = location.pathname.includes('/chat/') || location.pathname.includes('/conversation/');
 
   return (
-    <div className="flex flex-col h-[100svh] bg-background mobile-dynamic-height">
-      {/* Top header using unified AppHeader */}
+    <div className="flex flex-col h-[100svh] bg-cyberdark-950 mobile-dynamic-height">
+      {/* Optimized Top header - cleaner and more focused */}
       <AppHeader 
         variant="default"
         title={title}
-        showLogo={false}
-        showNavigation={false}
-        showUserNav={false}
-        showThemeToggle={false}
         onMenuClick={handleMenuOpen}
-        onAddClick={(location.pathname === '/messages' || location.pathname === '/chat') ? handleAddNew : undefined}
-        className="mobile-top-safe"
+        onAddClick={(location.pathname === '/messages' || location.pathname === '/basic-chat') ? handleAddNew : undefined}
+        className="mobile-top-safe border-b border-cyberdark-700 bg-cyberdark-900"
       />
       
-      {/* Main content */}
+      {/* Main content with proper spacing */}
       <div className={`flex-1 overflow-hidden ${!hideNavigation ? 'pb-16' : ''}`}> 
         {children}
       </div>
       
-      {/* Bottom navigation - only show on list views, not in chat conversation */}
+      {/* Bottom navigation - only show on main views, not in chat conversation */}
       {!hideNavigation && (
-        <div className="fixed bottom-0 left-0 right-0 z-50">
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-cyberdark-900 border-t border-cyberdark-700">
           <UnifiedNavigation variant="mobile" />
         </div>
       )}
       
-      {/* Mobile menu */}
+      {/* Enhanced Mobile menu */}
       <MobileMenu isOpen={menuOpen} setIsOpen={setMenuOpen} />
     </div>
   );

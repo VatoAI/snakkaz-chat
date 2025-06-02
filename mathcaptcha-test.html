@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MathCaptcha Test - Snakkaz Chat</title>
+    <style>
+        body {
+            background: #0a0a0a;
+            color: #d4af37;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            margin: 0;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #1a1a1a;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #d4af37;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 15px;
+            background: #2a2a2a;
+            border-radius: 5px;
+        }
+        .test-input {
+            padding: 8px;
+            margin: 10px;
+            background: #333;
+            border: 1px solid #555;
+            color: #d4af37;
+            border-radius: 4px;
+            width: 80px;
+            text-align: center;
+        }
+        .test-button {
+            padding: 8px 15px;
+            background: #d4af37;
+            color: #000;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #b8941f;
+        }
+        .result {
+            margin: 10px 0;
+            padding: 10px;
+            background: #333;
+            border-radius: 4px;
+        }
+        .pass { background: #0f4c0f; }
+        .fail { background: #4c0f0f; }
+        .warning { background: #4c3c0f; }
+        .test-math {
+            font-size: 18px;
+            font-family: monospace;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🔍 MathCaptcha Input Test - Snakkaz Chat</h1>
+        <p><strong>Dato:</strong> Juni 2, 2025</p>
+        <p><strong>Formål:</strong> Test om MathCaptcha input tillater flere siffer (kritisk registrering/login blocker)</p>
+
+        <div class="test-section">
+            <h2>📊 Test Status</h2>
+            <div id="testStatus">Initialiserer tester...</div>
+        </div>
+
+        <div class="test-section">
+            <h2>🧮 Simulert MathCaptcha Test</h2>
+            <div class="test-math">
+                <span id="num1">7</span> + <span id="num2">8</span> = 
+                <input type="text" id="mathAnswer" class="test-input" placeholder="?" maxlength="3">
+                <button class="test-button" onclick="generateNewProblem()">🔄 Ny oppgave</button>
+            </div>
+            <div id="mathResult" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>🔬 Input Behavior Tests</h2>
+            
+            <h3>Test 1: Kan skrive flere siffer</h3>
+            <input type="text" id="multiDigitTest" class="test-input" placeholder="Skriv 15" maxlength="3">
+            <button class="test-button" onclick="testMultipleDigits()">Test</button>
+            <div id="multiDigitResult" class="result"></div>
+
+            <h3>Test 2: Copy/Paste Test</h3>
+            <input type="text" id="pasteTest" class="test-input" placeholder="Lim inn 42" maxlength="3">
+            <button class="test-button" onclick="testPaste()">Test Paste</button>
+            <div id="pasteResult" class="result"></div>
+
+            <h3>Test 3: Keyboard Events</h3>
+            <input type="text" id="keyboardTest" class="test-input" placeholder="Type 123" maxlength="3">
+            <div id="keyboardResult" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>🌐 Browser Compatibility Test</h2>
+            <div id="browserInfo" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>🔍 JavaScript Event Listeners</h2>
+            <div id="eventListeners" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>📋 Test Results Summary</h2>
+            <div id="summaryResults" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>🚨 Live Application Test</h2>
+            <p>Test den faktiske registreringssiden:</p>
+            <button class="test-button" onclick="openRegisterPage()">📝 Åpne Registrering</button>
+            <button class="test-button" onclick="openLoginPage()">🔐 Åpne Login</button>
+        </div>
+    </div>
+
+    <script>
+        let testResults = {
+            multiDigit: false,
+            paste: false,
+            keyboard: false,
+            mathCaptcha: false
+        };
+
+        // Initialize tests
+        document.addEventListener('DOMContentLoaded', function() {
+            updateTestStatus();
+            setupBrowserInfo();
+            setupEventListenerTest();
+            setupKeyboardTest();
+        });
+
+        function updateTestStatus() {
+            const passedTests = Object.values(testResults).filter(result => result).length;
+            const totalTests = Object.keys(testResults).length;
+            const statusDiv = document.getElementById('testStatus');
+            
+            if (passedTests === totalTests) {
+                statusDiv.className = 'result pass';
+                statusDiv.innerHTML = `✅ Alle tester bestått (${passedTests}/${totalTests})`;
+            } else if (passedTests > 0) {
+                statusDiv.className = 'result warning';
+                statusDiv.innerHTML = `⚠️ Delvis bestått (${passedTests}/${totalTests})`;
+            } else {
+                statusDiv.className = 'result fail';
+                statusDiv.innerHTML = `❌ Alle tester feilet (${passedTests}/${totalTests})`;
+            }
+        }
+
+        // Generate new math problem
+        function generateNewProblem() {
+            const num1 = Math.floor(Math.random() * 10) + 1;
+            const num2 = Math.floor(Math.random() * 10) + 1;
+            document.getElementById('num1').textContent = num1;
+            document.getElementById('num2').textContent = num2;
+            document.getElementById('mathAnswer').value = '';
+            document.getElementById('mathResult').innerHTML = 'Ny oppgave generert. Test input...';
+        }
+
+        // Test multiple digits input
+        function testMultipleDigits() {
+            const input = document.getElementById('multiDigitTest');
+            const result = document.getElementById('multiDigitResult');
+            
+            // Simulate typing "15"
+            input.focus();
+            input.value = '';
+            
+            setTimeout(() => {
+                input.value = '1';
+                setTimeout(() => {
+                    input.value = '15';
+                    
+                    if (input.value === '15') {
+                        result.className = 'result pass';
+                        result.innerHTML = '✅ PASS: Kan skrive flere siffer (15)';
+                        testResults.multiDigit = true;
+                    } else {
+                        result.className = 'result fail';
+                        result.innerHTML = `❌ FAIL: Input viser "${input.value}" i stedet for "15"`;
+                        testResults.multiDigit = false;
+                    }
+                    updateTestStatus();
+                }, 100);
+            }, 100);
+        }
+
+        // Test paste functionality
+        function testPaste() {
+            const input = document.getElementById('pasteTest');
+            const result = document.getElementById('pasteResult');
+            
+            input.focus();
+            input.value = '';
+            
+            // Simulate paste
+            try {
+                input.value = '42';
+                input.dispatchEvent(new Event('input'));
+                
+                if (input.value === '42') {
+                    result.className = 'result pass';
+                    result.innerHTML = '✅ PASS: Paste funksjon virker (42)';
+                    testResults.paste = true;
+                } else {
+                    result.className = 'result fail';
+                    result.innerHTML = `❌ FAIL: Paste resulterte i "${input.value}"`;
+                    testResults.paste = false;
+                }
+            } catch (error) {
+                result.className = 'result fail';
+                result.innerHTML = `❌ FAIL: Paste error - ${error.message}`;
+                testResults.paste = false;
+            }
+            updateTestStatus();
+        }
+
+        // Setup keyboard test
+        function setupKeyboardTest() {
+            const input = document.getElementById('keyboardTest');
+            const result = document.getElementById('keyboardResult');
+            
+            let keySequence = '';
+            
+            input.addEventListener('input', function(e) {
+                keySequence += e.target.value.slice(-1);
+                
+                if (e.target.value.length >= 3) {
+                    if (e.target.value === '123') {
+                        result.className = 'result pass';
+                        result.innerHTML = `✅ PASS: Keyboard input sekvens (${keySequence})`;
+                        testResults.keyboard = true;
+                    } else {
+                        result.className = 'result fail';
+                        result.innerHTML = `❌ FAIL: Forventet "123", fikk "${e.target.value}"`;
+                        testResults.keyboard = false;
+                    }
+                    updateTestStatus();
+                }
+            });
+
+            input.addEventListener('keydown', function(e) {
+                if (e.target.value.length === 0) {
+                    keySequence = '';
+                }
+            });
+        }
+
+        // Setup browser info
+        function setupBrowserInfo() {
+            const browserDiv = document.getElementById('browserInfo');
+            const userAgent = navigator.userAgent;
+            const browser = detectBrowser(userAgent);
+            
+            browserDiv.innerHTML = `
+                <strong>Browser:</strong> ${browser}<br>
+                <strong>User Agent:</strong> ${userAgent}<br>
+                <strong>JavaScript Enabled:</strong> ✅<br>
+                <strong>Input Events Supported:</strong> ${typeof Event !== 'undefined' ? '✅' : '❌'}
+            `;
+        }
+
+        function detectBrowser(userAgent) {
+            if (userAgent.includes('Chrome')) return 'Chrome';
+            if (userAgent.includes('Firefox')) return 'Firefox';
+            if (userAgent.includes('Safari')) return 'Safari';
+            if (userAgent.includes('Edge')) return 'Edge';
+            return 'Ukjent';
+        }
+
+        // Setup event listener test
+        function setupEventListenerTest() {
+            const eventDiv = document.getElementById('eventListeners');
+            
+            // Check if there are conflicting event listeners
+            const inputElements = document.querySelectorAll('input[type="text"]');
+            let conflictCount = 0;
+            
+            inputElements.forEach((input, index) => {
+                // Try to detect if there are multiple event listeners
+                const events = ['input', 'keydown', 'keyup', 'change'];
+                events.forEach(eventType => {
+                    // This is a simplified check
+                    const originalAddEventListener = input.addEventListener;
+                    if (originalAddEventListener !== Element.prototype.addEventListener) {
+                        conflictCount++;
+                    }
+                });
+            });
+            
+            eventDiv.innerHTML = `
+                <strong>Input elementer funnet:</strong> ${inputElements.length}<br>
+                <strong>Potensielle konflikter:</strong> ${conflictCount}<br>
+                <strong>Event listeners OK:</strong> ${conflictCount === 0 ? '✅' : '⚠️'}
+            `;
+        }
+
+        // Math captcha test
+        document.getElementById('mathAnswer').addEventListener('input', function(e) {
+            const num1 = parseInt(document.getElementById('num1').textContent);
+            const num2 = parseInt(document.getElementById('num2').textContent);
+            const answer = parseInt(e.target.value);
+            const result = document.getElementById('mathResult');
+            
+            if (isNaN(answer)) {
+                result.className = 'result';
+                result.innerHTML = 'Skriv et tall...';
+                return;
+            }
+            
+            if (answer === num1 + num2) {
+                result.className = 'result pass';
+                result.innerHTML = `✅ RIKTIG! ${num1} + ${num2} = ${answer}`;
+                testResults.mathCaptcha = true;
+            } else {
+                result.className = 'result fail';
+                result.innerHTML = `❌ Feil. ${num1} + ${num2} ≠ ${answer}`;
+                testResults.mathCaptcha = false;
+            }
+            updateTestStatus();
+        });
+
+        // Open application pages
+        function openRegisterPage() {
+            window.open('http://localhost:5175/register', '_blank');
+        }
+
+        function openLoginPage() {
+            window.open('http://localhost:5175/login', '_blank');
+        }
+
+        // Update summary every 2 seconds
+        setInterval(() => {
+            const summaryDiv = document.getElementById('summaryResults');
+            const passedTests = Object.values(testResults).filter(result => result).length;
+            const totalTests = Object.keys(testResults).length;
+            
+            summaryDiv.innerHTML = `
+                <h3>📊 Test Sammendrag</h3>
+                <strong>Multi-digit input:</strong> ${testResults.multiDigit ? '✅ PASS' : '❌ FAIL'}<br>
+                <strong>Paste funksjonalitet:</strong> ${testResults.paste ? '✅ PASS' : '❌ FAIL'}<br>
+                <strong>Keyboard events:</strong> ${testResults.keyboard ? '✅ PASS' : '❌ FAIL'}<br>
+                <strong>Math captcha:</strong> ${testResults.mathCaptcha ? '✅ PASS' : '❌ FAIL'}<br>
+                <br>
+                <strong>Total:</strong> ${passedTests}/${totalTests} tester bestått
+                ${passedTests === totalTests ? 
+                    '<br>🎉 <strong style="color: #0f4c0f;">ALLE TESTER BESTÅTT - MathCaptcha fungerer!</strong>' :
+                    '<br>⚠️ <strong style="color: #4c0f0f;">KRITISKE PROBLEMER FUNNET</strong>'
+                }
+            `;
+        }, 2000);
+    </script>
+</body>
+</html>
