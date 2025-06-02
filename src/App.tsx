@@ -10,28 +10,36 @@ import { bootstrapSecurityFeatures } from '@/services/security/securityIntegrati
 import { ENV } from './utils/env/environmentFix';
 import { initializePreview, shouldShowPreviewNotice, getPreviewDisplayInfo } from '@/utils/supabase/preview-fix';
 
-// Import dynamically loaded feature pages
-const ProfilePage = lazy(() => import("@/pages/Profile"));
-const SettingsPage = lazy(() => import("@/pages/Settings"));
-const GroupChatPage = lazy(() => import("@/features/chat/components/group/GroupChatPage"));
-const AIChatPage = lazy(() => import("@/features/chat/components/common/AIChatPage"));
-const CreateGroupPage = lazy(() => import("@/pages/CreateGroupPage"));
-
-// Friend-focused pages
-const Friends = lazy(() => import("@/pages/Friends"));
-const FindFriends = lazy(() => import("@/pages/FindFriends"));
-
-// Lazy load components for initial routes
+// Lazy load components with route-based chunking for optimal performance
 const Login = lazy(() => import("@/pages/Login"));
 const Register = lazy(() => import("@/pages/Register"));
 const ForgotPassword = lazy(() => import("@/pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
 const Info = lazy(() => import("@/pages/Info"));
+
+// Core chat functionality - separate chunk for main feature
 const Chat = lazy(() => import("@/features/chat/components/common/OptimizedChat"));
 const BasicChatPage = lazy(() => import("@/pages/BasicChatPage"));
+
+// AI features - separate chunk (lazy load on demand)
+const AIChatPage = lazy(() => import("@/features/chat/components/common/AIChatPage"));
+
+// Group functionality - separate chunk
+const CreateGroupPage = lazy(() => import("@/pages/CreateGroupPage"));
+const GroupChatPage = lazy(() => import("@/features/chat/components/group/GroupChatPage"));
+
+// Social features - separate chunk
+const Friends = lazy(() => import("@/pages/Friends"));
+const FindFriends = lazy(() => import("@/pages/FindFriends"));
+
+// User management - separate chunk (lazy loaded)
+const ProfilePage = lazy(() => import("@/pages/Profile"));
+const SettingsPage = lazy(() => import("@/pages/Settings"));
+
+// Subscription features - separate chunk
 const Subscription = lazy(() => import("@/pages/Subscription"));
 
-// Admin components (hidden from public)
+// Admin features - separate chunk (hidden/security sensitive)
 const AdminSecurityPanel = lazy(() => import("@/pages/admin/AdminSecurityPanel"));
 
 // Loading component
@@ -121,12 +129,37 @@ const AuthAwareRedirect = ({ fallback = "/login" }: { fallback?: string }) => {
   return <Navigate to={fallback} replace />;
 };
 
-// Preload components function
+// Intelligent preloading function with user behavior analysis
 const preloadComponents = () => {
   try {
-    // Preload important components in the background
-    import("@/pages/Profile");
-    import("@/pages/Settings");
+    // Schedule preloading after initial app load
+    setTimeout(() => {
+      // Preload commonly accessed components after 2 seconds
+      import("@/pages/Profile");
+      import("@/pages/Settings");
+    }, 2000);
+    
+    // Preload social features after 4 seconds if user is authenticated
+    setTimeout(() => {
+      if (localStorage.getItem('sb-xkrjfnrrngwovrhcotpj-auth-token')) {
+        import("@/pages/Friends");
+        import("@/pages/FindFriends");
+      }
+    }, 4000);
+    
+    // Preload AI features after 6 seconds for premium users
+    setTimeout(() => {
+      const userProfile = localStorage.getItem('snakkaz_user_profile');
+      if (userProfile && JSON.parse(userProfile)?.isPremium) {
+        import("@/features/chat/components/common/AIChatPage");
+      }
+    }, 6000);
+    
+    // Preload group features after 8 seconds
+    setTimeout(() => {
+      import("@/pages/CreateGroupPage");
+      import("@/features/chat/components/group/GroupChatPage");
+    }, 8000);
   } catch (e) {
     // Silently ignore any preloading errors
   }

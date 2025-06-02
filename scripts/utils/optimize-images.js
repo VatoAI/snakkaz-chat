@@ -1,9 +1,10 @@
 // Image Optimization Script
-const fs = require('fs');
-const path = require('path');
-const sharp = require('sharp');
-const imagemin = require('imagemin');
-const imageminWebp = require('imagemin-webp');
+import fs from 'fs';
+import path from 'path';
+// Note: These packages may need installation: npm install sharp imagemin imagemin-webp
+// const sharp = require('sharp');
+// const imagemin = require('imagemin');
+// const imageminWebp = require('imagemin-webp');
 
 const IMAGE_DIRS = ['src/assets', 'public/images', 'src/components/images'];
 const EXTENSIONS = ['.jpg', '.jpeg', '.png'];
