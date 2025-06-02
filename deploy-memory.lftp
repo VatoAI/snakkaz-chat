@@ -1,0 +1,55 @@
+# Deploy Snakkaz Memory Integration
+open -u SnakkaZ@snakkaz.com,Snakkaz2025! premium123.web-hosting.com
+
+# SSL/TLS settings
+set ssl:verify-certificate no
+set ftp:ssl-allow yes
+set ftp:ssl-protect-data yes
+set ftp:passive-mode yes
+
+# Network settings
+set net:timeout 60
+set net:max-retries 3
+
+# Go to public_html
+cd public_html
+
+# Create backup directory
+mkdir backup-memory-deploy 2>/dev/null || true
+
+# Upload dist files
+mirror -R dist/ ./ --delete --parallel=2 --verbose
+
+# Upload .htaccess for SPA
+put -O ./ - <<EOF
+# Snakkaz Chat SPA Configuration
+RewriteEngine On
+
+# MIME Types
+AddType application/javascript .js .mjs
+AddType text/css .css
+AddType application/json .json
+AddType image/svg+xml .svg
+
+# Security Headers
+Header always set X-Content-Type-Options nosniff
+Header always set X-Frame-Options DENY
+
+# SPA Routing
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} !\\.(css|js|json|png|jpg|jpeg|gif|ico|svg|woff|woff2)$ [NC]
+RewriteRule . /index.html [L]
+
+# Cache Control
+<FilesMatch "\\.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2)$">
+    ExpiresActive On
+    ExpiresDefault "access plus 1 month"
+</FilesMatch>
+
+<FilesMatch "\\.html$">
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+</FilesMatch>
+EOF
+
+bye

@@ -1,0 +1,75 @@
+# Snakkaz Chat SPA Routing Configuration
+# Comprehensive fix for React useState error and black screen
+
+# Enable mod_rewrite
+RewriteEngine On
+
+# MIME Type fixes for modern web apps (CRITICAL for React)
+AddType application/javascript .js .mjs .jsx
+AddType text/css .css
+AddType application/json .json
+AddType image/svg+xml .svg
+AddType font/woff2 .woff2
+AddType font/woff .woff
+AddType font/ttf .ttf
+AddType font/eot .eot
+
+# Security headers
+Header always set X-Content-Type-Options nosniff
+Header always set X-Frame-Options DENY
+Header always set X-XSS-Protection "1; mode=block"
+Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+# CORS headers for API calls (fixes useState issues)
+Header always set Access-Control-Allow-Origin "*"
+Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+Header always set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
+
+# Handle preflight requests
+RewriteCond %{REQUEST_METHOD} OPTIONS
+RewriteRule ^(.*)$ $1 [R=200,L]
+
+# SPA Routing - send all non-file requests to index.html
+# This is CRITICAL for React Router to work properly
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} !^/api/
+RewriteCond %{REQUEST_URI} !\.(css|js|json|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|map)$ [NC]
+RewriteRule ^(.*)$ /index.html [L,QSA]
+
+# Cache static assets (but not too aggressively during development)
+<FilesMatch "\.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$">
+    ExpiresActive On
+    ExpiresDefault "access plus 1 week"
+    Header set Cache-Control "public, max-age=604800"
+</FilesMatch>
+
+# No cache for HTML files (ensures latest version loads)
+<FilesMatch "\.html$">
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+    Header set Pragma "no-cache"
+    Header set Expires "0"
+</FilesMatch>
+
+# Prevent access to sensitive files
+<FilesMatch "\.(env|log|md)$">
+    Require all denied
+</FilesMatch>
+
+# Enable compression for better performance
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/plain
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/xml
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE application/xml
+    AddOutputFilterByType DEFLATE application/xhtml+xml
+    AddOutputFilterByType DEFLATE application/rss+xml
+    AddOutputFilterByType DEFLATE application/javascript
+    AddOutputFilterByType DEFLATE application/x-javascript
+    AddOutputFilterByType DEFLATE application/json
+</IfModule>
+
+# Error handling
+ErrorDocument 404 /index.html
+ErrorDocument 403 /index.html
