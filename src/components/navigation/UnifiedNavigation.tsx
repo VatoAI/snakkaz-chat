@@ -17,7 +17,8 @@ import {
   MessageCircle,
   Heart,
   Search,
-  Mail
+  Mail,
+  Brain
 } from 'lucide-react';
 
 type NavigationVariant = 'horizontal' | 'vertical' | 'bottom' | 'mobile';
@@ -94,6 +95,13 @@ export const UnifiedNavigation: React.FC<UnifiedNavigationProps> = ({
       label: 'Mail',
       icon: <Mail className="h-5 w-5" />,
       authRequired: true
+    },
+    {
+      path: '/memory',
+      label: 'Memory',
+      icon: <Brain className="h-5 w-5" />,
+      authRequired: true,
+      hideOnMobile: true
     },
     {
       path: '/find-friends',

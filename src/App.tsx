@@ -39,6 +39,7 @@ const SettingsPage = lazy(() => import("@/pages/Settings"));
 const Dashboard = lazy(() => import("@/pages/Dashboard"));
 const Mail = lazy(() => import("@/pages/Mail"));
 const MCPDashboard = lazy(() => import("@/pages/MCPDashboard"));
+const MemoryDashboard = lazy(() => import("@/pages/MemoryDashboard"));
 
 // Subscription features - separate chunk
 const Subscription = lazy(() => import("@/pages/Subscription"));
@@ -413,6 +414,14 @@ export default function App() {
                 element={
                   <RequireAuth>
                     <Subscription />
+                  </RequireAuth>
+                } 
+              />
+              <Route 
+                path="/memory" 
+                element={
+                  <RequireAuth>
+                    <MemoryDashboard />
                   </RequireAuth>
                 } 
               />

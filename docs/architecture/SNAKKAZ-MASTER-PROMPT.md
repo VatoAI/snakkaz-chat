@@ -4,8 +4,8 @@
 - **Appnavn**: Snakkaz Chat
 - **Type**: E2EE (End-to-End Encrypted) Chat-applikasjon
 - **Domene**: www.snakkaz.com
-- **Hovedteknologier**: React, TypeScript, Supabase, Cloudflare
-- **Sikkerhet**: E2EE, P2P-funksjonalitet, Cloudflare-sikkerhet
+- **Hovedteknologier**: React, TypeScript, Supabase, NameCheap - siteLock
+- **Sikkerhet**: E2EE, P2P-funksjonalitet, SiteLock
 - **Startdato**: Mai 2025
 - **Status**: Under utvikling
 
@@ -43,24 +43,104 @@ Alle endringer skal gjøres direkte på main-branch for korrekt deployment til w
 
 ## KOMPONENTER OG STRUKTUR
 
-### Frontend Arkitektur
-- React-basert SPA med TypeScript
-- Shadcn UI-komponenter for design
-- Bruker kontekst-API for tilstandshåndtering (ChatContext.tsx)
-- Komponent-hierarki:
-  * Hovedapp → AuthContainer → Chat → [GlobalChatContainer | PrivateChatDetailView | GroupChatView]
-  * ChatInterface → [ChatMessageList, PinnedMessages] → [ChatMessage]
-- Vite som build-system og utviklingsserver
+## KOMPONENTER OG ARKITEKTUR
 
-### Backend og Databaser
-- Supabase for backend (authentication, database, storage)
-- Realtime-funksjonalitet for chatmeldinger via Supabase subscriptions
-- Database-tabeller for meldinger med pin-støtte:
-  * `global_chat_messages`: Global chat med pinned, pinned_by, pinned_at felt
-  * `private_chat_messages`: Privat chat med pinned, pinned_by, pinned_at felt
-  * `group_chat_messages`: Gruppechat med pinned, pinned_by, pinned_at felt
-- Cloudflare for edge-caching, sikkerhet, og CDN
-- Cloudflare DNS-oppsett med nameservers kyle.ns.cloudflare.com og vita.ns.cloudflare.com
+### Fullstendig System Arkitektur (Juni 2025)
+
+#### Frontend Arkitektur
+- **React 18** med TypeScript for type-sikkerhet
+- **Vite** som build-system og utviklingsserver
+- **Shadcn UI** komponenter for konsistent design
+- **React Router v6** med future flags for v7-kompatibilitet
+- **Tailwind CSS** for styling med cyberpunk tema
+- **Context API** for tilstandshåndtering (AuthContext, ChatContext)
+
+#### Backend og Databaser
+- **Supabase** (PostgreSQL) for hoveddatabase med Row Level Security (RLS)
+- **pgvector extension** for vektorembeddings i memory system
+- **Redis** for caching og session-håndtering
+- **Realtime subscriptions** for live chat-funksjonalitet
+- **Storage buckets** for fil- og medieopplasting
+
+#### AI og Memory System
+- **Python MCP Server** (Model Context Protocol) for memory-håndtering
+- **OpenAI/Anthropic API** integrasjon for embeddings og AI-responses
+- **TypeScript Memory Service** for frontend-integrasjon
+- **React Memory Dashboard** for admin-oversight
+- **7 memory types** med intelligente TTL-strategier
+
+#### Chat System Komponenter
+- **Global Chat**: Åpen chat for alle brukere med moderasjon
+- **Private Chat**: End-to-end kryptert direktemeldinger
+- **Group Chat**: Grupper med rollebasert tilgangskontroll
+- **Pin System**: Mulighet til å feste viktige meldinger
+- **Custom Emoji System**: Opplasting og bruk av egendefinerte emojier
+- **Message Reactions**: Emoji-reaksjoner på meldinger
+
+#### Sikkerhet og Kryptering
+- **End-to-End Encryption (E2EE)** med AES-GCM kryptering
+- **PBKDF2** nøkkelavledning for sikker nøkkelgenerering
+- **Content Security Policy (CSP)** for XSS-beskyttelse
+- **Rate limiting** og brute-force beskyttelse
+- **Session timeout** (10 minutter standard)
+- **Cloudflare WAF** og DDoS-beskyttelse
+
+#### Deployment og Infrastruktur
+- **GitHub Actions** for automatisert CI/CD
+- **cPanel** deployment med multi-method fallback
+- **Cloudflare** for DNS, caching, og sikkerhet
+- **LFTP** for robust FTP-deployment
+- **Monitoring scripts** for deployment-verifisering
+
+### Komponent-hierarki
+```
+App.tsx
+├── AuthContainer
+│   ├── Layout
+│   │   ├── UnifiedNavigation (med Memory nav-item)
+│   │   └── ChatInterface
+│   │       ├── GlobalChatContainer
+│   │       │   ├── PinnedMessages
+│   │       │   ├── ChatMessageList
+│   │       │   └── MessageReactions
+│   │       ├── PrivateChatDetailView
+│   │       │   ├── PinnedMessages
+│   │       │   └── E2EE Integration
+│   │       └── GroupChatView
+│   │           ├── PinnedMessages
+│   │           └── Role-based Access
+│   └── MemoryDashboard (admin)
+│       ├── MemorySearch
+│       ├── MemoryAnalytics
+│       └── AdminOverview
+```
+
+### Database Schema Oversikt
+```sql
+-- Core Chat Tables
+global_chat_messages (id, content, sender_id, pinned, pinned_by, pinned_at)
+private_chat_messages (id, content, sender_id, recipient_id, encrypted_content)
+group_chat_messages (id, content, sender_id, group_id, pinned)
+
+-- User Management
+users (id, username, email, role, premium_status)
+user_groups (id, name, description, security_level)
+group_members (group_id, user_id, role, permissions)
+
+-- Memory System
+memories (id, user_id, memory_type, key, value, embedding, metadata)
+memory_collections (id, user_id, name, description)
+memory_relationships (id, memory_id_1, memory_id_2, relationship_type)
+
+-- Emoji System
+custom_emojis (id, user_id, name, file_url, category)
+message_reactions (id, message_id, user_id, emoji_code)
+
+-- System Tables
+api_keys (id, key_hash, permissions, expires_at)
+sessions (id, user_id, token_hash, expires_at)
+audit_logs (id, user_id, action, metadata, timestamp)
+```
 
 ### Prosjektstruktur og Filorganisering
 Det er viktig å forstå prosjektets filstruktur for effektiv utvikling:
@@ -765,7 +845,76 @@ Snakkaz Chat har nå implementert et komplett system for håndtering av egendefi
 - Chat system fungerer normalt
 - Subscription features uten 406 errors
 
-**Sist oppdatert: 26. mai 2025, 14:45 UTC - Custom emoji system implementert, React Router warnings fixed, prosjektstruktur revidert**
+**Sist oppdatert: 2. juni 2025, 20:30 UTC - Memory System implementert, AI agents med full oversight, MCP server infrastruktur**
+
+---
+
+## MEMORY SYSTEM - AI AGENTS MED FULL OVERSIGHT
+
+### Komplett Memory System Arkitektur ✅
+
+Snakkaz Chat har nå implementert et avansert minnesystem for AI-agenter med full admin-oversikt. Dette systemet gir AI-agenter mulighet til å huske brukerpreferanser, samtalekontext, og lære fra interaksjoner.
+
+#### Python MCP Memory Server
+- **Lokasjon**: `/workspaces/snakkaz-chat/src/services/mcp/memoryServer.py`
+- **Funksjonalitet**: PostgreSQL med pgvector for vektorembeddings, Redis caching, OpenAI/Anthropic API-integrasjon
+- **Memory typer**: 7 forskjellige typer med intelligente TTL-strategier
+- **Admin oversight**: Komplett overvåkning og statistikk for administrators
+
+#### TypeScript Integration Service
+- **Lokasjon**: `/workspaces/snakkaz-chat/src/services/ai/memoryService.ts`
+- **Funksjonalitet**: RESTful API-integrasjon med Python MCP-server
+- **Automatisk kontekst**: Lagring av samtalekontext og personalisering
+- **Learning loops**: Læring fra brukerinteraksjoner med feedback
+
+#### React Memory Dashboard
+- **Lokasjon**: `/workspaces/snakkaz-chat/src/pages/MemoryDashboard.tsx`
+- **Funksjonalitet**: Komplett admin-grensesnitt for memory-administrasjon
+- **Features**: Søk, filter, CRUD-operasjoner, analytics, premium brukeradmin
+- **Navigation**: Integrert i hovednavigasjon med Brain-ikon
+
+#### Navigation Integration ✅
+- **App.tsx**: Lazy loading av MemoryDashboard komponent
+- **UnifiedNavigation.tsx**: Memory-navigasjonselement med autentiseringskrav
+- **Routing**: Beskyttet rute på `/memory` som krever pålogging
+
+#### Database Schema
+```sql
+-- Memory Tables (PostgreSQL med pgvector)
+CREATE TABLE memories (
+    id SERIAL PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    memory_type TEXT NOT NULL,
+    key TEXT NOT NULL,
+    value TEXT NOT NULL,
+    confidence FLOAT DEFAULT 1.0,
+    importance FLOAT DEFAULT 1.0,
+    embedding vector(1536),
+    access_count INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW(),
+    last_accessed TIMESTAMP DEFAULT NOW(),
+    expires_at TIMESTAMP,
+    context TEXT,
+    source TEXT,
+    metadata JSONB
+);
+```
+
+#### Memory Types og TTL Strategies
+1. **user_preference** (180 dager) - Brukerpreferanser og innstillinger
+2. **conversation_context** (30 dager) - Samtalekontext og historie
+3. **learned_fact** (365 dager) - Lærte fakta om brukeren
+4. **emotional_state** (7 dager) - Emosjonell tilstand og stemning
+5. **task_context** (14 dager) - Oppgavekontext og fremgang
+6. **user_relationship** (730 dager) - Relasjoner og sosiale forbindelser
+7. **interaction_pattern** (90 dager) - Interaksjonsmønstre og vaner
+
+#### AI Chat Integration
+- **Automatic Context**: Memory-kontext hentes automatisk før AI-responses
+- **Learning**: AI lærer fra alle brukerinteraksjoner og lagrer viktig informasjon
+- **Personalization**: Responses tilpasses basert på lagret memory-kontext
+- **Feedback Loops**: Kontinuerlig forbedring basert på brukerinteraksjoner
 
 ---
 

@@ -1,0 +1,6 @@
+mcp
+asyncpg
+pgvector
+openai
+redis
+numpy

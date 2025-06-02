@@ -27,6 +27,7 @@
     "dev:with-supabase": "npm run supabase:start && npm run dev"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.52.0",
     "@hookform/resolvers": "^3.9.0",
     "@privacyresearch/libsignal-protocol-typescript": "^0.0.16",
     "@radix-ui/react-accordion": "^1.2.0",

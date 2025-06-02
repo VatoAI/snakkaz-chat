@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
-  Mail, 
+  Mail as MailIcon, 
   Send, 
   Inbox, 
   Edit, 
@@ -151,7 +151,7 @@ const Mail = () => {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
-            <Mail className="h-6 w-6 text-cybergold-400" />
+            <MailIcon className="h-6 w-6 text-cybergold-400" />
             <h1 className="text-2xl font-bold text-cybergold-400">Snakkaz Mail</h1>
             {isPremium && (
               <Badge className="bg-gradient-to-r from-cybergold-600 to-cybergold-400 text-cyberdark-900">
@@ -237,7 +237,7 @@ const Mail = () => {
                 <div className="max-h-96 overflow-y-auto">
                   {filteredMessages.length === 0 ? (
                     <div className="p-6 text-center text-cybergold-600">
-                      <Mail className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                      <MailIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
                       <p>Ingen meldinger i denne mappen</p>
                     </div>
                   ) : (
@@ -442,7 +442,7 @@ const Mail = () => {
             ) : (
               <Card className="bg-cyberdark-900 border-cyberdark-700">
                 <CardContent className="p-12 text-center">
-                  <Mail className="h-16 w-16 mx-auto mb-4 text-cybergold-600 opacity-50" />
+                  <MailIcon className="h-16 w-16 mx-auto mb-4 text-cybergold-600 opacity-50" />
                   <h3 className="text-xl font-medium text-cybergold-400 mb-2">
                     Velg en melding
                   </h3>
