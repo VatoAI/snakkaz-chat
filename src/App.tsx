@@ -319,22 +319,6 @@ export default function App() {
                 } 
               />
               <Route 
-                path="/messages" 
-                element={
-                  <RequireAuth>
-                    <BasicChatPage />
-                  </RequireAuth>
-                } 
-              />
-              <Route 
-                path="/contacts" 
-                element={
-                  <RequireAuth>
-                    <Friends />
-                  </RequireAuth>
-                } 
-              />
-              <Route 
                 path="/friends" 
                 element={
                   <RequireAuth>

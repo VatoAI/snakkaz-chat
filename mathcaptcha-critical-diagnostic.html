@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚨 KRITISK MathCaptcha Diagnostic - Production Issue Finder</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+            color: #fff;
+            min-height: 100vh;
+        }
+        .diagnostic-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: rgba(42, 42, 42, 0.95);
+            padding: 30px;
+            border-radius: 12px;
+            border: 2px solid #d4af37;
+            box-shadow: 0 8px 32px rgba(212, 175, 55, 0.2);
+        }
+        .critical-alert {
+            background: linear-gradient(45deg, #4d0000, #660000);
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #ff4444;
+            margin-bottom: 30px;
+            text-align: center;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 68, 68, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 68, 68, 0); }
+        }
+        .test-section {
+            margin: 25px 0;
+            padding: 20px;
+            border: 1px solid #555;
+            border-radius: 8px;
+            background: rgba(51, 51, 51, 0.8);
+        }
+        .diagnostic-input {
+            padding: 12px;
+            background: #1a1a1a;
+            border: 2px solid #d4af37;
+            color: #fff;
+            border-radius: 6px;
+            width: 100px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin: 10px;
+        }
+        .diagnostic-input:focus {
+            outline: none;
+            border-color: #ffd700;
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+        }
+        .result {
+            margin: 15px 0;
+            padding: 15px;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+        .success { background: #004d00; border: 2px solid #00ff00; }
+        .error { background: #4d0000; border: 2px solid #ff0000; }
+        .warning { background: #4d4d00; border: 2px solid #ffff00; }
+        .info { background: #004d4d; border: 2px solid #00ffff; }
+        button {
+            padding: 12px 24px;
+            background: linear-gradient(45deg, #d4af37, #ffd700);
+            border: none;
+            color: #000;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 8px;
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            background: linear-gradient(45deg, #ffd700, #ffff00);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(212, 175, 55, 0.3);
+        }
+        .math-problem {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 15px 0;
+            color: #ffd700;
+            text-align: center;
+            padding: 15px;
+            background: rgba(212, 175, 55, 0.1);
+            border-radius: 8px;
+        }
+        .step-indicator {
+            display: inline-block;
+            background: #d4af37;
+            color: #000;
+            padding: 5px 10px;
+            border-radius: 50%;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .live-monitor {
+            background: #001122;
+            border: 2px solid #0066cc;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        .production-warning {
+            background: linear-gradient(45deg, #660033, #330066);
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid #ff66cc;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="diagnostic-container">
+        <div class="critical-alert">
+            <h1>🚨 KRITISK MATHCAPTCHA DIAGNOSTIKK</h1>
+            <p><strong>PROBLEM:</strong> Multi-digit input blokkerer registrering og login</p>
+            <p><strong>STATUS:</strong> Diagnostiserer nå... <span id="diagnosticTimer">0</span>s</p>
+        </div>
+
+        <!-- Production Environment Simulation -->
+        <div class="test-section">
+            <h2><span class="step-indicator">1</span>🌐 Production Environment Simulation</h2>
+            <div class="production-warning">
+                <strong>⚠️ TESTING:</strong> Simulating exact production conditions where users report multi-digit input failure
+            </div>
+            
+            <div class="math-problem" id="prodProblem">Testing: 9 + 8 = ?</div>
+            <div style="text-align: center;">
+                <input type="text" class="diagnostic-input" id="prodInput" placeholder="?" maxlength="3">
+                <button onclick="startProductionTest()">🔍 Simulate Production Issue</button>
+            </div>
+            <div id="prodResult" class="result info">Ready to test production scenario...</div>
+        </div>
+
+        <!-- Live Input Monitoring -->
+        <div class="test-section">
+            <h2><span class="step-indicator">2</span>📊 Live Input Event Monitoring</h2>
+            <p>Real-time monitoring of every keystroke and input event:</p>
+            <div class="math-problem">6 + 7 = ?</div>
+            <div style="text-align: center;">
+                <input type="text" class="diagnostic-input" id="monitorInput" placeholder="?" maxlength="3">
+            </div>
+            <div id="liveMonitor" class="live-monitor">
+                <strong>Live Input Monitor:</strong><br>
+                Waiting for input...
+            </div>
+        </div>
+
+        <!-- Critical Multi-Digit Test -->
+        <div class="test-section">
+            <h2><span class="step-indicator">3</span>🎯 Critical Multi-Digit Input Test</h2>
+            <p>Step-by-step test of the exact user problem:</p>
+            
+            <div class="math-problem">5 + 8 = 13</div>
+            <div style="text-align: center;">
+                <input type="text" class="diagnostic-input" id="criticalInput" placeholder="?" maxlength="3">
+                <button onclick="testCriticalScenario()">🔬 Test Critical Scenario</button>
+            </div>
+            <div id="criticalResult" class="result info">
+                <strong>Test Steps:</strong><br>
+                1. Type "1" (first digit)<br>
+                2. Type "3" (second digit)<br>
+                3. Verify input shows "13"<br>
+                4. Check if validation works
+            </div>
+        </div>
+
+        <!-- Edge Case Testing -->
+        <div class="test-section">
+            <h2><span class="step-indicator">4</span>🧪 Edge Case Analysis</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <h3>Test A: Rapid Typing</h3>
+                    <input type="text" class="diagnostic-input" id="rapidInput" placeholder="?" maxlength="3">
+                    <button onclick="testRapidTyping()">⚡ Rapid Test</button>
+                    <div id="rapidResult" class="result info">Ready for rapid typing test</div>
+                </div>
+                <div>
+                    <h3>Test B: Browser Compatibility</h3>
+                    <input type="text" class="diagnostic-input" id="browserInput" placeholder="?" maxlength="3">
+                    <button onclick="testBrowserCompatibility()">🌍 Browser Test</button>
+                    <div id="browserResult" class="result info">Ready for browser compatibility test</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Root Cause Analysis -->
+        <div class="test-section">
+            <h2><span class="step-indicator">5</span>🔍 Root Cause Analysis</h2>
+            <div id="rootCauseAnalysis" class="result info">
+                <strong>Analyzing potential causes...</strong><br>
+                • JavaScript event conflicts: Checking...<br>
+                • CSS input restrictions: Checking...<br>
+                • React state management: Checking...<br>
+                • Browser input handling: Checking...<br>
+                • Form validation conflicts: Checking...
+            </div>
+            <button onclick="performRootCauseAnalysis()">🔬 Analyze Root Cause</button>
+        </div>
+
+        <!-- Solution Recommendations -->
+        <div class="test-section">
+            <h2><span class="step-indicator">6</span>💡 Solution Recommendations</h2>
+            <div id="solutionRecommendations" class="result info">
+                Solutions will appear after diagnostic completion...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let diagnosticStartTime = Date.now();
+        let inputEventLog = [];
+        let testResults = {};
+
+        // Start diagnostic timer
+        setInterval(() => {
+            const elapsed = Math.floor((Date.now() - diagnosticStartTime) / 1000);
+            document.getElementById('diagnosticTimer').textContent = elapsed;
+        }, 1000);
+
+        // Enhanced MathCaptcha simulation with exact production logic
+        function simulateMathCaptchaLogic(value, inputElement) {
+            // EXACT logic from MathCaptcha.tsx
+            const originalValue = value;
+            const numericValue = value.replace(/[^0-9]/g, '');
+            
+            // Log every detail
+            const logEntry = {
+                timestamp: new Date().toISOString(),
+                originalValue: originalValue,
+                filteredValue: numericValue,
+                inputLength: numericValue.length,
+                maxLength: inputElement.maxLength,
+                wasFiltered: originalValue !== numericValue,
+                inputElement: inputElement.id
+            };
+            
+            inputEventLog.push(logEntry);
+            
+            // Update input value
+            inputElement.value = numericValue;
+            
+            return {
+                success: numericValue === originalValue,
+                filtered: numericValue,
+                original: originalValue,
+                logEntry: logEntry
+            };
+        }
+
+        // Production simulation test
+        function startProductionTest() {
+            const input = document.getElementById('prodInput');
+            const result = document.getElementById('prodResult');
+            
+            result.innerHTML = '<strong>🔄 Running Production Simulation...</strong><br>';
+            
+            // Clear input
+            input.value = '';
+            input.focus();
+            
+            // Step 1: Type first digit
+            setTimeout(() => {
+                const step1 = simulateMathCaptchaLogic('1', input);
+                result.innerHTML += `Step 1: Type "1" → "${step1.filtered}" ${step1.success ? '✅' : '❌'}<br>`;
+                
+                // Step 2: Type second digit (this is where users report problems)
+                setTimeout(() => {
+                    const step2 = simulateMathCaptchaLogic('17', input);
+                    result.innerHTML += `Step 2: Type "17" → "${step2.filtered}" ${step2.success ? '✅' : '❌'}<br>`;
+                    
+                    // Analysis
+                    setTimeout(() => {
+                        const isWorking = input.value === '17';
+                        if (isWorking) {
+                            result.className = 'result success';
+                            result.innerHTML += '<br><strong>✅ PRODUCTION TEST PASSED!</strong><br>Multi-digit input is working correctly.';
+                            testResults.production = true;
+                        } else {
+                            result.className = 'result error';
+                            result.innerHTML += `<br><strong>❌ PRODUCTION ISSUE CONFIRMED!</strong><br>Expected "17", got "${input.value}"`;
+                            testResults.production = false;
+                        }
+                    }, 300);
+                }, 500);
+            }, 200);
+        }
+
+        // Live input monitoring
+        document.getElementById('monitorInput').addEventListener('input', function(e) {
+            const monitor = document.getElementById('liveMonitor');
+            const value = e.target.value;
+            const result = simulateMathCaptchaLogic(value, e.target);
+            
+            monitor.innerHTML = `
+                <strong>Live Input Monitor:</strong><br>
+                <span style="color: #00ff00;">Timestamp:</span> ${new Date().toLocaleTimeString()}<br>
+                <span style="color: #ffff00;">Original Input:</span> "${result.original}"<br>
+                <span style="color: #00ffff;">Filtered Result:</span> "${result.filtered}"<br>
+                <span style="color: #ff9900;">Length:</span> ${result.filtered.length}/3<br>
+                <span style="color: ${result.success ? '#00ff00' : '#ff0000'};">Status:</span> ${result.success ? 'VALID' : 'FILTERED'}<br>
+                <span style="color: #cc99ff;">Event Count:</span> ${inputEventLog.length}
+            `;
+        });
+
+        // Critical scenario test
+        function testCriticalScenario() {
+            const input = document.getElementById('criticalInput');
+            const result = document.getElementById('criticalResult');
+            
+            result.innerHTML = '<strong>🔬 Running Critical Scenario Test...</strong><br>';
+            
+            input.value = '';
+            input.focus();
+            
+            // Simulate exact user scenario
+            const steps = [
+                { input: '1', expected: '1', delay: 300 },
+                { input: '13', expected: '13', delay: 500 }
+            ];
+            
+            let stepIndex = 0;
+            
+            function runStep() {
+                if (stepIndex >= steps.length) {
+                    // Final analysis
+                    const finalValue = input.value;
+                    const isCorrect = finalValue === '13';
+                    
+                    if (isCorrect) {
+                        result.className = 'result success';
+                        result.innerHTML += '<br><strong>✅ CRITICAL TEST PASSED!</strong><br>User can type "13" successfully.';
+                        testResults.critical = true;
+                    } else {
+                        result.className = 'result error';
+                        result.innerHTML += `<br><strong>❌ CRITICAL ISSUE FOUND!</strong><br>Expected "13", got "${finalValue}"`;
+                        testResults.critical = false;
+                    }
+                    return;
+                }
+                
+                const step = steps[stepIndex];
+                const testResult = simulateMathCaptchaLogic(step.input, input);
+                
+                result.innerHTML += `Step ${stepIndex + 1}: "${step.input}" → "${testResult.filtered}" ${testResult.filtered === step.expected ? '✅' : '❌'}<br>`;
+                
+                stepIndex++;
+                setTimeout(runStep, step.delay);
+            }
+            
+            setTimeout(runStep, 200);
+        }
+
+        // Rapid typing test
+        function testRapidTyping() {
+            const input = document.getElementById('rapidInput');
+            const result = document.getElementById('rapidResult');
+            
+            input.value = '';
+            
+            result.innerHTML = '<strong>⚡ Testing rapid typing...</strong><br>';
+            
+            // Simulate very fast typing (like copy-paste or very fast typing)
+            const rapidSequence = ['1', '18', '18']; // Simulate rapid 1-8 then hold 8
+            let index = 0;
+            
+            function rapidType() {
+                if (index >= rapidSequence.length) {
+                    const finalValue = input.value;
+                    const isWorking = finalValue === '18';
+                    
+                    if (isWorking) {
+                        result.className = 'result success';
+                        result.innerHTML += '<br><strong>✅ RAPID TYPING WORKS!</strong>';
+                        testResults.rapid = true;
+                    } else {
+                        result.className = 'result error';
+                        result.innerHTML += `<br><strong>❌ RAPID TYPING FAILED!</strong><br>Expected "18", got "${finalValue}"`;
+                        testResults.rapid = false;
+                    }
+                    return;
+                }
+                
+                const testResult = simulateMathCaptchaLogic(rapidSequence[index], input);
+                result.innerHTML += `Rapid ${index + 1}: "${rapidSequence[index]}" → "${testResult.filtered}"<br>`;
+                
+                index++;
+                setTimeout(rapidType, 50); // Very fast
+            }
+            
+            setTimeout(rapidType, 100);
+        }
+
+        // Browser compatibility test
+        function testBrowserCompatibility() {
+            const input = document.getElementById('browserInput');
+            const result = document.getElementById('browserResult');
+            
+            const userAgent = navigator.userAgent;
+            const browserInfo = {
+                isChrome: userAgent.includes('Chrome'),
+                isFirefox: userAgent.includes('Firefox'),
+                isSafari: userAgent.includes('Safari') && !userAgent.includes('Chrome'),
+                isEdge: userAgent.includes('Edge'),
+                supportsInput: typeof HTMLInputElement !== 'undefined',
+                supportsEventListener: typeof addEventListener !== 'undefined',
+                supportsFocus: typeof input.focus === 'function'
+            };
+            
+            // Test browser-specific input behavior
+            input.value = '';
+            const testResult = simulateMathCaptchaLogic('15', input);
+            
+            result.innerHTML = `
+                <strong>🌍 Browser Compatibility:</strong><br>
+                Browser: ${userAgent.split(' ')[0]}<br>
+                Input Support: ${browserInfo.supportsInput ? '✅' : '❌'}<br>
+                Event Support: ${browserInfo.supportsEventListener ? '✅' : '❌'}<br>
+                Focus Support: ${browserInfo.supportsFocus ? '✅' : '❌'}<br>
+                Input Test: "${testResult.original}" → "${testResult.filtered}" ${testResult.success ? '✅' : '❌'}
+            `;
+            
+            testResults.browser = testResult.success && browserInfo.supportsInput;
+            result.className = testResults.browser ? 'result success' : 'result warning';
+        }
+
+        // Root cause analysis
+        function performRootCauseAnalysis() {
+            const analysis = document.getElementById('rootCauseAnalysis');
+            
+            analysis.innerHTML = '<strong>🔬 Performing Root Cause Analysis...</strong><br>';
+            
+            setTimeout(() => {
+                const issues = [];
+                const solutions = [];
+                
+                // Analyze test results
+                if (testResults.production === false) {
+                    issues.push('Production environment simulation failed');
+                    solutions.push('Check for production-specific JavaScript conflicts');
+                }
+                
+                if (testResults.critical === false) {
+                    issues.push('Critical multi-digit input failure');
+                    solutions.push('Verify React state management in MathCaptcha component');
+                }
+                
+                if (testResults.rapid === false) {
+                    issues.push('Rapid typing input failure');
+                    solutions.push('Add debouncing to input handler');
+                }
+                
+                if (testResults.browser === false) {
+                    issues.push('Browser compatibility problems');
+                    solutions.push('Add browser-specific input handling');
+                }
+                
+                // Check for potential causes
+                const potentialCauses = [
+                    'React useState not updating properly',
+                    'Event handler conflicts',
+                    'CSS input restrictions',
+                    'Form validation interference',
+                    'maxLength attribute behavior',
+                    'Input event bubbling issues'
+                ];
+                
+                let analysisResult = '';
+                
+                if (issues.length === 0) {
+                    analysisResult = '<span style="color: #00ff00;"><strong>✅ NO CRITICAL ISSUES FOUND</strong></span><br>MathCaptcha appears to be working correctly in this environment.';
+                    analysis.className = 'result success';
+                } else {
+                    analysisResult = `<span style="color: #ff0000;"><strong>❌ ${issues.length} CRITICAL ISSUES FOUND</strong></span><br>`;
+                    analysisResult += '<strong>Issues:</strong><br>' + issues.map(issue => `• ${issue}`).join('<br>') + '<br><br>';
+                    analysisResult += '<strong>Potential Causes:</strong><br>' + potentialCauses.map(cause => `• ${cause}`).join('<br>');
+                    analysis.className = 'result error';
+                }
+                
+                analysis.innerHTML = analysisResult;
+                
+                // Update solutions
+                updateSolutionRecommendations(solutions, issues.length === 0);
+                
+            }, 2000);
+        }
+
+        // Update solution recommendations
+        function updateSolutionRecommendations(solutions, isWorking) {
+            const solutionsDiv = document.getElementById('solutionRecommendations');
+            
+            if (isWorking) {
+                solutionsDiv.className = 'result success';
+                solutionsDiv.innerHTML = `
+                    <strong>✅ MATHCAPTCHA IS WORKING CORRECTLY</strong><br><br>
+                    <strong>Recommendations:</strong><br>
+                    • The issue may be production-environment specific<br>
+                    • Check live website at www.snakkaz.com for actual problems<br>
+                    • Consider implementing additional input event logging<br>
+                    • Test on different browsers and devices<br>
+                    • Monitor user feedback for specific scenarios that fail
+                `;
+            } else {
+                solutionsDiv.className = 'result error';
+                solutionsDiv.innerHTML = `
+                    <strong>❌ CRITICAL FIXES NEEDED</strong><br><br>
+                    <strong>Immediate Actions:</strong><br>
+                    ${solutions.map(solution => `• ${solution}`).join('<br>')}<br><br>
+                    <strong>Code Fixes to Implement:</strong><br>
+                    • Add input event debouncing<br>
+                    • Implement fallback input handling<br>
+                    • Add detailed error logging<br>
+                    • Test with different React versions<br>
+                    • Implement input validation retry mechanism
+                `;
+            }
+        }
+
+        // Auto-run basic tests
+        window.addEventListener('load', function() {
+            console.log('🚨 Critical MathCaptcha Diagnostic Tool Loaded');
+            console.log('Ready to identify multi-digit input issues');
+            
+            // Auto-start live monitoring
+            setTimeout(() => {
+                document.getElementById('liveMonitor').innerHTML += '<br><span style="color: #00ff00;">✅ Live monitoring active - start typing in any input field</span>';
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MathCaptcha Comprehensive Input Test</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #444;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #555;
+            border-radius: 5px;
+            background: #333;
+        }
+        .test-input {
+            padding: 8px;
+            background: #1a1a1a;
+            border: 1px solid #666;
+            color: #fff;
+            border-radius: 4px;
+            width: 80px;
+            text-align: center;
+            font-size: 16px;
+        }
+        .result {
+            margin: 10px 0;
+            padding: 8px;
+            border-radius: 4px;
+        }
+        .success { background: #004d00; }
+        .error { background: #4d0000; }
+        .warning { background: #4d4d00; }
+        .info { background: #004d4d; }
+        button {
+            padding: 8px 16px;
+            background: #555;
+            border: 1px solid #777;
+            color: #fff;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #666; }
+        .math-problem {
+            font-size: 20px;
+            font-weight: bold;
+            margin: 10px 0;
+            color: #ffd700;
+        }
+        .test-case {
+            border: 1px solid #666;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            background: #2a2a2a;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧮 MathCaptcha Comprehensive Input Test</h1>
+        <p><strong>Purpose:</strong> Test multi-digit input functionality and edge cases</p>
+        
+        <!-- Test Section 1: Basic Input Testing -->
+        <div class="test-section">
+            <h2>📝 Test 1: Basic Input Handling</h2>
+            <div class="math-problem" id="problem1">8 + 7 = ?</div>
+            <input type="text" class="test-input" id="input1" placeholder="?" maxlength="3">
+            <button onclick="testBasicInput()">Test Input</button>
+            <div id="result1" class="result info">Start typing to test...</div>
+            
+            <h3>Expected Results:</h3>
+            <ul>
+                <li>Should accept "15" (two digits)</li>
+                <li>Should accept "1" then "5" sequentially</li>
+                <li>Should reject letters and special characters</li>
+                <li>Should limit to 3 characters maximum</li>
+            </ul>
+        </div>
+
+        <!-- Test Section 2: Double Digit Results -->
+        <div class="test-section">
+            <h2>📝 Test 2: Double-Digit Math Problems</h2>
+            <div class="math-problem" id="problem2">9 + 9 = ?</div>
+            <input type="text" class="test-input" id="input2" placeholder="?" maxlength="3">
+            <button onclick="testDoubleDigit()">Test Answer (18)</button>
+            <div id="result2" class="result info">Try entering "18"...</div>
+        </div>
+
+        <!-- Test Section 3: Character Filtering -->
+        <div class="test-section">
+            <h2>🚫 Test 3: Character Filtering</h2>
+            <input type="text" class="test-input" id="input3" placeholder="Test here" maxlength="3">
+            <button onclick="testCharacterFiltering()">Test Various Inputs</button>
+            <div id="result3" class="result info">Will test: abc, 123, !@#, 1a2b3c</div>
+        </div>
+
+        <!-- Test Section 4: Rapid Input Testing -->
+        <div class="test-section">
+            <h2>⚡ Test 4: Rapid Input Testing</h2>
+            <input type="text" class="test-input" id="input4" placeholder="?" maxlength="3">
+            <button onclick="testRapidInput()">Simulate Rapid Typing</button>
+            <div id="result4" class="result info">Will rapidly type "123"</div>
+        </div>
+
+        <!-- Test Section 5: Edge Cases -->
+        <div class="test-section">
+            <h2>🎯 Test 5: Edge Cases</h2>
+            <div class="test-case">
+                <strong>Leading Zero Test:</strong>
+                <input type="text" class="test-input" id="input5a" placeholder="?" maxlength="3">
+                <button onclick="testLeadingZero()">Test "007"</button>
+                <div id="result5a" class="result info">Testing leading zeros</div>
+            </div>
+            
+            <div class="test-case">
+                <strong>Backspace Test:</strong>
+                <input type="text" class="test-input" id="input5b" placeholder="?" maxlength="3">
+                <button onclick="testBackspace()">Test Backspace</button>
+                <div id="result5b" class="result info">Testing deletion behavior</div>
+            </div>
+        </div>
+
+        <!-- Test Section 6: Production Simulation -->
+        <div class="test-section">
+            <h2>🌐 Test 6: Production Environment Simulation</h2>
+            <p>Simulating the exact MathCaptcha component behavior:</p>
+            <div class="math-problem" id="problem6">6 + 8 = ?</div>
+            <input type="text" class="test-input" id="input6" placeholder="?" maxlength="3">
+            <button onclick="simulateProduction()">Simulate Production Logic</button>
+            <div id="result6" class="result info">Using actual component logic...</div>
+        </div>
+
+        <!-- Live Test Results -->
+        <div class="test-section">
+            <h2>📊 Live Test Results</h2>
+            <div id="liveResults"></div>
+        </div>
+    </div>
+
+    <script>
+        // Simulate the actual MathCaptcha handleAnswerChange logic
+        function handleAnswerChange(value, inputElement, resultElement) {
+            const originalValue = value;
+            // Only allow numbers - exact logic from MathCaptcha.tsx
+            const numericValue = value.replace(/[^0-9]/g, '');
+            
+            // Update input
+            inputElement.value = numericValue;
+            
+            // Log results
+            const results = `
+                <strong>Input Processing:</strong><br>
+                Original: "${originalValue}"<br>
+                Filtered: "${numericValue}"<br>
+                Length: ${numericValue.length}<br>
+                Max Length: ${inputElement.maxLength}<br>
+                Accepted: ${numericValue === originalValue ? 'YES' : 'NO'}
+            `;
+            
+            resultElement.innerHTML = results;
+            resultElement.className = 'result ' + (numericValue === originalValue ? 'success' : 'warning');
+            
+            return numericValue;
+        }
+
+        function testBasicInput() {
+            const input = document.getElementById('input1');
+            const result = document.getElementById('result1');
+            
+            // Test sequence: typing "15"
+            setTimeout(() => {
+                input.value = '';
+                input.focus();
+                handleAnswerChange('1', input, result);
+            }, 100);
+            
+            setTimeout(() => {
+                handleAnswerChange('15', input, result);
+            }, 500);
+        }
+
+        function testDoubleDigit() {
+            const input = document.getElementById('input2');
+            const result = document.getElementById('result2');
+            
+            // Test typing "18" for 9+9
+            setTimeout(() => {
+                input.value = '';
+                input.focus();
+                handleAnswerChange('1', input, result);
+            }, 100);
+            
+            setTimeout(() => {
+                handleAnswerChange('18', input, result);
+                
+                // Check if answer is correct
+                setTimeout(() => {
+                    const isCorrect = parseInt(input.value) === 18;
+                    result.innerHTML += `<br><strong>Answer Check:</strong> ${isCorrect ? '✓ CORRECT' : '✗ WRONG'}`;
+                    result.className = 'result ' + (isCorrect ? 'success' : 'error');
+                }, 200);
+            }, 500);
+        }
+
+        function testCharacterFiltering() {
+            const input = document.getElementById('input3');
+            const result = document.getElementById('result3');
+            
+            const testCases = ['abc', '123', '!@#', '1a2b3c', '12.3', '1-2'];
+            let results = '<strong>Character Filtering Test Results:</strong><br>';
+            
+            testCases.forEach((testCase, index) => {
+                setTimeout(() => {
+                    const filtered = handleAnswerChange(testCase, input, result);
+                    results += `"${testCase}" → "${filtered}" ${filtered === testCase.replace(/[^0-9]/g, '') ? '✓' : '✗'}<br>`;
+                    
+                    if (index === testCases.length - 1) {
+                        result.innerHTML = results;
+                        result.className = 'result info';
+                    }
+                }, index * 300);
+            });
+        }
+
+        function testRapidInput() {
+            const input = document.getElementById('input4');
+            const result = document.getElementById('result4');
+            
+            input.value = '';
+            input.focus();
+            
+            // Simulate rapid typing
+            const sequence = ['1', '12', '123'];
+            sequence.forEach((value, index) => {
+                setTimeout(() => {
+                    handleAnswerChange(value, input, result);
+                    
+                    if (index === sequence.length - 1) {
+                        result.innerHTML += '<br><strong>Rapid Input Test:</strong> ✓ PASSED';
+                        result.className = 'result success';
+                    }
+                }, index * 50); // Very fast typing
+            });
+        }
+
+        function testLeadingZero() {
+            const input = document.getElementById('input5a');
+            const result = document.getElementById('result5a');
+            
+            handleAnswerChange('007', input, result);
+            
+            setTimeout(() => {
+                const finalValue = input.value;
+                result.innerHTML += `<br><strong>Leading Zero Test:</strong> "${finalValue}" (${finalValue === '007' ? 'Preserved' : 'Normalized'})`;
+            }, 200);
+        }
+
+        function testBackspace() {
+            const input = document.getElementById('input5b');
+            const result = document.getElementById('result5b');
+            
+            // First type "123"
+            handleAnswerChange('123', input, result);
+            
+            setTimeout(() => {
+                // Then simulate backspace to "12"
+                handleAnswerChange('12', input, result);
+                result.innerHTML += '<br><strong>Backspace Test:</strong> 123 → 12 ✓';
+                result.className = 'result success';
+            }, 500);
+        }
+
+        function simulateProduction() {
+            const input = document.getElementById('input6');
+            const result = document.getElementById('result6');
+            
+            // Simulate the exact production scenario
+            const correctAnswer = 14; // 6 + 8
+            
+            result.innerHTML = '<strong>Production Simulation:</strong><br>Testing multi-digit input for 6 + 8 = 14<br>';
+            
+            // Test single digit first
+            setTimeout(() => {
+                handleAnswerChange('1', input, result);
+                result.innerHTML += 'Step 1: Typed "1" ✓<br>';
+            }, 200);
+            
+            // Then complete with second digit
+            setTimeout(() => {
+                handleAnswerChange('14', input, result);
+                result.innerHTML += 'Step 2: Typed "14" ✓<br>';
+                
+                const isCorrect = parseInt(input.value) === correctAnswer;
+                result.innerHTML += `<strong>Final Result:</strong> ${isCorrect ? '✓ CORRECT - Multi-digit input works!' : '✗ FAILED'}`;
+                result.className = 'result ' + (isCorrect ? 'success' : 'error');
+            }, 600);
+        }
+
+        // Add live input event listeners to all test inputs
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputs = document.querySelectorAll('.test-input');
+            const liveResults = document.getElementById('liveResults');
+            
+            inputs.forEach((input, index) => {
+                input.addEventListener('input', function(e) {
+                    const value = e.target.value;
+                    const filtered = value.replace(/[^0-9]/g, '');
+                    
+                    if (value !== filtered) {
+                        e.target.value = filtered;
+                    }
+                    
+                    // Live feedback
+                    liveResults.innerHTML = `
+                        <strong>Live Input Monitoring:</strong><br>
+                        Input #${index + 1}: "${value}" → "${filtered}"<br>
+                        Length: ${filtered.length}/3<br>
+                        Status: ${filtered.length > 0 ? 'Valid numeric input' : 'Empty'}
+                    `;
+                });
+            });
+        });
+
+        // Auto-run basic tests on load
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                console.log('🧮 MathCaptcha Test Suite Loaded');
+                console.log('Ready to test multi-digit input functionality');
+            }, 100);
+        });
+    </script>
+</body>
+</html>

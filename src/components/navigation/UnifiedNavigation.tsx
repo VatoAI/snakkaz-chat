@@ -56,12 +56,17 @@ export const UnifiedNavigation: React.FC<UnifiedNavigationProps> = ({
   const navRef = useRef<HTMLDivElement>(null);
   const activeIndicatorRef = useRef<HTMLDivElement | null>(null);
   
-  // Define all navigation items
+  // Define all navigation items - cleaned up for better UX
   const navItems: NavItem[] = [
     {
       path: '/',
       label: 'Hjem',
       icon: <Home className="h-5 w-5" />
+    },
+    {
+      path: '/basic-chat',
+      label: 'Chat',
+      icon: <MessageSquare className="h-5 w-5" />
     },
     {
       path: '/friends',
@@ -70,13 +75,14 @@ export const UnifiedNavigation: React.FC<UnifiedNavigationProps> = ({
       authRequired: true
     },
     {
-      path: '/basic-chat',
-      label: 'Chat',
-      icon: <MessageSquare className="h-5 w-5" />
+      path: '/find-friends',
+      label: 'Finn Venner',
+      icon: <Search className="h-5 w-5" />,
+      authRequired: true
     },
     {
       path: '/ai-chat',
-      label: 'Venn Assistent',
+      label: 'AI Assistent',
       icon: <Bot className="h-5 w-5" />,
       authRequired: true
     },
@@ -88,26 +94,10 @@ export const UnifiedNavigation: React.FC<UnifiedNavigationProps> = ({
     },
     {
       path: '/create-group',
-      label: 'Opprett Gruppe',
+      label: 'Ny Gruppe',
       icon: <UserPlus className="h-5 w-5" />,
       authRequired: true,
       hideOnMobile: true
-    },
-    {
-      path: '/find-friends',
-      label: 'Finn Venner',
-      icon: <Search className="h-5 w-5" />,
-      authRequired: true
-    },
-    {
-      path: '/messages',
-      label: 'Meldinger',
-      icon: <MessageCircle className="h-5 w-5" />
-    },
-    {
-      path: '/contacts',
-      label: 'Kontakter',
-      icon: <Users className="h-5 w-5" />
     },
     {
       path: '/info',

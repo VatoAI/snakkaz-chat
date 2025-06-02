@@ -68,12 +68,13 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, setIsOpen }) => 
     },
     {
       icon: <Globe size={24} />,
-      label: 'Global Chat',
+      label: 'Grupper',
       action: () => {
-        navigate('/global-chat');
+        navigate('/group-chat');
         setIsOpen(false);
       },
-      color: 'text-cybergreen-400'
+      color: 'text-cybergreen-400',
+      authRequired: true
     },
     {
       icon: <User size={24} />,
@@ -92,10 +93,11 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, setIsOpen }) => 
       icon: <Shield size={24} />,
       label: 'Sikkerhet',
       action: () => {
-        navigate('/security');
+        navigate('/settings');
         setIsOpen(false);
       },
-      color: 'text-cybergreen-400'
+      color: 'text-cybergreen-400',
+      authRequired: true
     },
     {
       icon: <Settings size={24} />,
