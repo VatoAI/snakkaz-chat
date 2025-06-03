@@ -1,18 +1,17 @@
-// React State Fix - Ultra-robust polyfill to prevent production errors
+// React State Fix V2 - Ultra-robust polyfill with self-healing capabilities
 // This ensures proper React state synchronization across the app
 
 // Define types for our extended window object
-interface ExtendedWindow extends Window {
-  React?: {
-    useState?: (initialState: any) => [any, (value: any) => void];
-    useSyncExternalStore?: (subscribe: any, getSnapshot: any, getServerSnapshot?: any) => any;
-  };
-  useSyncExternalStore?: any;
-  __USE_SYNC_EXTERNAL_STORE_POLYFILL__?: boolean;
+declare global {
+  interface Window {
+    React: any;
+    useSyncExternalStore: any;
+    __USE_SYNC_EXTERNAL_STORE_POLYFILL__: boolean;
+  }
 }
 
 // Self-healing monitoring mechanism - Executes periodically to ensure fixes remain applied
-const ensureReactHooksAvailable = () => {
+const ensureReactHooksAvailable = (): boolean => {
   if (typeof window !== 'undefined') {
     // Detect if React is available but its hooks are not
     if (window.React && (!window.React.useState || !window.React.useSyncExternalStore)) {
@@ -26,11 +25,11 @@ const ensureReactHooksAvailable = () => {
 };
 
 // Main fix implementation function - can be called multiple times safely
-const applyReactStateFix = () => {
+const applyReactStateFix = (): void => {
   // Ultra-robust polyfill to prevent "G is undefined" and "Cannot read properties of undefined (reading 'useState')" errors
   if (typeof window !== 'undefined') {
     // Fix for use-sync-external-store production build issues
-    (window as any).__USE_SYNC_EXTERNAL_STORE_POLYFILL__ = true;
+    window.__USE_SYNC_EXTERNAL_STORE_POLYFILL__ = true;
     
     // Create a non-overridable React object with Object.defineProperty
     if (!window.React) {
@@ -42,7 +41,7 @@ const applyReactStateFix = () => {
     }
     
     // Create a dummy useState function that won't break in production
-    const dummyUseStateFunction = function(initialState) {
+    const dummyUseStateFunction = function(initialState: any) {
       return [initialState, function() { console.log('useState setter called (polyfill)'); }];
     };
     
@@ -56,7 +55,7 @@ const applyReactStateFix = () => {
     }
 
     // Add useSyncExternalStore with defineProperty 
-    const dummyUseSyncExternalStore = function(subscribe, getSnapshot, getServerSnapshot) {
+    const dummyUseSyncExternalStore = function(subscribe: any, getSnapshot: any, getServerSnapshot?: any) {
       try {
         return getSnapshot();
       } catch (e) {
@@ -74,15 +73,15 @@ const applyReactStateFix = () => {
     }
     
     // Also add it directly to the window object to catch any direct references
-    (window as any).useSyncExternalStore = (window as any).React.useSyncExternalStore;
+    window.useSyncExternalStore = window.React.useSyncExternalStore;
   }
 
   // Prevent production build errors globally using the same robust approach
   if (typeof globalThis !== 'undefined') {
-    globalThis.__USE_SYNC_EXTERNAL_STORE_POLYFILL__ = true;
+    (globalThis as any).__USE_SYNC_EXTERNAL_STORE_POLYFILL__ = true;
     
     // Global React polyfill with non-overridable properties
-    if (!globalThis.React) {
+    if (!(globalThis as any).React) {
       Object.defineProperty(globalThis, 'React', {
         value: {},
         writable: false,
@@ -91,9 +90,9 @@ const applyReactStateFix = () => {
     }
     
     // Add useState with defineProperty
-    if (!globalThis.React.useState) {
-      Object.defineProperty(globalThis.React, 'useState', {
-        value: function(initialState) {
+    if (!(globalThis as any).React.useState) {
+      Object.defineProperty((globalThis as any).React, 'useState', {
+        value: function(initialState: any) {
           return [initialState, function() { console.log('useState setter called (global polyfill)'); }];
         },
         writable: false,
@@ -102,9 +101,9 @@ const applyReactStateFix = () => {
     }
     
     // Add useSyncExternalStore with defineProperty
-    if (!globalThis.React.useSyncExternalStore) {
-      Object.defineProperty(globalThis.React, 'useSyncExternalStore', {
-        value: function(subscribe, getSnapshot, getServerSnapshot) {
+    if (!(globalThis as any).React.useSyncExternalStore) {
+      Object.defineProperty((globalThis as any).React, 'useSyncExternalStore', {
+        value: function(subscribe: any, getSnapshot: any, getServerSnapshot?: any) {
           try {
             return getSnapshot();
           } catch (e) {

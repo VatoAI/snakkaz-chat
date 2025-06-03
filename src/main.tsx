@@ -3,7 +3,10 @@
  * Super-Simplified Version - May 22, 2025
  */
 
-// Import environment fix first to ensure process.env is available
+// Import React polyfill FIRST to ensure React and its hooks are available
+import './reactPolyfill';
+
+// Import environment fix to ensure process.env is available
 import './utils/env/environmentFix';
 
 import React from 'react';
