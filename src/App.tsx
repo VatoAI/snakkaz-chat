@@ -30,19 +30,19 @@ const AIChatPage = lazy(() => import("@/features/chat/components/common/AIChatPa
 
 // Group functionality - separate chunk
 const CreateGroupPage = lazy(() => import("@/pages/CreateGroupPage"));
-const GroupChatPage = lazy(() => import("@/features/chat/components/group/GroupChatPage"));
+const GroupChatPage = lazy(() => import("@/features/chat/components/group/DynamicGroupChatPage"));
 
 // Social features - separate chunk
 const Friends = lazy(() => import("@/pages/Friends"));
 const FindFriends = lazy(() => import("@/pages/FindFriends"));
 
-// User management - separate chunk (lazy loaded)
-const ProfilePage = lazy(() => import("@/pages/Profile"));
-const SettingsPage = lazy(() => import("@/pages/Settings"));
+// User management - separate chunk (lazy loaded with dynamic wrappers)
+const ProfilePage = lazy(() => import("@/components/dynamic/DynamicProfile"));
+const SettingsPage = lazy(() => import("@/components/dynamic/DynamicSettings"));
 const Dashboard = lazy(() => import("@/pages/Dashboard"));
-const Mail = lazy(() => import("@/pages/Mail"));
+const Mail = lazy(() => import("@/components/dynamic/DynamicMail"));
 const MCPDashboard = lazy(() => import("@/pages/MCPDashboard"));
-const MemoryDashboard = lazy(() => import("@/pages/MemoryDashboard"));
+const MemoryDashboard = lazy(() => import("@/components/dynamic/DynamicMemoryDashboard"));
 
 // Subscription features - separate chunk
 const Subscription = lazy(() => import("@/pages/Subscription"));

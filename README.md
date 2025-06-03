@@ -1,98 +1,183 @@
-# Snakkaz Chat
+# Supabase CLI
 
-Snakkaz Chat er en End-to-End Encrypted (E2EE) chat-applikasjon med fokus på sikkerhet, brukervennlighet og moderne funksjoner.
+[![Coverage Status](https://coveralls.io/repos/github/supabase/cli/badge.svg?branch=main)](https://coveralls.io/github/supabase/cli?branch=main) [![Bitbucket Pipelines](https://img.shields.io/bitbucket/pipelines/supabase-cli/setup-cli/master?style=flat-square&label=Bitbucket%20Canary)](https://bitbucket.org/supabase-cli/setup-cli/pipelines) [![Gitlab Pipeline Status](https://img.shields.io/gitlab/pipeline-status/sweatybridge%2Fsetup-cli?label=Gitlab%20Canary)
+](https://gitlab.com/sweatybridge/setup-cli/-/pipelines)
 
-## Project Status
+[Supabase](https://supabase.io) is an open source Firebase alternative. We're building the features of Firebase using enterprise-grade open source tools.
 
-**Status**: Under utvikling og restrukturering (Mai 2025)
-**Nettside**: [www.snakkaz.com](https://www.snakkaz.com)
+This repository contains all the functionality for Supabase CLI.
 
-## Project Overview
+- [x] Running Supabase locally
+- [x] Managing database migrations
+- [x] Creating and deploying Supabase Functions
+- [x] Generating types directly from your database schema
+- [x] Making authenticated HTTP requests to [Management API](https://supabase.com/docs/reference/api/introduction)
 
-Snakkaz Chat er en chat-applikasjon som tilbyr:
+## Getting started
 
-- End-to-End kryptering for alle meldinger
-- Støtte for privat chat, gruppe chat og global chat
-- Custom Emoji System med avansert søk og analytics
-- Pin-funksjonalitet for viktige meldinger
-- Integrert med Supabase og Cloudflare for sikkerhet og ytelse
+### Install the CLI
 
-## Pågående Restrukturering
-
-Prosjektet gjennomgår for øyeblikket en omfattende restrukturering for å forbedre kodeorganisering, redusere duplisering og øke vedlikeholdbarheten. Se følgende filer for mer informasjon:
-
-- [RESTRUCTURING-GUIDE.md](./RESTRUCTURING-GUIDE.md): Detaljert guide om restruktureringsarbeidet
-- [RESTRUCTURING-STATUS.md](./RESTRUCTURING-STATUS.md): Gjeldende status for restrukturering
-- [SNAKKAZ-MASTER-PROMPT.md](./SNAKKAZ-MASTER-PROMPT.md): Hovedprompt med prosjektdetaljer
-
-### Ny Prosjektstruktur
-
-Den nye standardiserte prosjektstrukturen organiserer koden i følgende hovedmapper:
-
-```
-/workspaces/snakkaz-chat/
-├── docs/              # All dokumentasjon samlet i én mappe
-├── scripts/           # Alle shell scripts og verktøy
-├── src/               # Applikasjonskildekode
-│   ├── assets/        # Statiske ressurser
-│   ├── components/    # React-komponenter (UI)
-│   ├── features/      # Feature-moduler med egen struktur
-│   ├── hooks/         # React hooks
-│   ├── integrations/  # Tredjepartsintegrasjoner
-│   ├── pages/         # React Router-sider
-│   └── utils/         # Utility-funksjoner
-└── bin/               # Symlinks til ofte brukte scripts
-```
-
-## Teknologier
-
-- **Frontend**: React, TypeScript, Vite
-- **UI**: Shadcn UI komponenter
-- **Backend**: Supabase (authentication, database, storage, realtime)
-- **Security**: E2EE, Cloudflare for CDN og sikkerhet
-
-## Utvikling
-
-### Oppsett av utviklingsmiljø
+Available via [NPM](https://www.npmjs.com) as dev dependency. To install:
 
 ```bash
-# Klon repositoriet
-git clone https://github.com/yourusername/snakkaz-chat.git
-cd snakkaz-chat
-
-# Installer avhengigheter
-npm install
-
-# Start utviklingsserver
-npm run dev
+npm i supabase --save-dev
 ```
 
-### Kjøre med lokalt Supabase-miljø
+To install the beta release channel:
 
 ```bash
-# Initialisere Supabase-prosjekt (første gang)
-npm run supabase:setup
-
-# Starte lokal Supabase-instans
-npm run supabase:start
-
-# Kjøre applikasjon med lokal Supabase
-npm run dev:with-supabase
+npm i supabase@beta --save-dev
 ```
 
-## Deployment
+When installing with yarn 4, you need to disable experimental fetch with the following nodejs config.
 
-Se [docs/deployment/](./docs/deployment/) for detaljert informasjon om deployment-prosessen.
+```
+NODE_OPTIONS=--no-experimental-fetch yarn add supabase
+```
 
-## Dokumentasjon
+> **Note**
+For Bun versions below v1.0.17, you must add `supabase` as a [trusted dependency](https://bun.sh/guides/install/trusted) before running `bun add -D supabase`.
 
-All prosjektdokumentasjon er tilgjengelig i [docs/](./docs/) mappen, organisert etter kategorier:
+<details>
+  <summary><b>macOS</b></summary>
 
-- [Architecture](./docs/architecture/): Systemarkitektur og design
-- [Deployment](./docs/deployment/): Deployment-veiledninger
-- [Features](./docs/features/): Feature-spesifikk dokumentasjon
-- [Troubleshooting](./docs/troubleshooting/): Feilsøkingsguider
+  Available via [Homebrew](https://brew.sh). To install:
 
-## Kontakt
+  ```sh
+  brew install supabase/tap/supabase
+  ```
 
-For spørsmål eller henvendelser om Snakkaz Chat, vennligst kontakt [kontakt@snakkaz.com](mailto:kontakt@snakkaz.com).
+  To install the beta release channel:
+  
+  ```sh
+  brew install supabase/tap/supabase-beta
+  brew link --overwrite supabase-beta
+  ```
+  
+  To upgrade:
+
+  ```sh
+  brew upgrade supabase
+  ```
+</details>
+
+<details>
+  <summary><b>Windows</b></summary>
+
+  Available via [Scoop](https://scoop.sh). To install:
+
+  ```powershell
+  scoop bucket add supabase https://github.com/supabase/scoop-bucket.git
+  scoop install supabase
+  ```
+
+  To upgrade:
+
+  ```powershell
+  scoop update supabase
+  ```
+</details>
+
+<details>
+  <summary><b>Linux</b></summary>
+
+  Available via [Homebrew](https://brew.sh) and Linux packages.
+
+  #### via Homebrew
+
+  To install:
+
+  ```sh
+  brew install supabase/tap/supabase
+  ```
+
+  To upgrade:
+
+  ```sh
+  brew upgrade supabase
+  ```
+
+  #### via Linux packages
+
+  Linux packages are provided in [Releases](https://github.com/supabase/cli/releases). To install, download the `.apk`/`.deb`/`.rpm`/`.pkg.tar.zst` file depending on your package manager and run the respective commands.
+
+  ```sh
+  sudo apk add --allow-untrusted <...>.apk
+  ```
+
+  ```sh
+  sudo dpkg -i <...>.deb
+  ```
+
+  ```sh
+  sudo rpm -i <...>.rpm
+  ```
+
+  ```sh
+  sudo pacman -U <...>.pkg.tar.zst
+  ```
+</details>
+
+<details>
+  <summary><b>Other Platforms</b></summary>
+
+  You can also install the CLI via [go modules](https://go.dev/ref/mod#go-install) without the help of package managers.
+
+  ```sh
+  go install github.com/supabase/cli@latest
+  ```
+
+  Add a symlink to the binary in `$PATH` for easier access:
+
+  ```sh
+  ln -s "$(go env GOPATH)/bin/cli" /usr/bin/supabase
+  ```
+
+  This works on other non-standard Linux distros.
+</details>
+
+<details>
+  <summary><b>Community Maintained Packages</b></summary>
+
+  Available via [pkgx](https://pkgx.sh/). Package script [here](https://github.com/pkgxdev/pantry/blob/main/projects/supabase.com/cli/package.yml).
+  To install in your working directory:
+
+  ```bash
+  pkgx install supabase
+  ```
+
+  Available via [Nixpkgs](https://nixos.org/). Package script [here](https://github.com/NixOS/nixpkgs/blob/master/pkgs/development/tools/supabase-cli/default.nix).
+</details>
+
+### Run the CLI
+
+```bash
+supabase bootstrap
+```
+
+Or using npx:
+
+```bash
+npx supabase bootstrap
+```
+
+The bootstrap command will guide you through the process of setting up a Supabase project using one of the [starter](https://github.com/supabase-community/supabase-samples/blob/main/samples.json) templates.
+
+## Docs
+
+Command & config reference can be found [here](https://supabase.com/docs/reference/cli/about).
+
+## Breaking changes
+
+We follow semantic versioning for changes that directly impact CLI commands, flags, and configurations.
+
+However, due to dependencies on other service images, we cannot guarantee that schema migrations, seed.sql, and generated types will always work for the same CLI major version. If you need such guarantees, we encourage you to pin a specific version of CLI in package.json.
+
+## Developing
+
+To run from source:
+
+```sh
+# Go >= 1.22
+go run . help
+```

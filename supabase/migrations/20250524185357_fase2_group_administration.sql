@@ -7,6 +7,33 @@
 -- FASE 2: Group Administration Database Improvements
 ------------------
 
+-- 0. Ensure group_settings table exists first
+CREATE TABLE IF NOT EXISTS group_settings (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  group_id UUID NOT NULL REFERENCES group_chats(id) ON DELETE CASCADE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(group_id)
+);
+
+-- Enable RLS for group_settings if not already enabled
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE tablename = 'group_settings' AND policyname = 'group_settings_select'
+  ) THEN
+    ALTER TABLE group_settings ENABLE ROW LEVEL SECURITY;
+    
+    CREATE POLICY group_settings_select ON group_settings 
+      FOR SELECT USING (
+        EXISTS (
+          SELECT 1 FROM group_members 
+          WHERE group_members.group_id = group_settings.group_id 
+          AND group_members.user_id = auth.uid()
+        )
+      );
+  END IF;
+END $$;
+
 -- 1. Update group_settings table
 ALTER TABLE group_settings ADD COLUMN IF NOT EXISTS allow_member_invites BOOLEAN DEFAULT FALSE;
 ALTER TABLE group_settings ADD COLUMN IF NOT EXISTS is_private BOOLEAN DEFAULT TRUE;
