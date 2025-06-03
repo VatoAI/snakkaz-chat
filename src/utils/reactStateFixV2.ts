@@ -26,7 +26,7 @@ const ensureReactHooksAvailable = (): boolean => {
 
 // Main fix implementation function - can be called multiple times safely
 const applyReactStateFix = (): void => {
-  // Ultra-robust polyfill to prevent "G is undefined" and "Cannot read properties of undefined (reading 'useState')" errors
+  // Ultra-robust polyfill to prevent "G is undefined", "ni is undefined" and "Cannot read properties of undefined (reading 'useState')" errors
   if (typeof window !== 'undefined') {
     // Fix for use-sync-external-store production build issues
     window.__USE_SYNC_EXTERNAL_STORE_POLYFILL__ = true;
@@ -57,6 +57,21 @@ const applyReactStateFix = (): void => {
     // Add useSyncExternalStore with defineProperty 
     const dummyUseSyncExternalStore = function(subscribe: any, getSnapshot: any, getServerSnapshot?: any) {
       try {
+        // Handle potential minified variables that might be undefined
+        if (typeof window !== 'undefined') {
+          // Fix for G is undefined (original error)
+          if (window['G'] === undefined) {
+            window['G'] = {}; 
+            console.log('Fixed undefined "G" variable in use-sync-external-store-shim');
+          }
+          
+          // Fix for ni is undefined (new error)
+          if (window['ni'] === undefined) {
+            window['ni'] = {}; 
+            console.log('Fixed undefined "ni" variable in use-sync-external-store-shim');
+          }
+        }
+
         return getSnapshot();
       } catch (e) {
         console.log('useSyncExternalStore error (polyfill):', e);
@@ -105,6 +120,21 @@ const applyReactStateFix = (): void => {
       Object.defineProperty((globalThis as any).React, 'useSyncExternalStore', {
         value: function(subscribe: any, getSnapshot: any, getServerSnapshot?: any) {
           try {
+            // Handle potential minified variables in global context
+            if (typeof globalThis !== 'undefined') {
+              // Fix for G is undefined (original error)
+              if ((globalThis as any)['G'] === undefined) {
+                (globalThis as any)['G'] = {};
+                console.log('Fixed undefined "G" variable in global context');
+              }
+              
+              // Fix for ni is undefined (new error)
+              if ((globalThis as any)['ni'] === undefined) {
+                (globalThis as any)['ni'] = {};
+                console.log('Fixed undefined "ni" variable in global context');
+              }
+            }
+            
             return getSnapshot();
           } catch (e) {
             console.log('useSyncExternalStore error (global polyfill):', e);
@@ -144,7 +174,9 @@ if (typeof window !== 'undefined') {
       event.error && 
       (event.error.toString().includes('useState') || 
        event.error.toString().includes('undefined') ||
-       event.error.toString().includes('React'))
+       event.error.toString().includes('React') ||
+       event.error.toString().includes('G is undefined') ||
+       event.error.toString().includes('ni is undefined'))
     ) {
       console.warn('⚠️ React-related error detected - Applying emergency fix');
       applyReactStateFix();

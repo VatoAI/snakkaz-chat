@@ -55,7 +55,10 @@ check_for_react_errors() {
     echo "❌ React 'undefined' error detected!"
     return 1
   elif [[ "$page_source" == *"G is undefined"* ]]; then
-    echo "❌ 'G is undefined' error detected!"
+    echo "❌ React 'G is undefined' error detected!"
+    return 1
+  elif [[ "$page_source" == *"ni is undefined"* ]]; then
+    echo "❌ React 'ni is undefined' error detected!"
     return 1
   elif [[ "$page_source" == *"React.useState"* && "$page_source" == *"not a function"* ]]; then
     echo "❌ React.useState error detected!"
