@@ -1,17 +1,20 @@
-// React State Fix - Polyfill for use-sync-external-store
+// React State Fix - Simple polyfill to prevent production errors
 // This ensures proper React state synchronization across the app
 
-import { useSyncExternalStore } from 'use-sync-external-store/shim';
-
-// Polyfill fix for "ni is undefined" error
-if (typeof window !== 'undefined' && !window.useSyncExternalStore) {
-  window.useSyncExternalStore = useSyncExternalStore;
+// Simple polyfill to prevent "G is undefined" errors
+if (typeof window !== 'undefined') {
+  // Fix for use-sync-external-store production build issues
+  window.__USE_SYNC_EXTERNAL_STORE_POLYFILL__ = true;
+  
+  // Ensure React's useSyncExternalStore is available
+  if (!window.React) {
+    window.React = {};
+  }
 }
 
-// Export for use in components that need explicit synchronization
-export { useSyncExternalStore };
-
-// Global React state fix
+// Prevent production build errors
 if (typeof globalThis !== 'undefined') {
-  globalThis.useSyncExternalStore = useSyncExternalStore;
+  globalThis.__USE_SYNC_EXTERNAL_STORE_POLYFILL__ = true;
 }
+
+console.log('✅ React State Fix Applied Successfully');

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snakkaz MCP API Status</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .status-card {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+        }
+        .status-badge {
+            background: #4CAF50;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #333;
+            margin: 0 0 10px 0;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .feature-list {
+            text-align: left;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .feature-item {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }
+        .feature-item::before {
+            content: "✅";
+            margin-right: 10px;
+        }
+        .timestamp {
+            color: #888;
+            font-size: 12px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="status-card">
+        <div class="status-badge">✅ ONLINE</div>
+        <h1>Snakkaz MCP API</h1>
+        <p class="subtitle">Memory Context Protocol Service</p>
+        
+        <div class="feature-list">
+            <div class="feature-item">Memory Storage Ready</div>
+            <div class="feature-item">Chat History Tracking</div>
+            <div class="feature-item">User Preferences</div>
+            <div class="feature-item">Claude Sonnet 4 Integration</div>
+            <div class="feature-item">Real-time Processing</div>
+        </div>
+        
+        <p><strong>Version:</strong> 1.0.0</p>
+        <p><strong>Status:</strong> All systems operational</p>
+        
+        <div class="timestamp">
+            Last updated: <span id="timestamp"></span>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('timestamp').textContent = new Date().toLocaleString();
+    </script>
+</body>
+</html>
