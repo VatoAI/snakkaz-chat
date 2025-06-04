@@ -10,8 +10,8 @@ import { bootstrapSecurityFeatures } from '@/services/security/securityIntegrati
 import { ENV } from './utils/env/environmentFix';
 import { initializePreview, shouldShowPreviewNotice, getPreviewDisplayInfo } from '@/utils/supabase/preview-fix';
 
-// Fix React state synchronization issues - V3 Emergency Fix
-import './utils/reactStateFixV3';
+// Fix React state synchronization issues - V4 Emergency Fix
+import './utils/reactStateFixV4';
 
 // Lazy load components with route-based chunking for optimal performance
 const Login = lazy(() => import("@/pages/Login"));
