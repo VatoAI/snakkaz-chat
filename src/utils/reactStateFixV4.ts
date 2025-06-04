@@ -8,7 +8,7 @@
  */
 
 // Ensure this runs before any other code
-(function emergencyReactStateFixV4() {
+export function emergencyReactStateFixV4() {
     'use strict';
     
     console.log('🚨 EMERGENCY REACT STATE FIX V4 - LOADING');

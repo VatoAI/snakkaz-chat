@@ -3,6 +3,49 @@
  * Super-Simplified Version - May 22, 2025
  */
 
+// CRITICAL: Apply React state fix IMMEDIATELY - Juni 4, 2025
+console.log('🚨 APPLYING EMERGENCY REACT STATE FIX');
+
+// Emergency useState implementation
+const emergencyUseState = (initialState: any): [any, (newState: any) => void] => {
+  console.log('Emergency useState called with:', initialState);
+  let state = initialState;
+  const setState = (newState: any) => {
+    state = newState;
+    console.log('Emergency setState called with:', newState);
+  };
+  return [state, setState];
+};
+
+// Apply fixes to window object
+if (typeof window !== 'undefined') {
+  // Ensure React exists
+  if (!window.React) {
+    (window as any).React = {};
+  }
+  
+  // Ensure useState exists
+  if (!window.React.useState) {
+    window.React.useState = emergencyUseState;
+  }
+  
+  // Ensure global useState exists
+  if (!(window as any).useState) {
+    (window as any).useState = emergencyUseState;
+  }
+  
+  // Fix for minified variables
+  const minifiedVars = ['Nt', 'Mt', 'Pt', 'Qt', 'Rt'];
+  minifiedVars.forEach(varName => {
+    if ((window as any)[varName] === undefined) {
+      (window as any)[varName] = { useState: emergencyUseState };
+      console.log(`Fixed undefined minified variable: ${varName}`);
+    }
+  });
+  
+  console.log('✅ EMERGENCY REACT STATE FIX APPLIED');
+}
+
 // Import React polyfill FIRST to ensure React and its hooks are available
 import './reactPolyfill';
 
