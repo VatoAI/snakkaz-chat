@@ -1,4 +1,5 @@
-// React State Fix - Ultra-robust polyfill to prevent production errors
+// React State Fix V3 - Ultra-robust polyfill to prevent production errors
+// Updated Juni 4, 2025 - Fixes "useState undefined" in use-sync-external-store-shim
 // This ensures proper React state synchronization across the app
 
 // Define types for our extended window object
@@ -9,11 +10,25 @@ interface ExtendedWindow extends Window {
   };
   useSyncExternalStore?: any;
   __USE_SYNC_EXTERNAL_STORE_POLYFILL__?: boolean;
+  // Add support for minified variable names that might be undefined
+  G?: any;
+  ni?: any;
 }
 
 // Self-healing monitoring mechanism - Executes periodically to ensure fixes remain applied
 const ensureReactHooksAvailable = () => {
   if (typeof window !== 'undefined') {
+    // Fix minified variables that might become undefined in production
+    if ((window as any).G === undefined) {
+      (window as any).G = {};
+      console.log('🔧 Fixed undefined "G" variable in use-sync-external-store-shim');
+    }
+    
+    if ((window as any).ni === undefined) {
+      (window as any).ni = {};
+      console.log('🔧 Fixed undefined "ni" variable in use-sync-external-store-shim');
+    }
+    
     // Detect if React is available but its hooks are not
     if (window.React && (!window.React.useState || !window.React.useSyncExternalStore)) {
       console.warn('⚠️ React hooks missing - Applying emergency fix');
@@ -27,10 +42,23 @@ const ensureReactHooksAvailable = () => {
 
 // Main fix implementation function - can be called multiple times safely
 const applyReactStateFix = () => {
-  // Ultra-robust polyfill to prevent "G is undefined" and "Cannot read properties of undefined (reading 'useState')" errors
+  // Ultra-robust polyfill to prevent useState undefined errors in use-sync-external-store-shim
   if (typeof window !== 'undefined') {
+    const windowAny = window as any;
+    
     // Fix for use-sync-external-store production build issues
-    (window as any).__USE_SYNC_EXTERNAL_STORE_POLYFILL__ = true;
+    windowAny.__USE_SYNC_EXTERNAL_STORE_POLYFILL__ = true;
+    
+    // Fix minified variables that cause "useState undefined" error
+    if (windowAny.G === undefined) {
+      windowAny.G = {};
+      console.log('🔧 Fixed undefined "G" variable');
+    }
+    
+    if (windowAny.ni === undefined) {
+      windowAny.ni = {};
+      console.log('🔧 Fixed undefined "ni" variable');
+    }
     
     // Create a non-overridable React object with Object.defineProperty
     if (!window.React) {
@@ -42,7 +70,7 @@ const applyReactStateFix = () => {
     }
     
     // Create a dummy useState function that won't break in production
-    const dummyUseStateFunction = function(initialState) {
+    const dummyUseStateFunction = function(initialState: any) {
       return [initialState, function() { console.log('useState setter called (polyfill)'); }];
     };
     
@@ -56,8 +84,12 @@ const applyReactStateFix = () => {
     }
 
     // Add useSyncExternalStore with defineProperty 
-    const dummyUseSyncExternalStore = function(subscribe, getSnapshot, getServerSnapshot) {
+    const dummyUseSyncExternalStore = function(subscribe: any, getSnapshot: any, getServerSnapshot?: any) {
       try {
+        // Fix additional undefined variables that might occur in shim
+        if (windowAny.G === undefined) windowAny.G = {};
+        if (windowAny.ni === undefined) windowAny.ni = {};
+        
         return getSnapshot();
       } catch (e) {
         console.log('useSyncExternalStore error (polyfill):', e);
@@ -74,15 +106,20 @@ const applyReactStateFix = () => {
     }
     
     // Also add it directly to the window object to catch any direct references
-    (window as any).useSyncExternalStore = (window as any).React.useSyncExternalStore;
+    windowAny.useSyncExternalStore = windowAny.React.useSyncExternalStore;
   }
 
   // Prevent production build errors globally using the same robust approach
   if (typeof globalThis !== 'undefined') {
-    globalThis.__USE_SYNC_EXTERNAL_STORE_POLYFILL__ = true;
+    const globalAny = globalThis as any;
+    globalAny.__USE_SYNC_EXTERNAL_STORE_POLYFILL__ = true;
+    
+    // Fix minified variables globally
+    if (globalAny.G === undefined) globalAny.G = {};
+    if (globalAny.ni === undefined) globalAny.ni = {};
     
     // Global React polyfill with non-overridable properties
-    if (!globalThis.React) {
+    if (!globalAny.React) {
       Object.defineProperty(globalThis, 'React', {
         value: {},
         writable: false,
@@ -91,9 +128,9 @@ const applyReactStateFix = () => {
     }
     
     // Add useState with defineProperty
-    if (!globalThis.React.useState) {
-      Object.defineProperty(globalThis.React, 'useState', {
-        value: function(initialState) {
+    if (!globalAny.React.useState) {
+      Object.defineProperty(globalAny.React, 'useState', {
+        value: function(initialState: any) {
           return [initialState, function() { console.log('useState setter called (global polyfill)'); }];
         },
         writable: false,
@@ -102,10 +139,14 @@ const applyReactStateFix = () => {
     }
     
     // Add useSyncExternalStore with defineProperty
-    if (!globalThis.React.useSyncExternalStore) {
-      Object.defineProperty(globalThis.React, 'useSyncExternalStore', {
-        value: function(subscribe, getSnapshot, getServerSnapshot) {
+    if (!globalAny.React.useSyncExternalStore) {
+      Object.defineProperty(globalAny.React, 'useSyncExternalStore', {
+        value: function(subscribe: any, getSnapshot: any, getServerSnapshot?: any) {
           try {
+            // Fix global undefined variables
+            if (globalAny.G === undefined) globalAny.G = {};
+            if (globalAny.ni === undefined) globalAny.ni = {};
+            
             return getSnapshot();
           } catch (e) {
             console.log('useSyncExternalStore error (global polyfill):', e);
