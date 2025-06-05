@@ -7,10 +7,10 @@
 import React, { Suspense, lazy } from 'react';
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Settings, Shield, Bell, Palette, Globe, User } from 'lucide-react';
+import { Settings as SettingsIcon, Shield, Bell, Palette, Globe, User } from 'lucide-react';
 
 // Dynamically load the Settings component
-const Settings = lazy(() => import("@/pages/Settings"));
+const SettingsComponent = lazy(() => import("@/pages/Settings"));
 
 // Custom loading skeleton that matches the Settings page layout
 const SettingsLoadingSkeleton = () => (
@@ -24,7 +24,7 @@ const SettingsLoadingSkeleton = () => (
       {/* Header skeleton */}
       <div className="mb-6">
         <div className="flex items-center space-x-3 mb-2">
-          <Settings className="h-8 w-8 text-cybergold-400" />
+          <SettingsIcon className="h-8 w-8 text-cybergold-400" />
           <Skeleton className="h-8 w-32 bg-cyberdark-700" />
         </div>
         <Skeleton className="h-4 w-64 bg-cyberdark-700" />
@@ -139,7 +139,7 @@ const SettingsLoadingSkeleton = () => (
 export const DynamicSettings: React.FC = () => {
   return (
     <Suspense fallback={<SettingsLoadingSkeleton />}>
-      <Settings />
+      <SettingsComponent />
     </Suspense>
   );
 };
