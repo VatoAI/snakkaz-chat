@@ -1,4 +1,0 @@
-./README.md
-./README-SNAKKAZ.md
-./PROSJEKT-OPPRYDDING-ANALYSE.md
-./.devcontainer/README.md

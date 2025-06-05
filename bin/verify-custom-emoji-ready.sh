@@ -1,1 +1,0 @@
-../scripts/verification/verify-custom-emoji-ready.sh

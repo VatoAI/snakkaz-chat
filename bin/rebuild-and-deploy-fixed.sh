@@ -1,1 +1,0 @@
-../scripts/deployment/rebuild-and-deploy-fixed.sh

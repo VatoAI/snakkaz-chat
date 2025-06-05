@@ -1,1 +1,0 @@
-../scripts/deployment/deploy-to-namecheap.sh

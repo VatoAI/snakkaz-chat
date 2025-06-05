@@ -1,1 +1,0 @@
-../scripts/deployment/fix-404-deploy-check.sh

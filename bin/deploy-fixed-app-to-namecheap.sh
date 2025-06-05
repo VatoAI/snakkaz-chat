@@ -1,1 +1,0 @@
-../scripts/deployment/deploy-fixed-app-to-namecheap.sh

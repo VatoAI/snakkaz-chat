@@ -1,21 +1,16 @@
 /**
- * React Polyfill - Må importeres før alt annet
+ * React Polyfill - Enkel versjon - Juni 5, 2025
  * Dette sikrer at React og useState er tilgjengelig tidlig i lasterekkefølgen
- * 
- * Enhanced with self-healing capabilities - Juni 3, 2025
  */
-
-// Import the improved React state fix with self-healing functionality
-import './utils/reactStateFixV2';
 
 // Export dummy functions to ensure this module is used
 export const ensureReactAvailable = (): void => {
   if (typeof window !== 'undefined' && !window.React) {
     console.warn('React not available - applying emergency polyfill');
-    window.React = {};
+    (window as any).React = {};
     
-    if (!window.React.useState) {
-      window.React.useState = function(initialState: unknown): [unknown, (value: unknown) => void] {
+    if (!(window as any).React.useState) {
+      (window as any).React.useState = function(initialState: unknown): [unknown, (value: unknown) => void] {
         return [initialState, function(value: unknown): void {}];
       };
     }

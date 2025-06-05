@@ -1,1 +1,0 @@
-../scripts/deployment/verify-emoji-deployment.sh

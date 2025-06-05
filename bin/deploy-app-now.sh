@@ -1,1 +1,0 @@
-../scripts/deployment/deploy-app-now.sh

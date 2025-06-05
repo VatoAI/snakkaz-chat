@@ -1,1 +1,0 @@
-const s=e=>new TextEncoder().encode(e).buffer,a=e=>new TextDecoder().decode(new Uint8Array(e)),c=e=>{const n=new Uint8Array(e).reduce((t,o)=>t+String.fromCharCode(o),"");return btoa(n)},d=e=>{const r=atob(e),n=new Uint8Array(r.length);for(let t=0;t<r.length;t++)n[t]=r.charCodeAt(t);return n.buffer};export{c as a,d as b,a as c,s};

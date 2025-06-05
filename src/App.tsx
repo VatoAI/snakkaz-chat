@@ -10,13 +10,6 @@ import { bootstrapSecurityFeatures } from '@/services/security/securityIntegrati
 import { ENV } from './utils/env/environmentFix';
 import { initializePreview, shouldShowPreviewNotice, getPreviewDisplayInfo } from '@/utils/supabase/preview-fix';
 
-// FINAL React state fix - Juni 4, 2025
-import applyFinalReactStateFix from './utils/reactStateFixFINAL';
-
-// Execute the final fix immediately
-const finalFixResult = applyFinalReactStateFix();
-console.log('🚨 FINAL React State Fix executed:', finalFixResult);
-
 // Lazy load components with route-based chunking for optimal performance
 const Login = lazy(() => import("@/pages/Login"));
 const Register = lazy(() => import("@/pages/Register"));

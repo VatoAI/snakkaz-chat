@@ -1,1 +1,0 @@
-../scripts/deployment/monitor-live-deployment.sh

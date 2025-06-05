@@ -1,1 +1,0 @@
-../scripts/deployment/enhanced-ftp-deploy.sh

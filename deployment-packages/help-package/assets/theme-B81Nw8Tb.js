@@ -1,1 +1,0 @@
-import{t as p,c as r}from"./vendor-utils-hcQ3DXb5.js";function t(...x){return p(r(x))}const a={colors:{},shadows:{sm:"0 1px 2px 0 rgba(0, 0, 0, 0.05)",md:"0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)"}};export{t as c,a as t};

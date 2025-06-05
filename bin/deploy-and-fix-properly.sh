@@ -1,1 +1,0 @@
-../scripts/deployment/deploy-and-fix-properly.sh

@@ -1,1 +1,0 @@
-../scripts/deployment/deploy-with-cpanel-api-token.sh
