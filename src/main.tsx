@@ -1,12 +1,15 @@
 /**
  * Snakkaz Chat - Main Entry Point
- * Clean Version - Juni 5, 2025
+ * Enhanced for Norwegian Tech Community - Juni 7, 2025
  */
 
 import './reactPolyfill';
 
 // Import environment fix to ensure process.env is available
 import './utils/env/environmentFix';
+
+// Norwegian UX Performance Monitoring
+import './utils/performanceMonitor';
 
 import React from 'react';
 import { createRoot } from 'react-dom/client';
@@ -18,11 +21,15 @@ import './styles/custom-emoji.css';
 // Import the preview-fix utilities - the App component will initialize them
 import '@/utils/supabase/preview-fix';
 
-// Simplified global error handler
+// Enhanced global error handler for Norwegian users
 const handleGlobalError = (event: Event | Error) => {
   try {
-    console.log('Global error handlers initialized');
-    // Silent mode - just prevent crashing
+    console.log('🇳🇴 Global error handlers initialized for Norwegian tech community');
+    
+    // Enhanced error tracking for better UX
+    if (window.snakkazPerformance) {
+      console.log('📊 Performance monitoring active');
+    }
   } catch (e) {
     // Completely silent fail
   }
