@@ -1,0 +1,17 @@
+(function() {
+  console.log('🚨 APPLYING IMMEDIATE SNAKKAZ FIX...');
+  function createEmergencyUseState() {
+    return function(initialState) {
+      let currentState = initialState;
+      function setState(newState) {
+        currentState = typeof newState === 'function' ? newState(currentState) : newState;
+      }
+      return [currentState, setState];
+    };
+  }
+  if (!window.React) window.React = {};
+  if (!window.React.useState) window.React.useState = createEmergencyUseState();
+  if (!window.Nt) window.Nt = createEmergencyUseState();
+  console.log('✅ Emergency fix applied - refresh page');
+  location.reload();
+})();
