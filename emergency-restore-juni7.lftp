@@ -1,0 +1,4 @@
+open ftp://premium123.web-hosting.com:2083
+user snakksge_snakkaz Kj88Hh99Pp55Tt44Oo
+mirror -R dist/ public_html/
+quit
