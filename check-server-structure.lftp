@@ -1,0 +1,16 @@
+set ftp:ssl-allow no
+set ssl:verify-certificate no
+open ftp://SnakkaZ@snakkaz.com:Eplekake123!@ftp.snakkaz.com
+cd /public_html
+
+ls -la
+
+echo "Checking if assets directory exists..."
+cd assets
+ls -la
+
+echo "Checking if js directory exists..."
+cd js
+ls -la
+
+quit

@@ -1,0 +1,25 @@
+set ftp:ssl-allow no
+set ssl:verify-certificate no
+open ftp://SnakkaZ@snakkaz.com:Eplekake123!@ftp.snakkaz.com
+cd /public_html
+
+echo "Creating assets directory if needed..."
+mkdir -p assets
+cd assets
+
+echo "Creating js directory if needed..."  
+mkdir -p js
+cd js
+
+echo "Now uploading vendor files..."
+lcd /workspaces/snakkaz-chat/dist/assets/js
+
+mput vendor-react-core-iFRBiayd.js
+mput vendor-supabase-core-BqDz4zbK.js
+mput vendor-router-B0BV1ApG.js
+mput vendor-react-dom-DJJO0aee.js
+mput vendor-tailwind-DI7x5DrD.js
+
+ls -la
+
+quit
