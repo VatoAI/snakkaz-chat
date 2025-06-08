@@ -1,0 +1,26 @@
+set ssl:verify-certificate no
+set ftp:ssl-allow no
+set cmd:fail-exit yes
+
+open ftp://snakkaz.com
+user snakkaz.com snak6452
+
+# Clear existing files first (backup approach)
+mirror --reverse --delete --verbose dist/ public_html/
+
+# Alternative: Upload specific critical files
+lcd dist
+cd public_html
+
+# Upload main files
+put index.html
+put .htaccess
+
+# Upload assets
+mirror --reverse --verbose assets/ assets/
+
+# Verify upload
+ls -la
+ls -la assets/js/ | head -10
+
+quit
