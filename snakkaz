@@ -1,0 +1,208 @@
+#!/bin/bash
+
+# 🎯 SNAKKAZ SYSTEMATIC CODESPACE OPERATIONS
+# Essential daily workflow commands for optimal development
+
+echo "🚀 SNAKKAZ CODESPACE OPERATIONS"
+echo "==============================="
+echo ""
+
+# Function to show available operations
+show_operations() {
+    echo "Available operations:"
+    echo ""
+    echo "📊 DAILY OPERATIONS:"
+    echo "  sync     - Full git sync (pull, status, push)"
+    echo "  dev      - Start development environment"
+    echo "  build    - Create production build"
+    echo "  deploy   - Deploy to production"
+    echo "  status   - Check deployment status"
+    echo ""
+    echo "🔧 DEVELOPMENT:"
+    echo "  lint     - Run code quality checks"
+    echo "  clean    - Clean build artifacts"
+    echo "  install  - Install/update dependencies"
+    echo ""
+    echo "🚨 EMERGENCY:"
+    echo "  emergency - Emergency deployment"
+    echo "  fix      - Quick fix deployment"
+    echo "  monitor  - Monitor live site"
+    echo ""
+    echo "📋 MANAGEMENT:"
+    echo "  docs     - Open documentation"
+    echo "  logs     - View recent commits"
+    echo "  help     - Show this help"
+    echo ""
+}
+
+# Function for git sync
+git_sync() {
+    echo "🔄 SYNCING WITH REPOSITORY..."
+    echo ""
+    echo "📊 Current status:"
+    git status
+    echo ""
+    echo "⬇️ Pulling latest changes..."
+    git pull origin main
+    echo ""
+    echo "⬆️ Pushing local changes..."
+    git add .
+    if [ -n "$(git diff --staged)" ]; then
+        echo "📝 Enter commit message (or press Enter for auto-message):"
+        read -r commit_msg
+        if [ -z "$commit_msg" ]; then
+            commit_msg="🔄 Daily sync - $(date '+%Y-%m-%d %H:%M')"
+        fi
+        git commit -m "$commit_msg"
+        git push origin main
+        echo "✅ Changes committed and pushed"
+    else
+        echo "✅ No changes to commit"
+    fi
+}
+
+# Function for development start
+start_dev() {
+    echo "🚀 STARTING DEVELOPMENT ENVIRONMENT..."
+    echo ""
+    echo "📦 Installing dependencies..."
+    npm install --legacy-peer-deps
+    echo ""
+    echo "🔥 Starting development server..."
+    echo "🌐 Will open at http://localhost:5173"
+    npm run dev
+}
+
+# Function for production build
+build_prod() {
+    echo "📦 BUILDING FOR PRODUCTION..."
+    echo ""
+    echo "🧹 Cleaning previous build..."
+    npm run clean 2>/dev/null || rm -rf dist
+    echo ""
+    echo "🔍 Running linter..."
+    npm run lint
+    echo ""
+    echo "🏗️ Building application..."
+    npm run build
+    echo ""
+    if [ -f "dist/index.html" ]; then
+        echo "✅ Build successful!"
+        echo "📊 Bundle analysis:"
+        ls -la dist/assets/js/ | head -10
+        echo "... (showing first 10 of $(ls dist/assets/js/*.js | wc -l) JS files)"
+    else
+        echo "❌ Build failed!"
+        exit 1
+    fi
+}
+
+# Function for deployment
+deploy_app() {
+    echo "🚀 DEPLOYING TO PRODUCTION..."
+    echo ""
+    echo "📦 Building application..."
+    build_prod
+    echo ""
+    echo "⬆️ Committing and pushing..."
+    git add .
+    git commit -m "🚀 Production deployment - $(date '+%Y-%m-%d %H:%M')"
+    git push origin main
+    echo ""
+    echo "⏳ GitHub Actions will deploy automatically"
+    echo "🔍 Monitor at: https://github.com/VatoAI/snakkaz-chat/actions"
+    echo ""
+    echo "✅ Deployment initiated!"
+}
+
+# Function to check status
+check_status() {
+    echo "📊 SNAKKAZ STATUS CHECK"
+    echo "======================"
+    echo ""
+    echo "🌐 Testing live site..."
+    if curl -s --head https://www.snakkaz.com | head -n 1 | grep -q "200 OK"; then
+        echo "✅ Site is online - https://www.snakkaz.com"
+    else
+        echo "❌ Site appears to be down"
+    fi
+    echo ""
+    echo "📝 Recent commits:"
+    git log --oneline -5
+    echo ""
+    echo "📊 Current git status:"
+    git status
+}
+
+# Function for emergency deployment
+emergency_deploy() {
+    echo "🚨 EMERGENCY DEPLOYMENT INITIATED"
+    echo "================================"
+    echo ""
+    if [ -f "./scripts/deployment/emergency-deploy-juni7.sh" ]; then
+        ./scripts/deployment/emergency-deploy-juni7.sh
+    elif [ -f "./tools/archived/emergency-deploy-juni7.sh" ]; then
+        ./tools/archived/emergency-deploy-juni7.sh
+    else
+        echo "⚠️ Emergency script not found, using direct deployment..."
+        deploy_app
+    fi
+}
+
+# Main script logic
+case "${1:-help}" in
+    "sync")
+        git_sync
+        ;;
+    "dev")
+        start_dev
+        ;;
+    "build")
+        build_prod
+        ;;
+    "deploy")
+        deploy_app
+        ;;
+    "status")
+        check_status
+        ;;
+    "lint")
+        echo "🔍 Running code quality checks..."
+        npm run lint
+        ;;
+    "clean")
+        echo "🧹 Cleaning build artifacts..."
+        rm -rf dist node_modules/.cache
+        echo "✅ Clean complete"
+        ;;
+    "install")
+        echo "📦 Installing/updating dependencies..."
+        npm install --legacy-peer-deps
+        ;;
+    "emergency")
+        emergency_deploy
+        ;;
+    "fix")
+        echo "🔧 Quick fix deployment..."
+        git add .
+        git commit -m "🔧 Quick fix - $(date '+%Y-%m-%d %H:%M')"
+        git push origin main
+        ;;
+    "monitor")
+        echo "📊 Monitoring live site..."
+        ./enhanced-health-monitor.sh 2>/dev/null || echo "Monitor script not found"
+        ;;
+    "docs")
+        echo "📚 Opening documentation..."
+        echo "📋 Main overview: SNAKKAZ-99-PERCENT-COMPLETE-OVERVIEW-AND-RESTRUCTURING.md"
+        echo "📋 Architecture: docs/architecture/SNAKKAZ-MASTER-PROMPT.md"
+        echo "📋 Current status: docs/current-status/"
+        ;;
+    "logs")
+        echo "📝 Recent commit history:"
+        git log --oneline -10
+        ;;
+    "help"|*)
+        show_operations
+        ;;
+esac
