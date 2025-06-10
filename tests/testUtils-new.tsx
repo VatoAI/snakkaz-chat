@@ -4,8 +4,23 @@ import { MemoryRouter, MemoryRouterProps } from 'react-router-dom';
 import { AuthContext } from '@/contexts/AuthContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-// Mock auth context creator
-export const createMockAuthContext = (overrides = {}) => ({
+// Mock auth context types
+interface MockAuthContextType {
+  user: any;
+  isLoading: boolean;
+  error: string | null;
+  signIn: jest.Mock;
+  signOut: jest.Mock;
+  signUp: jest.Mock;
+  resetPassword: jest.Mock;
+  updateProfile: jest.Mock;
+  updatePassword: jest.Mock;
+  enableEncryption: jest.Mock;
+  upgradeToPremuim: jest.Mock;
+}
+
+// Create default mock auth context
+export const createMockAuthContext = (overrides: Partial<MockAuthContextType> = {}): MockAuthContextType => ({
   user: null,
   isLoading: false,
   error: null,
@@ -20,6 +35,7 @@ export const createMockAuthContext = (overrides = {}) => ({
   ...overrides,
 });
 
+// Mock authenticated user
 export const mockAuthenticatedUser = {
   id: 'test-user-id',
   email: 'test@snakkaz.no',
@@ -31,29 +47,37 @@ export const mockAuthenticatedUser = {
   updated_at: '2025-06-08T10:00:00Z',
 };
 
-export const createAuthenticatedMockContext = (userOverrides = {}) => 
+// Helper functions for different auth states
+export const createAuthenticatedMockContext = (userOverrides = {}): MockAuthContextType => 
   createMockAuthContext({
     user: { ...mockAuthenticatedUser, ...userOverrides },
     isLoading: false,
   });
 
-export const createUnauthenticatedMockContext = () => 
+export const createUnauthenticatedMockContext = (): MockAuthContextType => 
   createMockAuthContext({
     user: null,
     isLoading: false,
   });
 
-// Create a custom render function that includes providers
+export const createLoadingMockContext = (): MockAuthContextType => 
+  createMockAuthContext({
+    user: null,
+    isLoading: true,
+  });
+
+// Custom render options
 interface CustomRenderOptions extends Omit<RenderOptions, 'wrapper'> {
   routerProps?: MemoryRouterProps;
   initialEntries?: string[];
-  authContext?: any;
+  authContext?: MockAuthContextType;
 }
 
+// All providers wrapper
 const AllTheProviders: React.FC<{ 
   children: React.ReactNode; 
   routerProps?: MemoryRouterProps;
-  authContext?: any;
+  authContext?: MockAuthContextType;
 }> = ({ 
   children, 
   routerProps = {},
@@ -78,6 +102,7 @@ const AllTheProviders: React.FC<{
   );
 };
 
+// Custom render function
 const customRender = (
   ui: ReactElement,
   options: CustomRenderOptions = {}
@@ -106,10 +131,16 @@ export const renderWithAuth = (ui: ReactElement, userOverrides = {}, options: Cu
 };
 
 export const renderWithoutAuth = (ui: ReactElement, options: CustomRenderOptions = {}) => {
-  const authContext = options.authContext || createUnauthenticatedMockContext();
   return customRender(ui, {
     ...options,
-    authContext,
+    authContext: createUnauthenticatedMockContext(),
+  });
+};
+
+export const renderWithLoading = (ui: ReactElement, options: CustomRenderOptions = {}) => {
+  return customRender(ui, {
+    ...options,
+    authContext: createLoadingMockContext(),
   });
 };
 
