@@ -5,6 +5,9 @@
 import * as Sentry from '@sentry/react';
 import { getConfig } from '../config/app-config';
 
+// Environment helper
+const getEnv = () => (typeof window !== 'undefined' && window.import_meta_env) || process.env;
+
 // Define ServiceName type
 export type ServiceName = 'SnakkaZ Business Analyser' | 'SnakkaZ Secure Docs' | 'AI Dash Hub' | 'SnakkaZ Analytics Hub';
 
@@ -68,7 +71,7 @@ export async function connectToService(service: ServiceName, url: string): Promi
  */
 export async function checkServiceStatus(url: string, timeout = 3000): Promise<boolean> {
     // Early return for development mode when testing locally
-    if (import.meta.env.DEV && !import.meta.env.VITE_CONNECT_EXTERNAL_SERVICES) {
+    if (getEnv().DEV && !getEnv().VITE_CONNECT_EXTERNAL_SERVICES) {
         const domain = new URL(url).hostname;
         if (SUPPRESS_DOMAINS.has(domain)) {
             return false;
@@ -106,7 +109,8 @@ export async function checkServiceStatus(url: string, timeout = 3000): Promise<b
         return true;
     } catch (error) {
         // Silent error handling in development mode
-        if (import.meta.env.DEV && !import.meta.env.VITE_DEBUG_NETWORK) {
+        const env = getEnv();
+        if (env.NODE_ENV === 'development' && !env.VITE_DEBUG_NETWORK) {
             // Don't log anything
         } else {
             console.debug(`Service connection failed: ${url}`);
@@ -155,7 +159,8 @@ export function setupSilentFetch(): void {
             const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
             const domain = new URL(url, window.location.origin).hostname;
 
-            if (SUPPRESS_DOMAINS.has(domain) && import.meta.env.DEV) {
+            const env = getEnv();
+            if (SUPPRESS_DOMAINS.has(domain) && env.NODE_ENV === 'development') {
                 // Return a mock response for development
                 return new Response(null, { status: 200 });
             }
@@ -171,7 +176,8 @@ export function setupSilentFetch(): void {
  */
 export function initializeSentry(): void {
     const config = getConfig();
-    const isProd = import.meta.env.PROD;
+    const env = getEnv();
+    const isProd = env.NODE_ENV === 'production';
     const sentryDsn = config.sentryDsn;
 
     if (isProd && sentryDsn) {
@@ -192,8 +198,8 @@ export function initializeSentry(): void {
                 replaysSessionSampleRate: 0.1,
                 // Capture Replay for 100% of sessions with an error
                 replaysOnErrorSampleRate: 1.0,
-                environment: import.meta.env.MODE,
-                release: `snakkaz-chat@${import.meta.env.VITE_APP_VERSION || '1.0.0'}`,
+                environment: env.NODE_ENV || 'development',
+                release: `snakkaz-chat@${env.VITE_APP_VERSION || '1.0.0'}`,
                 beforeSend(event) {
                     // Don't send events for known issues or development environments
                     if (!isProd) {
@@ -237,14 +243,16 @@ export function setupErrorHandlers(): void {
     window.onerror = function (message, source, lineno, colno, error) {
         if (typeof source === 'string') {
             const suppressedDomains = Array.from(SUPPRESS_DOMAINS);
-            if (suppressedDomains.some(domain => source.includes(domain)) && import.meta.env.DEV) {
+            const env = getEnv();
+            if (suppressedDomains.some(domain => source.includes(domain)) && env.NODE_ENV === 'development') {
                 // Prevent error from showing in console
                 return true;
             }
         }
 
         // Capture in Sentry for production environment
-        if (import.meta.env.PROD && error && getConfig().sentryDsn) {
+        const env = getEnv();
+        if (env.NODE_ENV === 'production' && error && getConfig().sentryDsn) {
             Sentry.captureException(error, {
                 extra: {
                     source,
@@ -271,7 +279,8 @@ export function setupErrorHandlers(): void {
 
         if (typeof event.filename === 'string') {
             const suppressedDomains = Array.from(SUPPRESS_DOMAINS);
-            if (suppressedDomains.some(domain => event.filename.includes(domain)) && import.meta.env.DEV) {
+            const env = getEnv();
+            if (suppressedDomains.some(domain => event.filename.includes(domain)) && env.NODE_ENV === 'development') {
                 // Prevent error from showing in console
                 event.preventDefault();
                 event.stopPropagation();
@@ -282,7 +291,8 @@ export function setupErrorHandlers(): void {
 
     // Monitor fetch errors
     window.addEventListener('unhandledrejection', function(event) {
-        if (import.meta.env.PROD && getConfig().sentryDsn) {
+        const env = getEnv();
+        if (env.NODE_ENV === 'production' && getConfig().sentryDsn) {
             if (event.reason instanceof Error) {
                 Sentry.captureException(event.reason);
             } else {

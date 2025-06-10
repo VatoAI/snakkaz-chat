@@ -11,12 +11,12 @@ import { createClient } from '@supabase/supabase-js';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 // Environment values with fallbacks for production stability
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://wqpoozpbceucynsojmbk.supabase.co';
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 
+const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://wqpoozpbceucynsojmbk.supabase.co';
+const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || 
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndxcG9venBiY2V1Y3luc29qbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzk1NjgzMDUsImV4cCI6MjA1NTE0NDMwNX0.vu1s86gQKEPXFleOZ1U2uOjW-kj4k4RAiKTbOuXPUD8';
 
 // Log configuration in development only
-if (import.meta.env.DEV) {
+if (process.env.NODE_ENV !== 'production') {
   console.log('Supabase Singleton: Initializing with URL:', SUPABASE_URL);
 }
 
@@ -42,7 +42,7 @@ class SupabaseSingleton {
         },
       });
       
-      if (import.meta.env.DEV) {
+      if (process.env.NODE_ENV !== 'production') {
         console.log('Supabase Singleton: Client instance created successfully');
       }
     }

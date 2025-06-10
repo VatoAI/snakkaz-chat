@@ -135,7 +135,7 @@ function setupResourceErrorHandler() {
 // Log error details in a structured way
 function logErrorDetails(errorType: string, details: any) {
   // Always log to console in development
-  if (import.meta.env.DEV || ERROR_CONFIG.verboseLogging) {
+  if (process.env.NODE_ENV === 'development' || ERROR_CONFIG.verboseLogging) {
     console.group(`%c${errorType}`, 'color: #ff5555; font-weight: bold;');
     console.error(details.message || 'Error occurred');
     
@@ -149,7 +149,7 @@ function logErrorDetails(errorType: string, details: any) {
   }
   
   // In production, we could send this to a backend error logging service
-  if (import.meta.env.PROD) {
+  if (process.env.NODE_ENV === 'production') {
     try {
       // This could be replaced with a call to an error logging service
       logErrorToLocalStorage(errorType, details);

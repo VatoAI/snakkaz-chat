@@ -6,7 +6,7 @@
  */
 
 // Default environment from Vite
-export const MODE = import.meta.env?.MODE || 'production';
+export const MODE = (typeof window !== 'undefined' && window.import_meta_env?.MODE) || process.env.NODE_ENV || 'production';
 export const DEV = MODE === 'development';
 export const PROD = MODE === 'production';
 

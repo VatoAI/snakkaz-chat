@@ -48,10 +48,10 @@ interface ErrorServiceConfig {
 
 // Default configuration
 const defaultConfig: ErrorServiceConfig = {
-  environment: import.meta.env.MODE as 'development' | 'staging' | 'production',
-  sentryDsn: import.meta.env.VITE_SENTRY_DSN,
-  consoleEnabled: import.meta.env.MODE !== 'production',
-  telemetryEnabled: import.meta.env.MODE === 'production',
+  environment: process.env.NODE_ENV as 'development' | 'staging' | 'production',
+  sentryDsn: process.env.VITE_SENTRY_DSN,
+  consoleEnabled: process.env.NODE_ENV !== 'production',
+  telemetryEnabled: process.env.NODE_ENV === 'production',
   maxRetries: 3
 };
 

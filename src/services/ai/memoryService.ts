@@ -81,8 +81,8 @@ export class MemoryService {
   private apiKey: string;
 
   constructor() {
-    this.mcpEndpoint = import.meta.env.VITE_MCP_MEMORY_ENDPOINT || 'http://localhost:3003';
-    this.apiKey = import.meta.env.VITE_MCP_API_KEY || '';
+    this.mcpEndpoint = process.env.VITE_MCP_MEMORY_ENDPOINT || 'http://localhost:3003';
+    this.apiKey = process.env.VITE_MCP_API_KEY || '';
   }
 
   private async callMCPTool(toolName: string, args: Record<string, any>): Promise<any> {

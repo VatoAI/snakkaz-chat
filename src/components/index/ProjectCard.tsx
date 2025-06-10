@@ -17,7 +17,7 @@ export interface ProjectProps {
 }
 
 // Check if we're in development mode
-const isDevelopment = import.meta.env.DEV;
+const isDevelopment = process.env.NODE_ENV === 'development';
 
 export const ProjectCard = ({ title, description, previewUrl, githubUrl, category, hasSupabase, progress = 0 }: ProjectProps) => {
   const [refreshKey, setRefreshKey] = useState(0);
@@ -52,7 +52,7 @@ export const ProjectCard = ({ title, description, previewUrl, githubUrl, categor
       } catch (error) {
         setProjectStatus('offline');
         // Only log in development mode if explicitly enabled
-        if (import.meta.env.VITE_DEBUG_NETWORK === 'true') {
+        if (process.env.VITE_DEBUG_NETWORK === 'true') {
           console.debug(`[Dev] Could not connect to ${title} - expected in development`);
         }
       }
@@ -181,7 +181,7 @@ export const ProjectCard = ({ title, description, previewUrl, githubUrl, categor
                 className="w-full h-full object-cover transition-all duration-300 group-hover:scale-105"
                 onLoad={() => setImageLoading(false)}
                 onError={(e) => {
-                  if (import.meta.env.VITE_DEBUG_IMAGES === 'true') {
+                  if (process.env.VITE_DEBUG_IMAGES === 'true') {
                     console.debug(`[Dev] Image failed to load for ${title}, using fallback`);
                   }
                   setImageError(true);

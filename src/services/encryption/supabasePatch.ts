@@ -9,12 +9,12 @@
 
 import { supabase as supabaseInstance } from '@/lib/supabaseClient';
 
-// For configuration diagnostics - use import.meta.env for consistency
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
-const ENV_CHECK = !!import.meta.env.VITE_SUPABASE_URL && !!import.meta.env.VITE_SUPABASE_ANON_KEY;
+// For configuration diagnostics - use process.env for Jest compatibility
+const SUPABASE_URL = process.env.VITE_SUPABASE_URL || '';
+const ENV_CHECK = !!(process.env.VITE_SUPABASE_URL) && !!(process.env.VITE_SUPABASE_ANON_KEY);
 
 // Helper to log config issues during development
-if (import.meta.env.DEV && !ENV_CHECK) {
+if (process.env.NODE_ENV !== 'production' && !ENV_CHECK) {
   console.warn(
     'Supabase configuration issue detected! Ensure you have set the following environment variables:\n' +
     '- VITE_SUPABASE_URL\n' + 
@@ -29,7 +29,7 @@ export const supabaseClient = supabaseInstance;
 // IMPORTANT: Export a function that returns the singleton to avoid breaking existing code
 export const createSupabaseClient = () => {
   // Warn about deprecated usage in development
-  if (import.meta.env.DEV) {
+  if (process.env.NODE_ENV !== 'production') {
     console.warn(
       'The createSupabaseClient() function is deprecated and will be removed in a future version.\n' +
       'Please import the supabase client directly from @/lib/supabaseClient instead.'
@@ -44,7 +44,7 @@ export const verifySupabaseConfig = () => {
   try {
     const isConfigValid = !!supabaseInstance && ENV_CHECK;
     
-    if (import.meta.env.DEV) {
+    if (process.env.NODE_ENV !== 'production') {
       console.log('Supabase config verification result:', isConfigValid ? 'Valid ✓' : 'Invalid ✗');
       
       if (!isConfigValid) {

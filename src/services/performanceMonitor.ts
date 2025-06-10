@@ -41,10 +41,10 @@ interface PerformanceMonitorConfig {
 
 // Standard konfigurasjon
 const defaultConfig: PerformanceMonitorConfig = {
-  enabled: import.meta.env.MODE === 'production',
+  enabled: process.env.NODE_ENV === 'production',
   sampleRate: 0.1,  // 10% av alle målinger
-  sentryEnabled: import.meta.env.MODE === 'production',
-  consoleEnabled: import.meta.env.MODE !== 'production',
+  sentryEnabled: process.env.NODE_ENV === 'production',
+  consoleEnabled: process.env.NODE_ENV !== 'production',
   slowThreshold: {
     navigation: 1000,   // 1 sekund
     apiCall: 500,       // 500 ms

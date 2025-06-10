@@ -19,19 +19,19 @@ export const ExternalServicesStatus: React.FC = () => {
     'AI Dash Hub': false,
     'SnakkaZ Analytics Hub': false
   });
-  const [isDevMode] = useState(() => import.meta.env.DEV);
+  const [isDevMode] = useState(() => process.env.NODE_ENV === 'development');
 
   // Service URL mapping
   const serviceUrls: Record<ServiceName, string> = {
-    'SnakkaZ Business Analyser': import.meta.env.VITE_SNAKKAZ_BUSINESS_ANALYSER_URL || '',
-    'SnakkaZ Secure Docs': import.meta.env.VITE_SNAKKAZ_SECURE_DOCS_URL || '',
-    'AI Dash Hub': import.meta.env.VITE_AI_DASH_HUB_URL || '',
-    'SnakkaZ Analytics Hub': import.meta.env.VITE_SNAKKAZ_ANALYTICS_HUB_URL || ''
+    'SnakkaZ Business Analyser': process.env.VITE_SNAKKAZ_BUSINESS_ANALYSER_URL || '',
+    'SnakkaZ Secure Docs': process.env.VITE_SNAKKAZ_SECURE_DOCS_URL || '',
+    'AI Dash Hub': process.env.VITE_AI_DASH_HUB_URL || '',
+    'SnakkaZ Analytics Hub': process.env.VITE_SNAKKAZ_ANALYTICS_HUB_URL || ''
   };
 
   // Connect to services on component mount if enabled
   useEffect(() => {
-    const enableExternalServices = import.meta.env.VITE_ENABLE_EXTERNAL_SERVICES === 'true';
+    const enableExternalServices = process.env.VITE_ENABLE_EXTERNAL_SERVICES === 'true';
     
     if (enableExternalServices) {
       const services = Object.keys(serviceStatuses) as ServiceName[];
@@ -64,7 +64,7 @@ export const ExternalServicesStatus: React.FC = () => {
   };
 
   // If services are disabled in development, show simplified UI
-  if (isDevMode && import.meta.env.VITE_ENABLE_EXTERNAL_SERVICES !== 'true') {
+  if (isDevMode && process.env.VITE_ENABLE_EXTERNAL_SERVICES !== 'true') {
     return (
       <div className="bg-slate-100 p-4 rounded-lg mb-4">
         <h3 className="font-medium text-lg mb-2">External Services</h3>

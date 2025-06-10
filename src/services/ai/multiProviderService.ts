@@ -1,5 +1,20 @@
-import Anthropic from '@anthropic-ai/sdk';
-import OpenAI from 'openai';
+import Anthropic from '@anthropic-ai/sdk';  private initializeClients() {
+    // Initialize Anthropic
+    if (process.env.VITE_ANTHROPIC_API_KEY) {
+      this.anthropic = new Anthropic({
+        apiKey: process.env.VITE_ANTHROPIC_API_KEY,
+        dangerouslyAllowBrowser: true // Note: For production, use server-side proxy
+      });
+    }
+    
+    // Initialize OpenAI
+    if (process.env.VITE_OPENAI_API_KEY) {
+      this.openai = new OpenAI({
+        apiKey: process.env.VITE_OPENAI_API_KEY,
+        dangerouslyAllowBrowser: true // Note: For production, use server-side proxy
+      });
+    }
+  }om 'openai';
 
 // AI Provider Types
 export type AIProvider = 'anthropic' | 'openai' | 'azure';

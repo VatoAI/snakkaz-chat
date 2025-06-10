@@ -51,6 +51,7 @@ export const searchEmojis = (
 
     // Calculate relevance score based on different matching criteria
     let score = 0;
+    let hasMatch = false;
     const shortcode = emoji.shortcode.toLowerCase();
     const name = emoji.name.toLowerCase();
     const category = emoji.category.toLowerCase();
@@ -58,44 +59,51 @@ export const searchEmojis = (
     // Exact shortcode match (highest priority)
     if (shortcode === normalizedQuery) {
       score += 100;
+      hasMatch = true;
     }
     // Shortcode starts with query
     else if (shortcode.startsWith(normalizedQuery)) {
       score += 50;
+      hasMatch = true;
     }
     // Shortcode contains query
     else if (shortcode.includes(normalizedQuery)) {
       score += 30;
+      hasMatch = true;
     }
 
     // Name exact match
     if (name === normalizedQuery) {
       score += 80;
+      hasMatch = true;
     }
     // Name starts with query
     else if (name.startsWith(normalizedQuery)) {
       score += 40;
+      hasMatch = true;
     }
     // Name contains query
     else if (name.includes(normalizedQuery)) {
       score += 20;
+      hasMatch = true;
     }
 
     // Category match
     if (category.includes(normalizedQuery)) {
       score += 10;
+      hasMatch = true;
     }
 
-    // Bonus for favorites
-    if (emoji.isFavorite) {
-      score += 25;
-    }
+    // Only add bonuses if there's actually a match
+    if (hasMatch) {
+      // Bonus for favorites
+      if (emoji.isFavorite) {
+        score += 25;
+      }
 
-    // Bonus for frequently used emojis
-    score += Math.min(emoji.usage, 10); // Cap usage bonus at 10
+      // Bonus for frequently used emojis
+      score += Math.min(emoji.usage, 10); // Cap usage bonus at 10
 
-    // If there's any match, add to results
-    if (score > 0) {
       results.push({ emoji, score });
     }
   }

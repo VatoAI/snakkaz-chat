@@ -62,11 +62,11 @@ export function useAIChat(): UseAIChatReturn {
   const [apiConfig, setApiConfigState] = useState<APIConfig>({
     endpoint: '',
     apiKey: '',
-    isEnabled: import.meta.env.VITE_AI_ENABLED === 'true',
-    provider: (import.meta.env.VITE_AI_DEFAULT_PROVIDER as AIProvider) || 'anthropic',
-    model: import.meta.env.VITE_AI_DEFAULT_MODEL || 'claude-3-5-sonnet-20241022',
-    maxTokens: parseInt(import.meta.env.VITE_AI_MAX_TOKENS) || 4000,
-    temperature: parseFloat(import.meta.env.VITE_AI_TEMPERATURE) || 0.7
+    isEnabled: process.env.VITE_AI_ENABLED === 'true',
+    provider: (process.env.VITE_AI_DEFAULT_PROVIDER as AIProvider) || 'anthropic',
+    model: process.env.VITE_AI_DEFAULT_MODEL || 'claude-3-5-sonnet-20241022',
+    maxTokens: parseInt(process.env.VITE_AI_MAX_TOKENS) || 4000,
+    temperature: parseFloat(process.env.VITE_AI_TEMPERATURE) || 0.7
   });
 
   // Load API configuration from localStorage on init

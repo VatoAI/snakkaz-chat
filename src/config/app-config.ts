@@ -4,7 +4,7 @@
  */
 
 // Import miljøvariabler fra .env filer
-const env = import.meta.env;
+const env = (typeof window !== 'undefined' && window.import_meta_env) || process.env;
 
 export interface AppConfig {
   appName: string;

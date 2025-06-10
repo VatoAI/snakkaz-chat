@@ -12,7 +12,7 @@ import { supabase as supabaseClient, getSession, getUser } from '@/lib/supabaseC
 export const supabase = supabaseClient;
 
 // Log deprecation notice in development
-if (import.meta.env.DEV) {
+if (process.env.NODE_ENV === 'development') {
   console.warn(
     'The file src/integrations/supabase/client-fixed.ts is deprecated.\n' +
     'Please import the Supabase client from @/lib/supabaseClient instead.'

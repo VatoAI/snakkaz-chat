@@ -39,8 +39,8 @@ export class ElectrumService {
 
   private constructor() {
     // In production, this would point to your Electrum server or API
-    this.serverUrl = import.meta.env.VITE_ELECTRUM_API_URL || 'https://api.electrum.snakkaz.com/v1';
-    this.apiKey = import.meta.env.VITE_ELECTRUM_API_KEY;
+    this.serverUrl = process.env.VITE_ELECTRUM_API_URL || 'https://api.electrum.snakkaz.com/v1';
+    this.apiKey = process.env.VITE_ELECTRUM_API_KEY;
   }
 
   public static getInstance(): ElectrumService {

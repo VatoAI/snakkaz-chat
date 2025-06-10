@@ -13,7 +13,7 @@ export function applyCspPolicy(): void {
   if (typeof document === 'undefined') return;
 
   // Check for development or testing mode
-  const isDev = import.meta.env.DEV || window.location.hostname === 'localhost';
+  const isDev = process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost';
   
   // Define the CSP directives with different strictness based on environment
   const cspDirectives: { [key: string]: string[] } = {
@@ -194,7 +194,7 @@ function setupCspReporting(): void {
   // Define reporting endpoints
   if ('ReportingObserver' in window) {
     // Register a reporting endpoint group
-    const reportingEndpoint = import.meta.env.VITE_CSP_REPORT_ENDPOINT || 'https://analytics.snakkaz.com/api/csp-report';
+    const reportingEndpoint = process.env.VITE_CSP_REPORT_ENDPOINT || 'https://analytics.snakkaz.com/api/csp-report';
     
     try {
       navigator.sendBeacon(reportingEndpoint, JSON.stringify({
@@ -231,9 +231,9 @@ export function enableCspEnforcement(): void {
 export function testCsp() {
   // Check for development or testing mode
   const isDev = typeof window !== 'undefined' && 
-                ((typeof import.meta !== 'undefined' && 
-                  import.meta.env && 
-                  import.meta.env.DEV) || 
+                ((typeof process !== 'undefined' && 
+                  process.env && 
+                  process.env.NODE_ENV === 'development') || 
                  window.location.hostname === 'localhost');
   
   // Build CSP directives object for testing - same as in applyCspPolicy

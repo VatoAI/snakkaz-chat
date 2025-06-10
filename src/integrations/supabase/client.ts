@@ -14,7 +14,7 @@ import { supabase, getSession, getUser } from '@/lib/supabase-singleton'; // Imp
 export { supabase, getSession, getUser };
 
 // Logging only in development environment
-if (import.meta.env.DEV) {
+if (process.env.NODE_ENV !== 'production') {
   console.log('Supabase client re-exported from singleton:', !!supabase);
 }
 
@@ -35,8 +35,8 @@ function createMockClient() {
     // Critical fix for onAuthStateChange
     onAuthStateChange: (callback: (event: string, session: unknown) => void) => {
       console.warn('Mock Supabase: onAuthStateChange registered but will not trigger events');
-      // Return an object with a subscription that can be unsubscribed
-      return {
+      // Return the structure that real Supabase returns with proper data object
+      const mockAuthListener = {
         data: {
           subscription: {
             unsubscribe: () => {
@@ -45,6 +45,7 @@ function createMockClient() {
           }
         }
       };
+      return mockAuthListener;
     }
   };
 
@@ -80,7 +81,7 @@ function createMockClient() {
 }
 
 // Print debug info in development mode
-if (import.meta.env.DEV) {
+if (process.env.NODE_ENV !== 'production') {
   console.log('Using Supabase singleton instance');
   
   // Test connection in development
@@ -102,7 +103,7 @@ if (import.meta.env.DEV) {
 }
 
 // Add enhanced logging for debugging only in development
-if (import.meta.env.DEV && supabase && typeof supabase.channel === 'function') {
+if (process.env.NODE_ENV !== 'production' && supabase && typeof supabase.channel === 'function') {
   try {
     const channel = supabase.channel('console_logging');
     channel.on('*', (event) => {
@@ -123,7 +124,7 @@ if (import.meta.env.DEV && supabase && typeof supabase.channel === 'function') {
  */
 export const createServiceClient = (serviceKey: string) => {
   // Import SUPABASE_URL from the singleton implementation to ensure consistency
-  const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://wqpoozpbceucynsojmbk.supabase.co';
+  const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://wqpoozpbceucynsojmbk.supabase.co';
   
   if (!SUPABASE_URL) {
     throw new Error('Missing Supabase URL for service client');

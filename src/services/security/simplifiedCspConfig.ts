@@ -29,7 +29,7 @@ export function applyCspPolicy(): void {
     document.head.appendChild(meta);
   } catch (error) {
     // Silently fail in production to prevent crashes
-    if (import.meta.env.DEV) {
+    if (process.env.NODE_ENV === 'development') {
       console.error('Failed to apply CSP policy:', error);
     }
   }

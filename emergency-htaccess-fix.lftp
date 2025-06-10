@@ -1,0 +1,18 @@
+#!/usr/bin/env lftp
+# Emergency .htaccess MIME type fix for snakkaz.com
+# Critical production issue - JavaScript files served as text/html
+
+set ftp:ssl-allow no
+set ssl:verify-certificate no
+set ftp:passive-mode on
+
+open ftp://snakqsqe@ftp.snakkaz.com:21098
+
+# Upload the corrected .htaccess file to fix MIME types
+put /workspaces/snakkaz-chat/dist/.htaccess .htaccess
+
+# Verify upload
+ls -la .htaccess
+
+# Disconnect
+bye
