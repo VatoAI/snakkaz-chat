@@ -1,0 +1,8 @@
+#!/usr/bin/env lftp -f
+set ftp:ssl-allow no
+open -u SnakkaZ@snakkaz.com,Eplekake123! ftp://ftp.snakkaz.com
+set ftp:sync-mode off
+cd /
+put /workspaces/snakkaz-chat/dist/index.html -o index.html
+ls -la index.html
+quit
