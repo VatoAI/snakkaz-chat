@@ -1,0 +1,49 @@
+set ssl:verify-certificate no
+set xfer:clobber on
+
+open -u SnakkaZ@snakkaz.com,Eplekake123! ftp://snakkaz.com
+cd public_html
+
+# 1. REMOVE ALL OLD CACHED FILES
+echo "🧹 Removing old JS files..."
+rm -f assets/js/vendor-react-core-*.js
+rm -f assets/js/vendor-react-dom-*.js  
+rm -f assets/js/vendor-misc-*.js
+rm -f assets/js/index-*.js
+rm -f assets/js/*.js.map
+rm -f emergency-react-fix.js
+
+# 2. CLEAR CSS CACHE
+echo "🎨 Clearing CSS cache..."
+rm -f assets/css/index-*.css
+
+# 3. UPLOAD REACT CORE FILES FIRST (CRITICAL ORDER)
+echo "⚛️ Uploading React core files in correct order..."
+cd assets/js
+lcd dist/assets/js
+put -c vendor-react-core-DwHMgWgV.js
+put -c vendor-react-dom-DBKh3-U4.js
+put -c vendor-misc-D0zU6y7X.js
+
+# 4. UPLOAD ALL OTHER JS FILES
+echo "📦 Uploading remaining JS files..."
+mput -c *.js
+mput -c *.js.map
+
+# 5. UPLOAD CSS
+echo "🎨 Uploading CSS..."
+cd ../css
+lcd ../css
+mput -c *.css
+
+# 6. UPLOAD INDEX.HTML LAST (TRIGGERS BROWSER REFRESH)
+echo "📄 Uploading index.html..."
+cd ../../
+lcd dist/
+put -c index.html
+
+# 7. FORCE CACHE HEADERS UPDATE
+echo "💾 Setting cache control headers..."
+put -c .htaccess
+
+quit

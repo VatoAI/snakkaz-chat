@@ -1,4 +1,4 @@
-name: Deploy to Production
+name: 🚀 SnakkaZ Production Deployment
 
 on:
   push:
@@ -6,36 +6,117 @@ on:
   workflow_dispatch:
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v3
+    - name: 📦 Checkout code
+      uses: actions/checkout@v4
     
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
+    - name: 🟢 Setup Node.js
+      uses: actions/setup-node@v4
       with:
         node-version: '18'
         cache: 'npm'
     
-    - name: Install dependencies
+    - name: 📥 Install dependencies
       run: npm ci
     
-    - name: Build application
+    - name: 🏗️ Build application
       run: npm run build
       env:
-        VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-        VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        VITE_SUPABASE_URL: https://wqpoozpbceucynsojmbk.supabase.co
+        VITE_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndxcG9venBiY2V1Y3luc29qbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzk1NjgzMDUsImV4cCI6MjA1NTE0NDMwNX0.vu1s86gQKEPXFleOZ1U2uOjW-kj4k4RAiKTbOuXPUD8
     
-    - name: Deploy to server
+    - name: 🧪 Verify build output
       run: |
-        # Install LFTP
-        sudo apt-get update
-        sudo apt-get install -y lftp
+        echo "✅ Build verification:"
+        ls -la dist/
+        ls -la dist/assets/js/ | grep -E "(vendor-react-core|vendor-react-dom|vendor-misc|index-)"
+        echo "📄 Checking index.html structure:"
+        grep -E "(vendor-react-core|vendor-react-dom|vendor-misc)" dist/index.html || echo "❌ Module order issue"
+    
+    - name: 📡 Install LFTP
+      run: sudo apt-get update && sudo apt-get install -y lftp
+    
+    - name: 🚀 Deploy to production
+      run: |
+        echo "🌐 Deploying to snakkaz.com..."
         
-        # Deploy
-        ./deploy.sh
-      env:
-        FTP_HOST: snakkaz.com
-        FTP_USER: ${{ secrets.FTP_USER }}
-        FTP_PASS: ${{ secrets.FTP_PASS }}
+        # Create deployment script
+        cat > deploy.lftp << 'EOF'
+        set ssl:verify-certificate no
+        set xfer:clobber on
+        
+        open -u SnakkaZ@snakkaz.com,Eplekake123! ftp://snakkaz.com
+        cd public_html
+        
+        # Upload React files in correct order
+        cd assets/js
+        lcd dist/assets/js
+        put -c vendor-react-core-DwHMgWgV.js
+        put -c vendor-react-dom-DBKh3-U4.js  
+        put -c vendor-misc-D0zU6y7X.js
+        
+        # Upload remaining files
+        mput -c *.js
+        mput -c *.js.map
+        
+        # Upload CSS
+        cd ../css
+        lcd ../css
+        mput -c *.css
+        
+        # Upload index.html last
+        cd ../../
+        lcd dist/
+        put -c index.html
+        
+        quit
+        EOF
+        
+        # Run deployment
+        lftp -f deploy.lftp
+        
+        echo "✅ Deployment completed successfully!"
+    
+    - name: 🩺 Health check
+      run: |
+        echo "🔍 Running post-deployment health check..."
+        sleep 10
+        
+        # Check main site
+        if curl -f https://snakkaz.com/ > /dev/null 2>&1; then
+          echo "✅ Main site: OK"
+        else
+          echo "❌ Main site: FAILED"
+          exit 1
+        fi
+        
+        # Check React core file
+        if curl -f https://snakkaz.com/assets/js/vendor-react-core-DwHMgWgV.js > /dev/null 2>&1; then
+          echo "✅ React Core: OK"
+        else
+          echo "❌ React Core: FAILED"
+          exit 1
+        fi
+        
+        echo "🎉 All health checks passed!"
+
+  supabase-health:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 🗄️ Test Supabase connection
+      run: |
+        echo "🔗 Testing Supabase API..."
+        response=$(curl -s -o /dev/null -w "%{http_code}" \
+          -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndxcG9venBiY2V1Y3luc29qbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzk1NjgzMDUsImV4cCI6MjA1NTE0NDMwNX0.vu1s86gQKEPXFleOZ1U2uOjW-kj4k4RAiKTbOuXPUD8" \
+          "https://wqpoozpbceucynsojmbk.supabase.co/rest/v1/")
+        
+        if [ "$response" = "200" ]; then
+          echo "✅ Supabase: OK ($response)"
+        else
+          echo "❌ Supabase: FAILED ($response)"
+          exit 1
+        fi

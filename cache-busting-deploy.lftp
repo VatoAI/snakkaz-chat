@@ -1,0 +1,52 @@
+#!/usr/bin/env lftp
+set ssl:verify-certificate no
+set xfer:clobber on
+
+# Connect to server
+open -u SnakkaZ@snakkaz.com,Eplekake123! ftp://snakkaz.com
+cd public_html
+
+# FORCE CACHE BUST - Remove old files first
+echo "🗑️ Removing old files for cache bust..."
+rm -f index.html
+rm -f emergency-react-fix.js
+rm -f assets/js/index-*.js
+rm -f assets/js/vendor-*.js
+
+# Upload React files in EXACT correct order
+echo "🚀 Uploading React Core FIRST..."
+cd assets/js
+lcd /workspaces/snakkaz-chat/dist/assets/js
+put -c vendor-react-core-DwHMgWgV.js
+
+echo "🚀 Uploading React DOM SECOND..."
+put -c vendor-react-dom-DBKh3-U4.js
+
+echo "🚀 Uploading Vendor Misc THIRD (after React is loaded)..."
+put -c vendor-misc-D0zU6y7X.js
+
+# Upload all other JS files
+echo "📦 Uploading remaining JS files..."
+mput -c *.js
+mput -c *.js.map
+
+# Upload CSS
+echo "🎨 Uploading CSS..."
+cd ../css
+lcd ../css
+mput -c *.css
+
+# Upload corrected index.html LAST (most important!)
+echo "🏁 Uploading corrected index.html (FINAL STEP)..."
+cd ../../
+lcd /workspaces/snakkaz-chat/dist
+put -c index.html
+
+# Force browser cache clearing by setting cache headers
+echo "💥 Forcing cache invalidation..."
+quote SITE CHMOD 644 index.html
+quote SITE CHMOD 644 assets/js/*.js
+
+echo "✅ CACHE-BUSTING DEPLOYMENT COMPLETE!"
+echo "🌐 Visit: https://snakkaz.com (clear browser cache!)"
+quit
