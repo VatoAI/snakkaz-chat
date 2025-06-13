@@ -1,0 +1,112 @@
+#!/usr/bin/env lftp
+set ssl:verify-certificate no
+set xfer:clobber on
+set cmd:trace-buffer yes
+
+# Connect to FTP
+open -u SnakkaZ@snakkaz.com,Eplekake123! ftp://snakkaz.com
+
+# Go to web root
+cd public_html
+
+# Step 1: Upload CSS first (safest)
+echo "=== Uploading CSS files ==="
+lcd /workspaces/snakkaz-chat/dist/assets/css
+mput -c index-uDlWtT9E.css
+
+# Step 2: Upload React core modules FIRST (critical order)
+echo "=== Uploading React Core (FIRST PRIORITY) ==="
+cd assets/js
+lcd /workspaces/snakkaz-chat/dist/assets/js
+put -c vendor-react-core-DwHMgWgV.js
+put -c vendor-react-core-DwHMgWgV.js.map
+
+# Step 3: Upload React DOM (second priority)  
+echo "=== Uploading React DOM (SECOND PRIORITY) ==="
+put -c vendor-react-dom-DBKh3-U4.js
+put -c vendor-react-dom-DBKh3-U4.js.map
+
+# Step 4: Upload remaining vendor files (order matters!)
+echo "=== Uploading remaining vendor files ==="
+put -c vendor-misc-D0zU6y7X.js
+put -c vendor-misc-D0zU6y7X.js.map
+put -c vendor-utils-style-DFYxjbTp.js
+put -c vendor-utils-style-DFYxjbTp.js.map
+put -c vendor-security-CWlgzNgn.js
+put -c vendor-security-CWlgzNgn.js.map
+put -c vendor-router-fNyDCxz3.js
+put -c vendor-router-fNyDCxz3.js.map
+put -c vendor-database-BRmP3Rmf.js
+put -c vendor-database-BRmP3Rmf.js.map
+put -c vendor-ui-components-CttiZxwU.js
+put -c vendor-ui-components-CttiZxwU.js.map
+put -c vendor-animation-mINV3pJO.js
+put -c vendor-animation-mINV3pJO.js.map
+put -c vendor-forms-Cob6igKG.js
+put -c vendor-forms-Cob6igKG.js.map
+put -c vendor-media-special-C7qrPEcm.js
+put -c vendor-media-special-C7qrPEcm.js.map
+
+# Step 5: Upload application files
+echo "=== Uploading application files ==="
+put -c app-services-bUWAQNC5.js
+put -c app-services-bUWAQNC5.js.map
+put -c app-utils-Bmyd2P0r.js
+put -c app-utils-Bmyd2P0r.js.map
+
+# Step 6: Upload component files
+echo "=== Uploading component files ==="
+put -c components-dynamic-zhSt7Ck3.js
+put -c components-dynamic-zhSt7Ck3.js.map
+put -c components-ui-BnMzY6Sf.js
+put -c components-ui-BnMzY6Sf.js.map
+
+# Step 7: Upload page files
+echo "=== Uploading page files ==="
+put -c pages-main-D3VkYZb0.js
+put -c pages-main-D3VkYZb0.js.map
+put -c pages-auth-Bkh1a3PB.js
+put -c pages-auth-Bkh1a3PB.js.map
+put -c pages-features-wi1a1F8S.js
+put -c pages-features-wi1a1F8S.js.map
+put -c pages-social-CAcJdZtQ.js
+put -c pages-social-CAcJdZtQ.js.map
+put -c pages-chat-DGDTO3D2.js
+put -c pages-chat-DGDTO3D2.js.map
+
+# Step 8: Upload specialized components
+echo "=== Uploading specialized components ==="
+put -c EnhancedGroupChat-BnmY923m.js
+put -c EnhancedGroupChat-BnmY923m.js.map
+put -c GroupChatPage-Ch_ZioSh.js
+put -c GroupChatPage-Ch_ZioSh.js.map
+put -c DynamicGroupChatPage-BrhRXSRB.js
+put -c DynamicGroupChatPage-BrhRXSRB.js.map
+put -c AIChatPage-ChlwC5SW.js
+put -c AIChatPage-ChlwC5SW.js.map
+
+# Step 9: Upload main entry point LAST (critical!)
+echo "=== Uploading main entry point (LAST) ==="
+put -c index-BLOqcvUi.js
+put -c index-BLOqcvUi.js.map
+
+# Step 10: Remove emergency React fix if it exists
+echo "=== Cleaning up emergency fixes ==="
+cd /public_html
+rm -f emergency-react-fix.js
+
+# Step 11: Upload corrected index.html VERY LAST
+echo "=== Uploading corrected index.html (FINAL STEP) ==="
+lcd /workspaces/snakkaz-chat/dist
+put -c index.html
+
+# Step 12: Verify critical files exist
+echo "=== Verification ==="
+ls -la assets/js/vendor-react-core-DwHMgWgV.js
+ls -la assets/js/vendor-react-dom-DBKh3-U4.js
+ls -la assets/js/vendor-misc-D0zU6y7X.js
+ls -la assets/js/index-BLOqcvUi.js
+ls -la index.html
+
+echo "=== DEPLOYMENT COMPLETE ==="
+quit
