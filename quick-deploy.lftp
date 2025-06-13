@@ -1,0 +1,39 @@
+#!/usr/bin/env lftp
+set ssl:verify-certificate no
+set xfer:clobber on
+
+# Connect and go to web root
+open -u SnakkaZ@snakkaz.com,Eplekake123! ftp://snakkaz.com
+cd public_html
+
+# Upload CSS
+echo "Uploading CSS..."
+lcd /workspaces/snakkaz-chat/dist/assets/css
+mput -c *.css
+
+# Upload JavaScript files in dependency order
+echo "Uploading React core first..."
+cd ../..
+cd assets/js
+lcd /workspaces/snakkaz-chat/dist/assets/js
+
+# Upload React files in correct order
+put -c vendor-react-core-DwHMgWgV.js
+put -c vendor-react-core-DwHMgWgV.js.map
+put -c vendor-react-dom-DBKh3-U4.js
+put -c vendor-react-dom-DBKh3-U4.js.map
+put -c vendor-misc-D0zU6y7X.js
+put -c vendor-misc-D0zU6y7X.js.map
+
+# Upload all other files
+mput -c *.js
+mput -c *.js.map
+
+# Upload index.html last
+echo "Uploading index.html..."
+cd ../..
+lcd /workspaces/snakkaz-chat/dist
+put -c index.html
+
+echo "=== Deployment successful ==="
+quit

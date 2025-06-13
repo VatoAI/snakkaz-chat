@@ -30,10 +30,7 @@
     "dev:with-supabase": "npm run supabase:start && npm run dev",
     "deploy": "./deploy.sh",
     "deploy:build": "npm run build && echo Build completed successfully",
-    "deploy:clean": "rm -rf dist && npm run build",
-    "deploy:quick": "lftp -f quick-deploy.lftp",
-    "health-check": "./health-check.sh",
-    "clean-deploy": "rm -rf dist && npm run build && ./deploy.sh"
+    "deploy:clean": "rm -rf dist && npm run build"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.52.0",
