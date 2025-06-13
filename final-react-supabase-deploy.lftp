@@ -1,0 +1,51 @@
+set ssl:verify-certificate no
+set xfer:clobber on
+
+open -u SnakkaZ@snakkaz.com,Eplekake123! ftp://snakkaz.com
+cd public_html
+
+echo "🧹 COMPLETE CACHE CLEARING..."
+# Remove ALL old JS files
+rm -f assets/js/*.js
+rm -f assets/js/*.js.map
+
+# Remove all old CSS  
+rm -f assets/css/*.css
+
+# Remove any emergency files
+rm -f emergency-react-fix.js
+rm -f emergency-*.js
+
+echo "⚛️ UPLOADING REACT CORE FILES IN CORRECT ORDER..."
+cd assets/js
+lcd dist/assets/js
+
+# Upload React files in EXACT order for useState fix
+put -c vendor-react-core-DwHMgWgV.js
+echo "✅ React Core uploaded"
+
+put -c vendor-react-dom-DBKh3-U4.js  
+echo "✅ React DOM uploaded"
+
+put -c vendor-misc-D0zU6y7X.js
+echo "✅ Vendor misc uploaded"
+
+echo "📦 UPLOADING ALL OTHER JS FILES..."
+mput -c *.js
+mput -c *.js.map
+
+echo "🎨 UPLOADING CSS..."
+cd ../css
+lcd ../css
+mput -c *.css
+
+echo "📄 UPLOADING CORRECTED INDEX.HTML..."
+cd ../../
+lcd dist/
+put -c index.html
+
+echo "💾 UPDATING .HTACCESS..."
+lcd /workspaces/snakkaz-chat
+put -c .htaccess
+
+quit

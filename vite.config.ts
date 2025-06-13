@@ -3,17 +3,59 @@ import react from '@vitejs/plugin-react'
 import path from 'path'
 import { snakkazCspPlugin } from './src/plugins/snakkazCspPlugin'
 
+// Plugin to fix React module loading order
+const fixReactLoadingOrder = () => {
+  return {
+    name: 'fix-react-loading-order',
+    generateBundle(_options: unknown, bundle: Record<string, unknown>) {
+      // Find the HTML file and fix modulepreload order
+      Object.keys(bundle).forEach(fileName => {
+        const file = bundle[fileName] as { type?: string; source?: string };
+        if (fileName.endsWith('.html') && file.type === 'asset' && file.source) {
+          let html = file.source as string;
+          
+          // Extract all modulepreload links
+          const modulePreloadRegex = /<link rel="modulepreload"[^>]*>/g;
+          const modulePreloads = html.match(modulePreloadRegex) || [];
+          
+          // Sort them in the correct order: React Core -> React DOM -> vendor-misc -> others
+          const sortedPreloads = modulePreloads.sort((a, b) => {
+            if (a.includes('vendor-react-core')) return -2;
+            if (a.includes('vendor-react-dom')) return -1;
+            if (a.includes('vendor-misc')) return 0;
+            return 1;
+          });
+          
+          // Remove all existing modulepreload links
+          html = html.replace(modulePreloadRegex, '');
+          
+          // Insert sorted modulepreload links before the main script
+          const scriptIndex = html.indexOf('<script type="module"');
+          if (scriptIndex !== -1) {
+            const sortedPreloadsStr = sortedPreloads.join('\n    ');
+            html = html.slice(0, scriptIndex) + sortedPreloadsStr + '\n    ' + html.slice(scriptIndex);
+          }
+          
+          file.source = html;
+        }
+      });
+    }
+  };
+};
+
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
+    fixReactLoadingOrder(),
     snakkazCspPlugin({
       debug: mode === 'development',
       // Legg til ekstra CSP-direktiver hvis nødvendig
       additionalDirectives: {
         // For eksempel: 'img-src': ['ytterligere.domene.no']
       }
-    })
+    }),
+    fixReactLoadingOrder()
   ].filter(Boolean),
   resolve: {
     alias: {
