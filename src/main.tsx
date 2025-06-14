@@ -19,8 +19,8 @@ import './index.css';
 import './assets/update-notification.css';
 import './styles/custom-emoji.css';
 
-// Import the preview-fix utilities - the App component will initialize them
-import '@/utils/supabase/preview-fix';
+// DEAKTIVERT: Supabase preview-fix (forårsaker konflikter)
+// import '@/utils/supabase/preview-fix';
 
 // Enhanced global error handler for Norwegian users
 const handleGlobalError = (event: Event | Error) => {

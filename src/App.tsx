@@ -8,7 +8,8 @@ import { verifySupabaseConfig } from '@/services/encryption/supabasePatch';
 import { setupGlobalErrorHandlers } from './utils/error/errorHandling';
 import { bootstrapSecurityFeatures } from '@/services/security/securityIntegration';
 import { ENV } from './utils/env/environmentFix';
-import { initializePreview, shouldShowPreviewNotice, getPreviewDisplayInfo } from '@/utils/supabase/preview-fix';
+// DEAKTIVERT: Supabase preview (forårsaker konflikter og 404-feil)
+// import { initializePreview, shouldShowPreviewNotice, getPreviewDisplayInfo } from '@/utils/supabase/preview-fix';
 
 // Lazy load components with route-based chunking for optimal performance
 const Login = lazy(() => import("@/pages/Login"));
@@ -268,13 +269,14 @@ export default function App() {
         // Verify Supabase configuration
         verifySupabaseConfig();
         
-        // Initialize preview environment if applicable
-        const previewStatus = await initializePreview();
-        setIsPreviewEnv(shouldShowPreviewNotice());
+        // DEAKTIVERT: Preview environment (forårsaker konflikter)
+        // const previewStatus = await initializePreview();
+        // setIsPreviewEnv(shouldShowPreviewNotice());
         
-        if (previewStatus.enabled) {
-          console.log('Running in Supabase preview environment:', previewStatus.branch);
-        }
+        // Force production environment
+        setIsPreviewEnv(false);
+        
+        console.log('Running in PRODUCTION environment - preview disabled');
       } catch (error) {
         console.error('Failed to initialize application:', error);
       }
