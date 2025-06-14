@@ -1,0 +1,31 @@
+# ================================================
+# SNAKKAZ DEPLOYMENT CLEANUP - GITIGNORE UPDATES
+# Juni 14, 2025 - Forhindrer fremtidige konflikter
+# ================================================
+
+# Deployment scripts som kan skape konflikter
+emergency-*.lftp
+deploy-*.sh
+*deploy.lftp
+corrected-*.lftp
+emergency-*.sh
+quick-deploy.*
+manual-deploy.*
+
+# Debug og test scripts
+debug-*.js
+debug-*.mjs
+debug-*.sh
+test-deploy.*
+verify-*.sh
+
+# Backup workflows (skal kun være i backup/)
+deploy.yml
+deploy-unified.yml
+deploy-corrected-ftp.yml
+supabase-preview.yml
+
+# Temporary deployment files
+*.lftp.temp
+*.deploy.temp
+deployment-temp.*

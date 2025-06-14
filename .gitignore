@@ -27,3 +27,15 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Deployment cleanup - Forhindrer workflow-konflikter
+emergency-*.lftp
+deploy-*.sh
+*deploy.lftp
+corrected-*.lftp
+emergency-*.sh
+debug-*.js
+debug-*.mjs
+verify-*.sh
+*.lftp.temp
+*.deploy.temp
