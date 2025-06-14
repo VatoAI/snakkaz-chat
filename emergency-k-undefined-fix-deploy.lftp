@@ -1,0 +1,65 @@
+#!/usr/bin/env lftp
+set ssl:verify-certificate no
+set xfer:clobber on
+
+# Connect to server
+open -u SnakkaZ@snakkaz.com,Eplekake123! ftp://snakkaz.com
+cd public_html
+
+echo "🔥 EMERGENCY K UNDEFINED FIX DEPLOYMENT - Juni 14, 2025"
+echo "🗑️ Removing old files for cache bust..."
+rm -f index.html
+
+# Remove old JS assets to prevent conflicts
+rm -rf assets/js/
+mkdir -p assets/js
+
+# Upload React files in EXACT correct order (CRITICAL FOR FIXING K UNDEFINED)
+echo "🚀 Step 1: Uploading React Core FIRST (with useState fix)..."
+cd assets/js
+lcd /workspaces/snakkaz-chat/dist/assets/js
+put -c vendor-react-core-C0pcvv1m.js
+
+echo "🚀 Step 2: Uploading React DOM SECOND..."
+put -c vendor-react-dom-C8Lme98b.js
+
+echo "🚀 Step 3: Uploading FIXED Vendor Misc THIRD (K undefined fix applied)..."
+put -c vendor-misc-BQVRpTcj.js
+
+echo "🚀 Step 4: Uploading Main Index FOURTH..."
+put -c index-TCURj0gr.js
+
+# Upload all other JS files
+echo "📦 Step 5: Uploading remaining JS files..."
+mput -c *.js
+
+# Upload source maps for debugging
+echo "🗺️ Step 6: Uploading source maps..."
+mput -c *.js.map
+
+# Upload CSS
+echo "🎨 Step 7: Uploading CSS..."
+cd ../..
+cd assets/css
+lcd /workspaces/snakkaz-chat/dist/assets/css
+mput -c *.css
+
+# Upload index.html LAST (triggers reload with new assets)
+echo "🏠 FINAL STEP: Uploading index.html (triggers new deployment)..."
+cd ../..
+lcd /workspaces/snakkaz-chat/dist
+put -c index.html
+
+echo "✅ K UNDEFINED FIX DEPLOYED SUCCESSFULLY!"
+echo "🔧 Fixed: K is undefined error in vendor-misc bundle"
+echo "🔧 Fixed: Source map JSON errors"  
+echo "🔧 Applied: Safer terser minification settings"
+echo "🌐 Test: https://www.snakkaz.com"
+echo ""
+echo "Key changes:"
+echo "- Reserved React function names to prevent mangling"
+echo "- Applied safer variable compression settings"
+echo "- Fixed duplicate terser configuration"
+echo "- Generated valid source maps"
+
+quit

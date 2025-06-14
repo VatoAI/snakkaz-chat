@@ -3,7 +3,8 @@
  * Enhanced for Norwegian Tech Community - Juni 7, 2025
  */
 
-import './reactPolyfill';
+// CRITICAL: Import the emergency React state fix FIRST to prevent useState undefined errors
+import './utils/reactStateFixV4NEW';
 
 // Import environment fix to ensure process.env is available
 import './utils/env/environmentFix';

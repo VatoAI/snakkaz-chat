@@ -1,0 +1,52 @@
+#!/usr/bin/env lftp
+set ssl:verify-certificate no
+set xfer:clobber on
+
+# Connect to server
+open -u SnakkaZ@snakkaz.com,Eplekake123! ftp://snakkaz.com
+cd public_html
+
+# CRITICAL: Deploy new React state fix - Remove old files for cache bust
+echo "🔥 EMERGENCY DEPLOY - React State Fix"
+echo "🗑️ Removing old files for cache bust..."
+rm -f index.html
+rm -f emergency-react-fix.js
+
+# Remove old JS assets
+rm -rf assets/js/
+mkdir -p assets/js
+
+# Upload React files in EXACT correct order (CRITICAL FOR FIXING useState UNDEFINED)
+echo "🚀 Step 1: Uploading React Core FIRST (contains emergency useState fix)..."
+cd assets/js
+lcd /workspaces/snakkaz-chat/dist/assets/js
+put -c vendor-react-core-HZ-CDCp-.js
+
+echo "🚀 Step 2: Uploading React DOM SECOND..."
+put -c vendor-react-dom-mryDZrWv.js
+
+echo "🚀 Step 3: Uploading Vendor Misc THIRD (after React is properly loaded)..."
+put -c vendor-misc-CX17Fr9w.js
+
+# Upload all other JS files
+echo "📦 Step 4: Uploading remaining JS files..."
+mput -c *.js
+
+# Upload CSS
+echo "🎨 Step 5: Uploading CSS..."
+cd ../..
+cd assets/css
+lcd /workspaces/snakkaz-chat/dist/assets/css
+mput -c *.css
+
+# Upload index.html LAST (triggers reload with new assets)
+echo "🏠 FINAL STEP: Uploading index.html (triggers new deployment)..."
+cd ../..
+lcd /workspaces/snakkaz-chat/dist
+put -c index.html
+
+echo "✅ EMERGENCY REACT STATE FIX DEPLOYED!"
+echo "🔧 This should fix the 'Cannot read properties of undefined (reading useState)' error"
+echo "🌐 Check: https://www.snakkaz.com"
+
+quit
