@@ -4,7 +4,7 @@
  */
 
 // CRITICAL: Import the emergency React state fix FIRST to prevent useState undefined errors
-import './utils/reactStateFixV4NEW';
+import './utils/reactStateFixV5';
 
 // Import environment fix to ensure process.env is available
 import './utils/env/environmentFix';

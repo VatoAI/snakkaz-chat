@@ -129,10 +129,14 @@ jobs:
         echo "  - Vendor Misc: $VENDOR_MISC"
         echo "  - Index: $INDEX_JS"
         
-        # Create temporary script to fix HTML
-        cat > fix-html.js << 'EOF'
-        const fs = require('fs');
-        const path = require('path');
+        # Create temporary script to fix HTML (using ES modules)
+        cat > fix-html.mjs << 'EOF'
+        import fs from 'fs';
+        import path from 'path';
+        import { fileURLToPath } from 'url';
+        
+        const __filename = fileURLToPath(import.meta.url);
+        const __dirname = path.dirname(__filename);
         
         const htmlPath = path.join(__dirname, 'dist', 'index.html');
         let html = fs.readFileSync(htmlPath, 'utf8');
@@ -163,7 +167,7 @@ jobs:
         console.log('✅ HTML loading order fixed');
         EOF
         
-        node fix-html.js
+        node fix-html.mjs
         
         # Verify the fix
         echo "🔍 Verifying HTML order:"

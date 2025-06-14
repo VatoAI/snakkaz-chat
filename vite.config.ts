@@ -145,13 +145,18 @@ export default defineConfig(({ mode }) => ({
             return 'vendor-react-core';
           }
           
+          // Radix UI components use React hooks and need to be loaded after React
+          if (id.includes('@radix-ui')) {
+            return 'vendor-react-core';
+          }
+          
           // 2. Router (1 chunk)
           if (id.includes('react-router')) {
             return 'vendor-router';
           }
           
-          // 3. UI Components (1 chunk)
-          if (id.includes('@radix-ui') || id.includes('lucide-react')) {
+          // 3. UI Components (1 chunk) - Note: Radix UI moved to vendor-react-core above
+          if (id.includes('lucide-react')) {
             return 'vendor-ui-components';
           }
           
