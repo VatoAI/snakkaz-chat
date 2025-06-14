@@ -117,9 +117,37 @@ export function applyReactStateFixV5(): void {
 
   const windowAny = window as any;
   
-  // 1. Ensure React namespace exists
+  // CRITICAL: Set React polyfill flag FIRST to prevent shim execution
+  windowAny.__USE_SYNC_EXTERNAL_STORE_POLYFILL__ = true;
+  
+  // CRITICAL: Provide React immediately if missing
   if (!windowAny.React) {
-    windowAny.React = {};
+    console.log('🔧 Emergency: Creating React namespace immediately');
+    windowAny.React = {
+      version: '18.0.0-emergency',
+      __SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED: {},
+      createElement: () => document.createElement('div'),
+      useState: emergencyUseState,
+      useEffect: emergencyUseEffect,
+      useRef: emergencyUseRef,
+      useMemo: emergencyUseMemo,
+      useCallback: emergencyUseCallback,
+      useSyncExternalStore: emergencyUseSyncExternalStore,
+      useMergeRef: emergencyUseMergeRef,
+    };
+  }
+  
+  // 1. Ensure React namespace exists with all essential properties
+  if (!windowAny.React) {
+    console.log('🔧 Creating React namespace');
+    windowAny.React = {
+      version: '18.0.0-emergency',
+      __SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED: {},
+      createElement: (type: any, props?: any, ...children: any[]) => {
+        console.log('🔧 Emergency React.createElement called');
+        return document.createElement('div');
+      }
+    };
   }
 
   // 2. Provide all essential React hooks
@@ -172,9 +200,33 @@ export function applyReactStateFixV5(): void {
     }
   });
 
-  // 5. Override problematic use-sync-external-store functions globally
+  // 5. Comprehensive use-sync-external-store polyfill
   if (typeof windowAny.useSyncExternalStore === 'undefined') {
     windowAny.useSyncExternalStore = emergencyUseSyncExternalStore;
+  }
+  
+  // Add direct polyfill for use-sync-external-store-shim module
+  if (!windowAny.__USE_SYNC_EXTERNAL_STORE_POLYFILL__) {
+    windowAny.__USE_SYNC_EXTERNAL_STORE_POLYFILL__ = true;
+  }
+  
+  // Emergency polyfill for the shim specifically
+  if (typeof windowAny.useSyncExternalStoreWithSelector === 'undefined') {
+    windowAny.useSyncExternalStoreWithSelector = (
+      subscribe: any,
+      getSnapshot: any,
+      getServerSnapshot: any,
+      selector: any,
+      isEqual: any
+    ) => {
+      try {
+        const snapshot = getSnapshot ? getSnapshot() : null;
+        return selector ? selector(snapshot) : snapshot;
+      } catch (e) {
+        console.warn('Emergency useSyncExternalStoreWithSelector error:', e);
+        return null;
+      }
+    };
   }
 
   // 6. Add emergency DOM ready handler

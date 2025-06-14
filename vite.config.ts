@@ -141,7 +141,8 @@ export default defineConfig(({ mode }) => ({
           }
           
           // React dependencies that need React to be available
-          if (id.includes('use-sync-external-store') || id.includes('scheduler')) {
+          if (id.includes('use-sync-external-store') || id.includes('scheduler') || 
+              id.includes('use-sync-external-store-shim')) {
             return 'vendor-react-core';
           }
           
