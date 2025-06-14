@@ -2,21 +2,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 import { snakkazCspPlugin } from './src/plugins/snakkazCspPlugin'
-
-// Plugin to fix React module loading order
-const fixReactLoadingOrder = () => {
-  return {
-    name: 'fix-react-loading-order',
-    generateBundle(_options: unknown, bundle: Record<string, unknown>) {
-      // Find the HTML file and fix modulepreload order
-      Object.keys(bundle).forEach(fileName => {
-        const file = bundle[fileName] as { type?: string; source?: string };
-        if (fileName.endsWith('.html') && file.type === 'asset' && file.source) {
-          let html = file.source as string;
-          
-          // Extract all modulepreload links
-          const modulePreloadRegex = /<link rel="modulepreload"[^>]*>/g;
-          const modulePreloads = html.match(modulePreloadRegex) || [];
+import { fixReactModuleOrder } from './src/vite-plugins/fix-react-order'
           
           // Sort them in the correct order: React Core -> React DOM -> vendor-misc -> others
           const sortedPreloads = modulePreloads.sort((a, b) => {
@@ -47,7 +33,7 @@ const fixReactLoadingOrder = () => {
 export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
-    fixReactLoadingOrder(),
+    fixReactModuleOrder(),
     snakkazCspPlugin({
       debug: mode === 'development',
       // Legg til ekstra CSP-direktiver hvis nødvendig
