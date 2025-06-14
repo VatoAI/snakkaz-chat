@@ -3,31 +3,6 @@ import react from '@vitejs/plugin-react'
 import path from 'path'
 import { snakkazCspPlugin } from './src/plugins/snakkazCspPlugin'
 import { fixReactModuleOrder } from './src/vite-plugins/fix-react-order'
-          
-          // Sort them in the correct order: React Core -> React DOM -> vendor-misc -> others
-          const sortedPreloads = modulePreloads.sort((a, b) => {
-            if (a.includes('vendor-react-core')) return -3;
-            if (a.includes('vendor-react-dom')) return -2;
-            if (a.includes('vendor-misc')) return -1;
-            return 0;
-          });
-          
-          // Remove all existing modulepreload links
-          html = html.replace(modulePreloadRegex, '');
-          
-          // Insert sorted modulepreload links before the main script
-          const scriptIndex = html.indexOf('<script type="module"');
-          if (scriptIndex !== -1) {
-            const sortedPreloadsStr = sortedPreloads.join('\n    ');
-            html = html.slice(0, scriptIndex) + sortedPreloadsStr + '\n    ' + html.slice(scriptIndex);
-          }
-          
-          file.source = html;
-        }
-      });
-    }
-  };
-};
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
