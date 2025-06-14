@@ -1,0 +1,381 @@
+# 🚀 SNAKKAZ UNIFIED DEPLOYMENT SYSTEM
+# Juni 14, 2025 - VatoAI
+# Synkroniserer alle deployment-systemer i ett system
+
+name: 🔄 Unified Production Deployment
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      force_deploy:
+        description: 'Force full deployment'
+        required: false
+        default: 'false'
+        type: boolean
+      emergency_fix:
+        description: 'Emergency React fix'
+        required: false
+        default: 'false'
+        type: boolean
+
+env:
+  # Production Supabase (ikke preview)
+  VITE_SUPABASE_URL: https://wqpoozpbceucynsojmbk.supabase.co
+  VITE_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndxcG9venBiY2V1Y3luc29qbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzk1NjgzMDUsImV4cCI6MjA1NTE0NDMwNX0.vu1s86gQKEPXFleOZ1U2uOjW-kj4k4RAiKTbOuXPUD8
+  NODE_ENV: production
+
+jobs:
+  pre-flight:
+    name: 🔍 Pre-flight Checks
+    runs-on: ubuntu-latest
+    outputs:
+      should_deploy: ${{ steps.check.outputs.should_deploy }}
+      bundle_hash: ${{ steps.check.outputs.bundle_hash }}
+    
+    steps:
+    - name: 📦 Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 2
+
+    - name: 🔍 Check if deployment needed
+      id: check
+      run: |
+        # Check if files that affect build have changed
+        if git diff --name-only HEAD~1 HEAD | grep -E "(src/|vite.config|package|index.html)" > /dev/null; then
+          echo "should_deploy=true" >> $GITHUB_OUTPUT
+          echo "💡 Build-affecting files changed - deployment needed"
+        elif [ "${{ github.event.inputs.force_deploy }}" = "true" ]; then
+          echo "should_deploy=true" >> $GITHUB_OUTPUT
+          echo "🚨 Force deployment requested"
+        elif [ "${{ github.event.inputs.emergency_fix }}" = "true" ]; then
+          echo "should_deploy=true" >> $GITHUB_OUTPUT
+          echo "🚑 Emergency fix deployment"
+        else
+          echo "should_deploy=false" >> $GITHUB_OUTPUT
+          echo "⏭️ No deployment needed"
+        fi
+        
+        # Generate bundle hash for cache busting
+        echo "bundle_hash=$(date +%s)" >> $GITHUB_OUTPUT
+
+  build:
+    name: 🏗️ Build Application
+    runs-on: ubuntu-latest
+    needs: pre-flight
+    if: needs.pre-flight.outputs.should_deploy == 'true'
+    
+    steps:
+    - name: 📦 Checkout
+      uses: actions/checkout@v4
+    
+    - name: 🟢 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: 📥 Install dependencies
+      run: |
+        echo "🔧 Installing dependencies..."
+        npm ci --production=false
+    
+    - name: 🧹 Clean previous builds
+      run: |
+        echo "🧹 Cleaning previous builds..."
+        rm -rf dist
+    
+    - name: 🏗️ Build with React fixes
+      run: |
+        echo "🚀 Building with React dependency fixes..."
+        npm run build
+        
+        echo "✅ Build completed. Verifying output..."
+        ls -la dist/assets/js/ | head -20
+        
+        # Verify React chunks are properly separated
+        if ls dist/assets/js/vendor-react-core-*.js > /dev/null 2>&1; then
+          echo "✅ React core bundle found"
+        else
+          echo "❌ React core bundle missing"
+          exit 1
+        fi
+        
+        if ls dist/assets/js/vendor-misc-*.js > /dev/null 2>&1; then
+          echo "✅ Vendor misc bundle found"
+        else
+          echo "❌ Vendor misc bundle missing"
+          exit 1
+        fi
+    
+    - name: 🔧 Fix loading order in HTML
+      run: |
+        echo "🔧 Ensuring correct module loading order..."
+        
+        # Extract current bundles
+        REACT_CORE=$(ls dist/assets/js/vendor-react-core-*.js | head -1 | xargs basename)
+        REACT_DOM=$(ls dist/assets/js/vendor-react-dom-*.js | head -1 | xargs basename)
+        VENDOR_MISC=$(ls dist/assets/js/vendor-misc-*.js | head -1 | xargs basename)
+        INDEX_JS=$(ls dist/assets/js/index-*.js | head -1 | xargs basename)
+        
+        echo "📦 Found bundles:"
+        echo "  - React Core: $REACT_CORE"
+        echo "  - React DOM: $REACT_DOM"
+        echo "  - Vendor Misc: $VENDOR_MISC"
+        echo "  - Index: $INDEX_JS"
+        
+        # Create temporary script to fix HTML
+        cat > fix-html.js << 'EOF'
+        const fs = require('fs');
+        const path = require('path');
+        
+        const htmlPath = path.join(__dirname, 'dist', 'index.html');
+        let html = fs.readFileSync(htmlPath, 'utf8');
+        
+        // Extract all modulepreload links
+        const modulePreloadRegex = /<link rel="modulepreload"[^>]*>/g;
+        const modulePreloads = html.match(modulePreloadRegex) || [];
+        
+        // Sort in correct order: React Core -> React DOM -> Misc -> Others
+        const sortedPreloads = modulePreloads.sort((a, b) => {
+          if (a.includes('vendor-react-core')) return -3;
+          if (a.includes('vendor-react-dom')) return -2;
+          if (a.includes('vendor-misc')) return -1;
+          return 0;
+        });
+        
+        // Remove existing modulepreloads
+        html = html.replace(modulePreloadRegex, '');
+        
+        // Insert sorted preloads before main script
+        const scriptIndex = html.indexOf('<script type="module"');
+        if (scriptIndex !== -1) {
+          const sortedPreloadsStr = sortedPreloads.join('\n    ');
+          html = html.slice(0, scriptIndex) + sortedPreloadsStr + '\n    ' + html.slice(scriptIndex);
+        }
+        
+        fs.writeFileSync(htmlPath, html);
+        console.log('✅ HTML loading order fixed');
+        EOF
+        
+        node fix-html.js
+        
+        # Verify the fix
+        echo "🔍 Verifying HTML order:"
+        grep -n "modulepreload\|script.*module" dist/index.html | head -10
+    
+    - name: 📊 Bundle analysis
+      run: |
+        echo "📊 Final bundle analysis:"
+        echo "=========================="
+        
+        # Check React dependencies are correctly bundled
+        REACT_CORE=$(ls dist/assets/js/vendor-react-core-*.js | head -1)
+        VENDOR_MISC=$(ls dist/assets/js/vendor-misc-*.js | head -1)
+        
+        echo "🔍 Checking React dependencies:"
+        if grep -q "useSyncExternalStore\|use.*external.*store" "$REACT_CORE"; then
+          echo "✅ use-sync-external-store in React core bundle"
+        else
+          echo "❌ use-sync-external-store missing from React core"
+          exit 1
+        fi
+        
+        if grep -q "useSyncExternalStore\|use.*external.*store" "$VENDOR_MISC"; then
+          echo "❌ use-sync-external-store wrongly in vendor-misc"
+          exit 1
+        else
+          echo "✅ use-sync-external-store not in vendor-misc"
+        fi
+        
+        echo "📦 Bundle sizes:"
+        ls -lh dist/assets/js/ | grep -E "(vendor-react|vendor-misc|index-)"
+    
+    - name: 💾 Cache build artifacts
+      uses: actions/cache@v4
+      with:
+        path: dist
+        key: build-${{ needs.pre-flight.outputs.bundle_hash }}-${{ github.sha }}
+
+  deploy:
+    name: 🚀 Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [pre-flight, build]
+    if: needs.pre-flight.outputs.should_deploy == 'true'
+    
+    steps:
+    - name: 📦 Checkout
+      uses: actions/checkout@v4
+    
+    - name: 💾 Restore build artifacts
+      uses: actions/cache@v4
+      with:
+        path: dist
+        key: build-${{ needs.pre-flight.outputs.bundle_hash }}-${{ github.sha }}
+    
+    - name: 📡 Install LFTP
+      run: sudo apt-get update && sudo apt-get install -y lftp
+    
+    - name: 🚀 Deploy to snakkaz.com
+      run: |
+        echo "🌐 Deploying to production..."
+        
+        # Get current bundle names
+        REACT_CORE=$(ls dist/assets/js/vendor-react-core-*.js | head -1 | xargs basename)
+        REACT_DOM=$(ls dist/assets/js/vendor-react-dom-*.js | head -1 | xargs basename)
+        VENDOR_MISC=$(ls dist/assets/js/vendor-misc-*.js | head -1 | xargs basename)
+        INDEX_JS=$(ls dist/assets/js/index-*.js | head -1 | xargs basename)
+        
+        # Create deployment script
+        cat > unified-deploy.lftp << EOF
+        set ssl:verify-certificate no
+        set xfer:clobber on
+        set cmd:fail-exit yes
+        set ftp:passive-mode yes
+        
+        open -u ${{ secrets.FTP_USERNAME }},${{ secrets.FTP_PASSWORD }} ftp://ftp.snakkaz.com:21
+        cd public_html
+        
+        # Upload critical bundles in correct order
+        cd assets/js
+        lcd dist/assets/js
+        
+        # 1. React Core first (contains use-sync-external-store)
+        put -c $REACT_CORE
+        put -c $REACT_CORE.map
+        
+        # 2. React DOM second  
+        put -c $REACT_DOM
+        put -c $REACT_DOM.map
+        
+        # 3. Vendor misc third (now safe)
+        put -c $VENDOR_MISC
+        put -c $VENDOR_MISC.map
+        
+        # 4. Main index last
+        put -c $INDEX_JS
+        put -c $INDEX_JS.map
+        
+        # Upload all other bundles
+        mput -c *.js
+        mput -c *.js.map
+        
+        # Upload CSS
+        cd ../css
+        lcd ../css
+        mput -c *.css
+        mput -c *.css.map
+        
+        # Upload index.html with correct loading order
+        cd ../../
+        lcd dist/
+        put -c index.html
+        
+        quit
+        EOF
+        
+        echo "🚀 Running deployment..."
+        lftp -f unified-deploy.lftp
+        
+        echo "✅ Deployment completed!"
+
+  verify:
+    name: 🩺 Verify Deployment
+    runs-on: ubuntu-latest
+    needs: [deploy]
+    
+    steps:
+    - name: 🔍 Health checks
+      run: |
+        echo "🩺 Running comprehensive health checks..."
+        
+        # Wait for deployment to propagate
+        sleep 30
+        
+        # 1. Main site accessibility
+        echo "🌐 Checking main site..."
+        if curl -f -s https://snakkaz.com/ > /dev/null; then
+          echo "✅ Main site: OK"
+        else
+          echo "❌ Main site: FAILED"
+          exit 1
+        fi
+        
+        # 2. Check React bundles are deployed
+        echo "📦 Checking React bundles..."
+        
+        # Get current bundle names from live site
+        LIVE_HTML=$(curl -s https://snakkaz.com/)
+        
+        if echo "$LIVE_HTML" | grep -q "vendor-react-core-.*\.js"; then
+          echo "✅ React Core bundle: OK"
+        else
+          echo "❌ React Core bundle: MISSING"
+          exit 1
+        fi
+        
+        if echo "$LIVE_HTML" | grep -q "vendor-misc-.*\.js"; then
+          echo "✅ Vendor Misc bundle: OK"
+        else
+          echo "❌ Vendor Misc bundle: MISSING"
+          exit 1
+        fi
+        
+        # 3. Check loading order
+        echo "🔄 Checking loading order..."
+        REACT_CORE_LINE=$(echo "$LIVE_HTML" | grep -n "vendor-react-core" | cut -d: -f1)
+        VENDOR_MISC_LINE=$(echo "$LIVE_HTML" | grep -n "vendor-misc" | cut -d: -f1)
+        
+        if [ "$REACT_CORE_LINE" -lt "$VENDOR_MISC_LINE" ]; then
+          echo "✅ Loading order: CORRECT (React Core before Vendor Misc)"
+        else
+          echo "❌ Loading order: WRONG"
+          exit 1
+        fi
+        
+        # 4. Check for React errors
+        echo "🐛 Checking for React errors..."
+        REACT_CORE_URL=$(echo "$LIVE_HTML" | grep -o "assets/js/vendor-react-core-[^\"]*\.js" | head -1)
+        
+        if curl -s "https://snakkaz.com/$REACT_CORE_URL" | grep -q "React is undefined\|K is undefined"; then
+          echo "❌ React errors still present"
+          exit 1
+        else
+          echo "✅ No React errors detected"
+        fi
+        
+        echo "🎉 All health checks passed!"
+        echo "🚀 SnakkaZ.com is fully operational!"
+
+  cleanup:
+    name: 🧹 Cleanup Old Deployments
+    runs-on: ubuntu-latest
+    needs: [verify]
+    if: always()
+    
+    steps:
+    - name: 🧹 Remove old bundles
+      run: |
+        echo "🧹 Cleaning up old deployment artifacts..."
+        
+        # This would connect via FTP and remove old unused bundles
+        # to prevent accumulation of old files
+        
+        cat > cleanup.lftp << 'EOF'
+        set ssl:verify-certificate no
+        open -u ${{ secrets.FTP_USERNAME }},${{ secrets.FTP_PASSWORD }} ftp://snakkaz.com
+        cd public_html/assets/js
+        
+        # List current files and keep only recent ones
+        ls -la
+        
+        # Remove bundles older than 7 days (implement if needed)
+        # find . -name "*.js" -mtime +7 -delete
+        
+        quit
+        EOF
+        
+        # lftp -f cleanup.lftp
+        echo "✅ Cleanup completed (or skipped)"

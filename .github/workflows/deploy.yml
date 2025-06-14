@@ -1,4 +1,5 @@
-name: 🚀 SnakkaZ Production Deployment
+# DEAKTIVERT - Bruk deploy-unified-final.yml i stedet
+# name: 🚀 SnakkaZ Production Deployment
 
 on:
   push:

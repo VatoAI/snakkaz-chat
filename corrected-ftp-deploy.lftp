@@ -1,0 +1,55 @@
+set ssl:verify-certificate no
+set xfer:clobber on
+set cmd:fail-exit yes
+set ftp:passive-mode yes
+
+# Koble til med korrekte opplysninger
+open -u SnakkaZ@snakkaz.com,YWC5-wgd-yrE-Ckt ftp://ftp.snakkaz.com:21
+
+# Naviger til public_html (web root)
+cd public_html
+
+# Upload critical bundles i riktig rekkefølge
+cd assets/js
+lcd dist/assets/js
+
+# 1. React Core først (inneholder use-sync-external-store)
+echo "📤 Uploader React Core..."
+put -c vendor-react-core-P8orpnXN.js
+put -c vendor-react-core-P8orpnXN.js.map
+
+# 2. React DOM andre
+echo "📤 Uploader React DOM..."
+put -c vendor-react-dom-BOtmEXjK.js
+put -c vendor-react-dom-BOtmEXjK.js.map
+
+# 3. Vendor misc tredje (nå trygg)
+echo "📤 Uploader Vendor Misc..."
+put -c vendor-misc-DcaTGh4z.js
+put -c vendor-misc-DcaTGh4z.js.map
+
+# 4. Main index sist
+echo "📤 Uploader Index..."
+put -c index-ClZPYTJk.js
+put -c index-ClZPYTJk.js.map
+
+# Upload alle andre bundles
+echo "📤 Uploader resterende bundles..."
+mput -c *.js
+mput -c *.js.map
+
+# Upload CSS
+cd ../css
+lcd ../css
+echo "📤 Uploader CSS..."
+mput -c *.css
+mput -c *.css.map
+
+# Upload index.html med riktig loading order
+cd ../../
+lcd dist/
+echo "📤 Uploader index.html..."
+put -c index.html
+
+echo "✅ Alle filer uploaded!"
+quit

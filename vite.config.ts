@@ -20,10 +20,10 @@ const fixReactLoadingOrder = () => {
           
           // Sort them in the correct order: React Core -> React DOM -> vendor-misc -> others
           const sortedPreloads = modulePreloads.sort((a, b) => {
-            if (a.includes('vendor-react-core')) return -2;
-            if (a.includes('vendor-react-dom')) return -1;
-            if (a.includes('vendor-misc')) return 0;
-            return 1;
+            if (a.includes('vendor-react-core')) return -3;
+            if (a.includes('vendor-react-dom')) return -2;
+            if (a.includes('vendor-misc')) return -1;
+            return 0;
           });
           
           // Remove all existing modulepreload links
@@ -54,8 +54,7 @@ export default defineConfig(({ mode }) => ({
       additionalDirectives: {
         // For eksempel: 'img-src': ['ytterligere.domene.no']
       }
-    }),
-    fixReactLoadingOrder()
+    })
   ].filter(Boolean),
   resolve: {
     alias: {
@@ -138,6 +137,11 @@ export default defineConfig(({ mode }) => ({
             if (id.includes('react-dom')) {
               return 'vendor-react-dom';
             }
+            return 'vendor-react-core';
+          }
+          
+          // React dependencies that need React to be available
+          if (id.includes('use-sync-external-store') || id.includes('scheduler')) {
             return 'vendor-react-core';
           }
           
@@ -243,7 +247,7 @@ export default defineConfig(({ mode }) => ({
       mangle: {
         safari10: true,
         // Reserve important React functions to prevent mangling issues
-        reserved: ['React', 'useState', 'useEffect', 'useSyncExternalStore'],
+        reserved: ['React', 'useState', 'useEffect', 'useSyncExternalStore', 'useSyncExternalStoreShim'],
       },
       format: {
         comments: false, // Remove comments for smaller bundles

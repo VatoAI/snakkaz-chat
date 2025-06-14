@@ -1,0 +1,43 @@
+set ssl:verify-certificate no
+set xfer:clobber on
+set cmd:fail-exit yes
+
+open -u snakkazcom,YWC5-wgd-yrE-Ckt ftp.snakkaz.com
+cd public_html
+
+# Upload critical bundles i riktig rekkefølge
+cd assets/js
+lcd dist/assets/js
+
+# 1. React Core først (inneholder use-sync-external-store)
+put -c vendor-react-core-P8orpnXN.js
+put -c vendor-react-core-P8orpnXN.js.map
+
+# 2. React DOM andre
+put -c vendor-react-dom-BOtmEXjK.js
+put -c vendor-react-dom-BOtmEXjK.js.map
+
+# 3. Vendor misc tredje (nå trygg)
+put -c vendor-misc-DcaTGh4z.js
+put -c vendor-misc-DcaTGh4z.js.map
+
+# 4. Main index sist
+put -c index-ClZPYTJk.js
+put -c index-ClZPYTJk.js.map
+
+# Upload alle andre bundles
+mput -c *.js
+mput -c *.js.map
+
+# Upload CSS
+cd ../css
+lcd ../css
+mput -c *.css
+mput -c *.css.map
+
+# Upload index.html med riktig loading order
+cd ../../
+lcd dist/
+put -c index.html
+
+quit
