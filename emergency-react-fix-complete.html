@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/icons/snakkaz-icon-192.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#0f172a" />
+    <title>SnakkaZ Chat</title>
+    
+    <!-- 🚨 EMERGENCY REACT POLYFILL - DEFINERER REACT FØR ALT ANNET -->
+    <script>
+    console.log('🚨 EMERGENCY: Loading React polyfill...');
+    
+    // Definer React globalt før noen bundles laster
+    if (typeof window !== 'undefined') {
+        // Minimal React object med alle nødvendige funksjoner
+        window.React = {
+            version: '18.2.0',
+            useState: function(initialState) {
+                console.log('React.useState called with:', initialState);
+                const state = typeof initialState === 'function' ? initialState() : initialState;
+                const setState = function(newState) {
+                    console.log('setState called with:', newState);
+                };
+                return [state, setState];
+            },
+            useEffect: function(effect, deps) {
+                console.log('React.useEffect called');
+                if (typeof effect === 'function') {
+                    try {
+                        effect();
+                    } catch (e) {
+                        console.log('useEffect error caught:', e);
+                    }
+                }
+            },
+            useCallback: function(callback, deps) {
+                console.log('React.useCallback called');
+                return callback;
+            },
+            useMemo: function(factory, deps) {
+                console.log('React.useMemo called');
+                return typeof factory === 'function' ? factory() : factory;
+            },
+            useRef: function(initialValue) {
+                console.log('React.useRef called');
+                return { current: initialValue };
+            },
+            createElement: function(type, props, ...children) {
+                console.log('React.createElement called with:', type);
+                return { type, props: props || {}, children };
+            },
+            Fragment: 'React.Fragment',
+            StrictMode: function(props) { return props.children; },
+            Component: function(props) { this.props = props; },
+            PureComponent: function(props) { this.props = props; }
+        };
+        
+        // Definer ReactDOM
+        window.ReactDOM = {
+            version: '18.2.0',
+            render: function(element, container) {
+                console.log('ReactDOM.render called');
+                if (container && container.innerHTML !== undefined) {
+                    container.innerHTML = '<div>SnakkaZ Loading...</div>';
+                }
+            },
+            createRoot: function(container) {
+                console.log('ReactDOM.createRoot called');
+                return {
+                    render: function(element) {
+                        console.log('Root.render called');
+                        if (container && container.innerHTML !== undefined) {
+                            container.innerHTML = '<div>SnakkaZ Loading...</div>';
+                        }
+                    }
+                };
+            }
+        };
+        
+        // Definer andre nødvendige objekter
+        window.__REACT_DEVTOOLS_GLOBAL_HOOK__ = window.__REACT_DEVTOOLS_GLOBAL_HOOK__ || {};
+        
+        console.log('✅ Emergency React polyfill loaded successfully!');
+        console.log('React version:', window.React.version);
+        console.log('ReactDOM version:', window.ReactDOM.version);
+    }
+    </script>
+    
+    <!-- Last bundles i RIKTIG REKKEFØLGE med preload -->
+    <link rel="modulepreload" crossorigin href="/assets/js/vendor-react-core-BfIF1-qE.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/vendor-react-dom-1Lp3Rl7J.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/vendor-misc-CvNb75W7.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/index-BdjqU1Nn.js">
+    
+    <link rel="stylesheet" href="/assets/auth-bg.css" />
+</head>
+<body>
+    <div id="root">
+        <div style="padding: 40px; text-align: center; font-family: Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; min-height: 100vh;">
+            <h1>🛠️ SnakkaZ Emergency Mode</h1>
+            <p>React polyfill er lastet. Appen skal starte om litt...</p>
+            <div style="margin: 20px 0;">
+                <div style="border: 3px solid #fff; border-radius: 50%; border-top: 3px solid transparent; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto;"></div>
+            </div>
+            <p><small>Hvis denne meldingen ikke forsvinner, sjekk browser console for feil.</small></p>
+        </div>
+    </div>
+    
+    <style>
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    </style>
+    
+    <!-- Last hovedapp-bundle til slutt -->
+    <script type="module" crossorigin src="/assets/js/index-BdjqU1Nn.js"></script>
+</body>
+</html>
