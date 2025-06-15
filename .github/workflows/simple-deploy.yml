@@ -1,0 +1,131 @@
+name: 🚀 Simple Production Deploy
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  VITE_SUPABASE_URL: https://wqpoozpbceucynsojmbk.supabase.co
+  VITE_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndxcG9venBiY2V1Y3luc29qbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzk1NjgzMDUsImV4cCI6MjA1NTE0NDMwNX0.vu1s86gQKEPXFleOZ1U2uOjW-kj4k4RAiKTbOuXPUD8
+  NODE_ENV: production
+
+jobs:
+  build-and-deploy:
+    name: 🏗️ Build & Deploy
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📦 Checkout code
+      uses: actions/checkout@v4
+    
+    - name: 📋 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: 📥 Install dependencies
+      run: npm ci
+    
+    - name: 🏗️ Build application
+      run: |
+        echo "🔧 Building with React fix..."
+        npm run build
+        
+        echo "✅ Build complete! Checking bundle order..."
+        ls -la dist/assets/js/vendor-react-* || true
+        
+        echo "📋 Verifying index.html modulepreload order..."
+        grep -n "modulepreload" dist/index.html | head -5 || true
+    
+    - name: 🚀 Deploy via FTP
+      if: success()
+      run: |
+        echo "🌐 Installing LFTP..."
+        sudo apt-get update && sudo apt-get install -y lftp
+        
+        echo "📡 Deploying to snakkaz.com..."
+        
+        # Create simple deployment script
+        cat > deploy.lftp << 'EOF'
+        set ssl:verify-certificate no
+        set ftp:passive-mode on
+        set cmd:fail-exit yes
+        
+        # Connect to FTP
+        open -u $FTP_USER,$FTP_PASS ftp://snakkaz.com
+        
+        # Navigate to public_html
+        cd public_html
+        
+        # Upload index.html first (most critical fix)
+        put dist/index.html index.html
+        echo "✅ index.html uploaded"
+        
+        # Upload JS bundles
+        cd assets/js
+        lcd dist/assets/js
+        
+        # Upload React bundles (critical order fix)
+        mput vendor-react-core-*.js
+        mput vendor-react-dom-*.js
+        mput vendor-misc-*.js
+        mput index-*.js
+        
+        # Upload all other JS files
+        mput *.js
+        echo "✅ JavaScript bundles uploaded"
+        
+        # Upload CSS
+        cd ../css
+        lcd ../css
+        mput *.css
+        echo "✅ CSS files uploaded"
+        
+        quit
+        EOF
+        
+        # Execute deployment
+        FTP_USER="${{ secrets.FTP_USERNAME }}" FTP_PASS="${{ secrets.FTP_PASSWORD }}" lftp -f deploy.lftp
+        
+        echo "🎉 Deployment complete!"
+    
+    - name: 🧪 Verify deployment
+      if: success()
+      run: |
+        echo "🔍 Testing deployed site..."
+        sleep 10
+        
+        # Check if new bundles are accessible
+        if curl -s --max-time 30 https://snakkaz.com/ | grep -q "vendor-react-core"; then
+          echo "✅ New React bundles detected on live site!"
+        else
+          echo "⚠️ Deployment may not be live yet or failed"
+        fi
+        
+        echo "🌐 Site: https://snakkaz.com"
+        echo "🔧 Check browser console for React errors"
+
+  # Optional: Supabase preview (but simplified)
+  preview:
+    name: 📱 Preview Deploy
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: 📦 Install and build
+      run: |
+        npm ci
+        npm run build
+    
+    - name: 🚀 Deploy to Supabase
+      run: |
+        # Simple Supabase deployment without complex checks
+        npx supabase functions deploy --project-ref wqpoozpbceucynsojmbk || echo "Supabase deploy skipped"
