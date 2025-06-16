@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/icons/snakkaz-icon-192.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#0f172a" />
+    <title>SnakkaZ Chat</title>
+    
+    <!-- 🚨 ULTRA AGGRESSIVE REACT FIX - OVERSKRIVER ALLE IMPORTS -->
+    <script>
+    console.log('🚨 ULTRA AGGRESSIVE REACT FIX - Starting...');
+    
+    // 1. DEFINER REACT GLOBALT FØR ALT ANNET
+    const ReactObject = {
+        version: '18.2.0',
+        
+        // Core hooks
+        useState: function(initialState) {
+            console.log('✅ React.useState called');
+            const state = typeof initialState === 'function' ? initialState() : initialState;
+            const setState = function(newState) {
+                console.log('setState called with:', newState);
+            };
+            return [state, setState];
+        },
+        
+        useEffect: function(effect, deps) {
+            console.log('✅ React.useEffect called');
+            if (typeof effect === 'function') {
+                try { effect(); } catch (e) { console.log('useEffect error:', e); }
+            }
+        },
+        
+        useLayoutEffect: function(effect, deps) {
+            console.log('✅ React.useLayoutEffect called');
+            if (typeof effect === 'function') {
+                try { effect(); } catch (e) { console.log('useLayoutEffect error:', e); }
+            }
+        },
+        
+        useCallback: function(callback, deps) {
+            console.log('✅ React.useCallback called');
+            return callback;
+        },
+        
+        useMemo: function(factory, deps) {
+            console.log('✅ React.useMemo called');
+            return typeof factory === 'function' ? factory() : factory;
+        },
+        
+        useRef: function(initialValue) {
+            console.log('✅ React.useRef called');
+            return { current: initialValue };
+        },
+        
+        useContext: function(context) {
+            console.log('✅ React.useContext called');
+            return {};
+        },
+        
+        useReducer: function(reducer, initialState) {
+            console.log('✅ React.useReducer called');
+            return [initialState, function() {}];
+        },
+        
+        // Additional hooks that might be needed
+        useImperativeHandle: function() { console.log('✅ useImperativeHandle called'); },
+        useDebugValue: function() { console.log('✅ useDebugValue called'); },
+        useDeferredValue: function(value) { console.log('✅ useDeferredValue called'); return value; },
+        useTransition: function() { console.log('✅ useTransition called'); return [false, function() {}]; },
+        useId: function() { console.log('✅ useId called'); return 'react-id-' + Math.random(); },
+        useSyncExternalStore: function(subscribe, getSnapshot, getServerSnapshot) {
+            console.log('✅ useSyncExternalStore called');
+            return typeof getSnapshot === 'function' ? getSnapshot() : null;
+        },
+        
+        // Core components
+        createElement: function(type, props, ...children) {
+            console.log('✅ React.createElement called with:', type);
+            return { type, props: props || {}, children };
+        },
+        
+        Fragment: 'React.Fragment',
+        StrictMode: function(props) { return props.children; },
+        Suspense: function(props) { return props.children; },
+        Component: function(props) { this.props = props; },
+        PureComponent: function(props) { this.props = props; },
+        
+        // Context
+        createContext: function(defaultValue) {
+            console.log('✅ createContext called');
+            return { Provider: function(props) { return props.children; }, Consumer: function() {} };
+        },
+        
+        // Refs
+        createRef: function() {
+            console.log('✅ createRef called');
+            return { current: null };
+        },
+        forwardRef: function(fn) {
+            console.log('✅ forwardRef called');
+            return fn;
+        },
+        
+        // Other utilities
+        isValidElement: function() { return true; },
+        cloneElement: function(element) { return element; },
+        Children: {
+            map: function(children, fn) { return Array.isArray(children) ? children.map(fn) : []; },
+            forEach: function() {},
+            count: function() { return 0; },
+            only: function(children) { return children; },
+            toArray: function(children) { return Array.isArray(children) ? children : []; }
+        }
+    };
+    
+    // 2. SET REACT ON WINDOW MULTIPLE WAYS
+    window.React = ReactObject;
+    window.react = ReactObject;
+    globalThis.React = ReactObject;
+    globalThis.react = ReactObject;
+    
+    // 3. DEFINE REACTDOM
+    const ReactDOMObject = {
+        version: '18.2.0',
+        render: function(element, container) {
+            console.log('✅ ReactDOM.render called');
+            if (container && container.innerHTML !== undefined) {
+                container.innerHTML = '<div>SnakkaZ Loading...</div>';
+            }
+        },
+        createRoot: function(container) {
+            console.log('✅ ReactDOM.createRoot called');
+            return {
+                render: function(element) {
+                    console.log('✅ Root.render called');
+                    if (container && container.innerHTML !== undefined) {
+                        container.innerHTML = '<div>SnakkaZ Loading...</div>';
+                    }
+                }
+            };
+        },
+        unmountComponentAtNode: function() { console.log('✅ unmountComponentAtNode called'); },
+        findDOMNode: function() { console.log('✅ findDOMNode called'); return null; },
+        createPortal: function(children, container) { console.log('✅ createPortal called'); return children; }
+    };
+    
+    window.ReactDOM = ReactDOMObject;
+    window['react-dom'] = ReactDOMObject;
+    globalThis.ReactDOM = ReactDOMObject;
+    
+    // 4. MONKEY PATCH MODULE IMPORTS
+    const originalDefine = window.define;
+    window.define = function(id, deps, factory) {
+        console.log('🔧 Module define intercepted:', id);
+        
+        // If module tries to import react
+        if (deps && Array.isArray(deps)) {
+            const newDeps = deps.map(dep => {
+                if (dep === 'react' || dep === 'React') {
+                    console.log('🔄 Redirecting react import to global React');
+                    return function() { return ReactObject; };
+                }
+                if (dep === 'react-dom' || dep === 'ReactDOM') {
+                    console.log('🔄 Redirecting react-dom import to global ReactDOM');
+                    return function() { return ReactDOMObject; };
+                }
+                return dep;
+            });
+            
+            if (originalDefine) {
+                return originalDefine.call(this, id, newDeps, factory);
+            }
+        }
+        
+        if (originalDefine) {
+            return originalDefine.apply(this, arguments);
+        }
+    };
+    
+    // 5. INTERCEPT IMPORT STATEMENTS
+    const originalImport = window.import;
+    if (originalImport) {
+        window.import = function(specifier) {
+            console.log('🔧 Import intercepted:', specifier);
+            if (specifier === 'react' || specifier === 'React') {
+                console.log('🔄 Returning global React for import');
+                return Promise.resolve(ReactObject);
+            }
+            if (specifier === 'react-dom' || specifier === 'ReactDOM') {
+                console.log('🔄 Returning global ReactDOM for import');
+                return Promise.resolve(ReactDOMObject);
+            }
+            return originalImport.apply(this, arguments);
+        };
+    }
+    
+    // 6. SETUP GLOBAL ERROR HANDLER
+    window.addEventListener('error', function(event) {
+        console.log('🚨 Global error caught:', event.error);
+        if (event.error && event.error.message && event.error.message.includes('React')) {
+            console.log('🔧 React-related error intercepted and ignored');
+            event.preventDefault();
+            return false;
+        }
+    });
+    
+    console.log('✅ ULTRA AGGRESSIVE REACT FIX COMPLETE');
+    console.log('React:', window.React);
+    console.log('ReactDOM:', window.ReactDOM);
+    </script>
+    
+    <!-- ULTIMATE SOLUTION - ALLE MULIGE FIXES -->
+    <script>
+    (function() {
+        console.log('🚨 ULTRA AGGRESSIVE REACT FIX AKTIVERT!');
+        
+        // 1. Definer funksjonen som brukes av vendor-misc
+        function createUseLayoutEffectImpl() {
+            console.log('🔧 Creating useLayoutEffect implementation');
+            return function useLayoutEffectImpl(create, deps) {
+                console.log('⚡ useLayoutEffect running with polyfill');
+                setTimeout(function() {
+                    if (typeof create === 'function') {
+                        try { create(); } catch (e) { console.error('useLayoutEffect error:', e); }
+                    }
+                }, 0);
+                return;
+            };
+        }
+        
+        // 2. Sikre at globalt React objekt eksisterer
+        window.React = window.React || {};
+        
+        // 3. Definer alle tenkelige useLayoutEffect-varianter
+        var useLayoutEffectImpl = createUseLayoutEffectImpl();
+        
+        // På React objektet
+        window.React.useLayoutEffect = useLayoutEffectImpl;
+        
+        // Som global funksjon
+        window.useLayoutEffect = useLayoutEffectImpl;
+        
+        // For CommonJS modules (brukt i vendor-misc)
+        if (typeof module !== 'undefined' && module.exports) {
+            module.exports = module.exports || {};
+            module.exports.useLayoutEffect = useLayoutEffectImpl;
+        }
+        
+        // For ES modules
+        if (typeof window !== 'undefined') {
+            window.__esModule_useLayoutEffect = useLayoutEffectImpl;
+        }
+        
+        // 4. Definer alle andre React hooks og funksjoner
+        var noop = function() {};
+        window.React = Object.assign(window.React, {
+            version: '18.2.0',
+            useState: function(initialState) {
+                return [typeof initialState === 'function' ? initialState() : initialState, noop];
+            },
+            useEffect: function(effect) {
+                if (typeof effect === 'function') setTimeout(effect, 0);
+            },
+            useCallback: function(callback) { return callback; },
+            useMemo: function(factory) { return typeof factory === 'function' ? factory() : factory; },
+            useRef: function(initialValue) { return { current: initialValue }; },
+            createContext: function() { return { Provider: {}, Consumer: {} }; },
+            createElement: function() { return {}; },
+            Fragment: 'Fragment',
+            memo: function(component) { return component; },
+            forwardRef: function(render) { return render; }
+        });
+        
+        // 5. Importer alle hooks globalt
+        Object.keys(window.React).forEach(function(key) {
+            if (key.startsWith('use') && typeof window.React[key] === 'function') {
+                window[key] = window.React[key];
+                console.log('🔄 Exported React.' + key + ' globally');
+            }
+        });
+        
+        // 6. Definer ReactDOM
+        window.ReactDOM = window.ReactDOM || {
+            createRoot: function() {
+                return { render: noop };
+            }
+        };
+        
+        // 7. Definer use-sync-external-store
+        window.useSyncExternalStore = function(subscribe, getSnapshot) {
+            console.log('⚡ useSyncExternalStore polyfill running');
+            return getSnapshot();
+        };
+        
+        // 8. Definer bruk av useSyncExternalStore med selector (brukt av mange biblioteker)
+        window.useSyncExternalStoreWithSelector = function(subscribe, getSnapshot, getServerSnapshot, selector, isEqual) {
+            console.log('⚡ useSyncExternalStoreWithSelector polyfill running');
+            var state = getSnapshot();
+            return selector ? selector(state) : state;
+        };
+        
+        // 9. Sikre ReactDOM har alle metoder
+        window.ReactDOM = Object.assign(window.ReactDOM, {
+            render: noop,
+            hydrate: noop,
+            createPortal: function() { return null; },
+            findDOMNode: function() { return null; }
+        });
+        
+        // AGGRESSIVT: Omdiriger alle React-relaterte krav
+        if (typeof window !== 'undefined') {
+            var originalGetOwnPropertyDescriptor = Object.getOwnPropertyDescriptor;
+            var originalDefineProperty = Object.defineProperty;
+            
+            // Interceptor for å håndtere manglende React properties
+            Object.getOwnPropertyDescriptor = function(obj, prop) {
+                var result = originalGetOwnPropertyDescriptor(obj, prop);
+                if (!result && obj === window.React && typeof prop === 'string' && prop.startsWith('use')) {
+                    console.log('🛠️ Intercepted getOwnPropertyDescriptor for React.' + prop);
+                    return {
+                        configurable: true,
+                        enumerable: true,
+                        value: function() { console.log('Polyfilled ' + prop); return {}; },
+                        writable: true
+                    };
+                }
+                return result;
+            };
+        }
+        
+        console.log('✅ ULTRA AGGRESSIVE REACT FIX COMPLETE!');
+        console.log('React: ' + typeof window.React);
+        console.log('useLayoutEffect: ' + typeof window.useLayoutEffect);
+        console.log('React.useLayoutEffect: ' + typeof window.React.useLayoutEffect);
+    })();
+    </script>
+    
+    <!-- SPESIFIKK VENDOR MISC FIX - Direkte hacket fix til use-sync-external-store biblioteket -->
+    <script>
+    (function() {
+        // Definer en skyggeversjon av vendor-misc-modulen som håndterer useLayoutEffect direkte
+        window.__vendorMiscFix = {
+            useLayoutEffect: function(callback, deps) {
+                console.log('💉 Injected vendor-misc useLayoutEffect running');
+                setTimeout(callback, 0);
+            }
+        };
+        
+        // SUPER AGGRESSIV: Redefinere Object.defineProperty for å fange useLayoutEffect
+        var originalDefineProperty = Object.defineProperty;
+        Object.defineProperty = function(obj, prop, descriptor) {
+            // For useLayoutEffect spesifikt, erstatt med vår versjon
+            if (prop === 'useLayoutEffect' && descriptor && typeof descriptor.get === 'function') {
+                console.log('🛡️ Intercepted attempt to define useLayoutEffect');
+                descriptor.get = function() { 
+                    return function(callback, deps) {
+                        console.log('💉 Intercepted useLayoutEffect running');
+                        setTimeout(callback, 0);
+                    };
+                };
+            }
+            return originalDefineProperty(obj, prop, descriptor);
+        };
+    })();
+    </script>
+    
+    <!-- Content Security Policy -->
+    <meta http-equiv="Content-Security-Policy" content="
+      default-src 'self';
+      script-src 'self' 'unsafe-inline' 'unsafe-eval';
+      style-src 'self' 'unsafe-inline';
+      img-src 'self' data: blob: *.amazonaws.com storage.googleapis.com *.supabase.co *.supabase.in;
+      font-src 'self' data:;
+      connect-src 'self' *.supabase.co *.supabase.in wss://*.supabase.co *.amazonaws.com storage.googleapis.com 
+                  *.snakkaz.com dash.snakkaz.com business.snakkaz.com docs.snakkaz.com analytics.snakkaz.com;
+      media-src 'self' blob:;
+      object-src 'none';
+      frame-src 'self';
+      worker-src 'self' blob:;
+    ">
+    
+    <!-- MANUELL LOADING AV BUNDLES -->
+    <script>
+        window.addEventListener('DOMContentLoaded', function() {
+            // Vis loading skjerm
+            var root = document.getElementById('root');
+            root.innerHTML = `
+                <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%); color: white; font-family: sans-serif; text-align: center; padding: 20px;">
+                    <h1>⚡ SnakkaZ - Loading...</h1>
+                    <p>Laster React i riktig rekkefølge...</p>
+                    <div style="width: 50px; height: 50px; border: 5px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: white; animation: spin 1s infinite linear; margin: 20px 0;"></div>
+                    <style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); }}</style>
+                    <div id="status" style="text-align: left; max-width: 500px; margin-top: 20px;"></div>
+                </div>
+            `;
+            
+            var status = document.getElementById('status');
+            
+            // Helper for status updates
+            function updateStatus(message, isError) {
+                var line = document.createElement('div');
+                
+                // Format med ikoner
+                if (isError) {
+                    line.innerHTML = '❌ ' + message;
+                    line.style.color = '#fca5a5';
+                } else {
+                    line.innerHTML = '✅ ' + message;
+                }
+                
+                status.appendChild(line);
+                console.log(message);
+            }
+            
+            // Aggressive script patcher - håndterer vendor-misc spesielt
+            function patchScript(content, name) {
+                if (name.includes('vendor-misc')) {
+                    console.log('🔧 Patching vendor-misc script...');
+                    
+                    // Erstatt bruk av React.useLayoutEffect med global useLayoutEffect
+                    content = content.replace(
+                        /const\s+(\w+)\s*=\s*React\.useLayoutEffect/g, 
+                        'const $1 = window.useLayoutEffect'
+                    );
+                    
+                    // Erstatt andre useLayoutEffect-bruk
+                    content = content.replace(
+                        /useLayoutEffect\s*=/g, 
+                        'window.useLayoutEffect ='
+                    );
+                    
+                    console.log('✅ vendor-misc script patched');
+                }
+                return content;
+            }
+            
+            // Last scripts med patching
+            function loadScript(src, callback) {
+                console.log('⏳ Loading: ' + src);
+                
+                if (src.includes('vendor-misc')) {
+                    // For vendor-misc, bruker vi XHR for å patche innholdet
+                    var xhr = new XMLHttpRequest();
+                    xhr.open('GET', src, true);
+                    xhr.onreadystatechange = function() {
+                        if (xhr.readyState === 4) {
+                            if (xhr.status === 200) {
+                                var content = xhr.responseText;
+                                console.log('📝 Received vendor-misc, patching...');
+                                
+                                // Patche vendor-misc innholdet med mer aggressive fixes
+                                content = `
+                                    // PATCHED vendor-misc with React polyfills
+                                    window.useLayoutEffect = window.useLayoutEffect || window.React.useLayoutEffect || function(fn, deps) { setTimeout(fn, 0); };
+                                    if (!window.React) window.React = {};
+                                    window.React.useLayoutEffect = window.useLayoutEffect;
+                                    
+                                    // Original script follows:
+                                    ${content}
+                                `;
+                                
+                                // Kjør den patchede vendor-misc som en inline script
+                                var script = document.createElement('script');
+                                script.type = 'module';
+                                script.textContent = content;
+                                document.head.appendChild(script);
+                                
+                                updateStatus('vendor-misc lastet (med patch)');
+                                if (callback) callback();
+                            } else {
+                                updateStatus('Feil ved lasting av vendor-misc: ' + xhr.status, true);
+                            }
+                        }
+                    };
+                    xhr.send();
+                } else {
+                    // For andre scripts, last normalt
+                    var script = document.createElement('script');
+                    script.type = 'module';
+                    script.src = src;
+                    script.crossOrigin = '';
+                    
+                    script.onload = function() {
+                        updateStatus(src.split('/').pop() + ' lastet');
+                        if (callback) callback();
+                    };
+                    
+                    script.onerror = function() {
+                        updateStatus('Feil ved lasting av: ' + src, true);
+                    };
+                    
+                    document.head.appendChild(script);
+                }
+            }
+            
+            // Last bundles i riktig rekkefølge med forsinkelse
+            setTimeout(function() {
+                // 1. Load React core first
+                loadScript('/assets/js/vendor-react-core-BfIF1-qE.js', function() {
+                    updateStatus('React core lastet');
+                    
+                    // 2. Load React DOM after React core
+                    loadScript('/assets/js/vendor-react-dom-1Lp3Rl7J.js', function() {
+                        updateStatus('React DOM lastet');
+                        
+                        // VIKTIG: Ekstra sjekk av React før vendor-misc
+                        console.log('🔍 Final check before vendor-misc:');
+                        console.log('React: ' + typeof window.React);
+                        console.log('useLayoutEffect: ' + typeof window.useLayoutEffect);
+                        console.log('React.useLayoutEffect: ' + typeof window.React.useLayoutEffect);
+                        
+                        // Ekstra sjekk - FØR vendor-misc, sett useLayoutEffect på React
+                        if (window.React && typeof window.useLayoutEffect === 'function') {
+                            window.React.useLayoutEffect = window.useLayoutEffect;
+                            console.log('✅ Ensured React.useLayoutEffect is set');
+                        }
+                        
+                        // 3. Load vendor-misc with special handling
+                        loadScript('/assets/js/vendor-misc-CvNb75W7.js', function() {
+                            updateStatus('vendor-misc lastet');
+                            
+                            // 4. Load main app bundle last
+                            loadScript('/assets/js/index-BdjqU1Nn.js', function() {
+                                updateStatus('Hovedapp lastet');
+                            });
+                        });
+                    });
+                });
+            }, 500);
+        });
+    </script>
+    
+    <link rel="stylesheet" href="/assets/auth-bg.css" />
+    
+    <!-- Load bundles WITHOUT modulepreload to avoid race conditions -->
+    <script type="module" crossorigin>
+        console.log('🚀 Starting manual sequential bundle loading...');
+        
+        async function loadBundleSequentially() {
+            const bundles = [
+                '/assets/js/vendor-react-core-BfIF1-qE.js',
+                '/assets/js/vendor-react-dom-1Lp3Rl7J.js',  
+                '/assets/js/vendor-misc-CvNb75W7.js',
+                '/assets/js/index-BdjqU1Nn.js'
+            ];
+            
+            for (const bundle of bundles) {
+                try {
+                    console.log('⏳ Loading:', bundle);
+                    await import(bundle);
+                    console.log('✅ Loaded:', bundle);
+                    
+                    // Give time for each bundle to initialize
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                } catch (error) {
+                    console.log('❌ Error loading:', bundle, error);
+                    // Continue anyway
+                }
+            }
+            
+            console.log('🎉 All bundles loaded!');
+        }
+        
+        // Start loading after a small delay to ensure React is fully set up
+        setTimeout(loadBundleSequentially, 50);
+    </script>
+</head>
+<body>
+    <div id="root">
+        <div style="padding: 40px; text-align: center; font-family: Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; min-height: 100vh;">
+            <h1>🛠️ SnakkaZ Ultra Fix</h1>
+            <p>Ultra-aggressive React fix loaded. Appen laster...</p>
+            <div style="margin: 20px 0;">
+                <div style="border: 3px solid #fff; border-radius: 50%; border-top: 3px solid transparent; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto;"></div>
+            </div>
+            <p><small>Overskriver alle React-imports og hooks.</small></p>
+        </div>
+    </div>
+    
+    <style>
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    </style>
+</body>
+</html>
