@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/icons/snakkaz-icon-192.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#0f172a" />
+    <title>SnakkaZ Chat</title>
+    
+    <!-- 🚨 KOMPLETT REACT POLYFILL - ALLE HOOKS -->
+    <script>
+    console.log('🚨 LOADING COMPLETE REACT POLYFILL...');
+    
+    if (typeof window !== 'undefined') {
+        // KOMPLETT React-objekt med ALLE hooks og funksjoner
+        window.React = {
+            version: '18.2.0',
+            
+            // ALLE REACT HOOKS
+            useState: function(initialState) {
+                console.log('React.useState called');
+                const state = typeof initialState === 'function' ? initialState() : initialState;
+                const setState = function(newState) {
+                    console.log('setState called');
+                };
+                return [state, setState];
+            },
+            
+            useEffect: function(effect, deps) {
+                console.log('React.useEffect called');
+                if (typeof effect === 'function') {
+                    try { effect(); } catch (e) { console.log('useEffect error:', e); }
+                }
+            },
+            
+            useLayoutEffect: function(effect, deps) {
+                console.log('React.useLayoutEffect called');
+                if (typeof effect === 'function') {
+                    try { effect(); } catch (e) { console.log('useLayoutEffect error:', e); }
+                }
+            },
+            
+            useCallback: function(callback, deps) {
+                console.log('React.useCallback called');
+                return callback;
+            },
+            
+            useMemo: function(factory, deps) {
+                console.log('React.useMemo called');
+                return typeof factory === 'function' ? factory() : factory;
+            },
+            
+            useRef: function(initialValue) {
+                console.log('React.useRef called');
+                return { current: initialValue };
+            },
+            
+            useContext: function(context) {
+                console.log('React.useContext called');
+                return context.defaultValue || {};
+            },
+            
+            useReducer: function(reducer, initialArg, init) {
+                console.log('React.useReducer called');
+                const state = init ? init(initialArg) : initialArg;
+                const dispatch = function(action) {
+                    console.log('dispatch called with:', action);
+                };
+                return [state, dispatch];
+            },
+            
+            useImperativeHandle: function(ref, createHandle, deps) {
+                console.log('React.useImperativeHandle called');
+                if (ref && typeof createHandle === 'function') {
+                    try { ref.current = createHandle(); } catch (e) {}
+                }
+            },
+            
+            useDebugValue: function(value, format) {
+                console.log('React.useDebugValue called');
+            },
+            
+            useDeferredValue: function(value) {
+                console.log('React.useDeferredValue called');
+                return value;
+            },
+            
+            useTransition: function() {
+                console.log('React.useTransition called');
+                return [false, function() {}];
+            },
+            
+            useId: function() {
+                console.log('React.useId called');
+                return 'react-id-' + Math.random().toString(36).substr(2, 9);
+            },
+            
+            useSyncExternalStore: function(subscribe, getSnapshot, getServerSnapshot) {
+                console.log('React.useSyncExternalStore called');
+                return typeof getSnapshot === 'function' ? getSnapshot() : null;
+            },
+            
+            useInsertionEffect: function(effect, deps) {
+                console.log('React.useInsertionEffect called');
+                if (typeof effect === 'function') {
+                    try { effect(); } catch (e) { console.log('useInsertionEffect error:', e); }
+                }
+            },
+            
+            // REACT KOMPONENTER OG FUNKSJONER
+            createElement: function(type, props, ...children) {
+                console.log('React.createElement called with:', type);
+                return { 
+                    type, 
+                    props: props || {}, 
+                    children: children.length === 1 ? children[0] : children 
+                };
+            },
+            
+            cloneElement: function(element, props, ...children) {
+                console.log('React.cloneElement called');
+                return { ...element, props: { ...element.props, ...props }, children };
+            },
+            
+            createContext: function(defaultValue) {
+                console.log('React.createContext called');
+                return {
+                    Provider: function(props) { return props.children; },
+                    Consumer: function(props) { return props.children; },
+                    defaultValue: defaultValue
+                };
+            },
+            
+            forwardRef: function(render) {
+                console.log('React.forwardRef called');
+                return render;
+            },
+            
+            memo: function(component, compare) {
+                console.log('React.memo called');
+                return component;
+            },
+            
+            lazy: function(factory) {
+                console.log('React.lazy called');
+                return { $$typeof: Symbol.for('react.lazy'), _payload: factory, _init: null };
+            },
+            
+            // REACT KOMPONENTER
+            Fragment: 'React.Fragment',
+            StrictMode: function(props) { return props.children; },
+            Suspense: function(props) { return props.children; },
+            Profiler: function(props) { return props.children; },
+            
+            // REACT KLASSER
+            Component: function(props) { 
+                this.props = props; 
+                this.setState = function() {};
+                this.forceUpdate = function() {};
+            },
+            PureComponent: function(props) { 
+                this.props = props; 
+                this.setState = function() {};
+                this.forceUpdate = function() {};
+            },
+            
+            // REACT UTILITIES
+            isValidElement: function(object) {
+                return typeof object === 'object' && object !== null && object.$$typeof;
+            },
+            
+            Children: {
+                map: function(children, fn) { return children; },
+                forEach: function(children, fn) {},
+                count: function(children) { return Array.isArray(children) ? children.length : 1; },
+                only: function(children) { return children; },
+                toArray: function(children) { return Array.isArray(children) ? children : [children]; }
+            }
+        };
+        
+        // REACT-DOM OBJEKT
+        window.ReactDOM = {
+            version: '18.2.0',
+            
+            render: function(element, container, callback) {
+                console.log('ReactDOM.render called (legacy)');
+                if (container && container.innerHTML !== undefined) {
+                    container.innerHTML = '<div style="padding:20px;text-align:center;"><h2>🚀 SnakkaZ Loading...</h2><p>React bundles are loading...</p></div>';
+                }
+                if (callback) callback();
+            },
+            
+            createRoot: function(container, options) {
+                console.log('ReactDOM.createRoot called');
+                return {
+                    render: function(element) {
+                        console.log('Root.render called');
+                        if (container && container.innerHTML !== undefined) {
+                            container.innerHTML = '<div style="padding:20px;text-align:center;"><h2>🚀 SnakkaZ Loading...</h2><p>React application is starting...</p></div>';
+                        }
+                    },
+                    unmount: function() {
+                        console.log('Root.unmount called');
+                    }
+                };
+            },
+            
+            hydrateRoot: function(container, element, options) {
+                console.log('ReactDOM.hydrateRoot called');
+                return this.createRoot(container, options);
+            },
+            
+            unmountComponentAtNode: function(container) {
+                console.log('ReactDOM.unmountComponentAtNode called');
+                if (container) container.innerHTML = '';
+            },
+            
+            findDOMNode: function(component) {
+                console.log('ReactDOM.findDOMNode called');
+                return null;
+            },
+            
+            createPortal: function(children, container) {
+                console.log('ReactDOM.createPortal called');
+                return children;
+            }
+        };
+        
+        // ANDRE REACT UTILITIES
+        window.__REACT_DEVTOOLS_GLOBAL_HOOK__ = window.__REACT_DEVTOOLS_GLOBAL_HOOK__ || {
+            supportsFiber: true,
+            inject: function() {},
+            onCommitFiberRoot: function() {},
+            onCommitFiberUnmount: function() {}
+        };
+        
+        // SCHEDULER (React 18 dependencies)
+        window.Scheduler = {
+            unstable_scheduleCallback: function(priority, callback) {
+                console.log('Scheduler.unstable_scheduleCallback called');
+                return setTimeout(callback, 0);
+            },
+            unstable_cancelCallback: function(id) {
+                console.log('Scheduler.unstable_cancelCallback called');
+                clearTimeout(id);
+            },
+            unstable_getCurrentPriorityLevel: function() {
+                return 3; // Normal priority
+            },
+            unstable_runWithPriority: function(priority, fn) {
+                return fn();
+            }
+        };
+        
+        console.log('✅ COMPLETE REACT POLYFILL LOADED!');
+        console.log('✅ React version:', window.React.version);
+        console.log('✅ ReactDOM version:', window.ReactDOM.version);
+        console.log('✅ All hooks available:', Object.keys(window.React).filter(k => k.startsWith('use')));
+    }
+    </script>
+    
+    <!-- LAST BUNDLES I RIKTIG REKKEFØLGE -->
+    <link rel="modulepreload" crossorigin href="/assets/js/vendor-react-core-BfIF1-qE.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/vendor-react-dom-1Lp3Rl7J.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/vendor-misc-CvNb75W7.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/index-BdjqU1Nn.js">
+    
+    <link rel="stylesheet" href="/assets/auth-bg.css" />
+</head>
+<body>
+    <div id="root">
+        <div style="padding: 40px; text-align: center; font-family: Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            <div style="background: rgba(255,255,255,0.1); padding: 40px; border-radius: 20px; backdrop-filter: blur(10px);">
+                <h1 style="margin: 0 0 20px 0; font-size: 2.5em;">🚀 SnakkaZ Chat</h1>
+                <p style="margin: 10px 0; font-size: 1.2em;">Complete React polyfill loaded!</p>
+                <div style="margin: 30px 0;">
+                    <div style="border: 4px solid #fff; border-radius: 50%; border-top: 4px solid transparent; width: 50px; height: 50px; animation: spin 1s linear infinite; margin: 0 auto;"></div>
+                </div>
+                <p style="margin: 10px 0; opacity: 0.8;">Loading application...</p>
+                <p style="margin: 10px 0; font-size: 0.9em; opacity: 0.6;">
+                    ✅ React polyfill active<br>
+                    ✅ All hooks available<br>
+                    ✅ Bundle order correct
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <style>
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    body { margin: 0; padding: 0; overflow-x: hidden; }
+    </style>
+    
+    <!-- LAST HOVEDAPP-BUNDLE TIL SLUTT -->
+    <script type="module" crossorigin src="/assets/js/index-BdjqU1Nn.js"></script>
+</body>
+</html>

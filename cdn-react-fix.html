@@ -11,10 +11,25 @@
     <meta name="apple-mobile-web-app-title" content="SnakkaZ Chat" />
     <link rel="apple-touch-icon" href="/icons/snakkaz-icon-192.png" />
     <link rel="stylesheet" href="/assets/auth-bg.css" />
-    <!-- Content Security Policy -->
+    
+    <title>SnakkaZ Chat</title>
+    
+    <!-- 🚀 LAST REACT FRA CDN FØRST - BLOCKING SCRIPTS -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/use-sync-external-store@1.2.0/index.js"></script>
+    
+    <script>
+    console.log('🔧 CDN React loaded:', typeof window.React);
+    console.log('🔧 CDN ReactDOM loaded:', typeof window.ReactDOM);
+    console.log('🔧 React version:', window.React?.version || 'unknown');
+    console.log('🔧 useLayoutEffect:', typeof window.React?.useLayoutEffect);
+    </script>
+    
+    <!-- Content Security Policy - OPPDATERT for CDN -->
     <meta http-equiv="Content-Security-Policy" content="
       default-src 'self';
-      script-src 'self' 'unsafe-inline' 'unsafe-eval';
+      script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com;
       style-src 'self' 'unsafe-inline';
       img-src 'self' data: blob: *.amazonaws.com storage.googleapis.com *.supabase.co *.supabase.in;
       font-src 'self' data:;
@@ -26,10 +41,8 @@
       worker-src 'self' blob:;
     ">
     <meta name="crossorigin" content="anonymous">
-    <title>SnakkaZ Chat</title>
-        <link rel="modulepreload" crossorigin href="/assets/js/vendor-react-core-BfIF1-qE.js">
-    <link rel="modulepreload" crossorigin href="/assets/js/vendor-react-dom-1Lp3Rl7J.js">
-    <link rel="modulepreload" crossorigin href="/assets/js/vendor-misc-CvNb75W7.js">
+    
+    <!-- SKIP React bundles - last kun de andre -->
     <link rel="modulepreload" crossorigin href="/assets/js/vendor-utils-style-DFYxjbTp.js">
     <link rel="modulepreload" crossorigin href="/assets/js/vendor-security-CWlgzNgn.js">
     <link rel="modulepreload" crossorigin href="/assets/js/app-services-CV6XBtv7.js">
@@ -39,21 +52,8 @@
     <link rel="modulepreload" crossorigin href="/assets/js/vendor-database-D0gM_N4X.js">
     <link rel="modulepreload" crossorigin href="/assets/js/vendor-animation-3lOsKE58.js">
     <link rel="modulepreload" crossorigin href="/assets/js/components-ui-BtaE8Zt_.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/vendor-misc-CvNb75W7.js">
     <script type="module" crossorigin src="/assets/js/index-BdjqU1Nn.js"></script>
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    <link rel="stylesheet" crossorigin href="/assets/css/index-uDlWtT9E.css">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: *.amazonaws.com storage.googleapis.com *.supabase.co *.supabase.in; font-src 'self' data:; connect-src 'self' *.supabase.co *.supabase.in wss://*.supabase.co *.amazonaws.com storage.googleapis.com *.snakkaz.com dash.snakkaz.com business.snakkaz.com docs.snakkaz.com analytics.snakkaz.com; media-src 'self' blob:; object-src 'none'; frame-src 'self'; worker-src 'self' blob:">
   </head>
   <body>
     <div id="root"></div>

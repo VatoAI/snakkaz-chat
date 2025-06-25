@@ -42,49 +42,33 @@ export default defineConfig(({ mode }) => ({
     // Configure Rollup options for optimal chunking
     rollupOptions: {
       output: {
-        // Ultra-optimized chunking strategy for ~20 bundles
+        // Ultra-optimized chunking strategy for ~15-20 bundles
         manualChunks: (id) => {
           // Core app utilities and shared components
           if (id.includes('/src/components/ui/') || id.includes('/src/hooks/') || id.includes('/src/lib/')) {
             return 'app-utils';
           }
           
-          // Page-level consolidation (5 chunks for all pages)
+          // Consolidate ALL page components into fewer chunks (3 chunks total)
           if (id.includes('/src/pages/')) {
-            // Authentication pages
+            // Authentication-related pages
             if (id.includes('Login') || id.includes('Register') || id.includes('ForgotPassword') || 
-                id.includes('ResetPassword') || id.includes('EmailConfirmation')) {
+                id.includes('ResetPassword') || id.includes('EmailConfirmation') || id.includes('Auth')) {
               return 'pages-auth';
             }
             
-            // Main application pages
-            if (id.includes('Dashboard') || id.includes('Profile') || id.includes('Settings')) {
-              return 'pages-main';
-            }
-            
-            // Social features pages  
-            if (id.includes('Friends') || id.includes('FindFriends') || id.includes('Mail')) {
-              return 'pages-social';
-            }
-            
-            // Chat-related pages
-            if (id.includes('Chat') || id.includes('BasicChat') || id.includes('GroupChat') || 
-                id.includes('AIChatPage') || id.includes('EnhancedGroupChat')) {
+            // Chat-related pages (including AI, Group, Basic chat)
+            if (id.includes('Chat') || id.includes('AIChatPage') || id.includes('GroupChat') || 
+                id.includes('BasicChat') || id.includes('EnhancedGroupChat')) {
               return 'pages-chat';
             }
             
-            // Feature pages (Memory, MCP, Subscription, etc.)
-            return 'pages-features';
+            // All other pages (Dashboard, Profile, Settings, Features, Social, etc.)
+            return 'pages-main';
           }
           
-          // Component consolidation (2 chunks for all components)
+          // Consolidate ALL components into single chunk
           if (id.includes('/src/components/')) {
-            // Dynamic components
-            if (id.includes('Dynamic')) {
-              return 'components-dynamic';
-            }
-            
-            // All other components (navigation, layout, etc.)
             return 'components-ui';
           }
           
@@ -101,14 +85,19 @@ export default defineConfig(({ mode }) => ({
             return 'vendor-react-core';
           }
           
-          // React dependencies that need React to be available
-          if (id.includes('use-sync-external-store') || id.includes('scheduler') || 
-              id.includes('use-sync-external-store-shim')) {
-            return 'vendor-react-core';
-          }
-          
-          // Radix UI components use React hooks and need to be loaded after React
-          if (id.includes('@radix-ui')) {
+          // ALL React dependencies must be bundled with React core to ensure proper loading order
+          if (id.includes('use-sync-external-store') || 
+              id.includes('scheduler') || 
+              id.includes('use-sync-external-store-shim') ||
+              id.includes('@radix-ui') ||
+              id.includes('react-error-boundary') ||
+              id.includes('react-hook-form') ||
+              id.includes('react-day-picker') ||
+              id.includes('react-intersection-observer') ||
+              id.includes('react-resizable-panels') ||
+              id.includes('react-virtuoso') ||
+              id.includes('framer-motion') ||
+              id.includes('motion')) {
             return 'vendor-react-core';
           }
           
@@ -122,18 +111,16 @@ export default defineConfig(({ mode }) => ({
             return 'vendor-ui-components';
           }
           
-          // 4. Animation & Motion (1 chunk)
-          if (id.includes('framer-motion') || id.includes('motion')) {
-            return 'vendor-animation';
-          }
+          // 4. Animation & Motion - Removed framer-motion (moved to vendor-react-core)
+          // Keeping this chunk for future animation libraries
           
           // 5. Database & Backend (1 chunk)
           if (id.includes('@supabase') || id.includes('supabase') || id.includes('postgrest')) {
             return 'vendor-database';
           }
           
-          // 6. Forms & Validation (1 chunk)
-          if (id.includes('react-hook-form') || id.includes('zod') || id.includes('@hookform')) {
+          // 6. Forms & Validation - Removed react-hook-form (moved to vendor-react-core)
+          if (id.includes('zod') || id.includes('@hookform')) {
             return 'vendor-forms';
           }
           
@@ -147,13 +134,10 @@ export default defineConfig(({ mode }) => ({
             return 'vendor-charts';
           }
           
-          // 9. Utilities (2 chunks)
-          if (id.includes('date-fns') || id.includes('lodash') || id.includes('uuid')) {
-            return 'vendor-utils-data';
-          }
-          
-          if (id.includes('tailwind-merge') || id.includes('clsx') || id.includes('class-variance') || id.includes('classnames')) {
-            return 'vendor-utils-style';
+          // 9. Utilities (merged from 2 to 1 chunk)
+          if (id.includes('date-fns') || id.includes('lodash') || id.includes('uuid') ||
+              id.includes('tailwind-merge') || id.includes('clsx') || id.includes('class-variance') || id.includes('classnames')) {
+            return 'vendor-utils';
           }
           
           // 10. Media & Special Features (1 chunk)
