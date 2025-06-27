@@ -1,5 +1,22 @@
-# 📚 SNAKKAZ DOCUMENTATION INDEX
-## Complete Guide to Project Structure and Operations
+# � SNAKKAZ CHAT
+## End-to-End Encrypted Messaging Platform
+
+Snakkaz Chat is a secure, feature-rich chat application with end-to-end encryption, built using React, TypeScript, and Supabase. The platform offers multiple chat types (global, private, group), custom emojis, pin functionality, and AI-powered memory system.
+
+### Key Features
+- 🔒 **End-to-End Encryption (E2EE)**: Secure communication with AES-GCM encryption
+- 💬 **Multiple Chat Types**: Global, private, and group chats with role-based permissions
+- 📌 **Pin System**: Pin important messages across all chat types
+- 😀 **Custom Emoji System**: User-defined emojis and reactions
+- 🧠 **Memory System**: AI agent integration with full admin oversight
+- 📱 **Responsive Design**: Works seamlessly across all device sizes
+
+### Technology Stack
+- **Frontend**: React 18, TypeScript, Vite, Shadcn UI, Tailwind CSS
+- **Backend**: Supabase (PostgreSQL, Row-Level Security, Realtime)
+- **AI Integration**: Python MCP Server, Vector embeddings with pgvector
+- **Security**: E2EE, PBKDF2, Content Security Policy, Rate limiting
+- **Infrastructure**: Cloudflare CDN, GitHub Actions for CI/CD
 
 ---
 
