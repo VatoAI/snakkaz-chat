@@ -33,8 +33,8 @@ export default defineConfig(({ mode }) => ({
     // Enable CSS code splitting for better performance
     cssCodeSplit: true,
     
-    // Enable source maps for debugging in production
-    sourcemap: true,
+    // Disable source maps in production for security and size
+    sourcemap: mode === 'development',
     
     // Optimize asset handling
     assetsInlineLimit: 4096, // Inline assets smaller than 4KB for better performance

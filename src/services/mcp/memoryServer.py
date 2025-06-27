@@ -264,7 +264,7 @@ class MemoryMCPServer:
             # Lagre i database
             if self.db_pool:
                 async with self.db_pool.acquire() as conn:
-                result = await conn.fetchrow("""
+                    result = await conn.fetchrow("""
                     INSERT INTO snakkaz_memories (
                         user_id, memory_type, key, value, embedding,
                         metadata, confidence, importance, context, source,
@@ -281,11 +281,11 @@ class MemoryMCPServer:
                         updated_at = NOW(),
                         access_count = snakkaz_memories.access_count + 1
                     RETURNING id, created_at, updated_at
-                """, 
-                    user_id, memory_type, key, value, embedding,
-                    json.dumps(metadata or {}), confidence, memory.importance,
-                    context, source, expires_at
-                )
+                    """, 
+                        user_id, memory_type, key, value, embedding,
+                        json.dumps(metadata or {}), confidence, memory.importance,
+                        context, source, expires_at
+                    )
                 
                 memory_id = result['id']
                 

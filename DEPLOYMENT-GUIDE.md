@@ -1,17 +1,26 @@
 # Snakkaz Chat - cPanel Deployment Guide
 
-## Gjeldende situasjon
-✅ snakkaz-dist.zip (11.97 MB) er lastet opp til public_html
-⚠️ Filen må ekstrakteres manuelt for at nettsiden skal fungere
+## Gjeldende situasjon (Oppdatert 27. juni 2025, 14:42)
+✅ snakkaz-dist-latest.zip (12.55 MB) er lastet opp til server root
+✅ PostCSS/autoprefixer problemer er løst
+✅ Build fungerer perfekt (vite build: 10.29s)
+⚠️ Filen må ekstrakteres manuelt for at nettsiden skal fungere korrekt
+
+## Siste endringer:
+- ✅ Fikset `autoprefixer` dependency problem
+- ✅ Bygget prosjektet uten feil (alle 29 moduler)
+- ✅ Lastet opp ny ZIP-fil med fikser
+- ⚠️ React runtime error må fortsatt løses
 
 ## Trinn-for-trinn instruksjoner:
 
 ### 1. Ekstraher ZIP-filen i cPanel
+
 1. **Gå til cPanel File Manager** (du er allerede der)
-2. **Naviger til public_html** (du er allerede der)
-3. **Høyreklikk på snakkaz-dist.zip**
+2. **Naviger til root directory** (du ser snakkaz-dist-latest.zip)
+3. **Høyreklikk på snakkaz-dist-latest.zip**
 4. **Velg "Extract"**
-5. **Bekreft at destinasjonen er `/public_html`**
+5. **Bekreft at destinasjonen er root directory**
 6. **Klikk "Extract Files"**
 7. **Vent til ekstraksjon er ferdig**
 
@@ -26,7 +35,8 @@ Du bør se disse nye filene/mappene:
 - og flere...
 
 ### 3. Slett ZIP-filen
-- **Høyreklikk på snakkaz-dist.zip**
+
+- **Høyreklikk på snakkaz-dist-latest.zip**
 - **Velg "Delete"**
 - **Bekreft sletting**
 
