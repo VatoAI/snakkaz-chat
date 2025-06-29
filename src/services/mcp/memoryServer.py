@@ -345,11 +345,11 @@ class MemoryMCPServer:
                 
                 if self.db_pool:
                     async with self.db_pool.acquire() as conn:
-                    # Oppdater expired minner
-                    await conn.execute("""
-                        DELETE FROM snakkaz_memories 
-                        WHERE expires_at IS NOT NULL AND expires_at < NOW()
-                    """)
+                        # Oppdater expired minner
+                        await conn.execute("""
+                            DELETE FROM snakkaz_memories 
+                            WHERE expires_at IS NOT NULL AND expires_at < NOW()
+                        """)
                     
                     # Søk med vektor-likhet
                     conditions = ["user_id = $1"]
@@ -761,11 +761,11 @@ class MemoryMCPServer:
             try:
                 if self.db_pool:
                     async with self.db_pool.acquire() as conn:
-                    deleted = await conn.fetchval("""
-                        DELETE FROM snakkaz_memories
-                        WHERE expires_at IS NOT NULL AND expires_at < NOW()
-                        RETURNING COUNT(*)
-                    """)
+                        deleted = await conn.fetchval("""
+                            DELETE FROM snakkaz_memories
+                            WHERE expires_at IS NOT NULL AND expires_at < NOW()
+                            RETURNING COUNT(*)
+                        """)
                     if deleted:
                         print(f"Slettet {deleted} utløpte minner")
                         

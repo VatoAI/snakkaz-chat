@@ -3,14 +3,14 @@
  * Enhanced for Norwegian Tech Community - Juni 7, 2025
  */
 
-// CRITICAL: Import the emergency React state fix FIRST to prevent useState undefined errors
-import './utils/reactStateFixV5';
+// CRITICAL: Import the optimized React fix FIRST to prevent runtime errors
+import './utils/reactFixOptimized';
 
 // Import environment fix to ensure process.env is available
 import './utils/env/environmentFix';
 
 // Norwegian UX Performance Monitoring
-import './utils/performanceMonitor';
+import './utils/PerformanceMonitor';
 
 import React from 'react';
 import { createRoot } from 'react-dom/client';

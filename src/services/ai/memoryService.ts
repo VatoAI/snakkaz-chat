@@ -1,7 +1,12 @@
 // Snakkaz Chat Memory System - TypeScript Integration
-// Kobler Python MCP Memory Server med React frontend
+// Kobler Python FastAPI Memory Server med React frontend
 
 import { AIMessage } from '../ai/multiProviderService';
+
+// Memory server configuration
+const MEMORY_SERVER_URL = process.env.NODE_ENV === 'production' 
+  ? 'https://api.snakkaz.com' 
+  : 'http://localhost:3001';
 
 export interface MemoryEntry {
   id: number;
@@ -77,28 +82,24 @@ export interface AdminMemoryOverview {
 }
 
 export class MemoryService {
-  private mcpEndpoint: string;
-  private apiKey: string;
+  private apiEndpoint: string;
 
   constructor() {
-    this.mcpEndpoint = process.env.VITE_MCP_MEMORY_ENDPOINT || 'http://localhost:3003';
-    this.apiKey = process.env.VITE_MCP_API_KEY || '';
+    this.apiEndpoint = MEMORY_SERVER_URL;
   }
 
-  private async callMCPTool(toolName: string, args: Record<string, any>): Promise<any> {
+  private async makeRequest(endpoint: string, options: RequestInit = {}): Promise<unknown> {
     try {
-      const response = await fetch(`${this.mcpEndpoint}/tools/${toolName}`, {
-        method: 'POST',
+      const response = await fetch(`${this.apiEndpoint}${endpoint}`, {
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.apiKey}`,
-          'X-Snakkaz-Client': 'web-app'
+          ...options.headers,
         },
-        body: JSON.stringify(args)
+        ...options,
       });
 
       if (!response.ok) {
-        throw new Error(`MCP Memory API error: ${response.status}`);
+        throw new Error(`Memory API error: ${response.status} - ${response.statusText}`);
       }
 
       return await response.json();
@@ -118,23 +119,35 @@ export class MemoryService {
     value: string,
     options: {
       confidence?: number;
-      metadata?: Record<string, any>;
+      metadata?: Record<string, unknown>;
       context?: string;
       source?: string;
       ttlSeconds?: number;
     } = {}
-  ): Promise<{ success: boolean; memory_id?: number; error?: string }> {
-    return this.callMCPTool('store_memory', {
-      user_id: userId,
-      memory_type: memoryType,
-      key,
-      value,
-      confidence: options.confidence || 1.0,
-      metadata: options.metadata,
-      context: options.context,
-      source: options.source || 'web-app',
-      ttl_seconds: options.ttlSeconds
-    });
+  ): Promise<{ status: string; message: string; id?: number; error?: string }> {
+    try {
+      const result = await this.makeRequest('/memories', {
+        method: 'POST',
+        body: JSON.stringify({
+          user_id: userId,
+          memory_type: memoryType,
+          key,
+          value,
+          confidence: options.confidence || 1.0,
+          metadata: options.metadata || {},
+          context: options.context,
+          source: options.source || 'web-app',
+        }),
+      });
+
+      return result as { status: string; message: string; id?: number };
+    } catch (error) {
+      return {
+        status: 'error',
+        message: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
   }
 
   /**
@@ -149,15 +162,21 @@ export class MemoryService {
       similarityThreshold?: number;
     } = {}
   ): Promise<MemoryEntry[]> {
-    const result = await this.callMCPTool('retrieve_memory', {
-      user_id: userId,
-      query,
-      memory_types: options.memoryTypes,
-      limit: options.limit || 10,
-      similarity_threshold: options.similarityThreshold || 0.7
-    });
+    try {
+      const params = new URLSearchParams({
+        limit: (options.limit || 10).toString(),
+      });
+      
+      if (options.memoryTypes && options.memoryTypes.length > 0) {
+        params.set('memory_type', options.memoryTypes[0]); // Use first type for now
+      }
 
-    return result || [];
+      const result = await this.makeRequest(`/memories/${userId}?${params.toString()}`);
+      return result as MemoryEntry[];
+    } catch (error) {
+      console.error('Error retrieving memories:', error);
+      return [];
+    }
   }
 
   /**
@@ -170,13 +189,32 @@ export class MemoryService {
       memoryType?: MemoryType;
       olderThanDays?: number;
     } = {}
-  ): Promise<{ success: boolean; deleted_count: number; error?: string }> {
-    return this.callMCPTool('forget_memory', {
-      user_id: userId,
-      key: criteria.key,
-      memory_type: criteria.memoryType,
-      older_than_days: criteria.olderThanDays
-    });
+  ): Promise<{ status: string; message: string; deleted_count?: number; error?: string }> {
+    try {
+      if (criteria.key) {
+        const result = await this.makeRequest(`/memories/${userId}/${criteria.key}`, {
+          method: 'DELETE',
+        });
+        return {
+          status: 'success',
+          message: 'Memory deleted',
+          deleted_count: 1,
+        };
+      }
+      
+      // For now, only single memory deletion is supported
+      return {
+        status: 'error',
+        message: 'Bulk deletion not yet implemented',
+        error: 'Only single memory deletion by key is supported'
+      };
+    } catch (error) {
+      return {
+        status: 'error',
+        message: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
   }
 
   /**
@@ -186,10 +224,40 @@ export class MemoryService {
     userId: string,
     timeRangeDays: number = 30
   ): Promise<MemoryStats> {
-    return this.callMCPTool('analyze_memory_patterns', {
-      user_id: userId,
-      time_range_days: timeRangeDays
-    });
+    try {
+      const result = await this.makeRequest(`/stats/${userId}`);
+      const stats = result as {
+        total_memories: number;
+        memory_types: Record<string, number>;
+        average_importance: number;
+        last_updated: string;
+      };
+      
+      return {
+        total_memories: stats.total_memories,
+        avg_confidence: 0.8, // Default since we don't have this in simple API
+        avg_importance: stats.average_importance,
+        max_access_count: 1, // Default since we don't have this in simple API
+        unique_types: Object.keys(stats.memory_types).length,
+        type_distribution: Object.entries(stats.memory_types).map(([memory_type, count]) => ({
+          memory_type,
+          count,
+          avg_importance: stats.average_importance
+        })),
+        access_patterns: [] // Default empty array for now
+      };
+    } catch (error) {
+      console.error('Error analyzing memory patterns:', error);
+      return {
+        total_memories: 0,
+        avg_confidence: 0,
+        avg_importance: 0,
+        max_access_count: 0,
+        unique_types: 0,
+        type_distribution: [],
+        access_patterns: []
+      };
+    }
   }
 
   /**
@@ -200,20 +268,30 @@ export class MemoryService {
     name: string,
     description: string,
     memoryIds: number[]
-  ): Promise<{ success: boolean; collection_id?: number; error?: string }> {
-    return this.callMCPTool('create_memory_collection', {
-      user_id: userId,
-      name,
-      description,
-      memory_ids: memoryIds
-    });
+  ): Promise<{ status: string; message: string; collection_id?: number; error?: string }> {
+    // Collections not implemented in simple server yet
+    return {
+      status: 'error',
+      message: 'Memory collections not yet implemented',
+      error: 'Feature not available in current version'
+    };
   }
 
   /**
    * Admin: Få oversikt over alle brukeres minnebruk
    */
   async getAdminOverview(): Promise<AdminMemoryOverview> {
-    return this.callMCPTool('get_admin_overview', {});
+    // Admin overview not implemented in simple server yet
+    return {
+      total_statistics: {
+        total_users: 0,
+        total_memories: 0,
+        total_size_bytes: 0,
+        avg_importance: 0
+      },
+      top_users: [],
+      type_distribution: []
+    };
   }
 
   /**
