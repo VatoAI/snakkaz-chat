@@ -5,7 +5,7 @@ import { AIMessage } from '../ai/multiProviderService';
 
 // Memory server configuration
 const MEMORY_SERVER_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://api.snakkaz.com' 
+  ? 'https://mcp.snakkaz.com' 
   : 'http://localhost:3001';
 
 export interface MemoryEntry {

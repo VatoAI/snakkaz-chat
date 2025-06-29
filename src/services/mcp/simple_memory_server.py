@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
-Snakkaz Simple Memory Server
+Snakkaz MCP Memory Server - Production Ready
 A FastAPI-based memory system for Snakkaz Chat
+Deployed at: mcp.snakkaz.com
 """
 
 from fastapi import FastAPI, HTTPException, Depends
@@ -17,17 +18,33 @@ from pydantic import BaseModel
 import logging
 
 # Setup logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="Snakkaz Memory Server", version="1.0.0")
+app = FastAPI(
+    title="Snakkaz MCP Memory Server", 
+    version="1.0.0",
+    description="AI Memory System for Snakkaz Chat - Production Deployment",
+    docs_url="/docs" if os.getenv("DEBUG") else None,  # Hide docs in production
+    redoc_url="/redoc" if os.getenv("DEBUG") else None
+)
 
-# Enable CORS for frontend communication
+# CORS configuration for production
+ALLOWED_ORIGINS = [
+    "https://snakkaz.com",
+    "https://www.snakkaz.com", 
+    "http://localhost:5173",  # Development
+    "http://localhost:3000",  # Development
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "https://snakkaz.com", "https://www.snakkaz.com"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["*"],
 )
 
@@ -59,18 +76,78 @@ class MemoryResponse(BaseModel):
     context: Optional[str]
     source: Optional[str]
 
-# Database connection
+# Database connection with Supabase
 async def get_db_pool():
     if not hasattr(app.state, 'db_pool') or app.state.db_pool is None:
-        # Use environment variables for database connection
-        database_url = os.getenv('DATABASE_URL', 'postgresql://localhost/snakkaz')
+        # Get database URL from environment (Supabase connection)
+        database_url = os.getenv('DATABASE_URL')
+        
+        if not database_url:
+            # Try constructing from Supabase components
+            supabase_url = os.getenv('SUPABASE_URL', '')
+            if 'wqpoozpbceucynsojmbk' in supabase_url:
+                database_url = "postgresql://postgres.wqpoozpbceucynsojmbk:Rompetroll123!@aws-0-eu-central-1.pooler.supabase.com:6543/postgres"
+                logger.info("Using constructed Supabase database URL")
+            else:
+                logger.warning("No database URL configured, using mock mode")
+                app.state.db_pool = None
+                return None
+        
         try:
-            app.state.db_pool = await asyncpg.create_pool(database_url, min_size=1, max_size=5)
-            logger.info("Database pool created successfully")
+            # Try to connect to Supabase PostgreSQL
+            app.state.db_pool = await asyncpg.create_pool(
+                database_url, 
+                min_size=1, 
+                max_size=10,
+                command_timeout=60
+            )
+            logger.info("Successfully connected to Supabase database")
+            
+            # Test the connection and create tables if needed
+            async with app.state.db_pool.acquire() as conn:
+                # Enable vector extension if available
+                try:
+                    await conn.execute("CREATE EXTENSION IF NOT EXISTS vector;")
+                    logger.info("Vector extension enabled")
+                except Exception as e:
+                    logger.warning(f"Could not enable vector extension: {e}")
+                
+                # Create memory table if it doesn't exist
+                await conn.execute("""
+                    CREATE TABLE IF NOT EXISTS snakkaz_memories (
+                        id SERIAL PRIMARY KEY,
+                        user_id TEXT NOT NULL,
+                        memory_type TEXT NOT NULL,
+                        key TEXT NOT NULL,
+                        value TEXT NOT NULL,
+                        metadata JSONB DEFAULT '{}',
+                        confidence REAL DEFAULT 1.0,
+                        importance REAL DEFAULT 0.5,
+                        access_count INTEGER DEFAULT 0,
+                        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+                        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+                        last_accessed TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+                        expires_at TIMESTAMP WITH TIME ZONE,
+                        context TEXT,
+                        source TEXT,
+                        UNIQUE(user_id, key)
+                    );
+                """)
+                
+                # Create indexes
+                await conn.execute("""
+                    CREATE INDEX IF NOT EXISTS idx_memories_user_id ON snakkaz_memories(user_id);
+                    CREATE INDEX IF NOT EXISTS idx_memories_type ON snakkaz_memories(memory_type);
+                    CREATE INDEX IF NOT EXISTS idx_memories_created_at ON snakkaz_memories(created_at);
+                """)
+                
+                logger.info("Database schema initialized successfully")
+                
         except Exception as e:
-            logger.error(f"Failed to create database pool: {e}")
-            # For development, create a mock connection
+            logger.error(f"Failed to connect to database: {e}")
+            logger.info("Falling back to mock mode for development")
             app.state.db_pool = None
+    
     return app.state.db_pool
 
 @app.on_event("startup")
@@ -293,11 +370,28 @@ async def get_memory_stats(user_id: str):
         raise HTTPException(status_code=500, detail=f"Failed to get memory stats: {str(e)}")
 
 if __name__ == "__main__":
-    logger.info("Starting Snakkaz Memory Server on port 3001...")
-    uvicorn.run(
-        "simple_memory_server:app",
-        host="0.0.0.0",
-        port=3001,
-        log_level="info",
-        reload=True
-    )
+    port = int(os.getenv("PORT", 3001))
+    host = os.getenv("HOST", "0.0.0.0")
+    
+    logger.info(f"Starting Snakkaz MCP Memory Server on {host}:{port}...")
+    
+    # Production vs development configuration
+    if os.getenv("DEBUG", "false").lower() == "true":
+        # Development mode
+        uvicorn.run(
+            "simple_memory_server:app",
+            host=host,
+            port=port,
+            log_level="debug",
+            reload=True
+        )
+    else:
+        # Production mode
+        uvicorn.run(
+            app,
+            host=host,
+            port=port,
+            log_level="info",
+            access_log=True,
+            workers=1  # Single worker for async operations
+        )
