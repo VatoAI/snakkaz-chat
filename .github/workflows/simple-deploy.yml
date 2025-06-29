@@ -24,6 +24,11 @@ jobs:
       with:
         node-version: '18'
         cache: 'npm'
+        
+    - name: 🧹 Clear npm cache (if needed)
+      run: |
+        echo "🧹 Clearing npm cache to ensure fresh install..."
+        npm cache clean --force || true
     
     - name: 📥 Install dependencies
       run: |
