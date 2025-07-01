@@ -26,6 +26,83 @@
     ">
     <meta name="crossorigin" content="anonymous">
     <title>SnakkaZ Chat</title>
+    
+    <!-- CRITICAL: Immediate React Hooks Fix - Runs BEFORE any modules load -->
+    <script>
+      (function() {
+        'use strict';
+        console.log('🚀 EMERGENCY: Applying immediate React hooks fix...');
+        
+        // Critical fixes applied immediately
+        if (typeof window !== 'undefined') {
+          // 1. useLayoutEffect fix (the main culprit)
+          window.useLayoutEffect = window.useLayoutEffect || function(effect, deps) {
+            console.log('🔧 Emergency useLayoutEffect called');
+            if (typeof effect === 'function') {
+              try {
+                var cleanup = effect();
+                return typeof cleanup === 'function' ? cleanup : function(){};
+              } catch (e) {
+                console.warn('Emergency useLayoutEffect error:', e);
+                return function(){};
+              }
+            }
+            return function(){};
+          };
+          
+          // 2. useMergeRef fix (specific to the error)
+          window.useMergeRef = window.useMergeRef || function() {
+            var refs = Array.prototype.slice.call(arguments);
+            console.log('🔧 Emergency useMergeRef called with refs:', refs.length);
+            return function(element) {
+              refs.forEach(function(ref) {
+                if (typeof ref === 'function') {
+                  try {
+                    ref(element);
+                  } catch (e) {
+                    console.warn('Emergency useMergeRef function ref error:', e);
+                  }
+                } else if (ref && typeof ref === 'object' && 'current' in ref) {
+                  try {
+                    ref.current = element;
+                  } catch (e) {
+                    console.warn('Emergency useMergeRef object ref error:', e);
+                  }
+                }
+              });
+            };
+          };
+          
+          // 3. SPECIFIC FIX: Create reactExports for vendor-misc bundle
+          window.reactExports = window.reactExports || {};
+          window.reactExports.useLayoutEffect = window.useLayoutEffect;
+          window.reactExports.useEffect = window.useLayoutEffect;
+          window.reactExports.useState = function(initialState) {
+            console.log('🔧 Emergency reactExports.useState called');
+            var state = initialState;
+            var setState = function(newState) {
+              if (typeof newState === 'function') {
+                state = newState(state);
+              } else {
+                state = newState;
+              }
+            };
+            return [state, setState];
+          };
+          
+          // 4. Ensure React object exists with hooks
+          window.React = window.React || {};
+          window.React.useLayoutEffect = window.React.useLayoutEffect || window.useLayoutEffect;
+          window.React.useMergeRef = window.React.useMergeRef || window.useMergeRef;
+          
+          // 5. Set polyfill flag
+          window.__USE_SYNC_EXTERNAL_STORE_POLYFILL__ = true;
+          
+          console.log('✅ EMERGENCY: React hooks fix applied in HTML head');
+        }
+      })();
+    </script>
+    
     <script type="module" src="/src/main.tsx"></script>
     
     

@@ -3,6 +3,12 @@
  * Enhanced for Norwegian Tech Community - Juni 7, 2025
  */
 
+// ULTRA-CRITICAL: Import the ultra-early React fix FIRST BEFORE ANYTHING ELSE
+import './utils/reactFixUltraEarly';
+
+// VENDOR-MISC SPECIFIC: Import the vendor-misc patch
+import './utils/vendorMiscPatch';
+
 // CRITICAL: Import the optimized React fix FIRST to prevent runtime errors
 import './utils/reactFixOptimized';
 
