@@ -190,15 +190,16 @@ export default defineConfig(({ mode }) => ({
         pure_funcs: ['console.log'],
         unused: true,
         dead_code: true,
-        // FIX: Prevent single-letter variables that cause "K is undefined"
+        // Fix for "K is undefined" and similar issues
         keep_fargs: false,
-        toplevel: false,
-        keep_fnames: false,
+        keep_classnames: false,
       },
       mangle: {
         safari10: true,
-        // Reserve important React functions to prevent mangling issues
-        reserved: ['React', 'useState', 'useEffect', 'useSyncExternalStore', 'useSyncExternalStoreShim'],
+        // Prevent critical mangling issues
+        reserved: ['React', 'useState', 'useEffect', 'useSyncExternalStore', 'useSyncExternalStoreShim', 'require', 'exports'],
+        keep_classnames: false,
+        keep_fnames: false,
       },
       format: {
         comments: false, // Remove comments for smaller bundles
