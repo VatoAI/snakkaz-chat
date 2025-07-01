@@ -788,16 +788,36 @@ async def main():
     
     # Start MCP server
     import sys
-    async with server.server.run(
-        sys.stdin.buffer,
-        sys.stdout.buffer,
-        InitializationOptions(
-            server_name="snakkaz-memory",
-            server_version="1.0.0",
-            capabilities={}
+    from mcp.server.models import ServerCapabilities
+    
+    # Define stream creation functions if not available in mcp package
+    def create_stdin_stream():
+        """Create a stream that reads from stdin"""
+        return sys.stdin.buffer
+        
+    def create_stdout_stream():
+        """Create a stream that writes to stdout"""
+        return sys.stdout.buffer
+    
+    # Create proper streams and capabilities
+    read_stream = create_stdin_stream()
+    write_stream = create_stdout_stream()
+    
+    # Start the server and keep it running
+    server_task = asyncio.create_task(
+        server.server.run(
+            read_stream,
+            write_stream,
+            InitializationOptions(
+                server_name="snakkaz-memory",
+                server_version="1.0.0",
+                capabilities=ServerCapabilities()
+            )
         )
-    ):
-        await asyncio.Event().wait()  # Keep server running
+    )
+    
+    # Keep server running until interrupted
+    await asyncio.Event().wait()
 
 if __name__ == "__main__":
     asyncio.run(main())

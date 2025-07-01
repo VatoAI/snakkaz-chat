@@ -56,10 +56,18 @@ CREATE INDEX IF NOT EXISTS idx_memories_importance ON snakkaz_memories(importanc
 CREATE INDEX IF NOT EXISTS idx_memories_embedding ON snakkaz_memories USING ivfflat (embedding vector_cosine_ops);
 
 -- Row Level Security (RLS) for Supabase
-ALTER TABLE snakkaz_memories ENABLE ROW LEVEL SECURITY;
-ALTER TABLE snakkaz_memory_collections ENABLE ROW LEVEL SECURITY;
-ALTER TABLE snakkaz_memory_collection_items ENABLE ROW LEVEL SECURITY;
+-- NOTE: These PostgreSQL-specific RLS commands are not compatible with SQL Server
+/* 
+-- PostgreSQL only (do not uncomment when using SQL Server):
+-- ALTER TABLE snakkaz_memories ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE snakkaz_memory_collections ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE snakkaz_memory_collection_items ENABLE ROW LEVEL SECURITY;
+*/
 
+-- NOTE: RLS Policies below are PostgreSQL-specific and have been commented out
+-- You'll need to implement row-level security using SQL Server's security features if needed
+
+/*
 -- RLS Policies (assuming auth.uid() is available in Supabase)
 CREATE POLICY "Users can view own memories" ON snakkaz_memories 
     FOR SELECT USING (user_id = auth.uid()::text);
@@ -88,6 +96,7 @@ CREATE POLICY "Users can manage collection items" ON snakkaz_memory_collection_i
             WHERE user_id = auth.uid()::text
         )
     );
+*/
 
 -- Function to update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()

@@ -22,10 +22,28 @@ const applyMinimalReactFixes = (): void => {
     useLayoutEffect?: ReactHook;
     useSyncExternalStore?: ReactHook;
     useMergeRef?: ReactHook;
+    useRef?: ReactHook;
+    useCallback?: ReactHook;
     __reactFixApplied?: boolean;
   };
   
   if (win.__reactFixApplied) return;
+
+  // Early detection: Listen for specific React hook errors
+  const originalError = console.error;
+  console.error = function(...args: unknown[]) {
+    const message = args.join(' ');
+    if (
+      message.includes('useLayoutEffect') ||
+      message.includes('useMergeRef') ||
+      message.includes('Cannot read properties of undefined') ||
+      message.includes('undefined has no properties')
+    ) {
+      console.warn('🚨 React hook error detected, re-applying fixes:', message);
+      setTimeout(() => applyMinimalReactFixes(), 0);
+    }
+    return originalError.apply(console, args);
+  };
 
   try {
     // 1. Critical: useLayoutEffect fix - this addresses the specific error you're seeing
@@ -37,10 +55,10 @@ const applyMinimalReactFixes = (): void => {
       const reactUseEffect = (win.React as Record<string, unknown>)?.useEffect as ReactEffect;
       
       win.useLayoutEffect = reactUseLayoutEffect || reactUseEffect || function(effect: () => void | (() => void), deps?: unknown[]) {
-        // Safe fallback implementation
+        // Safe fallback implementation that executes synchronously like useLayoutEffect
         if (typeof effect === 'function') {
           try {
-            // Execute effect immediately for layout effects
+            // Execute effect immediately for layout effects (synchronous execution)
             const cleanup = effect();
             return typeof cleanup === 'function' ? cleanup : undefined;
           } catch (e) {
@@ -50,6 +68,12 @@ const applyMinimalReactFixes = (): void => {
         }
         return () => {};
       };
+    }
+
+    // Critical: Also ensure useLayoutEffect is available in React namespace immediately
+    if (win.React && typeof win.React === 'object' && !win.React.useLayoutEffect) {
+      const reactObj = win.React as Record<string, unknown>;
+      reactObj.useLayoutEffect = win.useLayoutEffect;
     }
 
     // 2. Ensure React object has useLayoutEffect if it exists
@@ -80,10 +104,41 @@ const applyMinimalReactFixes = (): void => {
       };
     }
 
-    // 4. Specific: useMergeRef for Radix UI compatibility
+    // 4. Enhanced: useMergeRef for Radix UI compatibility with React hooks dependency
     if (!win.useMergeRef) {
-      console.log('🔧 Applying useMergeRef fix');
+      console.log('🔧 Applying enhanced useMergeRef fix');
+      
+      // Get React hooks to build a proper useMergeRef implementation
+      const reactUseRef = (win.React as Record<string, unknown>)?.useRef || win.useRef;
+      const reactUseCallback = (win.React as Record<string, unknown>)?.useCallback || win.useCallback;
+      
       win.useMergeRef = function(...refs: unknown[]) {
+        // If React hooks are available, use a more sophisticated implementation
+        if (reactUseCallback && reactUseRef) {
+          try {
+            return reactUseCallback((element: unknown) => {
+              refs.forEach(ref => {
+                if (typeof ref === 'function') {
+                  try {
+                    (ref as (element: unknown) => void)(element);
+                  } catch (e) {
+                    console.warn('useMergeRef ref function error:', e);
+                  }
+                } else if (ref && typeof ref === 'object' && ref !== null && 'current' in ref) {
+                  try {
+                    (ref as { current: unknown }).current = element;
+                  } catch (e) {
+                    console.warn('useMergeRef ref object error:', e);
+                  }
+                }
+              });
+            }, refs);
+          } catch (e) {
+            console.warn('useMergeRef React hooks error, falling back to simple implementation:', e);
+          }
+        }
+        
+        // Fallback implementation without React hooks
         return function(element: unknown) {
           refs.forEach(ref => {
             if (typeof ref === 'function') {
@@ -102,6 +157,12 @@ const applyMinimalReactFixes = (): void => {
           });
         };
       };
+    }
+
+    // Ensure useMergeRef is also available in React namespace
+    if (win.React && typeof win.React === 'object' && !win.React.useMergeRef) {
+      const reactObj = win.React as Record<string, unknown>;
+      reactObj.useMergeRef = win.useMergeRef;
     }
 
     // 5. Mark as applied
