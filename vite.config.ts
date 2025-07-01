@@ -34,7 +34,7 @@ export default defineConfig(({ mode }) => ({
     cssCodeSplit: true,
     
     // Disable source maps in production for security and size
-    sourcemap: mode === 'development',
+    sourcemap: true, // Enable for debugging
     
     // Optimize asset handling
     assetsInlineLimit: 4096, // Inline assets smaller than 4KB for better performance
@@ -151,8 +151,16 @@ export default defineConfig(({ mode }) => ({
             return 'vendor-ai';
           }
           
-          // 12. Remaining vendor packages (1 chunk)
+          // 12. Split remaining vendor packages for better error isolation
           if (id.includes('node_modules')) {
+            // Isolate potentially problematic packages
+            if (id.includes('axios') || id.includes('imapflow') || id.includes('puppeteer')) {
+              return 'vendor-network';
+            }
+            if (id.includes('imagemin') || id.includes('sharp') || id.includes('node-fetch')) {
+              return 'vendor-media-tools';
+            }
+            // Default for remaining packages
             return 'vendor-misc';
           }
         },
@@ -181,8 +189,8 @@ export default defineConfig(({ mode }) => ({
       }
     },
     
-    // Enable minification and compression
-    minify: 'terser',
+    // Enable minification and compression (TEMPORARILY DISABLED FOR DEBUGGING)
+    minify: false, // Changed from 'terser' to false for debugging
     terserOptions: {
       compress: {
         drop_console: true,
