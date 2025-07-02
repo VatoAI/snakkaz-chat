@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CAPTCHA Test - Flere Desimaler</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #0a0a0a;
+            color: #dabc45;
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .test-container {
+            background-color: #1a1a1a;
+            border: 1px solid #dabc45;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .input-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        .number-box {
+            background-color: #2a2a2a;
+            border: 1px solid #dabc45;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 18px;
+        }
+        input {
+            background-color: #2a2a2a;
+            border: 1px solid #dabc45;
+            color: #dabc45;
+            padding: 8px 12px;
+            border-radius: 4px;
+            width: 100px;
+            text-align: center;
+            font-size: 16px;
+        }
+        button {
+            background-color: #dabc45;
+            color: #0a0a0a;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #e6c05c;
+        }
+        .result {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        .success { color: #4ade80; }
+        .error { color: #ff3030; }
+        .info { color: #dabc45; }
+    </style>
+</head>
+<body>
+    <h1>🔐 SNAKKAZ CAPTCHA TEST - FLERE DESIMALER</h1>
+    
+    <div class="test-container">
+        <h2>✅ Oppgradert CAPTCHA med Desimalstøtte</h2>
+        <p>Nå kan CAPTCHA-en håndtere:</p>
+        <ul>
+            <li>Hele tall (f.eks. 15)</li>
+            <li>Desimaltall (f.eks. 15.5, 15.25, 15.123)</li>
+            <li>Presisjon opptil 6 tegn</li>
+        </ul>
+    </div>
+
+    <div class="test-container">
+        <h3>Test 1: Helt tall</h3>
+        <div class="input-group">
+            <span class="number-box">7</span>
+            <span>+</span>
+            <span class="number-box">8</span>
+            <span>=</span>
+            <input type="text" id="test1" placeholder="15" maxlength="6">
+            <button onclick="checkAnswer('test1', 15)">Sjekk</button>
+        </div>
+        <div id="result1" class="result"></div>
+    </div>
+
+    <div class="test-container">
+        <h3>Test 2: Ett desimal</h3>
+        <div class="input-group">
+            <span class="number-box">7.5</span>
+            <span>+</span>
+            <span class="number-box">8.2</span>
+            <span>=</span>
+            <input type="text" id="test2" placeholder="15.7" maxlength="6">
+            <button onclick="checkAnswer('test2', 15.7)">Sjekk</button>
+        </div>
+        <div id="result2" class="result"></div>
+    </div>
+
+    <div class="test-container">
+        <h3>Test 3: Flere desimaler</h3>
+        <div class="input-group">
+            <span class="number-box">7.25</span>
+            <span>+</span>
+            <span class="number-box">8.45</span>
+            <span>=</span>
+            <input type="text" id="test3" placeholder="15.7" maxlength="6">
+            <button onclick="checkAnswer('test3', 15.7)">Sjekk</button>
+        </div>
+        <div id="result3" class="result"></div>
+    </div>
+
+    <div class="test-container">
+        <h3>Test 4: Mange desimaler</h3>
+        <div class="input-group">
+            <span class="number-box">7.123</span>
+            <span>+</span>
+            <span class="number-box">8.456</span>
+            <span>=</span>
+            <input type="text" id="test4" placeholder="15.579" maxlength="6">
+            <button onclick="checkAnswer('test4', 15.579)">Sjekk</button>
+        </div>
+        <div id="result4" class="result"></div>
+    </div>
+
+    <script>
+        // Imiterer den oppgraderte CAPTCHA-logikken
+        function checkAnswer(inputId, correctAnswer) {
+            const input = document.getElementById(inputId);
+            const resultDiv = document.getElementById('result' + inputId.slice(-1));
+            const userAnswer = input.value;
+            
+            if (!userAnswer) {
+                resultDiv.innerHTML = '<span class="error">❌ Skriv inn et svar</span>';
+                return;
+            }
+            
+            // Parse som float for å tillate desimaler
+            const parsedAnswer = parseFloat(userAnswer);
+            
+            if (isNaN(parsedAnswer)) {
+                resultDiv.innerHTML = '<span class="error">❌ Ugyldig tall</span>';
+                return;
+            }
+            
+            // Sjekk med presisjon (toleranse for avrundingsfeil)
+            const isCorrect = Math.abs(parsedAnswer - correctAnswer) < 0.0001;
+            
+            if (isCorrect) {
+                resultDiv.innerHTML = '<span class="success">✅ Riktig! CAPTCHA godkjent</span>';
+            } else {
+                resultDiv.innerHTML = `<span class="error">❌ Feil. Forventet: ${correctAnswer}, Du skrev: ${parsedAnswer}</span>`;
+            }
+        }
+        
+        // Tillat bare tall og ett desimaltegn
+        document.querySelectorAll('input[type="text"]').forEach(input => {
+            input.addEventListener('input', function(e) {
+                let value = e.target.value;
+                
+                // Fjern alle tegn som ikke er tall eller punktum
+                value = value.replace(/[^0-9.]/g, '');
+                
+                // Tillat kun ett desimaltegn
+                const parts = value.split('.');
+                if (parts.length > 2) {
+                    value = parts[0] + '.' + parts.slice(1).join('');
+                }
+                
+                e.target.value = value;
+            });
+        });
+    </script>
+</body>
+</html>

@@ -59,7 +59,10 @@ export const MathCaptcha: React.FC<MathCaptchaProps> = ({
       return;
     }
 
-    const correct = parseInt(userAnswer) === (num1 + num2);
+    // Parse answer as float to allow decimals
+    const parsedAnswer = parseFloat(userAnswer);
+    const correctAnswer = num1 + num2;
+    const correct = !isNaN(parsedAnswer) && Math.abs(parsedAnswer - correctAnswer) < 0.0001; // Allow for floating point precision
     setIsCorrect(correct);
     
     if (correct) {
@@ -102,8 +105,15 @@ export const MathCaptcha: React.FC<MathCaptchaProps> = ({
   const handleAnswerChange = (value: string) => {
     if (isLocked) return;
     
-    // Only allow numbers
-    const numericValue = value.replace(/[^0-9]/g, '');
+    // Allow numbers and decimal point
+    const numericValue = value.replace(/[^0-9.]/g, '');
+    
+    // Ensure only one decimal point
+    const parts = numericValue.split('.');
+    if (parts.length > 2) {
+      return; // Don't update if more than one decimal point
+    }
+    
     setUserAnswer(numericValue);
   };
 
@@ -149,7 +159,7 @@ export const MathCaptcha: React.FC<MathCaptchaProps> = ({
             isCorrect ? 'border-green-500' : ''
           } ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
           disabled={isLoading || isLocked}
-          maxLength={3}
+          maxLength={6}
         />
         
         <button

@@ -1,5 +1,26 @@
-# Enhanced .htaccess for LiteSpeed Server
-# Snakkaz Chat - MIME Type Emergency Fix
+# ========================================
+# SNAKKAZ CRITICAL .HTACCESS FIX
+# Emergency MIME-type and routing fix
+# ========================================
+
+# CRITICAL: Force correct MIME types
+AddType application/javascript .js
+AddType application/javascript .mjs
+AddType text/css .css
+AddType application/json .json
+
+# Enhanced MIME handling
+<FilesMatch "\.js$">
+    Header set Content-Type "application/javascript"
+</FilesMatch>
+
+<FilesMatch "\.css$">
+    Header set Content-Type "text/css"
+</FilesMatch>
+
+<FilesMatch "\.json$">
+    Header set Content-Type "application/json"
+</FilesMatch>
 
 # Enable rewriting
 <IfModule mod_rewrite.c>
