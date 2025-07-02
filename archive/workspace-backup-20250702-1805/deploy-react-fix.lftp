@@ -1,0 +1,15 @@
+set ftp:ssl-allow no
+set ftp:passive-mode on
+open -u admin@snakkaz.com,Rompetroll123! ftp.snakkaz.com
+cd public_html
+
+# First backup current files
+mkdir -p backup-$(date +%Y%m%d-%H%M)
+mget -O backup-$(date +%Y%m%d-%H%M) index.html
+mget -O backup-$(date +%Y%m%d-%H%M) assets/js/vendor-misc-*.js
+
+# Upload new files
+put snakkaz-react-fix.zip
+ls -la snakkaz-react-fix.zip
+
+quit

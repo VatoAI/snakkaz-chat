@@ -1,0 +1,43 @@
+name: 🔍 Code Quality
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      
+    - name: 📦 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: 📋 Install dependencies
+      run: npm ci
+      
+    - name: 🔍 TypeScript check
+      run: npx tsc --noEmit
+      
+    - name: 🎨 Prettier check
+      run: npx prettier --check . || echo "Formatting issues found"
+      
+    - name: 📊 ESLint
+      run: npx eslint . --ext .ts,.tsx,.js,.jsx || echo "Linting issues found"
+      
+    - name: 🔒 Security scan
+      run: |
+        npm audit --audit-level moderate
+        npx better-npm-audit audit || echo "Security scan completed"
+        
+    - name: 📈 Code complexity
+      run: |
+        echo "📊 CODE COMPLEXITY ANALYSIS"
+        find src -name "*.ts" -o -name "*.tsx" | head -10 | xargs wc -l

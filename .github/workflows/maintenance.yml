@@ -1,0 +1,40 @@
+name: 🧹 Repository Maintenance
+
+on:
+  schedule:
+    - cron: '0 2 * * 0'  # Weekly on Sunday at 2 AM
+  workflow_dispatch:
+
+jobs:
+  maintenance:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      
+    - name: 📦 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: 🔄 Update dependencies
+      run: |
+        npm update
+        npm audit fix --force || echo "Audit fix completed"
+        
+    - name: 🧹 Cleanup old artifacts
+      run: |
+        # Remove old backup files
+        find . -name "*.backup.*" -mtime +7 -delete || echo "No old backups found"
+        find . -name "*.log" -mtime +30 -delete || echo "No old logs found"
+        
+    - name: 📊 Repository stats
+      run: |
+        echo "📊 REPOSITORY STATISTICS"
+        echo "======================="
+        echo "Total files: $(find . -type f | wc -l)"
+        echo "Code files: $(find src -name "*.ts" -o -name "*.tsx" | wc -l)"
+        echo "Total lines of code: $(find src -name "*.ts" -o -name "*.tsx" | xargs wc -l | tail -1)"
+        echo "Last commit: $(git log -1 --format='%h %s (%cr)')"

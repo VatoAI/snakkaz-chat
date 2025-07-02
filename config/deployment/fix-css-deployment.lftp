@@ -1,0 +1,37 @@
+#!/bin/bash
+# Fixed CSS Deployment Script
+# This script uploads the corrected files to fix CSS serving issues
+
+set ssl:verify-certificate false
+open -u snakkaz.com,B48@.m*VhQUF sftp://ftp.domeneshop.no
+
+# Upload the fixed index.html with correct asset references
+put index.html index.html
+
+# Create assets directory structure
+mkdir -p assets
+mkdir -p assets/css
+mkdir -p assets/js
+mkdir -p assets/images
+
+# Upload CSS files
+put assets/auth-bg.css assets/auth-bg.css
+put assets/css/index-uDlWtT9E.css assets/css/index-uDlWtT9E.css
+
+# Upload JavaScript files (entire js directory)
+mput assets/js/* assets/js/
+
+# Upload images
+mput assets/images/* assets/images/
+
+# Upload icons and other static assets
+mkdir -p icons
+mput icons/* icons/
+
+# Upload the corrected .htaccess file
+put .htaccess .htaccess
+
+# Upload favicon
+put favicon.ico favicon.ico
+
+quit

@@ -1,0 +1,85 @@
+name: 🚀 Deploy to Production
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      
+    - name: 📦 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: 📋 Install dependencies
+      run: npm ci
+      
+    - name: 🔧 Build application
+      run: npm run build
+      
+    - name: 🧪 Run tests
+      run: npm test -- --passWithNoTests
+      
+    - name: 📊 Build size analysis
+      run: |
+        echo "Build size analysis:"
+        du -sh dist/
+        find dist/assets/js -name "*.js" -exec basename {} \; | sort
+        
+    - name: 📡 Deploy to FTP
+      env:
+        FTP_HOST: ${{ secrets.FTP_HOST }}
+        FTP_USER: ${{ secrets.FTP_USER }}
+        FTP_PASS: ${{ secrets.FTP_PASS }}
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y lftp
+        
+        # Create deployment script
+        cat > deploy.lftp << 'LFTP_EOF'
+        set ssl:verify-certificate no
+        set ftp:passive-mode on
+        set cmd:fail-exit yes
+        
+        open -u $FTP_USER,$FTP_PASS ftp://$FTP_HOST
+        
+        # Backup current index.html
+        get index.html index-backup-$(date +%H%M).html || echo "No existing index.html"
+        
+        # Upload new files
+        put dist/index.html index.html
+        
+        # Upload assets
+        cd assets/js
+        lcd dist/assets/js
+        mput *.js
+        
+        cd ../css
+        lcd ../css  
+        mput *.css
+        
+        quit
+        LFTP_EOF
+        
+        lftp -f deploy.lftp
+        
+    - name: 🏥 Health check
+      run: |
+        sleep 10
+        curl -f https://snakkaz.com || exit 1
+        echo "✅ Deployment successful - site is responding"
+        
+    - name: 📱 Notify success
+      if: success()
+      run: |
+        echo "🎉 Production deployment completed successfully!"
+        echo "🌐 Site: https://snakkaz.com"
+        echo "📊 Build time: $(date)"

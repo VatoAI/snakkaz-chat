@@ -1,0 +1,32 @@
+name: ✨ Feature Request
+description: Suggest a new feature for Snakkaz Chat
+title: "[FEATURE] "
+labels: ["enhancement", "needs-discussion"]
+
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Description
+      description: What problem does this feature solve?
+      placeholder: I'm frustrated when...
+    validations:
+      required: true
+      
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: Describe your proposed solution
+      placeholder: I would like...
+    validations:
+      required: true
+      
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternative Solutions
+      description: Any alternative solutions considered?
+      placeholder: Alternatively...
+    validations:
+      required: false
