@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="no">
-  <head>
+<head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/icons/snakkaz-icon-192.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
@@ -10,32 +10,16 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="SnakkaZ Chat" />
     <link rel="apple-touch-icon" href="/icons/snakkaz-icon-192.png" />
-    <!-- Content Security Policy -->
-    <meta http-equiv="Content-Security-Policy" content="
-      default-src 'self';
-      script-src 'self' 'unsafe-inline' 'unsafe-eval';
-      style-src 'self' 'unsafe-inline';
-      img-src 'self' data: blob: *.amazonaws.com storage.googleapis.com *.supabase.co *.supabase.in;
-      font-src 'self' data:;
-      connect-src 'self' *.supabase.co *.supabase.in wss://*.supabase.co *.amazonaws.com storage.googleapis.com 
-                  *.snakkaz.com dash.snakkaz.com business.snakkaz.com docs.snakkaz.com analytics.snakkaz.com;
-      media-src 'self' blob:;
-      object-src 'none';
-      frame-src 'self';
-      worker-src 'self' blob:;
-    ">
-    <meta name="crossorigin" content="anonymous">
     <title>SnakkaZ Chat</title>
     
-    <!-- CRITICAL: Immediate React Hooks Fix - Runs BEFORE any modules load -->
+    <!-- CRITICAL: Emergency React Hooks Fix -->
     <script>
       (function() {
         'use strict';
         console.log('🚀 EMERGENCY: Applying immediate React hooks fix...');
         
-        // Critical fixes applied immediately
         if (typeof window !== 'undefined') {
-          // 1. useLayoutEffect fix (the main culprit)
+          // useLayoutEffect fix
           window.useLayoutEffect = window.useLayoutEffect || function(effect, deps) {
             console.log('🔧 Emergency useLayoutEffect called');
             if (typeof effect === 'function') {
@@ -50,7 +34,7 @@
             return function(){};
           };
           
-          // 2. useMergeRef fix (specific to the error)
+          // useMergeRef fix
           window.useMergeRef = window.useMergeRef || function() {
             var refs = Array.prototype.slice.call(arguments);
             console.log('🔧 Emergency useMergeRef called with refs:', refs.length);
@@ -73,7 +57,7 @@
             };
           };
           
-          // 3. SPECIFIC FIX: Create reactExports for vendor-misc bundle
+          // reactExports for vendor-misc bundle
           window.reactExports = window.reactExports || {};
           window.reactExports.useLayoutEffect = window.useLayoutEffect;
           window.reactExports.useEffect = window.useLayoutEffect;
@@ -90,32 +74,32 @@
             return [state, setState];
           };
           
-          // 4. Ensure React object exists with hooks
+          // React object
           window.React = window.React || {};
           window.React.useLayoutEffect = window.React.useLayoutEffect || window.useLayoutEffect;
           window.React.useMergeRef = window.React.useMergeRef || window.useMergeRef;
           
-          // 5. Set polyfill flag
           window.__USE_SYNC_EXTERNAL_STORE_POLYFILL__ = true;
           
           console.log('✅ EMERGENCY: React hooks fix applied in HTML head');
         }
       })();
     </script>
-     <script type="module" crossorigin src="/assets/js/index-C8UgCmie.js"></script>
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
+    <!-- PRODUCTION MODULE PRELOADS -->
+    <link rel="modulepreload" crossorigin href="/assets/js/vendor-react-core-dw-u3J8o.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/vendor-react-dom-4lR9Lo0M.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/vendor-misc-1EIi_gUb.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/vendor-router-CWDrJeTE.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/app-utils-Cjj9E4GC.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/components-ui-BmnsZTWe.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/index-C8UgCmie.js">
     <link rel="stylesheet" crossorigin href="/assets/css/index-C0s8nMya.css">
-  </head>
-  <body>
+</head>
+<body>
     <div id="root"></div>
-  </body>
+    
+    <!-- PRODUCTION BUNDLE LOAD -->
+    <script type="module" crossorigin src="/assets/js/index-C8UgCmie.js"></script>
+</body>
 </html>
