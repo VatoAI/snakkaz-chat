@@ -1,0 +1,69 @@
+# ========================================
+# SNAKKAZ LITESPEED .HTACCESS FIX
+# Emergency MIME-type fix for LiteSpeed server
+# ========================================
+
+# LiteSpeed specific MIME type configuration
+<IfModule mod_mime.c>
+    # Force JavaScript MIME type
+    AddType application/javascript .js
+    AddType application/javascript .mjs
+    AddType text/css .css
+    AddType application/json .json
+    AddType image/svg+xml .svg
+    AddType image/x-icon .ico
+    AddType application/manifest+json .webmanifest
+</IfModule>
+
+# Force proper content types with headers
+<IfModule mod_headers.c>
+    <FilesMatch "\.(js|mjs)$">
+        Header set Content-Type "application/javascript"
+        Header unset X-Content-Type-Options
+    </FilesMatch>
+    
+    <FilesMatch "\.css$">
+        Header set Content-Type "text/css"
+        Header unset X-Content-Type-Options
+    </FilesMatch>
+    
+    <FilesMatch "\.json$">
+        Header set Content-Type "application/json"
+    </FilesMatch>
+    
+    <FilesMatch "\.(woff2?|ttf|eot)$">
+        Header set Content-Type "application/font-woff"
+    </FilesMatch>
+</IfModule>
+
+# LiteSpeed specific directives
+DirectoryIndex index.html index.php
+
+# Prevent LiteSpeed from overriding MIME types
+RemoveHandler .js .css .json
+
+# Force file serving instead of PHP processing for assets
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Serve assets directly without PHP processing
+    RewriteRule ^assets/.*\.(js|css|json|map)$ - [L,T=text/plain]
+    
+    # Handle API routes
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} ^/api/
+    RewriteRule ^ index.php [QSA,L]
+    
+    # Handle all other routes to index.html for React Router
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.html [QSA,L]
+</IfModule>
+
+# Security headers
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options nosniff
+    Header always set X-Frame-Options DENY
+    Header always set X-XSS-Protection "1; mode=block"
+</IfModule>
