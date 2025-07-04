@@ -62,12 +62,28 @@ export function useAIChat(): UseAIChatReturn {
   const [apiConfig, setApiConfigState] = useState<APIConfig>({
     endpoint: '',
     apiKey: '',
-    isEnabled: process.env.VITE_AI_ENABLED === 'true',
-    provider: (process.env.VITE_AI_DEFAULT_PROVIDER as AIProvider) || 'anthropic',
-    model: process.env.VITE_AI_DEFAULT_MODEL || 'claude-3-5-sonnet-20241022',
-    maxTokens: parseInt(process.env.VITE_AI_MAX_TOKENS) || 4000,
-    temperature: parseFloat(process.env.VITE_AI_TEMPERATURE) || 0.7
+    isEnabled: import.meta.env.VITE_AI_ENABLED === 'true',
+    provider: (import.meta.env.VITE_AI_DEFAULT_PROVIDER as AIProvider) || 'anthropic',
+    model: import.meta.env.VITE_AI_DEFAULT_MODEL || 'claude-3-5-sonnet-20241022',
+    maxTokens: parseInt(import.meta.env.VITE_AI_MAX_TOKENS) || 4000,
+    temperature: parseFloat(import.meta.env.VITE_AI_TEMPERATURE) || 0.7
   });
+
+  // Add debugging for environment variables and codespace detection
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // Log environment info for debugging
+      console.log('AI Chat Debug Info:', {
+        environment: 'browser',
+        isCodespace: window.location.hostname.includes('github.dev') || window.location.hostname.includes('codespaces'),
+        aiEnabled: import.meta.env.VITE_AI_ENABLED,
+        aiProvider: import.meta.env.VITE_AI_DEFAULT_PROVIDER,
+        environmentKeys: Object.keys(import.meta.env).filter(key => key.startsWith('VITE_AI')),
+        userAgent: navigator.userAgent,
+        hostname: window.location.hostname
+      });
+    }
+  }, []);
 
   // Load API configuration from localStorage on init
   useEffect(() => {
@@ -446,6 +462,22 @@ Vil du ha mer detaljert informasjon om noen av disse sammenligningene?`;
     try {
       setError(null);
       
+      // Add enhanced debugging for codespace environment
+      console.log('AI Chat Send Debug:', {
+        message: message.substring(0, 50) + '...',
+        user: user?.uid,
+        currentChat: currentChat?.id,
+        apiConfig: {
+          ...apiConfig,
+          apiKey: apiConfig.apiKey ? '[REDACTED]' : 'NOT_SET'
+        },
+        environment: {
+          isCodespace: window.location.hostname.includes('github.dev') || window.location.hostname.includes('codespaces'),
+          hostname: window.location.hostname,
+          userAgent: navigator.userAgent.substring(0, 50) + '...'
+        }
+      });
+      
       // Legg til brukermelding i chat
       const userMessage: AIMessage = {
         id: `msg_${Date.now()}`,
@@ -536,6 +568,19 @@ Vil du ha mer detaljert informasjon om noen av disse sammenligningene?`;
           // await saveChat(finalChat);
         } catch (err: unknown) {
           console.error('Friend assistant response error:', err);
+          console.error('Error details:', {
+            error: err,
+            errorMessage: (err as Error).message,
+            stack: (err as Error).stack,
+            apiConfig: {
+              ...apiConfig,
+              apiKey: apiConfig.apiKey ? '[REDACTED]' : 'NOT_SET'
+            },
+            environment: {
+              isCodespace: window.location.hostname.includes('github.dev') || window.location.hostname.includes('codespaces'),
+              hostname: window.location.hostname
+            }
+          });
           setError(`Kunne ikke få svar fra AI-assistenten: ${(err as Error).message}`);
           
           // Remove the loading assistant message on error
@@ -551,6 +596,17 @@ Vil du ha mer detaljert informasjon om noen av disse sammenligningene?`;
       
     } catch (err: unknown) {
       console.error('Feil ved sending av melding:', err);
+      console.error('Top-level error details:', {
+        error: err,
+        errorMessage: (err as Error).message,
+        stack: (err as Error).stack,
+        user: user?.uid,
+        currentChat: currentChat?.id,
+        environment: {
+          isCodespace: window.location.hostname.includes('github.dev') || window.location.hostname.includes('codespaces'),
+          hostname: window.location.hostname
+        }
+      });
       setError((err as Error).message || 'Kunne ikke sende melding');
     }
   }, [user, currentChat, createNewChat, apiConfig, callCustomAPI, getPersonalizedContext, memoryService, saveConversationToMemory, simulateAIResponseWithMemory]);
