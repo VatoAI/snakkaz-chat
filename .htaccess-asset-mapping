@@ -1,0 +1,78 @@
+# ========================================
+# SNAKKAZ LITESPEED .HTACCESS FIX
+# Emergency MIME-type fix for LiteSpeed server
+# ========================================
+
+# LiteSpeed specific MIME type configuration
+<IfModule mod_mime.c>
+    # Force JavaScript MIME type
+    AddType application/javascript .js
+    AddType application/javascript .mjs
+    AddType text/css .css
+    AddType application/json .json
+    AddType image/svg+xml .svg
+    AddType image/x-icon .ico
+    AddType application/manifest+json .webmanifest
+</IfModule>
+
+# Force proper content types with headers
+<IfModule mod_headers.c>
+    <FilesMatch "\.(js|mjs)$">
+        Header set Content-Type "application/javascript"
+        Header unset X-Content-Type-Options
+    </FilesMatch>
+    
+    <FilesMatch "\.css$">
+        Header set Content-Type "text/css"
+        Header unset X-Content-Type-Options
+    </FilesMatch>
+    
+    <FilesMatch "\.json$">
+        Header set Content-Type "application/json"
+    </FilesMatch>
+    
+    <FilesMatch "\.(woff2?|ttf|eot)$">
+        Header set Content-Type "application/font-woff"
+    </FilesMatch>
+</IfModule>
+
+# LiteSpeed specific directives
+DirectoryIndex index.html index.php
+
+# EMERGENCY: Map assets/ requests to web root files (Internal Rewrite)
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Internal rewrite (no redirect) - serve files directly from web root
+    RewriteRule ^assets/js/vendor-react-core-Cvl4dr7Y\.js$ /react-vendor.js [L]
+    RewriteRule ^assets/js/vendor-react-dom-BCUID_Kj\.js$ /react-dom.js [L]
+    RewriteRule ^assets/js/vendor-router-CuBeC0PK\.js$ /vendor-router.js [L]
+    RewriteRule ^assets/js/vendor-database-Hixw_8oQ\.js$ /vendor-database.js [L]
+    RewriteRule ^assets/js/app-services-cQdnfz-t\.js$ /app-services.js [L]
+    RewriteRule ^assets/js/app-utils-CcC-EMsj\.js$ /app-utils.js [L]
+    RewriteRule ^assets/js/vendor-misc-C6E6rncc\.js$ /vendor-misc.js [L]
+    RewriteRule ^assets/js/vendor-utils-CDGg_kJ1\.js$ /vendor-utils.js [L]
+    RewriteRule ^assets/js/vendor-security-LdHy7Pt9\.js$ /vendor-security.js [L]
+    RewriteRule ^assets/js/vendor-network-BSBq6A-N\.js$ /vendor-network.js [L]
+    RewriteRule ^assets/js/components-ui-DIerSrst\.js$ /components-ui.js [L]
+    RewriteRule ^assets/js/index-CVhcb9nv\.js$ /app-main.js [L]
+    RewriteRule ^assets/css/index-C0s8nMya\.css$ /app-styles.css [L]
+    
+    # Handle API routes
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} ^/api/
+    RewriteRule ^ index.php [QSA,L]
+    
+    # Handle all other routes to index.html for React Router
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.html [QSA,L]
+</IfModule>
+
+# Security headers
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options nosniff
+    Header always set X-Frame-Options DENY
+    Header always set X-XSS-Protection "1; mode=block"
+</IfModule>
