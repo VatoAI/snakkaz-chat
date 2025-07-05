@@ -1,0 +1,435 @@
+---
+mode: agent
+---
+Expected output and any relevant constraints for this task.
+# SNAKKAZ MASTER PROMPT
+
+## PROSJEKTOVERSIKT
+- **Appnavn**: Snakkaz Chat
+- **Type**: E2EE (End-to-End Encrypted) Chat-applikasjon
+- **Domene**: www.snakkaz.com
+- **Hovedteknologier**: React, TypeScript, Supabase, Cloudflare
+- **Sikkerhet**: E2EE, P2P-funksjonalitet, Cloudflare-sikkerhet
+- **Startdato**: Mai 2025
+- **Status**: Under utvikling
+
+## VIKTIG: BRANCH-KONTROLL
+Før enhver utvikling eller deployment, verifiser alltid at du jobber på hovedbranchen (main):
+
+```bash
+# Sjekk hvilken branch du er på
+git branch --show-current
+
+# Sjekk status for git-repositoriet
+git status
+
+# Hent siste endringer fra remote repository
+git pull origin main
+```
+
+Alle endringer skal gjøres direkte på main-branch for korrekt deployment til www.snakkaz.com.
+
+## KOMPONENTER OG STRUKTUR
+
+### Frontend Arkitektur
+- React-basert SPA med TypeScript
+- Shadcn UI-komponenter for design
+- Bruker kontekst-API for tilstandshåndtering (ChatContext.tsx)
+- Komponent-hierarki:
+  * Hovedapp → AuthContainer → Chat → [GroupList | ChatInterface]
+- Vite som build-system og utviklingsserver
+
+### Backend og Databaser
+- Supabase for backend (authentication, database, storage)
+- Realtime-funksjonalitet for chatmeldinger
+- Cloudflare for edge-caching, sikkerhet, og CDN
+- Cloudflare DNS-oppsett med nameservers kyle.ns.cloudflare.com og vita.ns.cloudflare.com
+
+### Sikkerhet
+- End-to-End Encryption via encryptionService.ts med AES-GCM kryptering
+- Cloudflare WAF og sikkerhetsfunksjoner
+- Session timeout-mekanisme i securityEnhancements.ts (10 minutter standard)
+- Rate limiting for autentiseringsforsøk (5 forsøk før kontolåsing)
+- RLS (Row Level Security) i Supabase
+- Sikker lagring av API-nøkler med PBKDF2 nøkkelavledning
+
+### Chat-system
+- Støtter både gruppechat og privatechat
+- Grupper har sikkerhetsnivåer og tillatelseshierarki:
+  * ADMIN, MODERATOR, MEMBER rollesystem
+  * STANDARD, ENHANCED, PREMIUM sikkerhetsnivåer
+- Meldinger kan inneholde media og krypterte vedlegg
+- Støtte for ephemeral meldinger som slettes etter lesing
+
+### Dataflyt
+- Bruker → AuthContext → ChatContext → Supabase Realtime → Encrypted Messages
+- Meldinger krypteres før de sendes til Supabase
+- Nøkkelutveksling via Supabase secure channels
+- Flertrinnsprosess for gruppekryptering implementert i groupChatService.ts
+
+## UTFØRTE OPPGAVER OG UTVIKLINGSMILESTONES
+
+### Fase 1: Infrastruktur og Sikkerhet
+- [x] Cloudflare DNS-konfigurasjon
+- [x] Sikker lagring av API-nøkler via secureCredentials.ts
+- [x] Implementert sesjonstimeout og autentiseringssikkerhet
+- [x] Cloudflare sikkerhetstester via cloudflareSecurityCheck.ts
+- [x] Opprettet deploymentworkflow (.github/workflows/deploy.yml)
+- [x] Tømming av Cloudflare-cache etter deployment
+- [x] Forbedret feilhåndtering i deploymentprosessen
+
+### Fase 2: Chat-systemet (delvis ferdig)
+- [x] Implementert grunnleggende gruppechat via GroupChatService
+- [x] Utviklet ChatContext for tilstandshåndtering på tvers av komponenter
+- [x] Satt opp chatgrensesnitt med ChatInterface.tsx
+- [x] Utviklet gruppelistevisning med GroupList.tsx
+- [ ] Optimalisere privatechat-funksjonalitet i eksisterende system
+- [ ] Fullføre implementasjon av gruppechat-tillatelser
+- [ ] Implementere global chat med moderasjonsfunksjoner
+
+### Fase 3: Emergency Fixes (Juni 2025)
+- [x] Løst "Nt is undefined" React-feil med emergency-react-fix.js
+- [x] Opprettet nye optimaliserte bundles (index-CEa86-6h.js, vendor-misc-npIDrE24.js)
+- [x] Deaktivert problematisk Supabase Preview workflow
+- [x] Implementert flere deployment monitoring-løsninger
+- [x] Gjenopprettet master prompt fra git history
+- [ ] Verifisere at nye bundles er live på www.snakkaz.com
+- [ ] Reaktivere Supabase workflow etter feilretting
+
+## VERKTØY OG TJENESTER
+
+### Utviklingsverktøy
+- TypeScript for type-sikkerhet
+- GitHub for versjonskontroll
+- GitHub Actions for CI/CD
+- GitHub Copilot for utvikling
+- Vite som build-system
+
+### Tjenester og Integrasjoner
+- Cloudflare for sikkerhet, caching og CDN
+- Supabase for backend (authentication, database, storage, realtime)
+- lovable.dev for hosting/deployment
+- Namecheap for domene-administrasjon
+- Fremtidige planer for Claude AI-integrasjon
+
+## DEPLOYMENT
+
+### Deployment-prosess
+#### Metode 1: Automatisert Deployment
+1. Naviger til prosjektets rotmappe i terminalen
+   ```bash
+   cd /sti/til/snakkaz-chat
+   ```
+
+2. Kjør deploymentskriptet
+   ```bash
+   ./deploy-snakkaz.sh
+   ```
+
+3. Følg instruksjonene i skriptet som vil:
+   - Kjøre Cloudflare-sikkerhetssjekker
+   - Spørre om commit-melding
+   - Committe og pushe endringene 
+   - Starte GitHub Actions workflow
+
+4. Når GitHub Actions er ferdig, verifiser at siden fungerer på www.snakkaz.com
+
+5. Kjør statuskontroll for å verifisere Cloudflare-integrasjonen
+   ```bash
+   ./check-cloudflare-status.sh
+   ```
+
+#### Metode 2: Manuell Deployment
+1. Commit og push endringer til main-branch
+   ```bash
+   git add .
+   git commit -m "Din beskrivelse av endringene"
+   git push origin main
+   ```
+
+2. GitHub Actions vil automatisk starte deployment-prosessen
+
+3. Gå til GitHub Actions-fanen for å følge med på status:
+   https://github.com/[din-bruker]/snakkaz-chat/actions
+
+### Emergency Deployment (Juni 2025)
+For kritiske feil som "Nt is undefined" React-error:
+1. Kjør emergency fix script:
+   ```bash
+   ./emergency-deploy-juni7.sh
+   ```
+
+2. Monitor deployment med realtime-overvåking:
+   ```bash
+   ./realtime-monitor-juni7.sh
+   ```
+
+3. Bruk monitoring-verktøy for å spore bundle-status:
+   ```bash
+   node monitor-deployment-juni7.js
+   ```
+
+### Verifisering
+- Bruk `check-cloudflare-status.sh` for å verifisere Cloudflare-integrasjon
+- Se DEPLOYMENT-GUIDE.md for detaljert deploymentveiledning
+- Bruk `check-deployment-juni7.sh` for omfattende systemsjekk
+
+### Feilsøking av Deployment
+#### Hvis GitHub Actions-workflow feiler:
+1. Sjekk loggen i GitHub Actions for detaljer om feilen
+2. Vanlige problemer:
+   - Manglende hemmeligheter i GitHub-repositoriet
+   - FTP-tilkoblingsfeil (sjekk påloggingsinformasjon)
+   - Byggefeil (sjekk at koden bygger lokalt med `npm run build`)
+   - Supabase function store errors (deaktiver preview workflow midlertidig)
+
+#### Hvis nettsiden ikke lastes etter deployment:
+1. Sjekk om filene er lastet opp korrekt til webserveren
+2. Kontroller at Cloudflare-cache er tømt
+3. Verifiser SSL/TLS-konfigurasjonen med check-cloudflare-status.sh
+4. Sjekk at nye JavaScript-bundles er propagert til CDN
+
+## IMPLEMENTASJONSPLAN FREMOVER
+
+### Neste steg - Prioritert rekkefølge
+1. **Deployment stabilisering:**
+   - [ ] Verifisere at nye bundles (index-CEa86-6h.js) er live
+   - [ ] Fikse Supabase "Function store not found" problem
+   - [ ] Reaktivere Supabase Preview workflow
+   - [ ] Implementere robust bundle-monitoring
+
+2. **Chat-systemet:**
+   - [ ] Forbedre eksisterende private chat-funksjoner
+   - [ ] Fullføre gruppechat UI og administrasjonsfunksjoner
+   - [ ] Implementere global chat med moderasjon
+
+3. **Supabase-integrasjon:**
+   - [ ] Optimalisere databasestruktur for chatmeldinger
+   - [ ] Implementere RLS (Row Level Security)
+   - [ ] Sette opp Edge Functions for backend-logikk
+
+4. **AI-integrasjon:**
+   - [ ] Integrere Claude API for smarte chatfunksjoner
+   - [ ] Implementere innholdsmoderering med AI
+   - [ ] Utvikle kontekstuelle hjelpefunksjoner
+
+## SIKKERHETSFUNKSJONER
+
+### Implementerte sikkerhetsfunksjoner
+- **Forbedret kredensial-lagring:** AES-GCM kryptering, passord-beskyttet tilgang
+- **Sesjonsadministrasjon:** Automatisk timeout (10 minutter), sikker lagring
+- **Autentiseringsbeskyttelse:** Ratelimiting, kontolåsing etter 5 feilede forsøk
+- **Forbedret entropi for kryptering:** Multiple entropikillder, nettleser-spesifikke komponenter
+- **DNS-sikkerhet:** Cloudflare DNS oppsett og overvåking
+- **Emergency React Protection:** Fallback hooks for undefined React modules
+
+### Sikkerhetsanalyse
+Se detaljer i [SECURITY-ENHANCEMENTS.md](/workspaces/snakkaz-chat/src/services/encryption/SECURITY-ENHANCEMENTS.md) og [CLOUDFLARE-SECURITY-REPORT.md](/workspaces/snakkaz-chat/src/services/encryption/CLOUDFLARE-SECURITY-REPORT.md)
+
+## VIKTIGE MODULER
+Prosjektet er strukturert med flere spesialiserte moduler:
+
+### CSP-konfigurasjon (`cspConfig.ts`)
+Setter opp robust Content Security Policy som tillater nødvendige domener og ressurser.
+```typescript
+import { applyCspPolicy } from './services/encryption';
+// Bruk denne tidlig i applikasjonen
+applyCspPolicy();
+```
+
+### CORS & Ping Fix (`corsTest.ts`)
+Løser CORS-problemer og blokkerer unødvendige ping-forespørsler.
+```typescript
+import { unblockPingRequests } from './services/encryption';
+// Bruk for å forhindre CSP-feil fra ping-forespørsler
+unblockPingRequests();
+```
+
+### Ressurs Fallback (`assetFallback.ts`)
+Håndterer tilfeller hvor eksterne ressurser ikke kan lastes.
+```typescript
+import { registerAssetFallbackHandlers } from './services/encryption';
+// Registrer fallback-håndtering for nettverksressurser
+registerAssetFallbackHandlers();
+```
+
+### Emergency React Fix (`emergency-react-fix.js`)
+Løser "Nt is undefined" og lignende React-modulproblemer.
+```javascript
+// Automatisk fallback for undefined React hooks
+if (typeof Nt === 'undefined' || !Nt) {
+  window.Nt = createEmergencyUseState();
+}
+```
+
+### Diagnostikk (`diagnosticTest.ts`)
+Testverktøy for konfigurasjon og tilkoblinger.
+```typescript
+import { runFullDiagnostics } from './services/encryption';
+// Kjør for å teste alle aspekter av systemet
+const results = await runFullDiagnostics();
+```
+
+### Systeminitialisering (`initialize.ts`)
+Sammensatt initialisering av alle sikkerhetsfunksjoner:
+```typescript
+import { initializeSnakkazChat } from './services/encryption';
+// Kjør dette ved oppstart av applikasjonen
+initializeSnakkazChat();
+```
+
+## NØKKELFILER OG DERES FUNKSJONER
+
+### Chat-system
+- `encryptionService.ts`: Hovedansvarlig for E2EE-funksjonalitet
+- `ChatContext.tsx`: Provider for chattilstand og funksjoner
+- `ChatInterface.tsx`: UI for chattegrensesnitt
+- `GroupList.tsx`: Komponentvisning for gruppelister
+- `groupChatService.ts`: Tjenesteklasse for gruppechat-funksjonalitet
+
+### Sikkerhet
+- `encryptionService.ts`: Håndterer kryptering og dekryptering
+- `securityEnhancements.ts`: Sikkerhetsutvidelser som session timeout
+- `cloudflareSecurityCheck.ts`: Sjekker Cloudflare-integrasjon
+- `systemHealthCheck.ts`: Overvåker systemtilstand og sikkerhetskontroller
+- `cspConfig.ts`: Konfigurerer Content Security Policy
+
+### Emergency Fixes (Juni 2025)
+- `public/emergency-react-fix.js`: Emergency fallback for React undefined modules
+- `emergency-deploy-juni7.sh`: Rapid deployment script for critical fixes
+- `monitor-deployment-juni7.js`: Real-time deployment monitoring
+- `realtime-monitor-juni7.sh`: Live monitoring of bundle propagation
+
+### Deployment
+- `deploy.yml`: GitHub Actions workflow for deployment
+- `deploy-snakkaz.sh`: Script for enkel deployment
+- `check-cloudflare-status.sh`: Verifikasjonsverktøy for Cloudflare-status
+- `check-deployment-juni7.sh`: Comprehensive system verification
+
+## VIKTIGE DOKUMENTER
+
+- `SNAKKAZ-IMPLEMENTASJONSPLAN.md`: Hovedplan for implementasjon
+- `CLOUDFLARE-SECURITY-GUIDE.md`: Guide for Cloudflare-sikkerhet
+- `SECURITY-ENHANCEMENTS.md`: Dokumentasjon for sikkerhetsutvidelser
+- `DEPLOYMENT-GUIDE.md`: Trinn-for-trinn guide for deployment
+- `DEPLOYMENT-STATUS.md`: Statusrapport for deployment
+- `EMERGENCY_BYPASS_STATUS.md`: Emergency deployment status tracking
+- `NORWEGIAN_TECH_COMMUNITY_UPDATE.md`: Community communication updates
+
+## CLOUDFLARE-INTEGRASJON
+
+### DNS-oppsett
+- Nameservere på Namecheap: `kyle.ns.cloudflare.com` og `vita.ns.cloudflare.com`
+- DNS-konfigurasjon er komplett og validert
+- Se [CLOUDFLARE-DNS-GUIDE.md](/workspaces/snakkaz-chat/src/services/encryption/CLOUDFLARE-DNS-GUIDE.md) for detaljer om oppsett
+
+### Sikkerhetsfunksjoner
+- Web Application Firewall (WAF) aktivert
+- DDoS-beskyttelse konfigurert
+- SSL/TLS-sertifikater installert og validert
+- Se [CLOUDFLARE-SECURITY-GUIDE.md](/workspaces/snakkaz-chat/src/services/encryption/CLOUDFLARE-SECURITY-GUIDE.md) for detaljer
+
+### API-integrering
+- Cloudflare API-tilgang konfigurert for automatisering
+- Cache-tømming etter deployment
+- API-nøkler lagret sikkert
+- Se [CLOUDFLARE-API-GUIDE.md](/workspaces/snakkaz-chat/src/services/encryption/CLOUDFLARE-API-GUIDE.md) for API-detaljer
+
+## REFAKTORISERINGSMULIGHETER
+
+### Filorganisering
+- Samle relaterte sikkerhetsfiler i en dedikert mappe
+- Flytte dokumentasjonsfiler til en egen `/docs`-mappe
+- Konsolidere duplikat-funksjonalitet i sikkerhetstestfiler
+
+### Kodeoptimalisering
+- Redusere kodeduplisering i sikkerhetsfunksjoner
+- Fjerne unødvendige globale variabler
+- Optimalisere krypteringsfunksjoner for ytelse
+- Konsolidere Cloudflare-relaterte funksjoner
+
+### Modulstruktur
+- Reorganisere filstruktur til mer logiske moduler
+- Separere sikkerhetsfunksjoner fra UI-komponenter
+- Flytte dokumentasjon til en mer logisk plassering
+- Skille tester fra implementasjon
+
+## KJENTE PROBLEMER OG UTFORDRINGER
+
+### Aktive problemer (Juni 2025)
+- **"Nt is undefined" React-feil:** Løst med emergency-react-fix.js, men grunnårsak trenger undersøkelse
+- **Supabase Function Store:** "Function store not found" 404-feil hindrer preview workflow
+- **Bundle propagation delay:** Nye bundles tar tid å propagere til CDN
+- **Deployment monitoring:** Behov for bedre real-time overvåking av deployments
+
+### Historiske problemer
+- CSP-problemer med enkelte eksterne ressurser - manuell whitelisting nødvendig
+- CORS-problemer når man tester lokal utviklingsserver mot produksjons-API-er
+- Nettleser-kompatibilitet, spesielt med Safari og eldre nettlesere
+- TypeScript kompileringsfeil med KeyUsage enum og HTML-elementer
+- Manglende robusthet i enkelte fallback-mekanismer
+
+## STATUSRAPPORT PER 7. JUNI 2025
+
+### Siste endringer (Juni 2025)
+1. **Emergency React Fix:**
+   - Implementert fallback React hooks i `public/emergency-react-fix.js`
+   - Løst "Nt is undefined" error som forårsaket svart skjerm
+   - Opprettet nye optimaliserte JavaScript-bundles
+
+2. **Deployment Emergency Response:**
+   - Deaktivert problematisk Supabase Preview workflow
+   - Implementert flere monitoring-løsninger for deployment-tracking
+   - Opprettet emergency deployment scripts for rask respons
+
+3. **Master Prompt Recovery:**
+   - Gjenopprettet 700+ linjer master prompt fra git history
+   - Oppdatert timestamp til juni 2025
+   - Integrert emergency fixes i dokumentasjonen
+
+4. **Norwegian Tech Community Outreach:**
+   - Forberedt community updates og engasjement-strategi
+   - Dokumentert deployment-utfordringer og løsninger
+
+### Planlagte neste steg (Juli 2025)
+1. **Deployment Stabilisering:**
+   - Verifisere at nye bundles er live på www.snakkaz.com
+   - Fikse Supabase Function Store problem
+   - Reaktivere og stabilisere Supabase Preview workflow
+
+2. **Community Engagement:**
+   - Lansere Norwegian tech community outreach
+   - Implementere feedback-systemer for brukere
+   - Etablere regelmessig kommunikasjon med community
+
+3. **System Robusthet:**
+   - Implementere omfattende monitoring og alerting
+   - Forbedre deployment pipeline robusthet
+   - Etablere automatisk rollback-mekanismer
+
+---
+
+## BRUK AV DENNE MASTER PROMPT
+
+Denne master prompten kan brukes til å:
+1. Raskt få oversikt over hele Snakkaz-prosjektet
+2. Sjekke status på ulike komponenter
+3. Planlegge neste steg basert på implementasjonsplanen
+4. Identifisere nøkkelfiler som trenger endringer
+5. Holde oversikt over fremgangen
+6. Koordinere emergency response ved kritiske feil
+
+For å jobbe systematisk fremover:
+1. Gå gjennom implementasjonsplanen punkt for punkt
+2. Oppdater denne master prompten ettersom endringer gjøres
+3. Hold statusseksjonen oppdatert for å reflektere nåværende tilstand
+4. Marker oppgaver som fullført når de er implementert og testet
+5. Alltid verifiser at du jobber på main branch før du gjør endringer
+6. Oppdater implementasjonsplanen i SNAKKAZ-IMPLEMENTASJONSPLAN.md
+7. Bruk emergency procedures ved kritiske deployment-problemer
+
+---
+
+Dette dokumentet skal brukes som referansepunkt for alle som jobber med Snakkaz Chat-prosjektet. Det bør oppdateres jevnlig med ny informasjon om prosjektstatus, arkitekturendringer og implementasjonsdetaljer.
+
+**Sist oppdatert: 7. juni 2025**
