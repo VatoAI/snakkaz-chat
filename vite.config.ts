@@ -77,90 +77,111 @@ export default defineConfig(({ mode }) => ({
             return 'app-services';
           }
           
-          // 1. React ecosystem (2 chunks)
+          // 1. Split React ecosystem into smaller chunks for better performance
           if (id.includes('react') && !id.includes('react-router')) {
             if (id.includes('react-dom')) {
               return 'vendor-react-dom';
             }
+            // Pure React core only
             return 'vendor-react-core';
           }
           
-          // ALL React dependencies must be bundled with React core to ensure proper loading order
+          // 2. React state & hooks utilities (separate from core)
           if (id.includes('use-sync-external-store') || 
               id.includes('scheduler') || 
-              id.includes('use-sync-external-store-shim') ||
-              id.includes('@radix-ui') ||
-              id.includes('react-error-boundary') ||
-              id.includes('react-hook-form') ||
-              id.includes('react-day-picker') ||
-              id.includes('react-intersection-observer') ||
-              id.includes('react-resizable-panels') ||
-              id.includes('react-virtuoso') ||
-              id.includes('framer-motion') ||
-              id.includes('motion')) {
-            return 'vendor-react-core';
+              id.includes('use-sync-external-store-shim')) {
+            return 'vendor-react-hooks';
           }
           
-          // 2. Router (1 chunk)
+          // 3. UI Component Libraries (split into smaller chunks)
+          if (id.includes('@radix-ui')) {
+            return 'vendor-radix-ui';
+          }
+          
+          // 4. Form & Validation Libraries  
+          if (id.includes('react-error-boundary') ||
+              id.includes('react-hook-form') ||
+              id.includes('react-day-picker')) {
+            return 'vendor-react-forms';
+          }
+          
+          // 5. Advanced React Components
+          if (id.includes('react-intersection-observer') ||
+              id.includes('react-resizable-panels') ||
+              id.includes('react-virtuoso')) {
+            return 'vendor-react-advanced';
+          }
+          
+          // 6. Animation Libraries (separate from React core)
+          if (id.includes('framer-motion') || id.includes('motion')) {
+            return 'vendor-animation';
+          }
+          
+          // 7. Router (1 chunk)
           if (id.includes('react-router')) {
             return 'vendor-router';
           }
           
-          // 3. UI Components (1 chunk) - Note: Radix UI moved to vendor-react-core above
+          // 8. Icon Libraries
           if (id.includes('lucide-react')) {
-            return 'vendor-ui-components';
+            return 'vendor-icons';
           }
           
-          // 4. Animation & Motion - Removed framer-motion (moved to vendor-react-core)
-          // Keeping this chunk for future animation libraries
-          
-          // 5. Database & Backend (1 chunk)
+          // 9. Database & Backend (1 chunk)
           if (id.includes('@supabase') || id.includes('supabase') || id.includes('postgrest')) {
             return 'vendor-database';
           }
           
-          // 6. Forms & Validation - Removed react-hook-form (moved to vendor-react-core)
+          // 10. Forms & Validation
           if (id.includes('zod') || id.includes('@hookform')) {
-            return 'vendor-forms';
+            return 'vendor-validation';
           }
           
-          // 7. Security & Crypto (1 chunk)
+          // 11. Security & Crypto (1 chunk)
           if (id.includes('crypto') || id.includes('tweetnacl') || id.includes('security') || id.includes('@privacyresearch')) {
             return 'vendor-security';
           }
           
-          // 8. Charts & Visualization (1 chunk)
+          // 12. Charts & Visualization (1 chunk)
           if (id.includes('recharts') || id.includes('chart')) {
             return 'vendor-charts';
           }
           
-          // 9. Utilities (merged from 2 to 1 chunk)
-          if (id.includes('date-fns') || id.includes('lodash') || id.includes('uuid') ||
-              id.includes('tailwind-merge') || id.includes('clsx') || id.includes('class-variance') || id.includes('classnames')) {
-            return 'vendor-utils';
+          // 13. Utilities (split into smaller chunks)
+          if (id.includes('date-fns')) {
+            return 'vendor-date-utils';
           }
           
-          // 10. Media & Special Features (1 chunk)
+          if (id.includes('lodash') || id.includes('uuid')) {
+            return 'vendor-misc-utils';
+          }
+          
+          if (id.includes('tailwind-merge') || id.includes('clsx') || id.includes('class-variance') || id.includes('classnames')) {
+            return 'vendor-style-utils';
+          }
+          
+          // 14. Media & Special Features (1 chunk)
           if (id.includes('qrcode') || id.includes('jsqr') || id.includes('speakeasy') || id.includes('otpauth') || 
               id.includes('dompurify') || id.includes('pdf') || id.includes('@uppy') || id.includes('sharp')) {
-            return 'vendor-media-special';
+            return 'vendor-media';
           }
           
-          // 11. AI & External APIs (1 chunk)
+          // 15. AI & External APIs (1 chunk)
           if (id.includes('@anthropic-ai')) {
             return 'vendor-ai';
           }
           
-          // 12. Split remaining vendor packages for better error isolation
+          // 16. Split remaining vendor packages for better error isolation
           if (id.includes('node_modules')) {
-            // Isolate potentially problematic packages
+            // Network & HTTP utilities
             if (id.includes('axios') || id.includes('imapflow') || id.includes('puppeteer')) {
               return 'vendor-network';
             }
+            // Image & media processing
             if (id.includes('imagemin') || id.includes('sharp') || id.includes('node-fetch')) {
               return 'vendor-media-tools';
             }
-            // Default for remaining packages
+            // Default for remaining small packages
             return 'vendor-misc';
           }
         },
