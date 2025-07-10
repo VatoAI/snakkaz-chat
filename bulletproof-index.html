@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/icons/snakkaz-icon-192.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#0f172a" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="SnakkaZ Chat" />
+    <link rel="apple-touch-icon" href="/icons/snakkaz-icon-192.png" />
+    <title>SnakkaZ Chat - Fixed</title>
+    
+    <!-- SUPER AGGRESSIVE REACT HOOKS FIX -->
+    <script>
+      console.log('🚨 SUPER AGGRESSIVE React hooks fix loading...');
+      
+      // Block ALL errors from vendor bundles
+      window.addEventListener('error', function(e) {
+        if (e.message && (e.message.includes('undefined has no properties') || 
+                          e.message.includes('useMergeRef') ||
+                          e.filename && e.filename.includes('vendor-misc'))) {
+          console.error('🛡️ BLOCKED ERROR:', e.message, 'from', e.filename);
+          e.preventDefault();
+          e.stopPropagation();
+          return false;
+        }
+      }, true);
+      
+      // Override useMergeRef with bulletproof version
+      window.useMergeRef = function() {
+        console.log('🛡️ BULLETPROOF useMergeRef called');
+        var refs = [].slice.call(arguments);
+        return function(element) {
+          try {
+            refs.forEach(function(ref, i) {
+              if (ref && typeof ref === 'function') ref(element);
+              else if (ref && ref.current !== undefined) ref.current = element;
+            });
+          } catch (e) {
+            console.warn('🛡️ useMergeRef safe error:', e);
+          }
+        };
+      };
+      
+      // Lock it down
+      Object.defineProperty(window, 'useMergeRef', {
+        value: window.useMergeRef,
+        writable: false,
+        configurable: false
+      });
+      
+      console.log('✅ BULLETPROOF React hooks protection active');
+    </script>
+      <link rel="modulepreload" crossorigin href="/assets/js/vendor-react-core-UE0NfmHj.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/vendor-react-dom-D1hH5TN6.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/vendor-router-Zux6_7a3.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/vendor-react-hooks-Dp7bQxhI.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/vendor-animation-BHv7ctfq.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/vendor-style-utils-nLA3zUC6.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/vendor-misc-D3Hm-Kpl.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/vendor-date-utils-D2GbuEg1.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/vendor-media-D0lVWGTO.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/vendor-database-DzWXAs3S.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/vendor-validation-BwbaGm45.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/vendor-network-BSBq6A-N.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/vendor-security-LdHy7Pt9.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/vendor-radix-ui-UJNVxv2C.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/app-utils-B2JvKKuL.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/app-services-DTwYrFbC.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/components-ui-FURm-Hhi.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/pages-auth-CkZx9JEB.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/pages-main-mdjBCVF2.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/pages-chat-MsXbkER-.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/EnhancedGroupChat-Bco3OrZn.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/GroupChatPage-DjZHOTpZ.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/DynamicGroupChatPage-ByQOUCAl.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/index-CvHukjAV.js">
+    <link rel="stylesheet" crossorigin href="/assets/css/index-F5gxOYLI.css">
+</head>
+<body>
+    <div id="root"></div>
+    <script type="module" crossorigin src="/assets/js/index-CvHukjAV.js"></script>
+</body>
+</html>

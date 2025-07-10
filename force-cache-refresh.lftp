@@ -1,0 +1,95 @@
+set ssl:verify-certificate no
+set ftp:passive-mode on
+set cmd:fail-exit no
+set net:timeout 30
+set net:reconnect-interval-base 5
+set net:max-retries 3
+
+# Connect to FTP with working credentials
+open -u admin@snakkaz.com,Rompetroll123! ftp://ftp.snakkaz.com
+
+echo "=== FORCE CACHE REFRESH STRATEGY ==="
+
+# Create a temporary redirect to force cache refresh
+put << 'HTML_END' index-redirect.html
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Redirecting to SnakkaZ Chat...</title>
+    <script>
+        console.log('🔄 Cache bypass redirect...');
+        window.location.href = '/snakkaz-v2.html';
+    </script>
+    <meta http-equiv="refresh" content="0;url=/snakkaz-v2.html">
+</head>
+<body>
+    <p>Redirecting to SnakkaZ Chat...</p>
+    <p><a href="/snakkaz-v2.html">Click here if not redirected automatically</a></p>
+</body>
+</html>
+HTML_END
+
+echo "✅ Redirect page created"
+
+# Now copy the new file to index.html
+cp snakkaz-v2.html index.html
+echo "✅ Copied snakkaz-v2.html to index.html"
+
+# Verify both files exist
+ls -la index.html
+ls -la snakkaz-v2.html
+
+# Update .htaccess to clear any caching issues
+put << 'HTACCESS_END' .htaccess-nocache
+# SnakkaZ Production .htaccess - No Cache Version
+# Fixed MIME types and disabled caching
+
+# Enable rewrite engine
+RewriteEngine On
+
+# Force no cache for HTML files
+<FilesMatch "\.(html|htm)$">
+    Header always set Cache-Control "no-cache, no-store, must-revalidate"
+    Header always set Pragma "no-cache"
+    Header always set Expires "0"
+</FilesMatch>
+
+# Fix MIME types for CSS and JS
+<FilesMatch "\.(css)$">
+    ForceType text/css
+</FilesMatch>
+
+<FilesMatch "\.(js)$">
+    ForceType application/javascript
+</FilesMatch>
+
+<FilesMatch "\.(mjs)$">
+    ForceType application/javascript
+</FilesMatch>
+
+# SPA routing - redirect all requests to index.html
+<IfModule mod_rewrite.c>
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} !^/api/
+    RewriteRule . /index.html [L]
+</IfModule>
+
+# Security headers
+<IfModule mod_headers.c>
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+HTACCESS_END
+
+echo "✅ No-cache .htaccess created"
+
+# Apply the no-cache version
+cp .htaccess-nocache .htaccess
+echo "✅ No-cache .htaccess applied"
+
+echo "=== CACHE REFRESH COMPLETE ==="
+
+quit

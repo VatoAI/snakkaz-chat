@@ -1,0 +1,48 @@
+set ssl:verify-certificate no
+set ftp:passive-mode on
+set cmd:fail-exit no
+set net:timeout 30
+set net:reconnect-interval-base 5
+set net:max-retries 3
+
+# Connect to FTP with working credentials
+open -u admin@snakkaz.com,Rompetroll123! ftp://ftp.snakkaz.com
+
+echo "=== AGGRESSIVE MIME AND ASSET FIX ==="
+
+# Force update .htaccess with current timestamp
+put production-htaccess .htaccess
+echo "✅ Fresh .htaccess uploaded"
+
+# Upload fresh index.html
+put dist/index.html index.html
+echo "✅ Fresh index.html uploaded"
+
+# Clean and recreate asset directories
+rm -rf assets
+mkdir assets
+mkdir assets/css
+mkdir assets/js
+
+# Upload fresh CSS files
+cd assets/css
+lcd dist/assets/css
+mput *
+echo "✅ Fresh CSS files uploaded"
+
+# Upload fresh JS files  
+cd ../js
+lcd ../js
+mput *
+echo "✅ Fresh JS files uploaded"
+
+# Back to root and verify structure
+cd /
+ls -la index.html
+ls -la .htaccess  
+ls -la assets/css/
+ls -la assets/js/
+
+echo "=== DEPLOYMENT COMPLETE ==="
+
+quit

@@ -1,0 +1,47 @@
+set ssl:verify-certificate no
+set ftp:passive-mode on
+set cmd:fail-exit no
+set net:timeout 30
+set net:reconnect-interval-base 5
+set net:max-retries 3
+
+# Connect to FTP with working credentials
+open -u admin@snakkaz.com,Rompetroll123! ftp://ftp.snakkaz.com
+
+echo "=== SIMPLE RENAME STRATEGY ==="
+
+# Step 1: Remove the old cached index.html
+rm -f index.html
+echo "✅ Removed old index.html"
+
+# Step 2: Upload redirect temporarily
+put index-redirect.html index.html
+echo "✅ Uploaded redirect as index.html"
+
+# Step 3: Wait a moment and then overwrite with real file
+put dist/index.html index.html
+echo "✅ Overwrote with real index.html"
+
+# Verify final state
+ls -la index.html
+echo "Expected: 5689 bytes"
+
+# Also ensure assets are fresh
+echo "=== REFRESH ASSETS ==="
+cd assets/css
+rm -f index-*.css
+put ../../../dist/assets/css/index-F5gxOYLI.css index-F5gxOYLI.css
+echo "✅ Refreshed CSS"
+
+cd ../js
+rm -f vendor-react-core-*.js
+put ../../../dist/assets/js/vendor-react-core-UE0NfmHj.js vendor-react-core-UE0NfmHj.js
+echo "✅ Refreshed React core"
+
+cd /
+echo "=== FINAL VERIFICATION ==="
+ls -la index.html
+ls -la assets/css/index-F5gxOYLI.css
+ls -la assets/js/vendor-react-core-UE0NfmHj.js
+
+quit

@@ -1,0 +1,61 @@
+set ssl:verify-certificate no
+set ftp:passive-mode on
+set cmd:fail-exit no
+set net:timeout 30
+set net:reconnect-interval-base 5
+set net:max-retries 3
+
+# Connect to FTP with working credentials
+open -u admin@snakkaz.com,Rompetroll123! ftp://ftp.snakkaz.com
+
+echo "=== IMMEDIATE REACT HOOKS FIX V3 DEPLOYMENT ==="
+
+# Upload the V3 fix with new filename to bypass any cache
+put dist/index.html snakkaz-v3-fixed.html
+echo "✅ V3 fix uploaded as snakkaz-v3-fixed.html"
+
+# Verify upload
+ls -la snakkaz-v3-fixed.html
+echo "Expected: larger file with V3 fix"
+
+# Now force replace the main index.html
+rm -f index.html
+put dist/index.html index.html
+echo "✅ V3 fix applied to main index.html"
+
+# Verify main file
+ls -la index.html
+
+# Also create a test page that redirects to the working version
+put << 'TEST_END' test-hooks.html
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>SnakkaZ React Hooks Test</title>
+    <script>
+        console.log('🧪 Testing React hooks...');
+        if (window.location.pathname === '/test-hooks.html') {
+            setTimeout(function() {
+                window.location.href = '/snakkaz-v3-fixed.html';
+            }, 2000);
+        }
+    </script>
+</head>
+<body>
+    <h1>Testing React Hooks Fix...</h1>
+    <p>Redirecting to fixed version in 2 seconds...</p>
+    <p><a href="/snakkaz-v3-fixed.html">Or click here</a></p>
+</body>
+</html>
+TEST_END
+
+echo "✅ Test page created"
+
+echo "=== V3 DEPLOYMENT COMPLETE ==="
+echo "Test URLs:"
+echo "- https://www.snakkaz.com/snakkaz-v3-fixed.html"
+echo "- https://www.snakkaz.com/test-hooks.html" 
+echo "- https://www.snakkaz.com/ (main site)"
+
+quit
