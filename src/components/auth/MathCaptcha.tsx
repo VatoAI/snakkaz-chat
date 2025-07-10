@@ -20,6 +20,7 @@ export const MathCaptcha: React.FC<MathCaptchaProps> = ({
   const [isCorrect, setIsCorrect] = useState(false);
   const [attempts, setAttempts] = useState(0);
   const [isLocked, setIsLocked] = useState(false);
+  const [checkAttemptTimeout, setCheckAttemptTimeout] = useState<NodeJS.Timeout | null>(null);
 
   // Use ref to avoid dependency issues
   const onVerificationChangeRef = useRef(onVerificationChange);
@@ -66,6 +67,12 @@ export const MathCaptcha: React.FC<MathCaptchaProps> = ({
     setIsCorrect(correct);
     
     if (correct) {
+      // Clear any pending attempt check
+      if (checkAttemptTimeout) {
+        clearTimeout(checkAttemptTimeout);
+        setCheckAttemptTimeout(null);
+      }
+      
       // Generate a simple token for verification
       const token = btoa(`${num1}-${num2}-${userAnswer}-${Date.now()}`);
       onVerificationChangeRef.current(true, token);
@@ -73,30 +80,50 @@ export const MathCaptcha: React.FC<MathCaptchaProps> = ({
     } else {
       onVerificationChangeRef.current(false, '');
       
-      // Track failed attempts only when user finishes typing
-      if (userAnswer.length >= 1) {
-        const newAttempts = attempts + 1;
-        setAttempts(newAttempts);
-        
-        // Lock after 3 failed attempts
-        if (newAttempts >= 3) {
-          setIsLocked(true);
-          setTimeout(() => {
-            setIsLocked(false);
-            setAttempts(0);
-            // Use a fresh problem generation without dependency issues
-            const newNum1 = Math.floor(Math.random() * 10) + 1;
-            const newNum2 = Math.floor(Math.random() * 10) + 1;
-            setNum1(newNum1);
-            setNum2(newNum2);
-            setUserAnswer('');
-            setIsCorrect(false);
-            onVerificationChangeRef.current(false, '');
-          }, 30000); // 30 second lockout
-        }
+      // Clear any existing timeout
+      if (checkAttemptTimeout) {
+        clearTimeout(checkAttemptTimeout);
       }
+      
+      // Only count as a failed attempt after user stops typing for 1.5 seconds
+      // This prevents counting partial multi-digit entries as failures
+      const timeout = setTimeout(() => {
+        if (userAnswer.length >= 1 && !isNaN(parsedAnswer)) {
+          const newAttempts = attempts + 1;
+          setAttempts(newAttempts);
+          
+          // Lock after 3 failed attempts
+          if (newAttempts >= 3) {
+            setIsLocked(true);
+            setTimeout(() => {
+              setIsLocked(false);
+              setAttempts(0);
+              // Use a fresh problem generation without dependency issues
+              const newNum1 = Math.floor(Math.random() * 10) + 1;
+              const newNum2 = Math.floor(Math.random() * 10) + 1;
+              setNum1(newNum1);
+              setNum2(newNum2);
+              setUserAnswer('');
+              setIsCorrect(false);
+              onVerificationChangeRef.current(false, '');
+            }, 30000); // 30 second lockout
+          }
+        }
+        setCheckAttemptTimeout(null);
+      }, 1500);
+      
+      setCheckAttemptTimeout(timeout);
     }
-  }, [userAnswer, num1, num2, attempts]);
+  }, [userAnswer, num1, num2, attempts, checkAttemptTimeout]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (checkAttemptTimeout) {
+        clearTimeout(checkAttemptTimeout);
+      }
+    };
+  }, [checkAttemptTimeout]);
 
   const handleRefresh = useCallback(() => {
     generateNewProblem();
@@ -159,7 +186,7 @@ export const MathCaptcha: React.FC<MathCaptchaProps> = ({
             isCorrect ? 'border-green-500' : ''
           } ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
           disabled={isLoading || isLocked}
-          maxLength={6}
+          maxLength={10}
         />
         
         <button
