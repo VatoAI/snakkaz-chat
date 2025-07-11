@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { UnifiedLayout } from '@/components/layout/UnifiedLayout';
 import { 
   MessageSquare, 
   Users, 
@@ -103,49 +104,87 @@ export const Dashboard: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-cyberdark-950 p-4 md:p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Welcome Header */}
-        <div className="bg-gradient-to-r from-cybergold-600/20 to-cybergold-400/20 border border-cybergold-500/30 rounded-xl p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-cybergold-400">
-                {timeOfDay}, {user?.user_metadata?.username || 'Bruker'}!
-              </h1>
-              <p className="text-cybergold-300 mt-1">
-                Velkommen til Snakkaz Chat - din sikre kommunikasjonsplattform
-              </p>
-            </div>
-            {!isMobile && (
-              <div className="text-right">
-                <div className="flex items-center gap-2 text-cybergold-400">
-                  <Crown className="h-5 w-5" />
-                  <span className="text-sm">Premium</span>
-                </div>
-                <Button 
-                  onClick={() => navigate('/subscription')}
-                  size="sm" 
-                  className="mt-2 bg-cybergold-600 text-black hover:bg-cybergold-500"
-                >
-                  Oppgrader
-                </Button>
-              </div>
-            )}
+    <UnifiedLayout 
+      title="Dashboard"
+      subtitle="Din sikre kommunikasjonsplattform"
+    >
+      <div className="px-4 py-4">
+        <div className="max-w-sm mx-auto space-y-6">
+          {/* Welcome Header */}
+          <div className="bg-gradient-to-r from-cybergold-600/20 to-cybergold-400/20 border border-cybergold-500/30 rounded-xl p-4">
+            <h1 className="text-xl font-bold text-cybergold-400">
+              {timeOfDay}, {user?.user_metadata?.username || 'Bruker'}!
+            </h1>
+            <p className="text-cybergold-300 mt-1 text-sm">
+              Velkommen til SnakkaZ Chat
+            </p>
           </div>
-        </div>
+          </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Chat Hub - Main Feature */}
-          <div className="lg:col-span-2 space-y-6">
-            <Card className="bg-cyberdark-900 border-cyberdark-700">
-              <CardHeader>
-                <CardTitle className="text-cybergold-400 flex items-center gap-2">
-                  <MessageSquare className="h-5 w-5" />
-                  Chat Hub
-                </CardTitle>
-                <CardDescription className="text-cybergold-600">
-                  Alt chat-relatert samlet på ett sted
-                </CardDescription>
+          {/* Quick Stats */}
+          <div className="grid grid-cols-2 gap-3 mb-6">
+            <div className="bg-gradient-to-r from-cybergold-500/20 to-cybergold-600/20 rounded-lg p-3 border border-cybergold-500/30">
+              <div className="flex items-center space-x-2">
+                <MessageSquare size={18} className="text-cybergold-400" />
+                <div>
+                  <div className="text-lg font-bold text-cybergold-400">24</div>
+                  <div className="text-xs text-cyberdark-300">Chats</div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-gradient-to-r from-cyberblue-500/20 to-cyberblue-600/20 rounded-lg p-3 border border-cyberblue-500/30">
+              <div className="flex items-center space-x-2">
+                <Users size={18} className="text-cyberblue-400" />
+                <div>
+                  <div className="text-lg font-bold text-cyberblue-400">8</div>
+                  <div className="text-xs text-cyberdark-300">Grupper</div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-gradient-to-r from-cybergreen-500/20 to-cybergreen-600/20 rounded-lg p-3 border border-cybergreen-500/30">
+              <div className="flex items-center space-x-2">
+                <TrendingUp size={18} className="text-cybergreen-400" />
+                <div>
+                  <div className="text-lg font-bold text-cybergreen-400">156</div>
+                  <div className="text-xs text-cyberdark-300">Venner</div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-gradient-to-r from-cyberred-500/20 to-cyberred-600/20 rounded-lg p-3 border border-cyberred-500/30">
+              <div className="flex items-center space-x-2">
+                <Clock size={18} className="text-cyberred-400" />
+                <div>
+                  <div className="text-lg font-bold text-cyberred-400">12</div>
+                  <div className="text-xs text-cyberdark-300">Uleste</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Actions */}
+          <div className="space-y-3">
+            <h3 className="text-lg font-semibold text-white">⚡ Quick Actions</h3>
+            
+            {quickActions.slice(0, 4).map((action, index) => (
+              <button
+                key={index}
+                onClick={action.action}
+                className={`w-full p-4 rounded-lg border transition-all duration-200 active:scale-95 ${action.color}`}
+              >
+                <div className="flex items-center space-x-3">
+                  {action.icon}
+                  <div className="text-left">
+                    <h4 className="font-medium">{action.title}</h4>
+                    <p className="text-sm opacity-70">{action.description}</p>
+                  </div>
+                  <ChevronRight size={16} className="opacity-50" />
+                </div>
+              </button>
+            ))}
+          </div>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -321,10 +360,9 @@ export const Dashboard: React.FC = () => {
                 </div>
               </CardContent>
             </Card>
-          </div>
-        </div>
+        }
       </div>
-    </div>
+    </UnifiedLayout>
   );
 };
 

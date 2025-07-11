@@ -21,6 +21,7 @@ const Info = lazy(() => import("@/pages/Info"));
 
 // Core chat functionality - separate chunk for main feature
 const Chat = lazy(() => import("@/pages/BasicChatPage"));
+const ChatPageNew = lazy(() => import("@/pages/ChatPageNew"));
 const BasicChatPage = lazy(() => import("@/pages/BasicChatPage"));
 
 // AI features - separate chunk (lazy load on demand)
@@ -28,19 +29,30 @@ const AIChatPage = lazy(() => import("@/features/chat/components/common/AIChatPa
 
 // Mobile test page
 const MobileTestPage = lazy(() => import("@/pages/MobileTestPage"));
+// Improved mobile test page
+const ImprovedMobileTest = lazy(() => import("@/pages/ImprovedMobileTest"));
+// Final mobile test page with Claude-inspired structure
+const FinalMobileTest = lazy(() => import("@/pages/FinalMobileTest"));
+
+// Complete mobile test page with header + navigation
+const CompleteMobileTest = lazy(() => import("@/pages/CompleteMobileTest"));
+
+// LiquidGlass demo page
+const LiquidGlassDemo = lazy(() => import("@/pages/LiquidGlassDemo").then(module => ({ default: module.LiquidGlassDemo })));
 
 // Group functionality - separate chunk
 const CreateGroupPage = lazy(() => import("@/pages/CreateGroupPage"));
 const GroupChatPage = lazy(() => import("@/features/chat/components/group/DynamicGroupChatPage"));
 
 // Social features - separate chunk
-const Friends = lazy(() => import("@/pages/Friends"));
+const FriendsPage = lazy(() => import("@/pages/FriendsPage"));
 const FindFriends = lazy(() => import("@/pages/FindFriends"));
 
 // User management - separate chunk (lazy loaded with dynamic wrappers)
 const ProfilePage = lazy(() => import("@/components/dynamic/DynamicProfile"));
+const ProfilePageNew = lazy(() => import("@/pages/ProfilePageNew"));
 const SettingsPage = lazy(() => import("@/components/dynamic/DynamicSettings"));
-const Dashboard = lazy(() => import("@/pages/Dashboard"));
+const DashboardPage = lazy(() => import("@/pages/DashboardPage"));
 const Mail = lazy(() => import("@/components/dynamic/DynamicMail"));
 const MCPDashboard = lazy(() => import("@/pages/MCPDashboard"));
 const MemoryDashboard = lazy(() => import("@/components/dynamic/DynamicMemoryDashboard"));
@@ -311,6 +323,13 @@ export default function App() {
               
               {/* Mobile test page - no auth required for testing */}
               <Route path="/mobile-test" element={<MobileTestPage />} />
+              <Route path="/complete-mobile-test" element={<CompleteMobileTest />} />
+              <Route path="/improved-mobile-test" element={<ImprovedMobileTest />} />
+              <Route path="/final-mobile-test" element={<FinalMobileTest />} />
+              <Route path="/final-mobile-test" element={<FinalMobileTest />} />
+              
+              {/* LiquidGlass demo - no auth required for testing */}
+              <Route path="/liquid-glass-demo" element={<LiquidGlassDemo />} />
               
               {/* Protected routes that need authentication */}
               <Route 
@@ -341,7 +360,7 @@ export default function App() {
                 path="/friends" 
                 element={
                   <RequireAuth>
-                    <Friends />
+                    <FriendsPage />
                   </RequireAuth>
                 } 
               />
@@ -386,10 +405,18 @@ export default function App() {
                 } 
               />
               <Route 
+                path="/profile-new" 
+                element={
+                  <RequireAuth>
+                    <ProfilePageNew />
+                  </RequireAuth>
+                } 
+              />
+              <Route 
                 path="/dashboard" 
                 element={
                   <RequireAuth>
-                    <Dashboard />
+                    <DashboardPage />
                   </RequireAuth>
                 } 
               />
@@ -460,6 +487,14 @@ export default function App() {
               <Route path="*" element={
                 <AuthAwareRedirect fallback="/info" />
               } />
+              <Route 
+                path="/chat-new" 
+                element={
+                  <RequireAuth>
+                    <ChatPageNew />
+                  </RequireAuth>
+                } 
+              />
             </Routes>
           </Suspense>
           <Toaster />
