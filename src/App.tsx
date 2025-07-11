@@ -8,6 +8,10 @@ import { verifySupabaseConfig } from '@/services/encryption/supabasePatch';
 import { setupGlobalErrorHandlers } from './utils/error/errorHandling';
 import { bootstrapSecurityFeatures } from '@/services/security/securityIntegration';
 import { ENV } from './utils/env/environmentFix';
+// PWA and Mobile Components
+import PWAHead from './components/mobile/PWAHead';
+import MobileOptimization from './components/mobile/MobileOptimization';
+import MobileLaunchBanner from './components/mobile/MobileLaunchBanner';
 // DEAKTIVERT: Supabase preview (forårsaker konflikter og 404-feil)
 // import { initializePreview, shouldShowPreviewNotice, getPreviewDisplayInfo } from '@/utils/supabase/preview-fix';
 
@@ -27,7 +31,10 @@ const BasicChatPage = lazy(() => import("@/pages/BasicChatPage"));
 // AI features - separate chunk (lazy load on demand)
 const AIChatPage = lazy(() => import("@/features/chat/components/common/AIChatPage"));
 
-// Mobile test page
+// PWA Demo page
+const PWADemo = lazy(() => import("@/pages/PWADemo"));
+
+// Mobile test pages
 const MobileTestPage = lazy(() => import("@/pages/MobileTestPage"));
 // Improved mobile test page
 const ImprovedMobileTest = lazy(() => import("@/pages/ImprovedMobileTest"));
@@ -39,6 +46,12 @@ const CompleteMobileTest = lazy(() => import("@/pages/CompleteMobileTest"));
 
 // LiquidGlass demo page
 const LiquidGlassDemo = lazy(() => import("@/pages/LiquidGlassDemo").then(module => ({ default: module.LiquidGlassDemo })));
+
+// SnakkaZ Chat Beta - Full featured chat system
+const SnakkaZChatBeta = lazy(() => import("@/pages/SnakkaZChatBeta"));
+
+// SnakkaZ Beta Landing page
+const SnakkaZBetaLanding = lazy(() => import("@/pages/SnakkaZBetaLanding"));
 
 // Group functionality - separate chunk
 const CreateGroupPage = lazy(() => import("@/pages/CreateGroupPage"));
@@ -62,6 +75,9 @@ const Subscription = lazy(() => import("@/pages/Subscription"));
 
 // Admin features - separate chunk (hidden/security sensitive)
 const AdminSecurityPanel = lazy(() => import("@/pages/admin/AdminSecurityPanel"));
+
+// Invite system demo
+const InviteSystemDemo = lazy(() => import("@/pages/InviteSystemDemo"));
 
 // Loading component
 const LoadingSpinner = () => (
@@ -133,7 +149,7 @@ const RequireAuth = ({ children }) => {
 };
 
 // Smart redirect component that handles routing based on auth state
-const AuthAwareRedirect = ({ fallback = "/login" }: { fallback?: string }) => {
+const AuthAwareRedirect = ({ fallback = "/beta" }: { fallback?: string }) => {
   const { user, loading } = useAuth();
   
   // Show loading while checking auth
@@ -141,12 +157,18 @@ const AuthAwareRedirect = ({ fallback = "/login" }: { fallback?: string }) => {
     return <LoadingSpinner />;
   }
   
-  // If user is logged in, go to basic chat (proven working)
+  // If user is logged in, check if they're a beta user
   if (user) {
-    return <Navigate to="/basic-chat" replace />;
+    const isBetaUser = localStorage.getItem('snakkaz_beta_user') === 'true';
+    
+    if (isBetaUser) {
+      return <Navigate to="/beta-chat" replace />;
+    } else {
+      return <Navigate to="/basic-chat" replace />;
+    }
   }
   
-  // If not logged in, go to login
+  // If not logged in, go to beta landing page by default
   return <Navigate to={fallback} replace />;
 };
 
@@ -331,6 +353,19 @@ export default function App() {
               {/* LiquidGlass demo - no auth required for testing */}
               <Route path="/liquid-glass-demo" element={<LiquidGlassDemo />} />
               
+              {/* SnakkaZ Beta Landing - no auth required */}
+              <Route path="/beta" element={<SnakkaZBetaLanding />} />
+              
+              {/* SnakkaZ Chat Beta - Full featured chat system */}
+              <Route 
+                path="/beta-chat" 
+                element={
+                  <RequireAuth>
+                    <SnakkaZChatBeta />
+                  </RequireAuth>
+                } 
+              />
+              
               {/* Protected routes that need authentication */}
               <Route 
                 path="/basic-chat" 
@@ -495,11 +530,30 @@ export default function App() {
                   </RequireAuth>
                 } 
               />
+              <Route 
+                path="/invite-system-demo" 
+                element={
+                  <RequireAuth>
+                    <InviteSystemDemo />
+                  </RequireAuth>
+                } 
+              />
+              {/* Invite System Demo - no auth required for testing */}
+              <Route path="/invite-demo" element={<InviteSystemDemo />} />
+              
+              {/* PWA Demo - no auth required for testing */}
+              <Route path="/pwa-demo" element={<PWADemo />} />
             </Routes>
           </Suspense>
           <Toaster />
           <DeveloperTools />
         </AuthProvider>
+        
+        {/* PWA and Mobile Components */}
+        <PWAHead />
+        <MobileOptimization>
+          <MobileLaunchBanner />
+        </MobileOptimization>
       </BrowserRouter>
     </SuperSimpleErrorBoundary>
   );

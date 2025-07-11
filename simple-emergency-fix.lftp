@@ -1,0 +1,24 @@
+#!/usr/bin/env lftp -f
+
+# Simple Emergency Fix for React Hooks Error
+# Credentials from cPanel: snakqsqe / Rompetroll123!
+
+open ftp://snakqsqe:Rompetroll123!@ftp.snakkaz.com
+
+# Go to public_html
+cd public_html
+
+# Backup current index
+get index.html index-backup.html
+
+# Upload fixed index.html
+put emergency-index-fixed.html index.html
+
+# Upload the React hooks patch
+put emergency-react-hooks-patch.js
+
+# Verify upload
+ls -la *.html *.js
+
+echo "Emergency fix deployed!"
+bye

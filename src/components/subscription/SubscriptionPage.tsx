@@ -1,15 +1,17 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
 import { SubscriptionTiers } from "@/components/subscription/SubscriptionTiers";
 import { PremiumFeature } from "@/services/subscription/types";
-import { Check, AlertCircle, Lock } from "lucide-react";
+import { Check, AlertCircle, Lock, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
 export const SubscriptionPage = () => {
   const { isPremium, subscription } = useAuth();
+  const navigate = useNavigate();
 
   const [dbError, setDbError] = React.useState(false);
   
@@ -31,6 +33,18 @@ export const SubscriptionPage = () => {
   
   return (
     <div className="container py-10 max-w-6xl">
+      {/* Back button for beta */}
+      <div className="mb-4">
+        <Button
+          variant="ghost"
+          onClick={() => navigate('/beta-chat')}
+          className="text-cybergold-400 hover:text-cybergold-300"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Tilbake til Chat
+        </Button>
+      </div>
+      
       <div className="mb-8 text-center">
         <h1 className="text-3xl font-bold tracking-tight text-cybergold-100">Subscription Management</h1>
         <p className="text-cybergold-400 mt-2">

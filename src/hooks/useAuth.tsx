@@ -93,31 +93,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [user, refreshSubscription]);
 
-  // Check if subscription is expiring soon and show notification
-  useEffect(() => {
-    const checkExpiringSubscription = async () => {
-      if (!user) return;
-      
-      const isExpiringSoon = await subscriptionService.isSubscriptionExpiringSoon(user.id);
-      if (isExpiringSoon && subscription) {
-        const expiryDate = new Date(subscription.current_period_end || '');
-        const formattedDate = expiryDate.toLocaleDateString();
-        
-        toast({
-          title: "Subscription Expiring Soon",
-          description: `Your premium subscription will expire on ${formattedDate}. Renew now to avoid losing premium features.`,
-          variant: "warning",
-          duration: 10000,
-        });
-      }
-    };
+  // Subscription expiry notifications disabled for beta
+  // useEffect(() => {
+  //   const checkExpiringSubscription = async () => {
+  //     if (!user) return;
+  //     // Subscription checks disabled during beta
+  //   };
     
-    checkExpiringSubscription();
-    // Set up a daily check for expiring subscriptions
-    const interval = setInterval(checkExpiringSubscription, 24 * 60 * 60 * 1000);
-    
-    return () => clearInterval(interval);
-  }, [subscription, toast, user]);
+  //   checkExpiringSubscription();
+  // }, [subscription, toast, user]);
 
   // Logg inn
   const signIn = async (email: string, password: string) => {
@@ -133,27 +117,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSession(data.session);
       setUser(data.user);
       
-      // Check if this is a first-time user
-      const isFirstTimeUser = localStorage.getItem('snakkaz_first_time_user') === 'true';
+      // For beta launch - send alle direkte til chat
+      navigate('/beta-chat');
       
-      if (isFirstTimeUser) {
-        // Remove the flag and redirect to profile editing
-        localStorage.removeItem('snakkaz_first_time_user');
-        navigate('/profile?firstTime=true');
-        
-        toast({
-          title: "Velkommen til Snakkaz!",
-          description: "Fullfør profilen din for å komme i gang.",
-        });
-      } else {
-        // Existing user, go to dashboard/main page
-        navigate('/dashboard');
-        
-        toast({
-          title: "Innlogging vellykket",
-          description: "Velkommen tilbake!",
-        });
-      }
+      toast({
+        title: "🚀 Velkommen til SnakkaZ Chat Beta!",
+        description: "Klar for real-time chat!",
+      });
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
       console.error('Innloggingsfeil:', errorMessage);

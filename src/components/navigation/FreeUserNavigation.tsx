@@ -70,28 +70,30 @@ const FreeUserNavigation: React.FC = () => {
         })}
       </nav>
 
-      {/* Premium Upgrade */}
-      <div className="p-4 border-t border-cyberdark-700">
-        <Card className="bg-gradient-to-r from-cyberprimary-900/20 to-cybersecondary-900/20 border-cyberprimary-500/30">
-          <div className="p-3">
-            <div className="flex items-center gap-2 mb-2">
-              <Crown className="h-4 w-4 text-cyberprimary-400" />
-              <span className="text-sm font-medium text-cyberprimary-200">Premium</span>
+      {/* Premium Upgrade - Hidden during beta */}
+      {false && (
+        <div className="p-4 border-t border-cyberdark-700">
+          <Card className="bg-gradient-to-r from-cyberprimary-900/20 to-cybersecondary-900/20 border-cyberprimary-500/30">
+            <div className="p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <Crown className="h-4 w-4 text-cyberprimary-400" />
+                <span className="text-sm font-medium text-cyberprimary-200">Premium</span>
+              </div>
+              <p className="text-xs text-cyberdark-300 mb-3">
+                Få tilgang til krypterte meldinger, avanserte BTC-analyser og mer!
+              </p>
+              <Link to="/subscription">
+                <Button 
+                  size="sm" 
+                  className="w-full bg-cyberprimary-600 hover:bg-cyberprimary-700 text-white"
+                >
+                  Oppgrader
+                </Button>
+              </Link>
             </div>
-            <p className="text-xs text-cyberdark-300 mb-3">
-              Få tilgang til krypterte meldinger, avanserte BTC-analyser og mer!
-            </p>
-            <Link to="/subscription">
-              <Button 
-                size="sm" 
-                className="w-full bg-cyberprimary-600 hover:bg-cyberprimary-700 text-white"
-              >
-                Oppgrader
-              </Button>
-            </Link>
-          </div>
-        </Card>
-      </div>
+          </Card>
+        </div>
+      )}
 
       {/* Logout */}
       <div className="p-4 border-t border-cyberdark-700">

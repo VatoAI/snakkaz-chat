@@ -1,54 +1,48 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { z } from 'zod';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Lock, Mail, User, AlertCircle, Shield, Users, Check } from 'lucide-react';
+import { Shield, Users, ArrowLeft, Gift } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { MathCaptcha } from '@/components/auth/MathCaptcha';
-
-const formSchema = z.object({
-  username: z.string().min(3, {
-    message: 'Brukernavn må være minst 3 tegn.',
-  }).max(20, {
-    message: 'Brukernavn kan ikke være mer enn 20 tegn.',
-  }),
-  email: z.string().email({
-    message: 'Vennligst oppgi en gyldig e-postadresse.',
-  }),
-  password: z.string()
-    .min(8, {
-      message: 'Passord må være minst 8 tegn.',
-    })
-    .regex(/[A-Z]/, {
-      message: 'Passord må inneholde minst én stor bokstav.',
-    })
-    .regex(/[0-9]/, {
-      message: 'Passord må inneholde minst ett tall.',
-    })
-    .regex(/[^a-zA-Z0-9]/, {
-      message: 'Passord må inneholde minst ett spesialtegn.',
-    }),
-  confirmPassword: z.string(),
-  acceptTerms: z.boolean().refine(val => val === true, {
-    message: 'Du må godta vilkårene for å fortsette.',
-  }),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: 'Passordene samsvarer ikke.',
-  path: ['confirmPassword'],
-});
+import { EnhancedRegisterForm } from '@/components/auth/EnhancedRegisterForm';
+import { EnhancedAvatarUpload } from '@/components/profile/EnhancedAvatarUpload';
 
 const Register: React.FC = () => {
-  const { signUp } = useAuth();
-  const { toast } = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [currentStep, setCurrentStep] = useState<'register' | 'avatar'>('register');
+  const [registeredUser, setRegisteredUser] = useState<any>(null);
+  const { toast } = useToast();
+  
+  const inviteCode = searchParams.get('ref');
+  const isInvited = Boolean(inviteCode);
+
+  const handleRegistrationSuccess = (user: any) => {
+    setRegisteredUser(user);
+    setCurrentStep('avatar');
+    toast({
+      title: "🎉 Registrering vellykket!",
+      description: "Nå kan du laste opp et profilbilde.",
+    });
+  };
+
+  const handleAvatarUpload = (avatarUrl: string) => {
+    toast({
+      title: "Profilbilde oppdatert!",
+      description: "Du kan endre dette senere i innstillingene.",
+    });
+  };
+
+  const handleSkipAvatar = () => {
+    navigate('/beta-chat');
+  };
+
+  const handleCompleteSetup = () => {
+    navigate('/beta-chat');
+  };
+  
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -90,13 +84,16 @@ const Register: React.FC = () => {
       setRegistrationSuccess(true);
       
       toast({
-        title: 'Registrering vellykket!',
-        description: 'Sjekk e-posten din for å bekrefte kontoen.',
+        title: '🎉 Velkommen til SnakkaZ Beta!',
+        description: 'Kontoen din er opprettet. Du blir omdirigert til chat...',
       });
       
-      // Redirect to email confirmation page
+      // Store beta signup flag
+      localStorage.setItem('snakkaz_beta_user', 'true');
+      
+      // Redirect to beta chat after brief delay
       setTimeout(() => {
-        navigate('/email-confirmation');
+        navigate('/beta-chat');
       }, 2000);
       
       // Reseteer skjemaet etter vellykket registrering
