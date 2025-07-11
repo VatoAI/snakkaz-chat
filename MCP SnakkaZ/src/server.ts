@@ -97,10 +97,12 @@ class SnakkaZMCPServer {
             return await this.getChatStatus();
           
           case "send_message":
-            return await this.sendMessage(args.recipient, args.message);
+            if (!args) throw new Error("Missing arguments for send_message");
+            return await this.sendMessage(String(args.recipient), String(args.message));
           
           case "get_user_info":
-            return await this.getUserInfo(args.username);
+            if (!args) throw new Error("Missing arguments for get_user_info");
+            return await this.getUserInfo(String(args.username));
 
           default:
             throw new McpError(

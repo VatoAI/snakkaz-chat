@@ -26,6 +26,9 @@ const BasicChatPage = lazy(() => import("@/pages/BasicChatPage"));
 // AI features - separate chunk (lazy load on demand)
 const AIChatPage = lazy(() => import("@/features/chat/components/common/AIChatPage"));
 
+// Mobile test page
+const MobileTestPage = lazy(() => import("@/pages/MobileTestPage"));
+
 // Group functionality - separate chunk
 const CreateGroupPage = lazy(() => import("@/pages/CreateGroupPage"));
 const GroupChatPage = lazy(() => import("@/features/chat/components/group/DynamicGroupChatPage"));
@@ -305,6 +308,9 @@ export default function App() {
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/info" element={<Info />} />
+              
+              {/* Mobile test page - no auth required for testing */}
+              <Route path="/mobile-test" element={<MobileTestPage />} />
               
               {/* Protected routes that need authentication */}
               <Route 
