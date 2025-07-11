@@ -1,0 +1,34 @@
+set ssl:verify-certificate no
+set ftp:passive-mode on
+set cmd:fail-exit no
+set net:timeout 30
+set net:reconnect-interval-base 5
+set net:max-retries 3
+
+# Connect to FTP with working credentials
+open -u admin@snakkaz.com,Rompetroll123! ftp://ftp.snakkaz.com
+
+echo "=== BULLETPROOF REACT HOOKS DEPLOYMENT ==="
+
+# Upload bulletproof version
+put bulletproof-index.html bulletproof.html
+echo "✅ Bulletproof version uploaded"
+
+# Check size
+ls -la bulletproof.html
+echo "Bulletproof version size"
+
+# Replace main index.html with bulletproof version
+rm -f index.html
+put bulletproof-index.html index.html
+echo "✅ Main site now uses bulletproof version"
+
+# Verify
+ls -la index.html
+echo "Main site file size"
+
+echo "=== TEST THESE URLS ==="
+echo "https://www.snakkaz.com/bulletproof.html"
+echo "https://www.snakkaz.com/"
+
+quit

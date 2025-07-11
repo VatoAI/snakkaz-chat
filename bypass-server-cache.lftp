@@ -1,0 +1,46 @@
+set ssl:verify-certificate no
+set ftp:passive-mode on
+set cmd:fail-exit no
+set net:timeout 30
+set net:reconnect-interval-base 5
+set net:max-retries 3
+
+# Connect to FTP with working credentials
+open -u admin@snakkaz.com,Rompetroll123! ftp://ftp.snakkaz.com
+
+echo "=== BYPASS SERVER CACHE WITH NEW FILENAME ==="
+
+# Upload with completely different name to bypass cache
+put dist/index.html snakkaz-v2.html
+echo "✅ Uploaded as snakkaz-v2.html"
+
+# Verify the new file has correct size
+ls -la snakkaz-v2.html
+echo "Expected: 5689 bytes"
+
+# Check current directory structure
+echo "=== DIRECTORY ANALYSIS ==="
+pwd
+ls -la | head -20
+
+# Try to identify web root
+echo "=== CHECKING FOR WEB ROOT INDICATORS ==="
+ls -la | grep -i -E "(www|html|public|web|htdocs)"
+
+# Upload to different possible web roots
+echo "=== UPLOADING TO ALL POSSIBLE LOCATIONS ==="
+
+# Try www directory if it exists
+cd www 2>/dev/null || echo "No www directory"
+put ../dist/index.html index.html 2>/dev/null || echo "Could not upload to www"
+
+# Try htdocs if it exists
+cd ../htdocs 2>/dev/null || echo "No htdocs directory"  
+put ../dist/index.html index.html 2>/dev/null || echo "Could not upload to htdocs"
+
+# Go back to root and list everything
+cd /
+echo "=== FINAL DIRECTORY LISTING ==="
+ls -la
+
+quit

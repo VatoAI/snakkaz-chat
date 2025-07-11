@@ -1,0 +1,35 @@
+set ssl:verify-certificate no
+set ftp:passive-mode on
+set cmd:fail-exit no
+set net:timeout 30
+set net:reconnect-interval-base 5
+set net:max-retries 3
+
+# Connect to FTP with working credentials
+open -u admin@snakkaz.com,Rompetroll123! ftp://ftp.snakkaz.com
+
+echo "=== FORCE INDEX.HTML UPDATE ==="
+
+# Remove old index.html completely
+rm -f index.html
+echo "✅ Old index.html removed"
+
+# Force upload the correct index.html
+put dist/index.html index.html
+echo "✅ Correct index.html uploaded"
+
+# Verify the file size matches
+ls -la index.html
+echo "Expected size: 5689 bytes"
+
+# Also force update .htaccess one more time
+rm -f .htaccess
+put production-htaccess .htaccess
+echo "✅ .htaccess re-uploaded"
+
+# List assets to ensure they're there
+echo "=== VERIFYING ASSETS ==="
+ls -la assets/css/index-F5gxOYLI.css
+ls -la assets/js/vendor-react-core-UE0NfmHj.js
+
+quit

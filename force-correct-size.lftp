@@ -1,0 +1,30 @@
+set ssl:verify-certificate no
+set ftp:passive-mode on
+set cmd:fail-exit no
+set net:timeout 30
+set net:reconnect-interval-base 5
+set net:max-retries 3
+
+# Connect to FTP with working credentials
+open -u admin@snakkaz.com,Rompetroll123! ftp://ftp.snakkaz.com
+
+echo "=== FORCE CORRECT SIZE UPLOAD ==="
+
+# Check current file size
+ls -la index.html
+echo "Current server size (should be 10729 bytes)"
+
+# Force upload with correct size
+rm -f index.html
+put dist/index.html index.html
+
+# Verify correct size
+ls -la index.html
+echo "Expected: 10729 bytes"
+
+# Also upload as a test file to verify
+put dist/index.html hooks-v3-test.html
+ls -la hooks-v3-test.html
+echo "Test file should also be 10729 bytes"
+
+quit

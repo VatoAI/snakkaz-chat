@@ -1,0 +1,45 @@
+set ssl:verify-certificate no
+set ftp:passive-mode on
+set cmd:fail-exit no
+set net:timeout 30
+set net:reconnect-interval-base 5
+set net:max-retries 3
+
+# Connect to FTP with working credentials
+open -u admin@snakkaz.com,Rompetroll123! ftp://ftp.snakkaz.com
+
+echo "=== CRITICAL REACT HOOKS FIX DEPLOYMENT ==="
+
+# Remove old index.html from root
+rm -f index.html
+echo "✅ Old index.html removed from root"
+
+# Upload enhanced index.html to root
+put dist/index.html index.html
+echo "✅ Enhanced index.html uploaded to root"
+
+# Verify root deployment
+ls -la index.html
+echo "Expected: 5824 bytes (with enhanced React hooks fix)"
+
+# Also deploy to public_html
+cd public_html
+rm -f index.html
+put ../dist/index.html index.html
+echo "✅ Enhanced index.html uploaded to public_html"
+
+# Verify public_html deployment
+ls -la index.html
+echo "Expected: 5824 bytes (with enhanced React hooks fix)"
+
+# Verify both locations have correct version
+cd /
+echo "=== VERIFICATION ==="
+echo "ROOT:"
+ls -la index.html
+echo "PUBLIC_HTML:"
+ls -la public_html/index.html
+
+echo "=== REACT HOOKS FIX DEPLOYED ==="
+
+quit

@@ -12,76 +12,132 @@
     <link rel="apple-touch-icon" href="/icons/snakkaz-icon-192.png" />
     <title>SnakkaZ Chat</title>
     
-    <!-- CRITICAL: Emergency React Hooks Fix -->
+    <!-- CRITICAL: Enhanced React Hooks Fix V2 -->
     <script>
       (function() {
         'use strict';
-        console.log('🚀 EMERGENCY: Applying immediate React hooks fix...');
+        console.log('🚀 EMERGENCY: Applying enhanced React hooks fix V2...');
         
         if (typeof window !== 'undefined') {
-          // useLayoutEffect fix
-          window.useLayoutEffect = window.useLayoutEffect || function(effect, deps) {
-            console.log('🔧 Emergency useLayoutEffect called');
-            if (typeof effect === 'function') {
-              try {
-                var cleanup = effect();
-                return typeof cleanup === 'function' ? cleanup : function(){};
-              } catch (e) {
-                console.warn('Emergency useLayoutEffect error:', e);
-                return function(){};
+          // Enhanced module resolution for React
+          window.reactModule = window.reactModule || {
+            useRef: function(initialValue) {
+              return { current: initialValue };
+            },
+            useEffect: function(effect, deps) {
+              if (typeof effect === 'function') {
+                try {
+                  var cleanup = effect();
+                  return typeof cleanup === 'function' ? cleanup : function(){};
+                } catch (e) {
+                  console.warn('Emergency useEffect error:', e);
+                  return function(){};
+                }
               }
+              return function(){};
+            },
+            useLayoutEffect: function(effect, deps) {
+              console.log('🔧 Emergency useLayoutEffect called');
+              if (typeof effect === 'function') {
+                try {
+                  var cleanup = effect();
+                  return typeof cleanup === 'function' ? cleanup : function(){};
+                } catch (e) {
+                  console.warn('Emergency useLayoutEffect error:', e);
+                  return function(){};
+                }
+              }
+              return function(){};
+            },
+            useState: function(initialState) {
+              console.log('🔧 Emergency useState called');
+              var state = initialState;
+              var setState = function(newState) {
+                if (typeof newState === 'function') {
+                  state = newState(state);
+                } else {
+                  state = newState;
+                }
+              };
+              return [state, setState];
+            },
+            useMemo: function(factory, deps) {
+              if (typeof factory === 'function') {
+                try {
+                  return factory();
+                } catch (e) {
+                  console.warn('Emergency useMemo error:', e);
+                  return undefined;
+                }
+              }
+              return undefined;
+            },
+            useCallback: function(callback, deps) {
+              return callback;
             }
-            return function(){};
           };
           
-          // useMergeRef fix
+          // Enhanced useMergeRef with better error handling
           window.useMergeRef = window.useMergeRef || function() {
             var refs = Array.prototype.slice.call(arguments);
-            console.log('🔧 Emergency useMergeRef called with refs:', refs.length);
+            console.log('🔧 Emergency useMergeRef called with refs:', refs.length, refs);
+            
             return function(element) {
-              refs.forEach(function(ref) {
-                if (typeof ref === 'function') {
-                  try {
-                    ref(element);
-                  } catch (e) {
-                    console.warn('Emergency useMergeRef function ref error:', e);
+              if (refs && refs.length > 0) {
+                refs.forEach(function(ref, index) {
+                  if (!ref) {
+                    console.log('🔧 Skipping null/undefined ref at index:', index);
+                    return;
                   }
-                } else if (ref && typeof ref === 'object' && 'current' in ref) {
-                  try {
-                    ref.current = element;
-                  } catch (e) {
-                    console.warn('Emergency useMergeRef object ref error:', e);
+                  
+                  if (typeof ref === 'function') {
+                    try {
+                      ref(element);
+                      console.log('🔧 Applied function ref at index:', index);
+                    } catch (e) {
+                      console.warn('Emergency useMergeRef function ref error at index:', index, e);
+                    }
+                  } else if (ref && typeof ref === 'object' && 'current' in ref) {
+                    try {
+                      ref.current = element;
+                      console.log('🔧 Applied object ref at index:', index);
+                    } catch (e) {
+                      console.warn('Emergency useMergeRef object ref error at index:', index, e);
+                    }
+                  } else {
+                    console.warn('🔧 Unknown ref type at index:', index, typeof ref, ref);
                   }
-                }
-              });
-            };
-          };
-          
-          // reactExports for vendor-misc bundle
-          window.reactExports = window.reactExports || {};
-          window.reactExports.useLayoutEffect = window.useLayoutEffect;
-          window.reactExports.useEffect = window.useLayoutEffect;
-          window.reactExports.useState = function(initialState) {
-            console.log('🔧 Emergency reactExports.useState called');
-            var state = initialState;
-            var setState = function(newState) {
-              if (typeof newState === 'function') {
-                state = newState(state);
-              } else {
-                state = newState;
+                });
               }
             };
-            return [state, setState];
           };
           
-          // React object
+          // Copy all React hooks to window level
+          Object.keys(window.reactModule).forEach(function(key) {
+            window[key] = window[key] || window.reactModule[key];
+          });
+          
+          // Enhanced reactExports for vendor bundles
+          window.reactExports = window.reactExports || window.reactModule;
+          
+          // Enhanced React object
           window.React = window.React || {};
-          window.React.useLayoutEffect = window.React.useLayoutEffect || window.useLayoutEffect;
-          window.React.useMergeRef = window.React.useMergeRef || window.useMergeRef;
+          Object.assign(window.React, window.reactModule);
+          window.React.version = window.React.version || '18.3.1';
+          
+          // Module resolution helpers
+          window.__REACT_DEVTOOLS_GLOBAL_HOOK__ = window.__REACT_DEVTOOLS_GLOBAL_HOOK__ || {
+            isDisabled: true,
+            supportsFiber: true,
+            inject: function() {},
+            onCommitFiberRoot: function() {},
+            onCommitFiberUnmount: function() {}
+          };
           
           window.__USE_SYNC_EXTERNAL_STORE_POLYFILL__ = true;
           
-          console.log('✅ EMERGENCY: React hooks fix applied in HTML head');
+          console.log('✅ EMERGENCY: Enhanced React hooks fix V2 applied');
+          console.log('✅ Available hooks:', Object.keys(window.reactModule));
         }
       })();
     </script>

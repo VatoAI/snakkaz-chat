@@ -23,3 +23,16 @@ export { MigrationHelper } from './MigrationHelper';
 export { PrivateChats } from './PrivateChats';
 export { ScrollStabilizer } from './ScrollStabilizer';
 export { UsersProfiles } from './UsersProfiles';
+
+// New June 2025 release features
+export { CustomInstructionsDialog } from './CustomInstructionsDialog';
+export { ChatModeSelector, useChatMode } from './ChatModeSelector';
+export { TerminalDialog } from './TerminalDialog';
+export { EditChatRequestDialog } from './EditChatRequestDialog';
+export { GitHubIntegrationDialog } from './GitHubIntegrationDialog';
+export { PythonEnvironmentManager } from './PythonEnvironmentManager';
+export { EnhancedChatInterface } from './EnhancedChatInterface';
+
+// Types
+export type { ChatRequest } from './EditChatRequestDialog';
+export type { ChatMode } from './ChatModeSelector';

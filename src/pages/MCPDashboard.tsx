@@ -51,6 +51,36 @@ const MCPDashboard = () => {
     },
     {
       id: '2',
+      name: 'GitHub Integration',
+      url: 'mcp://localhost:3002',
+      status: 'online',
+      description: 'GitHub repository management and PR tools',
+      version: '1.2.0',
+      tools: ['github_pr_list', 'github_pr_review', 'github_issues', 'github_workflows'],
+      lastChecked: new Date()
+    },
+    {
+      id: '3',
+      name: 'Terminal Commands',
+      url: 'mcp://localhost:3003',
+      status: 'online',
+      description: 'Safe terminal command execution',
+      version: '1.1.0',
+      tools: ['execute_command', 'list_files', 'check_status'],
+      lastChecked: new Date()
+    },
+    {
+      id: '4',
+      name: 'Python Environment',
+      url: 'mcp://localhost:3004',
+      status: 'offline',
+      description: 'Python development tools and Poetry support',
+      version: '0.9.0',
+      tools: ['poetry_install', 'venv_create', 'pip_list'],
+      lastChecked: new Date()
+    },
+    {
+      id: '2',
       name: 'Developer Tools',
       url: 'mcp://dev.snakkaz.chat:3002',
       status: 'offline',
