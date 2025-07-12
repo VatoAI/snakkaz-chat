@@ -1,0 +1,65 @@
+# Snakkaz Chat .htaccess - Fix for 404 errors
+# For SPA-applikasjoner og React Router
+
+# Enable rewriting
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+    
+    # If the requested resource exists as a file or directory, skip rewriting
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-l
+    
+    # Otherwise, rewrite all requests to the index.html file
+    RewriteRule ^ index.html [QSA,L]
+</IfModule>
+
+# Set proper MIME types
+<IfModule mod_mime.c>
+    # JavaScript
+    AddType application/javascript .js
+    AddType application/x-javascript .js
+    AddType text/javascript .js
+    AddType application/json .json
+    
+    # CSS
+    AddType text/css .css
+    
+    # Images
+    AddType image/svg+xml .svg
+    AddType image/svg+xml .svgz
+    AddType image/png .png
+    AddType image/jpeg .jpg .jpeg
+    AddType image/gif .gif
+    AddType image/webp .webp
+    
+    # Fonts
+    AddType font/ttf .ttf
+    AddType font/otf .otf
+    AddType font/woff .woff
+    AddType font/woff2 .woff2
+    
+    # Web App Manifest
+    AddType application/manifest+json .webmanifest
+    AddType application/manifest+json .manifest
+</IfModule>
+
+# Force files to be loaded as their correct MIME type regardless of server config
+<FilesMatch "\.js$">
+    ForceType application/javascript
+</FilesMatch>
+
+<FilesMatch "\.css$">
+    ForceType text/css
+</FilesMatch>
+
+# Handle 404 errors
+ErrorDocument 404 /index.html
+
+# Enable CORS for asset files
+<IfModule mod_headers.c>
+    <FilesMatch "\.(js|css|ttf|otf|woff|woff2|svg)$">
+        Header set Access-Control-Allow-Origin "*"
+    </FilesMatch>
+</IfModule>

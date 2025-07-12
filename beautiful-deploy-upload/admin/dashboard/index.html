@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snakkaz MCP Dashboard</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React and ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Chart.js for metrics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <style>
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+                'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+                sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
+            min-height: 100vh;
+            color: white;
+        }
+
+        .dashboard {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: rgba(26, 26, 26, 0.95);
+            border-right: 1px solid #ffd700;
+            padding: 1rem;
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #333;
+        }
+
+        .logo h1 {
+            color: #ffd700;
+            font-size: 1.5rem;
+            margin: 0;
+        }
+
+        .nav-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .nav-item {
+            margin-bottom: 0.5rem;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem;
+            color: #ccc;
+            text-decoration: none;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background: rgba(255, 215, 0, 0.1);
+            color: #ffd700;
+        }
+
+        .nav-icon {
+            margin-right: 0.5rem;
+            font-size: 1.2rem;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #333;
+        }
+
+        .header h2 {
+            color: #ffd700;
+            margin: 0;
+            font-size: 2rem;
+        }
+
+        .logout-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: #dc2626;
+        }
+
+        .grid {
+            display: grid;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .grid-2 {
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        }
+
+        .grid-3 {
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        }
+
+        .card {
+            background: rgba(26, 26, 26, 0.8);
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: #ffd700;
+            transform: translateY(-2px);
+        }
+
+        .card-title {
+            color: #ffd700;
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .card-icon {
+            margin-right: 0.5rem;
+            font-size: 1.5rem;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #ffd700;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-label {
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+
+        .status-online {
+            background: #10b981;
+        }
+
+        .status-warning {
+            background: #f59e0b;
+        }
+
+        .status-offline {
+            background: #ef4444;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .table th, .table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #333;
+        }
+
+        .table th {
+            color: #ffd700;
+            font-weight: bold;
+        }
+
+        .table td {
+            color: #ccc;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #ffd700;
+            color: #000;
+        }
+
+        .btn-primary:hover {
+            background: #ffed4e;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .realtime-updates {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid #10b981;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .update-item {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .update-item:last-child {
+            border-bottom: none;
+        }
+
+        .update-time {
+            color: #10b981;
+            font-size: 0.8rem;
+            margin-right: 1rem;
+            min-width: 60px;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .alert-warning {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid #f59e0b;
+            color: #fbbf24;
+        }
+
+        .alert-error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid #ef4444;
+            color: #fca5a5;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="dashboard-root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const { createRoot } = ReactDOM;
+
+        // Mock data and services
+        const mockData = {
+            systemStatus: {
+                mcp: 'online',
+                database: 'online',
+                websocket: 'online',
+                email: 'warning',
+                api: 'online'
+            },
+            metrics: {
+                activeUsers: 1247,
+                totalMessages: 89634,
+                emailsSent: 2341,
+                systemUptime: '99.8%',
+                avgResponseTime: '124ms'
+            },
+            recentActivity: [
+                { time: '12:34', message: 'New user registered: user@example.com' },
+                { time: '12:32', message: 'Email campaign sent to 500 users' },
+                { time: '12:30', message: 'System backup completed successfully' },
+                { time: '12:28', message: 'High CPU usage detected on server-02' },
+                { time: '12:25', message: 'WebSocket connection pool refreshed' }
+            ],
+            users: [
+                { id: 1, username: 'john_doe', email: 'john@example.com', status: 'online', lastSeen: '2 min ago' },
+                { id: 2, username: 'jane_smith', email: 'jane@example.com', status: 'offline', lastSeen: '1 hour ago' },
+                { id: 3, username: 'mike_wilson', email: 'mike@example.com', status: 'online', lastSeen: 'Just now' }
+            ]
+        };
+
+        const MCPDashboard = () => {
+            const [activeTab, setActiveTab] = useState('overview');
+            const [data, setData] = useState(mockData);
+            const [realTimeUpdates, setRealTimeUpdates] = useState(true);
+
+            // Simulate real-time updates
+            useEffect(() => {
+                if (!realTimeUpdates) return;
+
+                const interval = setInterval(() => {
+                    setData(prevData => ({
+                        ...prevData,
+                        metrics: {
+                            ...prevData.metrics,
+                            activeUsers: prevData.metrics.activeUsers + Math.floor(Math.random() * 10 - 5),
+                            totalMessages: prevData.metrics.totalMessages + Math.floor(Math.random() * 50),
+                            avgResponseTime: Math.floor(Math.random() * 100 + 100) + 'ms'
+                        }
+                    }));
+                }, 5000);
+
+                return () => clearInterval(interval);
+            }, [realTimeUpdates]);
+
+            const handleLogout = () => {
+                if (confirm('Are you sure you want to logout?')) {
+                    window.location.href = '/admin.html';
+                }
+            };
+
+            const renderOverview = () => (
+                <div>
+                    <div className="grid grid-3">
+                        <div className="card">
+                            <div className="card-title">
+                                <span className="card-icon">👥</span>
+                                Active Users
+                            </div>
+                            <div className="metric-value">{data.metrics.activeUsers.toLocaleString()}</div>
+                            <div className="metric-label">Currently online</div>
+                        </div>
+                        <div className="card">
+                            <div className="card-title">
+                                <span className="card-icon">💬</span>
+                                Total Messages
+                            </div>
+                            <div className="metric-value">{data.metrics.totalMessages.toLocaleString()}</div>
+                            <div className="metric-label">All time</div>
+                        </div>
+                        <div className="card">
+                            <div className="card-title">
+                                <span className="card-icon">📧</span>
+                                Emails Sent
+                            </div>
+                            <div className="metric-value">{data.metrics.emailsSent.toLocaleString()}</div>
+                            <div className="metric-label">This month</div>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-2">
+                        <div className="card">
+                            <div className="card-title">
+                                <span className="card-icon">🔧</span>
+                                System Status
+                            </div>
+                            <div>
+                                {Object.entries(data.systemStatus).map(([service, status]) => (
+                                    <div key={service} style={{display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem'}}>
+                                        <span style={{textTransform: 'capitalize'}}>{service}</span>
+                                        <span style={{display: 'flex', alignItems: 'center'}}>
+                                            <span className={`status-indicator status-${status}`}></span>
+                                            {status}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="card">
+                            <div className="card-title">
+                                <span className="card-icon">📊</span>
+                                Performance Metrics
+                            </div>
+                            <div>
+                                <div style={{marginBottom: '1rem'}}>
+                                    <div style={{display: 'flex', justifyContent: 'space-between'}}>
+                                        <span>System Uptime</span>
+                                        <span style={{color: '#10b981', fontWeight: 'bold'}}>{data.metrics.systemUptime}</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div style={{display: 'flex', justifyContent: 'space-between'}}>
+                                        <span>Avg Response Time</span>
+                                        <span style={{color: '#ffd700', fontWeight: 'bold'}}>{data.metrics.avgResponseTime}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="card">
+                        <div className="card-title">
+                            <span className="card-icon">🔄</span>
+                            Real-time Activity
+                        </div>
+                        <div className="realtime-updates">
+                            {data.recentActivity.map((activity, index) => (
+                                <div key={index} className="update-item">
+                                    <span className="update-time">{activity.time}</span>
+                                    <span>{activity.message}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+
+            const renderUsers = () => (
+                <div>
+                    <div className="card">
+                        <div className="card-title">
+                            <span className="card-icon">👥</span>
+                            User Management
+                        </div>
+                        <table className="table">
+                            <thead>
+                                <tr>
+                                    <th>Username</th>
+                                    <th>Email</th>
+                                    <th>Status</th>
+                                    <th>Last Seen</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {data.users.map(user => (
+                                    <tr key={user.id}>
+                                        <td>{user.username}</td>
+                                        <td>{user.email}</td>
+                                        <td>
+                                            <span className={`status-indicator status-${user.status}`}></span>
+                                            {user.status}
+                                        </td>
+                                        <td>{user.lastSeen}</td>
+                                        <td>
+                                            <button className="btn btn-primary" style={{marginRight: '0.5rem'}}>
+                                                Edit
+                                            </button>
+                                            <button className="btn btn-danger">
+                                                Ban
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            );
+
+            const renderSettings = () => (
+                <div>
+                    <div className="card">
+                        <div className="card-title">
+                            <span className="card-icon">⚙️</span>
+                            System Settings
+                        </div>
+                        <div>
+                            <div style={{marginBottom: '1rem'}}>
+                                <label style={{display: 'flex', alignItems: 'center', cursor: 'pointer'}}>
+                                    <input 
+                                        type="checkbox" 
+                                        checked={realTimeUpdates}
+                                        onChange={(e) => setRealTimeUpdates(e.target.checked)}
+                                        style={{marginRight: '0.5rem'}}
+                                    />
+                                    Enable Real-time Updates
+                                </label>
+                            </div>
+                            <div style={{marginBottom: '1rem'}}>
+                                <button className="btn btn-primary">Save Settings</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="alert alert-warning">
+                        <strong>Notice:</strong> This is a demo dashboard. In production, these settings would connect to real backend services.
+                    </div>
+                </div>
+            );
+
+            const renderContent = () => {
+                switch(activeTab) {
+                    case 'overview': return renderOverview();
+                    case 'users': return renderUsers();
+                    case 'settings': return renderSettings();
+                    default: return renderOverview();
+                }
+            };
+
+            return (
+                <div className="dashboard">
+                    <div className="sidebar">
+                        <div className="logo">
+                            <h1>Snakkaz MCP</h1>
+                        </div>
+                        
+                        <ul className="nav-menu">
+                            <li className="nav-item">
+                                <a 
+                                    className={`nav-link ${activeTab === 'overview' ? 'active' : ''}`}
+                                    onClick={() => setActiveTab('overview')}
+                                >
+                                    <span className="nav-icon">📊</span>
+                                    Overview
+                                </a>
+                            </li>
+                            <li className="nav-item">
+                                <a 
+                                    className={`nav-link ${activeTab === 'users' ? 'active' : ''}`}
+                                    onClick={() => setActiveTab('users')}
+                                >
+                                    <span className="nav-icon">👥</span>
+                                    Users
+                                </a>
+                            </li>
+                            <li className="nav-item">
+                                <a 
+                                    className={`nav-link ${activeTab === 'chats' ? 'active' : ''}`}
+                                    onClick={() => setActiveTab('chats')}
+                                >
+                                    <span className="nav-icon">💬</span>
+                                    Chats
+                                </a>
+                            </li>
+                            <li className="nav-item">
+                                <a 
+                                    className={`nav-link ${activeTab === 'email' ? 'active' : ''}`}
+                                    onClick={() => setActiveTab('email')}
+                                >
+                                    <span className="nav-icon">📧</span>
+                                    Email
+                                </a>
+                            </li>
+                            <li className="nav-item">
+                                <a 
+                                    className={`nav-link ${activeTab === 'analytics' ? 'active' : ''}`}
+                                    onClick={() => setActiveTab('analytics')}
+                                >
+                                    <span className="nav-icon">📈</span>
+                                    Analytics
+                                </a>
+                            </li>
+                            <li className="nav-item">
+                                <a 
+                                    className={`nav-link ${activeTab === 'settings' ? 'active' : ''}`}
+                                    onClick={() => setActiveTab('settings')}
+                                >
+                                    <span className="nav-icon">⚙️</span>
+                                    Settings
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div className="main-content">
+                        <div className="header">
+                            <h2>{activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}</h2>
+                            <button className="logout-btn" onClick={handleLogout}>
+                                Logout
+                            </button>
+                        </div>
+
+                        {renderContent()}
+                    </div>
+                </div>
+            );
+        };
+
+        // Render the dashboard
+        const root = createRoot(document.getElementById('dashboard-root'));
+        root.render(<MCPDashboard />);
+    </script>
+</body>
+</html>

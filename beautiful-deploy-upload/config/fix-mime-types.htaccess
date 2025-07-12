@@ -1,0 +1,47 @@
+# fix-mime-types.htaccess
+# This file should be uploaded to the server as .htaccess
+# It fixes MIME type issues for JavaScript and CSS files
+
+# Enable mod_mime and set correct MIME types
+<IfModule mod_mime.c>
+    # JavaScript
+    AddType application/javascript .js
+    AddType application/x-javascript .js
+    AddType text/javascript .js
+    AddType application/json .json
+    
+    # CSS
+    AddType text/css .css
+    
+    # Images
+    AddType image/svg+xml .svg
+    AddType image/svg+xml .svgz
+    AddType image/png .png
+    AddType image/jpeg .jpg .jpeg
+    AddType image/gif .gif
+    AddType image/webp .webp
+    
+    # Fonts
+    AddType font/ttf .ttf
+    AddType font/otf .otf
+    AddType font/woff .woff
+    AddType font/woff2 .woff2
+    
+    # Web App Manifest
+    AddType application/manifest+json .webmanifest
+    AddType application/manifest+json .manifest
+</IfModule>
+
+# Force files to be loaded as their correct MIME type regardless of server config
+<FilesMatch "\.js$">
+    ForceType application/javascript
+</FilesMatch>
+
+<FilesMatch "\.css$">
+    ForceType text/css
+</FilesMatch>
+
+# Enable CORS for asset files
+<IfModule mod_headers.c>
+    Header set Access-Control-Allow-Origin "*"
+</IfModule>

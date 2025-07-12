@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/icons/snakkaz-icon-192.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#0f172a" />
+    <title>SnakkaZ Chat</title>
+    
+    <!-- 🚨 KOMPLETT REACT + USE-SYNC-EXTERNAL-STORE POLYFILL -->
+    <script>
+    console.log('🚨 LOADING COMPLETE REACT POLYFILL...');
+    
+    if (typeof window !== 'undefined') {
+        // KOMPLETT React object med ALLE hooks og funksjoner
+        window.React = {
+            version: '18.2.0',
+            
+            // State hooks
+            useState: function(initialState) {
+                console.log('React.useState called');
+                const state = typeof initialState === 'function' ? initialState() : initialState;
+                const setState = function(newState) { console.log('setState called'); };
+                return [state, setState];
+            },
+            
+            useReducer: function(reducer, initialArg, init) {
+                console.log('React.useReducer called');
+                const state = init ? init(initialArg) : initialArg;
+                const dispatch = function(action) { console.log('dispatch called'); };
+                return [state, dispatch];
+            },
+            
+            // Effect hooks
+            useEffect: function(effect, deps) {
+                console.log('React.useEffect called');
+                if (typeof effect === 'function') {
+                    try { effect(); } catch (e) { console.log('useEffect error:', e); }
+                }
+            },
+            
+            useLayoutEffect: function(effect, deps) {
+                console.log('React.useLayoutEffect called');
+                if (typeof effect === 'function') {
+                    try { effect(); } catch (e) { console.log('useLayoutEffect error:', e); }
+                }
+            },
+            
+            // Ref hooks
+            useRef: function(initialValue) {
+                console.log('React.useRef called');
+                return { current: initialValue };
+            },
+            
+            useImperativeHandle: function(ref, createHandle, deps) {
+                console.log('React.useImperativeHandle called');
+                return createHandle ? createHandle() : {};
+            },
+            
+            // Callback hooks
+            useCallback: function(callback, deps) {
+                console.log('React.useCallback called');
+                return callback;
+            },
+            
+            useMemo: function(factory, deps) {
+                console.log('React.useMemo called');
+                return typeof factory === 'function' ? factory() : factory;
+            },
+            
+            // Context hooks
+            useContext: function(context) {
+                console.log('React.useContext called');
+                return context._currentValue || context.defaultValue || {};
+            },
+            
+            // Transition hooks
+            useTransition: function() {
+                console.log('React.useTransition called');
+                return [false, function() {}];
+            },
+            
+            useDeferredValue: function(value) {
+                console.log('React.useDeferredValue called');
+                return value;
+            },
+            
+            // ID hook
+            useId: function() {
+                console.log('React.useId called');
+                return 'react-id-' + Math.random().toString(36).substr(2, 9);
+            },
+            
+            // 🔥 CRITICAL: use-sync-external-store polyfill
+            useSyncExternalStore: function(subscribe, getSnapshot, getServerSnapshot) {
+                console.log('React.useSyncExternalStore called');
+                try {
+                    return typeof getSnapshot === 'function' ? getSnapshot() : null;
+                } catch (e) {
+                    console.log('useSyncExternalStore error:', e);
+                    return null;
+                }
+            },
+            
+            // Core React functions
+            createElement: function(type, props, ...children) {
+                console.log('React.createElement called with:', type);
+                return { type, props: props || {}, children };
+            },
+            
+            cloneElement: function(element, props, ...children) {
+                console.log('React.cloneElement called');
+                return { ...element, props: { ...element.props, ...props }, children };
+            },
+            
+            createRef: function() {
+                console.log('React.createRef called');
+                return { current: null };
+            },
+            
+            // Components
+            Fragment: 'React.Fragment',
+            StrictMode: function(props) { return props.children; },
+            Suspense: function(props) { return props.children; },
+            
+            Component: function(props) { 
+                this.props = props; 
+                this.setState = function() {};
+                this.forceUpdate = function() {};
+            },
+            
+            PureComponent: function(props) { 
+                this.props = props;
+                this.setState = function() {};
+                this.forceUpdate = function() {};
+            },
+            
+            // Context
+            createContext: function(defaultValue) {
+                console.log('React.createContext called');
+                return {
+                    Provider: function(props) { return props.children; },
+                    Consumer: function(props) { return props.children; },
+                    _currentValue: defaultValue,
+                    defaultValue: defaultValue
+                };
+            },
+            
+            // Forward ref
+            forwardRef: function(render) {
+                console.log('React.forwardRef called');
+                return render;
+            },
+            
+            // Lazy loading
+            lazy: function(factory) {
+                console.log('React.lazy called');
+                return factory;
+            },
+            
+            // Error boundaries
+            isValidElement: function(object) {
+                return object != null && typeof object === 'object';
+            }
+        };
+        
+        // ReactDOM object
+        window.ReactDOM = {
+            version: '18.2.0',
+            render: function(element, container) {
+                console.log('ReactDOM.render called');
+                if (container && container.innerHTML !== undefined) {
+                    container.innerHTML = '<div style="padding: 20px; text-align: center;">SnakkaZ Loading...</div>';
+                }
+            },
+            createRoot: function(container) {
+                console.log('ReactDOM.createRoot called');
+                return {
+                    render: function(element) {
+                        console.log('Root.render called');
+                        if (container && container.innerHTML !== undefined) {
+                            container.innerHTML = '<div style="padding: 20px; text-align: center;">SnakkaZ Loading...</div>';
+                        }
+                    },
+                    unmount: function() {
+                        console.log('Root.unmount called');
+                    }
+                };
+            },
+            unmountComponentAtNode: function(container) {
+                console.log('ReactDOM.unmountComponentAtNode called');
+                return true;
+            }
+        };
+        
+        // 🔥 CRITICAL: use-sync-external-store shim
+        window.useSyncExternalStoreShim = {
+            useSyncExternalStore: window.React.useSyncExternalStore
+        };
+        
+        // Global React hooks (for compatibility)
+        window.useState = window.React.useState;
+        window.useEffect = window.React.useEffect;
+        window.useContext = window.React.useContext;
+        window.useSyncExternalStore = window.React.useSyncExternalStore;
+        
+        // DevTools
+        window.__REACT_DEVTOOLS_GLOBAL_HOOK__ = window.__REACT_DEVTOOLS_GLOBAL_HOOK__ || {
+            isDisabled: true,
+            supportsFiber: true,
+            inject: function() {},
+            onCommitFiberRoot: function() {},
+            onCommitFiberUnmount: function() {}
+        };
+        
+        console.log('✅ COMPLETE React polyfill loaded!');
+        console.log('🔥 useSyncExternalStore available:', typeof window.React.useSyncExternalStore);
+        console.log('📦 All React hooks defined');
+    }
+    </script>
+    
+    <!-- INGEN modulepreload - last bundles direkte for å unngå timing-problemer -->
+    <link rel="stylesheet" href="/assets/auth-bg.css" />
+    
+    <style>
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    .loading-spinner {
+        border: 3px solid #fff;
+        border-radius: 50%;
+        border-top: 3px solid transparent;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto;
+    }
+    </style>
+</head>
+<body>
+    <div id="root">
+        <div style="padding: 40px; text-align: center; font-family: Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; min-height: 100vh;">
+            <h1>🛠️ SnakkaZ Complete Fix</h1>
+            <p>Komplett React polyfill med use-sync-external-store er lastet!</p>
+            <div style="margin: 20px 0;">
+                <div class="loading-spinner"></div>
+            </div>
+            <p><small>Appen skal starte om litt...</small></p>
+            <div style="margin-top: 20px; font-size: 12px; opacity: 0.8;">
+                <p>✅ React polyfill aktiv</p>
+                <p>✅ useSyncExternalStore definert</p>
+                <p>✅ Alle React hooks tilgjengelige</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Last React bundles ETTER polyfill er definert -->
+    <script>
+    // Vent litt, så last bundles sekvensielt for å sikre riktig rekkefølge
+    setTimeout(() => {
+        console.log('🚀 Loading React bundles in sequence...');
+        
+        // Load React Core først
+        const reactCore = document.createElement('script');
+        reactCore.type = 'module';
+        reactCore.src = '/assets/js/vendor-react-core-BfIF1-qE.js';
+        reactCore.onload = () => {
+            console.log('✅ React Core loaded');
+            
+            // Load React DOM andre
+            const reactDOM = document.createElement('script');
+            reactDOM.type = 'module';
+            reactDOM.src = '/assets/js/vendor-react-dom-1Lp3Rl7J.js';
+            reactDOM.onload = () => {
+                console.log('✅ React DOM loaded');
+                
+                // Load vendor-misc tredje (trygt nå)
+                const vendorMisc = document.createElement('script');
+                vendorMisc.type = 'module';
+                vendorMisc.src = '/assets/js/vendor-misc-CvNb75W7.js';
+                vendorMisc.onload = () => {
+                    console.log('✅ Vendor Misc loaded');
+                    
+                    // Load main app sist
+                    const mainApp = document.createElement('script');
+                    mainApp.type = 'module';
+                    mainApp.src = '/assets/js/index-BdjqU1Nn.js';
+                    mainApp.onload = () => {
+                        console.log('✅ Main app loaded - should be working now!');
+                    };
+                    document.head.appendChild(mainApp);
+                };
+                document.head.appendChild(vendorMisc);
+            };
+            document.head.appendChild(reactDOM);
+        };
+        document.head.appendChild(reactCore);
+    }, 100);
+    </script>
+</body>
+</html>

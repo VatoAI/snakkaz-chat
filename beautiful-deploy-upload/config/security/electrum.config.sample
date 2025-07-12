@@ -1,0 +1,45 @@
+# Electrum Bitcoin Payment Configuration - Snakkaz Chat
+
+This file contains configuration settings for the Electrum Bitcoin payment integration.
+Copy this file to `.env` or `.env.local` and adjust values as needed.
+
+## Electrum Basic Configuration
+
+# Enable or disable Electrum payment processing
+ENABLE_ELECTRUM_PAYMENTS=true
+
+# Electrum server details - Change to match your setup
+ELECTRUM_HOST=localhost
+ELECTRUM_PORT=50001
+ELECTRUM_PROTOCOL=tls
+
+# Path to Electrum wallet file and password
+# For production, ensure these are properly secured and backed up
+ELECTRUM_WALLET_PATH=/path/to/your/wallet/file
+ELECTRUM_WALLET_PASSWORD=your-secure-password
+
+## Payment Processing Configuration
+
+# Minimum confirmations required to consider a payment as confirmed
+# Recommended: 3 (for standard security) or 6 (for high value transactions)
+ELECTRUM_MIN_CONFIRMATIONS=3
+
+# Interval in milliseconds for checking payments (1 minute = 60000)
+ELECTRUM_CHECK_INTERVAL=60000
+
+# Interval for reconnection attempts if connection to Electrum is lost
+ELECTRUM_RECONNECT_INTERVAL=30000
+
+## Caching and Storage
+
+# Where to store transaction cache data
+ELECTRUM_TX_CACHE_PATH=data/tx-cache.json
+
+## Testing Configuration
+
+# Set to true to enable test mode (simulated payments)
+ELECTRUM_TEST_MODE=false
+
+# Testnet server details (only used if TEST_MODE is true)
+ELECTRUM_TESTNET_HOST=testnet.electrumx-server.com
+ELECTRUM_TESTNET_PORT=51001

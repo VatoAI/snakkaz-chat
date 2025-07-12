@@ -1,0 +1,28 @@
+# Start med å åpne tilkoblingen
+open -u SnakkaZ@snakkaz.com,Snakkaz2025! premium123.web-hosting.com
+
+# Debug-modus for å se alle kommandoer
+debug 3
+
+# SSL/TLS-innstillinger
+set ssl:verify-certificate no
+set ftp:ssl-allow yes
+set ftp:ssl-protect-data yes
+set ftp:ssl-force no
+set ftp:passive-mode yes
+
+# Nettverkstilkoblingsinnstillinger
+set net:timeout 30
+set net:max-retries 5
+
+# Liste root-katalog struktur
+ls -la
+find public_html -maxdepth 1 -type f > serverfiles.txt
+ls -la public_html > public_html_ls.txt
+
+# Sjekk om critical files finnes
+cat public_html/index.html > index_content.txt
+cat public_html/.htaccess > htaccess_content.txt 2>/dev/null
+
+# Avslutt
+bye

@@ -1,0 +1,12 @@
+open -u SnakkaZ@snakkaz.com,Eplekake123! ftp://snakkaz.com
+cd public_html
+
+# Upload the corrected index.html
+lcd /workspaces/snakkaz-chat/dist
+put -c index.html
+
+# Upload .htaccess for proper MIME types  
+lcd /workspaces/snakkaz-chat
+put -c .htaccess
+
+quit

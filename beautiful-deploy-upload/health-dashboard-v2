@@ -1,0 +1,169 @@
+#!/bin/bash
+
+# 🎯 SNAKKAZ PROJECT HEALTH DASHBOARD v2.1
+# Comprehensive system monitoring and status reporting
+
+clear
+echo "🚀 SNAKKAZ PROJECT HEALTH DASHBOARD"
+echo "===================================="
+echo ""
+echo "🕐 Generated: $(date)"
+echo "🏠 Directory: $(pwd)"
+echo ""
+
+# Color codes for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# 1. LIVE SITE STATUS
+echo -e "${BLUE}🌐 LIVE SITE STATUS${NC}"
+echo "==================="
+
+# Check site with timeout
+HTTP_STATUS=$(timeout 10s curl -s -o /dev/null -w "%{http_code}" https://www.snakkaz.com 2>/dev/null || echo "TIMEOUT")
+
+if [ "$HTTP_STATUS" = "200" ]; then
+    echo -e "✅ ${GREEN}www.snakkaz.com - ONLINE (HTTP 200)${NC}"
+    
+    # Get response time
+    RESPONSE_TIME=$(timeout 10s curl -w "%{time_total}" -s -o /dev/null https://www.snakkaz.com 2>/dev/null || echo "N/A")
+    echo "⚡ Response time: ${RESPONSE_TIME}s"
+    
+    # Check bundle (with timeout)
+    BUNDLE_CHECK=$(timeout 15s curl -s https://www.snakkaz.com 2>/dev/null | grep -o 'index-[^.]*\.js' | head -1 || echo "")
+    if [ -n "$BUNDLE_CHECK" ]; then
+        echo "📦 Current bundle: $BUNDLE_CHECK"
+    fi
+    
+    # Check Norwegian content
+    if timeout 10s curl -s https://www.snakkaz.com 2>/dev/null | grep -q "SnakkaZ"; then
+        echo "🇳🇴 Norwegian branding: Present"
+    fi
+else
+    echo -e "❌ ${RED}www.snakkaz.com - OFFLINE or ERROR (HTTP $HTTP_STATUS)${NC}"
+    echo "🔧 Action: Run emergency deployment"
+fi
+echo ""
+
+# 2. GIT STATUS
+echo -e "${BLUE}📝 GIT REPOSITORY STATUS${NC}"
+echo "========================"
+
+CURRENT_BRANCH=$(git branch --show-current 2>/dev/null || echo "unknown")
+echo "🌿 Current branch: $CURRENT_BRANCH"
+
+# Check for changes
+CHANGES=$(git status --porcelain 2>/dev/null | wc -l)
+if [ "$CHANGES" -gt 0 ]; then
+    echo -e "⚠️ ${YELLOW}Uncommitted changes: $CHANGES files${NC}"
+    echo "🔧 Action: Run './snakkaz sync'"
+else
+    echo -e "✅ ${GREEN}Working directory clean${NC}"
+fi
+
+# Last commit
+LAST_COMMIT=$(git log -1 --format="%h - %s (%cr)" 2>/dev/null | head -c 80 || echo "No commits")
+echo "📝 Last: $LAST_COMMIT"
+echo ""
+
+# 3. BUILD STATUS
+echo -e "${BLUE}🏗️  BUILD STATUS${NC}"
+echo "================"
+
+if [ -d "dist" ]; then
+    JS_COUNT=$(find dist -name "*.js" 2>/dev/null | wc -l)
+    echo -e "✅ ${GREEN}Build directory exists${NC}"
+    echo "📊 JavaScript bundles: $JS_COUNT"
+    
+    if [ "$JS_COUNT" -gt 50 ]; then
+        echo -e "⚠️ ${YELLOW}High bundle count (Goal: ~20)${NC}"
+    fi
+    
+    BUILD_SIZE=$(du -sh dist 2>/dev/null | cut -f1 || echo "Unknown")
+    echo "💾 Build size: $BUILD_SIZE"
+else
+    echo -e "❌ ${RED}No build directory${NC}"
+    echo "🔧 Action: npm run build"
+fi
+echo ""
+
+# 4. DEPENDENCIES
+echo -e "${BLUE}📦 DEPENDENCIES${NC}"
+echo "==============="
+
+if [ -f "package.json" ]; then
+    echo -e "✅ ${GREEN}package.json present${NC}"
+    
+    if [ -d "node_modules" ]; then
+        echo -e "✅ ${GREEN}node_modules installed${NC}"
+        
+        # Quick audit check
+        AUDIT_COUNT=$(npm audit --json 2>/dev/null | grep -o '"vulnerabilities":[0-9]*' | cut -d':' -f2 2>/dev/null || echo "0")
+        if [ "$AUDIT_COUNT" -gt 0 ]; then
+            echo -e "⚠️ ${YELLOW}Security issues: $AUDIT_COUNT${NC}"
+            echo "🔧 Action: Review npm audit"
+        else
+            echo -e "✅ ${GREEN}No vulnerabilities${NC}"
+        fi
+    else
+        echo -e "❌ ${RED}node_modules missing${NC}"
+        echo "🔧 Action: npm install"
+    fi
+else
+    echo -e "❌ ${RED}package.json missing${NC}"
+fi
+echo ""
+
+# 5. QUICK ACTIONS
+echo -e "${BLUE}⚡ QUICK ACTIONS${NC}"
+echo "================"
+echo "🔄 Sync changes:      ./snakkaz sync"
+echo "🚀 Start dev server:  ./snakkaz dev"
+echo "🏗️  Build project:     ./snakkaz build"
+echo "📊 Full status:       ./snakkaz status"
+echo "🆘 Emergency deploy:  ./snakkaz emergency"
+echo ""
+
+# 6. HEALTH SCORE
+echo -e "${BLUE}📋 HEALTH SUMMARY${NC}"
+echo "=================="
+
+SCORE=0
+MAX_SCORE=8
+
+# Site online (+3)
+[ "$HTTP_STATUS" = "200" ] && SCORE=$((SCORE + 3))
+
+# Git clean (+1)
+[ "$CHANGES" -eq 0 ] && SCORE=$((SCORE + 1))
+
+# Build exists (+2)
+[ -d "dist" ] && SCORE=$((SCORE + 2))
+
+# Dependencies OK (+1)
+[ -d "node_modules" ] && SCORE=$((SCORE + 1))
+
+# Systematic operations (+1)
+[ -f "snakkaz" ] && [ -x "snakkaz" ] && SCORE=$((SCORE + 1))
+
+echo "🎯 Overall Health: $SCORE/$MAX_SCORE"
+
+if [ "$SCORE" -ge 7 ]; then
+    echo -e "✅ ${GREEN}EXCELLENT - Project is healthy${NC}"
+elif [ "$SCORE" -ge 5 ]; then
+    echo -e "⚠️ ${YELLOW}GOOD - Minor issues to address${NC}"
+else
+    echo -e "❌ ${RED}NEEDS ATTENTION - Several issues${NC}"
+fi
+echo ""
+
+# 7. RESOURCES
+echo "🔗 Resources:"
+echo "   • Live Site: https://www.snakkaz.com"
+echo "   • Repository: https://github.com/VatoAI/snakkaz-chat"
+echo "   • Actions: https://github.com/VatoAI/snakkaz-chat/actions"
+echo ""
+echo "Generated by SnakkaZ Health Dashboard v2.1 | $(date '+%H:%M:%S')"

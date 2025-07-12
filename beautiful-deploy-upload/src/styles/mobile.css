@@ -1,0 +1,342 @@
+/* Mobile-first CSS for SnakkaZ Chat */
+
+/* Safe area support for iOS */
+:root {
+  --safe-area-inset-top: env(safe-area-inset-top);
+  --safe-area-inset-bottom: env(safe-area-inset-bottom);
+  --safe-area-inset-left: env(safe-area-inset-left);
+  --safe-area-inset-right: env(safe-area-inset-right);
+}
+
+.pt-safe {
+  padding-top: var(--safe-area-inset-top);
+}
+
+.pb-safe {
+  padding-bottom: var(--safe-area-inset-bottom);
+}
+
+.pl-safe {
+  padding-left: var(--safe-area-inset-left);
+}
+
+.pr-safe {
+  padding-right: var(--safe-area-inset-right);
+}
+
+/* Touch-friendly interactions */
+.touch-none {
+  touch-action: none;
+}
+
+.touch-pan-y {
+  touch-action: pan-y;
+}
+
+.touch-pan-x {
+  touch-action: pan-x;
+}
+
+/* Smooth animations for mobile */
+@media (prefers-reduced-motion: no-preference) {
+  * {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Mobile-specific scrollbars */
+.scrollbar-thin {
+  scrollbar-width: thin;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.scrollbar-thumb-cyberdark-600::-webkit-scrollbar-thumb {
+  background-color: rgb(75 85 99);
+  border-radius: 9999px;
+}
+
+.scrollbar-track-transparent::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+/* Mobile breakpoints */
+@media (max-width: 768px) {
+  /* Optimize for mobile */
+  html {
+    font-size: 16px; /* Prevent zoom on input focus */
+  }
+  
+  input,
+  textarea,
+  select {
+    font-size: 16px; /* Prevent zoom on iOS */
+  }
+  
+  /* Larger touch targets */
+  button,
+  [role="button"],
+  input[type="submit"],
+  input[type="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Mobile-optimized text */
+  .mobile-text-sm {
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  
+  .mobile-text-base {
+    font-size: 16px;
+    line-height: 1.5;
+  }
+  
+  .mobile-text-lg {
+    font-size: 18px;
+    line-height: 1.6;
+  }
+}
+
+/* Dark mode optimizations for mobile */
+@media (prefers-color-scheme: dark) {
+  /* Optimize for OLED displays */
+  .bg-true-black {
+    background-color: #000000;
+  }
+  
+  .mobile-dark-optimized {
+    color: #e5e5e5;
+    background-color: #000000;
+  }
+}
+
+/* Landscape mode adjustments */
+@media (orientation: landscape) and (max-height: 500px) {
+  /* Compact UI for landscape phones */
+  .mobile-compact {
+    padding: 0.5rem;
+  }
+  
+  .mobile-compact-nav {
+    height: 48px;
+  }
+  
+  .mobile-compact-header {
+    height: 52px;
+  }
+}
+
+/* High DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2),
+       (min-resolution: 192dpi) {
+  /* Sharper icons and images */
+  .mobile-sharp-icon {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+}
+
+/* Enhanced touch feedback */
+.mobile-touch-feedback {
+  -webkit-tap-highlight-color: rgba(255, 215, 0, 0.1);
+  transition: background-color 0.15s ease;
+}
+
+.mobile-touch-feedback:active {
+  background-color: rgba(255, 215, 0, 0.05);
+}
+
+/* Improved focus indicators for mobile */
+.mobile-focus-ring:focus-visible {
+  outline: 2px solid #ffd700;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Gesture areas */
+.mobile-gesture-area {
+  position: relative;
+  overflow: hidden;
+}
+
+.mobile-gesture-area::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: transparent;
+  z-index: 1;
+}
+
+/* Chat-specific mobile styles */
+.mobile-chat-bubble {
+  max-width: calc(100vw - 120px);
+  word-wrap: break-word;
+  hyphens: auto;
+}
+
+.mobile-chat-input {
+  min-height: 44px;
+  max-height: 120px;
+  resize: none;
+  padding: 12px 16px;
+  border-radius: 22px;
+}
+
+/* Bottom navigation enhancements */
+.mobile-bottom-nav {
+  background: rgba(17, 24, 39, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(75, 85, 99, 0.3);
+}
+
+/* Pull-to-refresh indicator */
+.mobile-refresh-indicator {
+  position: absolute;
+  top: -60px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(17, 24, 39, 0.9);
+  border-radius: 20px;
+  padding: 8px 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Keyboard avoidance */
+.mobile-keyboard-avoid {
+  padding-bottom: env(keyboard-inset-height, 0);
+}
+
+/* Swipe indicators */
+.mobile-swipe-indicator {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.mobile-swipe-left {
+  right: -40px;
+}
+
+.mobile-swipe-right {
+  left: -40px;
+}
+
+/* Loading states optimized for mobile */
+.mobile-loading-skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(75, 85, 99, 0.1) 25%,
+    rgba(156, 163, 175, 0.2) 50%,
+    rgba(75, 85, 99, 0.1) 75%
+  );
+  background-size: 200% 100%;
+  animation: mobile-skeleton-loading 1.5s infinite;
+}
+
+@keyframes mobile-skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Haptic feedback simulation */
+.mobile-haptic {
+  animation: mobile-haptic-buzz 0.1s ease-in-out;
+}
+
+@keyframes mobile-haptic-buzz {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-1px); }
+  75% { transform: translateX(1px); }
+}
+
+/* Voice recording visual feedback */
+.mobile-recording-pulse {
+  animation: mobile-recording-pulse 1.5s infinite;
+}
+
+@keyframes mobile-recording-pulse {
+  0%, 100% { 
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 0.7;
+    transform: scale(1.05);
+  }
+}
+
+/* Message animation for mobile */
+.mobile-message-enter {
+  animation: mobile-message-slide-in 0.3s ease-out;
+}
+
+@keyframes mobile-message-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Improved readability on small screens */
+@media (max-width: 480px) {
+  .mobile-text-readable {
+    font-size: 16px;
+    line-height: 1.6;
+    letter-spacing: 0.01em;
+  }
+  
+  .mobile-button-large {
+    min-height: 48px;
+    min-width: 48px;
+    font-size: 16px;
+  }
+}
+
+/* Performance optimizations */
+.mobile-will-change {
+  will-change: transform;
+}
+
+.mobile-gpu-accelerated {
+  transform: translate3d(0, 0, 0);
+}
+
+.mobile-no-select {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Theme-aware mobile optimizations */
+@media (prefers-color-scheme: dark) {
+  .mobile-theme-dark {
+    color-scheme: dark;
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  .mobile-theme-light {
+    color-scheme: light;
+  }
+}

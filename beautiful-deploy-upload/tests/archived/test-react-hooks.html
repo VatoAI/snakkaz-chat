@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>React Hooks Test</title>
+</head>
+<body>
+    <div id="test-output"></div>
+    
+    <script>
+        // Test the React fixes by simulating the exact error conditions
+        function testReactHooksFix() {
+            const output = document.getElementById('test-output');
+            const results = [];
+            
+            // Test 1: useLayoutEffect availability
+            try {
+                if (typeof window.useLayoutEffect === 'function') {
+                    window.useLayoutEffect(() => {
+                        console.log('✅ useLayoutEffect works');
+                    }, []);
+                    results.push('✅ useLayoutEffect: Available and functional');
+                } else {
+                    results.push('❌ useLayoutEffect: Not available');
+                }
+            } catch (e) {
+                results.push('❌ useLayoutEffect: Error - ' + e.message);
+            }
+            
+            // Test 2: useMergeRef availability
+            try {
+                if (typeof window.useMergeRef === 'function') {
+                    const ref1 = { current: null };
+                    const ref2 = (el) => console.log('Ref function called with:', el);
+                    const mergedRef = window.useMergeRef(ref1, ref2);
+                    
+                    if (typeof mergedRef === 'function') {
+                        mergedRef(document.createElement('div'));
+                        results.push('✅ useMergeRef: Available and functional');
+                    } else {
+                        results.push('❌ useMergeRef: Not returning a function');
+                    }
+                } else {
+                    results.push('❌ useMergeRef: Not available');
+                }
+            } catch (e) {
+                results.push('❌ useMergeRef: Error - ' + e.message);
+            }
+            
+            // Test 3: React object availability
+            try {
+                if (window.React && typeof window.React === 'object') {
+                    const hasHooks = [
+                        'useLayoutEffect',
+                        'useMergeRef',
+                        'useState',
+                        'useEffect'
+                    ].every(hook => window.React[hook]);
+                    
+                    if (hasHooks) {
+                        results.push('✅ React object: Complete with all hooks');
+                    } else {
+                        results.push('⚠️ React object: Missing some hooks');
+                    }
+                } else {
+                    results.push('❌ React object: Not available');
+                }
+            } catch (e) {
+                results.push('❌ React object: Error - ' + e.message);
+            }
+            
+            output.innerHTML = `
+                <h2>React Hooks Fix Test Results</h2>
+                <ul>
+                    ${results.map(result => `<li>${result}</li>`).join('')}
+                </ul>
+                <p><strong>Test completed at:</strong> ${new Date().toLocaleString()}</p>
+            `;
+        }
+        
+        // Run test after a short delay to allow fixes to apply
+        setTimeout(testReactHooksFix, 100);
+    </script>
+</body>
+</html>

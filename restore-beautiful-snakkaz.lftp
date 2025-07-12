@@ -1,0 +1,54 @@
+set ftp:ssl-allow no
+set ftp:ssl-protect-data no
+set ssl:verify-certificate no
+
+# Connect to snakkaz.com FTP
+open ftp://snakkaz.com
+
+# Login (you'll be prompted for credentials)
+user $USERNAME $PASSWORD
+
+# Change to public_html directory
+cd public_html
+
+# Create backup directory
+mkdir -p backup-$(date +%Y%m%d-%H%M%S)
+
+# Backup current index.html
+put index.html backup-$(date +%Y%m%d-%H%M%S)/index-backup.html
+
+echo "🎨 Uploading beautiful Liquid Glass version..."
+
+# Upload new index.html with liquid glass
+put index.html
+
+echo "✨ Uploading Liquid Glass CSS..."
+# Upload CSS directory with liquid glass design
+mirror -R assets/css assets/css
+
+echo "⚡ Uploading JavaScript assets..."
+# Upload JavaScript
+mirror -R assets/js assets/js
+
+echo "🖼️ Uploading images and icons..."
+# Upload images
+mirror -R assets/images assets/images
+mirror -R icons icons
+mirror -R images images
+
+echo "📄 Uploading additional files..."
+# Upload other important files
+put manifest.json
+put service-worker.js
+put sw.js
+put robots.txt
+put sitemap.xml
+put .htaccess
+
+echo "🎉 Beautiful Liquid Glass version uploaded!"
+echo "🌐 www.snakkaz.com now has the stunning design restored!"
+
+# Verify upload
+ls -la
+
+bye

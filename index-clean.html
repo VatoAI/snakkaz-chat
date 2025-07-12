@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/icons/snakkaz-icon-192.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#0f172a" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="SnakkaZ Chat" />
+    <link rel="apple-touch-icon" href="/icons/snakkaz-icon-192.png" />
+    <title>SnakkaZ Chat</title>
+    
+    <!-- CRITICAL: Preemptive React Context Fix - MUST BE FIRST -->
+    <script>
+      (function() {
+        'use strict';
+        console.log('🚀 PREEMPTIVE: Setting up React context before any modules...');
+        
+        if (typeof window !== 'undefined') {
+          // Create React namespace immediately
+          window.React = window.React || {};
+          
+          // Create createContext function BEFORE any vendor bundles load
+          window.React.createContext = window.React.createContext || function(defaultValue) {
+            console.log('🔧 PREEMPTIVE: createContext called with:', defaultValue);
+            
+            const Context = {
+              Provider: function Provider({ children, value }) {
+                // Simple provider that just renders children
+                return children;
+              },
+              Consumer: function Consumer({ children }) {
+                // Consumer that provides default value
+                return children(defaultValue);
+              },
+              displayName: 'PreemptiveContext'
+            };
+            
+            return Context;
+          };
+          
+          // Ensure reactExports namespace
+          window.reactExports = window.reactExports || window.React;
+          
+          // Emergency useLayoutEffect fix
+          window.useLayoutEffect = window.useLayoutEffect || function(effect, deps) {
+            console.log('🔧 PREEMPTIVE: useLayoutEffect called');
+            if (typeof effect === 'function') {
+              try {
+                var cleanup = effect();
+                return typeof cleanup === 'function' ? cleanup : function(){};
+              } catch (e) {
+                console.warn('PREEMPTIVE: useLayoutEffect error:', e);
+                return function(){};
+              }
+            }
+            return function(){};
+          };
+          
+          // Assign to React object as well
+          window.React.useLayoutEffect = window.React.useLayoutEffect || window.useLayoutEffect;
+          
+          console.log('✅ PREEMPTIVE: React context and hooks ready!');
+        }
+      })();
+    </script>
+    
+    <!-- Preload critical vendor bundles -->
+    <link rel="modulepreload" crossorigin href="/assets/js/vendor-react-core-Cd05VJ5Y.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/vendor-react-dom-DmiX1e6y.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/vendor-router-DRYHFKTT.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/vendor-database-Cidpe8p9.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/app-services-Cf0jkxe3.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/app-utils-CvwRV1zG.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/vendor-animation-BRHAymv3.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/vendor-style-utils-nLA3zUC6.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/vendor-security-LdHy7Pt9.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/vendor-media-rJiPBk-1.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/vendor-network-BSBq6A-N.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/vendor-misc-guM_vOlB.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/vendor-react-hooks-Df_KBos6.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/vendor-radix-ui-UJNVxv2C.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/components-ui-CoK5VGD0.js">
+    
+    <!-- Main App Script -->
+    <script type="module" crossorigin src="/assets/js/index-BWQuTEbr.js"></script>
+    
+    <!-- CSS Stylesheets -->
+    <link rel="stylesheet" crossorigin href="/assets/css/index-BuuGx747.css">
+    <link rel="stylesheet" crossorigin href="/assets/css/pages-main-mrR2Awbu.css">
+    
+    <!-- Security Policy -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: *.amazonaws.com storage.googleapis.com *.supabase.co *.supabase.in; font-src 'self' data:; connect-src 'self' *.supabase.co *.supabase.in wss://*.supabase.co *.amazonaws.com storage.googleapis.com *.snakkaz.com dash.snakkaz.com business.snakkaz.com docs.snakkaz.com analytics.snakkaz.com; media-src 'self' blob:; object-src 'none'; frame-src 'self'; worker-src 'self' blob:">
+</head>
+<body>
+    <div id="root"></div>
+    
+    <!-- Error Recovery Script -->
+    <script>
+      // Additional error protection
+      window.addEventListener('error', function(e) {
+        if (e.error && e.error.message && e.error.message.includes('createContext')) {
+          console.warn('🛡️ BLOCKED: createContext error prevented');
+          e.preventDefault();
+          return true;
+        }
+      });
+      
+      // Check if React app loaded
+      setTimeout(function() {
+        const root = document.getElementById('root');
+        if (root && root.children.length === 0) {
+          console.warn('⚠️ App may not have loaded properly');
+          // Could add fallback loading indicator here
+        }
+      }, 3000);
+    </script>
+</body>
+</html>

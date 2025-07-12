@@ -1,0 +1,3 @@
+open -u admin@snakkaz.com,Rompetroll123! ftp://ftp.snakkaz.com
+put emergency-index.html index.html
+quit

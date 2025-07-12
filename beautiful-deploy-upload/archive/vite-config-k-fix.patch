@@ -1,0 +1,26 @@
+--- a/vite.config.ts
++++ b/vite.config.ts
+@@ -220,12 +220,18 @@
+     
+     // Enable minification and compression
+     minify: 'terser',
+     terserOptions: {
+       compress: {
+         drop_console: true, // Remove console.log in production
+         drop_debugger: true,
+         pure_funcs: ['console.log'], // Remove specific function calls
+         unused: true, // Remove unused code
+         dead_code: true, // Remove dead code
++        // FIX: Prevent single-letter variables that cause "K is undefined"
++        keep_fargs: false,
++        toplevel: false,
++        keep_fnames: false,
+       },
+       mangle: {
+         safari10: true,
++        reserved: ['React', 'useState', 'useEffect'], // Preserve important React functions
+       },
+       format: {
+         comments: false, // Remove comments for smaller bundles
+       }
+     },

@@ -1,0 +1,68 @@
+# Snakkaz Chat Main Domain .htaccess with Subdomain Routing
+# Handles both main domain and subdomain routing
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Handle subdomain routing - redirect subdomains to their directories
+    RewriteCond %{HTTP_HOST} ^dash\.snakkaz\.com$ [NC]
+    RewriteCond %{REQUEST_URI} !^/dash/
+    RewriteRule ^(.*)$ /dash/$1 [L]
+    
+    RewriteCond %{HTTP_HOST} ^business\.snakkaz\.com$ [NC]
+    RewriteCond %{REQUEST_URI} !^/business/
+    RewriteRule ^(.*)$ /business/$1 [L]
+    
+    RewriteCond %{HTTP_HOST} ^docs\.snakkaz\.com$ [NC]
+    RewriteCond %{REQUEST_URI} !^/docs/
+    RewriteRule ^(.*)$ /docs/$1 [L]
+    
+    RewriteCond %{HTTP_HOST} ^analytics\.snakkaz\.com$ [NC]
+    RewriteCond %{REQUEST_URI} !^/analytics/
+    RewriteRule ^(.*)$ /analytics/$1 [L]
+    
+    RewriteCond %{HTTP_HOST} ^mcp\.snakkaz\.com$ [NC]
+    RewriteCond %{REQUEST_URI} !^/mcp/
+    RewriteRule ^(.*)$ /mcp/$1 [L]
+    
+    RewriteCond %{HTTP_HOST} ^help\.snakkaz\.com$ [NC]
+    RewriteCond %{REQUEST_URI} !^/help/
+    RewriteRule ^(.*)$ /help/$1 [L]
+    
+    # Main domain routing for React SPA
+    RewriteCond %{HTTP_HOST} ^(www\.)?snakkaz\.com$ [NC]
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule . /index.html [L]
+    
+    # For /ping path (existing functionality)
+    RewriteRule ^ping$ ping.json [L]
+    
+    # For root subdomain access (when accessed directly)
+    RewriteRule ^$ index.json [L]
+</IfModule>
+
+# Return proper JSON for ping files
+<IfModule mod_headers.c>
+    <FilesMatch "ping\.json$|index\.json$">
+        Header set Content-Type "application/json"
+        Header set Access-Control-Allow-Origin "*"
+    </FilesMatch>
+</IfModule>
+
+# Set proper MIME types
+<IfModule mod_mime.c>
+    AddType application/javascript .js
+    AddType text/css .css
+    AddType application/json .json
+    AddType image/svg+xml .svg
+    AddType application/font-woff .woff
+    AddType application/font-woff2 .woff2
+</IfModule>
+
+# Security headers
+<IfModule mod_headers.c>
+    Header always set X-Frame-Options DENY
+    Header always set X-Content-Type-Options nosniff
+    Header always set X-XSS-Protection "1; mode=block"
+</IfModule>

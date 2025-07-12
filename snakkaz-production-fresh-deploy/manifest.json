@@ -1,0 +1,19 @@
+{
+  "name": "SnakkaZ - Norges sikreste chat-app",
+  "short_name": "SnakkaZ",
+  "description": "Sikker norsk chat-app med ende-til-ende kryptering",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#667eea",
+  "theme_color": "#667eea",
+  "orientation": "portrait-primary",
+  "categories": ["communication", "social"],
+  "lang": "no",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "type": "image/x-icon",
+      "sizes": "32x32"
+    }
+  ]
+}

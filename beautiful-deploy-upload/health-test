@@ -1,0 +1,20 @@
+#!/bin/bash
+
+echo "🚀 SNAKKAZ PROJECT HEALTH DASHBOARD"
+echo "===================================="
+echo ""
+echo "🕐 Generated: $(date)"
+echo ""
+
+# Test basic site status
+echo "🌐 Testing site status..."
+HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://www.snakkaz.com 2>/dev/null || echo "FAIL")
+echo "Site status: $HTTP_STATUS"
+
+# Test git status
+echo ""
+echo "📝 Git status..."
+git status --short 2>/dev/null || echo "Git not available"
+
+echo ""
+echo "✅ Basic health check complete"

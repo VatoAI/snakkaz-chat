@@ -1,0 +1,30 @@
+
+📦 BUNDLE SIZE ANALYSIS
+=====================
+
+app-services-Cf0jkxe3.js: 48KB
+app-utils-CvwRV1zG.js: 87KB
+components-ui-CoK5VGD0.js: 292KB
+DynamicGroupChatPage-D2TRlgGR.js: 5KB
+EnhancedGroupChat-C_bnn-j0.js: 178KB
+GroupChatPage-BPUDXmXd.js: 4KB
+index-BWQuTEbr.js: 37KB
+pages-auth-0cjITn4e.js: 77KB
+pages-chat-BHsWYgPA.js: 45KB
+pages-main-CX2DMHnw.js: 322KB
+vendor-animation-BRHAymv3.js: 251KB
+vendor-database-Cidpe8p9.js: 259KB
+vendor-date-utils-D2GbuEg1.js: 47KB
+vendor-media-rJiPBk-1.js: 94KB
+vendor-misc-guM_vOlB.js: 88KB
+vendor-network-BSBq6A-N.js: 74KB
+vendor-radix-ui-UJNVxv2C.js: 0KB
+vendor-react-core-Cd05VJ5Y.js: 503KB
+vendor-react-dom-DmiX1e6y.js: 198KB
+vendor-react-hooks-Df_KBos6.js: 8KB
+vendor-router-DRYHFKTT.js: 28KB
+vendor-security-LdHy7Pt9.js: 5KB
+vendor-style-utils-nLA3zUC6.js: 89KB
+vendor-validation-4nkgCfOe.js: 106KB
+
+Total JS Size: 2MB
