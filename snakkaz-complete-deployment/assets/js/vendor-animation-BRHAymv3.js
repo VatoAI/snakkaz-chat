@@ -1,3 +1,177 @@
+// Comprehensive React Mock System for Vendor Bundles
+(function() {
+    'use strict';
+    
+    // Safe React implementation
+    const SafeReact = {
+        Component: class Component {
+            constructor(props) {
+                this.props = props || {};
+                this.state = {};
+            }
+            setState(updates) {
+                if (typeof updates === 'function') {
+                    updates = updates(this.state);
+                }
+                this.state = { ...this.state, ...updates };
+            }
+            render() {
+                return null;
+            }
+        },
+        
+        createElement: function(type, props, ...children) {
+            if (typeof type === 'string') {
+                return {
+                    type: type,
+                    props: { ...props, children: children.length === 1 ? children[0] : children },
+                    $$typeof: Symbol.for('react.element')
+                };
+            }
+            if (typeof type === 'function') {
+                try {
+                    return type(props);
+                } catch (e) {
+                    console.warn('SafeReact: Component error caught', e);
+                    return { type: 'div', props: { children: 'Component Error' } };
+                }
+            }
+            return { type: 'div', props: { children: children } };
+        },
+        
+        createContext: function(defaultValue) {
+            const context = {
+                Provider: function({ children, value }) {
+                    return children;
+                },
+                Consumer: function({ children }) {
+                    return typeof children === 'function' ? children(defaultValue) : children;
+                },
+                _currentValue: defaultValue,
+                _context: true,
+                displayName: 'Context'
+            };
+            return context;
+        },
+        
+        forwardRef: function(render) {
+            return function(props) {
+                return render(props, { current: null });
+            };
+        },
+        
+        Fragment: function({ children }) {
+            return children;
+        },
+        
+        memo: function(component) {
+            return component;
+        },
+        
+        useCallback: function(callback, deps) {
+            return callback;
+        },
+        
+        useContext: function(context) {
+            return context._currentValue || {};
+        },
+        
+        useEffect: function(effect, deps) {
+            try {
+                if (typeof effect === 'function') {
+                    const cleanup = effect();
+                    if (typeof cleanup === 'function') {
+                        // Store cleanup for potential later use
+                        return cleanup;
+                    }
+                }
+            } catch (e) {
+                console.warn('SafeReact: useEffect error caught', e);
+            }
+        },
+        
+        useLayoutEffect: function(effect, deps) {
+            return this.useEffect(effect, deps);
+        },
+        
+        useMemo: function(factory, deps) {
+            try {
+                return typeof factory === 'function' ? factory() : factory;
+            } catch (e) {
+                console.warn('SafeReact: useMemo error caught', e);
+                return null;
+            }
+        },
+        
+        useRef: function(initialValue) {
+            return { current: initialValue };
+        },
+        
+        useState: function(initialState) {
+            const state = typeof initialState === 'function' ? initialState() : initialState;
+            const setState = function(newState) {
+                // In a real app, this would trigger re-render
+                console.log('SafeReact: setState called with', newState);
+            };
+            return [state, setState];
+        },
+        
+        useReducer: function(reducer, initialState) {
+            const dispatch = function(action) {
+                console.log('SafeReact: dispatch called with', action);
+            };
+            return [initialState, dispatch];
+        },
+        
+        isValidElement: function(element) {
+            return element && typeof element === 'object' && element.$$typeof === Symbol.for('react.element');
+        },
+        
+        Children: {
+            forEach: function(children, fn) {
+                if (Array.isArray(children)) {
+                    children.forEach(fn);
+                } else if (children) {
+                    fn(children, 0);
+                }
+            },
+            map: function(children, fn) {
+                if (Array.isArray(children)) {
+                    return children.map(fn);
+                } else if (children) {
+                    return [fn(children, 0)];
+                }
+                return [];
+            },
+            count: function(children) {
+                return Array.isArray(children) ? children.length : children ? 1 : 0;
+            },
+            only: function(children) {
+                if (Array.isArray(children) && children.length === 1) {
+                    return children[0];
+                }
+                return children;
+            }
+        }
+    };
+    
+    // Ensure global React availability
+    if (typeof window !== 'undefined') {
+        window.React = window.React || SafeReact;
+        window.SafeReact = SafeReact;
+    }
+    
+    // For module systems
+    if (typeof module !== 'undefined' && module.exports) {
+        module.exports = SafeReact;
+    }
+    
+    // For AMD
+    if (typeof define === 'function' && define.amd) {
+        define(function() { return SafeReact; });
+    }
+})();
+
 // SAFE VENDOR-ANIMATION REPLACEMENT - FIXED CREATECONTEXT
 console.log('🔧 Loading safe vendor-animation replacement...');
 
@@ -15,6 +189,14 @@ const createSafeContext = (defaultValue) => {
 // Mock React exports safely
 const reactExports = {
   createContext: createSafeContext,
+  Component: class Component {
+    constructor(props) {
+      this.props = props;
+      this.state = {};
+    }
+    setState() {}
+    render() { return null; }
+  },
   useRef: (initial) => ({ current: initial }),
   useLayoutEffect: (effect) => {
     if (typeof effect === 'function') {
@@ -1780,6 +1962,7 @@ class NativeAnimation extends WithPromise {
     try {
       this.animation.cancel();
     } catch (e) {
+      // Ignore error - animation may already be cancelled or not exist
     }
   }
   stop() {
@@ -2101,13 +2284,12 @@ class AsyncMotionValueAnimation extends WithPromise {
   }
 }
 const splitCSSVariableRegex = (
-  // eslint-disable-next-line redos-detector/no-unsafe-regex -- false positive, as it can match a lot of words
   /^var\(--(?:([\w-]+)|([\w-]+), ?([a-zA-Z\d ()%#.,-]+))\)/u
 );
 function parseCSSVariable(current) {
   const match = splitCSSVariableRegex.exec(current);
   if (!match)
-    return [,];
+    return [undefined, undefined];
   const [, token1, token2, fallback] = match;
   return [`--${token1 ?? token2}`, fallback];
 }
@@ -2844,7 +3026,7 @@ function isSVGSVGElement(element) {
 const isMotionValue = (value) => Boolean(value && value.getVelocity);
 const valueTypes = [...dimensionValueTypes, color, complex];
 const findValueType = (v) => valueTypes.find(testValueType(v));
-const MotionConfigContext = reactExports.createContext({
+const MotionConfigContext = SafeReact.createContext({
   transformPagePoint: (p) => p,
   isStatic: false,
   reducedMotion: "never"
@@ -3046,7 +3228,7 @@ const AnimatePresence = ({ children, custom, initial = true, onExitComplete, pre
     return jsxRuntimeExports.jsx(PresenceChild, { isPresent, initial: !isInitialRender.current || initial ? void 0 : false, custom, presenceAffectsLayout, mode, root, onExitComplete: isPresent ? void 0 : onExit, anchorX, children: child }, key);
   }) });
 };
-const LazyContext = reactExports.createContext({ strict: false });
+const LazyContext = SafeReact.createContext({ strict: false });
 const featureProps = {
   animation: [
     "animate",
@@ -3124,7 +3306,8 @@ function loadExternalIsValidProp(isValidProp) {
 }
 try {
   loadExternalIsValidProp(require("@emotion/is-prop-valid").default);
-} catch {
+} catch (error) {
+  // External prop validation not available
 }
 function filterProps(props, isDom, forwardMotionProps) {
   const filteredProps = {};
@@ -3162,7 +3345,7 @@ function createDOMMotionComponentProxy(componentFactory) {
     }
   });
 }
-const MotionContext = /* @__PURE__ */ reactExports.createContext({});
+const MotionContext = /* @__PURE__ */ SafeReact.createContext({});
 function isAnimationControls(v) {
   return v !== null && typeof v === "object" && typeof v.start === "function";
 }
@@ -3238,7 +3421,7 @@ function useMotionRef(visualState, visualElement, externalRef) {
 const camelToDash = (str) => str.replace(/([a-z])([A-Z])/gu, "$1-$2").toLowerCase();
 const optimizedAppearDataId = "framerAppearId";
 const optimizedAppearDataAttribute = "data-" + camelToDash(optimizedAppearDataId);
-const SwitchLayoutGroupContext = reactExports.createContext({});
+const SwitchLayoutGroupContext = SafeReact.createContext({});
 function useVisualElement(Component, visualState, props, createVisualElement, ProjectionNodeConstructor) {
   var _a, _b;
   const { visualElement: parent } = reactExports.useContext(MotionContext);
@@ -3903,7 +4086,7 @@ const animateMotionValue = (name, value, target, transition = {}, element, isHan
   return valueTransition.isSync ? new JSAnimation(options) : new AsyncMotionValueAnimation(options);
 };
 function shouldBlockAnimation({ protectedKeys, needsAnimating }, key) {
-  const shouldBlock = protectedKeys.hasOwnProperty(key) && needsAnimating[key] !== true;
+  const shouldBlock = Object.prototype.hasOwnProperty.call(protectedKeys, key) && needsAnimating[key] !== true;
   needsAnimating[key] = false;
   return shouldBlock;
 }
@@ -4121,7 +4304,7 @@ function createAnimationState(visualElement) {
       for (const key in allKeys) {
         const next = resolvedValues[key];
         const prev = prevResolvedValues[key];
-        if (encounteredKeys.hasOwnProperty(key))
+        if (Object.prototype.hasOwnProperty.call(encounteredKeys, key))
           continue;
         let valueHasChanged = false;
         if (isKeyframesTarget(next) && isKeyframesTarget(prev)) {

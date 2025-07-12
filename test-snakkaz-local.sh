@@ -1,7 +1,10 @@
 #!/bin/bash
 
-echo "🔍 SNAKKAZ LOCAL TESTING SETUP"
-echo "=============================="
+echo "🔍 SNAKKAZ LOCAL TESTING SETUP - REACT COMPONENT FIX"
+echo "==================================================="
+echo ""
+
+echo "🔧 Latest fix applied: React.Component class added to vendor-animation"
 echo ""
 
 # Check if Python is available

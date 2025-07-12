@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="192" height="192" viewBox="0 0 192 192" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#00ff88;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#00aaff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#7c3aed;stop-opacity:1" />
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+      <feMerge> 
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Background with glass effect -->
+  <rect width="192" height="192" rx="32" fill="url(#grad1)" opacity="0.9"/>
+  <rect width="192" height="192" rx="32" fill="rgba(255,255,255,0.1)" style="backdrop-filter: blur(10px);"/>
+  
+  <!-- SnakkaZ S Logo -->
+  <path d="M48 96 Q48 48 96 48 Q144 48 144 96 Q144 144 96 144 Q48 144 48 96 Z" 
+        fill="rgba(255,255,255,0.2)" 
+        stroke="rgba(255,255,255,0.8)" 
+        stroke-width="3" 
+        filter="url(#glow)"/>
+  
+  <!-- Inner S shape -->
+  <path d="M72 72 Q96 60 120 72 Q120 84 96 96 Q72 108 72 120 Q96 132 120 120" 
+        fill="none" 
+        stroke="rgba(255,255,255,0.9)" 
+        stroke-width="6" 
+        stroke-linecap="round" 
+        filter="url(#glow)"/>
+  
+  <!-- Chat bubble indicators -->
+  <circle cx="60" cy="60" r="4" fill="rgba(255,255,255,0.7)" filter="url(#glow)"/>
+  <circle cx="132" cy="132" r="4" fill="rgba(255,255,255,0.7)" filter="url(#glow)"/>
+  <circle cx="60" cy="132" r="3" fill="rgba(255,255,255,0.5)" filter="url(#glow)"/>
+  
+  <!-- Security lock indicator -->
+  <rect x="150" y="30" width="12" height="8" rx="2" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="2"/>
+  <rect x="152" y="36" width="8" height="6" rx="1" fill="rgba(255,255,255,0.6)"/>
+</svg>
