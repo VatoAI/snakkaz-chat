@@ -30,7 +30,7 @@ export function applyCspPolicy(): void {
         ],
     
     // Style sources
-    'style-src': ["'self'", "'unsafe-inline'"], // Inline styles still needed for some UI libraries
+    'style-src': ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'], // Inline styles still needed for some UI libraries
     
     // Image sources
     'img-src': [
@@ -44,8 +44,8 @@ export function applyCspPolicy(): void {
       'secure.gravatar.com' // For profile images
     ],
     
-    // Font sources - restrict to self and data URIs
-    'font-src': ["'self'", 'data:'],
+    // Font sources - restrict to self and data URIs, plus Google Fonts
+    'font-src': ["'self'", 'data:', 'https://fonts.gstatic.com', 'https://fonts.googleapis.com'],
     
     // Connection sources for APIs and WebSockets
     'connect-src': [

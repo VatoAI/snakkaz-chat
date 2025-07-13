@@ -42,12 +42,14 @@ export const createSupabaseClient = () => {
 // Configuration verification function - useful for debugging
 export const verifySupabaseConfig = () => {
   try {
-    const isConfigValid = !!supabaseInstance && ENV_CHECK;
-    
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('Supabase config verification result:', isConfigValid ? 'Valid ✓' : 'Invalid ✗');
+    // Use dynamic import to avoid initialization issues
+    import('@/lib/supabaseClient').then(({ supabase }) => {
+      const isConfigValid = !!supabase && ENV_CHECK;
       
-      if (!isConfigValid) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('Supabase config verification result:', isConfigValid ? 'Valid ✓' : 'Invalid ✗');
+        
+        if (!isConfigValid) {
         console.warn('Supabase configuration is incomplete or invalid. Check your environment variables.');
       }
     }

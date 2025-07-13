@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-// Removed framer-motion to fix LayoutGroupContext errors
 import { pwaManager } from '../../utils/pwaManager';
 
 // Simple icons as text/unicode
@@ -116,91 +115,52 @@ export const MobileLaunchBanner: React.FC = () => {
   if (!isVisible) return null;
 
   return (
-    <AnimatePresence>
-      <div
-        initial={{ y: 100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        exit={{ y: 100, opacity: 0 }}
-        className="fixed bottom-4 left-4 right-4 z-50 md:hidden"
-      >
-        <div
-          className={`bg-gradient-to-r ${currentStepData.color} rounded-2xl p-4 shadow-2xl backdrop-blur-sm border border-white/20`}
-          layout
-        >
-          <div className="flex items-center justify-between text-white">
-            <button
-              onClick={() => setIsVisible(false)}
-              className="absolute top-2 right-2 text-white/70 hover:text-white p-1"
-            >
-              ✕
-            </button>
-            
-            <div className="flex items-center space-x-3 flex-1">
-              <div
-                key={currentStep}
-                initial={{ rotate: 0, scale: 0.8 }}
-                animate={{ rotate: 360, scale: 1 }}
-                transition={{ duration: 0.5 }}
-                className="bg-white/20 p-3 rounded-full"
-              >
-                <IconComponent />
-              </div>
-              
-              <div className="flex-1">
-                <h3
-                  key={`title-${currentStep}`}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="font-bold text-lg"
-                >
-                  {currentStepData.title}
-                </h3>
-                <p
-                  key={`desc-${currentStep}`}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.1 }}
-                  className="text-sm opacity-90"
-                >
-                  {currentStepData.description}
-                </p>
-              </div>
+    <div className="fixed bottom-4 left-4 right-4 z-50 md:hidden">
+      <div className={`bg-gradient-to-r ${currentStepData.color} rounded-2xl p-4 shadow-2xl backdrop-blur-sm border border-white/20 transition-all duration-300`}>
+        <div className="flex items-center justify-between text-white">
+          <button
+            onClick={() => setIsVisible(false)}
+            className="absolute top-2 right-2 text-white/70 hover:text-white p-1"
+          >
+            ✕
+          </button>
+          
+          <div className="flex items-center space-x-3 flex-1">
+            <div className="bg-white/20 p-3 rounded-full transition-transform duration-500">
+              <IconComponent />
             </div>
             
-            <button
-              whileTap={{ scale: 0.95 }}
-              onClick={() => handleAction(currentStepData.action)}
-              className="bg-white text-gray-900 px-4 py-2 rounded-lg font-semibold text-sm hover:bg-gray-100 transition-colors ml-3"
-            >
-              {currentStepData.action === 'installer' && 'Installer'}
-              {currentStepData.action === 'notifications' && 'Aktiver'}
-              {currentStepData.action === 'share' && 'Del'}
-            </button>
+            <div className="flex-1">
+              <h3 className="font-bold text-lg">{currentStepData.title}</h3>
+              <p className="text-sm opacity-90">{currentStepData.description}</p>
+            </div>
           </div>
           
-          {/* Progress dots */}
-          <div className="flex justify-center space-x-2 mt-3">
-            {steps.map((_, index) => (
-              <div
-                key={index}
-                animate={{
-                  scale: index === currentStep ? 1.2 : 1,
-                  opacity: index === currentStep ? 1 : 0.5
-                }}
-                className="w-2 h-2 bg-white rounded-full cursor-pointer"
-                onClick={() => setCurrentStep(index)}
-              />
-            ))}
-          </div>
+          <button
+            onClick={() => handleAction(currentStepData.action)}
+            className="bg-white text-gray-900 px-4 py-2 rounded-lg font-semibold text-sm hover:bg-gray-100 transition-colors ml-3"
+          >
+            {currentStepData.action === 'installer' && 'Installer'}
+            {currentStepData.action === 'notifications' && 'Aktiver'}
+            {currentStepData.action === 'share' && 'Del'}
+          </button>
+        </div>
+        
+        {/* Progress dots */}
+        <div className="flex justify-center space-x-2 mt-3">
+          {steps.map((_, index) => (
+            <div
+              key={index}
+              className={`w-2 h-2 bg-white rounded-full cursor-pointer transition-all duration-300 ${
+                index === currentStep ? 'scale-125 opacity-100' : 'opacity-50'
+              }`}
+              onClick={() => setCurrentStep(index)}
+            />
+          ))}
         </div>
         
         {/* Feature highlights */}
-        <div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="mt-3 bg-black/80 backdrop-blur-sm rounded-xl p-3"
-        >
+        <div className="mt-3 bg-black/80 backdrop-blur-sm rounded-xl p-3 transition-all duration-500">
           <div className="flex justify-between text-white text-xs">
             <div className="flex items-center space-x-1">
               <icons.Shield />
@@ -217,7 +177,7 @@ export const MobileLaunchBanner: React.FC = () => {
           </div>
         </div>
       </div>
-    </AnimatePresence>
+    </div>
   );
 };
 

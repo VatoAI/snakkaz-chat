@@ -4,7 +4,6 @@ import { Routes, Route, Navigate, useLocation, BrowserRouter } from "react-route
 import { AuthProvider, useAuth } from './hooks/useAuth';
 import { Toaster } from "@/components/ui/toaster";
 import { RootErrorBoundary } from './components/error/RootErrorBoundary';
-import { verifySupabaseConfig } from '@/services/encryption/supabasePatch';
 import { setupGlobalErrorHandlers } from './utils/error/errorHandling';
 import { bootstrapSecurityFeatures } from '@/services/security/securityIntegration';
 import { ENV } from './utils/env/environmentFix';
@@ -302,9 +301,6 @@ export default function App() {
         // Initialize security features
         await bootstrapSecurityFeatures();
         console.log('Security features initialized');
-        
-        // Verify Supabase configuration
-        verifySupabaseConfig();
         
         // DEAKTIVERT: Preview environment (forårsaker konflikter)
         // const previewStatus = await initializePreview();

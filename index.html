@@ -2,73 +2,75 @@
 <html lang="no">
 <head>
     <meta charset="UTF-8" />
-    <title>SnakkaZ Chat - Debug</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/icons/snakkaz-icon-192.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#0f172a" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="SnakkaZ Chat" />
+    <link rel="apple-touch-icon" href="/icons/snakkaz-icon-192.png" />
+    <title>SnakkaZ Chat - Beta</title>
     
-    <!-- Debug: Check what's happening -->
-    <script>
-      console.log('🔍 DEBUG: Starting app load...');
-      
-      // Minimal React mock
-      window.React = {
-        createContext: function(defaultValue) {
-          console.log('🔧 Mock createContext called');
-          return {
-            Provider: ({ children }) => children,
-            Consumer: ({ children }) => children(defaultValue)
-          };
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- Google Fonts - Roboto -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Use system fonts instead of Google Fonts for production -->
+    <style>
+        body {
+            font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
-      };
-      window.reactExports = window.React;
-      
-      // Track module loading
-      const originalImport = window.import;
-      
-      console.log('✅ DEBUG: React mocks ready');
-    </script>
-    
-    <!-- Load only essential -->
-    <script type="module" crossorigin src="/assets/js/index-BWQuTEbr.js"></script>
-    <link rel="stylesheet" href="/assets/css/index-BuuGx747.css">
-    <link rel="stylesheet" href="/assets/css/pages-main-mrR2Awbu.css">
+    </style>
 </head>
 <body>
-    <div id="root"></div>
-    
-    <script>
-      console.log('🔍 DEBUG: Body loaded, checking root...');
-      
-      // Check every second if app loads
-      let checkCount = 0;
-      const checker = setInterval(() => {
-        checkCount++;
-        const root = document.getElementById('root');
-        const hasContent = root && root.children.length > 0;
-        
-        console.log(`🔍 DEBUG: Check ${checkCount} - Root has content: ${hasContent}`);
-        
-        if (hasContent) {
-          console.log('🎉 SUCCESS: React app loaded!');
-          clearInterval(checker);
-        } else if (checkCount > 10) {
-          console.error('❌ FAILURE: React app did not load after 10 seconds');
-          clearInterval(checker);
-          
-          // Show what's in the root
-          console.log('Root innerHTML:', root.innerHTML);
-          console.log('Root children:', root.children);
+    <div id="root">
+        <!-- React app will mount here -->
+        <div style="
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #ffffff;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        ">
+            <div style="text-align: center;">
+                <div style="font-size: 3rem; margin-bottom: 1rem;">🐛</div>
+                <h1 style="margin-bottom: 0.5rem; font-weight: 700;">SnakkaZ Chat Beta</h1>
+                <p style="opacity: 0.8;">Sikker norsk chat med E2EE kryptering</p>
+                <div style="
+                    width: 40px; 
+                    height: 40px; 
+                    border: 3px solid #3b82f6; 
+                    border-top: 3px solid transparent; 
+                    border-radius: 50%; 
+                    animation: spin 1s linear infinite;
+                    margin: 1rem auto;
+                "></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading spinner animation -->
+    <style>
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
-      }, 1000);
-      
-      // Catch all errors
-      window.onerror = function(msg, file, line, col, error) {
-        console.error('🚨 ERROR:', { msg, file, line, col, error });
-        return false; // Let them bubble up so we can see them
-      };
-      
-      window.addEventListener('unhandledrejection', function(event) {
-        console.error('🚨 UNHANDLED REJECTION:', event.reason);
-      });
-    </script>
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+    </style>
+
+    <!-- Main app script will be injected by Vite -->
+    <script type="module" src="/src/main.tsx"></script>
 </body>
 </html>

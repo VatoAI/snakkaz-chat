@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8" />
+    <title>SnakkaZ Chat - Debug</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- Debug: Check what's happening -->
+    <script>
+      console.log('🔍 DEBUG: Starting app load...');
+      
+      // Minimal React mock
+      window.React = {
+        createContext: function(defaultValue) {
+          console.log('🔧 Mock createContext called');
+          return {
+            Provider: ({ children }) => children,
+            Consumer: ({ children }) => children(defaultValue)
+          };
+        }
+      };
+      window.reactExports = window.React;
+      
+      // Track module loading
+      const originalImport = window.import;
+      
+      console.log('✅ DEBUG: React mocks ready');
+    </script>
+    
+    <!-- Load only essential -->
+    <script type="module" crossorigin src="/assets/js/index-BWQuTEbr.js"></script>
+    <link rel="stylesheet" href="/assets/css/index-BuuGx747.css">
+    <link rel="stylesheet" href="/assets/css/pages-main-mrR2Awbu.css">
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script>
+      console.log('🔍 DEBUG: Body loaded, checking root...');
+      
+      // Check every second if app loads
+      let checkCount = 0;
+      const checker = setInterval(() => {
+        checkCount++;
+        const root = document.getElementById('root');
+        const hasContent = root && root.children.length > 0;
+        
+        console.log(`🔍 DEBUG: Check ${checkCount} - Root has content: ${hasContent}`);
+        
+        if (hasContent) {
+          console.log('🎉 SUCCESS: React app loaded!');
+          clearInterval(checker);
+        } else if (checkCount > 10) {
+          console.error('❌ FAILURE: React app did not load after 10 seconds');
+          clearInterval(checker);
+          
+          // Show what's in the root
+          console.log('Root innerHTML:', root.innerHTML);
+          console.log('Root children:', root.children);
+        }
+      }, 1000);
+      
+      // Catch all errors
+      window.onerror = function(msg, file, line, col, error) {
+        console.error('🚨 ERROR:', { msg, file, line, col, error });
+        return false; // Let them bubble up so we can see them
+      };
+      
+      window.addEventListener('unhandledrejection', function(event) {
+        console.error('🚨 UNHANDLED REJECTION:', event.reason);
+      });
+    </script>
+</body>
+</html>

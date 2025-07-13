@@ -21,10 +21,12 @@ import {
   Zap,
   Check,
   ExternalLink,
-  Sparkles
+  Sparkles,
+  TrendingUp
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { inviteService } from '@/services/invite/inviteService';
 import QRCode from 'qrcode';
 import { cn } from '@/lib/utils';
 
@@ -46,57 +48,55 @@ export const SnakkaZInviteSystem: React.FC<SnakkaZInviteSystemProps> = ({
   const [referralCode, setReferralCode] = useState('');
   const [copied, setCopied] = useState(false);
   const [inviteStats, setInviteStats] = useState({
-    sent: 0,
-    joined: 0,
-    bonus: 0
+    totalSent: 0,
+    totalJoined: 0,
+    bonusPoints: 0,
+    conversionRate: 0,
+    topPlatform: 'whatsapp'
   });
   
   const { user } = useAuth();
   const { toast } = useToast();
 
-  // Generate referral code from user
+  // Load invite stats
   useEffect(() => {
     if (user?.id) {
-      const code = user.id.slice(-8).toUpperCase();
-      setReferralCode(code);
+      inviteService.getInviteStats(user.id).then(stats => {
+        setInviteStats(stats);
+      });
     }
   }, [user]);
 
-  // Generate invite link and QR code
+  // Generate referral code and invite link
   useEffect(() => {
-    const baseUrl = window.location.origin;
-    const linkParams = new URLSearchParams({
-      ref: referralCode,
-      source: 'app-invite'
-    });
-    
-    const link = `${baseUrl}/beta-chat?${linkParams.toString()}`;
-    setInviteLink(link);
-    
-    // Generate QR code
-    QRCode.toDataURL(link, {
-      width: 200,
-      margin: 2,
-      color: {
-        dark: '#D4AF37',
-        light: '#1A1B23'
-      }
-    }).then(setQrCodeUrl);
-  }, [referralCode]);
-
-  // Default message
-  useEffect(() => {
-    if (!customMessage) {
-      setCustomMessage(
-        `🚀 Bli med meg på SnakkaZ Beta - den nye generasjonen chat!\n\n` +
-        `✨ End-to-end kryptering\n` +
-        `💎 AI-assistert chat\n` +
-        `🎮 Interaktive funksjoner\n` +
-        `🔒 100% privat og sikkert\n\n` +
-        `Vi får begge bonuser når du registrerer deg! 🎁`
-      );
+    if (user?.id) {
+      // Generate simple referral code from user ID
+      const code = user.id.slice(-8).toUpperCase();
+      setReferralCode(code);
+      
+      // Generate invite link using service
+      const link = inviteService.generateInviteUrl(code);
+      setInviteLink(link);
+      
+      // Generate QR code
+      QRCode.toDataURL(link, {
+        width: 200,
+        margin: 2,
+        color: {
+          dark: '#D4AF37',
+          light: '#1A1B23'
+        }
+      }).then(setQrCodeUrl);
     }
-  }, [customMessage]);
+  }, [user]);
+
+  // Default message using service
+  useEffect(() => {
+    if (!customMessage && referralCode) {
+      const message = inviteService.generateShareMessage(referralCode);
+      setCustomMessage(message);
+    }
+  }, [customMessage, referralCode]);
 
   const copyToClipboard = async (text: string, label: string) => {
     try {
@@ -117,40 +117,36 @@ export const SnakkaZInviteSystem: React.FC<SnakkaZInviteSystemProps> = ({
     }
   };
 
-  const shareVia = (platform: string) => {
-    const fullMessage = `${customMessage}\n\n${inviteLink}`;
+  const shareVia = async (platform: string) => {
+    if (!referralCode) return;
     
-    let shareUrl = '';
-    
-    switch (platform) {
-      case 'whatsapp':
-        shareUrl = `https://wa.me/?text=${encodeURIComponent(fullMessage)}`;
-        break;
-      case 'telegram':
-        shareUrl = `https://t.me/share/url?url=${encodeURIComponent(inviteLink)}&text=${encodeURIComponent(customMessage)}`;
-        break;
-      case 'facebook':
-        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(inviteLink)}&quote=${encodeURIComponent(customMessage)}`;
-        break;
-      case 'twitter':
-        shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(customMessage)}&url=${encodeURIComponent(inviteLink)}&hashtags=SnakkaZBeta,SecureChat`;
-        break;
-      case 'linkedin':
-        shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(inviteLink)}`;
-        break;
-      case 'email':
-        shareUrl = `mailto:?subject=${encodeURIComponent('Bli med på SnakkaZ Beta!')}&body=${encodeURIComponent(fullMessage)}`;
-        break;
-      case 'sms':
-        shareUrl = `sms:?body=${encodeURIComponent(fullMessage)}`;
-        break;
-    }
-    
-    if (shareUrl) {
+    try {
+      // Track the share attempt
+      await inviteService.trackInviteClick(referralCode, platform);
+      
+      // Generate platform-specific share URL
+      const shareUrl = inviteService.getPlatformShareUrl(platform, customMessage);
+      
+      // Open share URL
       window.open(shareUrl, '_blank');
       
-      // Track share attempt
-      setInviteStats(prev => ({ ...prev, sent: prev.sent + 1 }));
+      // Update local stats
+      setInviteStats(prev => ({ 
+        ...prev, 
+        totalSent: prev.totalSent + 1 
+      }));
+      
+      toast({
+        title: "Delt! 🚀",
+        description: `Invitasjon delt via ${platform}. Vi sporer konverteringer automatisk.`,
+      });
+    } catch (error) {
+      console.error('Error sharing via platform:', error);
+      
+      // Fallback to traditional sharing
+      const fullMessage = `${customMessage}\n\n${inviteLink}`;
+      const fallbackUrl = inviteService.getPlatformShareUrl(platform, fullMessage);
+      window.open(fallbackUrl, '_blank');
     }
   };
 
@@ -174,16 +170,36 @@ export const SnakkaZInviteSystem: React.FC<SnakkaZInviteSystemProps> = ({
       {showStats && (
         <div className="grid grid-cols-3 gap-4">
           <div className="bg-cyberdark-800 p-4 rounded-lg text-center border border-cybergold-500/20">
-            <div className="text-2xl font-bold text-cybergold-400">{inviteStats.sent}</div>
+            <div className="text-2xl font-bold text-cybergold-400">{inviteStats.totalSent}</div>
             <div className="text-xs text-cybergold-500">Invitasjoner sendt</div>
           </div>
           <div className="bg-cyberdark-800 p-4 rounded-lg text-center border border-green-500/20">
-            <div className="text-2xl font-bold text-green-400">{inviteStats.joined}</div>
+            <div className="text-2xl font-bold text-green-400">{inviteStats.totalJoined}</div>
             <div className="text-xs text-cybergold-500">Venner registrert</div>
           </div>
           <div className="bg-cyberdark-800 p-4 rounded-lg text-center border border-purple-500/20">
-            <div className="text-2xl font-bold text-purple-400">{inviteStats.bonus}</div>
+            <div className="text-2xl font-bold text-purple-400">{inviteStats.bonusPoints}</div>
             <div className="text-xs text-cybergold-500">Bonus poeng</div>
+          </div>
+        </div>
+      )}
+
+      {/* Conversion Rate & Top Platform */}
+      {showStats && inviteStats.totalSent > 0 && (
+        <div className="grid grid-cols-2 gap-4">
+          <div className="bg-gradient-to-r from-green-500/10 to-cybergold-500/10 p-3 rounded-lg border border-green-500/20">
+            <div className="flex items-center gap-2 text-green-400">
+              <TrendingUp className="h-4 w-4" />
+              <span className="text-sm font-medium">Konverteringsrate</span>
+            </div>
+            <div className="text-lg font-bold text-white">{inviteStats.conversionRate}%</div>
+          </div>
+          <div className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 p-3 rounded-lg border border-blue-500/20">
+            <div className="flex items-center gap-2 text-blue-400">
+              <Star className="h-4 w-4" />
+              <span className="text-sm font-medium">Topp plattform</span>
+            </div>
+            <div className="text-lg font-bold text-white capitalize">{inviteStats.topPlatform}</div>
           </div>
         </div>
       )}

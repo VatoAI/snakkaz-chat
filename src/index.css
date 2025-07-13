@@ -1,9 +1,9 @@
+/* Import LiquidGlass Design System */
+@import './styles/liquid-glass-clean.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* Import LiquidGlass Design System */
-@import './styles/liquid-glass-clean.css';
 
 @layer base {
   :root {

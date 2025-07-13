@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/icons/snakkaz-icon-192.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#0f172a" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="SnakkaZ Chat" />
+    <link rel="apple-touch-icon" href="/icons/snakkaz-icon-192.png" />
+    <title>SnakkaZ Chat - Beta</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- CRITICAL: Emergency React Setup -->
+    <script>
+      window.SafeReact = window.SafeReact || {};
+      window.React = window.React || {};
+      window.reactExports = window.reactExports || {};
+      console.log('🚀 SnakkaZ: Emergency React setup initialized');
+    </script>
+    
+    <!-- Emergency Debug Systems -->
+    <script src="emergency-debug.js"></script>
+</head>
+<body>
+    <div id="root">
+        <!-- Loading state -->
+        <div style="
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #ffffff;
+            font-family: system-ui, -apple-system, sans-serif;
+        ">
+            <div style="text-align: center;">
+                <div style="font-size: 3rem; margin-bottom: 1rem;">🚀</div>
+                <h1 style="margin-bottom: 0.5rem;">SnakkaZ Chat Beta</h1>
+                <p style="opacity: 0.8;">Laster sikker chat...</p>
+                <div style="
+                    width: 40px; 
+                    height: 40px; 
+                    border: 3px solid #3b82f6; 
+                    border-top: 3px solid transparent; 
+                    border-radius: 50%; 
+                    animation: spin 1s linear infinite;
+                    margin: 1rem auto;
+                "></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CSS for spinner -->
+    <style>
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+
+    <!-- Load React and dependencies first -->
+    <script type="module" crossorigin src="assets/js/vendor-react-core-Cd05VJ5Y.js"></script>
+    <script type="module" crossorigin src="assets/js/vendor-react-dom-DmiX1e6y.js"></script>
+    <script type="module" crossorigin src="assets/js/vendor-react-hooks-Df_KBos6.js"></script>
+    <script type="module" crossorigin src="assets/js/vendor-router-DRYHFKTT-EMERGENCY-FIXED.js"></script>
+    
+    <!-- Load UI and services -->
+    <script type="module" crossorigin src="assets/js/components-ui-CoK5VGD0.js"></script>
+    <script type="module" crossorigin src="assets/js/app-services-Cf0jkxe3.js"></script>
+    
+    <!-- Load main app last -->
+    <script type="module" crossorigin src="assets/js/index-BWQuTEbr.js"></script>
+    
+    <!-- Creature system (clean version) -->
+    <script src="assets/js/snakkaz-adaptive-creature-clean.js"></script>
+    
+    <!-- Load CSS -->
+    <link rel="stylesheet" href="assets/css/snakkaz-cyber-business-system.css">
+    <link rel="stylesheet" href="assets/css/snakkaz-professional-dragonfly.css">
+    <link rel="stylesheet" href="assets/css/snakkaz-branding.css">
+    
+    <script>
+        console.log('🚀 SnakkaZ Chat Beta - App Loading Sequence Started');
+        
+        // Monitor loading
+        let loadAttempts = 0;
+        const maxAttempts = 30;
+        
+        function checkAppLoaded() {
+            loadAttempts++;
+            
+            // Check if React app has mounted
+            const root = document.getElementById('root');
+            const hasReactContent = root && (
+                root.children.length > 1 || 
+                (root.children.length === 1 && !root.children[0].textContent.includes('Laster sikker chat'))
+            );
+            
+            if (hasReactContent) {
+                console.log('✅ SnakkaZ Chat Beta loaded successfully!');
+                return;
+            }
+            
+            if (loadAttempts >= maxAttempts) {
+                console.error('❌ App loading timeout');
+                document.getElementById('root').innerHTML = `
+                    <div style="
+                        display: flex; 
+                        justify-content: center; 
+                        align-items: center; 
+                        height: 100vh; 
+                        background: #0f172a;
+                        color: #ffffff;
+                        font-family: system-ui;
+                        text-align: center;
+                    ">
+                        <div>
+                            <h1 style="color: #ef4444;">⚠️ Loading Error</h1>
+                            <p>SnakkaZ Chat kunne ikke lastes.</p>
+                            <button onclick="window.location.reload()" style="
+                                background: #3b82f6;
+                                color: white;
+                                border: none;
+                                padding: 12px 24px;
+                                border-radius: 6px;
+                                cursor: pointer;
+                                margin-top: 1rem;
+                            ">Prøv igjen</button>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Try again in 500ms
+            setTimeout(checkAppLoaded, 500);
+        }
+        
+        // Start checking after initial load
+        setTimeout(checkAppLoaded, 2000);
+    </script>
+</body>
+</html>

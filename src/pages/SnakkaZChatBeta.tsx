@@ -22,7 +22,7 @@ import {
 import { cn } from '@/lib/utils';
 import { chatService, Message, ChatRoom, UserProfile } from '@/services/chat/chatService';
 import { SnakkaZInviteSystem } from '@/components/invite/SnakkaZInviteSystem';
-import { GroupInviteSystem } from '@/components/chat/GroupInviteSystem';
+import { SnakkaZLogo } from '@/components/branding/SnakkaZLogo';
 
 const SnakkaZChatBeta: React.FC = () => {
   const { user, signOut } = useAuth();
@@ -201,36 +201,41 @@ const SnakkaZChatBeta: React.FC = () => {
           {/* Header */}
           <div className="p-4 border-b border-cybergold-500/20">
             <div className="flex items-center justify-between mb-4">
-              <h1 className="text-xl font-bold liquid-text">SnakkaZ Beta</h1>
-              <Badge variant="outline" className="border-cybergold-500/50 text-cybergold-400">
-                BETA
-              </Badge>
+              <SnakkaZLogo variant="header" animated={true} />
             </div>
-            
-            {/* User info */}
-            <div className="liquid-glass-subtle p-3 rounded-lg">
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-cybergold-500 rounded-full flex items-center justify-center">
-                  <span className="text-cyberdark-950 font-bold text-sm">
-                    {user?.email?.charAt(0).toUpperCase()}
-                  </span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-white text-sm font-medium truncate">
-                    {user?.email?.split('@')[0]}
-                  </p>
-                  <p className="text-cybergold-400 text-xs">Online</p>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={signOut}
-                  className="text-cyberred-400 hover:text-cyberred-300 p-1"
-                >
-                  <LogOut size={16} />
-                </Button>
+               {/* User info */}
+          <div className="liquid-glass-subtle p-3 rounded-lg">
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-cybergold-500 rounded-full flex items-center justify-center">
+                <span className="text-cyberdark-950 font-bold text-sm">
+                  {user?.email?.charAt(0).toUpperCase()}
+                </span>
               </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-white text-sm font-medium truncate">
+                  {user?.email?.split('@')[0]}
+                </p>
+                <p className="text-cybergold-400 text-xs">Online</p>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={signOut}
+                className="text-cyberred-400 hover:text-cyberred-300 p-1"
+              >
+                <LogOut size={16} />
+              </Button>
             </div>
+          </div>
+
+          {/* Featured Invite Button */}
+          <div className="p-4 pt-2">
+            <SnakkaZInviteSystem 
+              variant="button" 
+              className="w-full bg-gradient-to-r from-cybergold-600 to-green-600 hover:from-cybergold-500 hover:to-green-500 text-white border-0 shadow-lg"
+              showStats={false}
+            />
+          </div>
           </div>
 
           {/* Room List */}
@@ -509,7 +514,9 @@ const SnakkaZChatBeta: React.FC = () => {
           </div>
 
           <div className="space-y-4">
-            <GroupInviteSystem />
+            <div className="text-center">
+              <p className="text-cybergold-400">Gruppeinvitasjon kommer snart!</p>
+            </div>
           </div>
         </div>
       </div>

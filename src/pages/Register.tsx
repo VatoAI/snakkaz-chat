@@ -1,13 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Shield, Users, ArrowLeft, Gift } from 'lucide-react';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
+import { MathCaptcha } from '@/components/ui/math-captcha';
+import { Shield, Users, ArrowLeft, Gift, User, Mail, Lock, Eye, EyeOff, AlertCircle, Check } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { EnhancedRegisterForm } from '@/components/auth/EnhancedRegisterForm';
 import { EnhancedAvatarUpload } from '@/components/profile/EnhancedAvatarUpload';
+
+// Form validation schema
+const formSchema = z.object({
+  username: z.string().min(3, 'Brukernavn må være minst 3 tegn').max(20, 'Maks 20 tegn'),
+  email: z.string().email('Ugyldig e-postadresse'),
+  password: z.string().min(8, 'Passord må være minst 8 tegn'),
+  confirmPassword: z.string(),
+  acceptTerms: z.boolean().refine(val => val === true, 'Du må akseptere vilkårene'),
+}).refine(data => data.password === data.confirmPassword, {
+  message: "Passordene stemmer ikke overens",
+  path: ["confirmPassword"],
+});
 
 const Register: React.FC = () => {
   const navigate = useNavigate();
@@ -15,6 +34,7 @@ const Register: React.FC = () => {
   const [currentStep, setCurrentStep] = useState<'register' | 'avatar'>('register');
   const [registeredUser, setRegisteredUser] = useState<any>(null);
   const { toast } = useToast();
+  const { signUp } = useAuth();
   
   const inviteCode = searchParams.get('ref');
   const isInvited = Boolean(inviteCode);
@@ -106,6 +126,12 @@ const Register: React.FC = () => {
     }
   };
 
+  const handleImageError = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
+    const target = e.target as HTMLImageElement;
+    target.onerror = null;
+    target.src = "/logos/snakkaz-gold.png";
+  }, []);
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-cyberdark-950 py-8">
       <div className="w-full max-w-md px-4">
@@ -114,12 +140,7 @@ const Register: React.FC = () => {
             src="/logos/snakkaz-gold.svg" 
             alt="Snakkaz Logo" 
             className="h-16 w-auto"
-            onError={(e) => {
-              // Fallback til PNG hvis SVG ikke lastes
-              const target = e.target as HTMLImageElement;
-              target.onerror = null;
-              target.src = "/logos/snakkaz-gold.png";
-            }}
+            onError={handleImageError}
           />
         </div>
         <Card className="border-cybergold-600/20 bg-cyberdark-900">

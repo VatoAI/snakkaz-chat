@@ -208,16 +208,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Make available globally
 window.SnakkaZCreature = SnakkaZCreature;
-    constructor(container, options = {}) {
-        this.container = container;
-        this.options = {
-            phase: 'larva', // larva, water, dragonfly, legendary
-            size: 'medium', // tiny, small, medium, large, hero
-            autoEvolve: true,
-            saveProgress: true,
-            userId: options.userId || 'default',
-            ...options
-        };
         
         // 🎮 Creature stats
         this.stats = {
