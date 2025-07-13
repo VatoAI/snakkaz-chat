@@ -715,20 +715,50 @@ try {
 const START_TRANSITION = "startTransition";
 const startTransitionImpl = (() => {
   try {
-    // Emergency fix: Safe React access with fallbacks
-    if (typeof window !== 'undefined' && window.SafeReact && window.SafeReact[START_TRANSITION]) {
-      return window.SafeReact[START_TRANSITION];
+    // Emergency fix: Safe React access with fallbacks - IMPROVED
+    if (typeof window !== 'undefined' && window.React && window.React.startTransition) {
+      console.log('🔧 Using window.React.startTransition');
+      return window.React.startTransition;
     }
-    if (typeof reactExports !== 'undefined' && reactExports && reactExports[START_TRANSITION]) {
-      return reactExports[START_TRANSITION];
+    if (typeof window !== 'undefined' && window.reactExports && window.reactExports.startTransition) {
+      console.log('🔧 Using window.reactExports.startTransition');
+      return window.reactExports.startTransition;
     }
-    if (typeof React !== 'undefined' && React && React[START_TRANSITION]) {
-      return React[START_TRANSITION];
+    if (typeof window !== 'undefined' && window.SafeReact && window.SafeReact.startTransition) {
+      console.log('🔧 Using window.SafeReact.startTransition');
+      return window.SafeReact.startTransition;
     }
-    return null;
+    // Try direct React access last
+    if (typeof React !== 'undefined' && React && React.startTransition) {
+      console.log('🔧 Using React.startTransition');
+      return React.startTransition;
+    }
+    if (typeof reactExports !== 'undefined' && reactExports && reactExports.startTransition) {
+      console.log('🔧 Using reactExports.startTransition');
+      return reactExports.startTransition;
+    }
+    console.log('🔧 Using fallback startTransition');
+    return function(callback) {
+      console.log('🔧 Fallback startTransition executing callback');
+      if (typeof callback === 'function') {
+        try {
+          callback();
+        } catch (e) {
+          console.warn('Fallback startTransition error:', e);
+        }
+      }
+    };
   } catch (e) {
     console.warn("SafeReact: startTransition fallback failed:", e);
-    return null;
+    return function(callback) {
+      if (typeof callback === 'function') {
+        try {
+          callback();
+        } catch (e) {
+          console.warn('Emergency startTransition error:', e);
+        }
+      }
+    };
   }
 })();
 function BrowserRouter(_ref4) {

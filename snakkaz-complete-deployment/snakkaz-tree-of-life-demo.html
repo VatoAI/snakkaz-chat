@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🍎🐛🦋 Livets Tre - ØYESTIKKER Transformation</title>
+    <link rel="stylesheet" href="assets/css/snakkaz-enhanced-liquid-glass.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            font-family: 'Arial', sans-serif;
+            color: white;
+            overflow-x: hidden;
+        }
+        
+        .demo-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .title {
+            text-align: center;
+            font-size: clamp(1.5rem, 5vw, 3rem);
+            background: linear-gradient(45deg, #ffd700, #00ff88, #ff6ec7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 30px;
+        }
+        
+        .concept-explanation {
+            background: var(--glass-primary);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 215, 0, 0.2);
+        }
+        
+        .phase-demo {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .phase-card {
+            background: var(--glass-neutral);
+            backdrop-filter: blur(15px);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .phase-card:hover {
+            transform: translateY(-5px);
+            background: var(--glass-primary);
+            border-color: rgba(255, 215, 0, 0.3);
+        }
+        
+        .phase-emoji {
+            font-size: clamp(2rem, 8vw, 4rem);
+            margin-bottom: 10px;
+            display: block;
+        }
+        
+        .control-panel {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--glass-primary);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 15px 25px;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .control-btn {
+            background: linear-gradient(45deg, #ffd700, #ffed4e);
+            border: none;
+            border-radius: 10px;
+            padding: 10px 20px;
+            color: #0a0a0a;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+        
+        .control-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.4);
+        }
+        
+        .story-text {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .control-panel {
+                position: relative;
+                transform: none;
+                left: auto;
+                bottom: auto;
+                margin-top: 20px;
+            }
+            
+            .phase-demo {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <h1 class="title">🍎 LIVETS TRE → 🐛 LARVE → 🦋 ØYESTIKKER</h1>
+        
+        <div class="concept-explanation glass-container">
+            <h2>🌳 Konseptet: En levende maskot som vokser med deg</h2>
+            <p class="story-text">
+                <strong>🍎 Livets Tre:</strong> Alt starter med et magisk eple som henger på livets tre. 
+                Når brukeren registrerer seg, begynner eplet å gløde...
+            </p>
+            <p class="story-text">
+                <strong>🐛 Larven:</strong> Fra eplet kryper en liten larve ut! Den crawler rundt på skjermen 
+                og blir større og sterkere jo mer brukeren chatter og interagerer.
+            </p>
+            <p class="story-text">
+                <strong>💧 Transformasjon:</strong> Etter nok aktivitet, hopper larven ned i vann 
+                for en magisk transformasjon under overflaten.
+            </p>
+            <p class="story-text">
+                <strong>🦋 Øyestikker:</strong> Larven kommer opp som en vakker øyestikker (dragonfly) 
+                som fly elegant rundt på skjermen - symbolet på vekst og utvikling!
+            </p>
+        </div>
+        
+        <div class="phase-demo">
+            <div class="phase-card">
+                <span class="phase-emoji">🍎🌳</span>
+                <h3>Livets Tre</h3>
+                <p>Magisk eple som venter på å gi liv til din nye venn</p>
+            </div>
+            
+            <div class="phase-card">
+                <span class="phase-emoji">🐛</span>
+                <h3>Larve Fase</h3>
+                <p>Crawling rundt, lærer og vokser med hver melding du sender</p>
+            </div>
+            
+            <div class="phase-card">
+                <span class="phase-emoji">💧✨</span>
+                <h3>Transformasjon</h3>
+                <p>Magisk forvandling under vann med bobler og sparkles</p>
+            </div>
+            
+            <div class="phase-card">
+                <span class="phase-emoji">🦋</span>
+                <h3>Øyestikker</h3>
+                <p>Elegant dragonfly som flyr rundt som din trofaste følgesvenn</p>
+            </div>
+        </div>
+        
+        <div class="control-panel">
+            <button class="control-btn" onclick="startApplePhase()">🍎 Start med Eple</button>
+            <button class="control-btn" onclick="emergeLarva()">🐛 Larve ut av Eple</button>
+            <button class="control-btn" onclick="transformToWater()">💧 Gå under Vann</button>
+            <button class="control-btn" onclick="emergeAsDragonfly()">🦋 Bli Øyestikker</button>
+            <button class="control-btn" onclick="resetDemo()">🔄 Reset Demo</button>
+        </div>
+    </div>
+    
+    <!-- 🌳 Livets Tre Container -->
+    <div class="tree-of-life" id="treeOfLife">🌳</div>
+    
+    <!-- 🎭 Creature Stage -->
+    <div class="creature-stage" id="creatureStage"></div>
+    
+    <script>
+        let currentPhase = 'apple';
+        let creature = null;
+        let treeElement = document.getElementById('treeOfLife');
+        let stage = document.getElementById('creatureStage');
+        
+        // 🍎 Phase 1: Apple on Tree of Life
+        function startApplePhase() {
+            currentPhase = 'apple';
+            treeElement.innerHTML = '🍎🌳';
+            treeElement.style.animation = 'tree-blessing 3s ease-in-out infinite';
+            
+            // Clear any existing creature
+            if (creature) {
+                creature.remove();
+                creature = null;
+            }
+            
+            console.log('🍎 Apple phase started - livets tre er klar!');
+        }
+        
+        // 🐛 Phase 2: Larva emerges from apple
+        function emergeLarva() {
+            currentPhase = 'larva';
+            
+            // Create larva element
+            creature = document.createElement('div');
+            creature.className = 'creature larva-phase';
+            creature.innerHTML = '🐛';
+            creature.style.left = treeElement.offsetLeft + 'px';
+            creature.style.top = treeElement.offsetTop + 50 + 'px';
+            
+            stage.appendChild(creature);
+            
+            // Emergence animation
+            creature.style.animation = 'larva-emergence 2s ease-out, larva-crawl 8s linear 2s infinite';
+            
+            // Update tree to show empty apple
+            setTimeout(() => {
+                treeElement.innerHTML = '🌳';
+            }, 1000);
+            
+            // Add click interaction
+            creature.onclick = () => {
+                creature.classList.add('clicked');
+                createSparkles(creature);
+                setTimeout(() => creature.classList.remove('clicked'), 500);
+            };
+            
+            console.log('🐛 Larva has emerged from the apple!');
+        }
+        
+        // 💧 Phase 3: Water transformation
+        function transformToWater() {
+            if (!creature) return;
+            
+            currentPhase = 'water';
+            creature.className = 'creature water-phase';
+            creature.innerHTML = '💧';
+            creature.style.animation = 'water-bubble 2s ease-in-out infinite';
+            creature.style.left = '50%';
+            creature.style.top = '50%';
+            creature.style.transform = 'translate(-50%, -50%)';
+            
+            // Show transformation effect
+            const transition = document.createElement('div');
+            transition.className = 'phase-transition';
+            transition.innerHTML = '✨🌊✨';
+            stage.appendChild(transition);
+            
+            setTimeout(() => transition.remove(), 3000);
+            
+            console.log('💧 Water transformation in progress...');
+        }
+        
+        // 🦋 Phase 4: Emerge as dragonfly (øyestikker)
+        function emergeAsDragonfly() {
+            if (!creature) return;
+            
+            currentPhase = 'dragonfly';
+            creature.className = 'creature dragonfly-phase';
+            creature.innerHTML = '🦋';
+            creature.style.animation = 'dragonfly-fly 12s ease-in-out infinite';
+            creature.style.transform = 'none';
+            
+            // Celebration effect
+            const celebration = document.createElement('div');
+            celebration.className = 'phase-transition';
+            celebration.innerHTML = '🎉🦋🎉';
+            stage.appendChild(celebration);
+            
+            setTimeout(() => celebration.remove(), 3000);
+            
+            // Update tree to show blessing
+            treeElement.innerHTML = '✨🌳✨';
+            
+            console.log('🦋 Øyestikker has emerged! Transformation complete!');
+        }
+        
+        // ✨ Create sparkle effects
+        function createSparkles(element) {
+            for (let i = 0; i < 5; i++) {
+                setTimeout(() => {
+                    const sparkle = document.createElement('div');
+                    sparkle.className = 'magic-sparkle';
+                    sparkle.innerHTML = '✨';
+                    sparkle.style.left = element.offsetLeft + Math.random() * 40 + 'px';
+                    sparkle.style.top = element.offsetTop + Math.random() * 40 + 'px';
+                    
+                    stage.appendChild(sparkle);
+                    setTimeout(() => sparkle.remove(), 1000);
+                }, i * 100);
+            }
+        }
+        
+        // 🔄 Reset demo
+        function resetDemo() {
+            if (creature) {
+                creature.remove();
+                creature = null;
+            }
+            treeElement.innerHTML = '🌳';
+            currentPhase = 'idle';
+            console.log('🔄 Demo reset - ready for new transformation!');
+        }
+        
+        // Initialize demo
+        startApplePhase();
+        
+        // Auto-demo cycle (optional)
+        let autoDemoInterval;
+        
+        function startAutoDemo() {
+            let step = 0;
+            const steps = [startApplePhase, emergeLarva, transformToWater, emergeAsDragonfly];
+            
+            autoDemoInterval = setInterval(() => {
+                steps[step]();
+                step = (step + 1) % steps.length;
+                if (step === 0) setTimeout(resetDemo, 2000);
+            }, 5000);
+        }
+        
+        // Uncomment to start auto demo
+        // setTimeout(startAutoDemo, 3000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🐲 SnakkaZ Dopamin Design System</title>
+    <link rel="stylesheet" href="assets/css/snakkaz-dopamin-design-system.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 40px;
+            background: var(--calm-background);
+            color: var(--calm-white);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            overflow-x: hidden;
+        }
+        
+        .showcase-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        
+        .showcase-section {
+            margin: 80px 0;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border-radius: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .showcase-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 40px;
+            margin: 40px 0;
+        }
+        
+        .logo-card {
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(15px);
+            transition: all 0.4s ease;
+        }
+        
+        .logo-card:hover {
+            transform: translateY(-10px);
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--snakkaz-blue-glow);
+        }
+        
+        .logo-placeholder {
+            width: 100%;
+            height: 150px;
+            background: var(--sacred-gradient);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .logo-placeholder::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(45deg, 
+                transparent 30%, 
+                rgba(255, 255, 255, 0.1) 50%, 
+                transparent 70%);
+            animation: shimmer 3s ease-in-out infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(200%); }
+        }
+        
+        .color-palette {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 40px 0;
+            flex-wrap: wrap;
+        }
+        
+        .color-swatch {
+            width: 80px;
+            height: 80px;
+            border-radius: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .color-swatch:hover {
+            transform: scale(1.1);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .color-swatch::after {
+            content: attr(data-color);
+            position: absolute;
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            color: var(--calm-gray);
+            white-space: nowrap;
+        }
+        
+        .mascot-preview {
+            width: 200px;
+            height: 200px;
+            background: var(--sacred-gradient);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 120px;
+            margin: 0 auto 30px;
+            animation: mascotIdle 10s ease-in-out infinite;
+            cursor: pointer;
+            transition: all 0.4s ease;
+        }
+        
+        .mascot-preview:hover {
+            animation: mascotExcited 2s ease-in-out;
+            transform: scale(1.1);
+        }
+        
+        .design-principles {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin: 50px 0;
+        }
+        
+        .principle-card {
+            padding: 25px;
+            background: linear-gradient(135deg, 
+                rgba(0, 122, 255, 0.1) 0%,
+                rgba(255, 59, 48, 0.1) 100%);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+        }
+        
+        h1, h2, h3 {
+            background: var(--sacred-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-align: center;
+        }
+        
+        .interactive-demo {
+            position: relative;
+            padding: 50px;
+            background: radial-gradient(circle at center, 
+                rgba(0, 122, 255, 0.1) 0%,
+                transparent 70%);
+            border-radius: 30px;
+            margin: 40px 0;
+        }
+        
+        .demo-logo {
+            position: relative;
+            z-index: 2;
+        }
+        
+        .background-particles {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            overflow: hidden;
+            border-radius: 30px;
+        }
+        
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: var(--snakkaz-blue);
+            border-radius: 50%;
+            animation: float 8s ease-in-out infinite;
+            opacity: 0.6;
+        }
+        
+        @keyframes float {
+            0%, 100% { 
+                transform: translateY(0px) translateX(0px); 
+                opacity: 0.6;
+            }
+            50% { 
+                transform: translateY(-20px) translateX(10px); 
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="showcase-container">
+        <!-- Hero Section -->
+        <div class="showcase-section">
+            <h1>🐲 SnakkaZ Dopamin Design System</h1>
+            <p style="font-size: 18px; color: var(--calm-gray); margin-bottom: 40px;">
+                Basert på Apple's Liquid Glass 2025 & neuroscience research for optimal dopamin respons
+            </p>
+            
+            <div class="interactive-demo">
+                <div class="background-particles">
+                    <!-- Partikler genereres med JavaScript -->
+                </div>
+                <div class="mascot-preview snakkaz-mascot demo-logo" onclick="playMascotAnimation()">
+                    🐲
+                </div>
+                <p><strong>Klikk på maskotet!</strong></p>
+            </div>
+        </div>
+
+        <!-- Color Palette -->
+        <div class="showcase-section">
+            <h2>🎨 Dopamin-Optimalisert Fargepalett</h2>
+            <p>Starter palette: Rød/Blå/Sort | Premium palette: Gold/Sort</p>
+            
+            <div class="color-palette">
+                <div class="color-swatch" style="background: var(--snakkaz-red);" data-color="SnakkaZ Red"></div>
+                <div class="color-swatch" style="background: var(--snakkaz-blue);" data-color="SnakkaZ Blue"></div>
+                <div class="color-swatch" style="background: var(--snakkaz-black);" data-color="SnakkaZ Black"></div>
+                <div class="color-swatch" style="background: var(--snakkaz-gold);" data-color="SnakkaZ Gold"></div>
+                <div class="color-swatch" style="background: var(--premium-gradient);" data-color="Premium"></div>
+                <div class="color-swatch" style="background: var(--sacred-gradient);" data-color="Sacred"></div>
+            </div>
+        </div>
+
+        <!-- Logo Variations -->
+        <div class="showcase-section">
+            <h2>📱 Logo System - Alle Størrelser</h2>
+            
+            <div class="showcase-grid">
+                <div class="logo-card">
+                    <div class="logo-placeholder snakkaz-logo-frontpage">
+                        🐲
+                    </div>
+                    <h3>Front Page Logo</h3>
+                    <p>200x200px - Landing page</p>
+                </div>
+                
+                <div class="logo-card">
+                    <div class="logo-placeholder snakkaz-logo-app">
+                        🐲
+                    </div>
+                    <h3>App Logo</h3>
+                    <p>120x120px - App icon</p>
+                </div>
+                
+                <div class="logo-card">
+                    <div class="logo-placeholder snakkaz-logo-download">
+                        🐲
+                    </div>
+                    <h3>Download Logo</h3>
+                    <p>80x80px - Install button</p>
+                </div>
+                
+                <div class="logo-card">
+                    <div class="logo-placeholder snakkaz-logo-chat">
+                        🐲
+                    </div>
+                    <h3>Chat Logo</h3>
+                    <p>60x60px - Chat interface</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Design Principles -->
+        <div class="showcase-section">
+            <h2>🧠 Calm Technology Principles</h2>
+            
+            <div class="design-principles">
+                <div class="principle-card">
+                    <h3>✨ Purposeful Motion</h3>
+                    <p>Animasjoner som gir mening og guider brukerens oppmerksomhet</p>
+                </div>
+                
+                <div class="principle-card">
+                    <h3>🌊 Liquid Glass</h3>
+                    <p>Transparency og depth som skaper visuell hierarki</p>
+                </div>
+                
+                <div class="principle-card">
+                    <h3>🎯 Dopamin Triggers</h3>
+                    <p>Subtile belønninger som ikke forstyrrer fokus</p>
+                </div>
+                
+                <div class="principle-card">
+                    <h3>♿ Accessibility First</h3>
+                    <p>High contrast mode og keyboard navigation</p>
+                </div>
+                
+                <div class="principle-card">
+                    <h3>📱 Responsive Design</h3>
+                    <p>Optimal opplevelse på alle enheter</p>
+                </div>
+                
+                <div class="principle-card">
+                    <h3>🌙 Dark Mode Ready</h3>
+                    <p>Automatisk tilpasning til brukerens preferanser</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Implementation Ready -->
+        <div class="showcase-section">
+            <h2>🚀 Implementering</h2>
+            <p style="margin-bottom: 30px;">Design systemet er klart for integrering i main appen!</p>
+            
+            <div style="text-align: left; max-width: 600px; margin: 0 auto;">
+                <h3>📁 Filer opprettet:</h3>
+                <ul style="color: var(--calm-gray); line-height: 1.8;">
+                    <li><code>snakkaz-dopamin-design-system.css</code></li>
+                    <li><code>snakkaz-dopamin-showcase.html</code></li>
+                </ul>
+                
+                <h3>🎯 Neste steg:</h3>
+                <ul style="color: var(--calm-gray); line-height: 1.8;">
+                    <li>Integrer design system i main app</li>
+                    <li>Erstatt eksisterende logoer med nye størrelser</li>
+                    <li>Implementer SnakkaZ maskot (🐲)</li>
+                    <li>Test accessibility og responsiveness</li>
+                    <li>Valider dopamin-respons med brukere</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 🎭 Interactive mascot animation
+        function playMascotAnimation() {
+            const mascot = document.querySelector('.mascot-preview');
+            mascot.style.animation = 'mascotExcited 2s ease-in-out';
+            
+            setTimeout(() => {
+                mascot.style.animation = 'mascotIdle 10s ease-in-out infinite';
+            }, 2000);
+        }
+
+        // ✨ Generate floating particles
+        function createParticles() {
+            const container = document.querySelector('.background-particles');
+            
+            for (let i = 0; i < 20; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 8 + 's';
+                particle.style.animationDuration = (Math.random() * 4 + 6) + 's';
+                container.appendChild(particle);
+            }
+        }
+
+        // 🌊 Initialize on load
+        document.addEventListener('DOMContentLoaded', () => {
+            createParticles();
+            
+            // Add click handlers to color swatches
+            document.querySelectorAll('.color-swatch').forEach(swatch => {
+                swatch.addEventListener('click', () => {
+                    // Copy color value to clipboard (placeholder)
+                    console.log('Color clicked:', swatch.dataset.color);
+                });
+            });
+        });
+
+        // 🎯 Add some random dopamin triggers
+        setInterval(() => {
+            const logos = document.querySelectorAll('.snakkaz-logo');
+            if (logos.length > 0) {
+                const randomLogo = logos[Math.floor(Math.random() * logos.length)];
+                randomLogo.style.filter = 'drop-shadow(0 0 60px var(--snakkaz-gold))';
+                
+                setTimeout(() => {
+                    randomLogo.style.filter = '';
+                }, 1000);
+            }
+        }, 15000); // Hver 15. sekund - subtilt!
+    </script>
+</body>
+</html>

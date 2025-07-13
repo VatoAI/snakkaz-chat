@@ -4,20 +4,17 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/icons/snakkaz-icon-192.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <meta name="theme-color" content="#D4AF37" />
+    <meta name="theme-color" content="#0f172a" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: *.amazonaws.com storage.googleapis.com *.supabase.co *.supabase.in fonts.googleapis.com; font-src 'self' data: fonts.gstatic.com; connect-src 'self' *.supabase.co *.supabase.in wss://*.supabase.co *.amazonaws.com storage.googleapis.com *.snakkaz.com dash.snakkaz.com business.snakkaz.com docs.snakkaz.com analytics.snakkaz.com; media-src 'self' blob:; object-src 'none'; frame-src 'self'; worker-src 'self' blob:">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: *.amazonaws.com storage.googleapis.com *.supabase.co *.supabase.in; font-src 'self' data:; connect-src 'self' *.supabase.co *.supabase.in wss://*.supabase.co *.amazonaws.com storage.googleapis.com *.snakkaz.com dash.snakkaz.com business.snakkaz.com docs.snakkaz.com analytics.snakkaz.com; media-src 'self' blob:; object-src 'none'; frame-src 'self'; worker-src 'self' blob:">
 
     <!-- 🚨 EMERGENCY DEBUG SYSTEMS -->
     <script src="emergency-debug.js"></script>
     <script src="beta-fallback.js"></script>
 
-    <!-- 🎨 PROFESSIONAL CYBER BUSINESS DESIGN -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Cinzel:wght@400;600&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="assets/css/snakkaz-cyber-business-system.css">
-    <link rel="stylesheet" href="assets/css/snakkaz-professional-dragonfly.css">
+    <!-- 🎨 DESIGN SYSTEMS -->
     <link rel="stylesheet" href="assets/css/snakkaz-branding.css">
     <link rel="stylesheet" href="assets/css/snakkaz-creative-logo-system.css">
     <link rel="stylesheet" href="assets/css/snakkaz-dopamin-design-system.css">
@@ -27,68 +24,54 @@
     <!-- 🔗 PWA MANIFEST -->
     <link rel="manifest" href="manifest.json">
     
-    <title>SnakkaZ Cyber Business - Secure E2EE Chat</title>
-    <meta name="description" content="SnakkaZ Professional Cyber Business Chat - Secure E2EE Communication with Sacred Geometry Design">
+    <title>SnakkaZ Beta - Sikker End-to-End Kryptert Chat</title>
+    <meta name="description" content="SnakkaZ Beta - Moderne sikker chat med liquid glass design og end-to-end kryptering">
 </head>
-<body class="cyber-business-container">
-    <!-- Sacred Geometry Background Patterns -->
-    <div class="flower-of-life-bg"></div>
-    <div class="metatron-pattern"></div>
-    <div class="geometric-accent top-left"></div>
-    <div class="geometric-accent bottom-right"></div>
-    
+<body class="snakkaz-app">
     <div id="root">
-        <!-- Professional Header -->
-        <header class="cyber-header">
-            <div class="cyber-logo">
-                <div class="tree-of-life-symbol"></div>
-                SnakkaZ Cyber Business
-                <div class="encryption-badge">E2EE Secure</div>
+        <div class="logo-container">
+            <!-- 🐛 ADAPTIVE CREATURE SYSTEM - Hero Size -->
+            <div id="loading-creature" data-snakkaz-creature data-size="hero" data-user-id="user-main"></div>
+        </div>
+
+        <div class="snakkaz-header">
+            <div class="logo-area">
+                <div class="snakkaz-logo-main" onclick="playDragonflyAnimation(this)">
+                    <img src="assets/logos/snakkaz-logo-main.svg" alt="SnakkaZ" class="logo-img">
+                    <div class="logo-glow"></div>
+                </div>
             </div>
-        </header>
+        </div>
 
         <main class="app-content">
-            <div class="cyber-card">
-                <h1 class="cyber-title">SnakkaZ Cyber Business</h1>
-                <p class="cyber-subtitle">Professional Secure Communication Platform</p>
-                <p class="cyber-text">
-                    Advanced E2EE encrypted business chat with sacred geometry design. Professional-grade security for modern cyber business communications.
+            <div class="hero-section">
+                <h1 class="hero-title">SnakkaZ Beta</h1>
+                <p class="hero-subtitle">Velkommen til SnakkaZ Beta!</p>
+                <p class="hero-description">
+                    Sikker end-to-end kryptert chat med moderne liquid glass design. Beta-versjonen er under utvikling og blir bedre hver dag!
                 </p>
 
-                <div class="features-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin: 3rem 0;">
-                    <div class="cyber-card">
-                        <div class="feature-icon" style="font-size: 3rem; text-align: center; margin-bottom: 1rem;">🔐</div>
-                        <h3 class="cyber-title" style="font-size: 1.5rem; margin-bottom: 1rem;">Security Features</h3>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">🔐</div>
+                        <h3>Sikkerhetsfeatures</h3>
                         <div class="feature-list">
-                            <div class="cyber-text">🛡️ End-to-end encryption (AES-256-GCM)</div>
-                            <div class="cyber-text">📱 PWA - Professional installation</div>
-                            <div class="cyber-text">� Sacred geometry design</div>
-                            <div class="cyber-text">⚡ Real-time encrypted messaging</div>
-                            <div class="cyber-text">🔒 Quantum-safe authentication</div>
-                            <div class="cyber-text">🛸 Dragonfly metamorphosis system</div>
-                        </div>
-                    </div>
-                    
-                    <div class="cyber-card">
-                        <div class="feature-icon" style="font-size: 3rem; text-align: center; margin-bottom: 1rem;">💼</div>
-                        <h3 class="cyber-title" style="font-size: 1.5rem; margin-bottom: 1rem;">Cyber Business</h3>
-                        <div class="feature-list">
-                            <div class="cyber-text">🏢 Professional gold/black design</div>
-                            <div class="cyber-text">📐 Geometric and metaphoric symbols</div>
-                            <div class="cyber-text">🌸 Flower of Life integration</div>
-                            <div class="cyber-text">🍎 Tree of Life symbolism</div>
-                            <div class="cyber-text">🔮 Sacred geometry patterns</div>
-                            <div class="cyber-text">⚡ Mature, sophisticated interface</div>
+                            <div class="feature-item">🛡️ End-to-end kryptering (AES-256-GCM)</div>
+                            <div class="feature-item">📱 PWA - Installer som app</div>
+                            <div class="feature-item">🌊 Liquid glass design</div>
+                            <div class="feature-item">⚡ Sanntid meldinger</div>
+                            <div class="feature-item">🔒 Sikker autentisering</div>
+                            <div class="feature-item">✨ Kreative logo animasjoner</div>
                         </div>
                     </div>
                 </div>
 
-                <div class="cyber-card" style="text-align: center; margin-top: 2rem;">
-                    <h3 class="cyber-title" style="font-size: 1.8rem; margin-bottom: 1rem;">Professional Beta Status</h3>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin: 2rem 0;">
-                        <div class="encryption-badge" style="justify-content: center;">Design: Cyber Business Professional</div>
-                        <div class="encryption-badge" style="justify-content: center;">Security: E2EE Quantum-Safe</div>
-                        <div class="encryption-badge" style="justify-content: center;">Symbolism: Sacred Geometry</div>
+                <div class="beta-status">
+                    <h3>Beta Status: Denne versjonen er under aktiv utvikling</h3>
+                    <div class="status-grid">
+                        <div class="status-item">Design: Liquid glass med kreative logo animasjoner</div>
+                        <div class="status-item">Support: Rapporter problemer på Discord</div>
+                        <div class="status-item">Privacy: Alle meldinger er end-to-end krypterte</div>
                     </div>
                 </div>
 
@@ -322,51 +305,5 @@
             }
         }
     </style>
-
-    <!-- Professional Dragonfly Metamorphosis System -->
-    <script src="assets/js/snakkaz-professional-dragonfly.js"></script>
-    
-    <script>
-        // Professional cyber business initialization
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log('🚀 SnakkaZ Cyber Business Professional Platform Initialized');
-            
-            // Listen for dragonfly encryption events
-            document.addEventListener('dragonflyEncryption', (event) => {
-                console.log('🔐 Professional Encryption Status:', event.detail);
-                
-                // Update encryption badges
-                const badges = document.querySelectorAll('.encryption-badge');
-                badges.forEach(badge => {
-                    if (event.detail.isSecure) {
-                        badge.style.color = '#00FF00';
-                        badge.style.borderColor = '#00FF00';
-                        badge.textContent = 'E2EE Quantum Secure ✓';
-                    }
-                });
-            });
-            
-            // Professional loading completion
-            setTimeout(() => {
-                const cards = document.querySelectorAll('.cyber-card');
-                cards.forEach((card, index) => {
-                    card.style.transition = 'all 0.6s ease';
-                    card.style.transform = 'translateY(0)';
-                    card.style.opacity = '1';
-                });
-            }, 300);
-        });
-        
-        // Professional accessibility enhancements
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                // Return focus to dragonfly
-                const dragonfly = document.querySelector('.snakkaz-dragonfly-system');
-                if (dragonfly) {
-                    dragonfly.focus();
-                }
-            }
-        });
-    </script>
 </body>
 </html>

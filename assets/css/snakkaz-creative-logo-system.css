@@ -1,0 +1,196 @@
+/* 🎨 SNAKKAZ KREATIV LOGO SYSTEM MED LIQUID GLASS */
+
+/* Base logo klasser */
+.snakkaz-logo {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  filter: drop-shadow(0 0 20px rgba(0, 170, 255, 0.3));
+}
+
+/* Logo varianter */
+.snakkaz-logo-main {
+  width: auto;
+  height: 50px;
+  animation: logoFloat 6s ease-in-out infinite;
+}
+
+.snakkaz-logo-header {
+  width: auto; 
+  height: 40px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  padding: 5px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.snakkaz-logo-splash {
+  width: 120px;
+  height: 120px;
+  border-radius: 30px;
+  background: linear-gradient(135deg, 
+    rgba(0, 170, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.05) 50%,
+    rgba(0, 170, 255, 0.1) 100%);
+  backdrop-filter: blur(20px) saturate(200%);
+  border: 2px solid rgba(0, 170, 255, 0.3);
+  box-shadow: 
+    0 20px 40px rgba(0, 170, 255, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.snakkaz-logo-loading {
+  width: 80px;
+  height: 80px;
+  border-radius: 20px;
+  animation: logoGlow 3s ease-in-out infinite alternate;
+}
+
+/* Hover effekter */
+.snakkaz-logo:hover {
+  transform: scale(1.05) rotateY(5deg);
+  filter: drop-shadow(0 0 30px rgba(0, 170, 255, 0.5));
+}
+
+.snakkaz-logo-header:hover {
+  background: rgba(0, 170, 255, 0.1);
+  border-color: rgba(0, 170, 255, 0.4);
+  transform: translateY(-2px);
+}
+
+.snakkaz-logo-splash:hover {
+  transform: scale(1.1);
+  box-shadow: 
+    0 30px 60px rgba(0, 170, 255, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* Animations */
+@keyframes logoFloat {
+  0%, 100% { 
+    transform: translateY(0px) rotateZ(0deg); 
+  }
+  25% { 
+    transform: translateY(-10px) rotateZ(1deg); 
+  }
+  50% { 
+    transform: translateY(-5px) rotateZ(0deg); 
+  }
+  75% { 
+    transform: translateY(-15px) rotateZ(-1deg); 
+  }
+}
+
+@keyframes logoGlow {
+  0% { 
+    filter: drop-shadow(0 0 20px rgba(0, 170, 255, 0.3));
+    transform: scale(1);
+  }
+  100% { 
+    filter: drop-shadow(0 0 40px rgba(0, 170, 255, 0.7));
+    transform: scale(1.05);
+  }
+}
+
+@keyframes logoPulse {
+  0%, 100% { 
+    opacity: 0.8; 
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 1; 
+    transform: scale(1.02);
+  }
+}
+
+/* Liquid glass logo container */
+.logo-container {
+  position: relative;
+  display: inline-block;
+}
+
+.logo-container::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  right: -10px;
+  bottom: -10px;
+  background: linear-gradient(45deg, 
+    rgba(0, 170, 255, 0.1),
+    rgba(255, 255, 255, 0.05),
+    rgba(0, 170, 255, 0.1));
+  border-radius: inherit;
+  filter: blur(20px);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  z-index: -1;
+}
+
+.logo-container:hover::before {
+  opacity: 1;
+}
+
+/* Responsive logo system */
+@media (max-width: 768px) {
+  .snakkaz-logo-main {
+    height: 40px;
+  }
+  
+  .snakkaz-logo-header {
+    height: 35px;
+    padding: 3px 8px;
+  }
+  
+  .snakkaz-logo-splash {
+    width: 100px;
+    height: 100px;
+    border-radius: 25px;
+  }
+}
+
+@media (max-width: 480px) {
+  .snakkaz-logo-main {
+    height: 35px;
+  }
+  
+  .snakkaz-logo-splash {
+    width: 80px;
+    height: 80px;
+    border-radius: 20px;
+  }
+}
+
+/* Special effects for loading */
+.logo-loading-effect {
+  animation: logoPulse 2s infinite, logoFloat 6s ease-in-out infinite;
+}
+
+/* Logo med tekst kombinasjon */
+.snakkaz-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.snakkaz-brand-text {
+  font-size: 1.5em;
+  font-weight: bold;
+  background: linear-gradient(135deg, #00aaff, #ffffff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 20px rgba(0, 170, 255, 0.3);
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .snakkaz-logo {
+    filter: drop-shadow(0 0 25px rgba(0, 170, 255, 0.4));
+  }
+  
+  .snakkaz-logo-header {
+    background: rgba(0, 0, 0, 0.2);
+    border-color: rgba(0, 170, 255, 0.2);
+  }
+}

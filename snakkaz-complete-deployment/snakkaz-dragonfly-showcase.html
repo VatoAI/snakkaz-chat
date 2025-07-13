@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🐛 SnakkaZ Øyestikker Maskot System</title>
+    <link rel="stylesheet" href="assets/css/snakkaz-dragonfly-system.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 40px;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .showcase-container {
+            max-width: 900px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        
+        .showcase-section {
+            margin: 60px 0;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: var(--glass-blur);
+            border-radius: 25px;
+            border: var(--glass-border);
+            box-shadow: var(--glass-shadow);
+        }
+        
+        .dragonfly-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+            margin: 40px 0;
+        }
+        
+        .dragonfly-demo {
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .dragonfly-demo:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.08);
+        }
+        
+        h1, h2, h3 {
+            color: var(--calm-white);
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: var(--calm-gray);
+            font-size: 1.1em;
+            margin-bottom: 40px;
+        }
+        
+        .feature-list {
+            text-align: left;
+            max-width: 500px;
+            margin: 0 auto;
+            color: var(--calm-gray);
+            line-height: 1.8;
+        }
+        
+        .chat-preview {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 30px;
+            margin: 30px 0;
+            position: relative;
+        }
+        
+        .chat-message {
+            background: rgba(0, 122, 255, 0.2);
+            border-radius: 18px;
+            padding: 12px 16px;
+            margin: 10px 0;
+            display: inline-block;
+            max-width: 70%;
+            position: relative;
+        }
+        
+        .chat-message.own {
+            background: rgba(52, 199, 89, 0.2);
+            margin-left: auto;
+            display: block;
+            text-align: right;
+        }
+        
+        .interactive-area {
+            background: radial-gradient(circle at center, 
+                rgba(0, 122, 255, 0.1) 0%,
+                transparent 60%);
+            border-radius: 30px;
+            padding: 50px;
+            margin: 40px 0;
+            position: relative;
+        }
+        
+        .floating-particles {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            overflow: hidden;
+            border-radius: 30px;
+        }
+        
+        .particle {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: var(--snakkaz-primary);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+            opacity: 0.4;
+        }
+        
+        @keyframes float {
+            0%, 100% { 
+                transform: translateY(0px) translateX(0px) scale(1); 
+                opacity: 0.4;
+            }
+            50% { 
+                transform: translateY(-30px) translateX(15px) scale(1.2); 
+                opacity: 0.8;
+            }
+        }
+        
+        .implementation-box {
+            background: rgba(52, 199, 89, 0.1);
+            border: 2px solid rgba(52, 199, 89, 0.3);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 30px 0;
+            text-align: left;
+        }
+        
+        code {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="showcase-container">
+        <!-- Hero Section -->
+        <div class="showcase-section">
+            <h1>🐛 SnakkaZ Øyestikker Maskot</h1>
+            <p class="subtitle">Calm Technology Design - Enkel, fokusert og vennlig</p>
+            
+            <div class="interactive-area">
+                <div class="floating-particles"></div>
+                <div class="snakkaz-brand-with-dragonfly">
+                    <div class="snakkaz-dragonfly snakkaz-dragonfly-large" onclick="playDragonflyAnimation(this)">
+                        <div class="dragonfly-container dragonfly-loading">
+                            🐛
+                        </div>
+                    </div>
+                    <div class="snakkaz-brand-text" style="font-size: 2.5em;">SnakkaZ</div>
+                </div>
+                <p style="margin-top: 20px; color: var(--calm-gray);">
+                    <strong>Klikk på øyestikkeren!</strong> Se hvordan den reagerer naturlig og rolig.
+                </p>
+            </div>
+        </div>
+
+        <!-- Size Variants -->
+        <div class="showcase-section">
+            <h2>📱 Størrelser og Varianter</h2>
+            
+            <div class="dragonfly-grid">
+                <div class="dragonfly-demo">
+                    <div class="snakkaz-dragonfly snakkaz-dragonfly-large" onclick="playDragonflyAnimation(this)">
+                        <div class="dragonfly-container dragonfly-loading">🐛</div>
+                    </div>
+                    <h3>Large (120px)</h3>
+                    <p>Landing page & app icon</p>
+                </div>
+                
+                <div class="dragonfly-demo">
+                    <div class="snakkaz-dragonfly snakkaz-dragonfly-medium" onclick="playDragonflyAnimation(this)">
+                        <div class="dragonfly-container dragonfly-chat">🐛</div>
+                    </div>
+                    <h3>Medium (80px)</h3>
+                    <p>Chat interface & buttons</p>
+                </div>
+                
+                <div class="dragonfly-demo">
+                    <div class="snakkaz-dragonfly snakkaz-dragonfly-small" onclick="playDragonflyAnimation(this)">
+                        <div class="dragonfly-container dragonfly-success">🐛</div>
+                    </div>
+                    <h3>Small (50px)</h3>
+                    <p>Notifications & status</p>
+                </div>
+                
+                <div class="dragonfly-demo">
+                    <div class="snakkaz-dragonfly snakkaz-dragonfly-tiny" onclick="playDragonflyAnimation(this)">
+                        <div class="dragonfly-container">🐛</div>
+                    </div>
+                    <h3>Tiny (32px)</h3>
+                    <p>Inline & indicators</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Preview -->
+        <div class="showcase-section">
+            <h2>💬 Chat Interface med Øyestikker</h2>
+            
+            <div class="chat-preview">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
+                    <div class="snakkaz-dragonfly snakkaz-dragonfly-small">
+                        <div class="dragonfly-container dragonfly-chat">🐛</div>
+                    </div>
+                    <strong>SnakkaZ Chat</strong>
+                    <div class="chat-dragonfly-indicator"></div>
+                </div>
+                
+                <div class="chat-message">
+                    Hei! Velkommen til SnakkaZ 👋
+                </div>
+                
+                <div class="chat-message own">
+                    Takk! Elsker øyestikker-maskoten! 🐛✨
+                </div>
+                
+                <div class="chat-message">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <div class="snakkaz-dragonfly snakkaz-dragonfly-tiny">
+                            <div class="dragonfly-container typing-dragonfly">🐛</div>
+                        </div>
+                        <span style="opacity: 0.7;">skriver...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Features -->
+        <div class="showcase-section">
+            <h2>✨ Øyestikker Features</h2>
+            
+            <div class="feature-list">
+                <h3>🧠 Calm Technology Prinsipper:</h3>
+                <ul>
+                    <li><strong>Natural Movement</strong> - Svever som en ekte øyestikker</li>
+                    <li><strong>Subtle Feedback</strong> - Reagerer på interaksjon uten å distrahere</li>
+                    <li><strong>Accessibility First</strong> - Keyboard navigation og high contrast</li>
+                    <li><strong>Performance Optimized</strong> - CSS animations, ikke JavaScript</li>
+                </ul>
+                
+                <h3>🎨 Design Prinsipper:</h3>
+                <ul>
+                    <li><strong>Forenklet Fargepalett</strong> - 4 hovedfarger (ikke 6+)</li>
+                    <li><strong>Liquid Glass</strong> - Transparent og moderne</li>
+                    <li><strong>Responsive</strong> - Fungerer på alle skjermstørrelser</li>
+                    <li><strong>Contextual</strong> - Forskjellige varianter for ulike situasjoner</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Implementation -->
+        <div class="showcase-section">
+            <h2>🚀 Implementering</h2>
+            
+            <div class="implementation-box">
+                <h3>✅ Klart for integrering:</h3>
+                <p><code>snakkaz-dragonfly-system.css</code> - Komplett maskot system</p>
+                <p><code>snakkaz-dragonfly-showcase.html</code> - Demo og dokumentasjon</p>
+                
+                <h3>🎯 Neste steg:</h3>
+                <ol>
+                    <li>Integrer øyestikker i main app</li>
+                    <li>Test chat funktionalitet</li>
+                    <li>Verifiser responsiveness</li>
+                    <li>Valider accessibility</li>
+                    <li>Debug og perfeksjonere</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 🐛 Dragonfly Interactive Functions
+        function playDragonflyAnimation(element) {
+            const container = element.querySelector('.dragonfly-container');
+            if (container) {
+                container.style.animation = 'dragonflyExcited 2s ease-in-out';
+                
+                setTimeout(() => {
+                    container.style.animation = 'dragonflyHover 4s ease-in-out infinite';
+                }, 2000);
+            }
+        }
+
+        // ✨ Generate floating particles
+        function createFloatingParticles() {
+            const container = document.querySelector('.floating-particles');
+            if (!container) return;
+            
+            for (let i = 0; i < 15; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 6 + 's';
+                particle.style.animationDuration = (Math.random() * 3 + 4) + 's';
+                container.appendChild(particle);
+            }
+        }
+
+        // 🌊 Initialize on load
+        document.addEventListener('DOMContentLoaded', () => {
+            createFloatingParticles();
+            
+            // Auto-animate one dragonfly every 10 seconds
+            setInterval(() => {
+                const dragonflies = document.querySelectorAll('.snakkaz-dragonfly');
+                if (dragonflies.length > 0) {
+                    const randomDragonfly = dragonflies[Math.floor(Math.random() * dragonflies.length)];
+                    playDragonflyAnimation(randomDragonfly);
+                }
+            }, 10000);
+        });
+        
+        console.log('🐛 SnakkaZ Øyestikker Maskot System activated!');
+    </script>
+</body>
+</html>

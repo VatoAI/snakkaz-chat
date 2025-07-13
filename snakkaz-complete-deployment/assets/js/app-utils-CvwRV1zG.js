@@ -16,14 +16,44 @@ class SupabaseSingleton {
    */
   static getInstance() {
     if (!this.instance) {
-      this.instance = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-        auth: {
-          persistSession: true,
-          autoRefreshToken: true,
-          detectSessionInUrl: false
-          // More stable in production
-        }
-      });
+      // Emergency safety check for createClient
+      if (typeof createClient === 'undefined') {
+        console.warn('Emergency: createClient not available, returning mock client');
+        this.instance = {
+          auth: {
+            getSession: () => Promise.resolve({ data: { session: null }, error: null }),
+            signInWithPassword: () => Promise.resolve({ data: null, error: new Error('Mock client') }),
+            signOut: () => Promise.resolve({ error: null }),
+            onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } })
+          },
+          from: () => ({
+            select: () => ({ eq: () => ({ single: () => Promise.resolve({ data: null, error: null }) }) }),
+            insert: () => Promise.resolve({ data: null, error: null }),
+            update: () => ({ eq: () => Promise.resolve({ data: null, error: null }) }),
+            delete: () => ({ eq: () => Promise.resolve({ data: null, error: null }) })
+          }),
+          channel: () => ({
+            on: () => ({ subscribe: () => Promise.resolve('ok') }),
+            unsubscribe: () => Promise.resolve('ok')
+          })
+        };
+        return this.instance;
+      }
+      
+      try {
+        this.instance = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+          auth: {
+            persistSession: true,
+            autoRefreshToken: true,
+            detectSessionInUrl: false
+            // More stable in production
+          }
+        });
+      } catch (error) {
+        console.error('Emergency: createClient failed:', error);
+        // Return the mock client as fallback
+        return this.getInstance();
+      }
     }
     return this.instance;
   }

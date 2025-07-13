@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SnakkaZ Cyber Business - Sacred Geometry & Professional Dragonfly</title>
+    
+    <!-- Meta tags for professional branding -->
+    <meta name="description" content="SnakkaZ Professional Chat Platform - Cyber Business Design with Sacred Geometry, E2EE Encryption, and Dragonfly Metamorphosis">
+    <meta name="keywords" content="cyber business, sacred geometry, tree of life, flower of life, E2EE, encryption, dragonfly, metamorphosis, professional chat">
+    <meta name="theme-color" content="#D4AF37">
+    
+    <!-- Professional Styles -->
+    <link rel="stylesheet" href="../assets/css/snakkaz-cyber-business-system.css">
+    <link rel="stylesheet" href="../assets/css/snakkaz-professional-dragonfly.css">
+    
+    <!-- Professional Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Cinzel:wght@400;600&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Demo-specific enhancements */
+        .demo-container {
+            min-height: 100vh;
+            position: relative;
+        }
+        
+        .demo-header {
+            text-align: center;
+            padding: 4rem 2rem;
+            position: relative;
+            z-index: 10;
+        }
+        
+        .demo-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            position: relative;
+            z-index: 5;
+        }
+        
+        .feature-card {
+            background: linear-gradient(135deg, var(--cyber-charcoal) 0%, var(--cyber-dark) 100%);
+            border: 1px solid var(--cyber-border);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: var(--professional-shadow);
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .feature-card:hover {
+            border-color: var(--cyber-gold);
+            box-shadow: var(--sacred-glow), var(--professional-shadow);
+            transform: translateY(-5px);
+        }
+        
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 48%, rgba(212, 175, 55, 0.05) 49%, rgba(212, 175, 55, 0.05) 51%, transparent 52%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+        
+        .feature-card:hover::before {
+            opacity: 1;
+        }
+        
+        .feature-icon {
+            font-size: 3rem;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            filter: drop-shadow(var(--sacred-glow));
+        }
+        
+        .feature-title {
+            font-family: var(--font-sacred);
+            font-size: 1.5rem;
+            color: var(--cyber-gold);
+            text-align: center;
+            margin-bottom: 1rem;
+            letter-spacing: 1px;
+        }
+        
+        .feature-description {
+            color: var(--cyber-text-dim);
+            line-height: 1.6;
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .feature-tech {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .tech-badge {
+            background: var(--cyber-dark);
+            color: var(--cyber-gold);
+            padding: 0.3rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-family: var(--font-mono);
+            border: 1px solid var(--cyber-border);
+        }
+        
+        .lifecycle-demo {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 3rem;
+            background: linear-gradient(135deg, var(--cyber-dark) 0%, var(--cyber-charcoal) 50%, var(--cyber-black) 100%);
+            border-radius: 12px;
+            border: 2px solid var(--cyber-gold);
+            box-shadow: var(--sacred-glow);
+            margin-top: 2rem;
+        }
+        
+        .lifecycle-stages {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 3rem;
+            margin: 2rem 0;
+            flex-wrap: wrap;
+        }
+        
+        .lifecycle-stage {
+            text-align: center;
+            padding: 1.5rem;
+            border-radius: 8px;
+            background: var(--cyber-charcoal);
+            border: 1px solid var(--cyber-border);
+            transition: all 0.3s ease;
+            min-width: 150px;
+        }
+        
+        .lifecycle-stage:hover {
+            border-color: var(--cyber-gold);
+            box-shadow: var(--sacred-glow);
+        }
+        
+        .stage-emoji {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+        
+        .stage-name {
+            font-family: var(--font-sacred);
+            color: var(--cyber-gold);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stage-description {
+            font-size: 0.9rem;
+            color: var(--cyber-text-dim);
+        }
+        
+        .arrow {
+            font-size: 2rem;
+            color: var(--cyber-gold);
+            opacity: 0.7;
+        }
+        
+        @media (max-width: 768px) {
+            .lifecycle-stages {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .arrow {
+                transform: rotate(90deg);
+            }
+            
+            .demo-content {
+                grid-template-columns: 1fr;
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body class="cyber-business-container">
+    <!-- Sacred Geometry Background Patterns -->
+    <div class="flower-of-life-bg"></div>
+    <div class="metatron-pattern"></div>
+    <div class="geometric-accent top-left"></div>
+    <div class="geometric-accent bottom-right"></div>
+    
+    <!-- Professional Header -->
+    <header class="cyber-header">
+        <div class="cyber-logo">
+            <div class="tree-of-life-symbol"></div>
+            SnakkaZ Cyber Business
+            <div class="encryption-badge">E2EE Secure</div>
+        </div>
+    </header>
+    
+    <!-- Demo Container -->
+    <div class="demo-container">
+        <!-- Hero Section -->
+        <div class="demo-header">
+            <h1 class="cyber-title">Professional Sacred Geometry Design</h1>
+            <p class="cyber-subtitle">Cyber Business Gold/Black Theme • Tree of Life • Flower of Life • E2EE Encryption</p>
+        </div>
+        
+        <!-- Feature Grid -->
+        <div class="demo-content">
+            <!-- Sacred Geometry -->
+            <div class="feature-card">
+                <div class="feature-icon">🌳</div>
+                <h2 class="feature-title">Tree of Life</h2>
+                <p class="feature-description">Sacred geometric patterns representing growth, wisdom, and eternal connection. Professional symbolism for business communication.</p>
+                <div class="feature-tech">
+                    <span class="tech-badge">Sacred Geometry</span>
+                    <span class="tech-badge">Professional</span>
+                </div>
+            </div>
+            
+            <!-- Flower of Life -->
+            <div class="feature-card">
+                <div class="feature-icon">🌸</div>
+                <h2 class="feature-title">Flower of Life</h2>
+                <p class="feature-description">Ancient geometric pattern symbolizing creation and divine order. Integrated into the design as subtle background elements.</p>
+                <div class="feature-tech">
+                    <span class="tech-badge">Geometric</span>
+                    <span class="tech-badge">Metaphoric</span>
+                </div>
+            </div>
+            
+            <!-- E2EE Encryption -->
+            <div class="feature-card">
+                <div class="feature-icon">🔐</div>
+                <h2 class="feature-title">E2EE Encryption</h2>
+                <p class="feature-description">End-to-end encryption with visual indicators. Professional security for cyber business communications.</p>
+                <div class="feature-tech">
+                    <span class="tech-badge">AES-256</span>
+                    <span class="tech-badge">Quantum-Safe</span>
+                </div>
+            </div>
+            
+            <!-- Cyber Business Design -->
+            <div class="feature-card">
+                <div class="feature-icon">💼</div>
+                <h2 class="feature-title">Cyber Business</h2>
+                <p class="feature-description">Mature, professional design system. Gold and black color scheme for sophisticated business environments.</p>
+                <div class="feature-tech">
+                    <span class="tech-badge">Gold/Black</span>
+                    <span class="tech-badge">Professional</span>
+                </div>
+            </div>
+            
+            <!-- Dragonfly Metamorphosis -->
+            <div class="feature-card">
+                <div class="feature-icon">🛸</div>
+                <h2 class="feature-title">Dragonfly Evolution</h2>
+                <p class="feature-description">Accurate lifecycle representation: Apple → Aquatic Nymph → Emergence → Adult Øyestikker. Scientific metamorphosis symbolism.</p>
+                <div class="feature-tech">
+                    <span class="tech-badge">Lifecycle</span>
+                    <span class="tech-badge">Metamorphosis</span>
+                </div>
+            </div>
+            
+            <!-- Mobile Optimization -->
+            <div class="feature-card">
+                <div class="feature-icon">📱</div>
+                <h2 class="feature-title">Mobile Optimized</h2>
+                <p class="feature-description">Responsive design with touch-friendly interactions. Professional mobile experience with accessibility focus.</p>
+                <div class="feature-tech">
+                    <span class="tech-badge">Responsive</span>
+                    <span class="tech-badge">Touch-Ready</span>
+                </div>
+            </div>
+            
+            <!-- Dragonfly Lifecycle Demo -->
+            <div class="lifecycle-demo">
+                <h2 class="cyber-title" style="font-size: 2rem; margin-bottom: 1rem;">Accurate Dragonfly Metamorphosis</h2>
+                <p class="cyber-subtitle" style="margin-bottom: 2rem;">Scientific lifecycle representation with sacred symbolism</p>
+                
+                <div class="lifecycle-stages">
+                    <div class="lifecycle-stage">
+                        <span class="stage-emoji">🍎</span>
+                        <div class="stage-name">Forbidden Apple</div>
+                        <div class="stage-description">Tree of Life origin</div>
+                    </div>
+                    
+                    <span class="arrow">→</span>
+                    
+                    <div class="lifecycle-stage">
+                        <span class="stage-emoji">🪲</span>
+                        <div class="stage-name">Aquatic Nymph</div>
+                        <div class="stage-description">Underwater larval stage</div>
+                    </div>
+                    
+                    <span class="arrow">→</span>
+                    
+                    <div class="lifecycle-stage">
+                        <span class="stage-emoji">🛡️</span>
+                        <div class="stage-name">Emergence</div>
+                        <div class="stage-description">Metamorphosis process</div>
+                    </div>
+                    
+                    <span class="arrow">→</span>
+                    
+                    <div class="lifecycle-stage">
+                        <span class="stage-emoji">🛸</span>
+                        <div class="stage-name">Adult Øyestikker</div>
+                        <div class="stage-description">Mature dragonfly</div>
+                    </div>
+                </div>
+                
+                <button class="cyber-button" onclick="triggerMetamorphosis()">
+                    Trigger Metamorphosis
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Professional Dragonfly System (auto-loads in bottom right) -->
+    <script src="../assets/js/snakkaz-professional-dragonfly.js"></script>
+    
+    <script>
+        // Demo interaction
+        function triggerMetamorphosis() {
+            if (window.snakkaZDragonfly) {
+                window.snakkaZDragonfly.advanceStage();
+            }
+        }
+        
+        // Professional loading animation
+        document.addEventListener('DOMContentLoaded', () => {
+            // Fade in content professionally
+            const cards = document.querySelectorAll('.feature-card');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(30px)';
+                
+                setTimeout(() => {
+                    card.style.transition = 'all 0.6s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+            
+            // Listen for dragonfly encryption events
+            document.addEventListener('dragonflyEncryption', (event) => {
+                console.log('🔐 Professional Encryption Status:', event.detail);
+                
+                // Update encryption badges
+                const badges = document.querySelectorAll('.encryption-badge');
+                badges.forEach(badge => {
+                    if (event.detail.isSecure) {
+                        badge.style.color = '#00FF00';
+                        badge.style.borderColor = '#00FF00';
+                        badge.textContent = 'E2EE Quantum Secure';
+                    }
+                });
+            });
+        });
+        
+        // Professional keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                // Return focus to dragonfly
+                const dragonfly = document.querySelector('.snakkaz-dragonfly-system');
+                if (dragonfly) {
+                    dragonfly.focus();
+                }
+            }
+        });
+        
+        // Professional accessibility enhancements
+        window.addEventListener('load', () => {
+            // Announce completion for screen readers
+            const announcement = document.createElement('div');
+            announcement.setAttribute('aria-live', 'polite');
+            announcement.setAttribute('aria-atomic', 'true');
+            announcement.style.position = 'absolute';
+            announcement.style.left = '-10000px';
+            announcement.textContent = 'SnakkaZ Professional Cyber Business Design loaded successfully';
+            document.body.appendChild(announcement);
+        });
+    </script>
+</body>
+</html>

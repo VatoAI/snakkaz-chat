@@ -60,8 +60,14 @@
             };
         },
         
-        Fragment: function({ children }) {
-            return children;
+        Fragment: function(props) {
+            // Emergency safety check for destructured props
+            if (!props || typeof props !== 'object') {
+                console.warn('SafeReact Fragment: props is null or invalid, returning empty array');
+                return [];
+            }
+            const { children } = props;
+            return children || [];
         },
         
         memo: function(component) {

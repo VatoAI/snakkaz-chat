@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔥 SnakkaZ Beta Launch - Test Interface 🔥</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(45deg, #ffd700, #ffed4e, #ffd700);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            color: #b8c2cc;
+            margin-bottom: 20px;
+        }
+        
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            width: 100%;
+            margin-bottom: 30px;
+        }
+        
+        .status-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .status-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(255, 215, 0, 0.2);
+        }
+        
+        .status-card h3 {
+            color: #ffd700;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-success {
+            background-color: #00ff88;
+            box-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+        }
+        
+        .status-warning {
+            background-color: #ffaa00;
+            box-shadow: 0 0 10px rgba(255, 170, 0, 0.5);
+        }
+        
+        .status-error {
+            background-color: #ff4444;
+            box-shadow: 0 0 10px rgba(255, 68, 68, 0.5);
+        }
+        
+        .test-links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            max-width: 1000px;
+            width: 100%;
+        }
+        
+        .test-link {
+            display: block;
+            padding: 15px 20px;
+            background: linear-gradient(45deg, #1a1a2e, #16213e);
+            border: 2px solid #ffd700;
+            border-radius: 10px;
+            color: #ffffff;
+            text-decoration: none;
+            text-align: center;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .test-link:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+            color: #ffd700;
+        }
+        
+        .test-link::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .test-link:hover::before {
+            left: 100%;
+        }
+        
+        .mascot-preview {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(circle, #ffd700, #ffed4e);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            animation: bounce 2s infinite;
+            cursor: pointer;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-10px);
+            }
+            60% {
+                transform: translateY(-5px);
+            }
+        }
+        
+        .mascot-preview:hover {
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .footer {
+            margin-top: 40px;
+            text-align: center;
+            color: #888;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .status-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .test-links {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔥 SNAKKAZ BETA LAUNCH 🔥</h1>
+        <p>Historisk oversikt: 09.07.2025 - 13.07.2025</p>
+        <p>Test all systems before production launch!</p>
+    </div>
+    
+    <div class="status-grid">
+        <div class="status-card">
+            <h3><span class="status-indicator status-success"></span>Git & Deployment</h3>
+            <p>✅ Git sync issues resolved</p>
+            <p>✅ Large files excluded</p>
+            <p>✅ Emergency fixes applied</p>
+            <p>✅ Assets copied to deployment</p>
+        </div>
+        
+        <div class="status-card">
+            <h3><span class="status-indicator status-success"></span>Design Systems</h3>
+            <p>✅ Dopamin liquid glass design</p>
+            <p>✅ Dragonfly logo system</p>
+            <p>✅ Adaptive creature mascot</p>
+            <p>✅ CSS/JS assets integrated</p>
+        </div>
+        
+        <div class="status-card">
+            <h3><span class="status-indicator status-warning"></span>Authentication</h3>
+            <p>⚠️ Login/Register needs testing</p>
+            <p>⚠️ Email verification flow</p>
+            <p>⚠️ Session management</p>
+            <p>⚠️ Supabase integration</p>
+        </div>
+        
+        <div class="status-card">
+            <h3><span class="status-indicator status-warning"></span>Chat System</h3>
+            <p>⚠️ Real-time messaging</p>
+            <p>⚠️ E2EE implementation</p>
+            <p>⚠️ Group chat functionality</p>
+            <p>⚠️ Message persistence</p>
+        </div>
+        
+        <div class="status-card">
+            <h3><span class="status-indicator status-success"></span>Emergency Systems</h3>
+            <p>✅ Debug page active</p>
+            <p>✅ Fallback page working</p>
+            <p>✅ Error boundaries setup</p>
+            <p>✅ CSP headers configured</p>
+        </div>
+        
+        <div class="status-card">
+            <h3><span class="status-indicator status-warning"></span>Mobile & PWA</h3>
+            <p>⚠️ Mobile responsiveness</p>
+            <p>⚠️ PWA installation</p>
+            <p>⚠️ Touch optimization</p>
+            <p>⚠️ Offline functionality</p>
+        </div>
+    </div>
+    
+    <div class="test-links">
+        <a href="http://localhost:8081" class="test-link">
+            🏠 Main Application
+        </a>
+        
+        <a href="http://localhost:8081/snakkaz-dopamin-showcase.html" class="test-link">
+            🎨 Dopamin Design Demo
+        </a>
+        
+        <a href="http://localhost:8081/snakkaz-dragonfly-showcase.html" class="test-link">
+            🐲 Dragonfly Logo System
+        </a>
+        
+        <a href="http://localhost:8081/snakkaz-adaptive-creature-showcase.html" class="test-link">
+            🦋 Adaptive Creature Mascot
+        </a>
+        
+        <a href="http://localhost:8081/emergency-debug.html" class="test-link">
+            🚨 Emergency Debug Page
+        </a>
+        
+        <a href="http://localhost:8081/beta-fallback.html" class="test-link">
+            🛡️ Beta Fallback Page
+        </a>
+        
+        <a href="#auth-test" class="test-link" onclick="testAuthentication()">
+            🔐 Test Authentication
+        </a>
+        
+        <a href="#chat-test" class="test-link" onclick="testChatSystem()">
+            💬 Test Chat System
+        </a>
+        
+        <a href="#mobile-test" class="test-link" onclick="testMobileView()">
+            📱 Test Mobile View
+        </a>
+        
+        <a href="#pwa-test" class="test-link" onclick="testPWAFeatures()">
+            📲 Test PWA Features
+        </a>
+    </div>
+    
+    <div class="mascot-preview" onclick="triggerMascotDemo()">
+        🐛
+    </div>
+    
+    <div class="footer">
+        <p>SnakkaZ Chat Beta Launch - Historical Changes Since 09.07.2025</p>
+        <p>Emergency systems active | Local testing environment ready</p>
+    </div>
+    
+    <script>
+        function testAuthentication() {
+            alert('🔐 Opening authentication test...\n\nTest sequence:\n1. Registration form\n2. Email verification\n3. Login process\n4. Session management');
+            window.open('http://localhost:8081/#/register', '_blank');
+        }
+        
+        function testChatSystem() {
+            alert('💬 Opening chat system test...\n\nTest sequence:\n1. Chat interface\n2. Message sending\n3. Real-time updates\n4. Group functionality');
+            window.open('http://localhost:8081/#/beta-chat', '_blank');
+        }
+        
+        function testMobileView() {
+            alert('📱 Testing mobile responsiveness...\n\nOpening in mobile viewport simulation');
+            const mobileWindow = window.open('http://localhost:8081', '_blank');
+            // Note: Developer should manually test with browser dev tools mobile view
+        }
+        
+        function testPWAFeatures() {
+            alert('📲 Testing PWA features...\n\nChecking:\n1. Service worker\n2. App manifest\n3. Install prompt\n4. Offline capability');
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(registrations => {
+                    console.log('Service workers:', registrations);
+                    alert(`Found ${registrations.length} service worker(s)`);
+                });
+            } else {
+                alert('Service workers not supported in this browser');
+            }
+        }
+        
+        function triggerMascotDemo() {
+            const mascot = document.querySelector('.mascot-preview');
+            mascot.innerHTML = '🦋';
+            mascot.style.background = 'radial-gradient(circle, #00ff88, #4ade80)';
+            
+            setTimeout(() => {
+                mascot.innerHTML = '🐛';
+                mascot.style.background = 'radial-gradient(circle, #ffd700, #ffed4e)';
+            }, 2000);
+            
+            alert('🦋 Mascot transformation demo!\n\nLarve → Dragonfly\n\nThis represents the adaptive creature system that grows with user engagement!');
+        }
+        
+        // Auto-check system status
+        window.addEventListener('load', () => {
+            console.log('🔥 SnakkaZ Beta Launch Interface Loaded');
+            console.log('📊 System Status:');
+            console.log('✅ Design Systems: Active');
+            console.log('✅ Emergency Systems: Active');
+            console.log('⚠️ Authentication: Needs Testing');
+            console.log('⚠️ Chat System: Needs Testing');
+            console.log('⚠️ Mobile/PWA: Needs Testing');
+        });
+    </script>
+</body>
+</html>

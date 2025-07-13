@@ -1,0 +1,409 @@
+/* SnakkaZ Cyber Business Design System - Mature Professional Theme */
+/* Gold/Black Sacred Geometry - Tree of Life - Flower of Life - E2EE Encryption */
+
+:root {
+  /* Cyber Business Color Palette */
+  --cyber-gold: #D4AF37;
+  --cyber-gold-light: #FFD700;
+  --cyber-gold-dark: #B8860B;
+  --cyber-black: #000000;
+  --cyber-dark: #0A0A0A;
+  --cyber-charcoal: #1A1A1A;
+  --cyber-accent: #2A2A2A;
+  --cyber-border: #333333;
+  --cyber-text: #F0F0F0;
+  --cyber-text-dim: #CCCCCC;
+  --encryption-green: #00FF00;
+  --encryption-blue: #00BFFF;
+  
+  /* Sacred Geometry Shadows */
+  --sacred-glow: 0 0 20px rgba(212, 175, 55, 0.3);
+  --encryption-glow: 0 0 15px rgba(0, 255, 0, 0.2);
+  --professional-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  
+  /* Professional Typography */
+  --font-primary: 'Inter', 'Arial', sans-serif;
+  --font-mono: 'Fira Code', 'Monaco', monospace;
+  --font-sacred: 'Cinzel', serif;
+}
+
+/* Base Professional Layout */
+.cyber-business-container {
+  background: linear-gradient(135deg, var(--cyber-black) 0%, var(--cyber-dark) 50%, var(--cyber-charcoal) 100%);
+  color: var(--cyber-text);
+  font-family: var(--font-primary);
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Sacred Geometry Background Pattern */
+.cyber-business-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(circle at 25% 25%, transparent 20%, var(--cyber-gold) 21%, var(--cyber-gold) 22%, transparent 23%),
+    radial-gradient(circle at 75% 75%, transparent 20%, var(--cyber-gold) 21%, var(--cyber-gold) 22%, transparent 23%);
+  background-size: 100px 100px;
+  opacity: 0.03;
+  z-index: 1;
+}
+
+/* Professional Header with Tree of Life Symbolism */
+.cyber-header {
+  background: linear-gradient(90deg, var(--cyber-black) 0%, var(--cyber-charcoal) 100%);
+  border-bottom: 2px solid var(--cyber-gold);
+  padding: 1rem 2rem;
+  position: relative;
+  z-index: 10;
+  box-shadow: var(--professional-shadow);
+}
+
+.cyber-logo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-family: var(--font-sacred);
+  font-weight: 600;
+  font-size: 1.5rem;
+  color: var(--cyber-gold);
+  text-shadow: var(--sacred-glow);
+}
+
+/* Tree of Life Logo Symbol */
+.tree-of-life-symbol {
+  width: 40px;
+  height: 40px;
+  position: relative;
+  display: inline-block;
+}
+
+.tree-of-life-symbol::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 30px;
+  background: var(--cyber-gold);
+  clip-path: polygon(50% 0%, 20% 100%, 80% 100%);
+}
+
+.tree-of-life-symbol::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 30px;
+  height: 15px;
+  background: var(--cyber-gold);
+  clip-path: polygon(0% 100%, 50% 0%, 100% 100%);
+}
+
+/* Flower of Life Pattern */
+.flower-of-life-bg {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 200px;
+  height: 200px;
+  opacity: 0.05;
+  z-index: 2;
+}
+
+.flower-of-life-bg::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle, transparent 30%, var(--cyber-gold) 31%, var(--cyber-gold) 32%, transparent 33%);
+  background-size: 40px 40px;
+  background-position: 0 0, 20px 20px;
+}
+
+/* Professional Card Containers */
+.cyber-card {
+  background: linear-gradient(135deg, var(--cyber-charcoal) 0%, var(--cyber-dark) 100%);
+  border: 1px solid var(--cyber-border);
+  border-radius: 8px;
+  padding: 2rem;
+  margin: 1rem;
+  box-shadow: var(--professional-shadow);
+  position: relative;
+  z-index: 5;
+  transition: all 0.3s ease;
+}
+
+.cyber-card:hover {
+  border-color: var(--cyber-gold);
+  box-shadow: var(--sacred-glow), var(--professional-shadow);
+  transform: translateY(-2px);
+}
+
+/* E2EE Encryption Indicators */
+.encryption-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(90deg, var(--cyber-dark) 0%, var(--cyber-charcoal) 100%);
+  border: 1px solid var(--encryption-green);
+  border-radius: 20px;
+  padding: 0.5rem 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--encryption-green);
+  box-shadow: var(--encryption-glow);
+}
+
+.encryption-badge::before {
+  content: '🔒';
+  font-size: 1rem;
+}
+
+/* Geometric Button System */
+.cyber-button {
+  background: linear-gradient(135deg, var(--cyber-gold-dark) 0%, var(--cyber-gold) 50%, var(--cyber-gold-light) 100%);
+  color: var(--cyber-black);
+  border: none;
+  padding: 0.75rem 2rem;
+  border-radius: 4px;
+  font-family: var(--font-primary);
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.cyber-button:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--sacred-glow), var(--professional-shadow);
+}
+
+.cyber-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.cyber-button:hover::before {
+  left: 100%;
+}
+
+/* Sacred Dragonfly Mascot Container */
+.dragonfly-metamorphosis {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 80px;
+  height: 80px;
+  z-index: 20;
+  transition: all 0.5s ease;
+  cursor: pointer;
+}
+
+/* Dragonfly Stages */
+.dragonfly-stage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  transition: all 0.8s ease;
+  opacity: 0;
+  transform: scale(0.5) rotate(180deg);
+}
+
+.dragonfly-stage.active {
+  opacity: 1;
+  transform: scale(1) rotate(0deg);
+}
+
+/* Professional Sacred Geometry Decorations */
+.geometric-accent {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  border: 2px solid var(--cyber-gold);
+  transform: rotate(45deg);
+  opacity: 0.1;
+}
+
+.geometric-accent.top-left {
+  top: 20px;
+  left: 20px;
+}
+
+.geometric-accent.bottom-right {
+  bottom: 20px;
+  right: 20px;
+}
+
+/* Metatron's Cube Pattern */
+.metatron-pattern {
+  position: absolute;
+  top: 10%;
+  right: 10%;
+  width: 100px;
+  height: 100px;
+  opacity: 0.03;
+  background: var(--cyber-gold);
+  clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
+  animation: rotate-sacred 60s linear infinite;
+}
+
+@keyframes rotate-sacred {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Professional Text Styling */
+.cyber-title {
+  font-family: var(--font-sacred);
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--cyber-gold);
+  text-align: center;
+  margin: 2rem 0;
+  text-shadow: var(--sacred-glow);
+  letter-spacing: 2px;
+}
+
+.cyber-subtitle {
+  font-family: var(--font-primary);
+  font-size: 1.2rem;
+  color: var(--cyber-text-dim);
+  text-align: center;
+  margin-bottom: 3rem;
+  letter-spacing: 1px;
+}
+
+.cyber-text {
+  font-family: var(--font-primary);
+  font-size: 1rem;
+  color: var(--cyber-text);
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+/* Responsive Professional Design */
+@media (max-width: 768px) {
+  .cyber-header {
+    padding: 1rem;
+  }
+  
+  .cyber-logo {
+    font-size: 1.2rem;
+  }
+  
+  .cyber-card {
+    margin: 0.5rem;
+    padding: 1.5rem;
+  }
+  
+  .cyber-title {
+    font-size: 2rem;
+  }
+  
+  .dragonfly-metamorphosis {
+    width: 60px;
+    height: 60px;
+    bottom: 15px;
+    right: 15px;
+  }
+  
+  .dragonfly-stage {
+    font-size: 2rem;
+  }
+}
+
+/* Professional Loading States */
+.cyber-loading {
+  background: linear-gradient(90deg, var(--cyber-charcoal) 25%, var(--cyber-accent) 50%, var(--cyber-charcoal) 75%);
+  background-size: 200% 100%;
+  animation: cyber-shimmer 2s infinite;
+}
+
+@keyframes cyber-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Sacred Geometry Tooltips */
+.sacred-tooltip {
+  position: relative;
+  cursor: help;
+}
+
+.sacred-tooltip::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--cyber-dark);
+  color: var(--cyber-gold);
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  border: 1px solid var(--cyber-gold);
+  box-shadow: var(--sacred-glow);
+}
+
+.sacred-tooltip:hover::after {
+  opacity: 1;
+}
+
+/* Professional Focus States */
+.cyber-focus:focus {
+  outline: 2px solid var(--cyber-gold);
+  outline-offset: 2px;
+  box-shadow: var(--sacred-glow);
+}
+
+/* Accessibility Enhancements */
+@media (prefers-reduced-motion: reduce) {
+  .dragonfly-stage,
+  .cyber-button,
+  .cyber-card {
+    transition: none;
+  }
+  
+  .metatron-pattern {
+    animation: none;
+  }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  :root {
+    --cyber-gold: #FFFF00;
+    --cyber-black: #000000;
+    --cyber-text: #FFFFFF;
+  }
+}

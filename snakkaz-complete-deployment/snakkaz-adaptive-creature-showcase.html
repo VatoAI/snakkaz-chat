@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🐛 SnakkaZ Adaptive Creature System - Living Companion</title>
+    <link rel="stylesheet" href="assets/css/snakkaz-dragonfly-system.css">
+    <link rel="stylesheet" href="assets/css/snakkaz-adaptive-creature.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: var(--calm-background);
+            color: var(--calm-white);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            min-height: 100vh;
+        }
+        
+        .showcase-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .hero-section {
+            text-align: center;
+            padding: 60px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: var(--glass-blur);
+            border-radius: 30px;
+            margin-bottom: 40px;
+            border: var(--glass-border);
+        }
+        
+        .phase-showcase {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            margin: 40px 0;
+        }
+        
+        .phase-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(15px);
+            border-radius: 25px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .phase-card:hover {
+            transform: translateY(-10px);
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        .phase-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, 
+                transparent 30%, 
+                rgba(255, 255, 255, 0.05) 50%, 
+                transparent 70%);
+            animation: shimmer 8s ease-in-out infinite;
+            pointer-events: none;
+        }
+        
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+        
+        .creature-demo {
+            margin: 30px 0;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .phase-info {
+            position: relative;
+            z-index: 2;
+        }
+        
+        .stats-display {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 30px 0;
+            text-align: left;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 30px 0;
+        }
+        
+        .btn {
+            background: rgba(0, 122, 255, 0.2);
+            border: 1px solid rgba(0, 122, 255, 0.4);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .btn:hover {
+            background: rgba(0, 122, 255, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 122, 255, 0.3);
+        }
+        
+        .btn.secondary {
+            background: rgba(52, 199, 89, 0.2);
+            border-color: rgba(52, 199, 89, 0.4);
+        }
+        
+        .btn.secondary:hover {
+            background: rgba(52, 199, 89, 0.4);
+            box-shadow: 0 10px 20px rgba(52, 199, 89, 0.3);
+        }
+        
+        .btn.danger {
+            background: rgba(255, 59, 48, 0.2);
+            border-color: rgba(255, 59, 48, 0.4);
+        }
+        
+        .btn.danger:hover {
+            background: rgba(255, 59, 48, 0.4);
+            box-shadow: 0 10px 20px rgba(255, 59, 48, 0.3);
+        }
+        
+        .evolution-path {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 40px 0;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .evolution-step {
+            text-align: center;
+            flex: 1;
+            position: relative;
+        }
+        
+        .evolution-arrow {
+            position: absolute;
+            right: -30px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 24px;
+            color: rgba(255, 255, 255, 0.3);
+        }
+        
+        .evolution-step:last-child .evolution-arrow {
+            display: none;
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin: 40px 0;
+        }
+        
+        .feature-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 25px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .achievement-showcase {
+            background: linear-gradient(135deg, 
+                rgba(255, 149, 0, 0.1) 0%,
+                rgba(255, 59, 48, 0.1) 100%);
+            border-radius: 20px;
+            padding: 30px;
+            margin: 30px 0;
+            border: 1px solid rgba(255, 149, 0, 0.3);
+        }
+        
+        h1 { font-size: 2.5em; margin-bottom: 10px; }
+        h2 { font-size: 1.8em; margin-bottom: 20px; }
+        h3 { font-size: 1.3em; margin-bottom: 15px; }
+        
+        .subtitle {
+            font-size: 1.1em;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 40px;
+        }
+        
+        .live-demo {
+            background: radial-gradient(circle at center, 
+                rgba(0, 122, 255, 0.1) 0%,
+                transparent 70%);
+            border-radius: 25px;
+            padding: 40px;
+            margin: 30px 0;
+            text-align: center;
+            border: 1px solid rgba(0, 122, 255, 0.2);
+        }
+        
+        @media (max-width: 768px) {
+            .evolution-path {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .evolution-arrow {
+                position: static;
+                transform: rotate(90deg);
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="showcase-container">
+        <!-- Hero Section -->
+        <div class="hero-section">
+            <h1>🐛 SnakkaZ Adaptive Creature</h1>
+            <p class="subtitle">
+                Ditt levende digitale følgesvenn som evolerer med deg (16-100 år)<br>
+                Smart gamification som skaper emosjonell tilknytning til appen
+            </p>
+            
+            <div class="live-demo">
+                <h3>🚀 Live Demo - Din Creature</h3>
+                <div id="main-creature" data-snakkaz-creature data-size="hero" data-user-id="demo"></div>
+                <p style="margin-top: 20px; opacity: 0.8;">
+                    <strong>Klikk på din creature!</strong> Se hvordan den reagerer og evolerer.
+                </p>
+            </div>
+        </div>
+
+        <!-- Evolution Path -->
+        <div class="evolution-path">
+            <div class="evolution-step">
+                <div class="creature-demo">
+                    <div class="snakkaz-creature creature-larva creature-medium">
+                        <div class="creature-environment ground"></div>
+                        <div class="creature-body">
+                            <span class="creature-emoji">🐛</span>
+                        </div>
+                    </div>
+                </div>
+                <h3>Larve</h3>
+                <p>Starter fase<br>Kryper rundt</p>
+                <div class="evolution-arrow">→</div>
+            </div>
+            
+            <div class="evolution-step">
+                <div class="creature-demo">
+                    <div class="snakkaz-creature creature-water creature-medium">
+                        <div class="creature-environment water"></div>
+                        <div class="creature-body">
+                            <span class="creature-emoji">🐠</span>
+                        </div>
+                    </div>
+                </div>
+                <h3>Undervann</h3>
+                <p>50+ meldinger<br>Svømmer rundt</p>
+                <div class="evolution-arrow">→</div>
+            </div>
+            
+            <div class="evolution-step">
+                <div class="creature-demo">
+                    <div class="snakkaz-creature creature-dragonfly creature-medium">
+                        <div class="creature-environment air"></div>
+                        <div class="creature-body">
+                            <span class="creature-emoji">🐛</span>
+                        </div>
+                    </div>
+                </div>
+                <h3>Øyestikker</h3>
+                <p>200+ meldinger<br>Flyr rundt</p>
+                <div class="evolution-arrow">→</div>
+            </div>
+            
+            <div class="evolution-step">
+                <div class="creature-demo">
+                    <div class="snakkaz-creature creature-legendary creature-medium">
+                        <div class="creature-environment air"></div>
+                        <div class="creature-body">
+                            <span class="creature-emoji">✨</span>
+                        </div>
+                        <div class="creature-achievement">🏆</div>
+                    </div>
+                </div>
+                <h3>Legendarisk</h3>
+                <p>1000+ meldinger<br>Magisk aura</p>
+            </div>
+        </div>
+
+        <!-- Phase Showcase -->
+        <div class="phase-showcase">
+            <div class="phase-card">
+                <div class="phase-info">
+                    <h3>🐛 Larve Fase</h3>
+                    <p>Din creature starter som en søt larve som kryper rundt på bunnen av skjermen.</p>
+                    <ul style="text-align: left; opacity: 0.8; line-height: 1.6;">
+                        <li>Reagerer på klikk og hover</li>
+                        <li>Gradvis økt aktivitet</li>
+                        <li>Lærer dine vaner</li>
+                        <li>Viser grunnleggende emosjoner</li>
+                    </ul>
+                </div>
+                <div class="creature-demo">
+                    <div id="larva-demo" data-snakkaz-creature data-size="large" data-phase="larva" data-user-id="larva-demo"></div>
+                </div>
+            </div>
+            
+            <div class="phase-card">
+                <div class="phase-info">
+                    <h3>🐠 Undervann Fase</h3>
+                    <p>Når du chatter mer, dykker creature under vannet og blir en vakker fisk.</p>
+                    <ul style="text-align: left; opacity: 0.8; line-height: 1.6;">
+                        <li>Svømmer elegant rundt</li>
+                        <li>Vann-ripple effekter</li>
+                        <li>Reagerer på nye meldinger</li>
+                        <li>Mer sofistikerte animasjoner</li>
+                    </ul>
+                </div>
+                <div class="creature-demo">
+                    <div id="water-demo" data-snakkaz-creature data-size="large" data-phase="water" data-user-id="water-demo"></div>
+                </div>
+            </div>
+            
+            <div class="phase-card">
+                <div class="phase-info">
+                    <h3>🐛 Øyestikker Fase</h3>
+                    <p>Som erfaren bruker blir creature til en elegant øyestikker som flyr rundt.</p>
+                    <ul style="text-align: left; opacity: 0.8; line-height: 1.6;">
+                        <li>Flyr naturlig rundt skjermen</li>
+                        <li>Vinger som fladdrer</li>
+                        <li>Følger musepekeren</li>
+                        <li>Avanserte interaksjoner</li>
+                    </ul>
+                </div>
+                <div class="creature-demo">
+                    <div id="dragonfly-demo" data-snakkaz-creature data-size="large" data-phase="dragonfly" data-user-id="dragonfly-demo"></div>
+                </div>
+            </div>
+            
+            <div class="phase-card">
+                <div class="phase-info">
+                    <h3>✨ Legendarisk Fase</h3>
+                    <p>Den ultimate fasen - en magisk creature med spesielle effekter og achievements.</p>
+                    <ul style="text-align: left; opacity: 0.8; line-height: 1.6;">
+                        <li>Regnbue-aura effekter</li>
+                        <li>Spesielle animasjoner</li>
+                        <li>Achievement badges</li>
+                        <li>VIP status i appen</li>
+                    </ul>
+                </div>
+                <div class="creature-demo">
+                    <div id="legendary-demo" data-snakkaz-creature data-size="large" data-phase="legendary" data-user-id="legendary-demo"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Interactive Controls -->
+        <div class="stats-display">
+            <h3>🎮 Live Demo Kontroller</h3>
+            <div id="creature-stats">
+                <p>Level: <span id="level">1</span> | XP: <span id="xp">0</span> | Meldinger: <span id="messages">0</span> | Venner: <span id="friends">0</span></p>
+                <p>Fase: <span id="current-phase">larva</span> | Aktiv tid: <span id="active-time">0</span> minutter</p>
+            </div>
+            
+            <div class="controls">
+                <button class="btn" onclick="simulateMessage()">📝 Send Melding</button>
+                <button class="btn secondary" onclick="simulateFriend()">👋 Legg til Venn</button>
+                <button class="btn" onclick="addExperience()">⭐ Gi Erfaring</button>
+                <button class="btn" onclick="forceEvolution()">🔄 Tving Evolusjon</button>
+                <button class="btn danger" onclick="resetCreature()">🔄 Reset Creature</button>
+            </div>
+        </div>
+
+        <!-- Features Grid -->
+        <div class="feature-grid">
+            <div class="feature-item">
+                <h3>🧠 Smart Gamification</h3>
+                <p>Ikke barnslig, men engasjerende for alle aldersgrupper. Belønner naturlig app-bruk.</p>
+            </div>
+            
+            <div class="feature-item">
+                <h3>💾 Persistent Data</h3>
+                <p>Creature husker din progresjon og blir glad når du kommer tilbake etter pause.</p>
+            </div>
+            
+            <div class="feature-item">
+                <h3>🎯 Activity Tracking</h3>
+                <p>Evolerer basert på ekte app-bruk: meldinger, venner, tid aktiv.</p>
+            </div>
+            
+            <div class="feature-item">
+                <h3>♿ Accessibility</h3>
+                <p>Keyboard navigation, reduced motion support, screen reader friendly.</p>
+            </div>
+            
+            <div class="feature-item">
+                <h3>🎨 Adaptive Design</h3>
+                <p>Responsive på alle enheter, tilpasser seg app-tema og brukerpreferanser.</p>
+            </div>
+            
+            <div class="feature-item">
+                <h3>⚡ Performance</h3>
+                <p>CSS-baserte animasjoner, minimal JavaScript, batterivennlig.</p>
+            </div>
+        </div>
+
+        <!-- Achievement System -->
+        <div class="achievement-showcase">
+            <h3>🏆 Achievement System</h3>
+            <p>Lås opp badges og spesielle effekter ved å nå milepæler:</p>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 20px;">
+                <div>🗣️ <strong>Første Ord</strong><br>Send din første melding</div>
+                <div>🦋 <strong>Sosial Sommerfugl</strong><br>Legg til 5 venner</div>
+                <div>💪 <strong>Vokser Sterk</strong><br>Nå level 10</div>
+                <div>💬 <strong>Chat Mester</strong><br>Send 500 meldinger</div>
+                <div>⏰ <strong>Tidsherre</strong><br>1 time aktiv tid</div>
+                <div>🌟 <strong>Legendarisk</strong><br>Nå ultimate fase</div>
+            </div>
+        </div>
+
+        <!-- Implementation Info -->
+        <div style="background: rgba(52, 199, 89, 0.1); border-radius: 20px; padding: 30px; margin: 30px 0; border: 1px solid rgba(52, 199, 89, 0.3);">
+            <h3>🚀 Implementering</h3>
+            <p><strong>Klart for integrering i SnakkaZ Chat!</strong></p>
+            <ul style="line-height: 1.8;">
+                <li><code>snakkaz-adaptive-creature.css</code> - Komplett styling system</li>
+                <li><code>snakkaz-adaptive-creature.js</code> - JavaScript creature logic</li>
+                <li>Auto-initialisering ved å legge til <code>data-snakkaz-creature</code></li>
+                <li>Integrerer med chat events automatisk</li>
+                <li>Persistent lagring i localStorage</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Load Scripts -->
+    <script src="assets/js/snakkaz-adaptive-creature.js"></script>
+    <script>
+        // 🎮 Demo Controls
+        function simulateMessage() {
+            window.SnakkaZCreatureManager.onChatMessage('demo');
+            updateStatsDisplay();
+        }
+        
+        function simulateFriend() {
+            window.SnakkaZCreatureManager.onFriendAdded('demo');
+            updateStatsDisplay();
+        }
+        
+        function addExperience() {
+            const creature = window.SnakkaZCreatureManager.get('main-creature');
+            if (creature) {
+                creature.addManualExperience(50);
+                updateStatsDisplay();
+            }
+        }
+        
+        function forceEvolution() {
+            const creature = window.SnakkaZCreatureManager.get('main-creature');
+            if (creature) {
+                const phases = ['larva', 'water', 'dragonfly', 'legendary'];
+                const currentIndex = phases.indexOf(creature.stats.phase);
+                const nextPhase = phases[Math.min(currentIndex + 1, phases.length - 1)];
+                creature.forceEvolve(nextPhase);
+                updateStatsDisplay();
+            }
+        }
+        
+        function resetCreature() {
+            const creature = window.SnakkaZCreatureManager.get('main-creature');
+            if (creature) {
+                creature.resetCreature();
+                updateStatsDisplay();
+            }
+        }
+        
+        function updateStatsDisplay() {
+            const creature = window.SnakkaZCreatureManager.get('main-creature');
+            if (creature) {
+                document.getElementById('level').textContent = creature.stats.level;
+                document.getElementById('xp').textContent = creature.stats.experience;
+                document.getElementById('messages').textContent = creature.stats.chatMessages;
+                document.getElementById('friends').textContent = creature.stats.friendsAdded;
+                document.getElementById('current-phase').textContent = creature.stats.phase;
+                document.getElementById('active-time').textContent = Math.floor(creature.stats.timeActive / 60000);
+            }
+        }
+        
+        // Update stats display every 2 seconds
+        setInterval(updateStatsDisplay, 2000);
+        
+        // Initial stats update
+        setTimeout(updateStatsDisplay, 500);
+        
+        console.log('🐛 SnakkaZ Adaptive Creature Showcase ready!');
+    </script>
+</body>
+</html>
