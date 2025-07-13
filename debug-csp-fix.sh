@@ -1,0 +1,106 @@
+#!/bin/bash
+
+# 🔍 CSP FIX VERIFICATION SCRIPT
+echo "🚨 DEBUGGING CSP FONT FIX DEPLOYMENT"
+echo "===================================="
+echo ""
+
+echo "🔍 CURRENT PROBLEM:"
+echo "CSP violations still occurring after attempted fix deployment"
+echo "Font-src directive still shows: 'self' data: (missing Google Fonts)"
+echo ""
+
+echo "📋 VERIFICATION CHECKLIST:"
+echo ""
+
+echo "1. 📁 CHECK .htaccess LOCATION:"
+echo "   ✅ Should be: public_html/.htaccess (root directory)"
+echo "   ✅ Same folder as: index.html, manifest.json"
+echo "   ❌ NOT in: subfolders or wrong directory"
+echo ""
+
+echo "2. 📝 CHECK .htaccess CONTENT:"
+echo "   Required CSP policy should include:"
+echo "   font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com"
+echo ""
+
+echo "3. 🔧 CHECK FILE PERMISSIONS:"
+echo "   ✅ Required: 644 (rw-r--r--)"
+echo "   Fix if needed: Right-click → Properties → Permissions"
+echo ""
+
+echo "4. 🔄 CLEAR ALL CACHE:"
+echo "   ✅ Browser hard refresh: Ctrl+F5 / Cmd+Shift+R"
+echo "   ✅ Incognito window test"
+echo "   ✅ Mobile device test (different network)"
+echo ""
+
+echo "🛠️ DEBUGGING STEPS:"
+echo ""
+
+echo "STEP 1 - VERIFY DEPLOYMENT:"
+echo "• Login to cPanel File Manager"
+echo "• Navigate to public_html"
+echo "• Find .htaccess file"
+echo "• Right-click → View/Edit"
+echo "• Check if it contains the corrected CSP policy"
+echo ""
+
+echo "STEP 2 - FORCE CACHE CLEAR:"
+echo "• Close all browser windows"
+echo "• Open new incognito/private window"  
+echo "• Visit www.snakkaz.com"
+echo "• Check DevTools console for font errors"
+echo ""
+
+echo "STEP 3 - MOBILE TEST:"
+echo "• Open site on phone using mobile data"
+echo "• This bypasses all desktop cache"
+echo "• Check if fonts load correctly"
+echo ""
+
+echo "🎯 SUCCESS CRITERIA:"
+echo "✅ Zero 'Refused to load font' errors in console"
+echo "✅ Professional Roboto typography rendering"
+echo "✅ Clean DevTools console (no red CSP errors)"
+echo "✅ fonts.gstatic.com requests succeed (status 200)"
+echo ""
+
+echo "❌ CURRENT FAILURE INDICATORS:"
+echo "❌ Still seeing CSP font violations"
+echo "❌ Typography using fallback system fonts"
+echo "❌ fonts.gstatic.com requests blocked"
+echo ""
+
+echo "🚀 IF STILL NOT WORKING:"
+echo ""
+echo "Option A: RE-UPLOAD FILE"
+echo "• Delete current .htaccess"
+echo "• Re-upload EMERGENCY-HTACCESS-FONT-FIX.txt"
+echo "• Rename to .htaccess"
+echo "• Set permissions to 644"
+echo ""
+
+echo "Option B: MANUAL EDIT"
+echo "• Edit .htaccess directly in cPanel"
+echo "• Find the Content-Security-Policy line"
+echo "• Update font-src to include Google Fonts domains"
+echo ""
+
+echo "Option C: HOSTING SUPPORT"
+echo "• Contact hosting provider if .htaccess correct but not working"
+echo "• Some servers need special CSP configuration"
+echo ""
+
+echo "💡 TELL ME WHAT YOU SEE:"
+echo "1. Is .htaccess in the right location?"
+echo "2. Does it contain the corrected CSP policy?"
+echo "3. Does incognito window show same errors?"
+echo "4. Does mobile device show same errors?"
+echo ""
+
+echo "🎊 ONCE FIXED, YOU SHOULD SEE:"
+echo "• Clean console with zero CSP violations"
+echo "• Beautiful Roboto typography"
+echo "• Professional visual appearance"
+echo "• Ready for beta testing!"
