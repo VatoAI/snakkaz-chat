@@ -1,8 +1,0 @@
-
-📦 ASSET LOADING PERFORMANCE
-===========================
-
-✅ /ultimate-vendor-fix.js: 9ms
-✅ /comprehensive-react-fix.js: 8ms
-✅ /error-boundary-system.js: 7ms
-✅ /recovery-validation.js: 7ms

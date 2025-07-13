@@ -1,5 +1,0 @@
-set ftp:ssl-allow no
-set ssl:verify-certificate no
-open -u $USER,$PASS ftp.snakkaz.com
-mirror --reverse --delete --verbose ./ /public_html/
-bye
