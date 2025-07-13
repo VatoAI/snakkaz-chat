@@ -1,69 +1,10 @@
 import { r as reactExports, bU as React } from "./vendor-react-core-Cd05VJ5Y.js";
+// Emergency fix: Ensure SafeReact fallback system
+var SafeReact = (typeof window !== 'undefined' && window.SafeReact) || reactExports || React;
 import "./vendor-react-dom-DmiX1e6y.js";
 import { t as invariant, v as joinPaths, w as getResolveToMatches, x as resolveTo, A as Action, y as parsePath, z as stripBasename, B as matchRoutes, C as isRouteErrorResponse, D as createPath, E as createBrowserHistory } from "./vendor-misc-guM_vOlB.js";
-
-// EMERGENCY SAFE REACT SYSTEM - Complete Implementation
-const createSafeContext = (defaultValue) => {
-  const context = {
-    Provider: ({ children, value }) => children,
-    Consumer: ({ children }) => children(defaultValue),
-    _currentValue: defaultValue,
-    _context: true,
-    displayName: 'SafeContext'
-  };
-  return context;
-};
-
-// Safe React hooks implementation  
-const safeUseContext = (context) => context._currentValue || {};
-const safeUseRef = (initial) => ({ current: initial });
-const safeUseCallback = (fn) => fn;
-const safeUseMemo = (fn) => fn();
-const safeUseLayoutEffect = () => {};
-const safeCreateElement = (type, props, ...children) => ({ type, props, children });
-
-// Emergency safe react exports setup
-if (!reactExports || typeof reactExports !== 'object') {
-  window.reactExports = {};
-}
-
-const safeReactExports = reactExports || window.reactExports || {};
-
-// Emergency safe assignment with error handling
-try {
-  Object.assign(safeReactExports, {
-    createContext: createSafeContext,
-    useContext: safeUseContext,
-    useRef: safeUseRef,
-    useCallback: safeUseCallback,
-    useMemo: safeUseMemo,
-    useLayoutEffect: safeUseLayoutEffect,
-    createElement: safeCreateElement,
-    Component: class Component {
-      constructor(props) {
-        this.props = props || {};
-        this.state = {};
-      }
-      setState(updates) {
-        if (typeof updates === 'function') {
-          updates = updates(this.state);
-        }
-        this.state = { ...this.state, ...updates };
-      }
-      render() {
-        return null;
-      }
-    }
-  });
-  
-  // Ensure global access
-  window.reactExports = safeReactExports;
-} catch (e) {
-  console.warn('🚨 EMERGENCY: React assignment failed, using fallback:', e);
-}
-
 /**
- * React Router v6.30.1 - EMERGENCY FIXED VERSION
+ * React Router v6.30.1
  *
  * Copyright (c) Remix Software Inc.
  *
@@ -86,18 +27,16 @@ function _extends$1() {
   };
   return _extends$1.apply(this, arguments);
 }
-
-const DataRouterContext = createSafeContext(null);
-const DataRouterStateContext = createSafeContext(null);
-const NavigationContext = createSafeContext(null);
-const LocationContext = createSafeContext(null);
-const RouteContext = createSafeContext({
+const DataRouterContext = /* @__PURE__ */ SafeReact.createContext(null);
+const DataRouterStateContext = /* @__PURE__ */ SafeReact.createContext(null);
+const NavigationContext = /* @__PURE__ */ SafeReact.createContext(null);
+const LocationContext = /* @__PURE__ */ SafeReact.createContext(null);
+const RouteContext = /* @__PURE__ */ SafeReact.createContext({
   outlet: null,
   matches: [],
   isDataRoute: false
 });
-const RouteErrorContext = createSafeContext(null);
-
+const RouteErrorContext = /* @__PURE__ */ SafeReact.createContext(null);
 function useHref(to, _temp) {
   let {
     relative
@@ -106,7 +45,7 @@ function useHref(to, _temp) {
   let {
     basename,
     navigator
-  } = safeReactExports.useContext(NavigationContext);
+  } = SafeReact.useContext(NavigationContext);
   let {
     hash,
     pathname,
@@ -124,50 +63,45 @@ function useHref(to, _temp) {
     hash
   });
 }
-
 function useInRouterContext() {
-  return safeReactExports.useContext(LocationContext) != null;
+  return SafeReact.useContext(LocationContext) != null;
 }
-
 function useLocation() {
   !useInRouterContext() ? invariant(false) : void 0;
-  return safeReactExports.useContext(LocationContext).location;
+  return SafeReact.useContext(LocationContext).location;
 }
-
 function useIsomorphicLayoutEffect(cb) {
-  let isStatic = safeReactExports.useContext(NavigationContext).static;
+  let isStatic = SafeReact.useContext(NavigationContext).static;
   if (!isStatic) {
-    safeReactExports.useLayoutEffect(cb);
+    SafeReact.useLayoutEffect(cb);
   }
 }
-
 function useNavigate() {
   let {
     isDataRoute
-  } = safeReactExports.useContext(RouteContext);
+  } = SafeReact.useContext(RouteContext);
   return isDataRoute ? useNavigateStable() : useNavigateUnstable();
 }
-
 function useNavigateUnstable() {
   !useInRouterContext() ? invariant(false) : void 0;
-  let dataRouterContext = safeReactExports.useContext(DataRouterContext);
+  let dataRouterContext = SafeReact.useContext(DataRouterContext);
   let {
     basename,
     future,
     navigator
-  } = safeReactExports.useContext(NavigationContext);
+  } = SafeReact.useContext(NavigationContext);
   let {
     matches
-  } = safeReactExports.useContext(RouteContext);
+  } = SafeReact.useContext(RouteContext);
   let {
     pathname: locationPathname
   } = useLocation();
   let routePathnamesJson = JSON.stringify(getResolveToMatches(matches, future.v7_relativeSplatPath));
-  let activeRef = safeReactExports.useRef(false);
+  let activeRef = SafeReact.useRef(false);
   useIsomorphicLayoutEffect(() => {
     activeRef.current = true;
   });
-  let navigate = safeReactExports.useCallback(function(to, options) {
+  let navigate = SafeReact.useCallback(function(to, options) {
     if (options === void 0) {
       options = {};
     }
@@ -184,56 +118,50 @@ function useNavigateUnstable() {
   }, [basename, navigator, routePathnamesJson, locationPathname, dataRouterContext]);
   return navigate;
 }
-
-const OutletContext = createSafeContext(null);
-
+const OutletContext = /* @__PURE__ */ SafeReact.createContext(null);
 function useOutlet(context) {
-  let outlet = safeReactExports.useContext(RouteContext).outlet;
+  let outlet = SafeReact.useContext(RouteContext).outlet;
   if (outlet) {
-    return safeReactExports.createElement(OutletContext.Provider, {
+    return /* @__PURE__ */ SafeReact.createElement(OutletContext.Provider, {
       value: context
     }, outlet);
   }
   return outlet;
 }
-
 function useParams() {
   let {
     matches
-  } = safeReactExports.useContext(RouteContext);
+  } = SafeReact.useContext(RouteContext);
   let routeMatch = matches[matches.length - 1];
   return routeMatch ? routeMatch.params : {};
 }
-
 function useResolvedPath(to, _temp2) {
   let {
     relative
   } = _temp2 === void 0 ? {} : _temp2;
   let {
     future
-  } = safeReactExports.useContext(NavigationContext);
+  } = SafeReact.useContext(NavigationContext);
   let {
     matches
-  } = safeReactExports.useContext(RouteContext);
+  } = SafeReact.useContext(RouteContext);
   let {
     pathname: locationPathname
   } = useLocation();
   let routePathnamesJson = JSON.stringify(getResolveToMatches(matches, future.v7_relativeSplatPath));
-  return safeReactExports.useMemo(() => resolveTo(to, JSON.parse(routePathnamesJson), locationPathname, relative === "path"), [to, routePathnamesJson, locationPathname, relative]);
+  return SafeReact.useMemo(() => resolveTo(to, JSON.parse(routePathnamesJson), locationPathname, relative === "path"), [to, routePathnamesJson, locationPathname, relative]);
 }
-
 function useRoutes(routes, locationArg) {
   return useRoutesImpl(routes, locationArg);
 }
-
 function useRoutesImpl(routes, locationArg, dataRouterState, future) {
   !useInRouterContext() ? invariant(false) : void 0;
   let {
     navigator
-  } = safeReactExports.useContext(NavigationContext);
+  } = SafeReact.useContext(NavigationContext);
   let {
     matches: parentMatches
-  } = safeReactExports.useContext(RouteContext);
+  } = SafeReact.useContext(RouteContext);
   let routeMatch = parentMatches[parentMatches.length - 1];
   let parentParams = routeMatch ? routeMatch.params : {};
   routeMatch ? routeMatch.pathname : "/";
@@ -273,7 +201,7 @@ function useRoutesImpl(routes, locationArg, dataRouterState, future) {
     ])
   })), parentMatches, dataRouterState, future);
   if (locationArg && renderedMatches) {
-    return safeReactExports.createElement(LocationContext.Provider, {
+    return /* @__PURE__ */ SafeReact.createElement(LocationContext.Provider, {
       value: {
         location: _extends$1({
           pathname: "/",
@@ -288,7 +216,6 @@ function useRoutesImpl(routes, locationArg, dataRouterState, future) {
   }
   return renderedMatches;
 }
-
 function DefaultErrorComponent() {
   let error = useRouteError();
   let message = isRouteErrorResponse(error) ? error.status + " " + error.statusText : error instanceof Error ? error.message : JSON.stringify(error);
@@ -299,18 +226,16 @@ function DefaultErrorComponent() {
     backgroundColor: lightgrey
   };
   let devInfo = null;
-  return safeReactExports.createElement(safeReactExports.Fragment, null, safeReactExports.createElement("h2", null, "Unexpected Application Error!"), safeReactExports.createElement("h3", {
+  return /* @__PURE__ */ SafeReact.createElement(SafeReact.Fragment, null, /* @__PURE__ */ SafeReact.createElement("h2", null, "Unexpected Application Error!"), /* @__PURE__ */ SafeReact.createElement("h3", {
     style: {
       fontStyle: "italic"
     }
-  }, message), stack ? safeReactExports.createElement("pre", {
+  }, message), stack ? /* @__PURE__ */ SafeReact.createElement("pre", {
     style: preStyles
   }, stack) : null, devInfo);
 }
-
-const defaultErrorElement = safeReactExports.createElement(DefaultErrorComponent, null);
-
-class RenderErrorBoundary extends safeReactExports.Component {
+const defaultErrorElement = /* @__PURE__ */ SafeReact.createElement(DefaultErrorComponent, null);
+class RenderErrorBoundary extends SafeReact.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -342,30 +267,28 @@ class RenderErrorBoundary extends safeReactExports.Component {
     console.error("React Router caught the following error during render", error, errorInfo);
   }
   render() {
-    return this.state.error !== void 0 ? safeReactExports.createElement(RouteContext.Provider, {
+    return this.state.error !== void 0 ? /* @__PURE__ */ SafeReact.createElement(RouteContext.Provider, {
       value: this.props.routeContext
-    }, safeReactExports.createElement(RouteErrorContext.Provider, {
+    }, /* @__PURE__ */ SafeReact.createElement(RouteErrorContext.Provider, {
       value: this.state.error,
       children: this.props.component
     })) : this.props.children;
   }
 }
-
 function RenderedRoute(_ref) {
   let {
     routeContext,
     match,
     children
   } = _ref;
-  let dataRouterContext = safeReactExports.useContext(DataRouterContext);
+  let dataRouterContext = SafeReact.useContext(DataRouterContext);
   if (dataRouterContext && dataRouterContext.static && dataRouterContext.staticContext && (match.route.errorElement || match.route.ErrorBoundary)) {
     dataRouterContext.staticContext._deepestRenderedBoundaryId = match.route.id;
   }
-  return safeReactExports.createElement(RouteContext.Provider, {
+  return /* @__PURE__ */ SafeReact.createElement(RouteContext.Provider, {
     value: routeContext
   }, children);
 }
-
 function _renderMatches(matches, parentMatches, dataRouterState, future) {
   var _dataRouterState;
   if (parentMatches === void 0) {
@@ -450,13 +373,13 @@ function _renderMatches(matches, parentMatches, dataRouterState, future) {
       } else if (shouldRenderHydrateFallback) {
         children = hydrateFallbackElement;
       } else if (match.route.Component) {
-        children = safeReactExports.createElement(match.route.Component, null);
+        children = /* @__PURE__ */ SafeReact.createElement(match.route.Component, null);
       } else if (match.route.element) {
         children = match.route.element;
       } else {
         children = outlet;
       }
-      return safeReactExports.createElement(RenderedRoute, {
+      return /* @__PURE__ */ SafeReact.createElement(RenderedRoute, {
         match,
         routeContext: {
           outlet,
@@ -466,7 +389,7 @@ function _renderMatches(matches, parentMatches, dataRouterState, future) {
         children
       });
     };
-    return dataRouterState && (match.route.ErrorBoundary || match.route.errorElement || index === 0) ? safeReactExports.createElement(RenderErrorBoundary, {
+    return dataRouterState && (match.route.ErrorBoundary || match.route.errorElement || index === 0) ? /* @__PURE__ */ SafeReact.createElement(RenderErrorBoundary, {
       location: dataRouterState.location,
       revalidation: dataRouterState.revalidation,
       component: errorElement,
@@ -480,15 +403,13 @@ function _renderMatches(matches, parentMatches, dataRouterState, future) {
     }) : getChildren();
   }, null);
 }
-
-var DataRouterHook$1 = function(DataRouterHook2) {
+var DataRouterHook$1 = /* @__PURE__ */ function(DataRouterHook2) {
   DataRouterHook2["UseBlocker"] = "useBlocker";
   DataRouterHook2["UseRevalidator"] = "useRevalidator";
   DataRouterHook2["UseNavigateStable"] = "useNavigate";
   return DataRouterHook2;
 }(DataRouterHook$1 || {});
-
-var DataRouterStateHook$1 = function(DataRouterStateHook2) {
+var DataRouterStateHook$1 = /* @__PURE__ */ function(DataRouterStateHook2) {
   DataRouterStateHook2["UseBlocker"] = "useBlocker";
   DataRouterStateHook2["UseLoaderData"] = "useLoaderData";
   DataRouterStateHook2["UseActionData"] = "useActionData";
@@ -501,35 +422,45 @@ var DataRouterStateHook$1 = function(DataRouterStateHook2) {
   DataRouterStateHook2["UseRouteId"] = "useRouteId";
   return DataRouterStateHook2;
 }(DataRouterStateHook$1 || {});
-
 function useDataRouterContext(hookName) {
-  let ctx = safeReactExports.useContext(DataRouterContext);
+  let ctx = SafeReact.useContext(DataRouterContext);
   !ctx ? invariant(false) : void 0;
   return ctx;
 }
-
 function useDataRouterState(hookName) {
-  let state = safeReactExports.useContext(DataRouterStateContext);
+  let state = SafeReact.useContext(DataRouterStateContext);
   !state ? invariant(false) : void 0;
   return state;
 }
-
 function useRouteContext(hookName) {
-  let route = safeReactExports.useContext(RouteContext);
-  !route ? invariant(false) : void 0;
+  let route = SafeReact.useContext(RouteContext);
+  if (!route) {
+    console.warn("SafeReact: RouteContext is null, returning fallback context");
+    route = {
+      outlet: null,
+      matches: [],
+      isDataRoute: false
+    };
+  }
   return route;
 }
-
 function useCurrentRouteId(hookName) {
   let route = useRouteContext();
+  // Emergency fix: ensure route.matches exists and has elements
+  if (!route || !route.matches || route.matches.length === 0) {
+    console.warn("SafeReact: No route matches found, returning fallback route id");
+    return "root";
+  }
   let thisRoute = route.matches[route.matches.length - 1];
-  !thisRoute.route.id ? invariant(false) : void 0;
+  if (!thisRoute || !thisRoute.route || !thisRoute.route.id) {
+    console.warn("SafeReact: Invalid route structure, returning fallback route id");
+    return "root";
+  }
   return thisRoute.route.id;
 }
-
 function useRouteError() {
   var _state$errors;
-  let error = safeReactExports.useContext(RouteErrorContext);
+  let error = SafeReact.useContext(RouteErrorContext);
   let state = useDataRouterState();
   let routeId = useCurrentRouteId();
   if (error !== void 0) {
@@ -537,17 +468,16 @@ function useRouteError() {
   }
   return (_state$errors = state.errors) == null ? void 0 : _state$errors[routeId];
 }
-
 function useNavigateStable() {
   let {
     router
   } = useDataRouterContext(DataRouterHook$1.UseNavigateStable);
   let id = useCurrentRouteId(DataRouterStateHook$1.UseNavigateStable);
-  let activeRef = safeReactExports.useRef(false);
+  let activeRef = SafeReact.useRef(false);
   useIsomorphicLayoutEffect(() => {
     activeRef.current = true;
   });
-  let navigate = safeReactExports.useCallback(function(to, options) {
+  let navigate = SafeReact.useCallback(function(to, options) {
     if (options === void 0) {
       options = {};
     }
@@ -562,20 +492,16 @@ function useNavigateStable() {
   }, [router, id]);
   return navigate;
 }
-
 const alreadyWarned$1 = {};
-
 function warningOnce(key, cond, message) {
   if (!alreadyWarned$1[key]) {
     alreadyWarned$1[key] = true;
   }
 }
-
 function logV6DeprecationWarnings(renderFuture, routerFuture) {
   if ((renderFuture == null ? void 0 : renderFuture.v7_startTransition) === void 0) ;
   if ((renderFuture == null ? void 0 : renderFuture.v7_relativeSplatPath) === void 0 && true) ;
 }
-
 function Navigate(_ref4) {
   let {
     to,
@@ -587,32 +513,29 @@ function Navigate(_ref4) {
   let {
     future,
     static: isStatic
-  } = safeReactExports.useContext(NavigationContext);
+  } = SafeReact.useContext(NavigationContext);
   let {
     matches
-  } = safeReactExports.useContext(RouteContext);
+  } = SafeReact.useContext(RouteContext);
   let {
     pathname: locationPathname
   } = useLocation();
   let navigate = useNavigate();
   let path = resolveTo(to, getResolveToMatches(matches, future.v7_relativeSplatPath), locationPathname, relative === "path");
   let jsonPath = JSON.stringify(path);
-  safeReactExports.useEffect(() => navigate(JSON.parse(jsonPath), {
+  SafeReact.useEffect(() => navigate(JSON.parse(jsonPath), {
     replace: replace2,
     state,
     relative
   }), [navigate, jsonPath, relative, replace2, state]);
   return null;
 }
-
 function Outlet(props) {
   return useOutlet(props.context);
 }
-
 function Route(_props) {
   invariant(false);
 }
-
 function Router(_ref5) {
   let {
     basename: basenameProp = "/",
@@ -625,7 +548,7 @@ function Router(_ref5) {
   } = _ref5;
   useInRouterContext() ? invariant(false) : void 0;
   let basename = basenameProp.replace(/^\/*/, "/");
-  let navigationContext = safeReactExports.useMemo(() => ({
+  let navigationContext = SafeReact.useMemo(() => ({
     basename,
     navigator,
     static: staticProp,
@@ -643,7 +566,7 @@ function Router(_ref5) {
     state = null,
     key = "default"
   } = locationProp;
-  let locationContext = safeReactExports.useMemo(() => {
+  let locationContext = SafeReact.useMemo(() => {
     let trailingPathname = stripBasename(pathname, basename);
     if (trailingPathname == null) {
       return null;
@@ -662,14 +585,13 @@ function Router(_ref5) {
   if (locationContext == null) {
     return null;
   }
-  return safeReactExports.createElement(NavigationContext.Provider, {
+  return /* @__PURE__ */ SafeReact.createElement(NavigationContext.Provider, {
     value: navigationContext
-  }, safeReactExports.createElement(LocationContext.Provider, {
+  }, /* @__PURE__ */ SafeReact.createElement(LocationContext.Provider, {
     children,
     value: locationContext
   }));
 }
-
 function Routes(_ref6) {
   let {
     children,
@@ -677,21 +599,19 @@ function Routes(_ref6) {
   } = _ref6;
   return useRoutes(createRoutesFromChildren(children), location);
 }
-
 new Promise(() => {
 });
-
 function createRoutesFromChildren(children, parentPath) {
   if (parentPath === void 0) {
     parentPath = [];
   }
   let routes = [];
-  safeReactExports.Children.forEach(children, (element, index) => {
-    if (!safeReactExports.isValidElement(element)) {
+  SafeReact.Children.forEach(children, (element, index) => {
+    if (!/* @__PURE__ */ SafeReact.isValidElement(element)) {
       return;
     }
     let treePath = [...parentPath, index];
-    if (element.type === safeReactExports.Fragment) {
+    if (element.type === SafeReact.Fragment) {
       routes.push.apply(routes, createRoutesFromChildren(element.props.children, treePath));
       return;
     }
@@ -720,9 +640,8 @@ function createRoutesFromChildren(children, parentPath) {
   });
   return routes;
 }
-
 /**
- * React Router DOM v6.30.1 - EMERGENCY FIXED VERSION
+ * React Router DOM v6.30.1
  *
  * Copyright (c) Remix Software Inc.
  *
@@ -745,7 +664,6 @@ function _extends() {
   };
   return _extends.apply(this, arguments);
 }
-
 function _objectWithoutPropertiesLoose(source, excluded) {
   if (source == null) return {};
   var target = {};
@@ -758,17 +676,14 @@ function _objectWithoutPropertiesLoose(source, excluded) {
   }
   return target;
 }
-
 function isModifiedEvent(event) {
   return !!(event.metaKey || event.altKey || event.ctrlKey || event.shiftKey);
 }
-
 function shouldProcessLinkClick(event, target) {
   return event.button === 0 && // Ignore everything but left clicks
   (!target || target === "_self") && // Let browser handle "target=_blank" etc.
   !isModifiedEvent(event);
 }
-
 function createSearchParams(init) {
   if (init === void 0) {
     init = "";
@@ -778,7 +693,6 @@ function createSearchParams(init) {
     return memo.concat(Array.isArray(value) ? value.map((v) => [key, v]) : [[key, value]]);
   }, []));
 }
-
 function getSearchParamsForLocation(locationSearch, defaultSearchParams) {
   let searchParams = createSearchParams(locationSearch);
   if (defaultSearchParams) {
@@ -792,18 +706,31 @@ function getSearchParamsForLocation(locationSearch, defaultSearchParams) {
   }
   return searchParams;
 }
-
 const _excluded = ["onClick", "relative", "reloadDocument", "replace", "state", "target", "to", "preventScrollReset", "viewTransition"];
 const REACT_ROUTER_VERSION = "6";
-
 try {
   window.__reactRouterVersion = REACT_ROUTER_VERSION;
 } catch (e) {
 }
-
 const START_TRANSITION = "startTransition";
-const startTransitionImpl = React[START_TRANSITION];
-
+const startTransitionImpl = (() => {
+  try {
+    // Emergency fix: Safe React access with fallbacks
+    if (typeof window !== 'undefined' && window.SafeReact && window.SafeReact[START_TRANSITION]) {
+      return window.SafeReact[START_TRANSITION];
+    }
+    if (typeof reactExports !== 'undefined' && reactExports && reactExports[START_TRANSITION]) {
+      return reactExports[START_TRANSITION];
+    }
+    if (typeof React !== 'undefined' && React && React[START_TRANSITION]) {
+      return React[START_TRANSITION];
+    }
+    return null;
+  } catch (e) {
+    console.warn("SafeReact: startTransition fallback failed:", e);
+    return null;
+  }
+})();
 function BrowserRouter(_ref4) {
   let {
     basename,
@@ -811,7 +738,7 @@ function BrowserRouter(_ref4) {
     future,
     window: window2
   } = _ref4;
-  let historyRef = safeReactExports.useRef();
+  let historyRef = SafeReact.useRef();
   if (historyRef.current == null) {
     historyRef.current = createBrowserHistory({
       window: window2,
@@ -819,19 +746,19 @@ function BrowserRouter(_ref4) {
     });
   }
   let history = historyRef.current;
-  let [state, setStateImpl] = safeReactExports.useState({
+  let [state, setStateImpl] = SafeReact.useState({
     action: history.action,
     location: history.location
   });
   let {
     v7_startTransition
   } = future || {};
-  let setState = safeReactExports.useCallback((newState) => {
+  let setState = SafeReact.useCallback((newState) => {
     v7_startTransition && startTransitionImpl ? startTransitionImpl(() => setStateImpl(newState)) : setStateImpl(newState);
   }, [setStateImpl, v7_startTransition]);
-  safeReactExports.useLayoutEffect(() => history.listen(setState), [history, setState]);
-  safeReactExports.useEffect(() => logV6DeprecationWarnings(future), [future]);
-  return safeReactExports.createElement(Router, {
+  SafeReact.useLayoutEffect(() => history.listen(setState), [history, setState]);
+  SafeReact.useEffect(() => logV6DeprecationWarnings(future), [future]);
+  return /* @__PURE__ */ SafeReact.createElement(Router, {
     basename,
     children,
     location: state.location,
@@ -840,11 +767,9 @@ function BrowserRouter(_ref4) {
     future
   });
 }
-
 const isBrowser = typeof window !== "undefined" && typeof window.document !== "undefined" && typeof window.document.createElement !== "undefined";
 const ABSOLUTE_URL_REGEX = /^(?:[a-z][a-z0-9+.-]*:|\/\/)/i;
-
-const Link = safeReactExports.forwardRef(function LinkWithRef(_ref7, ref) {
+const Link = /* @__PURE__ */ SafeReact.forwardRef(function LinkWithRef(_ref7, ref) {
   let {
     onClick,
     relative,
@@ -858,7 +783,7 @@ const Link = safeReactExports.forwardRef(function LinkWithRef(_ref7, ref) {
   } = _ref7, rest = _objectWithoutPropertiesLoose(_ref7, _excluded);
   let {
     basename
-  } = safeReactExports.useContext(NavigationContext);
+  } = SafeReact.useContext(NavigationContext);
   let absoluteHref;
   let isExternal = false;
   if (typeof to === "string" && ABSOLUTE_URL_REGEX.test(to)) {
@@ -896,7 +821,7 @@ const Link = safeReactExports.forwardRef(function LinkWithRef(_ref7, ref) {
   }
   return (
     // eslint-disable-next-line jsx-a11y/anchor-has-content
-    safeReactExports.createElement("a", _extends({}, rest, {
+    /* @__PURE__ */ SafeReact.createElement("a", _extends({}, rest, {
       href: absoluteHref || href,
       onClick: isExternal || reloadDocument ? onClick : handleClick,
       ref,
@@ -904,7 +829,6 @@ const Link = safeReactExports.forwardRef(function LinkWithRef(_ref7, ref) {
     }))
   );
 });
-
 var DataRouterHook;
 (function(DataRouterHook2) {
   DataRouterHook2["UseScrollRestoration"] = "useScrollRestoration";
@@ -913,14 +837,12 @@ var DataRouterHook;
   DataRouterHook2["UseFetcher"] = "useFetcher";
   DataRouterHook2["useViewTransitionState"] = "useViewTransitionState";
 })(DataRouterHook || (DataRouterHook = {}));
-
 var DataRouterStateHook;
 (function(DataRouterStateHook2) {
   DataRouterStateHook2["UseFetcher"] = "useFetcher";
   DataRouterStateHook2["UseFetchers"] = "useFetchers";
   DataRouterStateHook2["UseScrollRestoration"] = "useScrollRestoration";
 })(DataRouterStateHook || (DataRouterStateHook = {}));
-
 function useLinkClickHandler(to, _temp) {
   let {
     target,
@@ -935,7 +857,7 @@ function useLinkClickHandler(to, _temp) {
   let path = useResolvedPath(to, {
     relative
   });
-  return safeReactExports.useCallback((event) => {
+  return SafeReact.useCallback((event) => {
     if (shouldProcessLinkClick(event, target)) {
       event.preventDefault();
       let replace2 = replaceProp !== void 0 ? replaceProp : createPath(location) === createPath(path);
@@ -949,28 +871,24 @@ function useLinkClickHandler(to, _temp) {
     }
   }, [location, navigate, path, replaceProp, state, target, to, preventScrollReset, relative, viewTransition]);
 }
-
 function useSearchParams(defaultInit) {
-  let defaultSearchParamsRef = safeReactExports.useRef(createSearchParams(defaultInit));
-  let hasSetSearchParamsRef = safeReactExports.useRef(false);
+  let defaultSearchParamsRef = SafeReact.useRef(createSearchParams(defaultInit));
+  let hasSetSearchParamsRef = SafeReact.useRef(false);
   let location = useLocation();
-  let searchParams = safeReactExports.useMemo(() => (
+  let searchParams = SafeReact.useMemo(() => (
     // Only merge in the defaults if we haven't yet called setSearchParams.
     // Once we call that we want those to take precedence, otherwise you can't
     // remove a param with setSearchParams({}) if it has an initial value
     getSearchParamsForLocation(location.search, hasSetSearchParamsRef.current ? null : defaultSearchParamsRef.current)
   ), [location.search]);
   let navigate = useNavigate();
-  let setSearchParams = safeReactExports.useCallback((nextInit, navigateOptions) => {
+  let setSearchParams = SafeReact.useCallback((nextInit, navigateOptions) => {
     const newSearchParams = createSearchParams(typeof nextInit === "function" ? nextInit(searchParams) : nextInit);
     hasSetSearchParamsRef.current = true;
     navigate("?" + newSearchParams, navigateOptions);
   }, [navigate, searchParams]);
   return [searchParams, setSearchParams];
 }
-
-console.log('🚀 EMERGENCY ROUTER FIX: Complete safe router implementation loaded');
-
 export {
   BrowserRouter as B,
   Link as L,

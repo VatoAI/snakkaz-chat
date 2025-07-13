@@ -1,0 +1,202 @@
+// Emergency Safe React Router - ES6 Module Version
+// Ensure SafeReact is available globally
+window.SafeReact = window.SafeReact || window.React || {
+  createContext: (defaultValue) => ({ 
+    Provider: ({ children }) => children, 
+    Consumer: ({ children }) => children(defaultValue), 
+    _currentValue: defaultValue 
+  }),
+  createElement: (type, props, ...children) => ({ 
+    type, 
+    props: props || {}, 
+    children: children.length === 1 ? children[0] : children 
+  }),
+  Component: class Component { 
+    constructor(props) { this.props = props; }
+    render() { return null; } 
+  },
+  Fragment: 'div',
+  useState: (initial) => [initial, () => {}],
+  useEffect: () => {},
+  useMemo: (fn) => fn(),
+  useCallback: (fn) => fn,
+  useRef: () => ({ current: null }),
+  useContext: (context) => context._currentValue || {},
+  useReducer: (reducer, initial) => [initial, () => {}],
+  forwardRef: (render) => render,
+  memo: (component) => component
+};
+
+// Set up safe React exports
+const reactExports = window.SafeReact;
+const React = window.SafeReact;
+
+// Mock utility functions
+const _extends = Object.assign || function (target) {
+  for (var i = 1; i < arguments.length; i++) {
+    var source = arguments[i];
+    for (var key in source) {
+      if (Object.prototype.hasOwnProperty.call(source, key)) {
+        target[key] = source[key];
+      }
+    }
+  }
+  return target;
+};
+
+// Mock invariant function
+function invariant(cond, message) {
+  if (!cond) {
+    throw new Error(message || 'Invariant failed');
+  }
+}
+
+// Mock path utilities
+function joinPaths(paths) {
+  return paths.filter(Boolean).join('/').replace(/\/+/g, '/');
+}
+
+function parsePath(path) {
+  let parsedPath = {};
+  if (path) {
+    let hashIndex = path.indexOf("#");
+    if (hashIndex >= 0) {
+      parsedPath.hash = path.substr(hashIndex);
+      path = path.substr(0, hashIndex);
+    }
+    let searchIndex = path.indexOf("?");
+    if (searchIndex >= 0) {
+      parsedPath.search = path.substr(searchIndex);
+      path = path.substr(0, searchIndex);
+    }
+    if (path) {
+      parsedPath.pathname = path;
+    }
+  }
+  return parsedPath;
+}
+
+function createPath(parsedPath) {
+  const { pathname = "/", search = "", hash = "" } = parsedPath;
+  return pathname + search + hash;
+}
+
+// Mock router context
+const LocationContext = React.createContext(null);
+const RouteContext = React.createContext({ outlet: null, matches: [] });
+const DataRouterContext = React.createContext(null);
+const DataRouterStateContext = React.createContext(null);
+
+// Mock components
+function Router({ children }) {
+  return React.createElement(React.Fragment, null, children);
+}
+
+// BrowserRouter component (main export)
+function BrowserRouter({ children }) {
+  return React.createElement(Router, null, children);
+}
+
+function Routes({ children }) {
+  return React.createElement(React.Fragment, null, children);
+}
+
+function Route() {
+  return null;
+}
+
+function Link({ to, href, children, ...rest }) {
+  const actualHref = href || to || '#';
+  return React.createElement("a", _extends({}, rest, {
+    href: actualHref,
+    onClick: (e) => {
+      if (rest.onClick) rest.onClick(e);
+      // Prevent default navigation for now
+      e.preventDefault();
+    }
+  }), children);
+}
+
+function NavLink(props) {
+  return React.createElement(Link, props);
+}
+
+function Navigate({ to }) {
+  // Mock navigate component
+  console.log('Navigate to:', to);
+  return null;
+}
+
+function Outlet() {
+  return null;
+}
+
+// Mock hooks
+function useNavigate() {
+  return (to) => {
+    console.log('Navigate to:', to);
+  };
+}
+
+function useLocation() {
+  return {
+    pathname: window.location.pathname,
+    search: window.location.search,
+    hash: window.location.hash,
+    state: null,
+    key: 'default'
+  };
+}
+
+function useParams() {
+  return {};
+}
+
+function useSearchParams() {
+  return [new URLSearchParams(window.location.search), () => {}];
+}
+
+// Export router components and hooks globally for window access
+window.ReactRouter = {
+  BrowserRouter,
+  Router,
+  Routes,
+  Route,
+  Link,
+  NavLink,
+  Navigate,
+  Outlet,
+  useNavigate,
+  useLocation,
+  useParams,
+  useSearchParams,
+  LocationContext,
+  RouteContext,
+  DataRouterContext,
+  DataRouterStateContext
+};
+
+// Also export to window for direct access
+Object.assign(window, {
+  BrowserRouter,
+  Router,
+  Routes,
+  Route,
+  Link,
+  NavLink,
+  Navigate,
+  Outlet,
+  useNavigate,
+  useLocation,
+  useParams,
+  useSearchParams
+});
+
+console.log('🔧 Safe React Router loaded successfully');
+
+// ES6 Module Exports (what the bundle expects)
+export { BrowserRouter as B };
+export { Routes as R };
+export { Route as d };
+export { Navigate as N };
+export { useLocation as a };

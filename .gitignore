@@ -39,3 +39,9 @@ debug-*.mjs
 verify-*.sh
 *.lftp.temp
 *.deploy.temp
+
+# Large archive files - Prevent GitHub size limit issues
+*.zip
+*.tar.gz
+*.rar
+*.7z

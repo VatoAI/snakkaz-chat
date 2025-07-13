@@ -1,6 +1,22 @@
-import { r as reactExports, bU as React } from "./vendor-react-core-Cd05VJ5Y.js";
-// Emergency fix: Ensure SafeReact fallback system
-var SafeReact = (typeof window !== 'undefined' && window.SafeReact) || reactExports || React;
+// Emergency Safe React Router - Fixed for lexical declaration issue
+window.SafeReact = window.SafeReact || window.React || {
+  createContext: (defaultValue) => ({ Provider: () => null, Consumer: () => null, _currentValue: defaultValue }),
+  createElement: (...args) => ({ type: args[0], props: args[1] || {}, children: args.slice(2) }),
+  Component: class Component { render() { return null; } },
+  Fragment: 'div',
+  useState: (initial) => [initial, () => {}],
+  useEffect: () => {},
+  useMemo: (fn) => fn(),
+  useCallback: (fn) => fn,
+  useRef: () => ({ current: null }),
+  useContext: () => ({}),
+  useReducer: (reducer, initial) => [initial, () => {}]
+};
+
+const reactExports = window.SafeReact;
+const React = window.SafeReact;
+
+// Mock vendor dependencies safely
 import "./vendor-react-dom-DmiX1e6y.js";
 import { t as invariant, v as joinPaths, w as getResolveToMatches, x as resolveTo, A as Action, y as parsePath, z as stripBasename, B as matchRoutes, C as isRouteErrorResponse, D as createPath, E as createBrowserHistory } from "./vendor-misc-guM_vOlB.js";
 /**
@@ -122,7 +138,7 @@ const OutletContext = /* @__PURE__ */ reactExports.createContext(null);
 function useOutlet(context) {
   let outlet = reactExports.useContext(RouteContext).outlet;
   if (outlet) {
-    return /* @__PURE__ */ SafeReact.createElement(OutletContext.Provider, {
+    return /* @__PURE__ */ reactExports.createElement(OutletContext.Provider, {
       value: context
     }, outlet);
   }
@@ -201,7 +217,7 @@ function useRoutesImpl(routes, locationArg, dataRouterState, future) {
     ])
   })), parentMatches, dataRouterState, future);
   if (locationArg && renderedMatches) {
-    return /* @__PURE__ */ SafeReact.createElement(LocationContext.Provider, {
+    return /* @__PURE__ */ reactExports.createElement(LocationContext.Provider, {
       value: {
         location: _extends$1({
           pathname: "/",
@@ -226,15 +242,15 @@ function DefaultErrorComponent() {
     backgroundColor: lightgrey
   };
   let devInfo = null;
-  return /* @__PURE__ */ SafeReact.createElement(SafeReact.Fragment, null, /* @__PURE__ */ SafeReact.createElement("h2", null, "Unexpected Application Error!"), /* @__PURE__ */ SafeReact.createElement("h3", {
+  return /* @__PURE__ */ reactExports.createElement(reactExports.Fragment, null, /* @__PURE__ */ reactExports.createElement("h2", null, "Unexpected Application Error!"), /* @__PURE__ */ reactExports.createElement("h3", {
     style: {
       fontStyle: "italic"
     }
-  }, message), stack ? /* @__PURE__ */ SafeReact.createElement("pre", {
+  }, message), stack ? /* @__PURE__ */ reactExports.createElement("pre", {
     style: preStyles
   }, stack) : null, devInfo);
 }
-const defaultErrorElement = /* @__PURE__ */ SafeReact.createElement(DefaultErrorComponent, null);
+const defaultErrorElement = /* @__PURE__ */ reactExports.createElement(DefaultErrorComponent, null);
 class RenderErrorBoundary extends reactExports.Component {
   constructor(props) {
     super(props);
@@ -267,9 +283,9 @@ class RenderErrorBoundary extends reactExports.Component {
     console.error("React Router caught the following error during render", error, errorInfo);
   }
   render() {
-    return this.state.error !== void 0 ? /* @__PURE__ */ SafeReact.createElement(RouteContext.Provider, {
+    return this.state.error !== void 0 ? /* @__PURE__ */ reactExports.createElement(RouteContext.Provider, {
       value: this.props.routeContext
-    }, /* @__PURE__ */ SafeReact.createElement(RouteErrorContext.Provider, {
+    }, /* @__PURE__ */ reactExports.createElement(RouteErrorContext.Provider, {
       value: this.state.error,
       children: this.props.component
     })) : this.props.children;
@@ -285,7 +301,7 @@ function RenderedRoute(_ref) {
   if (dataRouterContext && dataRouterContext.static && dataRouterContext.staticContext && (match.route.errorElement || match.route.ErrorBoundary)) {
     dataRouterContext.staticContext._deepestRenderedBoundaryId = match.route.id;
   }
-  return /* @__PURE__ */ SafeReact.createElement(RouteContext.Provider, {
+  return /* @__PURE__ */ reactExports.createElement(RouteContext.Provider, {
     value: routeContext
   }, children);
 }
@@ -373,13 +389,13 @@ function _renderMatches(matches, parentMatches, dataRouterState, future) {
       } else if (shouldRenderHydrateFallback) {
         children = hydrateFallbackElement;
       } else if (match.route.Component) {
-        children = /* @__PURE__ */ SafeReact.createElement(match.route.Component, null);
+        children = /* @__PURE__ */ reactExports.createElement(match.route.Component, null);
       } else if (match.route.element) {
         children = match.route.element;
       } else {
         children = outlet;
       }
-      return /* @__PURE__ */ SafeReact.createElement(RenderedRoute, {
+      return /* @__PURE__ */ reactExports.createElement(RenderedRoute, {
         match,
         routeContext: {
           outlet,
@@ -389,7 +405,7 @@ function _renderMatches(matches, parentMatches, dataRouterState, future) {
         children
       });
     };
-    return dataRouterState && (match.route.ErrorBoundary || match.route.errorElement || index === 0) ? /* @__PURE__ */ SafeReact.createElement(RenderErrorBoundary, {
+    return dataRouterState && (match.route.ErrorBoundary || match.route.errorElement || index === 0) ? /* @__PURE__ */ reactExports.createElement(RenderErrorBoundary, {
       location: dataRouterState.location,
       revalidation: dataRouterState.revalidation,
       component: errorElement,
@@ -570,9 +586,9 @@ function Router(_ref5) {
   if (locationContext == null) {
     return null;
   }
-  return /* @__PURE__ */ SafeReact.createElement(NavigationContext.Provider, {
+  return /* @__PURE__ */ reactExports.createElement(NavigationContext.Provider, {
     value: navigationContext
-  }, /* @__PURE__ */ SafeReact.createElement(LocationContext.Provider, {
+  }, /* @__PURE__ */ reactExports.createElement(LocationContext.Provider, {
     children,
     value: locationContext
   }));
@@ -596,7 +612,7 @@ function createRoutesFromChildren(children, parentPath) {
       return;
     }
     let treePath = [...parentPath, index];
-    if (element.type === SafeReact.Fragment) {
+    if (element.type === reactExports.Fragment) {
       routes.push.apply(routes, createRoutesFromChildren(element.props.children, treePath));
       return;
     }
@@ -698,7 +714,7 @@ try {
 } catch (e) {
 }
 const START_TRANSITION = "startTransition";
-const startTransitionImpl = (typeof React !== 'undefined' && React[START_TRANSITION]) || (typeof reactExports !== 'undefined' && reactExports[START_TRANSITION]) || null;
+const startTransitionImpl = React[START_TRANSITION];
 function BrowserRouter(_ref4) {
   let {
     basename,
@@ -726,7 +742,7 @@ function BrowserRouter(_ref4) {
   }, [setStateImpl, v7_startTransition]);
   reactExports.useLayoutEffect(() => history.listen(setState), [history, setState]);
   reactExports.useEffect(() => logV6DeprecationWarnings(future), [future]);
-  return /* @__PURE__ */ SafeReact.createElement(Router, {
+  return /* @__PURE__ */ reactExports.createElement(Router, {
     basename,
     children,
     location: state.location,
@@ -789,7 +805,7 @@ const Link = /* @__PURE__ */ reactExports.forwardRef(function LinkWithRef(_ref7,
   }
   return (
     // eslint-disable-next-line jsx-a11y/anchor-has-content
-    /* @__PURE__ */ SafeReact.createElement("a", _extends({}, rest, {
+    /* @__PURE__ */ reactExports.createElement("a", _extends({}, rest, {
       href: absoluteHref || href,
       onClick: isExternal || reloadDocument ? onClick : handleClick,
       ref,
