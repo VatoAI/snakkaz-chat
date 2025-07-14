@@ -52,7 +52,11 @@ export function applyCspPolicy(): void {
       "'self'", 
       '*.supabase.co', 
       '*.supabase.in',  
-      'wss://*.supabase.co', 
+      'wss://*.supabase.co',
+      'https://wqpoozpbceucynsojmbk.supabase.co',
+      'wss://wqpoozpbceucynsojmbk.supabase.co', 
+      'https://wqp0ozrbxcucynsojmbk.supabase.co', 
+      'wss://wqp0ozrbxcucynsojmbk.supabase.co',
       '*.amazonaws.com', 
       'storage.googleapis.com', 
       '*.snakkaz.com', 
@@ -62,7 +66,9 @@ export function applyCspPolicy(): void {
       'docs.snakkaz.com', 
       'analytics.snakkaz.com',
       'mcp.snakkaz.com',
-      'help.snakkaz.com'
+      'help.snakkaz.com',
+      'https://fonts.googleapis.com',
+      'https://fonts.gstatic.com'
     ],
     
     // Media sources for audio/video content

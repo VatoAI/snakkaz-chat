@@ -24,20 +24,72 @@ export default defineConfig(({ mode }) => ({
   },
   server: {
     port: 8080,
-    host: "::"
+    host: "::",
+    // Enable gzip compression for dev server
+    compress: true,
+    // Optimize caching for better dev performance
+    hmr: {
+      overlay: true
+    }
+  },
+  
+  // Optimize dependency pre-bundling
+  optimizeDeps: {
+    // Include commonly used dependencies for faster cold starts
+    include: [
+      'react',
+      'react-dom',
+      'react-router-dom',
+      '@supabase/supabase-js',
+      'framer-motion',
+      'lucide-react'
+    ],
+    // Exclude problematic packages that should be bundled fresh
+    exclude: ['@vite/client', '@vite/env']
   },
   build: {
-    // Target production build size limits (more lenient for better performance)
-    chunkSizeWarningLimit: 500,
+    // Target production build size limits (optimized for performance)
+    chunkSizeWarningLimit: 300, // Reduced from 500KB to 300KB for better chunk sizes
     
     // Enable CSS code splitting for better performance
     cssCodeSplit: true,
     
-    // Disable source maps in production for security and size
-    sourcemap: true, // Enable for debugging
+    // Disable source maps in production for better performance
+    sourcemap: false, // Disable for production
     
-    // Optimize asset handling
-    assetsInlineLimit: 4096, // Inline assets smaller than 4KB for better performance
+    // Optimize asset handling for faster LCP
+    assetsInlineLimit: 4096, // Inline smaller assets (reduced from 8KB to 4KB for better balance)
+    
+    // Enable optimized minification for production
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+        pure_funcs: ['console.log', 'console.info', 'console.warn'],
+        unused: true,
+        dead_code: true,
+        // More conservative compression settings for React compatibility
+        keep_fargs: true, // Keep function arguments for React compatibility
+        keep_classnames: true, // Keep class names for React components
+        passes: 1, // Reduced to 1 pass to avoid over-optimization
+        reduce_vars: false, // Disabled to prevent variable confusion
+        collapse_vars: false, // Disabled to prevent variable collapsing issues
+      },
+      mangle: {
+        safari10: true,
+        // Very conservative mangling to prevent runtime errors
+        reserved: ['React', 'ReactDOM', 'useState', 'useEffect', 'useSyncExternalStore', 'useSyncExternalStoreShim', 'require', 'exports', 'global', 'window', 'e', 'r', 't', 'a', 'n', 'o'],
+        keep_classnames: true, // Keep React component names
+        keep_fnames: true, // Keep function names for debugging
+        properties: false, // Don't mangle properties - critical for React
+      },
+      format: {
+        comments: false,
+        beautify: false,
+        semicolons: true,
+      }
+    },
     
     // Configure Rollup options for optimal chunking
     rollupOptions: {
@@ -207,31 +259,6 @@ export default defineConfig(({ mode }) => ({
       external: (id) => {
         // Don't externalize anything for web builds
         return false;
-      }
-    },
-    
-    // Enable minification and compression (TEMPORARILY DISABLED FOR DEBUGGING)
-    minify: false, // Changed from 'terser' to false for debugging
-    terserOptions: {
-      compress: {
-        drop_console: true,
-        drop_debugger: true,
-        pure_funcs: ['console.log'],
-        unused: true,
-        dead_code: true,
-        // Fix for "K is undefined" and similar issues
-        keep_fargs: false,
-        keep_classnames: false,
-      },
-      mangle: {
-        safari10: true,
-        // Prevent critical mangling issues
-        reserved: ['React', 'useState', 'useEffect', 'useSyncExternalStore', 'useSyncExternalStoreShim', 'require', 'exports'],
-        keep_classnames: false,
-        keep_fnames: false,
-      },
-      format: {
-        comments: false, // Remove comments for smaller bundles
       }
     },
   }

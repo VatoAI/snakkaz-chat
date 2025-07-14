@@ -129,13 +129,17 @@ export function buildCspPolicy() {
   // Extract domain from environment or use default
   const supabaseUrl = getSupabaseDomain();
   
-  // Supabase domains
+  // Supabase domains (both old and new URLs for compatibility)
   const supabaseDomains = [
     supabaseUrl, 
     '*.supabase.co', 
     '*.supabase.in', 
     'https://*.supabase.co', 
-    'wss://*.supabase.co'
+    'wss://*.supabase.co',
+    'https://wqpoozpbceucynsojmbk.supabase.co',
+    'wss://wqpoozpbceucynsojmbk.supabase.co',
+    'https://wqp0ozrbxcucynsojmbk.supabase.co', 
+    'wss://wqp0ozrbxcucynsojmbk.supabase.co'
   ].join(' ');
   
   // Storage domains
@@ -203,17 +207,17 @@ export function buildCspPolicy() {
     // Scripts - limit to self and trusted CDNs if needed
     "script-src 'self' 'unsafe-inline' 'unsafe-eval' " + appDomains + " " + cdnDomains,
     
-    // Styles
-    "style-src 'self' 'unsafe-inline'",
+    // Styles (including Google Fonts)
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     
     // Images
     "img-src 'self' data: blob: " + storageDomains + " " + supabaseDomains + " " + appDomains + " " + cdnDomains,
     
-    // Fonts
-    "font-src 'self' data:",
+    // Fonts (including Google Fonts for development)
+    "font-src 'self' data: https://fonts.gstatic.com https://fonts.googleapis.com",
     
     // Connect (API calls) - critical for Supabase and snakkaz subdomains
-    "connect-src 'self' " + supabaseDomains + " " + storageDomains + " " + appDomains + " " + cdnDomains + " " + additionalConnectDomains,
+    "connect-src 'self' " + supabaseDomains + " " + storageDomains + " " + appDomains + " " + cdnDomains + " " + additionalConnectDomains + " https://fonts.googleapis.com https://fonts.gstatic.com",
     
     // Media
     "media-src 'self' blob:",

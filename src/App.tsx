@@ -6,6 +6,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { RootErrorBoundary } from './components/error/RootErrorBoundary';
 import { setupGlobalErrorHandlers } from './utils/error/errorHandling';
 import { bootstrapSecurityFeatures } from '@/services/security/securityIntegration';
+import { applyEmergencyDevCsp } from '@/services/security/emergencyDevCsp';
+import { lcpOptimizer } from '@/services/performance/lcpOptimizer';
 import { ENV } from './utils/env/environmentFix';
 // PWA and Mobile Components
 import PWAHead from './components/mobile/PWAHead';
@@ -214,6 +216,13 @@ import { DeveloperTools } from '@/components/preview/DeveloperTools';
 // Subdomain detection utility with enhanced debugging
 const detectSubdomain = () => {
   const hostname = window.location.hostname;
+  
+  // Handle localhost and IP addresses
+  if (hostname === 'localhost' || hostname.startsWith('127.') || hostname.startsWith('192.168.') || hostname.startsWith('10.')) {
+    console.log(`🏠 Snakkaz Chat: Running on development/local server (${hostname})`);
+    return null;
+  }
+  
   const parts = hostname.split('.');
   
   // Check if we're on a subdomain
@@ -298,6 +307,12 @@ export default function App() {
   useEffect(() => {
     const initApp = async () => {
       try {
+        // Apply emergency CSP fix first (for development Google Fonts)
+        if (process.env.NODE_ENV === 'development') {
+          const { applyEmergencyDevCsp } = await import('@/services/security/emergencyDevCsp');
+          applyEmergencyDevCsp();
+        }
+        
         // Initialize security features
         await bootstrapSecurityFeatures();
         console.log('Security features initialized');
@@ -325,7 +340,12 @@ export default function App() {
   
   return (
     <SuperSimpleErrorBoundary>
-      <BrowserRouter>
+      <BrowserRouter
+        future={{
+          v7_startTransition: true,
+          v7_relativeSplatPath: true
+        }}
+      >
         <AuthProvider>
           <SubdomainRouter />
           {isPreviewEnv && <PreviewBanner />}
