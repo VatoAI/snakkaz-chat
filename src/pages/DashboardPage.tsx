@@ -50,7 +50,7 @@ const DashboardPage: React.FC = () => {
     },
     {
       title: 'AI Assistent',
-      description: 'Chat med AI',
+      description: 'Finn og koble til andre brukere',
       icon: <Bot className="h-5 w-5" />,
       action: () => navigate('/ai-assistant'),
       color: 'bg-cyberred-500/10 text-cyberred-400 border-cyberred-500/20'

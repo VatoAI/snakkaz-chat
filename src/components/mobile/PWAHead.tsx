@@ -38,8 +38,8 @@ export const PWAHead: React.FC = () => {
   return (
     <Helmet>
       {/* Basic PWA meta tags */}
-      <title>SnakkaZ Beta - Sikker Chat med AI</title>
-      <meta name="description" content="Fremtidens chat-plattform med end-to-end kryptering, AI-assistanse og viral deling. Last ned som app på mobil!" />
+      <title>SnakkaZ Beta - Finn og snakk med andre</title>
+      <meta name="description" content="Norsk sosial plattform med end-to-end kryptering og LiquidGlass design. Last ned som app på mobil!" />
       <meta name="keywords" content="chat, sikker, kryptering, AI, beta, norsk, mobil app, PWA" />
       
       {/* Viewport for mobile optimization */}
@@ -67,8 +67,8 @@ export const PWAHead: React.FC = () => {
       
       {/* Open Graph tags for social sharing */}
       <meta property="og:type" content="website" />
-      <meta property="og:title" content="SnakkaZ Beta - Sikker Chat med AI" />
-      <meta property="og:description" content="Opplev fremtidens chat-plattform. Sikker, rask og med AI-funksjoner. Tilgjengelig som app på mobil!" />
+      <meta property="og:title" content="SnakkaZ Beta - Finn og snakk med andre" />
+      <meta property="og:description" content="Opplev den norske sosiale plattformen. Sikker, rask og med moderne funksjoner. Tilgjengelig som app på mobil!" />
       <meta property="og:image" content="/og-image.png" />
       <meta property="og:image:width" content="1200" />
       <meta property="og:image:height" content="630" />
@@ -78,8 +78,8 @@ export const PWAHead: React.FC = () => {
       
       {/* Twitter Card tags */}
       <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content="SnakkaZ Beta - Sikker Chat med AI" />
-      <meta name="twitter:description" content="Fremtidens chat-plattform er her! Prøv SnakkaZ Beta med end-to-end kryptering og AI-assistanse." />
+      <meta name="twitter:title" content="SnakkaZ Beta - Finn og snakk med andre" />
+      <meta name="twitter:description" content="Norsk sosial plattform er her! Prøv SnakkaZ Beta med end-to-end kryptering og LiquidGlass design." />
       <meta name="twitter:image" content="/twitter-image.png" />
       <meta name="twitter:creator" content="@SnakkaZApp" />
       

@@ -9,13 +9,13 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     fixReactModuleOrder(),
-    snakkazCspPlugin({
-      debug: mode === 'development',
-      // Legg til ekstra CSP-direktiver hvis nødvendig
-      additionalDirectives: {
-        // For eksempel: 'img-src': ['ytterligere.domene.no']
-      }
-    })
+    // snakkazCspPlugin({
+    //   debug: mode === 'development',
+    //   // Legg til ekstra CSP-direktiver hvis nødvendig
+    //   additionalDirectives: {
+    //     // For eksempel: 'img-src': ['ytterligere.domene.no']
+    //   }
+    // })
   ].filter(Boolean),
   resolve: {
     alias: {

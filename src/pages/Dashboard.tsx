@@ -9,7 +9,7 @@ import { UnifiedLayout } from '@/components/layout/UnifiedLayout';
 import { 
   MessageSquare, 
   Users, 
-  Bot, 
+  UserSearch, 
   Heart, 
   Settings, 
   UserPlus,
@@ -51,10 +51,10 @@ export const Dashboard: React.FC = () => {
       color: 'bg-green-500/10 text-green-400 border-green-500/20'
     },
     {
-      title: 'AI Assistent',
-      description: 'Chat med AI',
-      icon: <Bot className="h-6 w-6" />,
-      action: () => navigate('/ai-chat'),
+      title: 'Finn brukere',
+      description: 'Finn og koble til andre brukere',
+      icon: <UserSearch className="h-6 w-6" />,
+      action: () => navigate('/find-friends'),
       color: 'bg-purple-500/10 text-purple-400 border-purple-500/20'
     },
     {

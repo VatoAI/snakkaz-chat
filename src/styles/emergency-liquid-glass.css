@@ -1,0 +1,102 @@
+/* EMERGENCY LIQUID GLASS FIX - FORCE OVERRIDE ALL STYLES */
+
+/* Apply global liquid glass background */
+body {
+  background: linear-gradient(135deg, #0f1419, #1a1f36, #2d3748) !important;
+  color: white !important;
+}
+
+/* Force all liquid glass elements to show */
+.liquid-glass,
+.liquid-glass-moderate,
+.liquid-glass-subtle,
+.liquid-glass-dramatic,
+.liquid-glass-premium,
+.liquid-glass-chat {
+  background: linear-gradient(135deg,
+      rgba(26, 157, 255, 0.15) 0%,
+      rgba(255, 255, 255, 0.08) 25%,
+      rgba(218, 188, 69, 0.15) 50%,
+      rgba(255, 255, 255, 0.05) 75%,
+      rgba(230, 0, 0, 0.15) 100%) !important;
+  backdrop-filter: blur(20px) saturate(150%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(150%) !important;
+  border: 2px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 20px !important;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    0 0 40px rgba(26, 157, 255, 0.2) !important;
+  position: relative !important;
+  overflow: visible !important;
+  transition: all 0.3s ease !important;
+  color: white !important;
+}
+
+.liquid-glass::before,
+.liquid-glass-moderate::before,
+.liquid-glass-subtle::before,
+.liquid-glass-dramatic::before,
+.liquid-glass-premium::before {
+  content: '' !important;
+  position: absolute !important;
+  top: -50% !important;
+  left: -50% !important;
+  width: 200% !important;
+  height: 200% !important;
+  background: linear-gradient(45deg,
+      transparent 30%,
+      rgba(255, 255, 255, 0.1) 50%,
+      transparent 70%) !important;
+  transform: rotate(45deg) !important;
+  animation: liquidShimmer 8s linear infinite !important;
+  pointer-events: none !important;
+  z-index: 1 !important;
+}
+
+@keyframes liquidShimmer {
+  0% {
+    transform: translateX(-100%) translateY(-100%) rotate(45deg);
+  }
+  100% {
+    transform: translateX(100%) translateY(100%) rotate(45deg);
+  }
+}
+
+/* Force text colors */
+.liquid-glass *,
+.liquid-glass-moderate *,
+.liquid-glass-subtle *,
+.liquid-glass-dramatic *,
+.liquid-glass-premium * {
+  color: white !important;
+  position: relative !important;
+  z-index: 2 !important;
+}
+
+/* Emergency cyberpunk colors */
+.text-cybergold-400 {
+  color: #DAC45B !important;
+}
+
+.text-cybergold-300 {
+  color: #E6D06B !important;
+}
+
+.border-cybergold-500 {
+  border-color: #C5B649 !important;
+}
+
+/* Force hover effects */
+.liquid-glass:hover,
+.liquid-glass-moderate:hover,
+.liquid-glass-subtle:hover,
+.liquid-glass-dramatic:hover,
+.liquid-glass-premium:hover {
+  transform: translateY(-2px) !important;
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    0 0 60px rgba(26, 157, 255, 0.3) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+}

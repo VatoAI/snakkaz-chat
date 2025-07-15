@@ -220,7 +220,7 @@ const MemoryDashboard: React.FC = () => {
             <Brain className="h-6 w-6 text-cybergold-400" />
             <div>
               <h1 className="text-2xl font-bold text-cybergold-400">Minnesjstem</h1>
-              <p className="text-cybergold-600">AI-drevet langtidsminne for personalisering</p>
+              <p className="text-cybergold-600">Intelligente funksjoner for bedre brukeropplevelse</p>
             </div>
           </div>
           
