@@ -48,6 +48,43 @@
     0 0 40px rgba(26, 157, 255, 0.1);
   position: relative;
   overflow: hidden;
+}
+
+/* Liquid Glass Background for full-screen pages */
+.liquid-glass-background {
+  background: linear-gradient(135deg,
+      #0a0a0a 0%,
+      #1a1a1a 25%,
+      #0a0a0a 50%,
+      #1a1a1a 75%,
+      #0a0a0a 100%);
+  position: relative;
+  min-height: 100vh;
+}
+
+.liquid-glass-background::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg,
+      rgba(26, 157, 255, 0.05) 0%,
+      rgba(255, 255, 255, 0.02) 25%,
+      rgba(218, 188, 69, 0.05) 50%,
+      rgba(255, 255, 255, 0.01) 75%,
+      rgba(230, 0, 0, 0.05) 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.liquid-glass-background > * {
+  position: relative;
+  z-index: 2;
+}
+
+.liquid-glass {
   transition: all 0.4s cubic-bezier(0.23, 1, 0.320, 1);
 }
 
@@ -208,22 +245,22 @@
 .liquid-glass-primary {
   background: linear-gradient(135deg,
       rgba(26, 157, 255, 0.15) 0%,
-      rgba(59, 130, 246, 0.1) 50%,
-      rgba(26, 157, 255, 0.15) 100%);
-  border: 1px solid rgba(26, 157, 255, 0.3);
+      rgba(255, 255, 255, 0.08) 50%,
+      rgba(26, 157, 255, 0.1) 100%);
+  border-color: rgba(26, 157, 255, 0.3);
   box-shadow:
-    0 8px 32px rgba(26, 157, 255, 0.2),
+    0 8px 32px rgba(26, 157, 255, 0.15),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .liquid-glass-gold {
   background: linear-gradient(135deg,
       rgba(218, 188, 69, 0.15) 0%,
-      rgba(255, 193, 7, 0.1) 50%,
-      rgba(218, 188, 69, 0.15) 100%);
-  border: 1px solid rgba(218, 188, 69, 0.3);
+      rgba(255, 255, 255, 0.08) 50%,
+      rgba(218, 188, 69, 0.1) 100%);
+  border-color: rgba(218, 188, 69, 0.3);
   box-shadow:
-    0 8px 32px rgba(218, 188, 69, 0.2),
+    0 8px 32px rgba(218, 188, 69, 0.15),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
@@ -243,20 +280,19 @@
 /* SUBTLE VARIANTS - For daglig bruk */
 .liquid-glass-subtle {
   background: linear-gradient(135deg,
-      rgba(26, 157, 255, 0.05) 0%,
-      rgba(255, 255, 255, 0.02) 25%,
-      rgba(218, 188, 69, 0.05) 50%,
-      rgba(255, 255, 255, 0.02) 75%,
-      rgba(230, 0, 0, 0.05) 100%);
-  backdrop-filter: blur(15px) saturate(150%);
-  -webkit-backdrop-filter: blur(15px) saturate(150%);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+      rgba(26, 157, 255, 0.03) 0%,
+      rgba(255, 255, 255, 0.02) 50%,
+      rgba(218, 188, 69, 0.03) 100%);
+  backdrop-filter: blur(12px) saturate(120%);
+  -webkit-backdrop-filter: blur(12px) saturate(120%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 16px;
   box-shadow:
-    0 4px 16px rgba(0, 0, 0, 0.2),
+    0 2px 8px rgba(0, 0, 0, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
   position: relative;
   overflow: hidden;
+  transition: all 0.3s ease;
 }
 
 .liquid-glass-subtle:hover {
@@ -284,21 +320,21 @@
 /* MODERATE VARIANTS - Balansert for de fleste */
 .liquid-glass-moderate {
   background: linear-gradient(135deg,
-      rgba(26, 157, 255, 0.08) 0%,
-      rgba(255, 255, 255, 0.04) 25%,
-      rgba(218, 188, 69, 0.08) 50%,
-      rgba(255, 255, 255, 0.03) 75%,
-      rgba(230, 0, 0, 0.08) 100%);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+      rgba(26, 157, 255, 0.06) 0%,
+      rgba(255, 255, 255, 0.03) 25%,
+      rgba(218, 188, 69, 0.06) 50%,
+      rgba(255, 255, 255, 0.02) 75%,
+      rgba(230, 0, 0, 0.06) 100%);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 18px;
   box-shadow:
-    0 6px 24px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.15),
-    0 0 20px rgba(26, 157, 255, 0.05);
+    0 4px 16px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
   position: relative;
   overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .liquid-glass-moderate:hover {
@@ -317,16 +353,17 @@
       rgba(218, 188, 69, 0.12) 50%,
       rgba(255, 255, 255, 0.04) 75%,
       rgba(230, 0, 0, 0.12) 100%);
-  backdrop-filter: blur(25px) saturate(200%);
-  -webkit-backdrop-filter: blur(25px) saturate(200%);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 20px;
+  border-radius: 24px;
   box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2),
-    0 0 40px rgba(26, 157, 255, 0.1);
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    0 0 20px rgba(26, 157, 255, 0.1);
   position: relative;
   overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.23, 1, 0.320, 1);
 }
 
 .liquid-glass-dramatic:hover {

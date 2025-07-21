@@ -28,12 +28,12 @@ export const Info: React.FC = () => {
               </h1>
               
               <p className="text-2xl md:text-3xl font-light mb-6 text-white/90 leading-relaxed">
-                Norsk sosial plattform
+                Fremtidens chat er her
               </p>
               
               <p className="text-xl text-cybergold-200 max-w-3xl mx-auto leading-relaxed mb-8">
-                Finn og koble til andre norske brukere med LiquidGlass design og banknivå sikkerhet. 
-                En sosial plattform bygget for det norske tech-miljøet.
+                Opplev next-generation real-time chat med LiquidGlass design, banknivå sikkerhet og AI-drevne funksjoner. 
+                Bygget for deg som krever det beste.
               </p>
 
               <div className="flex flex-wrap justify-center gap-4 text-lg">
@@ -250,11 +250,11 @@ export const Info: React.FC = () => {
                   Innovation
                 </h3>
                 <p className="text-purple-200 leading-relaxed mb-4">
-                  LiquidGlass design, avansert kommunikasjon og funksjoner som ikke finnes andre steder.
+                  LiquidGlass design, AI-assistert kommunikasjon og funksjoner som ikke finnes andre steder.
                 </p>
                 <ul className="space-y-2 text-purple-300">
                   <li>• Revolusjonerende UI/UX</li>
-                  <li>• Smarte funksjoner</li>
+                  <li>• AI-drevne funksjoner</li>
                   <li>• Kontinuerlig innovasjon</li>
                 </ul>
               </div>

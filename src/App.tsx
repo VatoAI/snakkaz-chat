@@ -23,6 +23,7 @@ const EmailConfirmation = lazy(() => import("@/pages/EmailConfirmation"));
 const ForgotPassword = lazy(() => import("@/pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
 const Info = lazy(() => import("@/pages/Info"));
+// const InfoNew = lazy(() => import("@/pages/InfoNew"));
 
 // Core chat functionality - separate chunk for main feature
 const Chat = lazy(() => import("@/pages/BasicChatPage"));
@@ -358,6 +359,7 @@ export default function App() {
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/info" element={<Info />} />
+              {/* <Route path="/info-new" element={<InfoNew />} /> */}
               
               {/* Mobile test page - no auth required for testing */}
               <Route path="/mobile-test" element={<MobileTestPage />} />

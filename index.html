@@ -26,7 +26,7 @@
     
     <!-- Critical CSS for faster rendering -->
     <style>
-        /* Critical CSS for initial paint */
+        /* Critical CSS for immediate liquid glass effect */
         * { box-sizing: border-box; }
         html, body { 
             margin: 0; 
@@ -37,6 +37,24 @@
             overflow-x: hidden;
         }
         #root { height: 100vh; }
+        
+        /* CRITICAL: Ensure liquid glass classes work immediately */
+        .liquid-glass-dramatic {
+            background: linear-gradient(135deg,
+                rgba(26, 157, 255, 0.15) 0%,
+                rgba(255, 255, 255, 0.08) 25%,
+                rgba(218, 188, 69, 0.15) 50%,
+                rgba(255, 255, 255, 0.06) 75%,
+                rgba(230, 0, 0, 0.15) 100%);
+            backdrop-filter: blur(25px) saturate(200%);
+            -webkit-backdrop-filter: blur(25px) saturate(200%);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 20px;
+            box-shadow:
+                0 8px 32px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.25),
+                0 0 40px rgba(26, 157, 255, 0.15);
+        }
     </style>
 </head>
 <body>

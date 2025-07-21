@@ -23,7 +23,6 @@ import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
 import './assets/update-notification.css';
-import './styles/custom-emoji.css';
 
 // DEAKTIVERT: Supabase preview-fix (forårsaker konflikter)
 // import '@/utils/supabase/preview-fix';

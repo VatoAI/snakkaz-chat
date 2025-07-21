@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,7 +19,6 @@ export const EnhancedLoginForm: React.FC = () => {
   const [showTwoFactor, setShowTwoFactor] = useState(false);
   const [pendingUser, setPendingUser] = useState<unknown>(null);
   const [totpSecret, setTotpSecret] = useState<string>('');
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [captchaValid, setCaptchaValid] = useState(false);
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [validationErrors, setValidationErrors] = useState<{[key: string]: string}>({});
@@ -155,7 +153,7 @@ export const EnhancedLoginForm: React.FC = () => {
   const currentLoading = isLoading || loading;
 
   return (
-    <Card className="w-full max-w-md mx-auto">
+    <Card className="w-full max-w-md mx-auto liquid-glass">
       <CardHeader className="text-center">
         <div className="mx-auto w-16 h-16 bg-cybergold-500/20 rounded-full flex items-center justify-center mb-4">
           {mode === 'login' ? 

@@ -8,7 +8,7 @@ import { UserPlus, Info, Mail, Shield, Lock, Users } from 'lucide-react';
 const Login: React.FC = () => {
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-cyberdark-950 via-cyberdark-900 to-cyberdark-950 p-4">
+    <div className="min-h-screen flex items-center justify-center liquid-glass-background p-4">
       <div className="w-full max-w-md space-y-6">
         {/* Logo Section */}
         <div className="flex justify-center mb-8">
