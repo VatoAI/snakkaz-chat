@@ -29,22 +29,22 @@ interface UploadingMedia {
 const ChatPage = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const { webRTCManager, setupWebRTC } = useWebRTC();
+  const webrtc = useWebRTC();
   const { friends, friendships, friendsMap } = useFriendships();
   const { userProfiles, fetchProfiles } = useProfiles();
   const { userPresence, currentStatus, handleStatusChange } = usePresence(user?.id || null);
   const [selectedFriend, setSelectedFriend] = useState<Friend | null>(null);
   const [activeTab, setActiveTab] = useState("global");
-  
+
   // State for direct messages
   const [directMessages, setDirectMessages] = useState<DecryptedMessage[]>([]);
-  
+
   // State for media handling
   const [uploadingMedia, setUploadingMedia] = useState<UploadingMedia | null>(null);
-  
+
   // Initialize chat state with the real useMessages hook
   const chatState = useMessages(user?.id || null, selectedFriend?.user_id);
-  
+
   // Init WebRTC connections
   useEffect(() => {
     if (user && user.id) {
@@ -58,14 +58,14 @@ const ChatPage = () => {
       chatState.fetchMessages();
       const cleanup = chatState.setupRealtimeSubscription();
       fetchProfiles();
-      
+
       // Cleanup function
       return () => {
         if (cleanup) cleanup();
       };
     }
   }, [user?.id, chatState, fetchProfiles]);
-  
+
   // Effect to load direct messages when a friend is selected
   useEffect(() => {
     const fetchDirectMessages = async () => {
@@ -97,14 +97,14 @@ const ChatPage = () => {
       const subscription = chatState.setupDirectMessageSubscription(selectedFriend.user_id, (newMessage) => {
         setDirectMessages(prev => [...prev, newMessage]);
       });
-      
+
       // Return the cleanup function directly if it exists
       if (typeof subscription === 'function') {
         return subscription;
       }
-      
+
       // Otherwise return a no-op function
-      return () => {};
+      return () => { };
     }
   }, [user?.id, selectedFriend?.user_id, chatState]);
 
@@ -145,7 +145,7 @@ const ChatPage = () => {
         progress: 0,
         status: 'uploading'
       });
-      
+
       // Simulate upload progress updates
       const updateProgress = (progress: number) => {
         setUploadingMedia(prev => prev ? {
@@ -153,7 +153,7 @@ const ChatPage = () => {
           progress
         } : null);
       };
-      
+
       // In a real app, this would use the actual file upload mechanism
       // For now, we'll use the useMediaUpload hook from chatState
       const mediaUrl = await chatState.handleSendMessage("", {
@@ -161,18 +161,18 @@ const ChatPage = () => {
         onProgress: updateProgress,
         receiverId: selectedFriend?.user_id
       });
-      
+
       // Update state to success
       setUploadingMedia(prev => prev ? {
         ...prev,
         status: 'success'
       } : null);
-      
+
       // Give user time to see upload completed
       setTimeout(() => {
         setUploadingMedia(null);
       }, 1000);
-      
+
       return mediaUrl || "";
     } catch (error) {
       console.error('Error uploading media:', error);
@@ -180,18 +180,18 @@ const ChatPage = () => {
         ...prev,
         status: 'error'
       } : null);
-      
+
       // Give user time to see the error
       setTimeout(() => {
         setUploadingMedia(null);
       }, 3000);
-      
+
       toast({
         variant: "destructive",
         title: "Opplastingsfeil",
         description: "Kunne ikke laste opp filen. Vennligst prøv igjen."
       });
-      
+
       throw new Error('Failed to upload media');
     }
   };
@@ -207,7 +207,7 @@ const ChatPage = () => {
           webRTCManager,
           onlineUsers: new Set(Object.keys(userPresence).filter(id => userPresence[id]?.online))
         });
-        
+
         // Add the message to our local state for immediate feedback
         const newMessage: DecryptedMessage = {
           id: Date.now().toString(),
@@ -226,7 +226,7 @@ const ChatPage = () => {
           media_url: null,
           media_type: null
         };
-        
+
         setDirectMessages(prev => [...prev, newMessage]);
       } else {
         // Send global message
@@ -248,12 +248,12 @@ const ChatPage = () => {
   };
 
   // Determine which user to show messages for in ChatInterface
-  const recipientInfo = selectedFriend 
+  const recipientInfo = selectedFriend
     ? {
-        name: userProfiles[selectedFriend.user_id]?.username || 'Ukjent bruker',
-        avatar: userProfiles[selectedFriend.user_id]?.avatar_url,
-        isOnline: userPresence[selectedFriend.user_id]?.online
-      }
+      name: userProfiles[selectedFriend.user_id]?.username || 'Ukjent bruker',
+      avatar: userProfiles[selectedFriend.user_id]?.avatar_url,
+      isOnline: userPresence[selectedFriend.user_id]?.online
+    }
     : undefined;
 
   return (
@@ -271,7 +271,7 @@ const ChatPage = () => {
                 Friends
               </TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="global" className="flex-1 overflow-hidden">
               <ChatInterface
                 messages={chatState.messages || []}
@@ -293,7 +293,7 @@ const ChatPage = () => {
                 onLoadMoreMessages={chatState.loadMoreMessages}
               />
             </TabsContent>
-            
+
             <TabsContent value="friends" className="flex-1 p-4 overflow-auto">
               <FriendsList
                 friends={friends}
@@ -305,7 +305,7 @@ const ChatPage = () => {
                 userProfiles={userProfiles}
               />
             </TabsContent>
-            
+
             <TabsContent value="directMessage" className="flex-1 overflow-hidden">
               <ChatInterface
                 messages={directMessages}

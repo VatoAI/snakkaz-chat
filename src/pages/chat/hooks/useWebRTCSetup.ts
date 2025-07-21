@@ -1,24 +1,33 @@
 
-import { useState } from "react";
-import { useWebRTC } from "@/hooks/useWebRTC";
+import { useState, useEffect } from "react";
+import { useWebRTC } from "@/hooks/webrtc-hooks";
 
-// Returns { manager, isReady, setupWebRTC, status }
+// Adapter hook to ensure backward compatibility with existing code
 export function useWebRTCSetup() {
-  const { manager, setupWebRTC, status } = useWebRTC();
+  const webrtc = useWebRTC();
   const [isReady, setIsReady] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
 
-  // Patch setup so we also set our isReady state
-  const wrappedSetupWebRTC = (userId: string, cb: () => void) => {
-    setupWebRTC(userId, () => {
+  // Initialize WebRTC when userId is set
+  useEffect(() => {
+    if (userId && webrtc.peers) {
       setIsReady(true);
-      if (cb) cb();
-    });
+    }
+  }, [userId, webrtc.peers]);
+
+  // Method to initialize WebRTC with new PeerJS system
+  const setupWebRTC = (newUserId: string, cb?: () => void) => {
+    setUserId(newUserId);
+    // PeerJS initialization happens automatically in the hook
+    if (webrtc.peers && cb) {
+      cb();
+    }
   };
 
   return {
-    manager,
+    manager: null, // For backward compatibility
     isReady,
-    setupWebRTC: wrappedSetupWebRTC,
-    status
+    setupWebRTC,
+    status: webrtc.peers?.length ? 'connected' : 'disconnected'
   };
 }

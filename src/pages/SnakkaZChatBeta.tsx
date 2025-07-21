@@ -17,16 +17,31 @@ import {
   X,
   Loader,
   Share2,
-  UserPlus
+  UserPlus,
+  Wifi,
+  WifiOff
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { chatService, Message, ChatRoom, UserProfile } from '@/services/chat/chatService';
 import { SnakkaZInviteSystem } from '@/components/invite/SnakkaZInviteSystem';
 import { SnakkaZLogo } from '@/components/branding/SnakkaZLogo';
+import { useMCPWebRTC } from '@/providers/MCPWebRTCProvider';
+import MCPWebRTCStatus from '@/components/chat/MCPWebRTCStatus';
 
 const SnakkaZChatBeta: React.FC = () => {
   const { user, signOut } = useAuth();
   const { toast } = useToast();
+  
+  // Hent MCP WebRTC-kontekst
+  const { 
+    isInitialized: mcpInitialized,
+    isConnecting: mcpConnecting,
+    error: mcpError,
+    stats: mcpStats,
+    connectTo: mcpConnectTo,
+    sendMessage: mcpSendMessage,
+    controller: mcpController
+  } = useMCPWebRTC();
   
   // State
   const [message, setMessage] = useState('');
@@ -35,6 +50,7 @@ const SnakkaZChatBeta: React.FC = () => {
   const [isUserListOpen, setIsUserListOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isInviteSystemOpen, setIsInviteSystemOpen] = useState(false);
+  const [showConnectionStatus, setShowConnectionStatus] = useState(false);
   
   // Chat data
   const [rooms, setRooms] = useState<ChatRoom[]>([]);
@@ -54,53 +70,61 @@ const SnakkaZChatBeta: React.FC = () => {
     scrollToBottom();
   }, [messages]);
 
-  // Initialize chat service
+  // Initialize real-time subscriptions
   useEffect(() => {
-    if (!user) return;
-
-    const initializeChat = async () => {
-      try {
-        setIsLoading(true);
-        
-        // Load rooms
-        const roomsList = await chatService.getChatRooms();
-        setRooms(roomsList);
-        
-        // Set default active room (first public room or general)
-        const defaultRoom = roomsList.find(r => r.name === 'General') || roomsList[0];
-        if (defaultRoom) {
-          setActiveRoom(defaultRoom.id);
-        }
-        
-        // Load online users
-        const users = await chatService.getOnlineUsers();
-        setOnlineUsers(users);
-        
-        // Start presence
-        await chatService.updatePresence(true);
-        
-      } catch (error) {
-        console.error('Failed to initialize chat:', error);
-        toast({
-          title: "Feil",
-          description: "Kunne ikke koble til chat. Prøv å laste siden på nytt.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     initializeChat();
-
-    // Cleanup on unmount
+    
     return () => {
       chatService.updatePresence(false);
       chatService.cleanup();
     };
-  }, [user, toast]);
-
-  // Subscribe to messages when active room changes
+  }, []);
+  
+  // Lytt etter MCP WebRTC-meldinger
+  useEffect(() => {
+    if (mcpInitialized && mcpController) {
+      // Registrer meldingslytter for MCP WebRTC
+      mcpController.onMessage((from, messageData) => {
+        try {
+          // Sjekk om meldingen er i forventet format
+          if (messageData && messageData.content && messageData.roomId) {
+            // Legg til melding i UI hvis den er for det aktive rommet
+            if (messageData.roomId === activeRoom) {
+              // Formater meldingen i samsvar med chatService-formatet
+              const newMessage: Message = {
+                id: `mcp-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+                room_id: messageData.roomId,
+                user_id: from,
+                content: messageData.content,
+                message_type: 'text',
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+                is_edited: false,
+                // Finne bruker-informasjon hvis mulig
+                user_profile: users.find(u => u.id === from) || {
+                  id: from,
+                  full_name: 'WebRTC-bruker',
+                  avatar_url: null
+                }
+              };
+              
+              // Legg til meldingen i messages-listen
+              setMessages(prev => [...prev, newMessage]);
+              
+              // Vis en notifikasjon om direkte MCP WebRTC-kommunikasjon
+              toast({
+                title: "Direkte melding",
+                description: "Meldingen ble sendt via sikker peer-to-peer forbindelse",
+                variant: "default",
+              });
+            }
+          }
+        } catch (error) {
+          console.error('Feil ved håndtering av MCP WebRTC-melding:', error);
+        }
+      });
+    }
+  }, [mcpInitialized, mcpController, activeRoom, users]);  // Subscribe to messages when active room changes
   useEffect(() => {
     if (!activeRoom) return;
 
@@ -127,9 +151,53 @@ const SnakkaZChatBeta: React.FC = () => {
     if (!message.trim() || !user || !activeRoom) return;
     
     try {
-      await chatService.sendMessage(activeRoom, message.trim());
-      setMessage('');
-      messageInputRef.current?.focus();
+      // Forsøk å sende via MCP WebRTC først hvis det er tilgjengelig
+      if (mcpInitialized && mcpController) {
+        // Finn ut om vi har en WebRTC-kobling til aktiv rom eller deltakere
+        const roomData = rooms.find(r => r.id === activeRoom);
+        let success = false;
+        
+        if (roomData && roomData.type === 'public') {
+          // Offentlige rom - bruk tradisjonell chatService
+          await chatService.sendMessage(activeRoom, message.trim());
+          success = true;
+        } else {
+          // For private og gruppe-chatter, prøv å bruke MCP WebRTC
+          try {
+            // For gruppe-chatter, sender vi meldinger til alle deltakerne
+            const messagePayload = {
+              content: message.trim(),
+              roomId: activeRoom,
+              timestamp: Date.now()
+            };
+            
+            // Send til alle deltakerne i rommet
+            if (users && users.length > 0) {
+              for (const user of users) {
+                if (user.id !== user?.id) {  // Ikke send til seg selv
+                  await mcpSendMessage(user.id, messagePayload);
+                }
+              }
+            }
+            success = true;
+          } catch (mcpError) {
+            console.warn('MCP WebRTC sending failed, falling back to regular chat service', mcpError);
+            // Fallback til tradisjonell chatService
+            await chatService.sendMessage(activeRoom, message.trim());
+            success = true;
+          }
+        }
+        
+        if (success) {
+          setMessage('');
+          messageInputRef.current?.focus();
+        }
+      } else {
+        // Bruk tradisjonell chatService hvis MCP WebRTC ikke er tilgjengelig
+        await chatService.sendMessage(activeRoom, message.trim());
+        setMessage('');
+        messageInputRef.current?.focus();
+      }
     } catch (error) {
       console.error('Failed to send message:', error);
       toast({
@@ -416,6 +484,48 @@ const SnakkaZChatBeta: React.FC = () => {
                   <Send size={18} />
                 </Button>
               </div>
+              
+              {/* MCP WebRTC Status Indicator */}
+              <div className="mt-2 flex items-center justify-between">
+                <div 
+                  onClick={() => setShowConnectionStatus(!showConnectionStatus)}
+                  className="flex items-center space-x-1 text-xs cursor-pointer text-cybergold-400 hover:text-white transition-colors"
+                >
+                  {mcpInitialized ? (
+                    <>
+                      <Wifi size={14} className="text-green-500" />
+                      <span>Sikker P2P-tilkobling aktiv</span>
+                    </>
+                  ) : mcpConnecting ? (
+                    <>
+                      <Loader size={14} className="animate-spin text-yellow-500" />
+                      <span>Kobler til P2P-nettverk...</span>
+                    </>
+                  ) : (
+                    <>
+                      <WifiOff size={14} className="text-red-500" />
+                      <span>Standard tilkobling</span>
+                    </>
+                  )}
+                </div>
+                
+                {mcpError && (
+                  <div className="text-xs text-red-400">
+                    Tilkoblingsfeil: {mcpError}
+                  </div>
+                )}
+              </div>
+              
+              {/* Detailed MCP WebRTC Status */}
+              {showConnectionStatus && (
+                <div className="mt-2 bg-cyberdark-800 border border-cybergold-500/20 rounded-lg p-3">
+                  <h4 className="text-sm font-medium mb-2 text-cybergold-400">Tilkoblingsstatus</h4>
+                  <MCPWebRTCStatus 
+                    userId={user?.id || ''} 
+                    serverUrl={process.env.REACT_APP_MCP_SERVER_URL || 'wss://mcp.snakkaz.com'} 
+                  />
+                </div>
+              )}
             </div>
           </div>
         </div>

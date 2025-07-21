@@ -1,9 +1,16 @@
 /**
  * SnakkaZ Chat Service - Real-time Chat Management
  * Production-ready service for chat functionality
+ * Integrasjon med MCP WebRTC for robust kommunikasjon
  */
 
 import { supabase } from '@/lib/supabaseClient';
+import { IntegratedCommunicationController, CommunicationConfig } from '@/utils/webrtc/integrated-communication';
+import { 
+  MCP_SERVER_URL, 
+  MAX_OFFLINE_MESSAGES, 
+  DEFAULT_ENCRYPTION_ENABLED 
+} from '@/config/constants';
 
 export interface ChatRoom {
   id: string;
@@ -44,15 +51,92 @@ export interface UserProfile {
   last_seen_at: string;
 }
 
+// Nye Message-typer for integrert kommunikasjon
+export interface MCPMessage extends Message {
+  transmission_type: 'webrtc' | 'mcp' | 'supabase';
+  encrypted: boolean;
+  delivered: boolean;
+  read: boolean;
+  encrypted_content?: string;
+  metadata?: any;
+}
+
 class ChatService {
   private static instance: ChatService;
   private subscriptions: Map<string, any> = new Map();
+  private communicationController: IntegratedCommunicationController | null = null;
+  private messageHandlers: Map<string, ((message: MCPMessage) => void)[]> = new Map();
+  private isInitialized: boolean = false;
+  private userId: string = '';
+  private connectionType: 'webrtc' | 'mcp' | 'supabase' = 'supabase';
+  private metrics: any = {
+    messagesSent: 0,
+    messagesReceived: 0,
+    webrtcSuccessRate: 0,
+    mcpSuccessRate: 0,
+    averageLatency: 0,
+    failedConnections: 0,
+    reconnections: 0,
+    lastUpdated: Date.now()
+  };
+  
+  private constructor() {
+    // Private constructor for singleton pattern
+  }
 
   static getInstance(): ChatService {
     if (!ChatService.instance) {
       ChatService.instance = new ChatService();
     }
     return ChatService.instance;
+  }
+  
+  /**
+   * Initialiser MCP WebRTC-integrasjonen
+   * @param userId Brukerens ID
+   * @returns Om initialiseringen var vellykket
+   */
+  async initializeMCPWebRTC(userId: string): Promise<boolean> {
+    try {
+      if (this.isInitialized && this.userId === userId) {
+        return true; // Allerede initialisert
+      }
+      
+      this.userId = userId;
+      
+      // Opprett konfigurasjon for kommunikasjonskontrolleren
+      const config: CommunicationConfig = {
+        userId: userId,
+        mcpServerUrl: MCP_SERVER_URL,
+        enableWebRTC: true,
+        enableMCP: true,
+        preferWebRTC: true,
+        fallbackEnabled: true
+      };
+      
+      // Opprett og initialiser kommunikasjonskontrolleren
+      this.communicationController = new IntegratedCommunicationController(config);
+      const success = await this.communicationController.init();
+      
+      if (success) {
+        this.isInitialized = true;
+        this.setupMessageHandlers();
+        
+        // Start metrics logging
+        this.startMetricsLogging();
+        
+        console.log('[ChatService] MCP WebRTC initialisert for bruker:', userId);
+        return true;
+      } else {
+        console.error('[ChatService] Kunne ikke initialisere MCP WebRTC');
+        this.connectionType = 'supabase';
+        return false;
+      }
+    } catch (error) {
+      console.error('[ChatService] Feil under initialisering av MCP WebRTC:', error);
+      this.connectionType = 'supabase';
+      return false;
+    }
   }
 
   /**
@@ -106,19 +190,181 @@ class ChatService {
   }
 
   /**
-   * Send a message to a room
+   * Setup message handlers for MCP WebRTC
+   */
+  private setupMessageHandlers(): void {
+    if (!this.communicationController) return;
+
+    // Lytt til meldinger fra MCP WebRTC
+    this.communicationController.onMessage((from: string, messageData: any) => {
+      try {
+        // Sjekk om meldingen er i forventet format
+        if (messageData && messageData.content && messageData.roomId) {
+          const mcpMessage: MCPMessage = {
+            id: messageData.id || `mcp-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+            room_id: messageData.roomId,
+            user_id: from,
+            content: messageData.content,
+            message_type: messageData.messageType || 'text',
+            created_at: new Date(messageData.timestamp || Date.now()).toISOString(),
+            updated_at: new Date(messageData.timestamp || Date.now()).toISOString(),
+            is_edited: false,
+            transmission_type: 'mcp',
+            encrypted: messageData.encrypted || false,
+            delivered: true,
+            read: false
+          };
+
+          // Trigger message handlers
+          const handlers = this.messageHandlers.get(messageData.roomId) || [];
+          handlers.forEach(handler => handler(mcpMessage));
+          
+          // Oppdater metrics
+          this.metrics.messagesReceived++;
+          
+          // Lagre i lokal database for offline-tilgang
+          this.saveMessageToLocalStorage(mcpMessage);
+        }
+      } catch (error) {
+        console.error('[ChatService] Error handling MCP message:', error);
+      }
+    });
+  }
+
+  /**
+   * Start logging metrics
+   */
+  private startMetricsLogging(): void {
+    // Logger metrics periodisk
+    setInterval(() => {
+      if (this.communicationController) {
+        // Hent statistikk fra kommunikasjonskontroller
+        const stats = this.communicationController.getStats();
+        if (stats) {
+          this.metrics = {
+            ...this.metrics,
+            ...stats
+          };
+        }
+        
+        // Logger til konsoll (i produksjon ville dette gå til en analysetjeneste)
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('[ChatService] Metrics:', this.metrics);
+        }
+      }
+    }, 60000); // Logger hvert minutt
+  }
+  
+  /**
+   * Save message to local storage for offline access
+   */
+  private saveMessageToLocalStorage(message: MCPMessage): void {
+    try {
+      // Hent eksisterende meldinger
+      const existingMessagesJson = localStorage.getItem(`snakkaz-messages-${message.room_id}`);
+      const existingMessages: MCPMessage[] = existingMessagesJson ? JSON.parse(existingMessagesJson) : [];
+      
+      // Legg til ny melding
+      existingMessages.push(message);
+      
+      // Behold bare de siste X meldingene
+      const messagesToKeep = existingMessages.slice(-MAX_OFFLINE_MESSAGES);
+      
+      // Lagre tilbake i localStorage
+      localStorage.setItem(`snakkaz-messages-${message.room_id}`, JSON.stringify(messagesToKeep));
+    } catch (error) {
+      console.error('[ChatService] Error saving message to local storage:', error);
+    }
+  }
+
+  /**
+   * Send a message to a room with MCP WebRTC support
    */
   async sendMessage(roomId: string, content: string, messageType: 'text' | 'image' | 'file' = 'text'): Promise<Message> {
     try {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error('User not authenticated');
-
+      
+      // Opprett melding
+      const messageId = `msg-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+      const timestamp = new Date().toISOString();
+      const message: MCPMessage = {
+        id: messageId,
+        room_id: roomId,
+        user_id: user.user.id,
+        content,
+        message_type: messageType,
+        created_at: timestamp,
+        updated_at: timestamp,
+        is_edited: false,
+        transmission_type: 'supabase', // Standard verdi, oppdateres basert på hvordan meldingen sendes
+        encrypted: false,
+        delivered: false,
+        read: false
+      };
+      
+      // Prøv å sende via MCP WebRTC først hvis tilgjengelig
+      if (this.isInitialized && this.communicationController) {
+        try {
+          // Hent brukerinformasjon for rommet
+          const roomUsers = await this.getRoomParticipants(roomId);
+          
+          // Forbered meldingsdata for MCP
+          const mcpMessageData = {
+            id: messageId,
+            roomId,
+            content,
+            messageType,
+            timestamp: Date.now(),
+            userId: user.user.id
+          };
+          
+          let mcpSendSuccess = false;
+          
+          // For gruppe-chatter, sender vi meldinger til alle deltakerne
+          if (roomUsers && roomUsers.length > 0) {
+            for (const roomUser of roomUsers) {
+              if (roomUser.id !== user.user.id) { // Ikke send til seg selv
+                const sendResult = await this.communicationController.sendTo(
+                  roomUser.id,
+                  mcpMessageData,
+                  { encrypted: true }
+                );
+                if (sendResult) {
+                  mcpSendSuccess = true;
+                  message.transmission_type = 'webrtc';
+                  message.encrypted = true;
+                }
+              }
+            }
+          }
+          
+          if (mcpSendSuccess) {
+            message.delivered = true;
+            // Oppdater metrics
+            this.metrics.messagesSent++;
+            
+            // Lagre i lokal database for offline-tilgang
+            this.saveMessageToLocalStorage(message);
+            
+            // Oppdater database via Supabase i bakgrunnen
+            this.saveToDatabaseInBackground(message);
+            
+            return message;
+          }
+        } catch (error) {
+          console.warn('[ChatService] Failed to send via MCP WebRTC, falling back to Supabase:', error);
+        }
+      }
+      
+      // Fallback til Supabase hvis MCP WebRTC ikke fungerer eller ikke er tilgjengelig
       const { data, error } = await supabase
         .from('messages')
         .insert({
           room_id: roomId,
           user_id: user.user.id,
           content,
+          id: messageId,
           message_type: messageType
         })
         .select(`
@@ -137,9 +383,74 @@ class ChatService {
   }
 
   /**
+   * Get room participants with user profiles
+   */
+  async getRoomParticipants(roomId: string): Promise<UserProfile[]> {
+    try {
+      const { data: participants, error } = await supabase
+        .from('room_participants')
+        .select(`
+          user_id,
+          user_profiles!inner(id, username, display_name, avatar_url, status, last_seen_at)
+        `)
+        .eq('room_id', roomId);
+
+      if (error) throw error;
+
+      return participants.map(p => ({
+        id: p.user_profiles.id,
+        username: p.user_profiles.username,
+        display_name: p.user_profiles.display_name,
+        avatar_url: p.user_profiles.avatar_url,
+        status: p.user_profiles.status as 'online' | 'away' | 'busy' | 'offline',
+        last_seen_at: p.user_profiles.last_seen_at
+      } as UserProfile));
+    } catch (error) {
+      console.error('[ChatService] Error getting room participants:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Save message to database in background
+   */
+  private async saveToDatabaseInBackground(message: MCPMessage): Promise<void> {
+    try {
+      // Lagre meldingen i databasen for persistens
+      await supabase
+        .from('messages')
+        .insert({
+          id: message.id,
+          room_id: message.room_id,
+          user_id: message.user_id,
+          content: message.content,
+          message_type: message.message_type,
+          created_at: message.created_at,
+          updated_at: message.updated_at,
+          is_edited: message.is_edited,
+          reply_to_id: message.reply_to_id,
+          metadata: {
+            transmission_type: message.transmission_type,
+            encrypted: message.encrypted
+          }
+        });
+    } catch (error) {
+      console.error('[ChatService] Error saving message to database in background:', error);
+      // Ikke kast feil her siden dette er en bakgrunnsoperasjon
+    }
+  }
+
+  /**
    * Subscribe to real-time messages for a room
    */
   subscribeToMessages(roomId: string, onMessage: (message: Message) => void): () => void {
+    // Registrer meldingshandleren for MCP WebRTC-meldinger
+    if (!this.messageHandlers.has(roomId)) {
+      this.messageHandlers.set(roomId, []);
+    }
+    this.messageHandlers.get(roomId)?.push(onMessage);
+    
+    // Abonner på Supabase-meldinger som fallback
     const channel = supabase
       .channel(`messages:${roomId}`)
       .on(

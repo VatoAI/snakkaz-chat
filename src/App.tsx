@@ -2,6 +2,7 @@
 import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { Routes, Route, Navigate, useLocation, BrowserRouter } from "react-router-dom";
 import { AuthProvider, useAuth } from './hooks/useAuth';
+import { supabase } from '@/lib/supabaseClient';
 import { Toaster } from "@/components/ui/toaster";
 import { RootErrorBoundary } from './components/error/RootErrorBoundary';
 import { setupGlobalErrorHandlers } from './utils/error/errorHandling';
@@ -9,6 +10,8 @@ import { bootstrapSecurityFeatures } from '@/services/security/securityIntegrati
 import { applyEmergencyDevCsp } from '@/services/security/emergencyDevCsp';
 import { lcpOptimizer } from '@/services/performance/lcpOptimizer';
 import { ENV } from './utils/env/environmentFix';
+// Import MCP WebRTC Provider
+import MCPWebRTCProvider from './providers/MCPWebRTCProvider';
 // PWA and Mobile Components
 import PWAHead from './components/mobile/PWAHead';
 import MobileOptimization from './components/mobile/MobileOptimization';
@@ -28,6 +31,9 @@ const Info = lazy(() => import("@/pages/Info"));
 // Core chat functionality - separate chunk for main feature
 const Chat = lazy(() => import("@/pages/BasicChatPage"));
 const ChatPageNew = lazy(() => import("@/pages/ChatPageNew"));
+
+// WebRTC Testing
+const WebRTCTest = lazy(() => import("@/components/test/WebRTCImplementationTest"));
 const BasicChatPage = lazy(() => import("@/pages/BasicChatPage"));
 
 // AI features - separate chunk (lazy load on demand)
@@ -45,6 +51,9 @@ const FinalMobileTest = lazy(() => import("@/pages/FinalMobileTest"));
 
 // Complete mobile test page with header + navigation
 const CompleteMobileTest = lazy(() => import("@/pages/CompleteMobileTest"));
+
+// MCP WebRTC test page
+const MCPWebRTCTestPage = lazy(() => import("@/pages/MCPWebRTCTestPage"));
 
 // LiquidGlass demo page
 const LiquidGlassDemo = lazy(() => import("@/pages/LiquidGlassDemo").then(module => ({ default: module.LiquidGlassDemo })));
@@ -92,20 +101,16 @@ const LoadingSpinner = () => (
 );
 
 // Error fallback component - extremely simplified for better stability
-const SimpleFallbackError = ({ resetApp }) => (
-  <div className="h-screen flex items-center justify-center bg-black">
-    <div className="flex flex-col items-center max-w-md p-6 bg-gray-900 rounded-lg shadow-lg">
-      <h2 className="text-xl text-yellow-400 mb-4">Noe gikk galt</h2>
-      <p className="text-white mb-4">
-        Vi beklager, men det har oppstått en feil i Snakkaz Chat.
-      </p>
-      <button
-        onClick={resetApp}
-        className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-black font-medium rounded"
-      >
-        Last siden på nytt
-      </button>
-    </div>
+const SimpleFallbackError = ({ resetApp }: { resetApp: () => void }) => (
+  <div className="flex flex-col items-center justify-center h-screen bg-cyberdark-950">
+    <h2 className="text-2xl font-bold text-cybergold-500 mb-4">Oops, something went wrong</h2>
+    <p className="text-white mb-6">We're sorry for the inconvenience. Please try again.</p>
+    <button 
+      onClick={resetApp} 
+      className="px-4 py-2 bg-cybergold-600 text-white rounded hover:bg-cybergold-500 transition-colors"
+    >
+      Restart App
+    </button>
   </div>
 );
 
@@ -303,6 +308,26 @@ const SubdomainRouter = () => {
 export default function App() {
   // Track if we're in a preview environment
   const [isPreviewEnv, setIsPreviewEnv] = useState(false);
+  // User ID for MCP and WebRTC
+  const [userId, setUserId] = useState<string>('');
+  
+  // Sett bruker-ID fra authentication
+  useEffect(() => {
+    // Hent bruker-ID fra supabase auth
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (_event: string, session: any) => {
+        if (session?.user?.id) {
+          setUserId(session.user.id);
+        } else {
+          setUserId('');
+        }
+      }
+    );
+    
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
   
   // Initialize security features and Supabase preview environment
   useEffect(() => {
@@ -313,6 +338,10 @@ export default function App() {
           const { applyEmergencyDevCsp } = await import('@/services/security/emergencyDevCsp');
           applyEmergencyDevCsp();
         }
+        
+        // Hent bruker-ID for MCP og WebRTC
+        const randomId = `user-${Math.random().toString(36).substring(2, 9)}`;
+        setUserId(randomId);
         
         // Initialize security features
         await bootstrapSecurityFeatures();
@@ -373,6 +402,10 @@ export default function App() {
               
               {/* SnakkaZ Beta Landing - no auth required */}
               <Route path="/beta" element={<SnakkaZBetaLanding />} />
+              
+              {/* MCP WebRTC Test Page - for testing MCP and WebRTC integration */}
+              <Route path="/mcp-webrtc-test" element={<MCPWebRTCTestPage />} />
+              <Route path="/mcp-webrtc-test" element={<MCPWebRTCTestPage />} />
               
               {/* SnakkaZ Chat Beta - Full featured chat system */}
               <Route 
@@ -568,10 +601,14 @@ export default function App() {
         </AuthProvider>
         
         {/* PWA and Mobile Components */}
-        <PWAHead />
-        <MobileOptimization>
-          <MobileLaunchBanner />
-        </MobileOptimization>
+        
+        {/* MCPWebRTCProvider - bruker autentisert brukers ID */}
+        <MCPWebRTCProvider userId={userId}>
+          <PWAHead />
+          <MobileOptimization>
+            <MobileLaunchBanner />
+          </MobileOptimization>
+        </MCPWebRTCProvider>
       </BrowserRouter>
     </SuperSimpleErrorBoundary>
   );
