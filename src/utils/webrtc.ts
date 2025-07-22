@@ -18,7 +18,6 @@ export { default as WebRTCMonitor } from '../components/chat/WebRTCMonitor.new';
 
 // Export utilities
 export { initializeWebRTCChat, useWebRTCChatStatus, useIntegratedChatWrapper } from './webrtc/chat-integration';
-export { PeerJSManager } from './webrtc/peerjs-manager';
 
 // Export types
 export type { ChatIntegrationConfig } from './webrtc/chat-integration';

@@ -16,6 +16,8 @@ import { GroupChat } from '@/types/chat';
 import { Loader, Settings, Users, ArrowLeft } from 'lucide-react';
 import GroupSettingsPanel from './GroupSettingsPanel';
 import GroupInvitePanel from './GroupInvitePanel';
+import { ChatSecurityHeader } from '../../security/ChatSecurityHeader';
+import { GroupEncryptionPanel } from '../../security/GroupEncryptionPanel';
 
 interface GroupChatViewProps {
   groupId: string;
@@ -61,6 +63,14 @@ const GroupChatView: React.FC<GroupChatViewProps> = ({
   const [showSettingsPanel, setShowSettingsPanel] = useState(false);
   const [showInvitePanel, setShowInvitePanel] = useState(false);
   const [userRole, setUserRole] = useState<string>('member');
+  
+  // E2EE state
+  const [isEncryptedGroup, setIsEncryptedGroup] = useState(false);
+  const [encryptionParticipants, setEncryptionParticipants] = useState<Array<{
+    userId: string;
+    hasKey: boolean;
+    keyExchanged: boolean;
+  }>>([]);
   
   const { user } = useAuth();
   const { toast } = useToast();
@@ -569,13 +579,25 @@ const GroupChatView: React.FC<GroupChatViewProps> = ({
           >
             <ArrowLeft size={20} />
           </button>
-          <div>
-            <h2 className="text-lg font-semibold text-cybergold-400">
-              {groupDetails?.name || 'Group Chat'}
-            </h2>
-            <div className="flex items-center text-xs text-gray-500">
-              <Users size={12} className="mr-1" />
-              <span>{groupMembers.length} members</span>
+          <div className="flex-1">
+            <div className="flex items-center gap-3">
+              <div>
+                <h2 className="text-lg font-semibold text-cybergold-400">
+                  {groupDetails?.name || 'Group Chat'}
+                </h2>
+                <div className="flex items-center text-xs text-gray-500">
+                  <Users size={12} className="mr-1" />
+                  <span>{groupMembers.length} members</span>
+                </div>
+              </div>
+              
+              {/* Encryption Status Indicator */}
+              <ChatSecurityHeader
+                encryptionStatus={isEncryptedGroup ? 'group-encrypted' : 'not-encrypted'}
+                transmissionType={isEncryptedGroup ? 'mcp' : 'supabase'}
+                participantCount={groupMembers.length}
+                isGroupChat={true}
+              />
             </div>
           </div>
         </div>

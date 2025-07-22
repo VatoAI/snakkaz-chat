@@ -28,6 +28,10 @@ export const MAX_RETRY_ATTEMPTS = 3;
 
 // Kryptering
 export const DEFAULT_ENCRYPTION_ENABLED = true;
+export const ENCRYPTION_ALGORITHM = 'AES-GCM';
+export const ENCRYPTION_KEY_LENGTH = 256; 
+export const ENCRYPTION_KEY_FORMAT = 'raw';
+export const ENCRYPTION_EXTRACT_KEY = false; // Om nøkler kan eksporteres
 
 // Chat konfigurasjon
 export const MAX_MESSAGE_LENGTH = 2000;

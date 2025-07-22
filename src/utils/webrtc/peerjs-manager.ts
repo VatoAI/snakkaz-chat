@@ -2,8 +2,54 @@ import Peer, { DataConnection } from 'peerjs';
 import pRetry from 'p-retry';
 import pTimeout from 'p-timeout';
 import * as uint8arrays from 'uint8arrays';
-import { EventEmitter } from 'events';
-import raceEvent from 'race-event';
+
+// Create a simple EventEmitter-like class for browser compatibility
+class SimpleEventEmitter {
+  private listeners: Record<string, Function[]> = {};
+  private onceListeners: Record<string, Function[]> = {};
+
+  on(event: string, listener: Function) {
+    if (!this.listeners[event]) {
+      this.listeners[event] = [];
+    }
+    this.listeners[event].push(listener);
+  }
+
+  once(event: string, listener: Function) {
+    if (!this.onceListeners[event]) {
+      this.onceListeners[event] = [];
+    }
+    this.onceListeners[event].push(listener);
+  }
+
+  emit(event: string, ...args: any[]) {
+    // Regular listeners
+    if (this.listeners[event]) {
+      this.listeners[event].forEach(listener => listener(...args));
+    }
+    
+    // Once listeners
+    if (this.onceListeners[event]) {
+      this.onceListeners[event].forEach(listener => listener(...args));
+      delete this.onceListeners[event]; // Remove after calling
+    }
+  }
+
+  removeListener(event: string, listener: Function) {
+    if (this.listeners[event]) {
+      this.listeners[event] = this.listeners[event].filter(l => l !== listener);
+    }
+  }
+
+  off(event: string, listener: Function) {
+    this.removeListener(event, listener);
+  }
+
+  removeAllListeners() {
+    this.listeners = {};
+    this.onceListeners = {};
+  }
+}
 
 export interface PeerJSConfig {
   host?: string;
@@ -30,7 +76,7 @@ export type DataChannelState = 'open' | 'connecting' | 'closing' | 'closed';
 export class PeerJSManager {
   private peer: Peer | null = null;
   private connections: Map<string, DataConnection> = new Map();
-  private events = new EventEmitter();
+  private events = new SimpleEventEmitter();
   private stats: Map<string, PeerConnectionStats> = new Map();
   private pingIntervals: Map<string, NodeJS.Timeout> = new Map();
   private pingTimestamps: Map<string, number> = new Map();

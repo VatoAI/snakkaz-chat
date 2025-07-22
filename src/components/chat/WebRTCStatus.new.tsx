@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FiWifi, FiWifiOff, FiServer, FiShield, FiAlertCircle, FiLoader } from 'react-icons/fi';
+import { Wifi, WifiOff, Server, Shield, AlertCircle, Loader } from 'lucide-react';
 import { ConnectionType } from '../../hooks/useWebRTCDirectMessaging.new';
 
 interface WebRTCStatusProps {
@@ -55,21 +55,21 @@ const WebRTCStatus: React.FC<WebRTCStatusProps> = ({
     switch (connectionStatus) {
       case 'p2p':
         return (
-          <div className="flex items-center">
-            <FiWifi className="text-green-500" />
-            {isEncrypted && <FiShield className="ml-1 text-blue-400" />}
-          </div>
+          <>
+            <Wifi className="text-green-500" />
+            {isEncrypted && <Shield className="ml-1 text-blue-400" />}
+          </>
         );
       case 'server':
-        return <FiServer className="text-yellow-500" />;
+        return <Server className="text-yellow-500" />;
       case 'connecting':
-        return <FiLoader className="animate-spin text-blue-400" />;
+        return <Loader className="animate-spin text-blue-400" />;
       case 'disconnected':
-        return <FiWifiOff className="text-gray-400" />;
+        return <WifiOff className="text-gray-400" />;
       case 'error':
-        return <FiAlertCircle className="text-red-500" />;
+        return <AlertCircle className="text-red-500" />;
       default:
-        return <FiWifiOff className="text-gray-400" />;
+        return <WifiOff className="text-gray-400" />;
     }
   };
 

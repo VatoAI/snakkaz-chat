@@ -7,7 +7,7 @@ import {
   WebRTCMonitor,
   initializeWebRTCChat,
   useIntegratedChatWrapper
-} from '../utils/webrtc';
+} from '../../utils/webrtc';
 
 interface Message {
   id: string;

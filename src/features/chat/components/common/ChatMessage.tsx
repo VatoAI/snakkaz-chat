@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { MoreVertical, Edit, Trash, X, Download, Copy, Eye } from 'lucide-react';
 import { cx, theme } from '@/lib/theme';
+import { EncryptionIndicator, EncryptionStatus } from '@/components/chat/security/EncryptionIndicator';
 
 interface ChatMessageProps {
   message: any; // Message object with at least id, content, sender_id
@@ -9,6 +10,10 @@ interface ChatMessageProps {
   onEdit?: (message: any) => void;
   onDelete?: (messageId: string) => void;
   showActions?: boolean;
+  // New encryption-related props
+  encryptionStatus?: EncryptionStatus;
+  transmissionType?: 'webrtc' | 'mcp' | 'supabase';
+  showEncryptionIndicator?: boolean;
 }
 
 export const ChatMessage: React.FC<ChatMessageProps> = ({
@@ -17,7 +22,10 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   userProfiles = {},
   onEdit,
   onDelete,
-  showActions = true
+  showActions = true,
+  encryptionStatus,
+  transmissionType,
+  showEncryptionIndicator = true
 }) => {
   const [showMenu, setShowMenu] = useState(false);
   const [showMediaModal, setShowMediaModal] = useState(false);
@@ -33,6 +41,15 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
     hour: '2-digit',
     minute: '2-digit'
   });
+
+  // Determine encryption status from message data if not explicitly provided
+  const actualEncryptionStatus = encryptionStatus || 
+    (message.encrypted ? 'encrypted' : 
+     message.transmission_type === 'mcp' ? 'encrypted' : 
+     message.transmission_type === 'webrtc' ? 'encrypted' : 'not-encrypted');
+  
+  const actualTransmissionType = transmissionType || 
+    message.transmission_type || 'supabase';
   
   // Handle media content
   const hasMedia = message.media_url || message.mediaUrl;
@@ -178,9 +195,20 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
           </div>
         )}
         
-        {/* Footer with timestamp and actions */}
+        {/* Footer with timestamp, encryption indicator, and actions */}
         <div className="flex items-center justify-between mt-1">
-          <span className="text-xs text-cybergold-600">{formattedTime}</span>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-cybergold-600">{formattedTime}</span>
+            {/* Encryption Indicator */}
+            {showEncryptionIndicator && (
+              <EncryptionIndicator
+                status={actualEncryptionStatus}
+                transmissionType={actualTransmissionType}
+                variant="icon-only"
+                className="opacity-70"
+              />
+            )}
+          </div>
           
           {/* Message actions */}
           {showActions && isCurrentUser && (

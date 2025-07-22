@@ -27,6 +27,8 @@ const ForgotPassword = lazy(() => import("@/pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
 const Info = lazy(() => import("@/pages/Info"));
 // const InfoNew = lazy(() => import("@/pages/InfoNew"));
+// E2EE Test Page
+const E2EETestPage = lazy(() => import("@/pages/E2EETestPage"));
 
 // Core chat functionality - separate chunk for main feature
 const Chat = lazy(() => import("@/pages/BasicChatPage"));
@@ -396,6 +398,9 @@ export default function App() {
               <Route path="/improved-mobile-test" element={<ImprovedMobileTest />} />
               <Route path="/final-mobile-test" element={<FinalMobileTest />} />
               <Route path="/final-mobile-test" element={<FinalMobileTest />} />
+              
+              {/* E2EE Test Page - for testing kryptering */}
+              <Route path="/e2ee-test" element={<E2EETestPage />} />
               
               {/* LiquidGlass demo - no auth required for testing */}
               <Route path="/liquid-glass-demo" element={<LiquidGlassDemo />} />
