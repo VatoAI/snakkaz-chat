@@ -1,24 +1,52 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  MessageCircle, 
+  Send, 
+  Crown, 
+  Bitcoin, 
+  Settings, 
+  Users, 
+  Shield,
+  Zap,
+  Home,
+  LogOut,
+  Smile,
+  Paperclip,
+  Mic,
+  Video,
+  Phone,
+  MoreHorizontal,
+  Search,
+  Bell
+} from 'lucide-react';
+import '../styles/professional-modern-2025.css';
+import FreeUserNavigation from '@/components/navigation/FreeUserNavigation';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
-import { MessageCircle, Send, Crown, Bitcoin } from 'lucide-react';
-import FreeUserNavigation from '@/components/navigation/FreeUserNavigation';
+import VoiceMessageRecorder from '@/components/chat/VoiceMessageRecorder';
+import VoiceMessagePlayer from '@/components/chat/VoiceMessagePlayer';
 
 interface Message {
   id: string;
-  text: string;
+  text?: string;
   user: string;
   timestamp: Date;
-  type: 'user' | 'welcome' | 'community';
+  type: 'user' | 'welcome' | 'community' | 'voice';
+  audioUrl?: string;
+  duration?: number;
+  waveformData?: number[];
 }
 
 const BasicChatPage: React.FC = () => {
   const { user } = useAuth();
   const [message, setMessage] = useState('');
+  const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -35,6 +63,14 @@ const BasicChatPage: React.FC = () => {
       type: 'community'
     }
   ]);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   const sendMessage = () => {
     if (message.trim() && user) {
@@ -61,6 +97,22 @@ const BasicChatPage: React.FC = () => {
           setMessages(prev => [...prev, encouragementMessage]);
         }, 1000);
       }
+    }
+  };
+
+  const sendVoiceMessage = (audioBlob: Blob, duration: number, waveformData: number[]) => {
+    if (user) {
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const newMessage: Message = {
+        id: Date.now().toString(),
+        user: user.email?.split('@')[0] || 'Anonym',
+        timestamp: new Date(),
+        type: 'voice',
+        audioUrl,
+        duration,
+        waveformData
+      };
+      setMessages(prev => [...prev, newMessage]);
     }
   };
 
@@ -180,14 +232,26 @@ const BasicChatPage: React.FC = () => {
                             ? 'bg-cybergold-900/20 text-cybergold-200 border border-cybergold-500/20' :
                           msg.type === 'community'
                             ? 'bg-green-900/20 text-green-200 border border-green-500/20' :
+                          msg.type === 'voice'
+                            ? 'bg-purple-900/20 border border-purple-500/20 p-2' :
                             'bg-cyberdark-700 text-cyberdark-200'
                         }`}
                       >
-                        {msg.text}
+                        {msg.type === 'voice' && msg.audioUrl ? (
+                          <VoiceMessagePlayer
+                            audioUrl={msg.audioUrl}
+                            duration={msg.duration || 0}
+                            waveformData={msg.waveformData || []}
+                            isFromSelf={msg.user === (user?.email?.split('@')[0] || 'Anonym')}
+                          />
+                        ) : (
+                          msg.text
+                        )}
                       </div>
                     </div>
                   ))}
                 </div>
+                <div ref={messagesEndRef} />
               </ScrollArea>
 
               {/* Input Area */}
@@ -200,6 +264,13 @@ const BasicChatPage: React.FC = () => {
                     placeholder="Skriv en melding..."
                     className="flex-1 bg-cyberdark-700 border-cyberdark-600 text-cyberdark-100 placeholder:text-cyberdark-400"
                   />
+                  <Button 
+                    onClick={() => setShowVoiceRecorder(true)}
+                    className="bg-purple-600 hover:bg-purple-700 text-white"
+                    title="Send voice message"
+                  >
+                    <Mic className="h-4 w-4" />
+                  </Button>
                   <Button 
                     onClick={sendMessage}
                     disabled={!message.trim()}
@@ -232,6 +303,14 @@ const BasicChatPage: React.FC = () => {
           </Card>
         </div>
       </div>
+
+      {/* Voice Message Recorder Modal */}
+      {showVoiceRecorder && (
+        <VoiceMessageRecorder
+          onSendVoiceMessage={sendVoiceMessage}
+          onClose={() => setShowVoiceRecorder(false)}
+        />
+      )}
     </div>
   );
 };

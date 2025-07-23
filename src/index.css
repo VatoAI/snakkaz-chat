@@ -2,6 +2,7 @@
 
 @import './styles/liquid-glass-clean.css';
 @import './styles/professional-glass-fixed.css';
+@import './styles/professional-modern-2025.css';
 
 @tailwind base;
 @tailwind components;

@@ -20,6 +20,7 @@ export const EnhancedLoginForm: React.FC = () => {
   const [pendingUser, setPendingUser] = useState<unknown>(null);
   const [totpSecret, setTotpSecret] = useState<string>('');
   const [captchaValid, setCaptchaValid] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string>('');
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [validationErrors, setValidationErrors] = useState<{[key: string]: string}>({});
   const [showPasswordRequirements, setShowPasswordRequirements] = useState(false);

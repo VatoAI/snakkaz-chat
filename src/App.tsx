@@ -21,6 +21,7 @@ import MobileLaunchBanner from './components/mobile/MobileLaunchBanner';
 
 // Lazy load components with route-based chunking for optimal performance
 const Login = lazy(() => import("@/pages/Login"));
+const ProfessionalLogin = lazy(() => import("@/pages/ProfessionalLogin"));
 const Register = lazy(() => import("@/pages/Register"));
 const EmailConfirmation = lazy(() => import("@/pages/EmailConfirmation"));
 const ForgotPassword = lazy(() => import("@/pages/ForgotPassword"));
@@ -37,6 +38,7 @@ const ChatPageNew = lazy(() => import("@/pages/ChatPageNew"));
 // WebRTC Testing
 const WebRTCTest = lazy(() => import("@/components/test/WebRTCImplementationTest"));
 const BasicChatPage = lazy(() => import("@/pages/BasicChatPage"));
+const ProfessionalChatPage = lazy(() => import("@/pages/ProfessionalChatPage"));
 
 // AI features - separate chunk (lazy load on demand)
 const AIChatPage = lazy(() => import("@/features/chat/components/common/AIChatPage"));
@@ -116,33 +118,33 @@ const SimpleFallbackError = ({ resetApp }: { resetApp: () => void }) => (
   </div>
 );
 
-// Super simplified error boundary for production
-function SuperSimpleErrorBoundary({ children }) {
-  const [hasError, setHasError] = useState(false);
-  
-  useEffect(() => {
-    const handleError = () => {
-      setHasError(true);
-    };
-    
-    window.addEventListener('error', handleError);
-    window.addEventListener('unhandledrejection', handleError);
-    
-    return () => {
-      window.removeEventListener('error', handleError);
-      window.removeEventListener('unhandledrejection', handleError);
-    };
-  }, []);
-  
-  const resetApp = () => {
+// Super simplified error boundary for production - CLASS COMPONENT (ikke hooks)
+class SuperSimpleErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error) {
+    console.log('🛡️ SuperSimpleErrorBoundary caught error:', error);
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('🛡️ Error caught by SuperSimpleErrorBoundary:', error, errorInfo);
+  }
+
+  resetApp = () => {
     window.location.reload();
   };
-  
-  if (hasError) {
-    return <SimpleFallbackError resetApp={resetApp} />;
+
+  render() {
+    if (this.state.hasError) {
+      return <SimpleFallbackError resetApp={this.resetApp} />;
+    }
+
+    return this.props.children;
   }
-  
-  return children;
 }
 
 // A basic auth check component
@@ -384,7 +386,7 @@ export default function App() {
           <Suspense fallback={<LoadingSpinner />}>
             <Routes>
               {/* Public routes */}
-              <Route path="/login" element={<Login />} />
+              <Route path="/login" element={<ProfessionalLogin />} />
               <Route path="/register" element={<Register />} />
               <Route path="/email-confirmation" element={<EmailConfirmation />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -427,7 +429,7 @@ export default function App() {
                 path="/basic-chat" 
                 element={
                   <RequireAuth>
-                    <BasicChatPage />
+                    <ProfessionalChatPage />
                   </RequireAuth>
                 } 
               />

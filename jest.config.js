@@ -11,8 +11,31 @@ export default {
     '**/tests/**/*.test.(ts|tsx|js|jsx)',
   ],
   transform: {
-    '^.+\\.(ts|tsx)$': 'ts-jest',
-    '^.+\\.(js|jsx)$': 'babel-jest',
+    '^.+\\.(ts|tsx)$': ['ts-jest', { 
+      tsconfig: {
+        target: 'ES2020',
+        lib: ['ES2020', 'DOM', 'DOM.Iterable'],
+        module: 'CommonJS',
+        moduleResolution: 'Node',
+        jsx: 'react-jsx',
+        esModuleInterop: true,
+        allowSyntheticDefaultImports: true,
+        skipLibCheck: true,
+        strict: false,
+        noImplicitAny: false,
+        isolatedModules: true,
+        baseUrl: '.',
+        paths: {
+          '@/*': ['./src/*']
+        }
+      },
+      isolatedModules: true,
+      useESM: false
+    }],
+    '^.+\\.(js|jsx)$': ['babel-jest', { configFile: './babel.config.cjs' }],
   },
-  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
+  transformIgnorePatterns: [
+    'node_modules/(?!(isows|@supabase|@tanstack|@floating-ui|@headlessui|@heroicons|@tailwindcss|@vitejs|@types|nanoid|p-retry|p-timeout|uint8arrays|is-network-error|peerjs|retry|otpauth|qrcode)/)',
+  ],
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node']
 };

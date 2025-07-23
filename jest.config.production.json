@@ -1,0 +1,39 @@
+{
+  "name": "Beta Production Tests",
+  "displayName": "SnakkaZ Beta - Production Ready Tests",
+  "testMatch": [
+    "**/__tests__/utils/encryption.test.ts",
+    "**/__tests__/services/chatService.test.ts",
+    "**/__tests__/utils/webrtc.test.ts"
+  ],
+  "testTimeout": 10000,
+  "collectCoverageFrom": [
+    "src/utils/**/*.{ts,tsx}",
+    "src/services/**/*.{ts,tsx}",
+    "src/lib/**/*.{ts,tsx}",
+    "!src/**/*.d.ts",
+    "!src/**/*.test.{ts,tsx}",
+    "!src/tests/**/*"
+  ],
+  "coverageThreshold": {
+    "global": {
+      "branches": 70,
+      "functions": 70,
+      "lines": 70,
+      "statements": 70
+    }
+  },
+  "setupFilesAfterEnv": ["<rootDir>/src/tests/setupTests.ts"],
+  "testEnvironment": "jsdom",
+  "moduleNameMapping": {
+    "^@/(.*)$": "<rootDir>/src/$1"
+  },
+  "transform": {
+    "^.+\\.(ts|tsx)$": ["ts-jest", {
+      "useESM": true
+    }]
+  },
+  "extensionsToTreatAsEsm": [".ts", ".tsx"],
+  "moduleFileExtensions": ["ts", "tsx", "js", "jsx", "json"],
+  "verbose": true
+}

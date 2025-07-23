@@ -1,0 +1,47 @@
+set ftp:ssl-allow no
+set ftp:ssl-protect-data no  
+set ssl:verify-certificate no
+
+# Connect to snakkaz.com
+open ftp://snakkaz.com
+
+# Login with your credentials
+user $FTP_USERNAME $FTP_PASSWORD
+
+# Navigate to public_html
+cd public_html
+
+# Create beta backup
+mkdir -p beta-backup-$(date +%Y%m%d-%H%M%S)
+
+echo "📦 Creating backup of current site..."
+mget -d beta-backup-$(date +%Y%m%d-%H%M%S)/ index.html manifest.json robots.txt
+
+echo "🚀 Deploying SnakkaZ Beta..."
+
+# Upload main files
+lcd dist
+put index.html
+put manifest.json
+put service-worker.js
+put sw.js
+put robots.txt
+put sitemap.xml
+put _redirects
+put _routes.json
+put deployment-info.json
+
+echo "📁 Uploading assets..."
+mirror -R assets assets
+mirror -R icons icons
+mirror -R images images
+mirror -R logos logos
+mirror -R thumbnails thumbnails
+
+echo "✅ Beta deployment complete!"
+echo "🌐 Your site is now live at https://snakkaz.com"
+
+# Verify deployment
+ls -la *.html *.json
+
+bye

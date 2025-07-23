@@ -44,7 +44,7 @@ import './utils/env/environmentFix';
 import './utils/PerformanceMonitor';
 
 import React from 'react'
-import ReactDOM from 'react-dom/client'
+import ReactDOM, { createRoot } from 'react-dom/client'
 import App from './App.js'
 import './index.css'
 
@@ -62,6 +62,7 @@ import './assets/update-notification.css';
 const handleGlobalError = (event: Event | Error) => {
   try {
     console.log('🇳🇴 Global error handlers initialized for Norwegian tech community');
+    console.log('Error event:', event);
     
     // Enhanced error tracking for better UX
     if (window.snakkazPerformance) {
@@ -81,10 +82,13 @@ window.addEventListener('unhandledrejection', handleGlobalError);
 // Simple function to render the app
 function renderApp() {
   try {
+    console.log('🚀 Starting SnakkaZ app initialization...');
+    
     // Find the container
     const container = document.getElementById('root');
     
     if (!container) {
+      console.error('❌ Root element not found');
       document.body.innerHTML = '<div style="padding: 20px; text-align: center;">'+
         '<h2>Laster Snakkaz Chat...</h2>'+
         '<p>Kunne ikke finne root-element. Vennligst last inn siden på nytt.</p>'+
@@ -93,11 +97,26 @@ function renderApp() {
       return;
     }
     
+    console.log('✅ Root element found, initializing React...');
+    
+    // Check if createRoot is available (React 18+)
+    if (!createRoot) {
+      console.error('❌ createRoot not available');
+      throw new Error('React 18 createRoot not loaded');
+    }
+    
+    console.log('✅ React available, creating root...');
+    
     // Create root and render
     const root = createRoot(container);
+    
+    console.log('✅ Root created, rendering App...');
+    
     root.render(
       <App />
     );
+    
+    console.log('✅ App rendered successfully!');
     
     // Unregister the service worker to avoid cached issues
     if ('serviceWorker' in navigator) {
@@ -107,11 +126,15 @@ function renderApp() {
         });
       });
     }
-  } catch (error) {
-    // If render fails, show minimal UI
+  } catch (error: any) {
+    console.error('❌ Error during app initialization:', error);
+    console.error('Error details:', error?.message, error?.stack);
+    
+    // If render fails, show minimal UI with more info
     document.body.innerHTML = '<div style="padding: 20px; text-align: center;">'+
       '<h2>Snakkaz Chat</h2>'+
       '<p>Vi beklager, men det oppstod et problem ved lasting av appen.</p>'+
+      '<p style="font-size: 12px; color: #666;">Error: ' + (error?.message || 'Unknown error') + '</p>'+
       '<button onclick="window.location.reload()" style="padding: 8px 16px; margin-top: 20px;">Last inn på nytt</button>'+
       '</div>';
   }
