@@ -1,0 +1,26 @@
+# Multi-stage build for optimal size
+FROM node:18-alpine AS builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production && npm cache clean --force
+
+FROM node:18-alpine AS runtime
+RUN addgroup -g 1001 -S snakkaz && \
+    adduser -S snakkaz -u 1001
+WORKDIR /app
+COPY --from=builder /app/node_modules ./node_modules
+COPY . .
+RUN chown -R snakkaz:snakkaz /app
+USER snakkaz
+
+# Labels for Docker Hub
+LABEL maintainer="SnakkaZ Team <team@snakkaz.com>"
+LABEL version="1.0.0"
+LABEL description="The chat app that DOMINATES all competitors!"
+LABEL org.opencontainers.image.source="https://github.com/VatoAI/snakkaz-chat"
+
+EXPOSE 3001
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:3001/health || exit 1
+
+CMD ["node", "server-production.cjs"]

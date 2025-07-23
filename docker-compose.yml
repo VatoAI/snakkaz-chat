@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  snakkaz-chat:
+    build: .
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_KEY=${SUPABASE_KEY}
+    volumes:
+      - ./logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Optional: Add PostgreSQL for local development
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: snakkaz_chat
+      POSTGRES_USER: snakkaz
+      POSTGRES_PASSWORD: snakkaz_secure_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./snakkaz-universal-schema.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: unless-stopped
+
+  # Optional: Redis for caching and session management
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+
+volumes:
+  postgres_data:
+  redis_data:

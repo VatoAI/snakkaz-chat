@@ -32,6 +32,11 @@ function logTestResult(testName: string, success: boolean, details: any = {}): v
   }
   
   console.log('-----------------------------------');
+  
+  // Call custom logger if available (for E2EETestPage integration)
+  if (typeof window !== 'undefined' && (window as any).logTestResult) {
+    (window as any).logTestResult(testName, success, details);
+  }
 }
 
 /**

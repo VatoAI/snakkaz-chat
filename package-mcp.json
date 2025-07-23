@@ -1,0 +1,20 @@
+{
+  "name": "snakkaz-mcp-memory",
+  "version": "1.0.0",
+  "description": "SnakkaZ MCP Memory System - AI that knows everything about SnakkaZ app",
+  "main": "snakkaz-mcp-server.js",
+  "scripts": {
+    "start": "node snakkaz-mcp-server.js",
+    "load-knowledge": "node load-snakkaz-knowledge.js",
+    "test": "node test-mcp-chat.js",
+    "setup": "npm install && node load-snakkaz-knowledge.js && node snakkaz-mcp-server.js"
+  },
+  "dependencies": {
+    "@qdrant/js-client-rest": "^1.8.2",
+    "axios": "^1.6.0",
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
+  },
+  "keywords": ["snakkaz", "mcp", "ai", "memory", "vector-database", "llama"],
+  "author": "VatoAI SnakkaZ Team"
+}

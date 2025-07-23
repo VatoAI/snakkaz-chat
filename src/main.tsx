@@ -1,5 +1,30 @@
 /**
- * Snakkaz Chat - Main Entry Point
+ * Snakkaz Chat import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App.tsx'
+import './index.css'
+
+// Import marketplace functionality
+import { testMarketplaceFunctions } from './marketplace/MarketplaceSecurity.js'
+
+// Test marketplace functions on startup
+console.log('🚀 SnakkaZ Beta - E-Commerce Marketplace Loading...')
+const marketplaceSystems = testMarketplaceFunctions()
+console.log('✅ Marketplace systems initialized:', marketplaceSystems)
+
+// Add global marketplace access for development
+window.SnakkaZ = {
+  marketplace: marketplaceSystems,
+  version: '1.0.0-beta',
+  features: {
+    pinSecurity: true,
+    groupAccess: true,
+    locationMaps: true,
+    trustSystem: true,
+    productListings: true,
+    mobileOptimized: true
+  }
+}in Entry Point
  * Enhanced for Norwegian Tech Community - Juni 7, 2025
  */
 
@@ -18,10 +43,16 @@ import './utils/env/environmentFix';
 // Norwegian UX Performance Monitoring
 import './utils/PerformanceMonitor';
 
-import React from 'react';
-import { createRoot } from 'react-dom/client';
-import App from './App.tsx';
-import './index.css';
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App.js'
+import './index.css'
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  React.createElement(React.StrictMode, null,
+    React.createElement(App)
+  )
+)
 import './assets/update-notification.css';
 
 // DEAKTIVERT: Supabase preview-fix (forårsaker konflikter)

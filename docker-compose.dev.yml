@@ -1,0 +1,13 @@
+# Development version - lighter, faster iteration
+version: '3.8'
+services:
+  snakkaz-dev:
+    build: .
+    ports: ["3001:3001"]
+    environment:
+      - NODE_ENV=development
+      - HOT_RELOAD=true
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: npm run dev

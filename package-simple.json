@@ -1,0 +1,9 @@
+{
+  "name": "snakkaz-docker-simple",
+  "version": "1.0.0",
+  "description": "SnakkaZ Simple Docker Setup",
+  "main": "server.js",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}

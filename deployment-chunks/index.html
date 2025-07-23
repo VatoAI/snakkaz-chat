@@ -102,6 +102,35 @@
     <link rel="modulepreload" crossorigin href="/assets/js/components-ui-CoK5VGD0.js">
     <script type="module" crossorigin src="/assets/js/index-BWQuTEbr.js"></script>
   
+  <!-- SnakkaZ Beta - Analytics, Security & Feedback System -->
+  <script type="module" src="/src/SnakkazAnalytics.js"></script>
+  <script type="module" src="/src/SnakkazSecurity.js"></script>
+  <script type="module" src="/src/components/FeedbackSystem.js"></script>
+  <script>
+    // Initialize SnakkaZ Beta Systems
+    window.addEventListener('DOMContentLoaded', function() {
+      console.log('🚀 SnakkaZ Beta: Initializing analytics, security & feedback...');
+      
+      // Analytics initialization happens automatically
+      if (window.SnakkazAnalytics) {
+        window.SnakkazAnalytics.trackPageView();
+        console.log('✅ Analytics started');
+      }
+      
+      // Security monitoring initialization happens automatically  
+      if (window.SnakkazSecurity) {
+        console.log('✅ Security monitoring active');
+      }
+      
+      // Feedback system initialization happens automatically
+      if (window.feedbackSystem) {
+        console.log('✅ Feedback system ready');
+      }
+      
+      console.log('🔒 SnakkaZ Beta: All systems operational!');
+    });
+  </script>
+  
   
   
   

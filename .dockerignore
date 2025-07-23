@@ -1,0 +1,49 @@
+# Docker ignore patterns for SnakkaZ
+node_modules/
+npm-debug.log
+.git/
+.gitignore
+README.md
+Dockerfile
+.dockerignore
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+coverage/
+.nyc_output/
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+dist/
+build/
+.cache/
+.parcel-cache/
+
+# Development files
+*.md
+!DEPLOY.md
+*.sh
+*.log
+
+# Test files
+test/
+tests/
+__tests__/
+spec/
+cypress/
+jest.config.*
+.eslintrc.*
+.prettierrc.*
+
+# Deployment artifacts
+snakkaz-production-deploy/
+*.tar.gz
+*.zip

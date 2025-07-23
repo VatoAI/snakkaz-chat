@@ -1,0 +1,32 @@
+{
+  "version": 2,
+  "name": "snakkaz-chat",
+  "builds": [
+    {
+      "src": "server-production.cjs",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "public/**",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/server-production.cjs"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/public/$1"
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  },
+  "functions": {
+    "server-production.cjs": {
+      "maxDuration": 10
+    }
+  }
+}

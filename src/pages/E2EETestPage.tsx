@@ -50,26 +50,23 @@ const E2EETestPage: React.FC = () => {
     setAllPassed(null);
     
     try {
-      // Add a collector for test results
-      const testResults: TestResult[] = [];
-      
-      const originalLogTestResult = (window as any).logTestResult;
-      
-      // Override the test logger to collect results
+      // Set up custom logger to collect results
       (window as any).logTestResult = (name: string, success: boolean, details: any) => {
-        testResults.push({ name, success, details });
-        setResults(prev => [...prev, { name, success, details }]);
+        const result = { name, success, details };
+        setResults(prev => [...prev, result]);
       };
       
       // Run the tests
       const success = await runAllE2EETests();
       setAllPassed(success);
       
-      // Restore original logger
-      (window as any).logTestResult = originalLogTestResult;
+      // Clean up
+      delete (window as any).logTestResult;
+      
     } catch (error) {
       console.error("Error running tests:", error);
       setAllPassed(false);
+      setLog(prev => [...prev, `Error: ${error instanceof Error ? error.message : String(error)}`]);
     } finally {
       setRunning(false);
     }

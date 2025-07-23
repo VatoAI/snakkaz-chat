@@ -1,0 +1,21 @@
+[build]
+  command = "npm run build"
+  publish = "public"
+  functions = "netlify/functions"
+
+[build.environment]
+  NODE_ENV = "production"
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/server-production"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[dev]
+  command = "node server-production.cjs"
+  port = 3001

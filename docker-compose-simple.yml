@@ -1,0 +1,56 @@
+# 🐳 SnakkaZ Simple Docker Setup
+version: '3.8'
+
+services:
+  snakkaz:
+    image: node:18-alpine
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: >
+      sh -c "
+        echo '🚀 Starting SnakkaZ with Docker!' &&
+        npm install express &&
+        node -e '
+          const express = require(\"express\");
+          const app = express();
+          
+          app.get(\"/\", (req, res) => {
+            res.json({
+              message: \"🔥 SnakkaZ Docker AI Stack!\",
+              status: \"DOMINATING with Docker!\",
+              ai: \"Ready for AI integration!\",
+              performance: \"Docker-powered speed!\",
+              timestamp: new Date().toISOString()
+            });
+          });
+          
+          app.get(\"/health\", (req, res) => {
+            res.json({
+              status: \"healthy\",
+              docker: \"running\",
+              ai: \"ready for integration\"
+            });
+          });
+          
+          app.listen(3001, () => {
+            console.log(\"🎉 SnakkaZ Docker running on http://localhost:3001\");
+            console.log(\"🏥 Health check: http://localhost:3001/health\");
+          });
+        '
+      "
+
+  # Future AI services ready to add
+  # ai-brain:
+  #   image: ollama/ollama
+  #   ports:
+  #     - "11434:11434"
+  
+  # analytics:
+  #   image: grafana/grafana
+  #   ports:
+  #     - "3002:3000"

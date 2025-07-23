@@ -1,0 +1,17 @@
+# Production version - full performance stack
+version: '3.8'
+services:
+  snakkaz:
+    build:
+      context: .
+      dockerfile: Dockerfile.optimized
+    ports: ["3001:3001"]
+    environment:
+      - NODE_ENV=production
+      - PERFORMANCE_MODE=MAXIMUM
+    restart: unless-stopped
+    deploy:
+      replicas: 3
+      resources:
+        limits:
+          memory: 1G
