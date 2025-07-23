@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { AuthProvider, useAuth } from './auth/AuthProvider.js';
 import AuthForm from './auth/AuthForm.js';
-import ChatSystem from './chat/ChatSystem.js';
+import ChatSystem from './chat/ChatSystem.jsx';
 import InviteManager from './invite/InviteManager.js';
 
 const AppContent = () => {
