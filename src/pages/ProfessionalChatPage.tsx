@@ -168,7 +168,7 @@ const ProfessionalChatPage: React.FC = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
         <motion.div 
-          className="glass-card p-8 max-w-md w-full text-center"
+          className="liquid-glass p-8 max-w-md w-full text-center"
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.5 }}
@@ -179,7 +179,7 @@ const ProfessionalChatPage: React.FC = () => {
           <h1 className="text-3xl font-bold text-white mb-2">SnakkaZ Beta</h1>
           <p className="text-gray-400 mb-6">Logg inn for å begynne din profesjonelle chat-opplevelse</p>
           <div className="space-y-4">
-            <div className="glass-card p-4">
+            <div className="glass-morphism p-4">
               <h4 className="font-semibold text-blue-300 mb-2">Chat Features:</h4>
               <ul className="text-sm text-gray-300 space-y-1 text-left">
                 <li>• Sanntids chat med moderne design</li>

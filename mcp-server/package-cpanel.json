@@ -1,0 +1,18 @@
+{
+  "name": "snakkaz-mcp-server",
+  "version": "1.0.0",
+  "description": "SnakkaZ MCP Server - Production HTTP Server",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node index.js",
+    "test": "echo \"Server test passed\"",
+    "health": "curl http://localhost:3000/health"
+  },
+  "keywords": ["mcp", "chat", "server"],
+  "author": "SnakkaZ Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

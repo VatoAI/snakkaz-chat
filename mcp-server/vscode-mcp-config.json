@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "snakkaz": {
+      "command": "node",
+      "args": [
+        "/workspaces/snakkaz-chat/mcp-server/server-mcp-official.js"
+      ],
+      "env": {}
+    }
+  }
+}

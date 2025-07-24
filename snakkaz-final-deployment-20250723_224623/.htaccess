@@ -1,0 +1,91 @@
+# SnakkaZ Production Configuration - Ultimate Version
+RewriteEngine On
+
+# Security Headers - Production Grade
+Header always set X-Content-Type-Options nosniff
+Header always set X-Frame-Options DENY
+Header always set X-XSS-Protection "1; mode=block"
+Header always set Referrer-Policy "strict-origin-when-cross-origin"
+Header always set Permissions-Policy "geolocation=(), microphone=(), camera=(), payment=(), usb=()"
+
+# HSTS - Force HTTPS
+Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+
+# Content Security Policy - Production Optimized
+Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://wqpoozpbceucynsojmbk.supabase.co wss://wqpoozpbceucynsojmbk.supabase.co; frame-src 'none'; object-src 'none'; base-uri 'self'; media-src 'self'; worker-src 'self' blob:; child-src 'self';"
+
+# Cache Control - Optimized for Performance
+<filesMatch "\.(css|js)$">
+Header set Cache-Control "max-age=31536000, public, immutable"
+Header set Expires "1 year"
+</filesMatch>
+
+<filesMatch "\.(jpg|jpeg|png|gif|ico|svg|webp|avif)$">
+Header set Cache-Control "max-age=2592000, public"
+Header set Expires "1 month"
+</filesMatch>
+
+<filesMatch "\.(woff|woff2|ttf|eot)$">
+Header set Cache-Control "max-age=31536000, public, immutable"
+Header set Expires "1 year"
+</filesMatch>
+
+<filesMatch "\.(html|htm)$">
+Header set Cache-Control "no-cache, no-store, must-revalidate"
+Header set Pragma "no-cache"
+Header set Expires "0"
+</filesMatch>
+
+# Compression - Maximum Performance
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/plain
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/xml
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE text/javascript
+    AddOutputFilterByType DEFLATE application/xml
+    AddOutputFilterByType DEFLATE application/xhtml+xml
+    AddOutputFilterByType DEFLATE application/rss+xml
+    AddOutputFilterByType DEFLATE application/javascript
+    AddOutputFilterByType DEFLATE application/x-javascript
+    AddOutputFilterByType DEFLATE application/json
+    AddOutputFilterByType DEFLATE application/ld+json
+</IfModule>
+
+# Brotli Compression (if available)
+<IfModule mod_brotli.c>
+    BrotliCompressionQuality 6
+    BrotliFilterByType text/plain text/css text/xml text/javascript application/javascript application/json
+</IfModule>
+
+# SPA Routing - React Router Support
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} !^/api/
+RewriteCond %{REQUEST_URI} !^/\.well-known/
+RewriteCond %{REQUEST_URI} !^/favicon\.ico$
+RewriteRule ^(.*)$ /index.html [QSA,L]
+
+# Error Pages
+ErrorDocument 404 /index.html
+ErrorDocument 500 /index.html
+
+# Security - Block access to sensitive files
+<FilesMatch "\.(env|log|config|md|json|lock|git.*|htaccess|htpasswd)$">
+Order Allow,Deny
+Deny from all
+</FilesMatch>
+
+# Performance Optimizations
+KeepAlive On
+MaxKeepAliveRequests 100
+KeepAliveTimeout 15
+
+# Enable ETags for better caching
+FileETag MTime Size
+
+# Preload important resources
+<FilesMatch "\.html$">
+Header add Link "</assets/css/index-D71hco0o.css>; rel=preload; as=style"
+Header add Link "</assets/js/index-$NEW_BUILD.js>; rel=preload; as=script"
+</FilesMatch>

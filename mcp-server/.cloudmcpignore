@@ -1,0 +1,18 @@
+# SnakkaZ Chat MCP Server
+# CloudMCP.run deployment files
+
+# Include server files
+server.js
+package.json
+README.md
+cloudmcp.yml
+
+# Include node_modules for dependencies
+node_modules/
+
+# Exclude development files
+!test.js
+!*.log
+!.env*
+!.git*
+!*.md.backup

@@ -3,6 +3,7 @@
 import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
+import './styles/professional-modern-2025.css'
 
 // Import marketplace functionality
 import { testMarketplaceFunctions } from './marketplace/MarketplaceSecurity.js'

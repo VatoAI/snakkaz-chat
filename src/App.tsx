@@ -39,6 +39,7 @@ const ChatPageNew = lazy(() => import("@/pages/ChatPageNew"));
 const WebRTCTest = lazy(() => import("@/components/test/WebRTCImplementationTest"));
 const BasicChatPage = lazy(() => import("@/pages/BasicChatPage"));
 const ProfessionalChatPage = lazy(() => import("@/pages/ProfessionalChatPage"));
+const DemoModePage = lazy(() => import("@/pages/DemoModePage"));
 
 // AI features - separate chunk (lazy load on demand)
 const AIChatPage = lazy(() => import("@/features/chat/components/common/AIChatPage"));
@@ -393,6 +394,9 @@ export default function App() {
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/info" element={<Info />} />
               {/* <Route path="/info-new" element={<InfoNew />} /> */}
+              
+              {/* Demo Mode - Shows professional design without auth */}
+              <Route path="/demo" element={<DemoModePage />} />
               
               {/* Mobile test page - no auth required for testing */}
               <Route path="/mobile-test" element={<MobileTestPage />} />

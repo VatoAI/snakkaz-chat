@@ -1,5 +1,7 @@
 # SNAKKAZ CHAT
-## Advanced End-to-End Encrypted Messaging Platform
+## Advanced End-to-End Encrypted Messaging Platform with CloudMCP.run Integration
+
+[![Deploy MCP Server](https://cloudmcp.run/button.svg)](https://cloudmcp.run/deploy?repo=VatoAI/snakkaz-chat)
 
 ## 🚀 Build Status
 
@@ -8,8 +10,16 @@
 - All react-icons imports migrated to lucide-react  
 - Zero build errors or warnings
 - Optimized bundle size: ~1.6MB (compressed: ~420KB)
+- 🌟 **NEW**: CloudMCP.run integration for GitHub Copilot superpowers!
 
-Snakkaz Chat is a secure, feature-rich chat application with robust end-to-end encryption, built using React, TypeScript, and Supabase. The platform offers multiple chat types (global, private, group), custom emojis, pin functionality, and AI-powered memory system, all protected with state-of-the-art encryption.
+Snakkaz Chat is a secure, feature-rich chat application with robust end-to-end encryption, built using React, TypeScript, and Supabase. The platform offers multiple chat types (global, private, group), custom emojis, pin functionality, AI-powered memory system, and **MCP (Model Context Protocol) integration** for GitHub Copilot, all protected with state-of-the-art encryption.
+
+### 🌟 NEW: GitHub Copilot Integration
+- 🤖 **MCP Server**: Give GitHub Copilot chat management superpowers
+- ☁️ **CloudMCP.run**: One-click deployment of MCP servers
+- 🛠️ **5 Chat Tools**: Status, messaging, analytics, room creation, AI assistant
+- ⚡ **30-Second Setup**: Deploy MCP server to cloud instantly
+- 💬 **Copilot Commands**: Use `@snakkaz_chat_status`, `@snakkaz_send_message`, etc.
 
 ### Key Features
 - 🔒 **Enhanced End-to-End Encryption (E2EE)**: 
@@ -21,6 +31,11 @@ Snakkaz Chat is a secure, feature-rich chat application with robust end-to-end e
   - Reliable message delivery with automatic fallback mechanisms
   - Optimized for low-latency communication
   - Seamless integration with encryption for maximum security
+- 🤖 **GitHub Copilot MCP Server**:
+  - Real-time chat status and analytics
+  - Encrypted message sending via Copilot
+  - AI-powered chat assistance and moderation
+  - One-click CloudMCP.run deployment
 - 💬 **Multiple Chat Types**: Global, private, and group chats with role-based permissions
 - 📌 **Pin System**: Pin important messages across all chat types
 - 😀 **Custom Emoji System**: User-defined emojis and reactions
@@ -32,6 +47,7 @@ Snakkaz Chat is a secure, feature-rich chat application with robust end-to-end e
 - **Frontend**: React 18, TypeScript, Vite, Shadcn UI, Tailwind CSS
 - **Backend**: Supabase (PostgreSQL, Row-Level Security, Realtime)
 - **AI Integration**: Python MCP Server, Vector embeddings with pgvector
+- **🌟 MCP Integration**: CloudMCP.run, Model Context Protocol, GitHub Copilot Chat
 - **Security**: E2EE, PBKDF2, Content Security Policy, Rate limiting
 - **Infrastructure**: Cloudflare CDN, GitHub Actions for CI/CD
 - **Real-time Communication**: WebRTC with PeerJS, MCP (Model Context Protocol)

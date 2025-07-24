@@ -35,6 +35,9 @@ export default defineConfig({
     
     /* Record video on failure */
     video: 'retain-on-failure',
+    
+    /* Run tests in headless mode for containerized environments */
+    headless: true,
   },
 
   /* Configure projects for major browsers */

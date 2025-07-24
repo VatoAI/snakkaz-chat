@@ -43,7 +43,35 @@ const ProfessionalLogin: React.FC = () => {
         await signUp(email, password);
       }
     } catch (err: any) {
-      setError(err.message || 'Noe gikk galt');
+      console.error('Auth error:', err);
+      
+      // Enhanced error handling with user-friendly messages
+      const enhanceErrorMessage = (error: any) => {
+        const message = error?.message || '';
+        
+        const errorMap: Record<string, string> = {
+          'Invalid login': '❌ Ugyldig e-post eller passord',
+          'Email not confirmed': '📧 Bekreft e-posten din før innlogging', 
+          'network': '🌐 Nettverksfeil - sjekk tilkoblingen',
+          'rate limit': '⏰ For mange forsøk - vent litt',
+          'too many': '⏰ For mange forsøk - vent litt',
+          'User not found': '❌ Bruker ikke funnet',
+          'Signup not allowed': '🚫 Registrering er stengt',
+          'Invalid email': '📧 Ugyldig e-postadresse'
+        };
+
+        for (const [key, value] of Object.entries(errorMap)) {
+          if (message.toLowerCase().includes(key.toLowerCase())) {
+            return value;
+          }
+        }
+
+        return message || 'Noe gikk galt - prøv igjen';
+      };
+
+      setError(enhanceErrorMessage(err));
+      // Auto-clear error after 5 seconds
+      setTimeout(() => setError(''), 5000);
     } finally {
       setIsLoading(false);
     }

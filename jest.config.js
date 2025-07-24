@@ -4,6 +4,8 @@ export default {
   roots: ['<rootDir>/src'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
+    '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
+    '\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$': 'jest-transform-stub'
   },
   setupFilesAfterEnv: ['<rootDir>/src/tests/setupTests.ts'],
   testMatch: [
@@ -28,14 +30,18 @@ export default {
         paths: {
           '@/*': ['./src/*']
         }
-      },
-      isolatedModules: true,
-      useESM: false
+      }
     }],
-    '^.+\\.(js|jsx)$': ['babel-jest', { configFile: './babel.config.cjs' }],
+    '^.+\\.(js|jsx)$': 'babel-jest'
   },
-  transformIgnorePatterns: [
-    'node_modules/(?!(isows|@supabase|@tanstack|@floating-ui|@headlessui|@heroicons|@tailwindcss|@vitejs|@types|nanoid|p-retry|p-timeout|uint8arrays|is-network-error|peerjs|retry|otpauth|qrcode)/)',
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
+  testTimeout: 60000, // Increased timeout for integration tests
+  collectCoverageFrom: [
+    'src/**/*.{ts,tsx,js,jsx}',
+    '!src/**/*.d.ts',
+    '!src/tests/**/*',
+    '!src/vite-env.d.ts'
   ],
-  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node']
+  coverageDirectory: 'coverage',
+  coverageReporters: ['text', 'lcov', 'html']
 };

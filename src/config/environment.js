@@ -1,19 +1,64 @@
-// Environment-aware configuration for SnakkaZ
+// Enhanced environment-aware configuration for SnakkaZ
 export const getEnvironmentConfig = () => {
-  const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+  const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+  const isProduction = hostname !== 'localhost' && hostname !== '127.0.0.1' && !hostname.includes('dev');
+  const isDevelopment = !isProduction;
   
-  return {
+  // Production-safe configuration
+  const config = {
     isProduction,
-    mcpServerUrl: isProduction ? null : 'http://localhost:3001', // Disable MCP in production for now
+    isDevelopment,
+    hostname,
+    
+    // Database configuration
     supabaseUrl: 'https://wqpoozpbceucynsojmbk.supabase.co',
+    supabaseAnonKey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+    
+    // MCP Server configuration (disabled in production for security)
+    mcpServerUrl: isDevelopment ? 'http://localhost:3001' : null,
+    
+    // Feature flags
     features: {
-      mcpConnections: !isProduction, // Disable MCP in production
+      mcpConnections: isDevelopment, // Only enable MCP in development
       voiceMessages: true,
       roomChat: true,
-      realtimeSync: true
+      realtimeSync: true,
+      debugMode: isDevelopment,
+      analytics: isProduction,
+      serviceWorker: isProduction
+    },
+    
+    // Security settings
+    security: {
+      encryptedMessagesOnly: isProduction,
+      requireActiveSession: true,
+      maxConnectionsPerUser: isProduction ? 1 : 3,
+      heartbeatInterval: 30000,
+      sessionTimeout: isProduction ? 1800000 : 3600000 // 30min prod, 1hr dev
+    },
+    
+    // Performance settings
+    performance: {
+      enableCompression: isProduction,
+      enableCaching: isProduction,
+      lazyLoading: true,
+      imageOptimization: isProduction
     }
   };
+  
+  // Log configuration in development
+  if (isDevelopment && typeof console !== 'undefined') {
+    console.log('🔧 SnakkaZ Environment Config:', config);
+  }
+  
+  return config;
 };
 
-export const isDev = () => !getEnvironmentConfig().isProduction;
+// Convenience exports
+export const isDev = () => getEnvironmentConfig().isDevelopment;
 export const isProd = () => getEnvironmentConfig().isProduction;
+export const getFeatures = () => getEnvironmentConfig().features;
+export const getSecurity = () => getEnvironmentConfig().security;
+
+// Default export
+export default getEnvironmentConfig;

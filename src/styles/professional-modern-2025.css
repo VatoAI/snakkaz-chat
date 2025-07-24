@@ -39,6 +39,8 @@
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
   --shadow-glow: 0 0 20px rgba(59, 130, 246, 0.3);
+  --shadow-glass: 0 8px 32px rgba(31, 38, 135, 0.37);
+  --shadow-glass-lg: 0 25px 50px rgba(31, 38, 135, 0.5);
   
   /* Spacing Scale */
   --space-1: 0.25rem;
@@ -98,6 +100,32 @@ body {
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-lg);
+}
+
+.glass-morphism {
+  background: var(--glass-bg-light);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-glass);
+}
+
+.liquid-glass {
+  background: linear-gradient(135deg, var(--glass-bg) 0%, var(--glass-bg-light) 100%);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-glass);
+  transition: all 0.3s ease;
+}
+
+.liquid-glass:hover {
+  background: linear-gradient(135deg, var(--glass-bg-light) 0%, rgba(255, 255, 255, 0.15) 100%);
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-glass-lg);
   transition: all var(--transition-normal);
 }
 

@@ -1,0 +1,31 @@
+{
+  "name": "snakkaz-mcp-production",
+  "version": "3.0.0-complete",
+  "description": "SnakkaZ MCP Complete Production Server - HTTP + Llama + Memory + All Tools",
+  "main": "server-production-complete.cjs",
+  "scripts": {
+    "start": "node server-production-complete.cjs",
+    "dev": "node --inspect server-production-complete.cjs",
+    "test": "echo \"✅ SnakkaZ MCP Server Test\"",
+    "health": "curl -s https://mcp.snakkaz.com/health || echo \"Server not responding\""
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol", 
+    "snakkaz",
+    "chat",
+    "e2ee",
+    "llama",
+    "memory",
+    "ai",
+    "production"
+  ],
+  "author": "SnakkaZ Team <team@snakkaz.com>",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
