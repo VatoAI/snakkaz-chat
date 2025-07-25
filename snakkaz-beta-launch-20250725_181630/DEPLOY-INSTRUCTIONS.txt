@@ -1,0 +1,28 @@
+🚀 SNAKKAZ BETA DEPLOYMENT INSTRUCTIONS
+
+1. CLEAR PUBLIC_HTML:
+   - Log into cPanel File Manager
+   - Navigate to public_html folder
+   - SELECT ALL files and DELETE them
+
+2. UPLOAD FILES:
+   - Select ALL files from this folder
+   - Upload to public_html ROOT (not subfolder!)
+   - Verify all files are in root level
+
+3. SET PERMISSIONS:
+   - Files: 644
+   - Folders: 755
+
+4. TEST:
+   - Visit: https://www.snakkaz.com
+   - Hard refresh: Ctrl+F5
+   - Check console: F12 (should be no errors)
+
+✅ SUCCESS INDICATORS:
+- App loads with Glass Liquid design
+- No console errors
+- PWA install prompt appears
+- All features work (login, chat, etc.)
+
+🎉 SNAKKAZ BETA IS NOW LIVE!
