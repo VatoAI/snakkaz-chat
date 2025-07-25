@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# Test script for CloudMCP-style UI components in SnakkaZ chat
+
+echo "=== CloudMCP UI Test for SnakkaZ Chat ==="
+echo ""
+echo "This script will help you test the new CloudMCP-inspired liquid glass UI components."
+echo ""
+echo "Available test pages:"
+echo "1. Profile Page (CloudMCP Style): http://localhost:5175/cloudmcp-profile"
+echo "2. Chat Page (CloudMCP Style): http://localhost:5175/cloudmcp-chat"
+echo "3. Demo HTML Page: see /src/templates/cloudmcp-style-demo.html"
+echo ""
+echo "Instructions:"
+echo "- Start the application with 'npm run dev'"
+echo "- Open the browser at the URLs above to test the new components"
+echo "- Compare with design inspiration from CloudMCP and Telegram"
+echo "- Check responsiveness on different screen sizes"
+echo ""
+echo "CSS file location: /src/styles/cloudmcp-liquid-glass.css"
+echo "React component locations:"
+echo "- /src/pages/ProfilePageCloudMCP.jsx"
+echo "- /src/pages/ChatPageCloudMCP.jsx"
+echo ""
+echo "=== End of Test Info ==="

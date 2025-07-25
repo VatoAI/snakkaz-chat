@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SnakkaZ Chat - CloudMCP Style</title>
+    <link rel="stylesheet" href="/src/styles/cloudmcp-liquid-glass.css">
+    <style>
+        /* This is just for the demo */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-layout">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <img src="/icons/snakkaz-icon-192.png" alt="SnakkaZ Logo">
+                    <h1>SnakkaZ</h1>
+                </div>
+                <button class="btn-icon">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="chat-list">
+                <!-- Active Chat Item -->
+                <div class="chat-item active">
+                    <div class="chat-item-avatar">R</div>
+                    <div class="chat-item-content">
+                        <div class="chat-item-name">Roberto</div>
+                        <div class="chat-item-message">Still morning in Tokyo! 😎</div>
+                    </div>
+                    <div class="chat-item-time">15:37</div>
+                </div>
+                
+                <!-- Regular Chat Items -->
+                <div class="chat-item">
+                    <div class="chat-item-avatar">A</div>
+                    <div class="chat-item-content">
+                        <div class="chat-item-name">Alicia Torreaux</div>
+                        <div class="chat-item-message">Bob says hi.</div>
+                    </div>
+                    <div class="chat-item-time">15:02</div>
+                </div>
+                
+                <div class="chat-item">
+                    <div class="chat-item-avatar">GP</div>
+                    <div class="chat-item-content">
+                        <div class="chat-item-name">Graduation Party</div>
+                        <div class="chat-item-message">Dan: Almost 3000 members!</div>
+                    </div>
+                    <div class="chat-item-time">14:42</div>
+                </div>
+                
+                <div class="chat-item">
+                    <div class="chat-item-avatar">KS</div>
+                    <div class="chat-item-content">
+                        <div class="chat-item-name">Karen Stanford</div>
+                        <div class="chat-item-message">Table for four, 2 PM. Be there.</div>
+                    </div>
+                    <div class="chat-item-time">14:40</div>
+                </div>
+                
+                <div class="chat-item">
+                    <div class="chat-item-avatar">😺</div>
+                    <div class="chat-item-content">
+                        <div class="chat-item-name">Cat Videos</div>
+                        <div class="chat-item-message">📹 Video</div>
+                    </div>
+                    <div class="chat-item-time">13:15</div>
+                </div>
+                
+                <div class="chat-item">
+                    <div class="chat-item-avatar">LS</div>
+                    <div class="chat-item-content">
+                        <div class="chat-item-name">Little Sister</div>
+                        <div class="chat-item-message">I got a job at NASA! 🎉 🚀</div>
+                    </div>
+                    <div class="chat-item-time">12:45</div>
+                </div>
+                
+                <div class="chat-item">
+                    <div class="chat-item-avatar">MP</div>
+                    <div class="chat-item-content">
+                        <div class="chat-item-name">Monika Parker</div>
+                        <div class="chat-item-message">I don't remember anything 😅</div>
+                    </div>
+                    <div class="chat-item-time">10:00</div>
+                </div>
+                
+                <div class="chat-item">
+                    <div class="chat-item-avatar">WH</div>
+                    <div class="chat-item-content">
+                        <div class="chat-item-name">Wave Hunters</div>
+                        <div class="chat-item-message">Best waves so far?</div>
+                    </div>
+                    <div class="chat-item-time">9:45</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Chat Area -->
+        <div class="chat-area">
+            <div class="chat-header">
+                <div class="chat-header-info">
+                    <div class="chat-item-avatar">WH</div>
+                    <div>
+                        <div class="chat-header-title">Wave Hunters</div>
+                        <div class="chat-header-status">2,168 members, 196 online</div>
+                    </div>
+                </div>
+                <div class="chat-header-actions">
+                    <button class="btn-icon">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                    </button>
+                    <button class="btn-icon">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="chat-messages">
+                <!-- System Message -->
+                <div class="message-bubble system">
+                    <div class="message-text">Welcome to Wave Hunters group chat!</div>
+                </div>
+                
+                <!-- Received Message -->
+                <div class="message-bubble received">
+                    <div class="message-sender">Roberto</div>
+                    <div class="message-text">Good morning everyone 👋</div>
+                    <div class="message-time">15:37</div>
+                </div>
+                
+                <!-- Sent Message -->
+                <div class="message-bubble sent">
+                    <div class="message-text">Any idea what time it is?</div>
+                    <div class="message-time">15:37</div>
+                </div>
+                
+                <!-- Received Message -->
+                <div class="message-bubble received">
+                    <div class="message-sender">Roberto</div>
+                    <div class="message-text">Still morning in Tokyo! 😎</div>
+                    <div class="message-time">15:37</div>
+                </div>
+                
+                <!-- Image Message -->
+                <div class="message-bubble received">
+                    <div class="message-sender">Roberto</div>
+                    <img src="/path/to/banana-beach.jpg" alt="Banana Beach" style="width: 100%; border-radius: 8px; margin-bottom: 8px;">
+                    <div class="message-time">15:38</div>
+                </div>
+                
+                <!-- Poll -->
+                <div class="message-bubble received">
+                    <div class="message-sender">Monika Parker</div>
+                    <div class="message-text">Best waves so far?</div>
+                    <div class="poll-container">
+                        <div class="poll-options">
+                            <div class="poll-option">
+                                <div class="poll-option-fill" style="width: 67%;"></div>
+                                <div class="poll-option-content">
+                                    <span class="poll-option-text">South Coast</span>
+                                    <span class="poll-option-percentage">67%</span>
+                                </div>
+                            </div>
+                            <div class="poll-option">
+                                <div class="poll-option-fill" style="width: 33%;"></div>
+                                <div class="poll-option-content">
+                                    <span class="poll-option-text">White Sands</span>
+                                    <span class="poll-option-percentage">33%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="poll-footer">185 votes</div>
+                    </div>
+                    <div class="message-time">15:39</div>
+                </div>
+            </div>
+            
+            <div class="chat-input-area">
+                <div class="chat-input-container">
+                    <button class="btn-icon">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
+                        </svg>
+                    </button>
+                    <input type="text" class="chat-input" placeholder="Message...">
+                    <div class="chat-input-actions">
+                        <button class="btn-icon">
+                            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </button>
+                        <button class="btn-icon primary">
+                            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Mobile Navigation (visible on small screens only) -->
+    <div class="mobile-nav">
+        <button class="btn-icon">
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+            </svg>
+        </button>
+        <button class="btn-icon active">
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+            </svg>
+        </button>
+        <button class="btn-icon">
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+            </svg>
+        </button>
+        <button class="btn-icon">
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            </svg>
+        </button>
+    </div>
+</body>
+</html>

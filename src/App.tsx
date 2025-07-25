@@ -41,6 +41,9 @@ const BasicChatPage = lazy(() => import("@/pages/BasicChatPage"));
 const ProfessionalChatPage = lazy(() => import("@/pages/ProfessionalChatPage"));
 const DemoModePage = lazy(() => import("@/pages/DemoModePage"));
 
+// CloudMCP Demo page (public)
+const CloudMCPDemo = lazy(() => import("@/pages/CloudMCPDemo"));
+
 // AI features - separate chunk (lazy load on demand)
 const AIChatPage = lazy(() => import("@/features/chat/components/common/AIChatPage"));
 
@@ -78,8 +81,12 @@ const FriendsPage = lazy(() => import("@/pages/FriendsPage"));
 const FindFriends = lazy(() => import("@/pages/FindFriends"));
 
 // User management - separate chunk (lazy loaded with dynamic wrappers)
-const ProfilePage = lazy(() => import("@/components/dynamic/DynamicProfile"));
 const ProfilePageNew = lazy(() => import("@/pages/ProfilePageNew"));
+// CloudMCP style pages  
+const ProfilePageCloudMCP = lazy(() => import("@/pages/ProfilePageCloudMCP"));
+const ChatPageCloudMCP = lazy(() => import("@/pages/ChatPageCloudMCP"));
+// Design overview page
+const DesignOverview = lazy(() => import("@/pages/DesignOverviewPage"));
 const SettingsPage = lazy(() => import("@/components/dynamic/DynamicSettings"));
 const DashboardPage = lazy(() => import("@/pages/DashboardPage"));
 const Mail = lazy(() => import("@/components/dynamic/DynamicMail"));
@@ -150,8 +157,13 @@ class SuperSimpleErrorBoundary extends React.Component {
 
 // A basic auth check component
 const RequireAuth = ({ children }) => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const location = useLocation();
+
+  // Show loading while checking auth
+  if (loading) {
+    return <LoadingSpinner />;
+  }
 
   if (!user) {
     return <Navigate to="/login" state={{ from: location }} replace />;
@@ -393,6 +405,13 @@ export default function App() {
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/info" element={<Info />} />
+              
+              {/* Design overview page - shows all design systems */}
+              <Route path="/design-overview" element={<DesignOverview />} />
+              
+              {/* CloudMCP Demo - public showcase of quantum interface */}
+              <Route path="/cloudmcp-demo" element={<CloudMCPDemo />} />
+              
               {/* <Route path="/info-new" element={<InfoNew />} /> */}
               
               {/* Demo Mode - Shows professional design without auth */}
@@ -416,7 +435,10 @@ export default function App() {
               
               {/* MCP WebRTC Test Page - for testing MCP and WebRTC integration */}
               <Route path="/mcp-webrtc-test" element={<MCPWebRTCTestPage />} />
-              <Route path="/mcp-webrtc-test" element={<MCPWebRTCTestPage />} />
+              
+              {/* CloudMCP Style Pages - Liquid Glass design */}
+              <Route path="/cloudmcp-profile" element={<ProfilePageCloudMCP />} />
+              <Route path="/cloudmcp-chat" element={<ChatPageCloudMCP />} />
               
               {/* SnakkaZ Chat Beta - Full featured chat system */}
               <Route 
@@ -428,12 +450,12 @@ export default function App() {
                 } 
               />
               
-              {/* Protected routes that need authentication */}
+              {/* Protected routes that need authentication - Updated to use CloudMCP design */}
               <Route 
                 path="/basic-chat" 
                 element={
                   <RequireAuth>
-                    <ProfessionalChatPage />
+                    <ChatPageCloudMCP />
                   </RequireAuth>
                 } 
               />
@@ -441,7 +463,7 @@ export default function App() {
                 path="/chat" 
                 element={
                   <RequireAuth>
-                    <Navigate to="/basic-chat" replace />
+                    <Navigate to="/cloudmcp-chat" replace />
                   </RequireAuth>
                 } 
               />
@@ -449,7 +471,7 @@ export default function App() {
                 path="/chat/*" 
                 element={
                   <RequireAuth>
-                    <Navigate to="/basic-chat" replace />
+                    <Navigate to="/cloudmcp-chat" replace />
                   </RequireAuth>
                 } 
               />
@@ -497,7 +519,7 @@ export default function App() {
                 path="/profile" 
                 element={
                   <RequireAuth>
-                    <ProfilePage />
+                    <ProfilePageCloudMCP />
                   </RequireAuth>
                 } 
               />

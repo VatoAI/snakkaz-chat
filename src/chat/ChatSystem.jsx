@@ -59,7 +59,7 @@ const ChatSystem = () => {
     try {
       // Fixed query for rooms - simplified to avoid join errors
       const { data, error } = await supabase
-        .from('rooms')
+        .from('chat_rooms')
         .select(`
           *,
           profiles:created_by(username, display_name)
@@ -71,7 +71,7 @@ const ChatSystem = () => {
         console.error('Error loading rooms:', error);
         // Fallback: try simpler query
         const { data: fallbackData, error: fallbackError } = await supabase
-          .from('rooms')
+          .from('chat_rooms')
           .select('*')
           .eq('is_active', true)
           .order('created_at', { ascending: false });
@@ -306,7 +306,7 @@ const ChatSystem = () => {
       };
 
       const { data, error } = await supabase
-        .from('rooms')
+        .from('chat_rooms')
         .insert(roomData)
         .select()
         .single();

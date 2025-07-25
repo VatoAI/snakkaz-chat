@@ -1,0 +1,71 @@
+#!/bin/bash
+
+# Alternative script to fix database schema issues without requiring service key
+# Uses Supabase REST API with authenticated user to create needed tables
+
+echo "🔧 SnakkaZ Database Schema Fix (API Version)"
+echo "=========================================="
+
+# Check that we have a user token or handle
+if [ -z "$SNAKKAZ_USER_TOKEN" ]; then
+  echo "❓ No user token set. Using browser auth flow."
+  echo "Please make sure you're logged in to the app in your browser."
+fi
+
+echo "This script will guide you through fixing common database issues:"
+echo "1. Missing chat_rooms table"
+echo "2. Missing mcp_connections table"
+echo "3. Relationship between chat_rooms and profiles"
+
+echo ""
+echo "To continue, please ensure:"
+echo "- You are logged in to your Supabase project"
+echo "- You have enabled the SQL Editor"
+echo ""
+
+echo "Go to your Supabase project SQL Editor (https://app.supabase.com/project/_/sql) and run these commands:"
+echo ""
+echo "-- Create chat_rooms table if it doesn't exist"
+echo "CREATE TABLE IF NOT EXISTS public.chat_rooms ("
+echo "    id UUID NOT NULL PRIMARY KEY DEFAULT gen_random_uuid(),"
+echo "    name TEXT NOT NULL,"
+echo "    description TEXT,"
+echo "    room_type TEXT DEFAULT 'public' CHECK (room_type IN ('public', 'private', 'direct')),"
+echo "    created_by UUID REFERENCES public.profiles(id) ON DELETE SET NULL,"
+echo "    max_participants INTEGER DEFAULT 50,"
+echo "    is_active BOOLEAN DEFAULT true,"
+echo "    webrtc_enabled BOOLEAN DEFAULT true,"
+echo "    e2ee_enabled BOOLEAN DEFAULT true,"
+echo "    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,"
+echo "    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL"
+echo ");"
+echo ""
+echo "-- Create mcp_connections table if it doesn't exist"
+echo "CREATE TABLE IF NOT EXISTS public.mcp_connections ("
+echo "    id UUID NOT NULL PRIMARY KEY DEFAULT gen_random_uuid(),"
+echo "    profile_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,"
+echo "    connection_id TEXT NOT NULL,"
+echo "    connection_type TEXT DEFAULT 'websocket' CHECK (connection_type IN ('websocket', 'webrtc', 'fallback')),"
+echo "    server_endpoint TEXT NOT NULL,"
+echo "    is_active BOOLEAN DEFAULT true,"
+echo "    last_heartbeat TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,"
+echo "    metadata JSONB,"
+echo "    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL"
+echo ");"
+echo ""
+echo "-- Enable RLS for both tables"
+echo "ALTER TABLE public.chat_rooms ENABLE ROW LEVEL SECURITY;"
+echo "ALTER TABLE public.mcp_connections ENABLE ROW LEVEL SECURITY;"
+echo ""
+echo "-- Create basic RLS policies"
+echo "CREATE POLICY \"Users can view all chat rooms\" ON public.chat_rooms FOR SELECT USING (true);"
+echo "CREATE POLICY \"Authenticated users can create rooms\" ON public.chat_rooms FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);"
+echo "CREATE POLICY \"Room creators can update their rooms\" ON public.chat_rooms FOR UPDATE USING (auth.uid()::text = created_by::text);"
+echo ""
+echo "CREATE POLICY \"Users can view their connections\" ON public.mcp_connections FOR SELECT USING (auth.uid()::text = profile_id::text);"
+echo "CREATE POLICY \"Users can create their connections\" ON public.mcp_connections FOR INSERT WITH CHECK (auth.uid()::text = profile_id::text);"
+echo "CREATE POLICY \"Users can update their connections\" ON public.mcp_connections FOR UPDATE USING (auth.uid()::text = profile_id::text);"
+echo ""
+
+echo "After executing these SQL commands, restart your SnakkaZ application."
+echo "This should resolve the database schema issues."

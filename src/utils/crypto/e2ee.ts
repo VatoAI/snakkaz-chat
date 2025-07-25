@@ -27,6 +27,32 @@ const IV_LENGTH = 12; // 96 bits
 const keyCache = new Map<string, CryptoKey>();
 
 /**
+ * Konverterer ArrayBuffer til Base64-streng
+ */
+export function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  return btoa(String.fromCharCode.apply(null, Array.from(new Uint8Array(buffer))));
+}
+
+/**
+ * Konverterer Base64-streng til ArrayBuffer
+ */
+export function base64ToArrayBuffer(base64: string): ArrayBuffer {
+  const binaryString = atob(base64);
+  const bytes = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return bytes.buffer;
+}
+
+// Eksporter type for krypterte meldinger
+export interface EncryptedMessage {
+  type: number;
+  body: string;
+  registrationId?: number;
+}
+
+/**
  * Generer en krypteringsnøkkel basert på brukerens ID og mottakerens ID
  */
 async function generateKey(userId: string, peerId: string): Promise<CryptoKey> {

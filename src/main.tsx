@@ -1,32 +1,11 @@
 /**
- * Snakkaz Chat import React from 'react'
-import ReactDOM from 'react-dom/client'
-import App from './App.tsx'
-import './index.css'
-import './styles/professional-modern-2025.css'
+ * Snakkaz Chat - Main Entry Point
+ * Enhanced for Norwegian Tech Community - Juli 24, 2025
+ */
 
-// Import marketplace functionality
-import { testMarketplaceFunctions } from './marketplace/MarketplaceSecurity.js'
-
-// Test marketplace functions on startup
-console.log('🚀 SnakkaZ Beta - E-Commerce Marketplace Loading...')
-const marketplaceSystems = testMarketplaceFunctions()
-console.log('✅ Marketplace systems initialized:', marketplaceSystems)
-
-// Add global marketplace access for development
-window.SnakkaZ = {
-  marketplace: marketplaceSystems,
-  version: '1.0.0-beta',
-  features: {
-    pinSecurity: true,
-    groupAccess: true,
-    locationMaps: true,
-    trustSystem: true,
-    productListings: true,
-    mobileOptimized: true
-  }
-}in Entry Point
- * Enhanced for Norwegian Tech Community - Juni 7, 2025
+/**
+ * Snakkaz Chat - Main Entry Point
+ * Enhanced for Norwegian Tech Community - Juli 25, 2025
  */
 
 // ULTRA-CRITICAL: Import the ultra-early React fix FIRST BEFORE ANYTHING ELSE
@@ -45,28 +24,22 @@ import './utils/env/environmentFix';
 import './utils/PerformanceMonitor';
 
 import React from 'react'
-import ReactDOM, { createRoot } from 'react-dom/client'
+import { createRoot } from 'react-dom/client'
 import App from './App.js'
 import './index.css'
-
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  React.createElement(React.StrictMode, null,
-    React.createElement(App)
-  )
-)
+import './styles/professional-modern-2025.css'
 import './assets/update-notification.css';
 
-// DEAKTIVERT: Supabase preview-fix (forårsaker konflikter)
-// import '@/utils/supabase/preview-fix';
+// Create a variable to track if we've already created a root
+let rootInstance: any = null;
 
 // Enhanced global error handler for Norwegian users
-const handleGlobalError = (event: Event | Error) => {
+const handleGlobalError = (_event: Event | Error) => {
   try {
     console.log('🇳🇴 Global error handlers initialized for Norwegian tech community');
-    console.log('Error event:', event);
     
     // Enhanced error tracking for better UX
-    if (window.snakkazPerformance) {
+    if ((window as any).snakkazPerformance) {
       console.log('📊 Performance monitoring active');
     }
   } catch (e) {
@@ -80,11 +53,15 @@ const handleGlobalError = (event: Event | Error) => {
 window.addEventListener('error', handleGlobalError);
 window.addEventListener('unhandledrejection', handleGlobalError);
 
-// Simple function to render the app
-function renderApp() {
+/**
+ * Initialize the React application
+ * This function ensures that we only create one React root
+ * and handles graceful error recovery
+ */
+function initializeApp() {
+  console.log('🚀 Starting SnakkaZ app initialization...');
+  
   try {
-    console.log('🚀 Starting SnakkaZ app initialization...');
-    
     // Find the container
     const container = document.getElementById('root');
     
@@ -100,26 +77,41 @@ function renderApp() {
     
     console.log('✅ Root element found, initializing React...');
     
-    // Check if createRoot is available (React 18+)
-    if (!createRoot) {
-      console.error('❌ createRoot not available');
-      throw new Error('React 18 createRoot not loaded');
+    // Check if we already have a root instance (for HMR)
+    if (rootInstance || (window as any).__SNAKKAZ_ROOT__) {
+      console.log('♻️ Using existing root for update...');
+      
+      // Use existing root from either variable
+      const existingRoot = rootInstance || (window as any).__SNAKKAZ_ROOT__;
+      
+      existingRoot.render(
+        <React.StrictMode>
+          <App />
+        </React.StrictMode>
+      );
+      
+      console.log('✅ App re-rendered successfully!');
+      return;
     }
     
+    // Create new root if none exists
     console.log('✅ React available, creating root...');
+    rootInstance = createRoot(container);
     
-    // Create root and render
-    const root = createRoot(container);
+    // Store it globally for HMR
+    (window as any).__SNAKKAZ_ROOT__ = rootInstance;
     
     console.log('✅ Root created, rendering App...');
     
-    root.render(
-      <App />
+    rootInstance.render(
+      <React.StrictMode>
+        <App />
+      </React.StrictMode>
     );
     
     console.log('✅ App rendered successfully!');
     
-    // Unregister the service worker to avoid cached issues
+    // Unregister service workers to avoid cached issues
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then(registrations => {
         registrations.forEach(registration => {
@@ -141,5 +133,5 @@ function renderApp() {
   }
 }
 
-// Render the app
-renderApp();
+// Initialize the application
+initializeApp();

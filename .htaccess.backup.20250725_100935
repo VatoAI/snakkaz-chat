@@ -1,0 +1,124 @@
+# ========================================
+# SNAKKAZ CRITICAL .HTACCESS FIX
+# Emergency MIME-type and routing fix
+# ========================================
+
+# CRITICAL: Force correct MIME types
+AddType application/javascript .js
+AddType application/javascript .mjs
+AddType text/css .css
+AddType application/json .json
+
+# Enhanced MIME handling
+<FilesMatch "\.js$">
+    Header set Content-Type "application/javascript"
+</FilesMatch>
+
+<FilesMatch "\.css$">
+    Header set Content-Type "text/css"
+</FilesMatch>
+
+<FilesMatch "\.json$">
+    Header set Content-Type "application/json"
+</FilesMatch>
+
+# Enable rewriting
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+    
+    # Explicitly allow PHP files to execute - handle them first
+    RewriteRule ^(.+\.php)$ $1 [L]
+    
+    # Handle ping endpoints - Return 200 OK instead of 404
+    # This prevents unnecessary console errors
+    RewriteRule ^(analytics|business|dash|docs)\.snakkaz\.com/ping$ - [R=200,L]
+    
+    # Handle direct subdomain access (without /ping path)
+    RewriteRule ^(analytics|business|dash|docs)\.snakkaz\.com$ - [R=200,L]
+    
+    # If the requested resource exists as a file or directory, skip rewriting
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-l
+    
+    # Otherwise, rewrite all requests to the index.html file
+    RewriteRule ^ index.html [QSA,L]
+</IfModule>
+
+# EMERGENCY MIME TYPE FIX for LiteSpeed
+# Multiple approaches to ensure JavaScript files serve correctly
+
+# Method 1: AddType directives
+<IfModule mod_mime.c>
+    # Primary JavaScript MIME type
+    AddType application/javascript .js
+    AddType application/javascript .mjs
+    AddType text/javascript .js
+    
+    # Other assets
+    AddType text/css .css
+    AddType application/json .json
+    AddType image/svg+xml .svg
+    AddType application/font-woff .woff
+    AddType application/font-woff2 .woff2
+    AddType application/vnd.ms-fontobject .eot
+    AddType application/x-font-ttf .ttf
+</IfModule>
+
+# Method 2: Force headers with mod_headers (LiteSpeed compatible)
+<IfModule mod_headers.c>
+    # Force JavaScript MIME type for all .js files
+    <FilesMatch "\.(js|mjs)$">
+        Header unset Content-Type
+        Header always set Content-Type "application/javascript; charset=utf-8"
+        Header always set X-Content-Type-Options "nosniff"
+        Header always set Cache-Control "public, max-age=31536000"
+    </FilesMatch>
+    
+    # Force CSS MIME type
+    <FilesMatch "\.css$">
+        Header unset Content-Type
+        Header always set Content-Type "text/css; charset=utf-8"
+    </FilesMatch>
+    
+    # Specific override for assets directory
+    <FilesMatch "^assets/.*\.(js|mjs)$">
+        Header unset Content-Type
+        Header always set Content-Type "application/javascript"
+        Header always set Access-Control-Allow-Origin "*"
+    </FilesMatch>
+</IfModule>
+
+# Method 3: Environment-based MIME type setting
+SetEnvIf Request_URI "\.js$" js_file=1
+SetEnvIf Request_URI "\.mjs$" js_file=1
+Header always set Content-Type "application/javascript" env=js_file
+
+# Method 4: LiteSpeed-specific directives
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType application/javascript "access plus 1 year"
+    ExpiresByType text/javascript "access plus 1 year"
+</IfModule>
+
+# Enable CORS - Updated for LiteSpeed compatibility
+<IfModule mod_headers.c>
+    # CORS for all assets
+    <FilesMatch "\.(ttf|ttc|otf|eot|woff|woff2|css|svg|js|mjs)$">
+        Header always set Access-Control-Allow-Origin "*"
+        Header always set Access-Control-Allow-Methods "GET, POST, OPTIONS"
+        Header always set Access-Control-Allow-Headers "Content-Type"
+    </FilesMatch>
+
+    # JSON endpoints
+    <FilesMatch "ping$|index\.json$">
+        Header always set Access-Control-Allow-Origin "*"
+        Header always set Content-Type "application/json"
+    </FilesMatch>
+</IfModule>
+
+# LiteSpeed-specific performance optimizations
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css application/javascript text/javascript application/json
+</IfModule>

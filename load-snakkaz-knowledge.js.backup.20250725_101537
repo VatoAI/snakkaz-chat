@@ -1,4 +1,4 @@
-import axios from 'axios';
+const axios = require('axios');
 
 // SnakkaZ Knowledge Base - All facts about your app!
 const snakkaZKnowledge = [
@@ -155,9 +155,9 @@ async function loadSnakkaZKnowledge() {
   }
 }
 
-// Run if called directly - ES6 way
-if (import.meta.url === `file://${process.argv[1]}`) {
+// Run if called directly
+if (require.main === module) {
   loadSnakkaZKnowledge();
 }
 
-export { loadSnakkaZKnowledge, snakkaZKnowledge, simpleEmbed };
+module.exports = { loadSnakkaZKnowledge, snakkaZKnowledge, simpleEmbed };
