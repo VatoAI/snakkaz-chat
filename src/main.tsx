@@ -25,10 +25,10 @@ import './utils/PerformanceMonitor';
 
 import React from 'react'
 import { createRoot } from 'react-dom/client'
-import App from './App.js'
-import './index.css'
-import './styles/professional-modern-2025.css'
-import './assets/update-notification.css';
+import App from './App-GlassLiquid.js'
+import './styles/master-design-system.css';
+import './styles/design-system/liquid-glass.css';
+import './styles/design-system/components.css';
 
 // Create a variable to track if we've already created a root
 let rootInstance: any = null;

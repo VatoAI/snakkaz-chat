@@ -14,8 +14,8 @@ export const getEnvironmentConfig = () => {
     supabaseUrl: 'https://wqpoozpbceucynsojmbk.supabase.co',
     supabaseAnonKey: import.meta.env.VITE_SUPABASE_ANON_KEY,
     
-    // MCP Server configuration (disabled in production for security)
-    mcpServerUrl: isDevelopment ? 'http://localhost:3001' : null,
+    // MCP Server configuration
+    mcpServerUrl: isProduction ? 'https://mcp.snakkaz.com' : 'http://localhost:3000',
     
     // Feature flags
     features: {

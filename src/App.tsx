@@ -1,15 +1,9 @@
 // filepath: /workspaces/snakkaz-chat/src/App.tsx
-import React, { Suspense, lazy, useEffect, useState } from 'react';
-import { Routes, Route, Navigate, useLocation, BrowserRouter } from "react-router-dom";
-import { AuthProvider, useAuth } from './hooks/useAuth';
-import { supabase } from '@/lib/supabaseClient';
-import { Toaster } from "@/components/ui/toaster";
-import { RootErrorBoundary } from './components/error/RootErrorBoundary';
-import { setupGlobalErrorHandlers } from './utils/error/errorHandling';
-import { bootstrapSecurityFeatures } from '@/services/security/securityIntegration';
-import { applyEmergencyDevCsp } from '@/services/security/emergencyDevCsp';
-import { lcpOptimizer } from '@/services/performance/lcpOptimizer';
-import { ENV } from './utils/env/environmentFix';
+import React, { Suspense, lazy } from 'react';
+
+// Import the new SnakkazGlassLiquidChat component
+import SnakkazGlassLiquidChat from './components/SnakkazGlassLiquidChat';
+
 // Import MCP WebRTC Provider
 import MCPWebRTCProvider from './providers/MCPWebRTCProvider';
 // PWA and Mobile Components
@@ -322,327 +316,151 @@ const SubdomainRouter = () => {
   return null; // This component only handles side effects for other subdomains
 };
 
+// Import the new SnakkazGlassLiquidChat component
+import SnakkazGlassLiquidChat from './components/SnakkazGlassLiquidChat';
+
+import React from 'react';
+
 export default function App() {
-  // Track if we're in a preview environment
-  const [isPreviewEnv, setIsPreviewEnv] = useState(false);
-  // User ID for MCP and WebRTC
-  const [userId, setUserId] = useState<string>('');
-  
-  // Sett bruker-ID fra authentication
-  useEffect(() => {
-    // Hent bruker-ID fra supabase auth
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      (_event: string, session: any) => {
-        if (session?.user?.id) {
-          setUserId(session.user.id);
-        } else {
-          setUserId('');
-        }
-      }
-    );
-    
-    return () => {
-      authListener.subscription.unsubscribe();
-    };
-  }, []);
-  
-  // Initialize security features and Supabase preview environment
-  useEffect(() => {
-    const initApp = async () => {
-      try {
-        // Apply emergency CSP fix first (for development Google Fonts)
-        if (process.env.NODE_ENV === 'development') {
-          const { applyEmergencyDevCsp } = await import('@/services/security/emergencyDevCsp');
-          applyEmergencyDevCsp();
-        }
-        
-        // Hent bruker-ID for MCP og WebRTC
-        const randomId = `user-${Math.random().toString(36).substring(2, 9)}`;
-        setUserId(randomId);
-        
-        // Initialize security features
-        await bootstrapSecurityFeatures();
-        console.log('Security features initialized');
-        
-        // DEAKTIVERT: Preview environment (forårsaker konflikter)
-        // const previewStatus = await initializePreview();
-        // setIsPreviewEnv(shouldShowPreviewNotice());
-        
-        // Force production environment
-        setIsPreviewEnv(false);
-        
-        console.log('Running in PRODUCTION environment - preview disabled');
-      } catch (error) {
-        console.error('Failed to initialize application:', error);
-      }
-    };
-    
-    initApp();
-  }, []);
-  
-  // Try to preload some components
-  useEffect(() => {
-    preloadComponents();
-  }, []);
+  console.log('🚀 SnakkaZ App rendering with Glass Liquid design...');
   
   return (
-    <SuperSimpleErrorBoundary>
-      <BrowserRouter
-        future={{
-          v7_startTransition: true,
-          v7_relativeSplatPath: true
-        }}
-      >
-        <AuthProvider>
-          <SubdomainRouter />
-          {isPreviewEnv && <PreviewBanner />}
-          <Suspense fallback={<LoadingSpinner />}>
-            <Routes>
-              {/* Public routes */}
-              <Route path="/login" element={<ProfessionalLogin />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/email-confirmation" element={<EmailConfirmation />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
-              <Route path="/info" element={<Info />} />
-              
-              {/* Design overview page - shows all design systems */}
-              <Route path="/design-overview" element={<DesignOverview />} />
-              
-              {/* CloudMCP Demo - public showcase of quantum interface */}
-              <Route path="/cloudmcp-demo" element={<CloudMCPDemo />} />
-              
-              {/* <Route path="/info-new" element={<InfoNew />} /> */}
-              
-              {/* Demo Mode - Shows professional design without auth */}
-              <Route path="/demo" element={<DemoModePage />} />
-              
-              {/* Mobile test page - no auth required for testing */}
-              <Route path="/mobile-test" element={<MobileTestPage />} />
-              <Route path="/complete-mobile-test" element={<CompleteMobileTest />} />
-              <Route path="/improved-mobile-test" element={<ImprovedMobileTest />} />
-              <Route path="/final-mobile-test" element={<FinalMobileTest />} />
-              <Route path="/final-mobile-test" element={<FinalMobileTest />} />
-              
-              {/* E2EE Test Page - for testing kryptering */}
-              <Route path="/e2ee-test" element={<E2EETestPage />} />
-              
-              {/* LiquidGlass demo - no auth required for testing */}
-              <Route path="/liquid-glass-demo" element={<LiquidGlassDemo />} />
-              
-              {/* SnakkaZ Beta Landing - no auth required */}
-              <Route path="/beta" element={<SnakkaZBetaLanding />} />
-              
-              {/* MCP WebRTC Test Page - for testing MCP and WebRTC integration */}
-              <Route path="/mcp-webrtc-test" element={<MCPWebRTCTestPage />} />
-              
-              {/* CloudMCP Style Pages - Liquid Glass design */}
-              <Route path="/cloudmcp-profile" element={<ProfilePageCloudMCP />} />
-              <Route path="/cloudmcp-chat" element={<ChatPageCloudMCP />} />
-              
-              {/* SnakkaZ Chat Beta - Full featured chat system */}
-              <Route 
-                path="/beta-chat" 
-                element={
-                  <RequireAuth>
-                    <SnakkaZChatBeta />
-                  </RequireAuth>
-                } 
+    <div className="app-background" style={{ minHeight: '100vh', background: '#0a0a0a' }}>
+      {/* Animated Background Blobs */}
+      <div className="liquid-blob liquid-blob-1"></div>
+      <div className="liquid-blob liquid-blob-2"></div>
+      <div className="liquid-blob liquid-blob-3"></div>
+      <div className="neural-network"></div>
+      <div className="noise-overlay"></div>
+      
+      {/* CloudMCP Style Chat Interface */}
+      <div className="cloudmcp-chat-container">
+        {/* Left Sidebar */}
+        <aside className="cloudmcp-sidebar">
+          <div className="cloudmcp-header">
+            <h1 className="glow-text" style={{ color: 'white', fontSize: '28px', margin: '0 0 20px 0' }}>
+              SnakkaZ Glass
+            </h1>
+            <div className="cloudmcp-search">
+              <span className="cloudmcp-search-icon">🔍</span>
+              <input 
+                type="text" 
+                className="cloudmcp-search-input" 
+                placeholder="Search conversations..."
               />
-              
-              {/* Protected routes that need authentication - Updated to use CloudMCP design */}
-              <Route 
-                path="/basic-chat" 
-                element={
-                  <RequireAuth>
-                    <ChatPageCloudMCP />
-                  </RequireAuth>
-                } 
-              />
-              <Route 
-                path="/chat" 
-                element={
-                  <RequireAuth>
-                    <Navigate to="/cloudmcp-chat" replace />
-                  </RequireAuth>
-                } 
-              />
-              <Route 
-                path="/chat/*" 
-                element={
-                  <RequireAuth>
-                    <Navigate to="/cloudmcp-chat" replace />
-                  </RequireAuth>
-                } 
-              />
-              <Route 
-                path="/friends" 
-                element={
-                  <RequireAuth>
-                    <FriendsPage />
-                  </RequireAuth>
-                } 
-              />
-              <Route 
-                path="/find-friends" 
-                element={
-                  <RequireAuth>
-                    <FindFriends />
-                  </RequireAuth>
-                } 
-              />
-              <Route 
-                path="/group-chat" 
-                element={
-                  <RequireAuth>
-                    <GroupChatPage />
-                  </RequireAuth>
-                } 
-              />
-              <Route 
-                path="/ai-chat" 
-                element={
-                  <RequireAuth>
-                    <AIChatPage />
-                  </RequireAuth>
-                } 
-              />
-              <Route 
-                path="/create-group" 
-                element={
-                  <RequireAuth>
-                    <CreateGroupPage />
-                  </RequireAuth>
-                } 
-              />
-              <Route 
-                path="/profile" 
-                element={
-                  <RequireAuth>
-                    <ProfilePageCloudMCP />
-                  </RequireAuth>
-                } 
-              />
-              <Route 
-                path="/profile-new" 
-                element={
-                  <RequireAuth>
-                    <ProfilePageNew />
-                  </RequireAuth>
-                } 
-              />
-              <Route 
-                path="/dashboard" 
-                element={
-                  <RequireAuth>
-                    <DashboardPage />
-                  </RequireAuth>
-                } 
-              />
-              <Route 
-                path="/mail" 
-                element={
-                  <RequireAuth>
-                    <Mail />
-                  </RequireAuth>
-                } 
-              />
-              <Route 
-                path="/settings" 
-                element={
-                  <RequireAuth>
-                    <SettingsPage />
-                  </RequireAuth>
-                } 
-              />
-              <Route 
-                path="/group/:id" 
-                element={
-                  <RequireAuth>
-                    <GroupChatPage />
-                  </RequireAuth>
-                } 
-              />
-              <Route 
-                path="/subscription" 
-                element={
-                  <RequireAuth>
-                    <Subscription />
-                  </RequireAuth>
-                } 
-              />
-              <Route 
-                path="/memory" 
-                element={
-                  <RequireAuth>
-                    <MemoryDashboard />
-                  </RequireAuth>
-                } 
-              />
-              <Route 
-                path="/admin" 
-                element={
-                  <RequireAuth>
-                    <div className="min-h-screen bg-cyberdark-950 flex items-center justify-center">
-                      <div className="text-center">
-                        <h1 className="text-2xl text-cybergold-400 mb-4">Admin Panel</h1>
-                        <p className="text-cybergold-300">Admin-funksjonalitet kommer snart</p>
-                      </div>
-                    </div>
-                  </RequireAuth>
-                } 
-              />
-              
-              {/* Hidden security panel - only accessible by direct URL */}
-              <Route 
-                path="/admin/security" 
-                element={<AdminSecurityPanel />} 
-              />
-              
-              {/* Default redirects - smart routing based on auth state */}
-              <Route path="/" element={
-                <AuthAwareRedirect />
-              } />
-              <Route path="*" element={
-                <AuthAwareRedirect fallback="/info" />
-              } />
-              <Route 
-                path="/chat-new" 
-                element={
-                  <RequireAuth>
-                    <ChatPageNew />
-                  </RequireAuth>
-                } 
-              />
-              <Route 
-                path="/invite-system-demo" 
-                element={
-                  <RequireAuth>
-                    <InviteSystemDemo />
-                  </RequireAuth>
-                } 
-              />
-              {/* Invite System Demo - no auth required for testing */}
-              <Route path="/invite-demo" element={<InviteSystemDemo />} />
-              
-              {/* PWA Demo - no auth required for testing */}
-              <Route path="/pwa-demo" element={<PWADemo />} />
-            </Routes>
-          </Suspense>
-          <Toaster />
-          <DeveloperTools />
-        </AuthProvider>
+            </div>
+          </div>
+          
+          <div className="cloudmcp-chat-list">
+            <div className="cloudmcp-chat-item active">
+              <div className="cloudmcp-avatar-wrapper">
+                <div className="cloudmcp-avatar">GL</div>
+                <div className="cloudmcp-online-indicator"></div>
+              </div>
+              <div className="cloudmcp-chat-info">
+                <div className="cloudmcp-chat-name">Glass Liquid Demo</div>
+                <div className="cloudmcp-chat-message">Design system active! 🌊</div>
+              </div>
+              <div className="cloudmcp-chat-meta">
+                <div className="cloudmcp-chat-time">now</div>
+                <div className="cloudmcp-unread-badge">1</div>
+              </div>
+            </div>
+          </div>
+        </aside>
         
-        {/* PWA and Mobile Components */}
-        
-        {/* MCPWebRTCProvider - bruker autentisert brukers ID */}
-        <MCPWebRTCProvider userId={userId}>
-          <PWAHead />
-          <MobileOptimization>
-            <MobileLaunchBanner />
-          </MobileOptimization>
-        </MCPWebRTCProvider>
-      </BrowserRouter>
-    </SuperSimpleErrorBoundary>
+        {/* Main Chat Area */}
+        <main className="cloudmcp-main-chat">
+          <header className="cloudmcp-chat-header">
+            <div className="cloudmcp-header-info">
+              <div className="cloudmcp-avatar-wrapper">
+                <div className="cloudmcp-avatar">GL</div>
+                <div className="cloudmcp-online-indicator"></div>
+              </div>
+              <div className="cloudmcp-header-details">
+                <h2>Glass Liquid Design System</h2>
+                <div className="cloudmcp-header-status">CloudMCP-inspired interface active</div>
+              </div>
+            </div>
+            <div className="cloudmcp-header-actions">
+              <button className="cloudmcp-icon-button">⚡</button>
+              <button className="cloudmcp-icon-button">🎨</button>
+              <button className="cloudmcp-icon-button">✨</button>
+            </div>
+          </header>
+          
+          <div className="cloudmcp-messages">
+            <div className="cloudmcp-message received">
+              <div className="cloudmcp-message-avatar">
+                <div className="liquid-avatar" style={{ width: '32px', height: '32px' }}>
+                  <div className="liquid-avatar-glow"></div>
+                </div>
+              </div>
+              <div className="cloudmcp-message-content">
+                � Welcome to SnakkaZ Glass Liquid Design System!
+                <div className="cloudmcp-message-time">just now</div>
+              </div>
+            </div>
+            
+            <div className="cloudmcp-message sent">
+              <div className="cloudmcp-message-content">
+                Incredible! The CloudMCP-inspired design is beautiful! 😍
+                <div className="cloudmcp-message-time">just now</div>
+              </div>
+            </div>
+            
+            <div className="cloudmcp-message received">
+              <div className="cloudmcp-message-avatar">
+                <div className="liquid-avatar" style={{ width: '32px', height: '32px' }}>
+                  <div className="liquid-avatar-glow"></div>
+                </div>
+              </div>
+              <div className="cloudmcp-message-content">
+                The glass morphism effects, liquid animations, and backdrop filters create an amazing Apple-inspired interface! ✨
+                <div className="cloudmcp-message-time">just now</div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="cloudmcp-input-area">
+            <div className="cloudmcp-input-container">
+              <textarea 
+                className="cloudmcp-input"
+                placeholder="Experience the Glass Liquid design... Type something!"
+                rows="1"
+              />
+              <div className="cloudmcp-input-actions">
+                <button className="cloudmcp-icon-button">📎</button>
+                <button className="cloudmcp-icon-button">😊</button>
+                <button className="cloudmcp-send-button">
+                  <span style={{ fontSize: '20px' }}>✈️</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+      
+      {/* Floating Action Button */}
+      <button className="cloudmcp-floating-button">
+        <span>🌊</span>
+      </button>
+      
+      {/* Status Banner */}
+      <div style={{
+        position: 'fixed',
+        top: '20px',
+        right: '20px',
+        background: 'rgba(102, 126, 234, 0.1)',
+        border: '1px solid rgba(102, 126, 234, 0.3)',
+        borderRadius: '12px',
+        padding: '12px 20px',
+        color: 'white',
+        backdropFilter: 'blur(20px)',
+        fontSize: '14px'
+      }}>
+        🎨 Glass Liquid Design Active
+      </div>
+    </div>
   );
 }

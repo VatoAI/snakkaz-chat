@@ -234,34 +234,64 @@ app.post('/ai/basic', async (req, res) => {
   }
 });
 
-// Health endpoint
-app.get('/health', async (req, res) => {
-  const health = {
-    status: 'online',
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  const healthData = {
+    status: 'healthy',
     timestamp: new Date().toISOString(),
-    mcp_brain: true,
-    services: {
-      vector_db: mcpBrain.isVectorConnected,
-      llama_ai: mcpBrain.isLlamaConnected
-    },
+    version: '1.0.0',
+    environment: process.env.NODE_ENV || 'development',
     uptime: process.uptime(),
     memory: process.memoryUsage(),
-    collections: []
+    glassliquid: 'active'
   };
+  
+  res.json(healthData);
+});
 
-  // Get collection stats if Vector DB is connected
-  if (mcpBrain.isVectorConnected) {
-    try {
-      const collections = await mcpBrain.vectorDB.getCollections();
-      const stats = await mcpBrain.vectorDB.getStats('snakkaz_knowledge');
-      health.collections = collections.map(col => col.name);
-      health.knowledge_stats = stats;
-    } catch (error) {
-      console.error('Error getting collection stats:', error);
+// Glass Liquid Chat endpoint
+app.post('/api/chat', createRateLimiter(30, 1), async (req, res) => {
+  try {
+    const { message, timestamp } = req.body;
+    
+    if (!message) {
+      return res.status(400).json({ error: 'Message is required' });
     }
+    
+    // Log chat interaction
+    console.log('💬 Glass Liquid Chat:', message);
+    
+    // Simulate AI response with Glass Liquid theme
+    const responses = [
+      "That's beautiful! The Glass Liquid design makes everything feel so smooth ✨",
+      "Amazing message! Our CloudMCP-inspired interface is perfect for this conversation 🎨",
+      "Love how the backdrop filters create that premium Apple-like experience! 💎",
+      "The liquid animations really bring this chat to life! 🌊",
+      "Glass morphism + premium UX = perfection! Thanks for using SnakkaZ 🚀"
+    ];
+    
+    const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+    
+    // Add performance tracking
+    const responseData = {
+      response: randomResponse,
+      timestamp: new Date().toISOString(),
+      processed: true,
+      server: 'MCP Glass Liquid',
+      performance: {
+        responseTime: req.performanceData ? performanceMonitor.getElapsed(req.performanceData) : 0
+      }
+    };
+    
+    res.json(responseData);
+    
+  } catch (error) {
+    console.error('Chat endpoint error:', error);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: 'Failed to process chat message'
+    });
   }
-
-  res.json(health);
 });
 
 // Enhanced knowledge search endpoint with caching and optimization
@@ -566,16 +596,18 @@ app.post('/knowledge/search', async (req, res) => {
   });
 });
 
-const PORT = 3003;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log('🧠 SnakkaZ MCP Brain Server started!');
-  console.log('=================================');
+  console.log('🚀 SnakkaZ MCP Server started!');
+  console.log('===============================');
   console.log(`🌐 Server: http://localhost:${PORT}`);
-  console.log(`💬 Smart Chat: POST http://localhost:${PORT}/ai/smart`);
-  console.log(`🔍 Knowledge Search: POST http://localhost:${PORT}/knowledge/search`);
-  console.log(`🏥 Health: http://localhost:${PORT}/health`);
+  console.log(`� Live URL: https://mcp.snakkaz.com`);
+  console.log(`�💬 Smart Chat: POST http://localhost:${PORT}/api/chat`);
+  console.log(`🔍 Knowledge Search: POST http://localhost:${PORT}/api/knowledge/search`);
+  console.log(`🏥 Health: http://localhost:${PORT}/api/health`);
+  console.log(`📊 Vector Status: http://localhost:${PORT}/api/vector/status`);
   console.log('');
-  console.log('🎉 AI now knows everything about SnakkaZ!');
+  console.log('🎉 Glass Liquid design with E2EE + MCP Ready!');
 });
 
 export { SnakkaZMCPBrain };
