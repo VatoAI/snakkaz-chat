@@ -1,0 +1,144 @@
+# FASE 4: Load Testing Configuration
+# Artillery configuration for comprehensive load testing
+# of Snakkaz Chat under various scenarios
+
+config:
+  target: "http://127.0.0.1:5173"
+  phases:
+    # Warm-up phase
+    - duration: 30
+      arrivalRate: 5
+      name: "Warm-up Phase"
+
+    # Gradual load increase
+    - duration: 120
+      arrivalRate: 10
+      rampTo: 50
+      name: "Load Ramp-up"
+
+    # Sustained load
+    - duration: 180
+      arrivalRate: 50
+      name: "Sustained Load"
+
+    # Peak load test
+    - duration: 60
+      arrivalRate: 100
+      name: "Peak Load"
+
+    # Cool down
+    - duration: 30
+      arrivalRate: 10
+      name: "Cool Down"
+
+  # Load testing plugins
+  plugins:
+    metrics-by-endpoint:
+      useOnlyRequestNames: true
+
+  # Performance thresholds
+  ensure:
+    thresholds:
+      - http.response_time.p95: 2000 # 95% of requests under 2s
+      - http.response_time.p99: 5000 # 99% of requests under 5s
+      - http.request_rate: 45 # At least 45 req/s
+      - http.codes.200: 95 # 95% success rate
+
+  # Environment variables
+  environments:
+    production:
+      target: "https://www.snakkaz.com"
+    staging:
+      target: "https://staging.snakkaz.com"
+    local:
+      target: "http://127.0.0.1:5173"
+
+scenarios:
+  # Basic page load testing
+  - name: "Page Load Test"
+    weight: 40
+    flow:
+      - get:
+          url: "/"
+          capture:
+            - json: "$.title"
+              as: "pageTitle"
+      - think: 2
+      - get:
+          url: "/assets/js/index-{{ $randomString() }}.js"
+          ifTrue: "Math.random() < 0.8" # 80% chance
+      - think: 1
+
+  # Chat interface testing
+  - name: "Chat Interface Load"
+    weight: 30
+    flow:
+      - get:
+          url: "/"
+      - think: 3
+      - post:
+          url: "/api/chat/messages"
+          ifTrue: "Math.random() < 0.6" # 60% chance
+          json:
+            message: "Load test message {{ $randomString() }}"
+            timestamp: "{{ $timestamp() }}"
+      - think: 5
+
+  # User registration simulation
+  - name: "User Registration Flow"
+    weight: 15
+    flow:
+      - get:
+          url: "/"
+      - think: 5
+      - post:
+          url: "/api/auth/register"
+          ifTrue: "Math.random() < 0.3" # 30% chance
+          json:
+            username: "user_{{ $randomString() }}"
+            email: "test_{{ $randomString() }}@example.com"
+            password: "testpassword123"
+      - think: 10
+
+  # PWA and Service Worker testing
+  - name: "PWA Resources Load"
+    weight: 10
+    flow:
+      - get:
+          url: "/manifest.json"
+      - get:
+          url: "/service-worker.js"
+          ifTrue: "Math.random() < 0.7" # 70% chance
+      - think: 1
+
+  # Static assets stress test
+  - name: "Asset Loading Stress"
+    weight: 5
+    flow:
+      - get:
+          url: "/assets/css/index-{{ $randomString() }}.css"
+      - get:
+          url: "/assets/images/logo.png"
+          ifTrue: "Math.random() < 0.5" # 50% chance
+      - think: 1
+
+# Custom functions for dynamic data
+functions:
+  # Generate random string
+  randomString: |
+    function() {
+      return Math.random().toString(36).substring(7);
+    }
+
+  # Generate timestamp
+  timestamp: |
+    function() {
+      return new Date().toISOString();
+    }
+
+# Reporting configuration
+reporting:
+  json:
+    output: "test-results/load-test-results.json"
+  html:
+    output: "test-results/load-test-report.html"

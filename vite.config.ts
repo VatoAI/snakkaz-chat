@@ -4,11 +4,60 @@ import path from 'path'
 import { snakkazCspPlugin } from './src/plugins/snakkazCspPlugin'
 import { fixReactModuleOrder } from './src/vite-plugins/fix-react-order'
 
+// FASE 3 Performance Enhancement: Custom Vite plugins for performance optimization
+function createPerformancePlugin() {
+  return {
+    name: 'snakkaz-performance',
+    configResolved(config: any) {
+      if (config.command === 'build') {
+        console.log('🚀 Snakkaz Performance Plugin: Build optimization enabled');
+      }
+    },
+    generateBundle(options: any, bundle: any) {
+      // Analyze bundle composition
+      let totalSize = 0;
+      let chunkCount = 0;
+      const largestChunks: Array<{ name: string; size: number }> = [];
+
+      for (const [fileName, chunk] of Object.entries(bundle)) {
+        if ((chunk as any).type === 'chunk') {
+          const size = (chunk as any).code?.length || 0;
+          totalSize += size;
+          chunkCount++;
+          largestChunks.push({ name: fileName, size });
+        }
+      }
+
+      largestChunks.sort((a, b) => b.size - a.size);
+
+      console.log('\n📊 Bundle Analysis Summary:');
+      console.log(`Total Size: ${(totalSize / 1024).toFixed(1)}KB`);
+      console.log(`Chunks: ${chunkCount}`);
+      console.log('Largest Chunks:');
+      largestChunks.slice(0, 5).forEach(chunk => {
+        console.log(`  - ${chunk.name}: ${(chunk.size / 1024).toFixed(1)}KB`);
+      });
+      
+      // Performance budget warnings
+      if (totalSize > 500 * 1024) {
+        console.warn('⚠️  Total bundle size exceeds 500KB budget');
+      }
+      if (chunkCount > 20) {
+        console.warn('⚠️  Too many chunks may impact loading performance');
+      }
+    }
+  };
+}
+
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   plugins: [
-    react(),
+    react({
+      // FASE 3: Optimize React for production  
+      jsxRuntime: 'automatic'
+    }),
     fixReactModuleOrder(),
+    createPerformancePlugin(),
     // snakkazCspPlugin({
     //   debug: mode === 'development',
     //   // Legg til ekstra CSP-direktiver hvis nødvendig
@@ -22,6 +71,8 @@ export default defineConfig(({ mode }) => ({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  
+  // FASE 3: Enhanced server configuration for development performance
   server: {
     port: 8080,
     host: "::",
@@ -29,11 +80,20 @@ export default defineConfig(({ mode }) => ({
     compress: true,
     // Optimize caching for better dev performance
     hmr: {
-      overlay: true
+      overlay: true,
+      port: 8081 // Separate port for HMR to avoid conflicts
+    },
+    // Enable HTTP/2 for better multiplexing
+    // https: false, // Set to true with certificates for HTTP/2 in dev
+    // Optimize CORS for performance
+    cors: true,
+    // Enable pre-transform for faster builds
+    warmup: {
+      clientFiles: ['./src/main.tsx', './src/App-GlassLiquid.tsx']
     }
   },
   
-  // Optimize dependency pre-bundling
+  // FASE 3: Enhanced dependency pre-bundling for better performance
   optimizeDeps: {
     // Include commonly used dependencies for faster cold starts
     include: [
@@ -42,10 +102,20 @@ export default defineConfig(({ mode }) => ({
       'react-router-dom',
       '@supabase/supabase-js',
       'framer-motion',
-      'lucide-react'
+      'lucide-react',
+      // FASE 3: Include our new performance utilities
+      'react/jsx-runtime',
+      'react-dom/client'
     ],
     // Exclude problematic packages that should be bundled fresh
-    exclude: ['@vite/client', '@vite/env']
+    exclude: ['@vite/client', '@vite/env'],
+    // Force include performance-critical modules
+    force: true,
+    // Optimize entry points
+    entries: [
+      './src/main.tsx',
+      './src/App-GlassLiquid.tsx'
+    ]
   },
   build: {
     // Target production build size limits (optimized for performance)
@@ -96,6 +166,14 @@ export default defineConfig(({ mode }) => ({
       output: {
         // Ultra-optimized chunking strategy for ~15-20 bundles
         manualChunks: (id) => {
+          // FASE 3: Performance utilities (new chunk for our enhancements)
+          if (id.includes('/src/utils/performance/') || 
+              id.includes('/src/components/performance/') ||
+              id.includes('/src/hooks/useNavigationTracking') ||
+              id.includes('/src/hooks/useSmartLazy')) {
+            return 'performance-system';
+          }
+          
           // Core app utilities and shared components
           if (id.includes('/src/components/ui/') || id.includes('/src/hooks/') || id.includes('/src/lib/')) {
             return 'app-utils';

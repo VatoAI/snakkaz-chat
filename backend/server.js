@@ -15,6 +15,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const speakeasy = require('speakeasy');
 const winston = require('winston');
+const crypto = require('crypto');
 require('dotenv').config();
 
 // Initialize Express app
@@ -42,7 +43,21 @@ const logger = winston.createLogger({
 });
 
 // Middleware
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "https:"],
+      connectSrc: ["'self'", "wss:", "https:"],
+      fontSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      mediaSrc: ["'self'"],
+      frameSrc: ["'none'"],
+    },
+  },
+}));
 app.use(cors({
   origin: ["https://mcp.snakkaz.com", "https://snakkaz.com"],
   credentials: true
@@ -50,26 +65,129 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Rate limiting
-const rateLimiter = new rateLimit.RateLimiterMemory({
+// Enhanced Rate Limiting - FASE 3 Security Enhancement
+const createRateLimiter = (options) => new rateLimit.RateLimiterMemory({
   keyGenerator: (req) => req.ip,
-  points: 100, // Number of requests
-  duration: 60, // Per 60 seconds
+  ...options
 });
 
-// Rate limiting middleware
+// Different rate limits for different endpoints
+const rateLimiters = {
+  general: createRateLimiter({
+    points: 100, // 100 requests
+    duration: 60, // per 60 seconds
+  }),
+  auth: createRateLimiter({
+    points: 5, // 5 login attempts
+    duration: 300, // per 5 minutes
+  }),
+  passwordReset: createRateLimiter({
+    points: 3, // 3 password reset attempts
+    duration: 600, // per 10 minutes
+  }),
+  api: createRateLimiter({
+    points: 50, // 50 API calls
+    duration: 60, // per minute
+  })
+};
+
+// General rate limiting middleware
 app.use(async (req, res, next) => {
   try {
-    await rateLimiter.consume(req.ip);
+    // Apply stricter limits to auth endpoints
+    if (req.path.includes('/auth/')) {
+      await rateLimiters.auth.consume(req.ip);
+    } else if (req.path.includes('/api/')) {
+      await rateLimiters.api.consume(req.ip);
+    } else {
+      await rateLimiters.general.consume(req.ip);
+    }
     next();
   } catch (rejRes) {
+    const retryAfter = Math.round(rejRes.msBeforeNext / 1000) || 60;
     res.status(429).json({
       success: false,
       error: 'Too many requests',
-      message: 'Rate limit exceeded'
+      message: 'Rate limit exceeded',
+      retryAfter: retryAfter
     });
   }
 });
+
+// CSRF Protection - FASE 3 Security Enhancement
+const csrfTokens = new Map(); // In production, use Redis
+
+// Generate CSRF token endpoint
+app.get('/api/csrf-token', (req, res) => {
+  const token = crypto.randomBytes(32).toString('hex');
+  const expires = Date.now() + (30 * 60 * 1000); // 30 minutes
+  
+  csrfTokens.set(token, {
+    issuedAt: Date.now(),
+    expires: expires,
+    ip: req.ip
+  });
+  
+  res.json({
+    success: true,
+    data: {
+      csrfToken: token,
+      expiresIn: 1800 // 30 minutes in seconds
+    }
+  });
+});
+
+// CSRF validation middleware
+const validateCSRF = (req, res, next) => {
+  // Skip CSRF for GET requests and public endpoints
+  if (req.method === 'GET' || req.path.includes('/api/csrf-token')) {
+    return next();
+  }
+
+  const token = req.headers['x-csrf-token'] || req.body.csrfToken;
+  
+  if (!token) {
+    return res.status(403).json({
+      success: false,
+      error: 'CSRF token required',
+      code: 'CSRF_TOKEN_MISSING'
+    });
+  }
+
+  const tokenData = csrfTokens.get(token);
+  
+  if (!tokenData) {
+    return res.status(403).json({
+      success: false,
+      error: 'Invalid CSRF token',
+      code: 'CSRF_TOKEN_INVALID'
+    });
+  }
+
+  if (Date.now() > tokenData.expires) {
+    csrfTokens.delete(token);
+    return res.status(403).json({
+      success: false,
+      error: 'CSRF token expired',
+      code: 'CSRF_TOKEN_EXPIRED'
+    });
+  }
+
+  // Optionally validate IP (comment out if using load balancers)
+  // if (tokenData.ip !== req.ip) {
+  //   return res.status(403).json({
+  //     success: false,
+  //     error: 'CSRF token IP mismatch',
+  //     code: 'CSRF_TOKEN_IP_MISMATCH'
+  //   });
+  // }
+
+  next();
+};
+
+// Apply CSRF protection to state-changing endpoints
+app.use('/api/auth/', validateCSRF);
+app.use('/api/admin/', validateCSRF);
 
 // Authentication middleware
 const authenticateToken = async (req, res, next) => {
@@ -150,6 +268,9 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Refresh tokens storage (in production, use a database like Redis)
+const refreshTokens = new Map();
+
 // Authentication endpoints
 app.post('/api/auth/login', async (req, res) => {
   try {
@@ -198,16 +319,33 @@ app.post('/api/auth/login', async (req, res) => {
       }
     }
 
-    // Generate JWT token
-    const token = jwt.sign(
+    // Generate JWT access token (shorter expiry for security)
+    const accessToken = jwt.sign(
       { 
         userId: user.id, 
         username: user.username, 
         role: user.role 
       },
       process.env.JWT_SECRET || 'SnakkazMCP2025Secret',
-      { expiresIn: '8h' }
+      { expiresIn: '15m' } // Short-lived access token
     );
+
+    // Generate refresh token (longer expiry)
+    const refreshToken = jwt.sign(
+      { 
+        userId: user.id, 
+        type: 'refresh' 
+      },
+      process.env.JWT_REFRESH_SECRET || 'SnakkazMCPRefresh2025Secret',
+      { expiresIn: '30d' } // Long-lived refresh token
+    );
+
+    // Store refresh token (in production, use Redis with TTL)
+    refreshTokens.set(refreshToken, {
+      userId: user.id,
+      issuedAt: new Date(),
+      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
+    });
 
     // Update last login
     user.lastLogin = new Date();
@@ -225,13 +363,121 @@ app.post('/api/auth/login', async (req, res) => {
           lastLogin: user.lastLogin,
           twoFactorEnabled: user.twoFactorEnabled
         },
-        token,
-        expiresIn: '8h'
+        token: accessToken,
+        refreshToken: refreshToken,
+        expiresIn: '15m'
       }
     });
 
   } catch (error) {
     logger.error('Login error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
+});
+
+// Refresh token endpoint - FASE 3 Security Enhancement
+app.post('/api/auth/refresh', async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      return res.status(401).json({
+        success: false,
+        error: 'Refresh token required'
+      });
+    }
+
+    // Verify refresh token exists in storage
+    const tokenData = refreshTokens.get(refreshToken);
+    if (!tokenData) {
+      return res.status(403).json({
+        success: false,
+        error: 'Invalid refresh token'
+      });
+    }
+
+    // Check if refresh token has expired
+    if (new Date() > tokenData.expiresAt) {
+      refreshTokens.delete(refreshToken);
+      return res.status(403).json({
+        success: false,
+        error: 'Refresh token expired'
+      });
+    }
+
+    // Verify refresh token signature
+    let decoded;
+    try {
+      decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET || 'SnakkazMCPRefresh2025Secret');
+    } catch (error) {
+      refreshTokens.delete(refreshToken);
+      return res.status(403).json({
+        success: false,
+        error: 'Invalid refresh token signature'
+      });
+    }
+
+    // Find user
+    const user = demoUsers.find(u => u.id === decoded.userId);
+    if (!user) {
+      refreshTokens.delete(refreshToken);
+      return res.status(403).json({
+        success: false,
+        error: 'User not found'
+      });
+    }
+
+    // Generate new access token
+    const newAccessToken = jwt.sign(
+      { 
+        userId: user.id, 
+        username: user.username, 
+        role: user.role 
+      },
+      process.env.JWT_SECRET || 'SnakkazMCP2025Secret',
+      { expiresIn: '15m' }
+    );
+
+    logger.info(`Access token refreshed for user ${user.username}`);
+
+    res.json({
+      success: true,
+      data: {
+        token: newAccessToken,
+        expiresIn: '15m'
+      }
+    });
+
+  } catch (error) {
+    logger.error('Token refresh error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
+});
+
+// Token revocation endpoint - FASE 3 Security Enhancement
+app.post('/api/auth/logout', async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+
+    if (refreshToken) {
+      // Remove refresh token from storage
+      refreshTokens.delete(refreshToken);
+      logger.info('Refresh token revoked during logout');
+    }
+
+    res.json({
+      success: true,
+      message: 'Logout successful'
+    });
+
+  } catch (error) {
+    logger.error('Logout error:', error);
     res.status(500).json({
       success: false,
       error: 'Internal server error'

@@ -1,15 +1,22 @@
 // filepath: /workspaces/snakkaz-chat/src/App.tsx
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useEffect } from 'react';
 
 // Import the new SnakkazGlassLiquidChat component
 import SnakkazGlassLiquidChat from './components/SnakkazGlassLiquidChat';
 
 // Import MCP WebRTC Provider
 import MCPWebRTCProvider from './providers/MCPWebRTCProvider';
+
 // PWA and Mobile Components
 import PWAHead from './components/mobile/PWAHead';
 import MobileOptimization from './components/mobile/MobileOptimization';
 import MobileLaunchBanner from './components/mobile/MobileLaunchBanner';
+
+// FASE 6 PWA Excellence - PWA Manager Integration
+import { pwaManager } from './utils/pwa-manager';
+import PWAComponent from './components/PWAComponent';
+import DigitalVokter from './components/DigitalVokter';
+
 // DEAKTIVERT: Supabase preview (forårsaker konflikter og 404-feil)
 // import { initializePreview, shouldShowPreviewNotice, getPreviewDisplayInfo } from '@/utils/supabase/preview-fix';
 
@@ -43,6 +50,9 @@ const AIChatPage = lazy(() => import("@/features/chat/components/common/AIChatPa
 
 // PWA Demo page
 const PWADemo = lazy(() => import("@/pages/PWADemo"));
+
+// FASE 6 Master Dashboard
+const Fase6Demo = lazy(() => import("@/pages/Fase6Demo"));
 
 // Mobile test pages
 const MobileTestPage = lazy(() => import("@/pages/MobileTestPage"));
@@ -441,11 +451,6 @@ export default function App() {
         </main>
       </div>
       
-      {/* Floating Action Button */}
-      <button className="cloudmcp-floating-button">
-        <span>🌊</span>
-      </button>
-      
       {/* Status Banner */}
       <div style={{
         position: 'fixed',
@@ -461,6 +466,17 @@ export default function App() {
       }}>
         🎨 Glass Liquid Design Active
       </div>
+
+      {/* FASE 6 PWA Excellence Components */}
+      <PWAComponent 
+        showInstallPrompt={true}
+        showOfflineIndicator={true}
+        showUpdateNotification={true}
+        position="bottom-right"
+      />
+      
+      {/* Digital Vokter AI Security */}
+      <DigitalVokter />
     </div>
   );
 }

@@ -19,6 +19,11 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { SupabaseAuthTester } from "@/components/SupabaseAuthTester";
+import { CompleteSupabaseTest } from "@/components/CompleteSupabaseTest";
+
+// Import and run Supabase test
+import '@/utils/testSupabase';
 
 // BeforeInstallPromptEvent type definition
 interface BeforeInstallPromptEvent extends Event {
@@ -631,6 +636,21 @@ const Index = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Development Auth Tester - Show only in development */}
+      {import.meta.env.DEV && (
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <div className="text-center mb-6">
+            <h2 className="text-2xl font-bold text-cyberblue-400 mb-2">
+              🔧 Developer Tools
+            </h2>
+            <p className="text-gray-400">
+              Testing Supabase authentication and real-time features
+            </p>
+          </div>
+          <CompleteSupabaseTest />
+        </div>
+      )}
     </div>
   );
 };

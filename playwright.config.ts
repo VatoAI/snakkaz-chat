@@ -1,11 +1,13 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * SnakkaZ Chat - Cross-Browser Testing Configuration
- * Comprehensive testing across modern browsers and devices
+ * FASE 4: Enhanced E2E Testing Configuration
+ * 
+ * Comprehensive end-to-end testing setup for Snakkaz Chat
+ * with cross-browser support, mobile testing, and performance validation
  */
 export default defineConfig({
-  testDir: './tests',
+  testDir: './tests/e2e',
   
   /* Run tests in files in parallel */
   fullyParallel: true,
@@ -19,13 +21,17 @@ export default defineConfig({
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
   
-  /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: 'html',
+  /* Enhanced Reporter configuration for FASE 4 */
+  reporter: [
+    ['html'],
+    ['junit', { outputFile: 'test-results/junit.xml' }],
+    ['json', { outputFile: 'test-results/results.json' }]
+  ],
   
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: 'http://localhost:8080',
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://127.0.0.1:5173',
     
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',

@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">38.7% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>12/31</span>
+                <span class='fraction'>0/31</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">27.27% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>6/22</span>
+                <span class='fraction'>0/22</span>
             </div>
         
             
@@ -117,26 +117,26 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -146,13 +146,13 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -164,26 +164,26 @@
  */
 &nbsp;
 // Convert string to ArrayBuffer
-export const str2ab = <span class="fstat-no" title="function not covered" >(s</span>tr: string): ArrayBuffer =&gt; {
+export const <span class="cstat-no" title="statement not covered" >str2ab = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(</span>s</span>tr: string): ArrayBuffer =&gt; {</span>
   const encoder = <span class="cstat-no" title="statement not covered" >new TextEncoder();</span>
 <span class="cstat-no" title="statement not covered" >  return encoder.encode(str).buffer;</span>
 };
 &nbsp;
 // Convert ArrayBuffer to string
-export const ab2str = <span class="fstat-no" title="function not covered" >(b</span>uffer: ArrayBuffer): string =&gt; {
+export const <span class="cstat-no" title="statement not covered" >ab2str = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(</span>b</span>uffer: ArrayBuffer): string =&gt; {</span>
   const decoder = <span class="cstat-no" title="statement not covered" >new TextDecoder();</span>
 <span class="cstat-no" title="statement not covered" >  return decoder.decode(new Uint8Array(buffer));</span>
 };
 &nbsp;
 // Convert ArrayBuffer to Base64 string
-export const arrayBufferToBase64 = <span class="fstat-no" title="function not covered" >(b</span>uffer: ArrayBuffer): string =&gt; {
+export const <span class="cstat-no" title="statement not covered" >arrayBufferToBase64 = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(</span>b</span>uffer: ArrayBuffer): string =&gt; {</span>
   const bytes = <span class="cstat-no" title="statement not covered" >new Uint8Array(buffer);</span>
   const binary = <span class="cstat-no" title="statement not covered" >bytes.reduce(<span class="fstat-no" title="function not covered" >(a</span>cc, byte) =&gt; <span class="cstat-no" title="statement not covered" >acc + String.fromCharCode(byte),</span> '');</span>
 <span class="cstat-no" title="statement not covered" >  return btoa(binary);</span>
 };
 &nbsp;
 // Convert Base64 string to ArrayBuffer
-export const base64ToArrayBuffer = <span class="fstat-no" title="function not covered" >(b</span>ase64: string): ArrayBuffer =&gt; {
+export const <span class="cstat-no" title="statement not covered" >base64ToArrayBuffer = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(</span>b</span>ase64: string): ArrayBuffer =&gt; {</span>
   const binary = <span class="cstat-no" title="statement not covered" >atob(base64);</span>
   const bytes = <span class="cstat-no" title="statement not covered" >new Uint8Array(binary.length);</span>
 <span class="cstat-no" title="statement not covered" >  for (let i = <span class="cstat-no" title="statement not covered" >0;</span> i &lt; binary.length; i++) {</span>
@@ -193,13 +193,13 @@ export const base64ToArrayBuffer = <span class="fstat-no" title="function not co
 };
 &nbsp;
 // Convert hex string to ArrayBuffer
-export const hexToArrayBuffer = <span class="fstat-no" title="function not covered" >(h</span>exString: string): ArrayBuffer =&gt; {
+export const <span class="cstat-no" title="statement not covered" >hexToArrayBuffer = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(</span>h</span>exString: string): ArrayBuffer =&gt; {</span>
   const bytes = <span class="cstat-no" title="statement not covered" >new Uint8Array(hexString.match(/.{1,2}/g)!.map(<span class="fstat-no" title="function not covered" >byte </span>=&gt; <span class="cstat-no" title="statement not covered" >parseInt(byte, 16))</span>);</span>
 <span class="cstat-no" title="statement not covered" >  return bytes.buffer;</span>
 };
 &nbsp;
 // Convert ArrayBuffer to hex string
-export const arrayBufferToHex = <span class="fstat-no" title="function not covered" >(b</span>uffer: ArrayBuffer): string =&gt; {
+export const <span class="cstat-no" title="statement not covered" >arrayBufferToHex = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(</span>b</span>uffer: ArrayBuffer): string =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >  return Array.from(new Uint8Array(buffer))</span>
     .map(<span class="fstat-no" title="function not covered" >byte </span>=&gt; <span class="cstat-no" title="statement not covered" >byte.toString(16).padStart(2, '0'))</span>
     .join('');
@@ -211,7 +211,7 @@ export const arrayBufferToHex = <span class="fstat-no" title="function not cover
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-07-23T16:37:33.803Z
+                at 2025-07-26T12:23:13.812Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

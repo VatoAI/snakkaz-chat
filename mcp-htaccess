@@ -1,0 +1,24 @@
+# SNAKKAZ MCP - CORS ENABLED .HTACCESS
+# Allows API calls from snakkaz.com
+
+# Enable CORS for SnakkaZ domains
+Header always set Access-Control-Allow-Origin "https://snakkaz.com"
+Header always set Access-Control-Allow-Origin "https://www.snakkaz.com"
+Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+Header always set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
+Header always set Access-Control-Allow-Credentials "true"
+
+# Handle preflight OPTIONS requests
+RewriteEngine On
+RewriteCond %{REQUEST_METHOD} OPTIONS
+RewriteRule ^(.*)$ $1 [R=200,L]
+
+# API routing
+RewriteRule ^api/(.*)$ api/$1 [L]
+
+# Enable compression
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE application/json
+    AddOutputFilterByType DEFLATE text/plain
+    AddOutputFilterByType DEFLATE text/html
+</IfModule>

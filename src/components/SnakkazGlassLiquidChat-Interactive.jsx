@@ -45,14 +45,29 @@ const SnakkazGlassLiquidChat = () => {
     const connectToMCP = async () => {
       try {
         const API_BASE = import.meta.env.PROD ? 'https://mcp.snakkaz.com' : 'http://localhost:3000';
-        const response = await fetch(`${API_BASE}/api/health`);
+        const response = await fetch(`${API_BASE}/api/health`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include'
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
         const data = await response.json();
-        if (data.status === 'healthy') {
+        
+        // Accept both 'healthy' and 'Active' status
+        if (data.status === 'healthy' || data.status === 'Active') {
           setIsConnected(true);
-          console.log('✅ Connected to MCP server');
+          console.log('✅ Connected to MCP server', data);
+        } else {
+          throw new Error(`Unexpected status: ${data.status}`);
         }
       } catch (error) {
-        console.log('⚠️ MCP server not available, using demo mode');
+        console.log('⚠️ MCP server not available, using demo mode:', error.message);
         setIsConnected(false);
       }
     };
@@ -88,8 +103,9 @@ const SnakkazGlassLiquidChat = () => {
           headers: {
             'Content-Type': 'application/json',
           },
+          credentials: 'include',
           body: JSON.stringify({
-            message: inputValue,
+            message: newMessage.content,
             timestamp: new Date().toISOString()
           })
         });
@@ -109,9 +125,24 @@ const SnakkazGlassLiquidChat = () => {
             };
             setMessages(prev => [...prev, responseMessage]);
           }, 1000);
+        } else {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
       } catch (error) {
-        console.log('Error sending to MCP:', error);
+        console.log('Error sending to MCP:', error.message);
+        
+        // Add error response
+        setTimeout(() => {
+          const errorMessage = {
+            id: messages.length + 2,
+            sender: 'System',
+            avatar: 'SY',
+            content: '⚠️ Could not reach MCP server. Using local mode.',
+            time: new Date().toLocaleTimeString('no-NO', { hour: '2-digit', minute: '2-digit' }),
+            type: 'received'
+          };
+          setMessages(prev => [...prev, errorMessage]);
+        }, 1000);
       }
     } else {
       // Demo response
@@ -272,11 +303,6 @@ const SnakkazGlassLiquidChat = () => {
           </div>
         </div>
       </main>
-      
-      {/* Floating Action Button */}
-      <button className="cloudmcp-floating-button">
-        <span>✨</span>
-      </button>
     </div>
   );
 };

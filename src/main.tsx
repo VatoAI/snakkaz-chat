@@ -20,6 +20,10 @@ import './utils/reactFixOptimized';
 // Import environment fix to ensure process.env is available
 import './utils/env/environmentFix';
 
+// FASE 5: Initialize Sentry before anything else
+import { initSentry } from './config/sentry';
+initSentry();
+
 // Norwegian UX Performance Monitoring
 import './utils/PerformanceMonitor';
 

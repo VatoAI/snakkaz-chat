@@ -1,28 +1,72 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { CreateGroup } from "@/features/groups/components";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { ArrowLeft, Users, Globe, Lock, Shield } from 'lucide-react';
 
 export const CreateGroupPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [isCreated, setIsCreated] = useState(false);
+  const { toast } = useToast();
   
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    is_private: false,
+    allow_member_invites: true
+  });
+  
+  const [loading, setLoading] = useState(false);
+
   // Redirect to login if user is not authenticated
   if (!user) {
     navigate('/login', { state: { returnUrl: '/create-group' } });
     return null;
   }
 
-  const handleGroupCreated = (groupId: string) => {
-    setIsCreated(true);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user?.id) return;
     
-    // Navigate to the group chat after a short delay
-    setTimeout(() => {
-      navigate(`/group-chat/${groupId}`);
-    }, 1500);
+    setLoading(true);
+    try {
+      // Create room in existing schema for now
+      const { data: room, error: roomError } = await supabase
+        .from('rooms')
+        .insert({
+          name: formData.name,
+          description: formData.description,
+          is_private: formData.is_private,
+          created_by: user.id
+        })
+        .select()
+        .single();
+
+      if (roomError) throw roomError;
+
+      toast({
+        title: 'Gruppe opprettet!',
+        description: `${formData.name} er nå klar for bruk.`,
+      });
+
+      navigate(`/chat/group/${room.id}`);
+    } catch (err) {
+      console.error('Error creating group:', err);
+      toast({
+        title: 'Kunne ikke opprette gruppe',
+        description: 'Prøv igjen senere.',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
