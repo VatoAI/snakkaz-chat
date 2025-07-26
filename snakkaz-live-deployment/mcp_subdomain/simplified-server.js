@@ -24,7 +24,7 @@ const corsOptions = {
     // Check if origin is allowed
     if (allowedOrigins.indexOf(origin) !== -1) {
       console.log(`✅ CORS allowed for origin: ${origin}`);
-      callback(null, origin); // Return the actual origin, not true
+      callback(null, true);
     } else {
       console.log(`❌ CORS blocked origin: ${origin}`);
       callback(new Error('Not allowed by CORS'), false);
@@ -76,6 +76,14 @@ app.post('/api/chat', (req, res) => {
   });
 });
 
+// Chat API endpoint
+app.post('/api/chat', (req, res) => {
+  res.json({
+    response: 'SnakkaZ MCP Chat is active and ready!',
+    timestamp: new Date().toISOString(),
+    cors: 'working'
+  });
+});
 
 // MCP status endpoint
 app.get('/api/mcp/status', (req, res) => {
