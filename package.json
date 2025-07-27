@@ -190,6 +190,7 @@
     "@types/simple-peer": "^9.11.8",
     "@types/supertest": "^6.0.3",
     "@vitejs/plugin-react-swc": "^3.5.0",
+    "archiver": "^7.0.1",
     "artillery": "^2.0.21",
     "autoprefixer": "^10.4.21",
     "babel-jest": "^30.0.0-beta.3",

@@ -44,7 +44,7 @@ const SnakkazGlassLiquidChat = () => {
   useEffect(() => {
     const connectToMCP = async () => {
       try {
-        const API_BASE = import.meta.env.PROD ? 'https://mcp.snakkaz.com' : 'http://localhost:3000';
+        const API_BASE = import.meta.env.VITE_MCP_SERVER_URL || 'https://mcp.snakkaz.com';
         const response = await fetch(`${API_BASE}/api/health`, {
           method: 'GET',
           headers: {
@@ -97,7 +97,7 @@ const SnakkazGlassLiquidChat = () => {
     // Send to MCP server if connected
     if (isConnected) {
       try {
-        const API_BASE = import.meta.env.PROD ? 'https://mcp.snakkaz.com' : 'http://localhost:3000';
+        const API_BASE = import.meta.env.VITE_MCP_SERVER_URL || 'https://mcp.snakkaz.com';
         const response = await fetch(`${API_BASE}/api/chat`, {
           method: 'POST',
           headers: {

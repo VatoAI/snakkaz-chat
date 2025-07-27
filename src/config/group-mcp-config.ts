@@ -86,7 +86,7 @@ export const SUPPORTED_SOCIAL_PLATFORMS = [
 
 // MCP Konfigurasjon for gruppefunksjonalitet
 export const GROUP_MCP_CONFIG: MCPClientConfig = {
-  baseUrl: process.env.NODE_ENV === 'production' ? 'https://mcp.snakkaz.com' : 'http://localhost:3000',
+  baseUrl: import.meta.env.VITE_MCP_SERVER_URL || 'https://mcp.snakkaz.com',
   endpoints: GROUP_MCP_ENDPOINTS,
   features: {
     groups: {

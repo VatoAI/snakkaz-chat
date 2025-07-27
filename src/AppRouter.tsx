@@ -10,7 +10,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider } from './providers/AuthProvider';
 import { ThemeProvider } from './providers/ThemeProvider';
 import { Toaster } from './components/ui/toaster';
-import { ChatProvider } from './contexts/ChatContext';
+import { ChatProvider } from './features/chat/components/common/ChatContext';
 
 // Lazy load pages for better performance
 const Login = lazy(() => import('./pages/Login'));

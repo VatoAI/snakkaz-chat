@@ -29,7 +29,7 @@ import './utils/PerformanceMonitor';
 
 import React from 'react'
 import { createRoot } from 'react-dom/client'
-import App from './App-GlassLiquid.js'
+import App from './AppRouterSimple'
 import './styles/master-design-system.css';
 import './styles/design-system/liquid-glass.css';
 import './styles/design-system/components.css';

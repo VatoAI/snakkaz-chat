@@ -24,17 +24,17 @@ export interface EmailConfig {
 
 export const emailConfig: EmailConfig = {
   smtp: {
-    host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    port: parseInt(process.env.SMTP_PORT || '587'),
-    secure: process.env.SMTP_SECURE === 'true',
+    host: process.env.SMTP_HOST || 'snakkaz.com',
+    port: parseInt(process.env.SMTP_PORT || '465'),
+    secure: process.env.SMTP_SECURE === 'true' || true, // SSL/TLS enabled by default
     auth: {
-      user: process.env.SMTP_USER || '',
+      user: process.env.SMTP_USER || 'help@snakkaz.com',
       pass: process.env.SMTP_PASS || ''
     }
   },
   from: {
-    name: 'Snakkaz Chat',
-    address: process.env.FROM_EMAIL || 'noreply@snakkaz.com'
+    name: 'SnakkaZ Chat',
+    address: process.env.FROM_EMAIL || 'help@snakkaz.com'
   },
   templates: {
     verification: 'email-verification',

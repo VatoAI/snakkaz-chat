@@ -2,6 +2,9 @@ export default {
   preset: 'ts-jest',
   testEnvironment: 'jsdom',
   roots: ['<rootDir>/src'],
+  transformIgnorePatterns: [
+    'node_modules/(?!(nanoid|@supabase|@anthropic-ai)/)'
+  ],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
     '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
@@ -13,7 +16,7 @@ export default {
     '**/tests/**/*.test.(ts|tsx|js|jsx)',
   ],
   transform: {
-    '^.+\\.(ts|tsx)$': ['ts-jest', { 
+    '^.+\\.(ts|tsx)$': ['ts-jest', {
       tsconfig: {
         target: 'ES2020',
         lib: ['ES2020', 'DOM', 'DOM.Iterable'],
@@ -24,7 +27,6 @@ export default {
         allowSyntheticDefaultImports: true,
         skipLibCheck: true,
         strict: false,
-        noImplicitAny: false,
         isolatedModules: true,
         baseUrl: '.',
         paths: {
@@ -32,10 +34,19 @@ export default {
         }
       }
     }],
-    '^.+\\.(js|jsx)$': 'babel-jest'
+    '^.+\\.(js|jsx|mjs)$': 'babel-jest'
   },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
-  testTimeout: 60000, // Increased timeout for integration tests
+  testTimeout: 60000,
+  globals: {
+    'import.meta': {
+      env: {
+        VITE_SUPABASE_URL: 'https://wqpoozpbceucynsojmbk.supabase.co',
+        VITE_SUPABASE_ANON_KEY: 'test-key',
+        VITE_APP_ENV: 'test'
+      }
+    }
+  },
   collectCoverageFrom: [
     'src/**/*.{ts,tsx,js,jsx}',
     '!src/**/*.d.ts',
