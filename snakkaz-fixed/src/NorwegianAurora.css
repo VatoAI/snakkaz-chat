@@ -1,0 +1,339 @@
+/* 🌊 NORWEGIAN AURORA CSS - TESTSPRITE ENHANCED 🧪 */
+
+:root {
+  --aurora-blue: #4facfe;
+  --aurora-cyan: #00f2fe;
+  --aurora-green: #00ff88;
+  --aurora-purple: #7877c6;
+  --aurora-pink: #ff6b9d;
+
+  --aurora-dark: #0a0a0f;
+  --aurora-darker: #050509;
+  --aurora-light: rgba(255, 255, 255, 0.1);
+  --aurora-glass: rgba(255, 255, 255, 0.08);
+
+  --aurora-gradient: linear-gradient(
+    135deg,
+    var(--aurora-blue) 0%,
+    var(--aurora-cyan) 100%
+  );
+  --aurora-text: #ffffff;
+  --aurora-text-secondary: rgba(255, 255, 255, 0.7);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  background: var(--aurora-dark);
+  color: var(--aurora-text);
+  overflow-x: hidden;
+}
+
+/* AURORA BACKGROUND ANIMATION */
+.aurora-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.aurora-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    135deg,
+    var(--aurora-dark) 0%,
+    #1a1a2e 50%,
+    var(--aurora-darker) 100%
+  );
+  z-index: 0;
+}
+
+.aurora-wave {
+  position: absolute;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, var(--aurora-blue) 0%, transparent 70%);
+  animation: aurora-float 15s ease-in-out infinite;
+  opacity: 0.1;
+}
+
+.aurora-wave:nth-child(1) {
+  animation-delay: 0s;
+  background: radial-gradient(circle, var(--aurora-blue) 0%, transparent 70%);
+}
+
+.aurora-wave:nth-child(2) {
+  animation-delay: -5s;
+  background: radial-gradient(circle, var(--aurora-green) 0%, transparent 70%);
+}
+
+.aurora-wave:nth-child(3) {
+  animation-delay: -10s;
+  background: radial-gradient(circle, var(--aurora-purple) 0%, transparent 70%);
+}
+
+@keyframes aurora-float {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) rotate(0deg) scale(1);
+  }
+  33% {
+    transform: translate(-30%, -70%) rotate(120deg) scale(1.1);
+  }
+  66% {
+    transform: translate(-70%, -30%) rotate(240deg) scale(0.9);
+  }
+}
+
+/* PREMIUM LOGIN CARD */
+.aurora-login-card {
+  background: var(--aurora-glass);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--aurora-light);
+  border-radius: 24px;
+  padding: 40px;
+  width: 100%;
+  max-width: 420px;
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+}
+
+.aurora-login-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 30px 60px rgba(79, 172, 254, 0.2);
+}
+
+.aurora-logo {
+  font-size: 2.5rem;
+  font-weight: 800;
+  text-align: center;
+  background: var(--aurora-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 8px;
+  font-family: "Orbitron", monospace;
+}
+
+.aurora-tagline {
+  text-align: center;
+  color: var(--aurora-text-secondary);
+  margin-bottom: 15px;
+  font-size: 0.95rem;
+}
+
+.aurora-subtitle {
+  text-align: center;
+  color: var(--aurora-green);
+  margin-bottom: 30px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+/* PREMIUM INPUT STYLING */
+.aurora-input-group {
+  margin-bottom: 20px;
+}
+
+.aurora-input {
+  width: 100%;
+  padding: 16px 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--aurora-light);
+  border-radius: 12px;
+  color: var(--aurora-text);
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.aurora-input:focus {
+  outline: none;
+  border-color: var(--aurora-blue);
+  box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.aurora-input::placeholder {
+  color: var(--aurora-text-secondary);
+}
+
+/* CUSTOM SOCIAL BUTTONS */
+.aurora-social-buttons {
+  display: flex;
+  gap: 12px;
+  margin: 24px 0;
+}
+
+.aurora-social-btn {
+  flex: 1;
+  padding: 14px 16px;
+  border: 1px solid var(--aurora-light);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--aurora-text);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 500;
+}
+
+.aurora-social-btn.aurora-github {
+  border-color: rgba(138, 43, 226, 0.3);
+}
+
+.aurora-social-btn.aurora-google {
+  border-color: rgba(79, 172, 254, 0.3);
+}
+
+.aurora-social-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.aurora-social-btn.aurora-github:hover {
+  background: rgba(138, 43, 226, 0.1);
+  border-color: #8a2be2;
+}
+
+.aurora-social-btn.aurora-google:hover {
+  background: rgba(79, 172, 254, 0.1);
+  border-color: var(--aurora-blue);
+}
+
+.aurora-icon {
+  font-size: 1.2rem;
+}
+
+/* PRIMARY BUTTON */
+.aurora-primary-btn {
+  width: 100%;
+  padding: 16px;
+  background: var(--aurora-gradient);
+  border: none;
+  border-radius: 12px;
+  color: var(--aurora-dark);
+  font-weight: 700;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-shadow: none;
+}
+
+.aurora-primary-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(79, 172, 254, 0.4);
+  filter: brightness(1.1);
+}
+
+.aurora-primary-btn:disabled {
+  opacity: 0.6;
+  transform: none;
+  cursor: not-allowed;
+}
+
+/* TESTSPRITE RESULTS */
+.aurora-test-results {
+  margin-top: 20px;
+  padding: 16px;
+  background: rgba(0, 255, 136, 0.1);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  border-radius: 12px;
+}
+
+.aurora-test-results h3 {
+  margin-bottom: 12px;
+  color: var(--aurora-green);
+  font-size: 1rem;
+}
+
+.test-result-item {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.test-result-item strong {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--aurora-green);
+}
+
+.test-result-item p {
+  margin: 4px 0;
+  font-size: 0.9rem;
+  color: var(--aurora-text-secondary);
+}
+
+.status-passed {
+  color: var(--aurora-green);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+/* MOBILE RESPONSIVE */
+@media (max-width: 768px) {
+  .aurora-login-card {
+    margin: 20px;
+    padding: 30px 25px;
+  }
+
+  .aurora-logo {
+    font-size: 2rem;
+  }
+}
+
+/* DOPAMINE ANIMATIONS */
+@keyframes pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+}
+
+.aurora-primary-btn:hover:not(:disabled) {
+  animation: pulse 2s infinite;
+}
+
+/* HIGH QUALITY BLUR SUPPORT */
+@supports (backdrop-filter: blur(20px)) {
+  .aurora-login-card {
+    backdrop-filter: blur(20px);
+  }
+}
+
+/* LOADING ANIMATION */
+@keyframes testsprite-loading {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.aurora-primary-btn:disabled::before {
+  content: "🧪";
+  display: inline-block;
+  animation: testsprite-loading 1s linear infinite;
+  margin-right: 8px;
+}

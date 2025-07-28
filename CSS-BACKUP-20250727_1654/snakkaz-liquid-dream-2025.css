@@ -1,0 +1,510 @@
+/* ========================================
+   SNAKKAZ LIQUID DREAM 2025 - ULTIMATE DESIGN
+   Liquid glass aesthetics with beautiful colors
+   ======================================== */
+
+:root {
+  /* ================================
+     LIQUID DREAM COLOR PALETTE
+     ================================ */
+
+  /* Base Dark Foundation */
+  --void-deep: #080811;
+  --void-dark: #0f0f1a;
+  --void-medium: #181825;
+  --void-light: #252532;
+
+  /* Liquid Glass Colors - Subtle but Beautiful */
+  --crystal-blue: #64b5f6;
+  --crystal-cyan: #4dd0e1;
+  --crystal-violet: #ba68c8;
+  --crystal-pink: #f06292;
+  --crystal-mint: #81c784;
+  --crystal-amber: #ffb74d;
+
+  /* Liquid Glass Variants with Perfect Transparency */
+  --glass-void: rgba(255, 255, 255, 0.01);
+  --glass-whisper: rgba(255, 255, 255, 0.04);
+  --glass-soft: rgba(255, 255, 255, 0.06);
+  --glass-medium: rgba(255, 255, 255, 0.08);
+  --glass-strong: rgba(255, 255, 255, 0.12);
+  --glass-vivid: rgba(255, 255, 255, 0.15);
+
+  /* Color-tinted Glass */
+  --glass-blue: rgba(100, 181, 246, 0.08);
+  --glass-cyan: rgba(77, 208, 225, 0.08);
+  --glass-violet: rgba(186, 104, 200, 0.08);
+  --glass-mint: rgba(129, 199, 132, 0.08);
+
+  /* ================================
+     LIQUID GRADIENTS
+     ================================ */
+  --gradient-liquid-main: linear-gradient(
+    135deg,
+    var(--crystal-blue) 0%,
+    var(--crystal-cyan) 25%,
+    var(--crystal-violet) 50%,
+    var(--crystal-pink) 75%,
+    var(--crystal-mint) 100%
+  );
+
+  --gradient-liquid-soft: linear-gradient(
+    135deg,
+    var(--glass-blue) 0%,
+    var(--glass-cyan) 50%,
+    var(--glass-violet) 100%
+  );
+
+  --gradient-liquid-bg: radial-gradient(
+    ellipse at center,
+    var(--glass-blue) 0%,
+    var(--glass-void) 70%
+  );
+
+  /* ================================
+     ADVANCED BLUR & EFFECTS
+     ================================ */
+  --blur-light: blur(8px);
+  --blur-medium: blur(12px);
+  --blur-strong: blur(20px);
+  --blur-ultra: blur(32px);
+
+  /* ================================
+     GENTLE SHADOWS
+     ================================ */
+  --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.1);
+  --shadow-medium: 0 8px 30px rgba(0, 0, 0, 0.15);
+  --shadow-strong: 0 12px 40px rgba(0, 0, 0, 0.2);
+  --shadow-float: 0 16px 50px rgba(0, 0, 0, 0.25);
+
+  /* ================================
+     SMOOTH TRANSITIONS
+     ================================ */
+  --transition-smooth: 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --transition-gentle: 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --transition-elegant: 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+
+  /* ================================
+     TYPOGRAPHY - CLEAN AND MODERN
+     ================================ */
+  --font-primary: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    system-ui, sans-serif;
+  --font-display: "SF Pro Display", "Inter", sans-serif;
+
+  /* ================================
+     SPACING & SIZING
+     ================================ */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-2xl: 2rem;
+}
+
+/* ================================
+   GLOBAL FOUNDATION - LIQUID DARK
+   ================================ */
+
+html,
+body,
+#root,
+.App {
+  background: var(--void-deep) !important;
+  background-image: var(--gradient-liquid-bg) !important;
+  min-height: 100vh;
+}
+
+body {
+  color: rgba(255, 255, 255, 0.9);
+  font-family: var(--font-primary);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ================================
+   LIQUID GLASS COMPONENTS
+   ================================ */
+
+.liquid-glass-whisper {
+  background: var(--glass-whisper) !important;
+  backdrop-filter: var(--blur-light) !important;
+  -webkit-backdrop-filter: var(--blur-light) !important;
+  border: 1px solid var(--glass-soft) !important;
+}
+
+.liquid-glass-soft {
+  background: var(--glass-soft) !important;
+  backdrop-filter: var(--blur-medium) !important;
+  -webkit-backdrop-filter: var(--blur-medium) !important;
+  border: 1px solid var(--glass-medium) !important;
+}
+
+.liquid-glass-medium {
+  background: var(--glass-medium) !important;
+  backdrop-filter: var(--blur-medium) !important;
+  -webkit-backdrop-filter: var(--blur-medium) !important;
+  border: 1px solid var(--glass-strong) !important;
+  box-shadow: var(--shadow-soft) !important;
+}
+
+.liquid-glass-strong {
+  background: var(--glass-strong) !important;
+  backdrop-filter: var(--blur-strong) !important;
+  -webkit-backdrop-filter: var(--blur-strong) !important;
+  border: 1px solid var(--glass-vivid) !important;
+  box-shadow: var(--shadow-medium) !important;
+}
+
+/* Color-tinted Glass Variants */
+.liquid-glass-blue {
+  background: var(--glass-blue) !important;
+  border: 1px solid rgba(100, 181, 246, 0.15) !important;
+}
+
+.liquid-glass-cyan {
+  background: var(--glass-cyan) !important;
+  border: 1px solid rgba(77, 208, 225, 0.15) !important;
+}
+
+.liquid-glass-violet {
+  background: var(--glass-violet) !important;
+  border: 1px solid rgba(186, 104, 200, 0.15) !important;
+}
+
+/* ================================
+   GENTLE BUTTONS - NO AGGRESSIVE STYLING
+   ================================ */
+
+.btn-liquid-ghost {
+  background: var(--glass-whisper) !important;
+  backdrop-filter: var(--blur-light) !important;
+  -webkit-backdrop-filter: var(--blur-light) !important;
+  border: 1px solid var(--glass-soft) !important;
+  border-radius: var(--radius-md) !important;
+  padding: var(--space-sm) var(--space-md) !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+  font-weight: 400 !important;
+  transition: var(--transition-smooth) !important;
+  cursor: pointer;
+}
+
+.btn-liquid-ghost:hover {
+  background: var(--glass-soft) !important;
+  border-color: var(--glass-medium) !important;
+  color: rgba(255, 255, 255, 0.95) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: var(--shadow-soft) !important;
+}
+
+.btn-liquid-primary {
+  background: var(--glass-medium) !important;
+  backdrop-filter: var(--blur-medium) !important;
+  -webkit-backdrop-filter: var(--blur-medium) !important;
+  border: 1px solid var(--glass-strong) !important;
+  border-radius: var(--radius-md) !important;
+  padding: var(--space-sm) var(--space-lg) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  font-weight: 500 !important;
+  transition: var(--transition-smooth) !important;
+  cursor: pointer;
+}
+
+.btn-liquid-primary:hover {
+  background: var(--glass-strong) !important;
+  border-color: var(--glass-vivid) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: var(--shadow-medium) !important;
+}
+
+/* ================================
+   ELEGANT CARDS
+   ================================ */
+
+.card-liquid {
+  background: var(--glass-soft) !important;
+  backdrop-filter: var(--blur-medium) !important;
+  -webkit-backdrop-filter: var(--blur-medium) !important;
+  border: 1px solid var(--glass-medium) !important;
+  border-radius: var(--radius-xl) !important;
+  padding: var(--space-lg) !important;
+  transition: var(--transition-gentle) !important;
+}
+
+.card-liquid:hover {
+  background: var(--glass-medium) !important;
+  border-color: var(--glass-strong) !important;
+  transform: translateY(-4px) !important;
+  box-shadow: var(--shadow-medium) !important;
+}
+
+.card-liquid-premium {
+  background: var(--glass-medium) !important;
+  backdrop-filter: var(--blur-strong) !important;
+  -webkit-backdrop-filter: var(--blur-strong) !important;
+  border: 1px solid var(--glass-strong) !important;
+  border-radius: var(--radius-xl) !important;
+  padding: var(--space-xl) !important;
+  box-shadow: var(--shadow-strong) !important;
+}
+
+/* ================================
+   BEAUTIFUL INPUTS
+   ================================ */
+
+.input-liquid {
+  background: var(--glass-whisper) !important;
+  backdrop-filter: var(--blur-light) !important;
+  -webkit-backdrop-filter: var(--blur-light) !important;
+  border: 1px solid var(--glass-soft) !important;
+  border-radius: var(--radius-md) !important;
+  padding: var(--space-sm) var(--space-md) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  font-family: var(--font-primary) !important;
+  transition: var(--transition-smooth) !important;
+}
+
+.input-liquid::placeholder {
+  color: rgba(255, 255, 255, 0.4) !important;
+}
+
+.input-liquid:focus {
+  outline: none !important;
+  background: var(--glass-soft) !important;
+  border-color: var(--crystal-blue) !important;
+  box-shadow: 0 0 0 3px rgba(100, 181, 246, 0.1) !important;
+}
+
+/* ================================
+   ELEGANT TYPOGRAPHY
+   ================================ */
+
+.text-liquid-title {
+  font-family: var(--font-display) !important;
+  font-weight: 600 !important;
+  font-size: 2rem !important;
+  line-height: 1.2 !important;
+  color: rgba(255, 255, 255, 0.95) !important;
+}
+
+.text-liquid-heading {
+  font-family: var(--font-display) !important;
+  font-weight: 500 !important;
+  font-size: 1.5rem !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.text-liquid-body {
+  color: rgba(255, 255, 255, 0.8) !important;
+  line-height: 1.6 !important;
+}
+
+.text-liquid-caption {
+  color: rgba(255, 255, 255, 0.6) !important;
+  font-size: 0.875rem !important;
+}
+
+/* ================================
+   LIQUID ANIMATIONS
+   ================================ */
+
+.liquid-float {
+  animation: liquidFloat 6s ease-in-out infinite;
+}
+
+@keyframes liquidFloat {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.liquid-glow {
+  animation: liquidGlow 3s ease-in-out infinite;
+}
+
+@keyframes liquidGlow {
+  0%,
+  100% {
+    box-shadow: var(--shadow-soft);
+  }
+  50% {
+    box-shadow: var(--shadow-medium);
+  }
+}
+
+/* ================================
+   RESPONSIVE & ACCESSIBILITY
+   ================================ */
+
+@media (max-width: 768px) {
+  .text-liquid-title {
+    font-size: 1.75rem !important;
+  }
+
+  .card-liquid {
+    padding: var(--space-md) !important;
+  }
+}
+
+/* ================================
+   LIQUID MESSAGE BUBBLES & CHAT
+   ================================ */
+
+.liquid-message-bubble {
+  background: var(--glass-blue);
+  border: 1px solid rgba(100, 181, 246, 0.15);
+  backdrop-filter: blur(12px);
+  position: relative;
+  transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.liquid-message-bubble::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--gradient-liquid-subtle);
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 300ms ease;
+  pointer-events: none;
+}
+
+.liquid-message-bubble:hover::before {
+  opacity: 0.3;
+}
+
+.liquid-input {
+  background: var(--glass-strong) !important;
+  border: 1px solid rgba(100, 181, 246, 0.2) !important;
+  backdrop-filter: blur(12px);
+  color: white !important;
+  border-radius: 12px !important;
+  padding: 12px 16px !important;
+  transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: "Inter", sans-serif;
+}
+
+.liquid-input:focus {
+  outline: none !important;
+  border-color: var(--crystal-cyan) !important;
+  box-shadow: 0 0 20px rgba(77, 208, 225, 0.3) !important;
+  background: var(--glass-vivid) !important;
+}
+
+.liquid-input::placeholder {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.liquid-floating {
+  animation: liquidFloat 3s ease-in-out infinite;
+}
+
+@keyframes liquidFloat {
+  0%,
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(5deg);
+  }
+}
+
+.liquid-glow-hover:hover {
+  box-shadow: 0 0 20px rgba(100, 181, 246, 0.2),
+    0 0 40px rgba(77, 208, 225, 0.1), inset 0 0 20px rgba(255, 255, 255, 0.03);
+}
+
+/* ================================
+   BUTTON VARIATIONS
+   ================================ */
+
+.liquid-button-primary {
+  background: var(--gradient-liquid-main) !important;
+  color: var(--void-deep) !important;
+  border: none !important;
+  border-radius: 12px !important;
+  padding: 12px 24px !important;
+  font-weight: 600;
+  font-family: "Inter", sans-serif;
+  cursor: pointer;
+  transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.liquid-button-primary::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.2),
+    rgba(255, 255, 255, 0.05)
+  );
+  transition: opacity 300ms ease;
+  pointer-events: none;
+}
+
+.liquid-button-primary:hover::before {
+  opacity: 0.7;
+}
+
+.liquid-button-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(100, 181, 246, 0.3),
+    0 5px 15px rgba(77, 208, 225, 0.2);
+}
+
+.liquid-button-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ================================
+   FORCE OVERRIDES FOR VISIBILITY
+   ================================ */
+
+/* Make sure main containers are visible */
+.h-screen,
+.min-h-screen {
+  background: var(--void-deep) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Override any Tailwind hiding */
+.hidden {
+  display: block !important;
+}
+
+/* Make sure text is visible */
+.text-white {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Ensure buttons are visible */
+button {
+  background: var(--glass-medium) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid var(--glass-strong) !important;
+}

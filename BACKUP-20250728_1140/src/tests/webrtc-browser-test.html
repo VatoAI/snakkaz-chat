@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SnakkaZ WebRTC Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #0f0f13;
+            color: #ffffff;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #1a1a24;
+            border-radius: 12px;
+            border: 1px solid #d4af37;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            background: #1a1a24;
+            border-radius: 12px;
+            border: 1px solid #444;
+        }
+        .test-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .test-card {
+            background: #25252f;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #d4af37;
+            color: #000;
+            border: none;
+            padding: 10px 15px;
+            margin: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover {
+            background: #f2c744;
+        }
+        .success {
+            color: #4caf50;
+        }
+        .failure {
+            color: #f44336;
+        }
+        .warning {
+            color: #ff9800;
+        }
+        .log-container {
+            background: #121218;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 10px;
+            font-family: monospace;
+            height: 200px;
+            overflow-y: auto;
+        }
+        .input-group {
+            margin: 15px 0;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #444;
+            background: #2a2a35;
+            color: #fff;
+            margin-top: 5px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        .status-offline {
+            background-color: #f44336;
+        }
+        .status-connecting {
+            background-color: #ff9800;
+        }
+        .status-online {
+            background-color: #4caf50;
+        }
+        @media (max-width: 768px) {
+            .test-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔌 SnakkaZ WebRTC Test</h1>
+            <p>Test WebRTC connectivity and chat functionality</p>
+        </div>
+
+        <div class="test-section">
+            <h2>⚙️ WebRTC System Tests</h2>
+            <button onclick="testWebRTC()">Test WebRTC API</button>
+            <button onclick="testICEServers()">Test ICE Servers</button>
+            <button onclick="testFullConnection()">Test Full Connection</button>
+            <div id="webrtc-results" class="log-container"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>🔄 Connection Test</h2>
+            <div class="input-group">
+                <label for="userId">Your User ID:</label>
+                <input type="text" id="userId" value="user-" placeholder="Enter a unique user ID">
+            </div>
+            <div class="input-group">
+                <label for="peerId">Peer User ID:</label>
+                <input type="text" id="peerId" value="peer-" placeholder="Enter peer's user ID">
+            </div>
+            <button onclick="createLocalConnection()">Initialize Connection</button>
+            <button onclick="connectToPeer()">Connect to Peer</button>
+            <div>
+                <p>Connection Status: <span class="status-indicator status-offline"></span> <span id="connection-status">Offline</span></p>
+                <p>Data Channel: <span id="channel-status">Closed</span></p>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>💬 Message Test</h2>
+            <div class="input-group">
+                <label for="message">Message:</label>
+                <textarea id="message" placeholder="Type a message to send"></textarea>
+            </div>
+            <button onclick="sendMessage()">Send Message</button>
+            <button onclick="sendDirectMessage()">Send E2E Encrypted Message</button>
+            <h3>Message Log:</h3>
+            <div id="message-log" class="log-container"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>🔒 Security Test</h2>
+            <button onclick="testEncryption()">Test Encryption</button>
+            <button onclick="testSecureConnection()">Test Secure Connection</button>
+            <div id="security-results" class="log-container"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>🧯 Fallback Test</h2>
+            <button onclick="testReconnection()">Test Reconnection</button>
+            <button onclick="testServerFallback()">Test Server Fallback</button>
+            <div id="fallback-results" class="log-container"></div>
+        </div>
+    </div>
+
+    <script>
+        // Test state
+        let webRTCManager = null;
+        let localKeyPair = null;
+        let peerPublicKey = null;
+
+        // Helper logging functions
+        function log(containerId, message, type = 'info') {
+            const container = document.getElementById(containerId);
+            const logEntry = document.createElement('div');
+            logEntry.textContent = `${new Date().toLocaleTimeString()} - ${message}`;
+            logEntry.classList.add(type);
+            container.appendChild(logEntry);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function logSuccess(containerId, message) {
+            log(containerId, `✅ ${message}`, 'success');
+        }
+
+        function logError(containerId, message) {
+            log(containerId, `❌ ${message}`, 'failure');
+        }
+
+        function logWarning(containerId, message) {
+            log(containerId, `⚠️ ${message}`, 'warning');
+        }
+
+        // Test WebRTC API availability
+        async function testWebRTC() {
+            const containerId = 'webrtc-results';
+            log(containerId, 'Testing WebRTC API availability...');
+            
+            if (typeof RTCPeerConnection === 'undefined') {
+                logError(containerId, 'RTCPeerConnection is not supported in this browser');
+                return false;
+            }
+            
+            logSuccess(containerId, 'RTCPeerConnection is supported');
+            
+            // Test data channels
+            try {
+                const pc = new RTCPeerConnection();
+                try {
+                    const dc = pc.createDataChannel('test');
+                    logSuccess(containerId, 'Data channels are supported');
+                    pc.close();
+                } catch (error) {
+                    logError(containerId, `Data channel creation failed: ${error.message}`);
+                    return false;
+                }
+            } catch (error) {
+                logError(containerId, `RTCPeerConnection creation failed: ${error.message}`);
+                return false;
+            }
+
+            // Test WebCrypto API
+            if (!window.crypto || !window.crypto.subtle) {
+                logError(containerId, 'WebCrypto API is not available (required for encryption)');
+                return false;
+            }
+            
+            logSuccess(containerId, 'WebCrypto API is available');
+            return true;
+        }
+
+        // Test ICE server connectivity
+        async function testICEServers() {
+            const containerId = 'webrtc-results';
+            log(containerId, 'Testing ICE servers...');
+            
+            const iceServers = [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' }
+            ];
+            
+            try {
+                const pc = new RTCPeerConnection({ iceServers });
+                
+                return new Promise((resolve) => {
+                    let iceCandidatesFound = false;
+                    let timeoutId;
+                    
+                    pc.onicecandidate = (e) => {
+                        if (e.candidate) {
+                            iceCandidatesFound = true;
+                            logSuccess(containerId, `ICE candidate found: ${e.candidate.candidate.substring(0, 50)}...`);
+                            
+                            // We've found at least one candidate, so we're good
+                            if (timeoutId) {
+                                clearTimeout(timeoutId);
+                            }
+                            pc.close();
+                            resolve(true);
+                        }
+                    };
+                    
+                    // Create a data channel to trigger ICE gathering
+                    pc.createDataChannel('test');
+                    
+                    // Create an offer to trigger ICE gathering
+                    pc.createOffer()
+                        .then(offer => pc.setLocalDescription(offer))
+                        .catch(err => {
+                            logError(containerId, `Error creating offer: ${err.message}`);
+                            resolve(false);
+                        });
+                    
+                    // Set a timeout in case we don't get any candidates
+                    timeoutId = setTimeout(() => {
+                        if (!iceCandidatesFound) {
+                            logError(containerId, 'No ICE candidates found. Check firewall or network settings.');
+                            pc.close();
+                            resolve(false);
+                        }
+                    }, 5000);
+                });
+            } catch (error) {
+                logError(containerId, `Error testing ICE servers: ${error.message}`);
+                return false;
+            }
+        }
+
+        // Test a full connection cycle
+        async function testFullConnection() {
+            const containerId = 'webrtc-results';
+            log(containerId, 'Testing full WebRTC connection cycle...');
+            
+            // This is a simplified test since we can't easily create two peers in one browser
+            try {
+                // Create two peer connections
+                const pc1 = new RTCPeerConnection();
+                const pc2 = new RTCPeerConnection();
+                
+                // Track connection state
+                pc1.onconnectionstatechange = () => {
+                    log(containerId, `PC1 connection state: ${pc1.connectionState}`);
+                };
+                
+                pc2.onconnectionstatechange = () => {
+                    log(containerId, `PC2 connection state: ${pc2.connectionState}`);
+                };
+                
+                // Create a data channel on pc1
+                const dc1 = pc1.createDataChannel('test');
+                
+                dc1.onopen = () => {
+                    logSuccess(containerId, 'Data channel opened successfully');
+                    dc1.send('Test message');
+                };
+                
+                // Handle the data channel on pc2
+                pc2.ondatachannel = (e) => {
+                    const dc2 = e.channel;
+                    dc2.onmessage = (e) => {
+                        logSuccess(containerId, `Message received: ${e.data}`);
+                        // Close connections after successful test
+                        setTimeout(() => {
+                            dc1.close();
+                            pc1.close();
+                            pc2.close();
+                            logSuccess(containerId, 'Test completed and connections closed');
+                        }, 1000);
+                    };
+                };
+                
+                // Exchange signaling
+                pc1.onicecandidate = (e) => {
+                    if (e.candidate) {
+                        pc2.addIceCandidate(e.candidate);
+                    }
+                };
+                
+                pc2.onicecandidate = (e) => {
+                    if (e.candidate) {
+                        pc1.addIceCandidate(e.candidate);
+                    }
+                };
+                
+                // Create and set descriptions
+                const offer = await pc1.createOffer();
+                await pc1.setLocalDescription(offer);
+                await pc2.setRemoteDescription(offer);
+                
+                const answer = await pc2.createAnswer();
+                await pc2.setLocalDescription(answer);
+                await pc1.setRemoteDescription(answer);
+                
+                logSuccess(containerId, 'Signaling exchange completed successfully');
+                
+                return true;
+            } catch (error) {
+                logError(containerId, `Full connection test failed: ${error.message}`);
+                return false;
+            }
+        }
+
+        // Mock implementation of WebRTCManager for testing
+        class MockWebRTCManager {
+            constructor(userId) {
+                this.userId = userId;
+                this.connections = new Map();
+                this.messageCallback = null;
+                this.localKeyPair = null;
+                
+                // Generate key pair
+                this.generateKeyPair();
+            }
+            
+            async generateKeyPair() {
+                try {
+                    const keyPair = await window.crypto.subtle.generateKey(
+                        {
+                            name: "ECDH",
+                            namedCurve: "P-256"
+                        },
+                        true,
+                        ["deriveKey", "deriveBits"]
+                    );
+                    
+                    this.localKeyPair = keyPair;
+                    
+                    // Export the public key for sharing
+                    const exportedPublicKey = await window.crypto.subtle.exportKey(
+                        "jwk",
+                        keyPair.publicKey
+                    );
+                    
+                    peerPublicKey = exportedPublicKey;
+                    return { publicKey: exportedPublicKey };
+                } catch (error) {
+                    console.error('Failed to generate key pair:', error);
+                    throw error;
+                }
+            }
+            
+            async connectToPeer(peerId, peerPublicKey) {
+                try {
+                    const pc = new RTCPeerConnection({
+                        iceServers: [
+                            { urls: 'stun:stun.l.google.com:19302' },
+                            { urls: 'stun:stun1.l.google.com:19302' }
+                        ]
+                    });
+                    
+                    const dc = pc.createDataChannel('data', {
+                        ordered: true,
+                        maxRetransmits: 3
+                    });
+                    
+                    pc.onconnectionstatechange = () => {
+                        this.updateConnectionStatus(peerId, pc.connectionState);
+                    };
+                    
+                    dc.onopen = () => {
+                        this.updateChannelStatus(peerId, dc.readyState);
+                    };
+                    
+                    dc.onclose = () => {
+                        this.updateChannelStatus(peerId, dc.readyState);
+                    };
+                    
+                    dc.onmessage = (event) => {
+                        if (this.messageCallback) {
+                            this.messageCallback(event.data, peerId);
+                        }
+                    };
+                    
+                    this.connections.set(peerId, { pc, dc });
+                    return { connection: pc, dataChannel: dc };
+                } catch (error) {
+                    console.error(`Error connecting to peer ${peerId}:`, error);
+                    throw error;
+                }
+            }
+            
+            updateConnectionStatus(peerId, state) {
+                const statusElement = document.getElementById('connection-status');
+                const indicatorElement = document.querySelector('.status-indicator');
+                
+                statusElement.textContent = state.charAt(0).toUpperCase() + state.slice(1);
+                
+                indicatorElement.classList.remove('status-offline', 'status-connecting', 'status-online');
+                switch (state) {
+                    case 'connected':
+                        indicatorElement.classList.add('status-online');
+                        break;
+                    case 'connecting':
+                    case 'new':
+                        indicatorElement.classList.add('status-connecting');
+                        break;
+                    default:
+                        indicatorElement.classList.add('status-offline');
+                }
+            }
+            
+            updateChannelStatus(peerId, state) {
+                const statusElement = document.getElementById('channel-status');
+                statusElement.textContent = state.charAt(0).toUpperCase() + state.slice(1);
+            }
+            
+            onMessage(callback) {
+                this.messageCallback = callback;
+            }
+            
+            async sendMessage(peerId, message) {
+                const connection = this.connections.get(peerId);
+                if (!connection || !connection.dc || connection.dc.readyState !== 'open') {
+                    throw new Error(`Cannot send message: connection to peer ${peerId} not ready`);
+                }
+                
+                connection.dc.send(message);
+                return true;
+            }
+            
+            async sendDirectMessage(peerId, message) {
+                const connection = this.connections.get(peerId);
+                if (!connection || !connection.dc || connection.dc.readyState !== 'open') {
+                    throw new Error(`Cannot send direct message: connection to peer ${peerId} not ready`);
+                }
+                
+                // In a real implementation, this would encrypt the message
+                const wrappedMessage = JSON.stringify({
+                    type: 'direct',
+                    content: `(Encrypted) ${message}`,
+                    timestamp: new Date().toISOString()
+                });
+                
+                connection.dc.send(wrappedMessage);
+                return true;
+            }
+            
+            getPublicKey() {
+                return this.localKeyPair ? peerPublicKey : null;
+            }
+            
+            disconnect(peerId) {
+                const connection = this.connections.get(peerId);
+                if (connection) {
+                    if (connection.dc) connection.dc.close();
+                    if (connection.pc) connection.pc.close();
+                    this.connections.delete(peerId);
+                }
+            }
+            
+            disconnectAll() {
+                for (const peerId of this.connections.keys()) {
+                    this.disconnect(peerId);
+                }
+            }
+        }
+
+        // Create local connection
+        function createLocalConnection() {
+            const userId = document.getElementById('userId').value;
+            if (!userId || userId === 'user-') {
+                alert('Please enter a valid user ID');
+                return;
+            }
+            
+            try {
+                webRTCManager = new MockWebRTCManager(userId);
+                log('webrtc-results', `Local connection initialized for user: ${userId}`);
+                
+                // Set up message handler
+                webRTCManager.onMessage((message, peerId) => {
+                    try {
+                        // Check if message is JSON
+                        const parsed = JSON.parse(message);
+                        if (parsed.type === 'direct') {
+                            log('message-log', `📩 Encrypted from ${peerId}: ${parsed.content}`);
+                        } else {
+                            log('message-log', `📬 From ${peerId}: ${parsed.content || message}`);
+                        }
+                    } catch {
+                        log('message-log', `📬 From ${peerId}: ${message}`);
+                    }
+                });
+                
+                logSuccess('webrtc-results', 'Connection manager initialized successfully');
+            } catch (error) {
+                logError('webrtc-results', `Failed to initialize connection: ${error.message}`);
+            }
+        }
+
+        // Connect to peer
+        async function connectToPeer() {
+            if (!webRTCManager) {
+                logError('webrtc-results', 'Initialize your connection first');
+                return;
+            }
+            
+            const peerId = document.getElementById('peerId').value;
+            if (!peerId || peerId === 'peer-') {
+                alert('Please enter a valid peer ID');
+                return;
+            }
+            
+            try {
+                log('webrtc-results', `Connecting to peer: ${peerId}...`);
+                await webRTCManager.connectToPeer(peerId, peerPublicKey);
+                logSuccess('webrtc-results', `Connected to peer: ${peerId}`);
+            } catch (error) {
+                logError('webrtc-results', `Failed to connect to peer: ${error.message}`);
+            }
+        }
+
+        // Send message
+        async function sendMessage() {
+            if (!webRTCManager) {
+                logError('message-log', 'Initialize your connection first');
+                return;
+            }
+            
+            const peerId = document.getElementById('peerId').value;
+            if (!peerId || peerId === 'peer-') {
+                alert('Please enter a valid peer ID');
+                return;
+            }
+            
+            const message = document.getElementById('message').value;
+            if (!message.trim()) {
+                alert('Please enter a message to send');
+                return;
+            }
+            
+            try {
+                log('message-log', `Sending message to ${peerId}...`);
+                await webRTCManager.sendMessage(peerId, message);
+                logSuccess('message-log', `✅ Sent to ${peerId}: ${message}`);
+            } catch (error) {
+                logError('message-log', `Failed to send message: ${error.message}`);
+            }
+        }
+
+        // Send direct (encrypted) message
+        async function sendDirectMessage() {
+            if (!webRTCManager) {
+                logError('message-log', 'Initialize your connection first');
+                return;
+            }
+            
+            const peerId = document.getElementById('peerId').value;
+            if (!peerId || peerId === 'peer-') {
+                alert('Please enter a valid peer ID');
+                return;
+            }
+            
+            const message = document.getElementById('message').value;
+            if (!message.trim()) {
+                alert('Please enter a message to send');
+                return;
+            }
+            
+            try {
+                log('message-log', `Sending encrypted message to ${peerId}...`);
+                await webRTCManager.sendDirectMessage(peerId, message);
+                logSuccess('message-log', `🔒 Sent encrypted to ${peerId}: ${message}`);
+            } catch (error) {
+                logError('message-log', `Failed to send encrypted message: ${error.message}`);
+            }
+        }
+
+        // Test encryption
+        async function testEncryption() {
+            const containerId = 'security-results';
+            log(containerId, 'Testing end-to-end encryption...');
+            
+            try {
+                // Generate a test key
+                const key = await window.crypto.subtle.generateKey(
+                    {
+                        name: "AES-GCM",
+                        length: 256
+                    },
+                    true,
+                    ["encrypt", "decrypt"]
+                );
+                
+                // Test message
+                const message = "This is a secure test message! 🔒";
+                const encoder = new TextEncoder();
+                const data = encoder.encode(message);
+                
+                // Generate IV
+                const iv = window.crypto.getRandomValues(new Uint8Array(12));
+                
+                // Encrypt
+                const encrypted = await window.crypto.subtle.encrypt(
+                    {
+                        name: "AES-GCM",
+                        iv: iv
+                    },
+                    key,
+                    data
+                );
+                
+                logSuccess(containerId, `Message encrypted: ${message} → ${new Uint8Array(encrypted).slice(0, 10)}...`);
+                
+                // Decrypt
+                const decrypted = await window.crypto.subtle.decrypt(
+                    {
+                        name: "AES-GCM",
+                        iv: iv
+                    },
+                    key,
+                    encrypted
+                );
+                
+                // Convert back to string
+                const decoder = new TextDecoder();
+                const decryptedMessage = decoder.decode(decrypted);
+                
+                if (decryptedMessage === message) {
+                    logSuccess(containerId, `Message successfully decrypted: ${decryptedMessage}`);
+                    return true;
+                } else {
+                    logError(containerId, `Decryption failed: ${decryptedMessage} !== ${message}`);
+                    return false;
+                }
+            } catch (error) {
+                logError(containerId, `Encryption test failed: ${error.message}`);
+                return false;
+            }
+        }
+
+        // Test secure connection
+        async function testSecureConnection() {
+            const containerId = 'security-results';
+            log(containerId, 'Testing secure connection establishment...');
+            
+            try {
+                // Generate key pairs for both peers
+                const aliceKeyPair = await window.crypto.subtle.generateKey(
+                    {
+                        name: "ECDH",
+                        namedCurve: "P-256"
+                    },
+                    true,
+                    ["deriveKey", "deriveBits"]
+                );
+                
+                const bobKeyPair = await window.crypto.subtle.generateKey(
+                    {
+                        name: "ECDH",
+                        namedCurve: "P-256"
+                    },
+                    true,
+                    ["deriveKey", "deriveBits"]
+                );
+                
+                // Export public keys
+                const alicePublicKey = await window.crypto.subtle.exportKey("jwk", aliceKeyPair.publicKey);
+                const bobPublicKey = await window.crypto.subtle.exportKey("jwk", bobKeyPair.publicKey);
+                
+                logSuccess(containerId, 'Key pairs generated for both peers');
+                
+                // Import Bob's public key for Alice
+                const bobPubKeyForAlice = await window.crypto.subtle.importKey(
+                    "jwk",
+                    bobPublicKey,
+                    {
+                        name: "ECDH",
+                        namedCurve: "P-256"
+                    },
+                    true,
+                    []
+                );
+                
+                // Import Alice's public key for Bob
+                const alicePubKeyForBob = await window.crypto.subtle.importKey(
+                    "jwk",
+                    alicePublicKey,
+                    {
+                        name: "ECDH",
+                        namedCurve: "P-256"
+                    },
+                    true,
+                    []
+                );
+                
+                // Alice derives the shared secret
+                const aliceSharedSecret = await window.crypto.subtle.deriveBits(
+                    {
+                        name: "ECDH",
+                        public: bobPubKeyForAlice
+                    },
+                    aliceKeyPair.privateKey,
+                    256
+                );
+                
+                // Bob derives the shared secret
+                const bobSharedSecret = await window.crypto.subtle.deriveBits(
+                    {
+                        name: "ECDH",
+                        public: alicePubKeyForBob
+                    },
+                    bobKeyPair.privateKey,
+                    256
+                );
+                
+                // Convert to hex for comparison
+                const aliceHex = Array.from(new Uint8Array(aliceSharedSecret))
+                    .map(b => b.toString(16).padStart(2, '0'))
+                    .join('');
+                
+                const bobHex = Array.from(new Uint8Array(bobSharedSecret))
+                    .map(b => b.toString(16).padStart(2, '0'))
+                    .join('');
+                
+                if (aliceHex === bobHex) {
+                    logSuccess(containerId, 'Secure connection established! Shared secrets match.');
+                    logSuccess(containerId, `Shared secret (truncated): ${aliceHex.substring(0, 16)}...`);
+                    return true;
+                } else {
+                    logError(containerId, 'Secure connection failed: shared secrets do not match.');
+                    return false;
+                }
+            } catch (error) {
+                logError(containerId, `Secure connection test failed: ${error.message}`);
+                return false;
+            }
+        }
+
+        // Test reconnection
+        async function testReconnection() {
+            const containerId = 'fallback-results';
+            log(containerId, 'Testing reconnection functionality...');
+            
+            if (!webRTCManager) {
+                logError(containerId, 'Initialize your connection first');
+                return;
+            }
+            
+            const peerId = document.getElementById('peerId').value;
+            if (!peerId || peerId === 'peer-') {
+                logError(containerId, 'Enter a valid peer ID first');
+                return;
+            }
+            
+            try {
+                // Disconnect first
+                log(containerId, `Disconnecting from peer ${peerId}...`);
+                webRTCManager.disconnect(peerId);
+                logSuccess(containerId, 'Disconnected successfully');
+                
+                // Wait a moment to simulate network interruption
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Try to reconnect
+                log(containerId, `Attempting to reconnect to peer ${peerId}...`);
+                await connectToPeer();
+                logSuccess(containerId, `Reconnected to peer ${peerId}`);
+                
+                return true;
+            } catch (error) {
+                logError(containerId, `Reconnection test failed: ${error.message}`);
+                return false;
+            }
+        }
+
+        // Test server fallback (simulated)
+        function testServerFallback() {
+            const containerId = 'fallback-results';
+            log(containerId, 'Testing server fallback mechanism...');
+            
+            // This is a simulated test since we don't have an actual server
+            log(containerId, 'Simulating WebRTC connection failure...');
+            
+            // Wait a moment
+            setTimeout(() => {
+                log(containerId, 'WebRTC direct connection failed, falling back to server relay...');
+                
+                setTimeout(() => {
+                    logSuccess(containerId, 'Successfully established connection via server relay');
+                    logWarning(containerId, 'Note: This is a simulated test. In a real environment, the app would automatically fall back to server-relayed messaging if direct P2P connection fails.');
+                }, 1000);
+            }, 1000);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SnakkaZ Emergency Test</title>
+  </head>
+  <body style="padding: 20px; font-family: Arial, sans-serif">
+    <h1>🚨 SNAKKAZ EMERGENCY VISIBILITY TEST</h1>
+    <p>If you can see this page, the browser works fine.</p>
+
+    <h2>Test Navigation:</h2>
+    <ul>
+      <li>
+        <a href="http://localhost:5173/" target="_blank"
+          >Main App (/) - Should redirect to /beta</a
+        >
+      </li>
+      <li>
+        <a href="http://localhost:5173/beta" target="_blank"
+          >Chat Beta (/beta) - Should show chat UI with debug indicators</a
+        >
+      </li>
+      <li>
+        <a href="http://localhost:5173/admin" target="_blank"
+          >Admin Dashboard (/admin) - Should show admin interface</a
+        >
+      </li>
+    </ul>
+
+    <h2>Expected Debug Indicators:</h2>
+    <ul>
+      <li>🚨 SNAKKAZ APP IS RUNNING! (Green box, top right)</li>
+      <li>🔄 ROUTES LOADING... (Orange box)</li>
+      <li>✅ /BETA ROUTE ACTIVE (Blue box)</li>
+      <li>🚨 EMERGENCY DEBUG INDICATOR (In chat container)</li>
+    </ul>
+
+    <h2>Instructions:</h2>
+    <p>1. Click the links above to test each route</p>
+    <p>2. Look for the colored debug indicators in the top-right corner</p>
+    <p>
+      3. If you see a loading spinner but no debug indicators, there's a React
+      rendering issue
+    </p>
+    <p>
+      4. If you see debug indicators but no chat UI, it's a component-specific
+      issue
+    </p>
+
+    <script>
+      console.log(
+        "🚨 EMERGENCY TEST PAGE LOADED - Browser and HTML are working!"
+      );
+    </script>
+  </body>
+</html>

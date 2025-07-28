@@ -1,0 +1,325 @@
+/* ========================================
+   SNAKKAZ ULTIMATE LIQUID DESIGN 2025
+   One super CSS file with beautiful colors and liquid glass
+   ======================================== */
+
+@import "./snakkaz-liquid-dream-2025.css";
+
+/* ================================
+   EMERGENCY VISIBILITY FIXES
+   ================================ */
+
+/* Force everything to be visible */
+* {
+  box-sizing: border-box !important;
+}
+
+html,
+body {
+  margin: 0 !important;
+  padding: 0 !important;
+  height: 100% !important;
+  background: #080811 !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  font-family: "Inter", system-ui, sans-serif !important;
+}
+
+#root {
+  min-height: 100vh !important;
+  background: #080811 !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Force main app containers to be visible */
+.App {
+  min-height: 100vh !important;
+  background: #080811 !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Fix any hidden content */
+.h-screen,
+.min-h-screen,
+.h-full,
+.min-h-full {
+  background: #080811 !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* ================================
+   LIQUID CHAT SPECIFIC OVERRIDES
+   ================================ */
+
+/* Ensure chat containers are visible */
+.liquid-glass-strong,
+.liquid-glass-card,
+.liquid-card {
+  background: rgba(255, 255, 255, 0.08) !important;
+  backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(100, 181, 246, 0.2) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  display: block !important;
+  visibility: visible !important;
+}
+
+/* Liquid buttons */
+.liquid-button,
+.liquid-button-primary {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  visibility: visible !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.liquid-button-primary {
+  background: linear-gradient(135deg, #64b5f6, #4dd0e1) !important;
+  color: #080811 !important;
+}
+
+/* Liquid input fields */
+.liquid-input {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border: 1px solid rgba(100, 181, 246, 0.3) !important;
+  color: rgba(255, 255, 255, 0.95) !important;
+  display: block !important;
+  visibility: visible !important;
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, #64b5f6, #4dd0e1) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+  display: inline !important;
+  visibility: visible !important;
+}
+
+/* Ensure room buttons are visible */
+button {
+  display: flex !important;
+  visibility: visible !important;
+  cursor: pointer !important;
+}
+
+/* Loading spinner visibility */
+.animate-spin {
+  display: block !important;
+  visibility: visible !important;
+}
+
+/* Sidebar and chat area */
+.flex-1 {
+  display: flex !important;
+  flex: 1 !important;
+  visibility: visible !important;
+}
+
+/* ScrollArea */
+[data-radix-scroll-area-viewport] {
+  display: block !important;
+  visibility: visible !important;
+}
+
+/* Badges */
+.badge {
+  display: inline-flex !important;
+  visibility: visible !important;
+  background: rgba(100, 181, 246, 0.2) !important;
+  color: #64b5f6 !important;
+}
+
+/* Make sure all text is visible */
+div,
+span,
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+button,
+input,
+textarea {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Fix buttons */
+button {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  padding: 0.5rem 1rem !important;
+  border-radius: 0.5rem !important;
+  cursor: pointer !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+
+button:hover {
+  background: rgba(255, 255, 255, 0.12) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Fix inputs */
+input,
+textarea {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  padding: 0.75rem !important;
+  border-radius: 0.5rem !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: rgba(255, 255, 255, 0.4) !important;
+}
+
+/* Force any potentially invisible containers to be visible */
+.bg-black,
+.bg-gray-900,
+.bg-slate-900,
+.bg-zinc-900 {
+  background: #080811 !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Emergency override for any problematic styling */
+.invisible,
+.opacity-0 {
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Make sure loading states are visible */
+.loading,
+.spinner {
+  color: rgba(255, 255, 255, 0.9) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* ================================
+   BEAUTIFUL LIQUID GLASS OVERRIDES
+   ================================ */
+
+/* Better card styling */
+.card,
+.card-cyber,
+.glass-premium {
+  background: rgba(255, 255, 255, 0.08) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 1rem !important;
+  padding: 1.5rem !important;
+  transition: all 0.3s ease !important;
+}
+
+.card:hover,
+.card-cyber:hover,
+.glass-premium:hover {
+  background: rgba(255, 255, 255, 0.12) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Better header styling */
+header {
+  background: rgba(255, 255, 255, 0.06) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Sidebar styling */
+.sidebar,
+.lg\\:w-80 {
+  background: rgba(255, 255, 255, 0.04) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+/* ================================
+   TEXT AND TYPOGRAPHY FIXES
+   ================================ */
+
+/* Headings */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: rgba(255, 255, 255, 0.95) !important;
+  font-weight: 500 !important;
+}
+
+/* Links */
+a {
+  color: #64b5f6 !important;
+  text-decoration: none !important;
+}
+
+a:hover {
+  color: #4dd0e1 !important;
+}
+
+/* ================================
+   ANIMATION FIXES
+   ================================ */
+
+/* Gentle animations */
+* {
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+}
+
+/* Remove any jarring animations */
+@keyframes none {
+  to {
+    transform: none;
+  }
+}
+
+/* ================================
+   RESPONSIVE FIXES
+   ================================ */
+
+@media (max-width: 768px) {
+  .card,
+  .card-cyber,
+  .glass-premium {
+    padding: 1rem !important;
+    margin: 0.5rem !important;
+  }
+
+  button {
+    padding: 0.75rem 1rem !important;
+    font-size: 0.875rem !important;
+  }
+}
+
+/* ================================
+   DEBUGGING - REMOVE AFTER TESTING
+   ================================ */
+
+/* Temporary border to see containers */
+.debug * {
+  border: 1px solid rgba(255, 0, 0, 0.2) !important;
+}
+
+/* Force content to be at least visible during debugging */
+.force-visible {
+  background: rgba(255, 0, 0, 0.1) !important;
+  border: 1px solid rgba(255, 0, 0, 0.3) !important;
+  color: white !important;
+  min-height: 50px !important;
+  padding: 1rem !important;
+}

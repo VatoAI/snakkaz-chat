@@ -1,0 +1,541 @@
+/* ========================================
+   SNAKKAZ BETA UNIFIED DESIGN SYSTEM
+   Konsistent LiquidGlass design for alle sider
+   ======================================== */
+
+/* Core Variables */
+:root {
+  /* SnakkaZ Brand Colors */
+  --snakkaz-gold: #ffd700;
+  --snakkaz-gold-dark: #b8860b;
+  --snakkaz-blue: #4a90e2;
+  --snakkaz-purple: #8b5cf6;
+  --snakkaz-dark: #0a0a0a;
+  --snakkaz-dark-elevated: #1a1a1a;
+  --snakkaz-dark-surface: #2a2a2a;
+
+  /* Fix CSS custom properties */
+  --color-snakkaz-gold: #ffd700;
+  --color-snakkaz-blue: #4a90e2;
+
+  /* Glass System */
+  --glass-ultra-light: rgba(255, 255, 255, 0.03);
+  --glass-light: rgba(255, 255, 255, 0.05);
+  --glass-moderate: rgba(255, 255, 255, 0.08);
+  --glass-heavy: rgba(255, 255, 255, 0.12);
+  --glass-border: rgba(255, 255, 255, 0.15);
+  --glass-border-hover: rgba(255, 255, 255, 0.25);
+
+  /* Gold Glass Variants */
+  --glass-gold-light: rgba(255, 215, 0, 0.05);
+  --glass-gold-moderate: rgba(255, 215, 0, 0.1);
+  --glass-gold-heavy: rgba(255, 215, 0, 0.15);
+  --glass-gold-border: rgba(255, 215, 0, 0.3);
+
+  /* Shadows & Glows */
+  --shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.12);
+  --shadow-glass-hover: 0 12px 48px rgba(0, 0, 0, 0.18);
+  --glow-gold: 0 0 30px rgba(255, 215, 0, 0.3);
+  --glow-gold-intense: 0 0 40px rgba(255, 215, 0, 0.5);
+  --glow-blue: 0 0 30px rgba(74, 144, 226, 0.3);
+
+  /* Blur Effects */
+  --blur-light: blur(8px);
+  --blur-moderate: blur(16px);
+  --blur-heavy: blur(24px);
+  --blur-ultra: blur(40px);
+
+  /* Gradients */
+  --gradient-snakkaz: linear-gradient(
+    135deg,
+    #ffd700 0%,
+    #4a90e2 50%,
+    #8b5cf6 100%
+  );
+  --gradient-gold: linear-gradient(135deg, #ffd700 0%, #ffa500 100%);
+  --gradient-blue: linear-gradient(135deg, #4a90e2 0%, #667eea 100%);
+  --gradient-purple: linear-gradient(135deg, #8b5cf6 0%, #764ba2 100%);
+
+  /* Animations */
+  --transition-glass: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* Base Styles */
+* {
+  box-sizing: border-box;
+}
+
+/* KRITISK: Kraftig global background override */
+html,
+body,
+#root {
+  background: var(--snakkaz-dark) !important;
+  background-color: var(--snakkaz-dark) !important;
+  min-height: 100vh !important;
+  color: white !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* EKSTRA STERK OVERRIDE FOR ALT */
+html {
+  background: #0a0a0a !important;
+}
+
+body {
+  background: #0a0a0a !important;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--snakkaz-dark) !important;
+  color: white;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+/* App Container Override */
+.App,
+[data-testid="app"],
+.snakkaz-app {
+  background: var(--snakkaz-dark) !important;
+  min-height: 100vh !important;
+  color: white !important;
+}
+
+/* Universal Glass Classes */
+.liquid-glass-ultra {
+  background: var(--glass-ultra-light);
+  backdrop-filter: var(--blur-light);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-glass);
+  transition: var(--transition-glass);
+}
+
+.liquid-glass-light {
+  background: var(--glass-light);
+  backdrop-filter: var(--blur-moderate);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-glass);
+  transition: var(--transition-glass);
+}
+
+.liquid-glass-moderate {
+  background: var(--glass-moderate);
+  backdrop-filter: var(--blur-moderate);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-glass);
+  transition: var(--transition-glass);
+}
+
+.liquid-glass-heavy {
+  background: var(--glass-heavy);
+  backdrop-filter: var(--blur-heavy);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-glass);
+  transition: var(--transition-glass);
+}
+
+/* Gold Variants */
+.liquid-glass-gold {
+  background: var(--glass-gold-moderate);
+  backdrop-filter: var(--blur-moderate);
+  border: 1px solid var(--glass-gold-border);
+  box-shadow: var(--shadow-glass), var(--glow-gold);
+  transition: var(--transition-glass);
+}
+
+/* Hover States */
+.liquid-glass-ultra:hover,
+.liquid-glass-light:hover,
+.liquid-glass-moderate:hover,
+.liquid-glass-heavy:hover {
+  border-color: var(--glass-border-hover);
+  box-shadow: var(--shadow-glass-hover);
+  transform: translateY(-2px);
+}
+
+.liquid-glass-gold:hover {
+  border-color: var(--snakkaz-gold);
+  box-shadow: var(--shadow-glass-hover), var(--glow-gold-intense);
+  transform: translateY(-2px);
+}
+
+/* SnakkaZ Button System */
+.snakkaz-btn {
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  border: none;
+  transition: var(--transition-glass);
+  position: relative;
+  overflow: hidden;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.snakkaz-btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: 1px;
+  background: var(--gradient-snakkaz);
+  border-radius: inherit;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  opacity: 0;
+  transition: var(--transition-glass);
+}
+
+.snakkaz-btn:hover::before {
+  opacity: 1;
+}
+
+/* Button Variants */
+.snakkaz-btn-primary {
+  background: var(--glass-gold-moderate);
+  backdrop-filter: var(--blur-moderate);
+  border: 1px solid var(--glass-gold-border);
+  color: white;
+  box-shadow: var(--glow-gold);
+}
+
+.snakkaz-btn-primary:hover {
+  background: var(--glass-gold-heavy);
+  box-shadow: var(--glow-gold-intense);
+  transform: translateY(-2px);
+}
+
+.snakkaz-btn-secondary {
+  background: var(--glass-moderate);
+  backdrop-filter: var(--blur-moderate);
+  border: 1px solid var(--glass-border);
+  color: white;
+}
+
+.snakkaz-btn-secondary:hover {
+  background: var(--glass-heavy);
+  border-color: var(--glass-border-hover);
+  transform: translateY(-2px);
+}
+
+.snakkaz-btn-ghost {
+  background: transparent;
+  border: 1px solid transparent;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.snakkaz-btn-ghost:hover {
+  background: var(--glass-light);
+  border-color: var(--glass-border);
+  color: white;
+}
+
+/* Card System */
+.snakkaz-card {
+  background: var(--glass-moderate);
+  backdrop-filter: var(--blur-moderate);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  box-shadow: var(--shadow-glass);
+  transition: var(--transition-glass);
+  overflow: hidden;
+}
+
+.snakkaz-card:hover {
+  border-color: var(--glass-border-hover);
+  box-shadow: var(--shadow-glass-hover);
+  transform: translateY(-4px);
+}
+
+.snakkaz-card-header {
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.snakkaz-card-content {
+  padding: 20px 24px;
+}
+
+.snakkaz-card-footer {
+  padding: 16px 24px 20px;
+  border-top: 1px solid var(--glass-border);
+  background: var(--glass-ultra-light);
+}
+
+/* Input System */
+.snakkaz-input {
+  width: 100%;
+  padding: 12px 16px;
+  background: var(--glass-light);
+  backdrop-filter: var(--blur-light);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  color: white;
+  font-size: 14px;
+  transition: var(--transition-glass);
+}
+
+.snakkaz-input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.snakkaz-input:focus {
+  outline: none;
+  border-color: var(--snakkaz-gold);
+  box-shadow: var(--glow-gold);
+  background: var(--glass-moderate);
+}
+
+/* Navigation System */
+.snakkaz-nav {
+  background: var(--glass-heavy);
+  backdrop-filter: var(--blur-heavy);
+  border-bottom: 1px solid var(--glass-border);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.snakkaz-nav-item {
+  padding: 12px 16px;
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+  transition: var(--transition-glass);
+  border-radius: 8px;
+}
+
+.snakkaz-nav-item:hover,
+.snakkaz-nav-item.active {
+  color: white;
+  background: var(--glass-gold-light);
+}
+
+/* Layout Helpers */
+.snakkaz-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.snakkaz-section {
+  padding: 60px 0;
+}
+
+.snakkaz-grid {
+  display: grid;
+  gap: 24px;
+}
+
+.snakkaz-grid-2 {
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.snakkaz-grid-3 {
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+.snakkaz-grid-4 {
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+/* Typography */
+.snakkaz-heading-1 {
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1.2;
+  background: var(--gradient-snakkaz);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.snakkaz-heading-2 {
+  font-size: 2.5rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: white;
+}
+
+.snakkaz-heading-3 {
+  font-size: 2rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: white;
+}
+
+.snakkaz-text-gold {
+  color: var(--snakkaz-gold);
+}
+
+.snakkaz-text-muted {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Background Animations */
+.snakkaz-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--snakkaz-dark);
+  z-index: -2;
+  overflow: hidden;
+}
+
+.snakkaz-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.4;
+  animation: snakkazFloat 20s infinite ease-in-out;
+}
+
+.snakkaz-blob-1 {
+  top: -20%;
+  left: -20%;
+  width: 60%;
+  height: 60%;
+  background: radial-gradient(circle, var(--snakkaz-gold) 0%, transparent 70%);
+  animation-delay: 0s;
+}
+
+.snakkaz-blob-2 {
+  bottom: -20%;
+  right: -20%;
+  width: 50%;
+  height: 50%;
+  background: radial-gradient(circle, var(--snakkaz-blue) 0%, transparent 70%);
+  animation-delay: 7s;
+}
+
+.snakkaz-blob-3 {
+  top: 50%;
+  left: 50%;
+  width: 40%;
+  height: 40%;
+  background: radial-gradient(
+    circle,
+    var(--snakkaz-purple) 0%,
+    transparent 70%
+  );
+  animation-delay: 14s;
+  transform: translate(-50%, -50%);
+}
+
+@keyframes snakkazFloat {
+  0%,
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  33% {
+    transform: translateY(-30px) rotate(120deg);
+  }
+  66% {
+    transform: translateY(30px) rotate(240deg);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .snakkaz-container {
+    padding: 0 16px;
+  }
+
+  .snakkaz-section {
+    padding: 40px 0;
+  }
+
+  .snakkaz-heading-1 {
+    font-size: 2.5rem;
+  }
+
+  .snakkaz-heading-2 {
+    font-size: 2rem;
+  }
+
+  .snakkaz-grid-2,
+  .snakkaz-grid-3,
+  .snakkaz-grid-4 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Special Effects */
+.snakkaz-glow-text {
+  text-shadow: 0 0 20px var(--snakkaz-gold);
+}
+
+/* Utility Classes for Tailwind compatibility */
+.from-snakkaz-gold {
+  --tw-gradient-from: var(--snakkaz-gold);
+}
+.to-snakkaz-blue {
+  --tw-gradient-to: var(--snakkaz-blue);
+}
+.text-snakkaz-gold {
+  color: var(--snakkaz-gold);
+}
+.border-snakkaz-gold {
+  border-color: var(--snakkaz-gold);
+}
+.bg-snakkaz-gold {
+  background-color: var(--snakkaz-gold);
+}
+
+.snakkaz-animate-in {
+  animation: snakkazSlideIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes snakkazSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Focus Management */
+.snakkaz-focus {
+  outline: 2px solid var(--snakkaz-gold);
+  outline-offset: 2px;
+}
+
+/* Loading States */
+.snakkaz-loading {
+  position: relative;
+  overflow: hidden;
+}
+
+.snakkaz-loading::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 215, 0, 0.3),
+    transparent
+  );
+  animation: snakkazShimmer 1.5s infinite;
+}
+
+@keyframes snakkazShimmer {
+  to {
+    left: 100%;
+  }
+}

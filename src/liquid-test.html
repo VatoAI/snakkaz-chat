@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="no">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SnakkaZ Liquid Design Test</title>
+    <style>
+      /* Test our new liquid design system */
+      :root {
+        --void-deep: #080811;
+        --glass-soft: rgba(255, 255, 255, 0.06);
+        --glass-medium: rgba(255, 255, 255, 0.08);
+        --crystal-blue: #64b5f6;
+        --crystal-cyan: #4dd0e1;
+      }
+
+      body {
+        margin: 0;
+        padding: 2rem;
+        background: var(--void-deep);
+        color: rgba(255, 255, 255, 0.9);
+        font-family: "Inter", system-ui, sans-serif;
+        min-height: 100vh;
+      }
+
+      .liquid-card {
+        background: var(--glass-medium);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 1rem;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        transition: all 0.3s ease;
+      }
+
+      .liquid-card:hover {
+        background: rgba(255, 255, 255, 0.12);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+      }
+
+      .liquid-title {
+        font-size: 2rem;
+        font-weight: 600;
+        color: var(--crystal-blue);
+        margin-bottom: 1rem;
+      }
+
+      .liquid-button {
+        background: var(--glass-soft);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        color: rgba(255, 255, 255, 0.9);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+      }
+
+      .liquid-button:hover {
+        background: var(--glass-medium);
+        transform: translateY(-1px);
+        color: white;
+      }
+
+      .gradient-text {
+        background: linear-gradient(
+          135deg,
+          var(--crystal-blue),
+          var(--crystal-cyan)
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .status-indicator {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: rgba(0, 255, 0, 0.8);
+        color: black;
+        padding: 10px;
+        border-radius: 5px;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="status-indicator">✅ Liquid Design System Active</div>
+
+    <div class="liquid-card">
+      <h1 class="liquid-title gradient-text">🌊 SnakkaZ Liquid Dream Design</h1>
+      <p>Dette er vårt nye, vakre liquid glass design system med:</p>
+      <ul>
+        <li>Mørk, elegant bakgrunn (#080811)</li>
+        <li>Subtle glassmorphism-effekter</li>
+        <li>Vakre blå/cyan farger i stedet for gull</li>
+        <li>Mindre aggressive knapper</li>
+        <li>Smooth animasjoner</li>
+      </ul>
+      <a href="http://localhost:5173/chat" class="liquid-button">
+        Gå til SnakkaZ Chat
+      </a>
+    </div>
+
+    <div class="liquid-card">
+      <h2 class="gradient-text">Fargepalett</h2>
+      <div
+        style="
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+          gap: 1rem;
+          margin-top: 1rem;
+        "
+      >
+        <div
+          style="
+            padding: 1rem;
+            background: var(--void-deep);
+            border: 1px solid var(--glass-soft);
+            border-radius: 0.5rem;
+          "
+        >
+          Void Deep<br />
+          <small>#080811</small>
+        </div>
+        <div
+          style="
+            padding: 1rem;
+            background: var(--crystal-blue);
+            color: black;
+            border-radius: 0.5rem;
+          "
+        >
+          Crystal Blue<br />
+          <small>#64b5f6</small>
+        </div>
+        <div
+          style="
+            padding: 1rem;
+            background: var(--crystal-cyan);
+            color: black;
+            border-radius: 0.5rem;
+          "
+        >
+          Crystal Cyan<br />
+          <small>#4dd0e1</small>
+        </div>
+        <div
+          style="
+            padding: 1rem;
+            background: var(--glass-medium);
+            border: 1px solid var(--glass-soft);
+            border-radius: 0.5rem;
+          "
+        >
+          Glass Medium<br />
+          <small>rgba(255,255,255,0.08)</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="liquid-card">
+      <h3>CSS Status Check</h3>
+      <p>
+        Hvis du ser dette med riktige farger og glassmorphism-effekter, fungerer
+        vårt design system perfekt! 🎉
+      </p>
+      <button class="liquid-button" onclick="window.location.reload()">
+        Refresh Side
+      </button>
+    </div>
+  </body>
+</html>

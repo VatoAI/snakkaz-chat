@@ -1,0 +1,558 @@
+/* ========================================
+   SNAKKAZ BETA 2025 - PREMIUM DESIGN SYSTEM v2.1
+   Revolutionary glassmorphism with cyber aesthetics
+   ======================================== */
+
+/* FOUNDATION: Next-Generation Design Tokens */
+:root {
+  /* ================================
+     CYBER-GOLD COLOR REVOLUTION
+     ================================ */
+  --cyber-black: #000000;
+  --cyber-void: #0a0a0a;
+  --cyber-dark: #0f0f0f;
+  --cyber-surface: #151515;
+
+  /* Premium Gold System */
+  --cyber-gold: #ffcc00;
+  --cyber-gold-bright: #ffd700;
+  --cyber-gold-electric: #ffed4a;
+  --cyber-gold-dark: #cc9900;
+  --cyber-gold-shadow: rgba(255, 204, 0, 0.3);
+
+  /* Electric Accent Colors */
+  --electric-blue: #00d4ff;
+  --electric-cyan: #00ffff;
+  --neon-purple: #c77dff;
+  --neon-pink: #ff477e;
+  --cyber-green: #39ff14;
+
+  /* ================================
+     REVOLUTIONARY GLASS SYSTEM
+     ================================ */
+  --glass-void: rgba(255, 255, 255, 0.01);
+  --glass-whisper: rgba(255, 255, 255, 0.03);
+  --glass-subtle: rgba(255, 255, 255, 0.05);
+  --glass-soft: rgba(255, 255, 255, 0.08);
+  --glass-medium: rgba(255, 255, 255, 0.12);
+  --glass-strong: rgba(255, 255, 255, 0.18);
+  --glass-intense: rgba(255, 255, 255, 0.25);
+
+  /* Gold Glass Variants */
+  --glass-gold-whisper: rgba(255, 204, 0, 0.03);
+  --glass-gold-subtle: rgba(255, 204, 0, 0.05);
+  --glass-gold-soft: rgba(255, 204, 0, 0.08);
+  --glass-gold-medium: rgba(255, 204, 0, 0.12);
+  --glass-gold-intense: rgba(255, 204, 0, 0.2);
+
+  /* Electric Glass Variants */
+  --glass-electric-whisper: rgba(0, 212, 255, 0.03);
+  --glass-electric-soft: rgba(0, 212, 255, 0.08);
+  --glass-electric-medium: rgba(0, 212, 255, 0.12);
+
+  /* ================================
+     PREMIUM GRADIENTS
+     ================================ */
+  --gradient-cyber-main: linear-gradient(
+    135deg,
+    var(--cyber-gold) 0%,
+    var(--electric-blue) 50%,
+    var(--neon-purple) 100%
+  );
+
+  --gradient-gold-electric: linear-gradient(
+    135deg,
+    var(--cyber-gold-bright) 0%,
+    var(--cyber-gold-electric) 50%,
+    var(--electric-cyan) 100%
+  );
+
+  --gradient-glass-gold: linear-gradient(
+    135deg,
+    var(--glass-gold-whisper) 0%,
+    var(--glass-gold-medium) 100%
+  );
+
+  --gradient-glass-electric: linear-gradient(
+    135deg,
+    var(--glass-electric-whisper) 0%,
+    var(--glass-electric-medium) 100%
+  );
+
+  /* Animated Mesh Gradients */
+  --mesh-cyber: radial-gradient(
+      at 40% 20%,
+      var(--cyber-gold-shadow) 0px,
+      transparent 50%
+    ),
+    radial-gradient(at 80% 0%, var(--electric-blue) 0px, transparent 50%),
+    radial-gradient(at 0% 50%, var(--neon-purple) 0px, transparent 50%);
+
+  /* ================================
+     REVOLUTIONARY GLOW SYSTEM
+     ================================ */
+  --glow-cyber-gold: 0 0 30px var(--cyber-gold-shadow);
+  --glow-cyber-intense: 0 0 50px var(--cyber-gold-shadow);
+  --glow-electric: 0 0 30px rgba(0, 212, 255, 0.4);
+  --glow-purple: 0 0 30px rgba(199, 125, 255, 0.4);
+  --glow-text-gold: 0 0 20px var(--cyber-gold-shadow);
+
+  /* ================================
+     PREMIUM SHADOW SYSTEM
+     ================================ */
+  --shadow-void: 0 0 0 rgba(0, 0, 0, 0);
+  --shadow-whisper: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --shadow-subtle: 0 4px 16px rgba(0, 0, 0, 0.15);
+  --shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.2);
+  --shadow-medium: 0 12px 32px rgba(0, 0, 0, 0.25);
+  --shadow-strong: 0 16px 48px rgba(0, 0, 0, 0.3);
+  --shadow-intense: 0 24px 64px rgba(0, 0, 0, 0.4);
+
+  /* Floating Shadows */
+  --shadow-float: 0 10px 30px rgba(0, 0, 0, 0.2);
+  --shadow-float-hover: 0 20px 50px rgba(0, 0, 0, 0.3);
+
+  /* ================================
+     BLUR & BACKDROP EFFECTS
+     ================================ */
+  --blur-whisper: blur(4px);
+  --blur-subtle: blur(8px);
+  --blur-soft: blur(12px);
+  --blur-medium: blur(16px);
+  --blur-strong: blur(24px);
+  --blur-intense: blur(32px);
+  --blur-ultra: blur(48px);
+
+  /* ================================
+     PREMIUM TYPOGRAPHY
+     ================================ */
+  --font-primary: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    system-ui, sans-serif;
+  --font-display: "SF Pro Display", "Inter", sans-serif;
+  --font-cyber: "Orbitron", "Space Grotesk", monospace;
+  --font-code: "JetBrains Mono", "Fira Code", monospace;
+
+  /* Font Weights */
+  --weight-light: 300;
+  --weight-normal: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --weight-heavy: 800;
+  --weight-black: 900;
+
+  /* ================================
+     REVOLUTIONARY ANIMATIONS
+     ================================ */
+  --transition-instant: 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-smooth: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-elegant: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-dramatic: 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Bounce & Spring Effects */
+  --transition-bounce: 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  --transition-spring: 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+  /* ================================
+     SPACING SYSTEM
+     ================================ */
+  --space-1: 0.25rem; /* 4px */
+  --space-2: 0.5rem; /* 8px */
+  --space-3: 0.75rem; /* 12px */
+  --space-4: 1rem; /* 16px */
+  --space-5: 1.25rem; /* 20px */
+  --space-6: 1.5rem; /* 24px */
+  --space-8: 2rem; /* 32px */
+  --space-10: 2.5rem; /* 40px */
+  --space-12: 3rem; /* 48px */
+  --space-16: 4rem; /* 64px */
+  --space-20: 5rem; /* 80px */
+
+  /* ================================
+     BORDER RADIUS SYSTEM
+     ================================ */
+  --radius-none: 0;
+  --radius-sm: 0.25rem;
+  --radius-base: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-2xl: 2rem;
+  --radius-3xl: 3rem;
+  --radius-full: 9999px;
+
+  /* ================================
+     Z-INDEX SYSTEM
+     ================================ */
+  --z-base: 0;
+  --z-elevated: 10;
+  --z-overlay: 100;
+  --z-modal: 1000;
+  --z-popover: 1100;
+  --z-tooltip: 1200;
+  --z-notification: 1300;
+  --z-maximum: 9999;
+}
+
+/* ================================
+   GLOBAL FOUNDATION RESET
+   ================================ */
+
+/* KRITISK: Fullstendig background override */
+html,
+body,
+#root,
+.App,
+* {
+  background: var(--cyber-void) !important;
+  background-color: var(--cyber-void) !important;
+}
+
+/* FORCE OVERRIDE - Sikrer at vårt design blir brukt */
+.bg-cyber-void {
+  background: var(--cyber-void) !important;
+  background-color: var(--cyber-void) !important;
+}
+
+html {
+  box-sizing: border-box;
+  height: 100%;
+  background: var(--cyber-void) !important;
+  font-size: 16px;
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  min-height: 100vh;
+  font-family: var(--font-primary);
+  background: var(--cyber-void) !important;
+  color: white;
+  line-height: 1.6;
+  overflow-x: hidden;
+  font-feature-settings: "kern" 1, "liga" 1;
+  font-variant-ligatures: common-ligatures;
+}
+
+/* ================================
+   PREMIUM GLASSMORPHISM SYSTEM
+   ================================ */
+
+.glass-whisper {
+  background: var(--glass-whisper);
+  backdrop-filter: var(--blur-subtle);
+  -webkit-backdrop-filter: var(--blur-subtle);
+  border: 1px solid var(--glass-whisper);
+}
+
+.glass-subtle {
+  background: var(--glass-subtle);
+  backdrop-filter: var(--blur-soft);
+  -webkit-backdrop-filter: var(--blur-soft);
+  border: 1px solid var(--glass-subtle);
+}
+
+.glass-premium {
+  background: var(--glass-medium);
+  backdrop-filter: var(--blur-medium);
+  -webkit-backdrop-filter: var(--blur-medium);
+  border: 1px solid var(--glass-strong);
+  box-shadow: var(--shadow-soft);
+}
+
+.glass-intense {
+  background: var(--glass-intense);
+  backdrop-filter: var(--blur-strong);
+  -webkit-backdrop-filter: var(--blur-strong);
+  border: 1px solid var(--glass-intense);
+  box-shadow: var(--shadow-medium);
+}
+
+/* Gold Glass Variants */
+.glass-gold {
+  background: var(--glass-gold-medium);
+  backdrop-filter: var(--blur-medium);
+  -webkit-backdrop-filter: var(--blur-medium);
+  border: 1px solid var(--glass-gold-intense);
+  box-shadow: var(--glow-cyber-gold);
+}
+
+/* ================================
+   REVOLUTIONARY BUTTON SYSTEM
+   ================================ */
+
+.btn-cyber-primary {
+  position: relative;
+  background: var(--gradient-gold-electric);
+  border: none;
+  border-radius: var(--radius-lg);
+  padding: var(--space-3) var(--space-6);
+  font-family: var(--font-display);
+  font-weight: var(--weight-semibold);
+  font-size: 1rem;
+  color: var(--cyber-void);
+  cursor: pointer;
+  overflow: hidden;
+  transition: var(--transition-smooth);
+  box-shadow: var(--shadow-medium), var(--glow-cyber-gold);
+}
+
+.btn-cyber-primary::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  transition: var(--transition-elegant);
+}
+
+.btn-cyber-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-strong), var(--glow-cyber-intense);
+}
+
+.btn-cyber-primary:hover::before {
+  left: 100%;
+}
+
+.btn-cyber-primary:active {
+  transform: translateY(0);
+  transition: var(--transition-instant);
+}
+
+/* Glass Button Variant */
+.btn-glass {
+  background: var(--glass-medium);
+  backdrop-filter: var(--blur-medium);
+  -webkit-backdrop-filter: var(--blur-medium);
+  border: 1px solid var(--glass-strong);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3) var(--space-6);
+  color: white;
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  transition: var(--transition-smooth);
+}
+
+.btn-glass:hover {
+  background: var(--glass-strong);
+  border-color: var(--glass-intense);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-soft);
+}
+
+/* ================================
+   PREMIUM CARD SYSTEM
+   ================================ */
+
+.card-cyber {
+  background: var(--glass-subtle);
+  backdrop-filter: var(--blur-medium);
+  -webkit-backdrop-filter: var(--blur-medium);
+  border: 1px solid var(--glass-medium);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  position: relative;
+  overflow: hidden;
+  transition: var(--transition-smooth);
+  box-shadow: var(--shadow-subtle);
+}
+
+.card-cyber::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--gradient-cyber-main);
+  opacity: 0.7;
+}
+
+.card-cyber:hover {
+  transform: translateY(-4px);
+  border-color: var(--glass-strong);
+  box-shadow: var(--shadow-strong);
+}
+
+.card-cyber-premium {
+  background: var(--glass-gold-medium);
+  border: 1px solid var(--glass-gold-intense);
+  box-shadow: var(--shadow-medium), var(--glow-cyber-gold);
+}
+
+/* ================================
+   PREMIUM INPUT SYSTEM
+   ================================ */
+
+.input-cyber {
+  background: var(--glass-subtle);
+  backdrop-filter: var(--blur-soft);
+  -webkit-backdrop-filter: var(--blur-soft);
+  border: 1px solid var(--glass-medium);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4) var(--space-5);
+  font-family: var(--font-primary);
+  font-size: 1rem;
+  color: white;
+  width: 100%;
+  transition: var(--transition-smooth);
+}
+
+.input-cyber::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.input-cyber:focus {
+  outline: none;
+  background: var(--glass-medium);
+  border-color: var(--cyber-gold);
+  box-shadow: 0 0 0 3px var(--glass-gold-soft), var(--glow-cyber-gold);
+}
+
+/* ================================
+   REVOLUTIONARY TYPOGRAPHY
+   ================================ */
+
+.text-cyber-title {
+  font-family: var(--font-display);
+  font-weight: var(--weight-heavy);
+  font-size: 2.5rem;
+  line-height: 1.2;
+  background: var(--gradient-gold-electric);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: var(--glow-text-gold);
+}
+
+.text-cyber-heading {
+  font-family: var(--font-display);
+  font-weight: var(--weight-bold);
+  font-size: 1.875rem;
+  line-height: 1.3;
+  color: var(--cyber-gold-bright);
+  text-shadow: var(--glow-text-gold);
+}
+
+.text-cyber-body {
+  font-family: var(--font-primary);
+  font-weight: var(--weight-normal);
+  font-size: 1rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.text-cyber-caption {
+  font-family: var(--font-primary);
+  font-weight: var(--weight-medium);
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* ================================
+   FLOATING & ANIMATION SYSTEM
+   ================================ */
+
+.floating-element {
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.glow-pulse {
+  animation: glowPulse 2s ease-in-out infinite;
+}
+
+@keyframes glowPulse {
+  0%,
+  100% {
+    box-shadow: var(--glow-cyber-gold);
+  }
+  50% {
+    box-shadow: var(--glow-cyber-intense);
+  }
+}
+
+/* ================================
+   RESPONSIVE UTILITIES
+   ================================ */
+
+@media (max-width: 768px) {
+  .text-cyber-title {
+    font-size: 2rem;
+  }
+
+  .text-cyber-heading {
+    font-size: 1.5rem;
+  }
+
+  .card-cyber {
+    padding: var(--space-4);
+  }
+
+  .btn-cyber-primary {
+    padding: var(--space-3) var(--space-5);
+    font-size: 0.875rem;
+  }
+}
+
+/* ================================
+   ACCESSIBILITY & PERFORMANCE
+   ================================ */
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .floating-element {
+    animation: none;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  :root {
+    --glass-subtle: rgba(255, 255, 255, 0.15);
+    --glass-medium: rgba(255, 255, 255, 0.25);
+  }
+}
+
+/* Print styles */
+@media print {
+  * {
+    background: white !important;
+    color: black !important;
+    box-shadow: none !important;
+  }
+}

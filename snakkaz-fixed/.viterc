@@ -1,0 +1,4 @@
+# Vite Project Configuration
+# This isolates the Vite project to only this directory
+root = ./
+ignore = ["../**/*", "!./src/**/*", "!./public/**/*", "!./index.html"]

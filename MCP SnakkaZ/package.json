@@ -8,10 +8,10 @@
     "snakkaz-mcp": "./build/index.js"
   },
   "scripts": {
-    "start": "node build/index.js",
+    "start": "node build/simple-server.js",
     "start:http": "node build/server.js",
     "start:demo": "node build/demo-infrastructure.js",
-    "dev": "tsc --watch & node build/index.js",
+    "dev": "tsx src/simple-server.ts",
     "dev:http": "tsc && node build/server.js",
     "build": "tsc",
     "build:prod": "tsc --build --clean && tsc",
@@ -47,7 +47,7 @@
   "devDependencies": {
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
-    "@types/node": "^20.19.7",
+    "@types/node": "^20.19.9",
     "concurrently": "^9.2.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"

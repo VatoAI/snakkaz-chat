@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="no">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>🚀 SnakkaZ Beta Test Status</title>
+    <style>
+      body {
+        font-family: "Segoe UI", sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+        margin: 0;
+      }
+      .status-card {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        padding: 2rem;
+        margin: 1rem 0;
+        max-width: 800px;
+      }
+      .success {
+        border-left: 4px solid #4caf50;
+      }
+      .error {
+        border-left: 4px solid #f44336;
+      }
+      .warning {
+        border-left: 4px solid #ff9800;
+      }
+      .test-button {
+        background: rgba(76, 175, 80, 0.8);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        cursor: pointer;
+        margin: 0.5rem;
+        font-size: 14px;
+        font-weight: 500;
+      }
+      .test-button:hover {
+        background: rgba(76, 175, 80, 1);
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🚀 SnakkaZ Beta System Test</h1>
+
+    <div class="status-card success">
+      <h2>✅ System Status</h2>
+      <p><strong>Performance:</strong> Grade A 🏆</p>
+      <p><strong>Vite Server:</strong> ✅ Running on http://localhost:5173</p>
+      <p><strong>MCP API:</strong> ✅ Running on http://localhost:3000</p>
+      <p><strong>App Init:</strong> ✅ React rendered successfully</p>
+    </div>
+
+    <div class="status-card warning">
+      <h2>⚠️ Discovered Issues</h2>
+      <p>
+        <strong>Main Issue:</strong> SnakkaZChatBeta component not rendering
+      </p>
+      <p><strong>Root Cause:</strong> Potential routing or loading issue</p>
+      <p>
+        <strong>Database Error:</strong> Old ChatSystem.jsx still causing
+        Supabase errors
+      </p>
+    </div>
+
+    <div class="status-card">
+      <h2>🔍 Test URLs</h2>
+      <p>Test these URLs to verify functionality:</p>
+      <button
+        class="test-button"
+        onclick="window.open('http://localhost:5173', '_blank')"
+      >
+        Test Main App (/)
+      </button>
+      <button
+        class="test-button"
+        onclick="window.open('http://localhost:5173/beta', '_blank')"
+      >
+        Test Chat Beta (/beta)
+      </button>
+      <button
+        class="test-button"
+        onclick="window.open('http://localhost:5173/admin', '_blank')"
+      >
+        Test Admin Dashboard (/admin)
+      </button>
+      <button
+        class="test-button"
+        onclick="window.open('http://localhost:3000/api/status', '_blank')"
+      >
+        Test MCP API Status
+      </button>
+    </div>
+
+    <div class="status-card">
+      <h2>📋 Next Steps</h2>
+      <ol>
+        <li>Verify that SnakkaZChatBeta component is actually rendering</li>
+        <li>Check browser console for any React/routing errors</li>
+        <li>Ensure mock data and MCP system are loading correctly</li>
+        <li>Fix old ChatSystem.jsx database dependency</li>
+      </ol>
+    </div>
+
+    <div class="status-card">
+      <h2>🎯 Emergency Plan</h2>
+      <p>If SnakkaZChatBeta is not visible:</p>
+      <ul>
+        <li>Force render SnakkaZChatBeta with emergency CSS overlay</li>
+        <li>Add debug indicators to confirm component execution</li>
+        <li>Bypass all loading states and auth checks</li>
+        <li>Implement emergency mock chat UI</li>
+      </ul>
+    </div>
+
+    <script>
+      // Auto-refresh console info
+      setInterval(() => {
+        console.log(
+          "🚀 SnakkaZ Test Page - Status Check at",
+          new Date().toLocaleTimeString()
+        );
+
+        // Test main app URL
+        fetch("http://localhost:5173")
+          .then((response) => {
+            if (response.ok) {
+              console.log("✅ Main app is responding");
+            } else {
+              console.log("⚠️ Main app response:", response.status);
+            }
+          })
+          .catch((error) => {
+            console.log("❌ Main app error:", error.message);
+          });
+
+        // Test MCP API
+        fetch("http://localhost:3000/api/status")
+          .then((response) => response.json())
+          .then((data) => {
+            console.log("✅ MCP API Status:", data);
+          })
+          .catch((error) => {
+            console.log("❌ MCP API error:", error.message);
+          });
+      }, 10000);
+
+      console.log("🚀 SnakkaZ Test Page Loaded - Monitoring system status...");
+    </script>
+  </body>
+</html>

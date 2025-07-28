@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Snakkaz System Test</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      background-color: #0f0f13;
+      color: #e0e0e0;
+      padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    h1, h2, h3 {
+      color: #d4af37; /* cybergold-500 */
+    }
+    .card {
+      background-color: #1a1a22;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      border: 1px solid #2a2a35;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    button {
+      background-color: #d4af37; /* cybergold-500 */
+      color: #0f0f13;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 4px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-right: 10px;
+      margin-bottom: 10px;
+      transition: all 0.2s ease;
+    }
+    button:hover {
+      background-color: #e6c755; /* cybergold-400 */
+      transform: translateY(-2px);
+    }
+    button:active {
+      transform: translateY(1px);
+    }
+    pre {
+      background-color: #0a0a0f;
+      border-radius: 4px;
+      padding: 15px;
+      overflow: auto;
+      color: #a0a0a0;
+      white-space: pre-wrap;
+    }
+    .results {
+      margin-top: 20px;
+    }
+    .success {
+      color: #4caf50;
+    }
+    .error {
+      color: #f44336;
+    }
+    .result-item {
+      margin-bottom: 8px;
+      padding: 8px;
+      border-radius: 4px;
+      background-color: #1f1f28;
+    }
+    .test-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 10px;
+    }
+    footer {
+      margin-top: 40px;
+      text-align: center;
+      font-size: 14px;
+      color: #666;
+    }
+    .spinner {
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top: 3px solid #d4af37;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Snakkaz System Test</h1>
+    <p>Dette verktøyet tester om alle systemforbedringene fungerer som forventet.</p>
+  </div>
+
+  <div class="card">
+    <h2>Systemdiagnostikk</h2>
+    <div class="test-grid">
+      <button id="run-all">Kjør alle tester</button>
+      <button id="test-csp">Test CSP</button>
+      <button id="test-sri">Test SRI</button>
+      <button id="test-ping">Test Ping</button>
+      <button id="test-meta">Test Meta Tags</button>
+      <button id="test-analytics">Test Analytics</button>
+    </div>
+    <div id="status"></div>
+  </div>
+
+  <div class="card results">
+    <h2>Testresultater</h2>
+    <div id="results">
+      Kjør tester for å se resultater...
+    </div>
+    <pre id="details"></pre>
+  </div>
+
+  <footer>
+    © 2025 Snakkaz | Systemdiagnostikk
+  </footer>
+
+  <script type="module">
+    // Import nødvendige moduler
+    import { 
+      initializeSnakkazChat,
+      verifyCspConfiguration,
+      checkSriRemoval,
+      testPingRequestBlocker,
+      runSystemHealthCheck,
+      loadCloudflareAnalytics
+    } from '../services/encryption/index.ts';
+    
+    // Initialiser systemet
+    initializeSnakkazChat();
+    
+    // DOM elementer
+    const statusEl = document.getElementById('status');
+    const resultsEl = document.getElementById('results');
+    const detailsEl = document.getElementById('details');
+    
+    // Vis lastestatus
+    function setStatus(message, isLoading = true) {
+      statusEl.innerHTML = isLoading ? 
+        `<span class="spinner"></span> ${message}` : 
+        message;
+    }
+    
+    // Vis resultat
+    function showResult(name, success, message) {
+      const resultEl = document.createElement('div');
+      resultEl.className = `result-item ${success ? 'success' : 'error'}`;
+      resultEl.innerHTML = `
+        <strong>${name}:</strong> 
+        ${success ? '✅ OK' : '❌ Feilet'}
+        ${message ? ` - ${message}` : ''}
+      `;
+      resultsEl.appendChild(resultEl);
+    }
+    
+    // Vis detaljert resultat
+    function showDetails(data) {
+      detailsEl.textContent = JSON.stringify(data, null, 2);
+    }
+    
+    // Knapp-handlere
+    document.getElementById('run-all').addEventListener('click', async () => {
+      resultsEl.innerHTML = '';
+      detailsEl.textContent = '';
+      setStatus('Kjører full systemsjekk...');
+      
+      try {
+        const results = await runSystemHealthCheck();
+        setStatus(`Systemsjekk fullført: ${results.healthy ? 'Alt OK!' : 'Problemer oppdaget'}`, false);
+        
+        for (const [test, success] of Object.entries(results.details)) {
+          showResult(test, success, success ? 'OK' : 'Feilet');
+        }
+        
+        showDetails(results);
+      } catch (error) {
+        setStatus(`Feil under systemsjekk: ${error.message}`, false);
+        showResult('Systemsjekk', false, error.message);
+      }
+    });
+    
+    document.getElementById('test-csp').addEventListener('click', () => {
+      resultsEl.innerHTML = '';
+      detailsEl.textContent = '';
+      setStatus('Tester CSP-konfigurasjon...');
+      
+      try {
+        const success = verifyCspConfiguration();
+        setStatus('CSP-test fullført', false);
+        showResult('CSP-konfigurasjon', success);
+      } catch (error) {
+        setStatus(`Feil under CSP-test: ${error.message}`, false);
+        showResult('CSP-test', false, error.message);
+      }
+    });
+    
+    document.getElementById('test-sri').addEventListener('click', () => {
+      resultsEl.innerHTML = '';
+      detailsEl.textContent = '';
+      setStatus('Tester SRI-fjerning...');
+      
+      try {
+        const success = checkSriRemoval();
+        setStatus('SRI-test fullført', false);
+        showResult('SRI-fjerning', success);
+      } catch (error) {
+        setStatus(`Feil under SRI-test: ${error.message}`, false);
+        showResult('SRI-test', false, error.message);
+      }
+    });
+    
+    document.getElementById('test-ping').addEventListener('click', async () => {
+      resultsEl.innerHTML = '';
+      detailsEl.textContent = '';
+      setStatus('Tester ping-blokkering...');
+      
+      try {
+        const success = await testPingRequestBlocker();
+        setStatus('Ping-test fullført', false);
+        showResult('Ping-blokkering', success);
+      } catch (error) {
+        setStatus(`Feil under ping-test: ${error.message}`, false);
+        showResult('Ping-test', false, error.message);
+      }
+    });
+    
+    document.getElementById('test-meta').addEventListener('click', () => {
+      resultsEl.innerHTML = '';
+      detailsEl.textContent = '';
+      setStatus('Tester meta-tags...');
+      
+      const mobileAppCapable = document.querySelector('meta[name="mobile-web-app-capable"]');
+      const success = !!mobileAppCapable;
+      
+      setStatus('Meta-tag test fullført', false);
+      showResult('mobile-web-app-capable', success);
+      
+      if (!success) {
+        const appleCapable = document.querySelector('meta[name="apple-mobile-web-app-capable"]');
+        showResult('apple-mobile-web-app-capable', !!appleCapable, 'Fant apple-tag men ikke standard tag');
+      }
+    });
+    
+    document.getElementById('test-analytics').addEventListener('click', () => {
+      resultsEl.innerHTML = '';
+      detailsEl.textContent = '';
+      setStatus('Tester analytics-lasting...');
+      
+      try {
+        loadCloudflareAnalytics();
+        setTimeout(() => {
+          const analyticsScript = document.querySelector('script[src*="cloudflareinsights.com"]');
+          const success = !!analyticsScript;
+          
+          setStatus('Analytics-test fullført', false);
+          showResult('Cloudflare Analytics', success);
+          
+          if (analyticsScript) {
+            showResult('Integrity-attributt', !analyticsScript.hasAttribute('integrity'), 
+              analyticsScript.hasAttribute('integrity') ? 'Integrity-attributtet ble ikke fjernet' : '');
+          }
+        }, 1000);
+      } catch (error) {
+        setStatus(`Feil under analytics-test: ${error.message}`, false);
+        showResult('Analytics-test', false, error.message);
+      }
+    });
+    
+    // Initial status
+    setStatus('Systemet er klart for testing', false);
+  </script>
+</body>
+</html>

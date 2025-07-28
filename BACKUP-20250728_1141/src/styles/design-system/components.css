@@ -1,0 +1,511 @@
+/* ========================================
+   CLOUDMCP-INSPIRED COMPONENTS
+   Premium Glass & Liquid Elements
+   ======================================== */
+
+/* Neural Network Background Animation */
+.neural-network {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  z-index: -1;
+}
+
+.neural-node {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: rgba(102, 126, 234, 0.8);
+  border-radius: 50%;
+  box-shadow: 0 0 10px rgba(102, 126, 234, 0.6);
+}
+
+.neural-connection {
+  position: absolute;
+  height: 1px;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(102, 126, 234, 0.4), 
+    transparent);
+  transform-origin: left center;
+  animation: neuralPulse 3s ease-in-out infinite;
+}
+
+@keyframes neuralPulse {
+  0%, 100% { opacity: 0.2; }
+  50% { opacity: 0.8; }
+}
+
+/* CloudMCP-style Chat Interface */
+.cloudmcp-chat-container {
+  display: flex;
+  height: 100vh;
+  background: #0a0a0a;
+  position: relative;
+  overflow: hidden;
+}
+
+.cloudmcp-sidebar {
+  width: 320px;
+  background: rgba(15, 15, 15, 0.6);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+}
+
+.cloudmcp-header {
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.cloudmcp-search {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 12px 16px;
+  gap: 12px;
+}
+
+.cloudmcp-search-icon {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 18px;
+}
+
+.cloudmcp-search-input {
+  flex: 1;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 14px;
+  outline: none;
+}
+
+.cloudmcp-search-input::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+/* Chat List */
+.cloudmcp-chat-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.cloudmcp-chat-item {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  margin-bottom: 4px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.cloudmcp-chat-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, 
+    rgba(102, 126, 234, 0.1) 0%, 
+    rgba(118, 75, 162, 0.1) 100%);
+  border-radius: 12px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.cloudmcp-chat-item:hover::before,
+.cloudmcp-chat-item.active::before {
+  opacity: 1;
+}
+
+.cloudmcp-chat-item:hover {
+  transform: translateX(4px);
+}
+
+.cloudmcp-avatar-wrapper {
+  position: relative;
+  margin-right: 12px;
+}
+
+.cloudmcp-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  color: white;
+  font-size: 18px;
+}
+
+.cloudmcp-avatar img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.cloudmcp-online-indicator {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 12px;
+  height: 12px;
+  background: #4ade80;
+  border: 2px solid #0a0a0a;
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(74, 222, 128, 0.6);
+}
+
+.cloudmcp-chat-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.cloudmcp-chat-name {
+  font-weight: 600;
+  color: white;
+  font-size: 15px;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cloudmcp-chat-message {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.5);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cloudmcp-chat-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.cloudmcp-chat-time {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.cloudmcp-unread-badge {
+  background: linear-gradient(135deg, #f093fb, #f5576c);
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 10px;
+  min-width: 20px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(240, 87, 108, 0.4);
+}
+
+/* Main Chat Area */
+.cloudmcp-main-chat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: rgba(10, 10, 10, 0.8);
+  position: relative;
+}
+
+.cloudmcp-chat-header {
+  padding: 20px 24px;
+  background: rgba(15, 15, 15, 0.6);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cloudmcp-header-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.cloudmcp-header-details h2 {
+  font-size: 18px;
+  font-weight: 600;
+  color: white;
+  margin-bottom: 4px;
+}
+
+.cloudmcp-header-status {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.cloudmcp-header-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.cloudmcp-icon-button {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cloudmcp-icon-button:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: white;
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
+}
+
+/* Messages Area */
+.cloudmcp-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cloudmcp-message {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  animation: messageSlide 0.3s ease;
+}
+
+@keyframes messageSlide {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.cloudmcp-message.sent {
+  flex-direction: row-reverse;
+}
+
+.cloudmcp-message-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
+}
+
+.cloudmcp-message-content {
+  max-width: 70%;
+  padding: 12px 16px;
+  border-radius: 18px;
+  font-size: 15px;
+  line-height: 1.4;
+  position: relative;
+}
+
+.cloudmcp-message.received .cloudmcp-message-content {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.cloudmcp-message.sent .cloudmcp-message-content {
+  background: linear-gradient(135deg, 
+    rgba(102, 126, 234, 0.2) 0%, 
+    rgba(118, 75, 162, 0.2) 100%);
+  color: white;
+  border: 1px solid rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+}
+
+.cloudmcp-message-time {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.3);
+  margin-top: 4px;
+}
+
+/* Input Area */
+.cloudmcp-input-area {
+  padding: 20px;
+  background: rgba(15, 15, 15, 0.8);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.cloudmcp-input-container {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  padding: 8px 8px 8px 20px;
+  transition: all 0.2s ease;
+}
+
+.cloudmcp-input-container:focus-within {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(102, 126, 234, 0.3);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.cloudmcp-input {
+  flex: 1;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 15px;
+  outline: none;
+  resize: none;
+  max-height: 120px;
+  padding: 8px 0;
+}
+
+.cloudmcp-input::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.cloudmcp-input-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.cloudmcp-send-button {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border: none;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.cloudmcp-send-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.cloudmcp-send-button:active {
+  transform: scale(0.95);
+}
+
+/* Floating Action Elements */
+.cloudmcp-floating-button {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 
+    0 8px 24px rgba(102, 126, 234, 0.4),
+    0 0 0 4px rgba(102, 126, 234, 0.1);
+  transition: all 0.3s ease;
+  font-size: 24px;
+}
+
+.cloudmcp-floating-button:hover {
+  transform: translateY(-4px);
+  box-shadow: 
+    0 12px 32px rgba(102, 126, 234, 0.5),
+    0 0 0 8px rgba(102, 126, 234, 0.15);
+}
+
+/* Status Indicators */
+.cloudmcp-typing-indicator {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 16px;
+  margin-left: 44px;
+}
+
+.cloudmcp-typing-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(102, 126, 234, 0.6);
+  animation: typingBounce 1.4s infinite ease-in-out;
+}
+
+.cloudmcp-typing-dot:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.cloudmcp-typing-dot:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+@keyframes typingBounce {
+  0%, 80%, 100% {
+    transform: scale(0.8);
+    opacity: 0.4;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .cloudmcp-sidebar {
+    position: fixed;
+    left: -100%;
+    top: 0;
+    bottom: 0;
+    width: 85%;
+    z-index: 1000;
+    transition: left 0.3s ease;
+  }
+  
+  .cloudmcp-sidebar.open {
+    left: 0;
+    box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+  }
+  
+  .cloudmcp-main-chat {
+    width: 100%;
+  }
+  
+  .cloudmcp-message-content {
+    max-width: 85%;
+  }
+}

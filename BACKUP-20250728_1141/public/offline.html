@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SnakkaZ - Offline</title>
+    <meta name="description" content="SnakkaZ er offline, men du kan fortsatt se dine meldinger">
+    
+    <!-- PWA Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="SnakkaZ">
+    <meta name="mobile-web-app-capable" content="yes">
+    
+    <!-- Icons -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-192x192.png">
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .offline-container {
+            max-width: 500px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .offline-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            opacity: 0.8;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.8; }
+            50% { opacity: 0.4; }
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .subtitle {
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+
+        .description {
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            opacity: 0.8;
+        }
+
+        .actions {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .btn {
+            padding: 15px 25px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-primary:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            font-size: 14px;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ff6b6b;
+            animation: blink 1s infinite;
+        }
+
+        .status-dot.online {
+            background: #51cf66;
+            animation: none;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
+
+        .features {
+            text-align: left;
+            margin-top: 30px;
+        }
+
+        .features h3 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .feature-list li {
+            padding: 8px 0;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .feature-list li::before {
+            content: "✓ ";
+            color: #51cf66;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+
+        .footer {
+            margin-top: 30px;
+            font-size: 12px;
+            opacity: 0.7;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 800;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #fff, #e1e8ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        @media (max-width: 600px) {
+            .offline-container {
+                padding: 30px 20px;
+                margin: 10px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .subtitle {
+                font-size: 16px;
+            }
+
+            .offline-icon {
+                font-size: 60px;
+            }
+        }
+
+        /* Loading animation */
+        .reconnecting {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="offline-container">
+        <div class="logo">SnakkaZ</div>
+        <div class="offline-icon">📡</div>
+        
+        <h1>Du er offline</h1>
+        <p class="subtitle">Ingen internettforbindelse</p>
+        
+        <div class="status">
+            <div class="status-dot" id="statusDot"></div>
+            <span id="statusText">Tilkobling ikke tilgjengelig</span>
+        </div>
+        
+        <p class="description">
+            Ikke bekymre deg! SnakkaZ fungerer fortsatt offline. 
+            Dine meldinger vil bli synkronisert når forbindelsen er tilbake.
+        </p>
+        
+        <div class="actions">
+            <button class="btn btn-primary" onclick="tryReconnect()">
+                🔄 Prøv å koble til igjen
+            </button>
+            <a href="/beta-chat" class="btn btn-secondary">
+                💬 Gå til cached chat
+            </a>
+            <a href="/" class="btn btn-secondary">
+                🏠 Gå til hovedside
+            </a>
+        </div>
+        
+        <div class="reconnecting" id="reconnecting">
+            <div class="spinner"></div>
+            <span>Kobler til...</span>
+        </div>
+        
+        <div class="features">
+            <h3>Tilgjengelig offline:</h3>
+            <ul class="feature-list">
+                <li>Se tidligere samtaler</li>
+                <li>Skriv nye meldinger (synkroniseres senere)</li>
+                <li>Bla gjennom chat-historikk</li>
+                <li>Tilgang til brukerinnstillinger</li>
+                <li>Se cachede filer og bilder</li>
+            </ul>
+        </div>
+        
+        <div class="footer">
+            <p>FASE 6 PWA Excellence - SnakkaZ Beta</p>
+            <p>Powered by Service Worker & Workbox</p>
+        </div>
+    </div>
+
+    <script>
+        // Connection status monitoring
+        let isOnline = navigator.onLine;
+        
+        function updateConnectionStatus() {
+            const statusDot = document.getElementById('statusDot');
+            const statusText = document.getElementById('statusText');
+            
+            if (navigator.onLine) {
+                statusDot.classList.add('online');
+                statusText.textContent = 'Tilkobling gjenopprettet!';
+                
+                // Auto-redirect after 2 seconds
+                setTimeout(() => {
+                    window.location.href = '/beta-chat';
+                }, 2000);
+            } else {
+                statusDot.classList.remove('online');
+                statusText.textContent = 'Tilkobling ikke tilgjengelig';
+            }
+        }
+
+        function tryReconnect() {
+            const reconnecting = document.getElementById('reconnecting');
+            reconnecting.style.display = 'flex';
+            
+            // Simulate connection check
+            setTimeout(() => {
+                reconnecting.style.display = 'none';
+                updateConnectionStatus();
+                
+                if (!navigator.onLine) {
+                    // Show temporary message
+                    const statusText = document.getElementById('statusText');
+                    const originalText = statusText.textContent;
+                    statusText.textContent = 'Fortsatt offline - prøv igjen';
+                    
+                    setTimeout(() => {
+                        statusText.textContent = originalText;
+                    }, 3000);
+                }
+            }, 2000);
+        }
+
+        // Listen for connection changes
+        window.addEventListener('online', () => {
+            console.log('[Offline Page] Connection restored');
+            updateConnectionStatus();
+        });
+
+        window.addEventListener('offline', () => {
+            console.log('[Offline Page] Connection lost');
+            updateConnectionStatus();
+        });
+
+        // Service Worker messaging
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.addEventListener('message', event => {
+                if (event.data.type === 'CONNECTION_RESTORED') {
+                    updateConnectionStatus();
+                }
+            });
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'r' && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                tryReconnect();
+            }
+            if (e.key === 'h' && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                window.location.href = '/';
+            }
+            if (e.key === 'c' && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                window.location.href = '/beta-chat';
+            }
+        });
+
+        // Initialize
+        updateConnectionStatus();
+
+        // PWA install prompt handling
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            
+            // Show install suggestion
+            const actions = document.querySelector('.actions');
+            const installBtn = document.createElement('button');
+            installBtn.className = 'btn btn-primary';
+            installBtn.innerHTML = '📱 Installer SnakkaZ som app';
+            installBtn.onclick = async () => {
+                e.prompt();
+                const { outcome } = await e.userChoice;
+                if (outcome === 'accepted') {
+                    console.log('PWA installed from offline page');
+                }
+            };
+            
+            actions.appendChild(installBtn);
+        });
+
+        console.log('[Offline Page] FASE 6 PWA Excellence offline page loaded');
+    </script>
+</body>
+</html>

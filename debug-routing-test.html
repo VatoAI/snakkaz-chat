@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SnakkaZ Routing Debug</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+        background: #0f172a;
+        color: #e2e8f0;
+      }
+      .debug-box {
+        background: rgba(59, 130, 246, 0.1);
+        border: 1px solid rgba(59, 130, 246, 0.3);
+        border-radius: 8px;
+        padding: 20px;
+        margin: 20px 0;
+      }
+      .debug-title {
+        color: #60a5fa;
+        font-size: 1.2em;
+        margin-bottom: 10px;
+      }
+      .test-link {
+        display: inline-block;
+        background: #3b82f6;
+        color: white;
+        padding: 10px 20px;
+        text-decoration: none;
+        border-radius: 5px;
+        margin: 5px;
+      }
+      .test-link:hover {
+        background: #2563eb;
+      }
+      .status {
+        font-weight: bold;
+        padding: 5px 10px;
+        border-radius: 4px;
+      }
+      .success {
+        background: #059669;
+      }
+      .error {
+        background: #dc2626;
+      }
+      .warning {
+        background: #d97706;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🔍 SnakkaZ Routing & Components Debug</h1>
+
+    <div class="debug-box">
+      <div class="debug-title">Current Status</div>
+      <div id="current-status">
+        <div class="status warning">🔄 Checking...</div>
+      </div>
+    </div>
+
+    <div class="debug-box">
+      <div class="debug-title">Test Navigation</div>
+      <a href="http://localhost:5173/" class="test-link">Home Route (/)</a>
+      <a href="http://localhost:5173/beta" class="test-link"
+        >Beta Chat (/beta)</a
+      >
+      <a href="http://localhost:5173/admin" class="test-link">Admin (/admin)</a>
+    </div>
+
+    <div class="debug-box">
+      <div class="debug-title">Direct React Component Test</div>
+      <p>If components aren't rendering, it could be:</p>
+      <ul>
+        <li>Routing issue</li>
+        <li>Component import/export issue</li>
+        <li>React lazy loading issue</li>
+        <li>CSS/visibility issue</li>
+        <li>Authentication blocking</li>
+      </ul>
+    </div>
+
+    <div class="debug-box">
+      <div class="debug-title">What We Know</div>
+      <ul>
+        <li class="status success">✅ Vite is serving correctly</li>
+        <li class="status success">✅ React app is initializing</li>
+        <li class="status success">✅ Authentication is working</li>
+        <li class="status success">✅ MCP API is responding</li>
+        <li class="status warning">❓ SnakkaZChatBeta component visibility</li>
+      </ul>
+    </div>
+
+    <script>
+      async function testEndpoints() {
+        const status = document.getElementById("current-status");
+        status.innerHTML =
+          '<div class="status warning">🔄 Testing endpoints...</div>';
+
+        try {
+          // Test if main app is loading
+          const response = await fetch("http://localhost:5173/");
+          if (response.ok) {
+            status.innerHTML +=
+              '<div class="status success">✅ Main app endpoint working</div>';
+          } else {
+            status.innerHTML +=
+              '<div class="status error">❌ Main app endpoint failed</div>';
+          }
+
+          // Test MCP API
+          const mcpResponse = await fetch("http://localhost:3000/api/status");
+          if (mcpResponse.ok) {
+            status.innerHTML +=
+              '<div class="status success">✅ MCP API working</div>';
+          } else {
+            status.innerHTML +=
+              '<div class="status error">❌ MCP API failed</div>';
+          }
+        } catch (error) {
+          status.innerHTML += `<div class="status error">❌ Test failed: ${error.message}</div>`;
+        }
+      }
+
+      testEndpoints();
+    </script>
+  </body>
+</html>

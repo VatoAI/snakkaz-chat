@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{subject}}</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      color: #1a1a1a;
+      background-color: #f9f9f9;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .logo {
+      max-height: 60px;
+      width: auto;
+      margin-bottom: 20px;
+    }
+    .content {
+      padding: 0 20px;
+    }
+    .bitcoin-box {
+      background-color: #f7f9fc;
+      border-radius: 5px;
+      padding: 15px;
+      margin: 20px 0;
+      border: 1px solid #e6e6e6;
+    }
+    .bitcoin-address {
+      font-family: monospace;
+      word-break: break-all;
+      background-color: #fff;
+      padding: 10px;
+      border-radius: 4px;
+      border: 1px solid #e0e0e0;
+      text-align: center;
+      margin: 10px 0;
+      font-size: 14px;
+    }
+    .bitcoin-logo {
+      display: block;
+      width: 40px;
+      height: auto;
+      margin: 0 auto 10px auto;
+    }
+    h1 {
+      color: #2c2c2c;
+    }
+    h2 {
+      color: #444444;
+      font-size: 18px;
+    }
+    p {
+      color: #555555;
+      line-height: 1.5;
+    }
+    .footer {
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid #e0e0e0;
+      text-align: center;
+      color: #888888;
+      font-size: 12px;
+    }
+    .button {
+      display: inline-block;
+      background-color: #f7931a;
+      color: white;
+      padding: 10px 20px;
+      text-decoration: none;
+      border-radius: 4px;
+      font-weight: 600;
+      margin: 15px 0;
+    }
+    .status {
+      display: inline-block;
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+    .status-pending {
+      background-color: #fff8e6;
+      color: #ffa400;
+    }
+    .status-confirmed {
+      background-color: #e7f4e8;
+      color: #28a745;
+    }
+    .status-completed {
+      background-color: #e7f4e8;
+      color: #218838;
+    }
+    .status-failed {
+      background-color: #feeaea;
+      color: #dc3545;
+    }
+    .details {
+      margin: 20px 0;
+    }
+    .details table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .details table td {
+      padding: 8px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .details table td:first-child {
+      font-weight: 600;
+      color: #555;
+      width: 40%;
+    }
+    .qrcode {
+      display: block;
+      width: 150px;
+      height: 150px;
+      margin: 20px auto;
+      background-color: #ffffff;
+      padding: 10px;
+      border: 1px solid #e0e0e0;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="https://snakkaz.com/logo.png" alt="Snakkaz Chat" class="logo">
+      <h1>{{title}}</h1>
+      
+      {{#if status}}
+      <div class="status status-{{status}}">
+        {{statusText}}
+      </div>
+      {{/if}}
+    </div>
+    
+    <div class="content">
+      <p>Hei {{name}},</p>
+      
+      {{#if isPending}}
+      <p>Takk for at du velger å oppgradere til Premium! Nedenfor finner du betalingsinformasjonen for din Bitcoin-betaling:</p>
+      
+      <div class="bitcoin-box">
+        <img src="https://snakkaz.com/images/bitcoin-logo.png" alt="Bitcoin" class="bitcoin-logo">
+        <h2>Send nøyaktig dette beløpet:</h2>
+        <p><strong>{{btcAmount}} BTC</strong> (≈ {{fiatAmount}} {{currency}})</p>
+        
+        <h2>Til denne Bitcoin-adressen:</h2>
+        <div class="bitcoin-address">{{bitcoinAddress}}</div>
+        
+        {{#if qrCodeUrl}}
+        <img src="{{qrCodeUrl}}" alt="Bitcoin QR-kode" class="qrcode">
+        {{/if}}
+        
+        <p><strong>Merk:</strong> Denne betalingsforespørselen er gyldig i 24 timer, til {{expiresAt}}.</p>
+      </div>
+      
+      <p>Når betalingen er bekreftet på Bitcoin-nettverket, vil din Premium-konto bli aktivert automatisk. Dette tar vanligvis mellom 10-60 minutter, avhengig av nettverkstrafikk.</p>
+      
+      <p>Du kan følge status på din betaling ved å klikke på knappen nedenfor:</p>
+      
+      <div style="text-align: center;">
+        <a href="{{paymentUrl}}" class="button">Sjekk betalingsstatus</a>
+      </div>
+      {{/if}}
+      
+      {{#if isConfirmed}}
+      <p>Vi har mottatt din Bitcoin-betaling og den er nå bekreftet på blokkjeden!</p>
+      
+      <div class="details">
+        <table>
+          <tr>
+            <td>Transaksjons-ID:</td>
+            <td style="font-family: monospace; font-size: 13px;">{{transactionId}}</td>
+          </tr>
+          <tr>
+            <td>Beløp:</td>
+            <td>{{btcAmount}} BTC</td>
+          </tr>
+          <tr>
+            <td>Bekreftelser:</td>
+            <td>{{confirmations}}</td>
+          </tr>
+          <tr>
+            <td>Status:</td>
+            <td><strong>{{statusText}}</strong></td>
+          </tr>
+        </table>
+      </div>
+      
+      <p>Vi jobber med å aktivere dine Premium-tjenester. Du vil motta en ny e-post så snart dette er fullført.</p>
+      {{/if}}
+      
+      {{#if isCompleted}}
+      <p>Gratulerer! Din Bitcoin-betaling er fullstendig behandlet og dine Premium-tjenester er nå aktivert.</p>
+      
+      <div class="details">
+        <table>
+          <tr>
+            <td>Premium-plan:</td>
+            <td>{{planName}}</td>
+          </tr>
+          <tr>
+            <td>Aktiv fra:</td>
+            <td>{{activationDate}}</td>
+          </tr>
+          <tr>
+            <td>Neste fornyelse:</td>
+            <td>{{renewalDate}}</td>
+          </tr>
+        </table>
+      </div>
+      
+      <p>Du kan nå nyte alle fordelene med Snakkaz Chat Premium, inkludert:</p>
+      
+      <ul>
+        <li>Egen e-postkonto på mail.snakkaz.com</li>
+        <li>Utvidet lagringskapasitet</li>
+        <li>API-tilgang</li>
+        <li>Prioritert kundesupport</li>
+        <li>...og mye mer!</li>
+      </ul>
+      
+      <div style="text-align: center; margin-top: 20px;">
+        <a href="https://snakkaz.com/dashboard" class="button">Gå til dashboard</a>
+      </div>
+      {{/if}}
+      
+      {{#if isFailed}}
+      <p>Vi beklager, men det oppstod et problem med behandling av din Bitcoin-betaling.</p>
+      
+      <div class="details">
+        <table>
+          <tr>
+            <td>Feilmelding:</td>
+            <td>{{errorMessage}}</td>
+          </tr>
+          <tr>
+            <td>Dato:</td>
+            <td>{{failureDate}}</td>
+          </tr>
+        </table>
+      </div>
+      
+      <p>Dette kan skyldes en av følgende årsaker:</p>
+      <ul>
+        <li>Beløpet som ble sendt samsvarer ikke med beløpet som ble forespurt</li>
+        <li>Betalingen ble ikke bekreftet innen tidsfristen</li>
+        <li>Det oppstod en teknisk feil under behandlingen</li>
+      </ul>
+      
+      <p>Ikke bekymre deg - hvis du har sendt bitcoin, er de fortsatt trygge. Vennligst kontakt vår kundeservice for assistanse.</p>
+      
+      <div style="text-align: center; margin-top: 20px;">
+        <a href="https://snakkaz.com/kontakt" class="button">Kontakt kundeservice</a>
+      </div>
+      {{/if}}
+      
+      <p>Hvis du har noen spørsmål, kan du alltid kontakte oss på <a href="mailto:support@snakkaz.com">support@snakkaz.com</a>.</p>
+    </div>
+    
+    <div class="footer">
+      <p>&copy; 2025 Snakkaz Chat. Alle rettigheter reservert.</p>
+      <p>Org. nr.: 1234567890 | Adresse: Tech Boulevard 42, 0101 Oslo, Norge</p>
+    </div>
+  </div>
+</body>
+</html>
