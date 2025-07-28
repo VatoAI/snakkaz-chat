@@ -1,56 +1,57 @@
 import React from 'react';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render } from '../../../tests/testUtils';
 import { TOTPVerification } from '@/features/auth/two-factor/TOTPVerification';
 import { TOTPSetup } from '@/features/auth/two-factor/TOTPSetup';
 
 // Mock the TOTP utility functions
-jest.mock('@/features/auth/two-factor/useTOTP', () => ({
-  generateTOTPSecret: jest.fn(() => 'JBSWY3DPEHPK3PXP'),
-  generateTOTPToken: jest.fn(() => '123456'),
-  verifyTOTPToken: jest.fn(() => true),
-  generateQRCodeURL: jest.fn(() => 'otpauth://totp/test')
+vi.mock('@/features/auth/two-factor/useTOTP', () => ({
+  generateTOTPSecret: vi.fn(() => 'JBSWY3DPEHPK3PXP'),
+  generateTOTPToken: vi.fn(() => '123456'),
+  verifyTOTPToken: vi.fn(() => true),
+  generateQRCodeURL: vi.fn(() => 'otpauth://totp/test')
 }));
 
 // Mock the useTOTP hook
 const mockUseTOTP = {
-  verifyTOTP: jest.fn(() => true),
-  verifyBackupCode: jest.fn(() => ({ success: true })),
-  setupTOTP: jest.fn(),
+  verifyTOTP: vi.fn(() => true),
+  verifyBackupCode: vi.fn(() => ({ success: true })),
+  setupTOTP: vi.fn(),
   loading: false,
   error: null
 };
 
-jest.mock('@/features/auth/hooks/useTOTP', () => ({
+vi.mock('@/features/auth/hooks/useTOTP', () => ({
   useTOTP: () => mockUseTOTP
 }));
 
 // Mock the useAuth hook
 const mockUseAuth = {
   user: { id: 'test-user', email: 'test@example.com' },
-  completeTwoFactorAuth: jest.fn(() => Promise.resolve({ success: true })),
+  completeTwoFactorAuth: vi.fn(() => Promise.resolve({ success: true })),
   loading: false
 };
 
-jest.mock('@/features/auth/hooks/useAuth', () => ({
+vi.mock('@/features/auth/hooks/useAuth', () => ({
   useAuth: () => mockUseAuth
 }));
 
 // Mock QR code generation
-jest.mock('qrcode', () => ({
-  toDataURL: jest.fn().mockResolvedValue('data:image/png;base64,mockedqr'),
+vi.mock('qrcode', () => ({
+  toDataURL: vi.fn().mockResolvedValue('data:image/png;base64,mockedqr'),
 }));
 
 describe('Two-Factor Authentication', () => {
   const mockProps = {
     secret: 'JBSWY3DPEHPK3PXP',
-    onVerificationSuccess: jest.fn(),
-    onCancel: jest.fn(),
+    onVerificationSuccess: vi.fn(),
+    onCancel: vi.fn(),
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockUseTOTP.verifyTOTP.mockReturnValue(true);
     mockUseTOTP.verifyBackupCode.mockReturnValue({ success: true });
     mockUseAuth.completeTwoFactorAuth.mockResolvedValue({ success: true });
@@ -60,8 +61,8 @@ describe('Two-Factor Authentication', () => {
     const setupProps = {
       userId: 'test-user-id',
       userEmail: 'test@example.com',
-      onSetupComplete: jest.fn(),
-      onCancel: jest.fn(),
+      onSetupComplete: vi.fn(),
+      onCancel: vi.fn(),
     };
 
     it('should display QR code for authenticator app setup', async () => {

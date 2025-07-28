@@ -159,6 +159,5 @@ export class ChatService {
 // Export a singleton instance
 export const chatService = new ChatService();
 
-// Export the class as both default and named export for better Jest compatibility
-export { ChatService };
+// Export default only to avoid duplicate export errors
 export default ChatService;

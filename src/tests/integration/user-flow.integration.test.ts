@@ -3,9 +3,11 @@
  * Tests the complete user journey through the application
  */
 
+import { describe, it, expect, beforeEach, vi } from "vitest";
+
 describe('User Flow Integration Tests', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('Complete User Journey', () => {

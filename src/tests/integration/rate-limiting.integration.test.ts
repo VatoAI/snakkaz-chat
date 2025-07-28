@@ -5,6 +5,7 @@
  * protection against abuse while maintaining usability.
  */
 
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import request from 'supertest';
 import express from 'express';
 
@@ -13,7 +14,7 @@ const createMockRateLimiter = (options: any) => {
   let requests: number[] = [];
   
   return {
-    consume: jest.fn().mockImplementation((_key: string) => {
+    consume: vi.fn().mockImplementation((_key: string) => {
       const now = Date.now();
       const windowStart = now - (options.duration * 1000);
       

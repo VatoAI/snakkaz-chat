@@ -1,0 +1,261 @@
+/* ========================================
+   SNAKKAZ MOBILE - NORWEGIAN AURORA SYSTEM
+   Optimalisert for mobile enheter og touch
+   ======================================== */
+
+/* Touch-friendly sizing */
+:root {
+  --mobile-touch-target: 44px; /* Apple's recommendation */
+  --mobile-padding: 16px;
+  --mobile-border-radius: 12px;
+  --mobile-max-width: 100%;
+}
+
+/* Mobile-first approach */
+@media (max-width: 768px) {
+  /* General mobile optimizations */
+  .mobile-container {
+    padding: var(--mobile-padding);
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
+  /* Mobile buttons - larger touch targets */
+  .mobile-button {
+    min-height: var(--mobile-touch-target);
+    padding: 12px 20px;
+    font-size: 16px; /* Prevents zoom on iOS */
+    border-radius: var(--mobile-border-radius);
+    font-weight: 600;
+    transition: all 0.2s ease;
+  }
+
+  .mobile-button:active {
+    transform: scale(0.98);
+  }
+
+  /* Mobile inputs - prevent zoom */
+  .mobile-input {
+    min-height: var(--mobile-touch-target);
+    font-size: 16px; /* Critical for iOS - prevents zoom */
+    padding: 12px 16px;
+    border-radius: var(--mobile-border-radius);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .mobile-input:focus {
+    outline: none;
+    border-color: var(--aurora-blue);
+    box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.2);
+  }
+
+  /* Mobile card design */
+  .mobile-card {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 24px;
+    margin: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  }
+
+  /* Mobile navigation */
+  .mobile-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(10, 10, 15, 0.95);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 12px 0 env(safe-area-inset-bottom);
+    z-index: 1000;
+  }
+
+  /* Mobile chat specific */
+  .mobile-chat-container {
+    height: 100vh;
+    height: 100dvh; /* Dynamic viewport height */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .mobile-chat-header {
+    flex-shrink: 0;
+    padding: env(safe-area-inset-top) var(--mobile-padding)
+      var(--mobile-padding);
+    background: rgba(10, 10, 15, 0.95);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .mobile-chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--mobile-padding);
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  }
+
+  .mobile-chat-input {
+    flex-shrink: 0;
+    padding: var(--mobile-padding);
+    padding-bottom: calc(var(--mobile-padding) + env(safe-area-inset-bottom));
+    background: rgba(10, 10, 15, 0.95);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  /* Mobile message bubbles */
+  .mobile-message {
+    max-width: 85%;
+    padding: 12px 16px;
+    border-radius: 18px;
+    margin-bottom: 8px;
+    word-wrap: break-word;
+    font-size: 16px;
+    line-height: 1.4;
+  }
+
+  .mobile-message.own {
+    background: var(--gradient-aurora);
+    color: white;
+    margin-left: auto;
+    border-bottom-right-radius: 6px;
+  }
+
+  .mobile-message.other {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    margin-right: auto;
+    border-bottom-left-radius: 6px;
+  }
+
+  /* Mobile swipe gestures support */
+  .mobile-swipeable {
+    touch-action: pan-x pan-y;
+  }
+
+  /* Mobile loading states */
+  .mobile-loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  /* Hide desktop elements on mobile */
+  .desktop-only {
+    display: none !important;
+  }
+
+  /* Mobile drawer/sidebar */
+  .mobile-drawer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(10, 10, 15, 0.98);
+    backdrop-filter: blur(20px);
+    z-index: 9999;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+  }
+
+  .mobile-drawer.open {
+    transform: translateX(0);
+  }
+
+  /* Mobile invite system */
+  .mobile-invite-card {
+    background: var(--gradient-aurora);
+    padding: 20px;
+    border-radius: 16px;
+    margin: 16px;
+    text-align: center;
+    color: white;
+  }
+
+  /* Mobile group/marketplace */
+  .mobile-marketplace-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    padding: var(--mobile-padding);
+  }
+
+  .mobile-marketplace-item {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* Landscape mobile adjustments */
+@media (max-width: 768px) and (orientation: landscape) {
+  .mobile-chat-header {
+    padding-top: 12px;
+  }
+
+  .mobile-card {
+    margin: 8px;
+    padding: 16px;
+  }
+}
+
+/* Large mobile/small tablet */
+@media (min-width: 480px) and (max-width: 768px) {
+  .mobile-card {
+    max-width: 400px;
+    margin: 24px auto;
+  }
+
+  .mobile-marketplace-grid {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+}
+
+/* PWA support */
+@media (display-mode: standalone) {
+  .mobile-container {
+    padding-top: env(safe-area-inset-top);
+  }
+}
+
+/* Dark mode optimizations for mobile */
+@media (prefers-color-scheme: dark) {
+  .mobile-input {
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  .mobile-card {
+    background: rgba(255, 255, 255, 0.05);
+  }
+}
+
+/* Haptic feedback simulation */
+.mobile-button:active,
+.mobile-message:active,
+.mobile-marketplace-item:active {
+  transform: scale(0.98);
+  transition: transform 0.1s ease;
+}
+
+/* Accessibility improvements for mobile */
+@media (prefers-reduced-motion: reduce) {
+  .mobile-button,
+  .mobile-drawer,
+  .mobile-message {
+    transition: none;
+  }
+}

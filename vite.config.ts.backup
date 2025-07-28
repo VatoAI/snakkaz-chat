@@ -1,0 +1,94 @@
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import path from "path";
+
+// 🎯 MASTERPLAN PHASE 1: EMERGENCY PERFORMANCE FIX
+// TARGET: <5 sekunder startup (ikke 15+ sekunder!)
+export default defineConfig({
+  plugins: [
+    react({
+      // Minimal React config
+      jsxRuntime: 'automatic'
+    })
+  ],
+
+  // CONSOLE NINJA FIX: Disable problematic extensions
+  define: {
+    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
+    'process.env.VITE_SUPABASE_URL': JSON.stringify(process.env.VITE_SUPABASE_URL),
+    'process.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(process.env.VITE_SUPABASE_ANON_KEY),
+    'process.env.DISABLE_CONSOLE_NINJA': JSON.stringify('true'),
+    // Disable problematic globals
+    global: 'globalThis'
+  },
+
+  // Simple resolve
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
+  },
+
+  // MASTERPLAN SERVER CONFIG: Smart port management + speed
+  server: {
+    port: 4000,
+    host: true,
+    strictPort: false, // Graceful fallback if port busy
+    open: false,
+    cors: true,
+    
+    // SPEED OPTIMIZATIONS
+    hmr: {
+      overlay: true, // Re-enable for dev experience
+      port: 4001
+    },
+    
+    // NO warmup - causes slowdown
+    warmup: undefined,
+    
+    // Clean headers
+    headers: {}
+  },
+
+  // EMERGENCY BUILD: Minimal chunking
+  build: {
+    target: 'esnext',
+    minify: 'esbuild',
+    sourcemap: false,
+    reportCompressedSize: false,
+    chunkSizeWarningLimit: 500,
+    
+    rollupOptions: {
+      output: {
+        // SIMPLE chunking for speed
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom'],
+          'vendor-ui': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu'],
+          'vendor-supabase': ['@supabase/supabase-js'],
+          'vendor-icons': ['lucide-react']
+        }
+      }
+    }
+  },
+
+  // SPEED OPTIMIZATIONS: Minimal deps
+  optimizeDeps: {
+    include: [
+      'react', 
+      'react-dom', 
+      'react-router-dom',
+      'lucide-react'
+    ],
+    exclude: ['@vite/client', '@vite/env'],
+    force: false // Don't force rebuild unless needed
+  },
+
+  // CSS optimizations
+  css: {
+    devSourcemap: false
+  },
+
+  // Clean logging
+  clearScreen: false,
+  logLevel: 'info'
+});

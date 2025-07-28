@@ -1,9 +1,9 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
-import './styles/NorwegianAurora.css'
+import './index.css'
 
-// MINIMAL MAIN.TSX FOR NORWEGIAN AURORA
+// FIXED MAIN.TSX - CSS IMPORT ADDED
 ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
         <App />

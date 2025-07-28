@@ -1,20 +1,21 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ToastProvider } from '@/components/ui/toast';
 import { EnhancedLoginForm } from '@/features/auth/components/EnhancedLoginForm';
 
 // Mock the useAuth hook
-const mockUseAuth = jest.fn();
+const mockUseAuth = vi.fn();
 
-jest.mock('@/contexts/AuthContext', () => ({
-  ...jest.requireActual('@/contexts/AuthContext'),
+vi.mock('@/contexts/AuthContext', () => ({
+  AuthProvider: vi.fn(({ children }) => children),
   useAuth: () => mockUseAuth(),
 }));
 
 // Also mock the features auth hook
-jest.mock('@/features/auth/hooks/useAuth', () => ({
+vi.mock('@/features/auth/hooks/useAuth', () => ({
   useAuth: () => mockUseAuth(),
 }));
 
@@ -34,9 +35,9 @@ describe('AuthForm Component', () => {
   beforeEach(() => {
     // Set default mock return value
     mockUseAuth.mockReturnValue({
-      signIn: jest.fn(),
-      signUp: jest.fn(),
-      completeTwoFactorAuth: jest.fn(),
+      signIn: vi.fn(),
+      signUp: vi.fn(),
+      completeTwoFactorAuth: vi.fn(),
       loading: false,
       user: null,
     });
@@ -125,9 +126,9 @@ describe('AuthForm Component', () => {
   it('disables submit button when loading', () => {
     // Mock loading state
     mockUseAuth.mockReturnValue({
-      signIn: jest.fn(),
-      signUp: jest.fn(),
-      completeTwoFactorAuth: jest.fn(),
+      signIn: vi.fn(),
+      signUp: vi.fn(),
+      completeTwoFactorAuth: vi.fn(),
       loading: true,
       user: null,
     });

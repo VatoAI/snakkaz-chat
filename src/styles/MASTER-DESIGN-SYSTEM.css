@@ -44,6 +44,11 @@
   --border-radius-sm: 8px;
   --border-radius-lg: 16px;
   --shadow-elevation: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+  /* Liquid theme aliases - map to snakkaz colors */
+  --liquid-primary: var(--snakkaz-primary);
+  --liquid-secondary: var(--snakkaz-secondary);
+  --liquid-accent: var(--snakkaz-accent);
 }
 
 /* 2️⃣ GLOBAL RESET - INGEN KONFLIKTER */
@@ -596,5 +601,179 @@ select {
   }
 }
 
-/* 🚀 MOBILE OPTIMIZATION IMPORT */
-@import "./mobile-optimization.css";
+/* 🚀 MOBILE OPTIMIZATION STYLES - Moved inline to fix @import order */
+
+/* Mobile-first media queries */
+@media (max-width: 640px) {
+  /* Chat page mobile optimizations */
+  .liquid-container {
+    padding: 0.5rem;
+  }
+
+  .liquid-card {
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  /* Admin dashboard mobile */
+  .admin-dashboard .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-dashboard h1 {
+    font-size: 1.8rem;
+  }
+
+  /* Metric cards on mobile */
+  .metric-card {
+    text-align: center;
+    padding: 1.5rem 1rem;
+  }
+
+  .metric-card .metric-icon {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .metric-card .metric-value {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: var(--liquid-primary);
+    margin-bottom: 0.25rem;
+  }
+
+  .metric-card .metric-label {
+    font-size: 0.8rem;
+    color: var(--liquid-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* Mobile buttons */
+  .liquid-button {
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  /* Mobile navigation */
+  .glass-status-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+  }
+
+  /* Mobile chat messages */
+  .chat-message {
+    margin-bottom: 0.75rem;
+    padding: 0.75rem;
+  }
+
+  /* Mobile status indicators */
+  .glass-status-indicator {
+    font-size: 0.8rem;
+  }
+
+  .status-dot {
+    width: 6px;
+    height: 6px;
+  }
+}
+
+/* Tablet optimizations */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .admin-dashboard .grid-cols-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .liquid-container {
+    padding: 1rem;
+  }
+}
+
+/* Touch-friendly optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .liquid-button {
+    min-height: 44px;
+  }
+
+  .glass-card:hover {
+    transform: none;
+  }
+
+  .liquid-button:hover {
+    transform: scale(1.02);
+  }
+}
+
+/* Dark mode mobile optimizations */
+@media (prefers-color-scheme: dark) and (max-width: 640px) {
+  .liquid-container {
+    background: linear-gradient(
+      135deg,
+      rgba(6, 19, 36, 0.95) 0%,
+      rgba(14, 35, 52, 0.95) 50%,
+      rgba(6, 19, 36, 0.95) 100%
+    );
+  }
+
+  .liquid-card {
+    background: rgba(15, 45, 85, 0.2);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+  }
+}
+
+/* 🎯 MISSING CSS CLASSES - QUICK FIX */
+
+/* Liquid Primary Text Color */
+.liquid-primary {
+  color: var(--liquid-primary) !important;
+}
+
+.text-liquid-primary {
+  color: var(--liquid-primary) !important;
+}
+
+.text-liquid-secondary {
+  color: var(--liquid-secondary) !important;
+}
+
+/* SnakkaZ Liquid Glass Effect */
+.snakkaz-liquid-glass {
+  background: var(--glass-bg) !important;
+  border: 1px solid var(--glass-border) !important;
+  backdrop-filter: var(--backdrop-blur) !important;
+  box-shadow: var(--glass-shadow) !important;
+  border-radius: var(--border-radius) !important;
+  transition: var(--transition-smooth) !important;
+}
+
+.snakkaz-liquid-glass:hover {
+  background: var(--glass-bg-hover) !important;
+  border-color: var(--glass-border-hover) !important;
+  box-shadow: var(--glass-shadow-hover) !important;
+}
+
+/* Glass Crystal Effect */
+.glass-crystal {
+  background: linear-gradient(
+    135deg,
+    rgba(100, 181, 246, 0.1) 0%,
+    rgba(77, 208, 225, 0.08) 50%,
+    rgba(100, 181, 246, 0.1) 100%
+  ) !important;
+  border: 1px solid rgba(100, 181, 246, 0.3) !important;
+  backdrop-filter: blur(16px) !important;
+  box-shadow: 
+    0 8px 32px rgba(100, 181, 246, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+  border-radius: var(--border-radius-lg) !important;
+}
+
+/* Glass Card Base */
+.glass-card {
+  background: var(--glass-bg) !important;
+  border: 1px solid var(--glass-border) !important;
+  backdrop-filter: var(--backdrop-blur) !important;
+  box-shadow: var(--glass-shadow) !important;
+  border-radius: var(--border-radius) !important;
+  transition: var(--transition-smooth) !important;
+}

@@ -2,37 +2,85 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
 
-// MINIMAL CONFIG FOR NORWEGIAN AURORA - GUARANTEED WORKING
+// 🚀 ULTRA-OPTIMIZED VITE CONFIG - SPEED FOCUSED
 export default defineConfig({
-  plugins: [react()],
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: ['./src/test/setup.ts'],
+  },
+  plugins: [
+    react({
+      // Optimize React plugin
+      babel: {
+        plugins: []
+      }
+    })
+  ],
+
+  // Aggressive caching
+  cacheDir: 'node_modules/.vite',
+
+  // Minimal defines
+  define: {
+    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
+    'process.env.VITE_SUPABASE_URL': JSON.stringify(process.env.VITE_SUPABASE_URL),
+    'process.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(process.env.VITE_SUPABASE_ANON_KEY),
+  },
+
+  // Simple alias only
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
   },
+
+  // Ultra-fast server config
   server: {
-    port: 3000, // DIFFERENT PORT FOR FRESH START!
+    port: 4000,
     host: true,
-    open: false,
     strictPort: false,
-    hmr: {
-      overlay: false, // Disable error overlay for cleaner experience
-    },
-  },
-  optimizeDeps: {
-    include: ["react", "react-dom"],
-  },
-  build: {
-    sourcemap: false,
-    minify: false, // DISABLE FOR NOW - easier debugging
-    rollupOptions: {
-      output: {
-        manualChunks: undefined, // Prevent chunk splitting issues
-      },
-    },
-  },
-  // Prevent auto-opening browser
-  preview: {
     open: false,
+    cors: true,
+    
+    // Minimal middleware
+    middlewareMode: false,
+    
+    // Fixed HMR
+    hmr: {
+      port: 4001,
+      host: 'localhost',
+      overlay: false
+    },
+    
+    // No proxy
+    proxy: {}
   },
+
+  // Aggressive build optimizations
+  build: {
+    target: 'esnext',
+    minify: 'esbuild',
+    sourcemap: false,
+    rollupOptions: {
+      external: [],
+      output: {
+        manualChunks: undefined
+      }
+    },
+    chunkSizeWarningLimit: 1000,
+    reportCompressedSize: false
+  },
+
+  // Ultra-fast dev optimizations
+  optimizeDeps: {
+    include: ['react', 'react-dom'],
+    exclude: [],
+    force: false
+  },
+
+  // Disable unnecessary features in dev
+  css: {
+    devSourcemap: false
+  }
 });

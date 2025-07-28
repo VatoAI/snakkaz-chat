@@ -37,18 +37,10 @@
         position: relative !important;
       }
 
-      /* Emergency debug indicator */
-      #root::before {
-        content: "🚀 SnakkaZ Loading..." !important;
-        position: fixed !important;
-        top: 20px !important;
-        left: 20px !important;
-        background: rgba(0, 255, 0, 0.8) !important;
-        color: black !important;
-        padding: 10px !important;
-        border-radius: 5px !important;
-        z-index: 10000 !important;
-        font-weight: bold !important;
+      /* Emergency loading removed - clean startup */
+      .snakkaz-ready {
+        opacity: 1 !important;
+        visibility: visible !important;
       }
 
       /* Force any content to be visible */

@@ -2,6 +2,7 @@ import '@testing-library/jest-dom';
 import React from 'react';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { renderWithAuth, mockAuthenticatedUser } from '../../../tests/testUtils';
 import SimpleChat from '@/components/chat/SimpleChat';
 
@@ -12,25 +13,25 @@ const mockUser = {
   name: 'Test User'
 };
 
-jest.mock('@/hooks/useAuth', () => ({
+vi.mock('@/hooks/useAuth', () => ({
   useAuth: () => ({
     user: mockUser,
     loading: false,
     error: null,
-    signIn: jest.fn(),
-    signOut: jest.fn(),
-    signUp: jest.fn(),
+    signIn: vi.fn(),
+    signOut: vi.fn(),
+    signUp: vi.fn(),
   }),
 }));
 
 // Mock the UnifiedNavigation to avoid complex dependencies
-jest.mock('@/components/navigation/UnifiedNavigation', () => ({
+vi.mock('@/components/navigation/UnifiedNavigation', () => ({
   UnifiedNavigation: () => <div data-testid="unified-navigation">Navigation</div>
 }));
 
 describe('Chat Functionality Integration Tests', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('Basic Chat Interface', () => {

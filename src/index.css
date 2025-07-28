@@ -1,7 +1,7 @@
 /* SnakkaZ Beta - Norwegian Aurora Design System */
 
-@import "./styles/super-design.css";
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+@import "./styles/mobile.css";
+@import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -19,20 +19,25 @@
   --aurora-green: #64ffda;
   --aurora-pink: #ff9a9e;
   --aurora-amber: #fecfef;
-  
+
   /* Premium Gradients */
-  --gradient-aurora: linear-gradient(135deg, #4facfe 0%, #00f2fe 50%, #7877c6 100%);
+  --gradient-aurora: linear-gradient(
+    135deg,
+    #4facfe 0%,
+    #00f2fe 50%,
+    #7877c6 100%
+  );
   --gradient-northern: linear-gradient(135deg, #00f2fe 0%, #64ffda 100%);
   --gradient-midnight: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 100%);
-  
+
   /* Glass Morphism */
   --glass-light: rgba(255, 255, 255, 0.08);
   --glass-medium: rgba(255, 255, 255, 0.12);
   --glass-strong: rgba(255, 255, 255, 0.18);
-  
+
   /* Typography */
-  --font-display: 'Orbitron', monospace;
-  --font-body: 'Space Grotesk', sans-serif;
+  --font-display: "Orbitron", monospace;
+  --font-body: "Space Grotesk", sans-serif;
 }
 
 /* Force Norwegian Aurora theme over everything */
@@ -133,11 +138,13 @@ body {
 
 /* Norwegian Aurora Animation */
 @keyframes aurora-glow {
-  0%, 100% { 
+  0%,
+  100% {
     box-shadow: 0 0 20px rgba(79, 172, 254, 0.3);
   }
-  50% { 
-    box-shadow: 0 0 30px rgba(0, 242, 254, 0.5), 0 0 40px rgba(79, 172, 254, 0.3);
+  50% {
+    box-shadow: 0 0 30px rgba(0, 242, 254, 0.5),
+      0 0 40px rgba(79, 172, 254, 0.3);
   }
 }
 

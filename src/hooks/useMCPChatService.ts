@@ -65,7 +65,7 @@ export const useMCPChatService = () => {
 
   // MCP Server URL - fra miljøvariabler eller default
   const mcpServerUrl =
-    process.env.REACT_APP_MCP_SERVER_URL || "http://localhost:3000";
+    import.meta.env.VITE_MCP_SERVER_URL || "http://localhost:3000";
 
   /**
    * Koble til MCP serveren og hent initial data

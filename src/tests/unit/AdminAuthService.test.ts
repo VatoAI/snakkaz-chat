@@ -5,13 +5,14 @@
  * and security compliance in the authentication system.
  */
 
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { AdminAuthService } from '@/admin/services/AdminAuthService';
 
 // Mock the ApiService
-jest.mock('@/admin/services/ApiService', () => ({
+vi.mock('@/admin/services/ApiService', () => ({
   ApiService: {
-    post: jest.fn(),
-    get: jest.fn(),
+    post: vi.fn(),
+    get: vi.fn(),
   }
 }));
 
@@ -21,7 +22,7 @@ describe('AdminAuthService - JWT Refresh Tests', () => {
   beforeEach(() => {
     // Clear localStorage before each test
     localStorage.clear();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('Token Refresh Functionality', () => {

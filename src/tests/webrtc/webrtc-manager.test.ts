@@ -1,80 +1,81 @@
 import '@testing-library/jest-dom';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { WebRTCManager } from '../../utils/webrtc/webrtc-manager';
 
 // Mock modules
-jest.mock('../../utils/encryption', () => ({
-  generateKeyPair: jest.fn().mockResolvedValue({
+vi.mock('../../utils/encryption', () => ({
+  generateKeyPair: vi.fn().mockResolvedValue({
     publicKey: { key: 'mock-public-key' },
     privateKey: { key: 'mock-private-key' }
   }),
-  encryptMessage: jest.fn().mockResolvedValue({
+  encryptMessage: vi.fn().mockResolvedValue({
     encryptedContent: 'encrypted-message',
     key: 'encrypted-key',
     iv: 'iv-string'
   }),
-  decryptMessage: jest.fn().mockResolvedValue('decrypted-message'),
-  establishSecureConnection: jest.fn().mockResolvedValue('secure-connection-key')
+  decryptMessage: vi.fn().mockResolvedValue('decrypted-message'),
+  establishSecureConnection: vi.fn().mockResolvedValue('secure-connection-key')
 }));
 
-jest.mock('../../utils/webrtc/peer-manager', () => {
+vi.mock('../../utils/webrtc/peer-manager', () => {
   return {
-    PeerManager: jest.fn().mockImplementation(() => ({
+    PeerManager: vi.fn().mockImplementation(() => ({
       signalingService: {
-        setupSignalingListener: jest.fn().mockReturnValue(() => {}),
-        sendSignal: jest.fn().mockResolvedValue(true),
+        setupSignalingListener: vi.fn().mockReturnValue(() => {}),
+        sendSignal: vi.fn().mockResolvedValue(true),
       },
-      handleIncomingSignal: jest.fn().mockResolvedValue(true),
-      createPeerConnection: jest.fn().mockImplementation((peerId) => {
+      handleIncomingSignal: vi.fn().mockResolvedValue(true),
+      createPeerConnection: vi.fn().mockImplementation((peerId) => {
         const connection = new (global as any).RTCPeerConnection({});
         const dataChannel = connection.createDataChannel('data', {});
         return { connection, dataChannel };
       }),
-      getPeerConnection: jest.fn().mockImplementation((peerId) => {
+      getPeerConnection: vi.fn().mockImplementation((peerId) => {
         const connection = new (global as any).RTCPeerConnection({});
         const dataChannel = connection.createDataChannel('data', {});
         return { connection, dataChannel };
       }),
-      removePeerConnection: jest.fn(),
-      removeAllPeerConnections: jest.fn(),
+      removePeerConnection: vi.fn(),
+      removeAllPeerConnections: vi.fn(),
     }))
   };
 });
 
 // Other mocked dependencies
-jest.mock('../../utils/webrtc/connection-manager', () => ({
-  ConnectionManager: jest.fn().mockImplementation(() => ({
-    connectToPeer: jest.fn().mockImplementation(async (_peerId) => {
+vi.mock('../../utils/webrtc/connection-manager', () => ({
+  ConnectionManager: vi.fn().mockImplementation(() => ({
+    connectToPeer: vi.fn().mockImplementation(async (_peerId) => {
       const connection = new (global as any).RTCPeerConnection({});
       const dataChannel = connection.createDataChannel('data', {});
       return { connection, dataChannel };
     }),
-    disconnect: jest.fn(),
-    disconnectAll: jest.fn(),
-    getConnectionState: jest.fn().mockReturnValue('connected'),
-    getDataChannelState: jest.fn().mockReturnValue('open'),
+    disconnect: vi.fn(),
+    disconnectAll: vi.fn(),
+    getConnectionState: vi.fn().mockReturnValue('connected'),
+    getDataChannelState: vi.fn().mockReturnValue('open'),
   }))
 }));
 
-jest.mock('../../utils/webrtc/message-handler', () => ({
-  MessageHandler: jest.fn().mockImplementation(() => ({
-    setupMessageCallback: jest.fn().mockImplementation((callback: any) => {
+vi.mock('../../utils/webrtc/message-handler', () => ({
+  MessageHandler: vi.fn().mockImplementation(() => ({
+    setupMessageCallback: vi.fn().mockImplementation((callback: any) => {
       return (message: any, peerId: any) => callback(message, peerId);
     }),
-    sendMessage: jest.fn().mockResolvedValue(true),
-    sendDirectMessage: jest.fn().mockResolvedValue(true),
+    sendMessage: vi.fn().mockResolvedValue(true),
+    sendDirectMessage: vi.fn().mockResolvedValue(true),
   }))
 }));
 
-jest.mock('../../utils/webrtc/reconnection-manager', () => ({
-  ReconnectionManager: jest.fn().mockImplementation(() => ({
-    attemptReconnect: jest.fn().mockResolvedValue(true),
+vi.mock('../../utils/webrtc/reconnection-manager', () => ({
+  ReconnectionManager: vi.fn().mockImplementation(() => ({
+    attemptReconnect: vi.fn().mockResolvedValue(true),
   }))
 }));
 
-jest.mock('../../utils/webrtc/connection-state-manager', () => ({
-  ConnectionStateManager: jest.fn().mockImplementation(() => ({
-    isPeerReady: jest.fn().mockReturnValue(true),
-    ensurePeerReady: jest.fn().mockResolvedValue(true),
+vi.mock('../../utils/webrtc/connection-state-manager', () => ({
+  ConnectionStateManager: vi.fn().mockImplementation(() => ({
+    isPeerReady: vi.fn().mockReturnValue(true),
+    ensurePeerReady: vi.fn().mockResolvedValue(true),
   }))
 }));
 
@@ -82,7 +83,7 @@ describe('WebRTCManager', () => {
   let webRTCManager: any;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     webRTCManager = new WebRTCManager('test-user-id');
   });
 
@@ -138,7 +139,7 @@ describe('WebRTCManager', () => {
     });
 
     test('should register message callback', () => {
-      const callback = jest.fn();
+      const callback = vi.fn();
       webRTCManager.onMessage(callback);
       
       // Validate the callback was registered (cannot easily test the actual call)
@@ -172,16 +173,16 @@ describe('WebRTCManager', () => {
   describe('Fallback and Error Handling', () => {
     test('should attempt reconnection when sending to disconnected peer', async () => {
       // Override the isPeerReady method to return false initially, then true
-      const isPeerReadySpy = jest.spyOn(webRTCManager.connectionStateManager, 'isPeerReady')
+      const isPeerReadySpy = vi.spyOn(webRTCManager.connectionStateManager, 'isPeerReady')
         .mockReturnValueOnce(false)  // First call returns false
         .mockReturnValueOnce(false)  // Second call still false
         .mockReturnValueOnce(true);  // Third call returns true after "reconnection"
       
       // Mock the connectToPeer method to simulate successful reconnection
-      const connectToPeerSpy = jest.spyOn(webRTCManager, 'connectToPeer').mockResolvedValue(true);
+      const connectToPeerSpy = vi.spyOn(webRTCManager, 'connectToPeer').mockResolvedValue(true);
       
       // Mock sendDirectMessage on messageHandler to avoid the actual sending
-      const sendMessageSpy = jest.spyOn(webRTCManager.messageHandler, 'sendDirectMessage').mockResolvedValue(true);
+      const sendMessageSpy = vi.spyOn(webRTCManager.messageHandler, 'sendDirectMessage').mockResolvedValue(true);
       
       await webRTCManager.sendDirectMessage('peer-1', 'Hello after reconnect');
       

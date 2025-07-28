@@ -1,7 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { BrowserRouter } from 'react-router-dom';
-import BasicAuthPage from '../../pages/BasicAuthPage';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import Login from '../../pages/Login';
 
 const MockAuthProvider = ({ children }: { children: React.ReactNode }) => {
   return <div data-testid="auth-flow-provider">{children}</div>;
@@ -19,11 +20,11 @@ const renderWithProviders = (component: React.ReactElement) => {
 
 describe('Authentication Flow Integration Tests', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('should switch to registration mode', async () => {
-    renderWithProviders(<BasicAuthPage />);
+    renderWithProviders(<Login />);
     
     await waitFor(() => {
       expect(screen.getByTestId('auth-flow-provider')).toBeInTheDocument();
@@ -33,7 +34,7 @@ describe('Authentication Flow Integration Tests', () => {
   }, 15000);
 
   it('should handle authentication state changes', async () => {
-    renderWithProviders(<BasicAuthPage />);
+    renderWithProviders(<Login />);
     
     await waitFor(() => {
       expect(screen.getByTestId('auth-flow-provider')).toBeInTheDocument();

@@ -1,57 +1,57 @@
 /**
- * @jest-environment jsdom
+ * @vitest-environment jsdom
  */
 
-import { describe, expect, it, jest, beforeEach, afterEach } from '@jest/globals';
+import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 
 // Mock for RTCPeerConnection
 const mockRTCPeerConnectionInstance = {
-  createOffer: jest.fn().mockResolvedValue({ type: 'offer', sdp: 'mock-sdp' }),
-  setLocalDescription: jest.fn().mockResolvedValue(undefined),
-  setRemoteDescription: jest.fn().mockResolvedValue(undefined),
-  createAnswer: jest.fn().mockResolvedValue({ type: 'answer', sdp: 'mock-sdp-answer' }),
-  createDataChannel: jest.fn().mockReturnValue({
+  createOffer: vi.fn().mockResolvedValue({ type: 'offer', sdp: 'mock-sdp' }),
+  setLocalDescription: vi.fn().mockResolvedValue(undefined),
+  setRemoteDescription: vi.fn().mockResolvedValue(undefined),
+  createAnswer: vi.fn().mockResolvedValue({ type: 'answer', sdp: 'mock-sdp-answer' }),
+  createDataChannel: vi.fn().mockReturnValue({
     onopen: null,
     onmessage: null,
     onclose: null,
     onerror: null,
-    send: jest.fn(),
-    close: jest.fn(),
+    send: vi.fn(),
+    close: vi.fn(),
   }),
   onicecandidate: null,
   onconnectionstatechange: null,
   oniceconnectionstatechange: null,
   ondatachannel: null,
-  getStats: jest.fn().mockResolvedValue([
+  getStats: vi.fn().mockResolvedValue([
     { type: 'data-channel', bytesReceived: 100, bytesSent: 200 },
     { packetsLost: 0 }
   ]),
   connectionState: 'new',
   iceConnectionState: 'new',
-  close: jest.fn(),
-  addIceCandidate: jest.fn().mockResolvedValue(undefined),
+  close: vi.fn(),
+  addIceCandidate: vi.fn().mockResolvedValue(undefined),
 };
 
 // Mock for navigator.mediaDevices
 const mockMediaDevices = {
-  getUserMedia: jest.fn().mockResolvedValue({
-    getTracks: jest.fn().mockReturnValue([]),
+  getUserMedia: vi.fn().mockResolvedValue({
+    getTracks: vi.fn().mockReturnValue([]),
   }),
 };
 
 // Mock for WebCrypto API
 const mockCrypto = {
   subtle: {
-    generateKey: jest.fn().mockResolvedValue({
+    generateKey: vi.fn().mockResolvedValue({
       publicKey: 'mock-public-key',
       privateKey: 'mock-private-key'
     }),
-    deriveBits: jest.fn().mockResolvedValue(new ArrayBuffer(32)),
-    importKey: jest.fn().mockResolvedValue('mock-encryption-key'),
-    encrypt: jest.fn().mockResolvedValue(new ArrayBuffer(64)),
-    decrypt: jest.fn().mockResolvedValue(new TextEncoder().encode('decrypted-message').buffer),
+    deriveBits: vi.fn().mockResolvedValue(new ArrayBuffer(32)),
+    importKey: vi.fn().mockResolvedValue('mock-encryption-key'),
+    encrypt: vi.fn().mockResolvedValue(new ArrayBuffer(64)),
+    decrypt: vi.fn().mockResolvedValue(new TextEncoder().encode('decrypted-message').buffer),
   },
-  getRandomValues: jest.fn().mockImplementation((arr) => {
+  getRandomValues: vi.fn().mockImplementation((arr) => {
     for (let i = 0; i < arr.length; i++) {
       arr[i] = Math.floor(Math.random() * 256);
     }
@@ -62,7 +62,7 @@ const mockCrypto = {
 // Setup globals before tests
 beforeEach(() => {
   // Setup RTCPeerConnection mock
-  global.RTCPeerConnection = jest.fn().mockImplementation(() => mockRTCPeerConnectionInstance);
+  global.RTCPeerConnection = vi.fn().mockImplementation(() => mockRTCPeerConnectionInstance);
   // Setup navigator mock
   global.navigator = {
     ...global.navigator,
@@ -80,7 +80,7 @@ beforeEach(() => {
 
 // Clean up after tests
 afterEach(() => {
-  jest.clearAllMocks();
+  vi.clearAllMocks();
 });
 
 // Import functions to test (these would normally be imported from your code)
@@ -194,7 +194,7 @@ const decryptMessage = async (encryptedData, iv) => {
 // Tests
 describe('WebRTC Functionality', () => {
   it('should create a peer connection', () => {
-    const { peerConnection, dataChannel } = setupWebRTC('user123', jest.fn());
+    const { peerConnection, dataChannel } = setupWebRTC('user123', vi.fn());
     
     expect(peerConnection).toBeDefined();
     expect(dataChannel).toBeDefined();
@@ -208,7 +208,7 @@ describe('WebRTC Functionality', () => {
   });
   
   it('should create an offer', async () => {
-    const { peerConnection } = setupWebRTC('user123', jest.fn());
+    const { peerConnection } = setupWebRTC('user123', vi.fn());
     const offer = await createSignalingOffer(peerConnection);
     
     expect(offer).toEqual({ type: 'offer', sdp: 'mock-sdp' });
@@ -217,7 +217,7 @@ describe('WebRTC Functionality', () => {
   });
   
   it('should handle an answer', async () => {
-    const { peerConnection } = setupWebRTC('user123', jest.fn());
+    const { peerConnection } = setupWebRTC('user123', vi.fn());
     const answer = { type: 'answer', sdp: 'mock-sdp-answer' };
     const result = await handleSignalingAnswer(peerConnection, answer);
     
@@ -226,7 +226,7 @@ describe('WebRTC Functionality', () => {
   });
   
   it('should handle connection state changes', () => {
-    const { peerConnection } = setupWebRTC('user123', jest.fn());
+    const { peerConnection } = setupWebRTC('user123', vi.fn());
     
     // Simulate connection state change
     mockRTCPeerConnectionInstance.connectionState = 'connected';
@@ -236,11 +236,11 @@ describe('WebRTC Functionality', () => {
   });
   
   it('should handle ICE candidates', () => {
-    const { peerConnection } = setupWebRTC('user123', jest.fn());
+    const { peerConnection } = setupWebRTC('user123', vi.fn());
     const mockCandidate = { candidate: 'mock-ice-candidate' };
     
     // Setup spy for console.log
-    const consoleSpy = jest.spyOn(console, 'log');
+    const consoleSpy = vi.spyOn(console, 'log');
     
     // Trigger ICE candidate event
     peerConnection.onicecandidate({ candidate: mockCandidate });
@@ -261,7 +261,7 @@ describe('WebRTC Functionality', () => {
   });
   
   it('should handle data channel messaging', () => {
-    const messageCallback = jest.fn();
+    const messageCallback = vi.fn();
     const { dataChannel } = setupWebRTC('user123', messageCallback);
     
     // Simulate receiving a message
@@ -271,7 +271,7 @@ describe('WebRTC Functionality', () => {
   });
   
   it('should get connection statistics', async () => {
-    const { peerConnection } = setupWebRTC('user123', jest.fn());
+    const { peerConnection } = setupWebRTC('user123', vi.fn());
     
     const stats = await peerConnection.getStats();
     
@@ -282,7 +282,7 @@ describe('WebRTC Functionality', () => {
   });
   
   it('should clean up resources when closed', () => {
-    const { peerConnection, dataChannel } = setupWebRTC('user123', jest.fn());
+    const { peerConnection, dataChannel } = setupWebRTC('user123', vi.fn());
     
     peerConnection.close();
     
@@ -290,13 +290,13 @@ describe('WebRTC Functionality', () => {
   });
   
   it('should handle failures when creating offer', async () => {
-    const { peerConnection } = setupWebRTC('user123', jest.fn());
+    const { peerConnection } = setupWebRTC('user123', vi.fn());
     
     // Mock a failure
     peerConnection.createOffer.mockRejectedValueOnce(new Error('Failed to create offer'));
     
     // Setup spy for console.error
-    const consoleSpy = jest.spyOn(console, 'error');
+    const consoleSpy = vi.spyOn(console, 'error');
     
     await expect(createSignalingOffer(peerConnection)).rejects.toThrow('Failed to create offer');
     expect(consoleSpy).toHaveBeenCalledWith('Error creating offer:', expect.any(Error));
@@ -305,13 +305,13 @@ describe('WebRTC Functionality', () => {
   });
   
   it('should handle failures when processing answer', async () => {
-    const { peerConnection } = setupWebRTC('user123', jest.fn());
+    const { peerConnection } = setupWebRTC('user123', vi.fn());
     
     // Mock a failure
     peerConnection.setRemoteDescription.mockRejectedValueOnce(new Error('Failed to set remote description'));
     
     // Setup spy for console.error
-    const consoleSpy = jest.spyOn(console, 'error');
+    const consoleSpy = vi.spyOn(console, 'error');
     
     const result = await handleSignalingAnswer(peerConnection, { type: 'answer', sdp: 'invalid-sdp' });
     
@@ -327,12 +327,12 @@ describe('WebRTC Fallback Mechanism', () => {
     // Remove RTCPeerConnection to simulate unsupported browser
     delete global.RTCPeerConnection;
     
-    expect(() => setupWebRTC('user123', jest.fn())).toThrow();
+    expect(() => setupWebRTC('user123', vi.fn())).toThrow();
   });
   
   it('should handle ICE connection failures', () => {
-    const { peerConnection } = setupWebRTC('user123', jest.fn());
-    const consoleSpy = jest.spyOn(console, 'log');
+    const { peerConnection } = setupWebRTC('user123', vi.fn());
+    const consoleSpy = vi.spyOn(console, 'log');
     
     // Simulate ICE connection failure
     mockRTCPeerConnectionInstance.iceConnectionState = 'failed';

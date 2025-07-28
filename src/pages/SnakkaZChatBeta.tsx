@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,8 +22,39 @@ import {
   Shield
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-// FJERNET: import chatService siden vi kun bruker MCP
-import { SnakkaZInviteSystem } from '@/components/invite/SnakkaZInviteSystem';
+import { SnakkaZLogo } from '@/components/branding/SnakkaZLogo';
+
+// 🚀 SAFE LAZY LOAD WITH ERROR HANDLING
+const MCPDashboard = lazy(() => 
+  import('@/components/dashboard/MCPDashboard').catch(() => ({ 
+    default: () => <div className="text-white p-4">Dashboard ikke tilgjengelig</div> 
+  }))
+);
+const SystemArchitecture = lazy(() => 
+  import('@/components/system/SystemArchitecture').catch(() => ({ 
+    default: () => <div className="text-white p-4">System arkitektur ikke tilgjengelig</div> 
+  }))
+);
+const SnakkaZAI = lazy(() => 
+  import('@/components/ai/SnakkaZAI').catch(() => ({ 
+    default: () => <div className="text-white p-4">AI ikke tilgjengelig</div> 
+  }))
+);
+const SnakkaZInviteSystem = lazy(() => 
+  import('@/components/invite/SnakkaZInviteSystem').catch(() => ({ 
+    default: () => <div className="text-white p-4">Invite system ikke tilgjengelig</div> 
+  }))
+);
+
+// Loading fallback component
+const ComponentLoader = ({ name }: { name: string }) => (
+  <div className="flex items-center justify-center h-32">
+    <div className="flex flex-col items-center gap-2 text-white/70">
+      <Loader className="h-6 w-6 animate-spin" />
+      <span className="text-sm">Laster {name}...</span>
+    </div>
+  </div>
+);
 
 // Type definitions for MCP compatibility
 interface ChatRoom {
@@ -47,7 +78,7 @@ interface UserProfile {
   last_seen: string;
   display_name?: string;
 }
-import { SnakkaZLogo } from '@/components/branding/SnakkaZLogo';
+
 import { useMCPWebRTC } from '@/providers/MCPWebRTCProvider';
 import MCPWebRTCStatus from '@/components/chat/MCPWebRTCStatus';
 import { useMCPChatService } from '@/hooks/useMCPChatService';
@@ -129,6 +160,17 @@ const SnakkaZChatBeta: React.FC = () => {
   const [isInviteSystemOpen, setIsInviteSystemOpen] = useState(false);
   const [showConnectionStatus, setShowConnectionStatus] = useState(false);
   const [showMCPDashboard, setShowMCPDashboard] = useState(false);
+  const [showSystemArchitecture, setShowSystemArchitecture] = useState(false);
+  const [showAIInterface, setShowAIInterface] = useState(false);
+  const [aiMood, setAiMood] = useState<'happy' | 'neutral' | 'curious' | 'focused' | 'sleepy'>('neutral');
+
+  // 🤖 NEW: Ollama AI Integration
+  const {
+    isConnected: ollamaConnected,
+    models: ollamaModels,
+    generateNorwegian,
+    error: ollamaError
+  } = useOllama();
 
   // 🚀 EMERGENCY: SKIP OLD CHAT SERVICE - USE ONLY MCP!
   // Chat data - Use ONLY MCP rooms and messages
@@ -146,13 +188,13 @@ const SnakkaZChatBeta: React.FC = () => {
 
   const onlineUsers: UserProfile[] = [
     {
-      id: 'mcp-user-1',
-      email: 'demo@snakkaz.com',
-      username: 'MCP Demo User',
+      id: 'snakkaz-user-1',
+      email: 'user@snakkaz.com',
+      username: 'SnakkaZ User',
       avatar_url: '',
       status: 'online',
       last_seen: new Date().toISOString(),
-      display_name: 'MCP Demo User'
+      display_name: 'SnakkaZ User'
     }
   ];
 
@@ -313,6 +355,22 @@ const SnakkaZChatBeta: React.FC = () => {
         >
           {showMCPDashboard ? '❌ Hide' : '🚀 MCP Dashboard'}
         </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setShowSystemArchitecture(!showSystemArchitecture)}
+          className="glass-button text-xs"
+        >
+          {showSystemArchitecture ? '❌ Hide' : '🏗️ System'}
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setShowAIInterface(!showAIInterface)}
+          className="glass-button text-xs"
+        >
+          {showAIInterface ? '❌ Hide' : '🤖 AI'}
+        </Button>
       </div>
 
       {/* Mobile Header */}
@@ -357,7 +415,7 @@ const SnakkaZChatBeta: React.FC = () => {
             {/* User info */}
             <div className="glass-card p-3 rounded-lg">
               <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-gradient-to-r from-snakkaz-primary to-snakkaz-secondary rounded-full flex items-center justify-center">
+                <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center">
                   <span className="text-white font-bold text-sm">
                     {user?.email?.charAt(0).toUpperCase()}
                   </span>
@@ -366,7 +424,7 @@ const SnakkaZChatBeta: React.FC = () => {
                   <p className="text-white text-sm font-medium truncate">
                     {user?.email?.split('@')[0]}
                   </p>
-                  <p className="text-snakkaz-primary text-xs">Online</p>
+                  <p className="text-blue-500 text-xs">Online</p>
                 </div>
                 <div className="flex items-center space-x-1">
                   <Button
@@ -384,7 +442,7 @@ const SnakkaZChatBeta: React.FC = () => {
                     variant="ghost"
                     size="sm"
                     onClick={signOut}
-                    className="text-snakkaz-secondary hover:text-snakkaz-primary p-1"
+                    className="text-cyan-500 hover:text-blue-500 p-1"
                     title="Logg ut"
                   >
                     <LogOut size={16} />
@@ -397,7 +455,7 @@ const SnakkaZChatBeta: React.FC = () => {
           {/* Room List */}
           <ScrollArea className="flex-1 p-4">
             <div className="space-y-2">
-              <div className="text-liquid-primary text-sm font-medium mb-3 flex items-center justify-between">
+              <div className="text-blue-400 text-sm font-medium mb-3 flex items-center justify-between">
                 OFFENTLIGE ROM
                 <Button variant="ghost" size="sm" className="p-1 h-auto">
                   <Plus size={14} />
@@ -415,12 +473,12 @@ const SnakkaZChatBeta: React.FC = () => {
                     "w-full text-left p-3 rounded-lg transition-all duration-200",
                     "flex items-center justify-between group",
                     activeRoom === room.id
-                      ? "snakkaz-liquid-glass text-white"
-                      : "hover:snakkaz-liquid-glass text-liquid-secondary hover:text-white"
+                      ? "bg-slate-800/60 backdrop-blur-lg text-white"
+                      : "hover:bg-slate-800/60 backdrop-blur-lg text-liquid-secondary hover:text-white"
                   )}
                 >
                   <div className="flex items-center space-x-2 flex-1">
-                    <Hash size={16} className="text-liquid-primary" />
+                    <Hash size={16} className="text-blue-400" />
                     <span className="font-medium">{room.name}</span>
                   </div>
                   <Badge variant="secondary" className="text-xs">
@@ -435,22 +493,22 @@ const SnakkaZChatBeta: React.FC = () => {
         {/* Main Chat Area */}
         <div className="flex-1 flex flex-col">
           {/* Chat Header (Desktop) */}
-          <div className="hidden lg:flex items-center justify-between p-4 snakkaz-liquid-glass border-b border-liquid-primary/20">
+          <div className="hidden lg:flex items-center justify-between p-4 bg-slate-800/60 backdrop-blur-lg border-b border-blue-400/20">
             <div className="flex items-center space-x-3">
-              <Hash size={20} className="text-liquid-primary" />
+              <Hash size={20} className="text-blue-400" />
               <h2 className="text-xl font-semibold text-white">
                 {activeRoomData?.name || 'Chat'}
               </h2>
-              <Badge variant="outline" className="border-liquid-primary/50 text-liquid-primary">
+              <Badge variant="outline" className="border-blue-400/50 text-blue-400">
                 {activeRoomData?.participant_count || 0} medlemmer
               </Badge>
             </div>
 
             <div className="flex items-center space-x-2">
-              <Button variant="ghost" size="sm" className="text-liquid-primary">
+              <Button variant="ghost" size="sm" className="text-blue-400">
                 <Search size={16} />
               </Button>
-              <Button variant="ghost" size="sm" className="text-liquid-primary">
+              <Button variant="ghost" size="sm" className="text-blue-400">
                 <Settings size={16} />
               </Button>
             </div>
@@ -462,7 +520,7 @@ const SnakkaZChatBeta: React.FC = () => {
               {filteredMessages.map((msg) => (
                 <div key={msg.id} className="group">
                   <div className="flex items-start space-x-3">
-                    <div className="w-8 h-8 bg-liquid-primary rounded-full flex items-center justify-center flex-shrink-0">
+                    <div className="w-8 h-8 bg-blue-400 rounded-full flex items-center justify-center flex-shrink-0">
                       <span className="text-white font-bold text-sm">
                         {msg.user_id?.charAt(0).toUpperCase() || 'U'}
                       </span>
@@ -474,7 +532,7 @@ const SnakkaZChatBeta: React.FC = () => {
                             msg.user_id === 'user-2' ? 'Designer 🎨' :
                               'You 🌊'}
                         </span>
-                        <span className="text-liquid-primary text-xs">
+                        <span className="text-blue-400 text-xs">
                           {new Date(msg.created_at).toLocaleTimeString()}
                         </span>
                       </div>
@@ -490,7 +548,7 @@ const SnakkaZChatBeta: React.FC = () => {
           </ScrollArea>
 
           {/* Message Input */}
-          <div className="p-4 snakkaz-liquid-glass border-t border-liquid-primary/20">
+          <div className="p-4 bg-slate-800/60 backdrop-blur-lg border-t border-blue-400/20">
             <div className="max-w-4xl mx-auto">
               <div className="flex space-x-2">
                 <div className="flex-1 relative">
@@ -500,13 +558,13 @@ const SnakkaZChatBeta: React.FC = () => {
                     onKeyPress={handleKeyPress}
                     placeholder={`Skriv en melding til ${activeRoomData?.name || 'rommet'}...`}
                     ref={messageInputRef}
-                    className="snakkaz-liquid-glass border-liquid-primary/30 text-white placeholder:text-liquid-primary pr-12"
+                    className="bg-slate-800/60 backdrop-blur-lg border-blue-400/30 text-white placeholder:text-blue-400 pr-12"
                   />
                 </div>
                 <Button
                   onClick={sendMessage}
                   disabled={!message.trim()}
-                  className="snakkaz-liquid-glass border-liquid-primary/30 hover:border-liquid-primary/50 text-liquid-primary hover:text-white"
+                  className="bg-slate-800/60 backdrop-blur-lg border-blue-400/30 hover:border-blue-400/50 text-blue-400 hover:text-white"
                 >
                   <Send size={18} />
                 </Button>
@@ -516,7 +574,7 @@ const SnakkaZChatBeta: React.FC = () => {
               <div className="mt-2 flex items-center justify-between">
                 <div
                   onClick={() => setShowConnectionStatus(!showConnectionStatus)}
-                  className="flex items-center space-x-1 text-xs cursor-pointer text-liquid-primary hover:text-white transition-colors"
+                  className="flex items-center space-x-1 text-xs cursor-pointer text-blue-400 hover:text-white transition-colors"
                 >
                   {mcpInitialized ? (
                     <>
@@ -545,8 +603,8 @@ const SnakkaZChatBeta: React.FC = () => {
 
               {/* Detailed MCP WebRTC Status */}
               {showConnectionStatus && (
-                <div className="mt-2 snakkaz-liquid-glass border border-liquid-primary/20 rounded-lg p-3">
-                  <h4 className="text-sm font-medium mb-2 text-liquid-primary">Tilkoblingsstatus</h4>
+                <div className="mt-2 bg-slate-800/60 backdrop-blur-lg border border-blue-400/20 rounded-lg p-3">
+                  <h4 className="text-sm font-medium mb-2 text-blue-400">Tilkoblingsstatus</h4>
                   <MCPWebRTCStatus
                     userId={user?.id || ''}
                     serverUrl={process.env.REACT_APP_MCP_SERVER_URL || 'wss://mcp.snakkaz.com'}
@@ -559,14 +617,14 @@ const SnakkaZChatBeta: React.FC = () => {
 
         {/* User List (Desktop & Mobile) */}
         <div className={cn(
-          "snakkaz-liquid-glass border-l border-liquid-primary/20 flex flex-col",
+          "bg-slate-800/60 backdrop-blur-lg border-l border-blue-400/20 flex flex-col",
           "lg:w-64 lg:block",
           isUserListOpen ? "fixed inset-y-0 right-0 z-50 w-64" : "hidden lg:block"
         )}>
-          <div className="p-4 border-b border-liquid-primary/20">
+          <div className="p-4 border-b border-blue-400/20">
             <div className="flex items-center justify-between">
               <h3 className="font-semibold text-white">Online ({onlineUsers.length})</h3>
-              <Button variant="ghost" size="sm" className="text-liquid-primary lg:hidden" onClick={() => setIsUserListOpen(false)}>
+              <Button variant="ghost" size="sm" className="text-blue-400 lg:hidden" onClick={() => setIsUserListOpen(false)}>
                 <X size={16} />
               </Button>
             </div>
@@ -575,9 +633,9 @@ const SnakkaZChatBeta: React.FC = () => {
           <ScrollArea className="flex-1 p-4">
             <div className="space-y-2">
               {onlineUsers.map((user) => (
-                <div key={user.id} className="flex items-center space-x-2 p-2 rounded-lg hover:snakkaz-liquid-glass cursor-pointer">
+                <div key={user.id} className="flex items-center space-x-2 p-2 rounded-lg hover:bg-slate-800/60 backdrop-blur-lg cursor-pointer">
                   <div className="relative">
-                    <div className="w-8 h-8 bg-liquid-primary rounded-full flex items-center justify-center">
+                    <div className="w-8 h-8 bg-blue-400 rounded-full flex items-center justify-center">
                       <span className="text-white font-bold text-sm">
                         {user.display_name?.charAt(0).toUpperCase() || user.id?.charAt(0).toUpperCase() || 'U'}
                       </span>
@@ -588,7 +646,7 @@ const SnakkaZChatBeta: React.FC = () => {
                     <p className="text-white text-sm font-medium truncate">
                       {user.display_name || user.id || 'Anonym'}
                     </p>
-                    <p className="text-liquid-primary text-xs">Online</p>
+                    <p className="text-blue-400 text-xs">Online</p>
                   </div>
                 </div>
               ))}
@@ -613,14 +671,14 @@ const SnakkaZChatBeta: React.FC = () => {
         "fixed inset-0 z-50 flex items-center justify-center p-4",
         isInviteSystemOpen ? "block" : "hidden"
       )}>
-        <div className="w-full max-w-md snakkaz-liquid-glass rounded-lg shadow-lg p-6">
+        <div className="w-full max-w-md bg-slate-800/60 backdrop-blur-lg rounded-lg shadow-lg p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-white">Inviter til rom</h3>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setIsInviteSystemOpen(false)}
-              className="text-liquid-primary"
+              className="text-blue-400"
             >
               <X size={16} />
             </Button>
@@ -646,7 +704,97 @@ const SnakkaZChatBeta: React.FC = () => {
                 <X size={20} />
               </Button>
 
-              <MCPAdminDashboard />
+              <Suspense fallback={<ComponentLoader name="MCP Dashboard" />}>
+                <MCPDashboard />
+              </Suspense>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 🏗️ SYSTEM ARCHITECTURE OVERLAY */}
+      {showSystemArchitecture && (
+        <div className="fixed inset-0 z-[200] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-7xl max-h-[90vh] overflow-y-auto">
+            <div className="glass-crystal rounded-lg shadow-2xl p-6 relative">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowSystemArchitecture(false)}
+                className="absolute top-4 right-4 text-cyan-200 hover:text-white z-10"
+              >
+                <X size={20} />
+              </Button>
+
+              <Suspense fallback={<ComponentLoader name="System Architecture" />}>
+                <SystemArchitecture />
+              </Suspense>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 🤖 AI INTERFACE OVERLAY */}
+      {showAIInterface && (
+        <div className="fixed inset-0 z-[200] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="glass-crystal rounded-lg shadow-2xl p-6 relative">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowAIInterface(false)}
+                className="absolute top-4 right-4 text-cyan-200 hover:text-white z-10"
+              >
+                <X size={20} />
+              </Button>
+
+              <Suspense fallback={<ComponentLoader name="SnakkaZ AI" />}>
+                <SnakkaZAI isActive={true} />
+              </Suspense>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 🤖 AI INTERFACE OVERLAY */}
+      {showAIInterface && (
+        <div className="fixed inset-0 z-[200] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="glass-crystal rounded-lg shadow-2xl p-6 relative">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowAIInterface(false)}
+                className="absolute top-4 right-4 text-cyan-200 hover:text-white z-10"
+              >
+                <X size={20} />
+              </Button>
+
+              <Suspense fallback={<ComponentLoader name="SnakkaZ AI" />}>
+                <SnakkaZAI isActive={true} />
+              </Suspense>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 📨 INVITE SYSTEM OVERLAY */}
+      {showInviteSystem && (
+        <div className="fixed inset-0 z-[200] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="glass-crystal rounded-lg shadow-2xl p-6 relative">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowInviteSystem(false)}
+                className="absolute top-4 right-4 text-cyan-200 hover:text-white z-10"
+              >
+                <X size={20} />
+              </Button>
+
+              <Suspense fallback={<ComponentLoader name="Invite System" />}>
+                <SnakkaZInviteSystem />
+              </Suspense>
             </div>
           </div>
         </div>
