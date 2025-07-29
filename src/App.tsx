@@ -1,18 +1,11 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { useDeviceDetection } from './hooks/useDeviceDetection';
 
-// Import desktop pages
+// Import pages
 import Login from './pages/Login';
 import Register from './pages/Register';
 import SnakkaZChatBeta from './pages/SnakkaZChatBeta';
-import SimpleChatBeta from './pages/SimpleChatBeta';
 import AdminDashboard from './pages/AdminDashboard';
-
-// Lazy load mobile components for better performance
-const MobileLogin = lazy(() => import('./components/mobile/MobileLogin'));
-const MobileRegister = lazy(() => import('./components/mobile/MobileRegister'));
-const MobileChat = lazy(() => import('./components/mobile/MobileChat'));
 
 // Import MCP WebRTC Provider
 import MCPWebRTCProvider from './providers/MCPWebRTCProvider';
@@ -173,10 +166,7 @@ const AuroraLoader: React.FC = () => (
 
 // Main App Component
 const App: React.FC = () => {
-  const { isMobile } = useDeviceDetection();
-
   console.log('🌊 SnakkaZ Norwegian Aurora System - Starting...');
-  console.log('📱 Device Detection:', { isMobile });
 
   return (
     <ErrorBoundary>
@@ -197,46 +187,27 @@ const App: React.FC = () => {
             boxShadow: '0 4px 12px rgba(79, 172, 254, 0.3)',
             fontFamily: 'Space Grotesk, sans-serif'
           }}>
-            🌊 Aurora System {isMobile ? '📱' : '🖥️'}
+            🌊 Aurora System
           </div>
 
           <MCPWebRTCProvider>
             <Suspense fallback={<AuroraLoader />}>
               <Routes>
-                {/* Main routes - use mobile or desktop based on device */}
-                <Route 
-                  path="/" 
-                  element={isMobile ? <MobileChat /> : <SimpleChatBeta />} 
-                />
-                <Route
-                  path="/login"
-                  element={isMobile ? <MobileLogin /> : <Login />}
-                />
-                <Route
-                  path="/register"
-                  element={isMobile ? <MobileRegister /> : <Register />}
-                />
+                {/* Main routes */}
+                <Route path="/" element={<Navigate to="/login" replace />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
 
-                {/* Chat routes - stable versions */}
-                <Route
-                  path="/beta"
-                  element={isMobile ? <MobileChat /> : <SimpleChatBeta />}
-                />
-                <Route
-                  path="/chat"
-                  element={isMobile ? <MobileChat /> : <SimpleChatBeta />}
-                />
-                <Route
-                  path="/advanced"
-                  element={isMobile ? <MobileChat /> : <SnakkaZChatBeta />}
-                />
+                {/* Chat routes */}
+                <Route path="/beta" element={<SnakkaZChatBeta />} />
+                <Route path="/chat" element={<SnakkaZChatBeta />} />
 
-                {/* Admin routes - desktop only for now */}
+                {/* Admin routes */}
                 <Route path="/admin" element={<AdminDashboard />} />
                 <Route path="/dashboard" element={<AdminDashboard />} />
 
-                {/* Catch all - redirect to main chat */}
-                <Route path="*" element={<Navigate to="/" replace />} />
+                {/* Catch all */}
+                <Route path="*" element={<Navigate to="/login" replace />} />
               </Routes>
             </Suspense>
           </MCPWebRTCProvider>
