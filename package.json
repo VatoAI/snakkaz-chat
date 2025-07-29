@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --host --port 4000",
+    "dev": "vite --host --port 3001",
     "dev:v2": "vite --config vite.config.v2.ts --host --port 5174 --open",
     "dev:network": "vite --host",
     "dev:mcp": "node snakkaz-mcp-server.js",

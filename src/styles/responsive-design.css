@@ -1,0 +1,68 @@
+/* 
+ * SnakkaZ Norwegian Aurora Responsive Design System
+ * Sikrer konsistent design på mobil og desktop
+ */
+
+/* Base responsive utilities */
+.snakkaz-container {
+  @apply w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+}
+
+.snakkaz-card {
+  @apply bg-slate-800/60 backdrop-blur-lg rounded-xl border border-slate-700 shadow-lg;
+}
+
+.snakkaz-button-primary {
+  @apply bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-bold py-3 px-4 rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.snakkaz-input {
+  @apply w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400/50 transition-all duration-200;
+}
+
+.snakkaz-gradient-text {
+  @apply bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent;
+}
+
+.snakkaz-aurora-bg {
+  @apply min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white;
+}
+
+/* Responsive breakpoint helpers */
+@media (max-width: 640px) {
+  .snakkaz-mobile-full {
+    @apply w-full px-4;
+  }
+
+  .snakkaz-mobile-text {
+    @apply text-sm;
+  }
+}
+
+@media (min-width: 641px) {
+  .snakkaz-desktop-constrained {
+    @apply max-w-md mx-auto;
+  }
+}
+
+/* Device detection consistency */
+.snakkaz-responsive-form {
+  @apply w-full max-w-md mx-auto px-4 sm:px-0;
+}
+
+.snakkaz-responsive-grid {
+  @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6;
+}
+
+/* Aurora effects - cross-browser compatible */
+.snakkaz-aurora-effect {
+  @apply absolute inset-0 overflow-hidden;
+}
+
+.snakkaz-aurora-gradient {
+  @apply bg-gradient-to-br from-blue-500/10 to-cyan-500/10 animate-pulse opacity-30;
+}
+
+.snakkaz-aurora-overlay {
+  @apply absolute inset-0 bg-gradient-to-tr from-transparent via-blue-500/5 to-transparent;
+}

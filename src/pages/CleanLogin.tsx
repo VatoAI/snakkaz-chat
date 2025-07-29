@@ -4,7 +4,7 @@ import { ArrowLeft, Mail, Eye, EyeOff, Loader, CheckCircle } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 
-const Login: React.FC = () => {
+const CleanLogin: React.FC = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
@@ -237,4 +237,4 @@ const Login: React.FC = () => {
     );
 };
 
-export default Login;
+export default CleanLogin;

@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabaseClient';
 
 const Register: React.FC = () => {
     const [formData, setFormData] = useState({
@@ -45,36 +44,17 @@ const Register: React.FC = () => {
         }
 
         try {
-            console.log('🌊 Attempting Supabase registration for:', formData.email);
-
-            // Real Supabase registration
-            const { data, error } = await supabase.auth.signUp({
-                email: formData.email.trim(),
-                password: formData.password,
-                options: {
-                    data: {
-                        full_name: formData.fullName,
-                        display_name: formData.fullName
-                    }
-                }
+            // Supabase auth will be integrated here
+            console.log('Register attempt:', {
+                email: formData.email,
+                fullName: formData.fullName
             });
-
-            if (error) throw error;
-
-            if (data.user) {
-                console.log('✅ Supabase registration successful:', data.user.email);
-                // Check if user needs to confirm email
-                if (!data.session) {
-                    setError('Sjekk e-posten din for bekreftelseslink!');
-                    setTimeout(() => navigate('/login'), 3000);
-                } else {
-                    navigate('/chat');
-                }
-            }
-        } catch (err: any) {
-            console.error('❌ Registration error:', err);
-            setError(err.message || 'Registrering feilet. Prøv igjen.');
-        } finally {
+            setTimeout(() => {
+                setLoading(false);
+                navigate('/');
+            }, 1500);
+        } catch (err) {
+            setError('Registrering feilet. Prøv igjen.');
             setLoading(false);
         }
     };

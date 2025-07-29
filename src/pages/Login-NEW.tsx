@@ -1,80 +1,28 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabaseClient';
 
-const Register: React.FC = () => {
-    const [formData, setFormData] = useState({
-        email: '',
-        password: '',
-        confirmPassword: '',
-        fullName: '',
-        acceptTerms: false
-    });
+const Login: React.FC = () => {
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const navigate = useNavigate();
-
-    const handleChange = (field: string, value: string | boolean) => {
-        setFormData(prev => ({ ...prev, [field]: value }));
-    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError('');
 
-        // Validation
-        if (formData.password !== formData.confirmPassword) {
-            setError('Passordene matcher ikke');
-            setLoading(false);
-            return;
-        }
-
-        if (formData.password.length < 6) {
-            setError('Passordet må være minst 6 tegn');
-            setLoading(false);
-            return;
-        }
-
-        if (!formData.acceptTerms) {
-            setError('Du må akseptere vilkårene');
-            setLoading(false);
-            return;
-        }
-
         try {
-            console.log('🌊 Attempting Supabase registration for:', formData.email);
-
-            // Real Supabase registration
-            const { data, error } = await supabase.auth.signUp({
-                email: formData.email.trim(),
-                password: formData.password,
-                options: {
-                    data: {
-                        full_name: formData.fullName,
-                        display_name: formData.fullName
-                    }
-                }
-            });
-
-            if (error) throw error;
-
-            if (data.user) {
-                console.log('✅ Supabase registration successful:', data.user.email);
-                // Check if user needs to confirm email
-                if (!data.session) {
-                    setError('Sjekk e-posten din for bekreftelseslink!');
-                    setTimeout(() => navigate('/login'), 3000);
-                } else {
-                    navigate('/chat');
-                }
-            }
-        } catch (err: any) {
-            console.error('❌ Registration error:', err);
-            setError(err.message || 'Registrering feilet. Prøv igjen.');
-        } finally {
+            // Supabase auth will be integrated here
+            console.log('Login attempt:', { email });
+            setTimeout(() => {
+                setLoading(false);
+                navigate('/');
+            }, 1000);
+        } catch (err) {
+            setError('Login feilet. Sjekk e-post og passord.');
             setLoading(false);
         }
     };
@@ -115,7 +63,7 @@ const Register: React.FC = () => {
                 border: '1px solid var(--glass-border)',
                 boxShadow: 'var(--glass-shadow)',
                 padding: '3rem',
-                maxWidth: '500px',
+                maxWidth: '450px',
                 width: '100%',
                 animation: 'fadeInUp 1s ease-out'
             }}>
@@ -138,52 +86,12 @@ const Register: React.FC = () => {
                         color: 'rgba(255, 255, 255, 0.8)',
                         fontWeight: '300'
                     }}>
-                        Opprett din konto og start å chatte
+                        Logg inn for å chatte med vennene dine
                     </p>
                 </div>
 
                 {/* Form */}
                 <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '1.5rem' }}>
-                    {/* Full Name Field */}
-                    <div>
-                        <label style={{
-                            display: 'block',
-                            fontSize: '0.9rem',
-                            fontWeight: '600',
-                            color: 'var(--snakkaz-primary)',
-                            marginBottom: '0.5rem'
-                        }}>
-                            👤 Fullt navn
-                        </label>
-                        <input
-                            type="text"
-                            value={formData.fullName}
-                            onChange={(e) => handleChange('fullName', e.target.value)}
-                            placeholder="Ditt fulle navn"
-                            required
-                            style={{
-                                width: '100%',
-                                padding: '1rem',
-                                background: 'rgba(255, 255, 255, 0.05)',
-                                border: '1px solid var(--glass-border)',
-                                borderRadius: '12px',
-                                color: 'white',
-                                fontSize: '1rem',
-                                fontFamily: 'var(--font-body)',
-                                outline: 'none',
-                                transition: 'all 0.3s ease'
-                            }}
-                            onFocus={(e) => {
-                                e.target.style.borderColor = 'var(--snakkaz-primary)';
-                                e.target.style.boxShadow = '0 0 20px rgba(100, 181, 246, 0.3)';
-                            }}
-                            onBlur={(e) => {
-                                e.target.style.borderColor = 'var(--glass-border)';
-                                e.target.style.boxShadow = 'none';
-                            }}
-                        />
-                    </div>
-
                     {/* Email Field */}
                     <div>
                         <label style={{
@@ -197,8 +105,8 @@ const Register: React.FC = () => {
                         </label>
                         <input
                             type="email"
-                            value={formData.email}
-                            onChange={(e) => handleChange('email', e.target.value)}
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
                             placeholder="din@email.com"
                             required
                             style={{
@@ -233,14 +141,14 @@ const Register: React.FC = () => {
                             color: 'var(--snakkaz-primary)',
                             marginBottom: '0.5rem'
                         }}>
-                            🔒 Passord (min 6 tegn)
+                            🔒 Passord
                         </label>
                         <div style={{ position: 'relative' }}>
                             <input
                                 type={showPassword ? 'text' : 'password'}
-                                value={formData.password}
-                                onChange={(e) => handleChange('password', e.target.value)}
-                                placeholder="Velg et sikkert passord"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder="Ditt passord"
                                 required
                                 style={{
                                     width: '100%',
@@ -284,101 +192,6 @@ const Register: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Confirm Password Field */}
-                    <div>
-                        <label style={{
-                            display: 'block',
-                            fontSize: '0.9rem',
-                            fontWeight: '600',
-                            color: 'var(--snakkaz-primary)',
-                            marginBottom: '0.5rem'
-                        }}>
-                            🔒 Bekreft passord
-                        </label>
-                        <div style={{ position: 'relative' }}>
-                            <input
-                                type={showConfirmPassword ? 'text' : 'password'}
-                                value={formData.confirmPassword}
-                                onChange={(e) => handleChange('confirmPassword', e.target.value)}
-                                placeholder="Skriv passordet igjen"
-                                required
-                                style={{
-                                    width: '100%',
-                                    padding: '1rem',
-                                    paddingRight: '3rem',
-                                    background: 'rgba(255, 255, 255, 0.05)',
-                                    border: '1px solid var(--glass-border)',
-                                    borderRadius: '12px',
-                                    color: 'white',
-                                    fontSize: '1rem',
-                                    fontFamily: 'var(--font-body)',
-                                    outline: 'none',
-                                    transition: 'all 0.3s ease'
-                                }}
-                                onFocus={(e) => {
-                                    e.target.style.borderColor = 'var(--snakkaz-primary)';
-                                    e.target.style.boxShadow = '0 0 20px rgba(100, 181, 246, 0.3)';
-                                }}
-                                onBlur={(e) => {
-                                    e.target.style.borderColor = 'var(--glass-border)';
-                                    e.target.style.boxShadow = 'none';
-                                }}
-                            />
-                            <button
-                                type="button"
-                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                style={{
-                                    position: 'absolute',
-                                    right: '1rem',
-                                    top: '50%',
-                                    transform: 'translateY(-50%)',
-                                    background: 'none',
-                                    border: 'none',
-                                    color: 'rgba(255, 255, 255, 0.6)',
-                                    cursor: 'pointer',
-                                    fontSize: '1.2rem'
-                                }}
-                            >
-                                {showConfirmPassword ? '🙈' : '👁️'}
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Terms Checkbox */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <input
-                            type="checkbox"
-                            id="acceptTerms"
-                            checked={formData.acceptTerms}
-                            onChange={(e) => handleChange('acceptTerms', e.target.checked)}
-                            style={{
-                                width: '20px',
-                                height: '20px',
-                                accentColor: 'var(--snakkaz-primary)'
-                            }}
-                        />
-                        <label htmlFor="acceptTerms" style={{
-                            color: 'rgba(255, 255, 255, 0.8)',
-                            fontSize: '0.9rem',
-                            cursor: 'pointer'
-                        }}>
-                            Jeg aksepterer{' '}
-                            <Link to="/terms" style={{
-                                color: 'var(--snakkaz-primary)',
-                                textDecoration: 'underline'
-                            }}>
-                                vilkårene
-                            </Link>
-                            {' '}og{' '}
-                            <Link to="/privacy" style={{
-                                color: 'var(--snakkaz-primary)',
-                                textDecoration: 'underline'
-                            }}>
-                                personvernreglene
-                            </Link>
-                        </label>
-                    </div>
-
                     {/* Error Message */}
                     {error && (
                         <div style={{
@@ -415,11 +228,11 @@ const Register: React.FC = () => {
                             boxShadow: loading ? 'none' : '0 8px 25px rgba(100, 181, 246, 0.4)'
                         }}
                     >
-                        {loading ? '🔄 Oppretter konto...' : '🎉 Opprett konto'}
+                        {loading ? '🔄 Logger inn...' : '🚀 Logg inn'}
                     </button>
                 </form>
 
-                {/* Login Link */}
+                {/* Register Link */}
                 <div style={{
                     textAlign: 'center',
                     marginTop: '2rem',
@@ -427,10 +240,10 @@ const Register: React.FC = () => {
                     borderTop: '1px solid var(--glass-border)'
                 }}>
                     <p style={{ color: 'rgba(255, 255, 255, 0.7)', marginBottom: '1rem' }}>
-                        Har du allerede konto?
+                        Har du ikke konto?
                     </p>
                     <Link
-                        to="/login"
+                        to="/register"
                         style={{
                             color: 'var(--snakkaz-primary)',
                             textDecoration: 'none',
@@ -445,11 +258,11 @@ const Register: React.FC = () => {
                             (e.target as HTMLElement).style.color = 'var(--snakkaz-primary)';
                         }}
                     >
-                        🔑 Logg inn her
+                        📝 Registrer deg her
                     </Link>
                 </div>
 
-                {/* Features Preview */}
+                {/* Demo Info */}
                 <div style={{
                     display: 'grid',
                     gridTemplateColumns: 'repeat(2, 1fr)',
@@ -465,7 +278,7 @@ const Register: React.FC = () => {
                         textAlign: 'center',
                         color: 'var(--snakkaz-primary)'
                     }}>
-                        💬 Gratis chat
+                        🧪 Eller prøv demo (demo@snakkaz.com)
                     </div>
                     <div style={{
                         background: 'rgba(77, 208, 225, 0.05)',
@@ -475,7 +288,7 @@ const Register: React.FC = () => {
                         textAlign: 'center',
                         color: 'var(--snakkaz-secondary)'
                     }}>
-                        🔒 End-to-end kryptering
+                        🔒 Sikker chat
                     </div>
                     <div style={{
                         background: 'rgba(129, 199, 132, 0.05)',
@@ -485,7 +298,7 @@ const Register: React.FC = () => {
                         textAlign: 'center',
                         color: 'var(--snakkaz-accent)'
                     }}>
-                        🇳🇴 På norsk
+                        🇳🇴 Norsk plattform
                     </div>
                     <div style={{
                         background: 'rgba(100, 181, 246, 0.05)',
@@ -495,7 +308,7 @@ const Register: React.FC = () => {
                         textAlign: 'center',
                         color: 'var(--snakkaz-primary)'
                     }}>
-                        ⚡ Lynrask
+                        ⚡ Gratis å bruke
                     </div>
                 </div>
             </div>
@@ -521,4 +334,4 @@ const Register: React.FC = () => {
     );
 };
 
-export default Register;
+export default Login;

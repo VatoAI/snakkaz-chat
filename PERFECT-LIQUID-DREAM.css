@@ -1,0 +1,252 @@
+    <style>
+      /* 🌊 SNAKKAZ LIQUID DREAM DESIGN SYSTEM */
+      @import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap");
+
+      :root {
+        /* Crystal Blue Theme - Det FINE designet! */
+        --snakkaz-primary: #64b5f6; /* Crystal Blue */
+        --snakkaz-secondary: #4dd0e1; /* Crystal Cyan */
+        --snakkaz-accent: #81c784; /* Success Green */
+
+        /* Background farger */
+        --snakkaz-dark: #0a0f1b; /* Deep Void */
+        --snakkaz-surface: #1a1f2e; /* Surface */
+        --snakkaz-card: #252a3a; /* Card Background */
+
+        /* Glass effekter - Liquid Dream */
+        --glass-bg: rgba(100, 181, 246, 0.08);
+        --glass-bg-hover: rgba(100, 181, 246, 0.12);
+        --glass-border: rgba(100, 181, 246, 0.2);
+        --glass-shadow: 0 8px 32px rgba(100, 181, 246, 0.15);
+        --backdrop-blur: blur(12px);
+
+        /* Typography */
+        --font-display: "Orbitron", monospace;
+        --font-body: "Space Grotesk", sans-serif;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: var(--font-body);
+        background: linear-gradient(
+          135deg,
+          var(--snakkaz-dark) 0%,
+          var(--snakkaz-surface) 100%
+        );
+        color: white;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+
+      /* Liquid Dream Background Effect */
+      body::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(
+            circle at 20% 50%,
+            rgba(100, 181, 246, 0.1) 0%,
+            transparent 50%
+          ),
+          radial-gradient(
+            circle at 80% 20%,
+            rgba(77, 208, 225, 0.1) 0%,
+            transparent 50%
+          ),
+          radial-gradient(
+            circle at 40% 80%,
+            rgba(129, 199, 132, 0.1) 0%,
+            transparent 50%
+          );
+        animation: liquidDream 20s ease-in-out infinite;
+        z-index: -1;
+      }
+
+      @keyframes liquidDream {
+        0%,
+        100% {
+          transform: scale(1) rotate(0deg);
+        }
+        33% {
+          transform: scale(1.1) rotate(1deg);
+        }
+        66% {
+          transform: scale(0.9) rotate(-1deg);
+        }
+      }
+
+      /* Main Container - Glass Morphism */
+      .container {
+        background: var(--glass-bg);
+        backdrop-filter: var(--backdrop-blur);
+        -webkit-backdrop-filter: var(--backdrop-blur);
+        border-radius: 24px;
+        border: 1px solid var(--glass-border);
+        box-shadow: var(--glass-shadow);
+        padding: 3rem;
+        max-width: 500px;
+        width: 90%;
+        text-align: center;
+        animation: fadeInUp 1s ease-out;
+      }
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Logo */
+      .logo {
+        font-family: var(--font-display);
+        font-size: 3rem;
+        font-weight: 900;
+        background: linear-gradient(
+          135deg,
+          var(--snakkaz-primary) 0%,
+          var(--snakkaz-secondary) 100%
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 1rem;
+        text-shadow: 0 0 30px rgba(100, 181, 246, 0.3);
+      }
+
+      /* Subtitle */
+      .subtitle {
+        font-size: 1.2rem;
+        color: rgba(255, 255, 255, 0.8);
+        margin-bottom: 2rem;
+        font-weight: 300;
+      }
+
+      /* Features */
+      .features {
+        display: grid;
+        gap: 1rem;
+        margin-bottom: 2rem;
+      }
+
+      .feature {
+        background: rgba(100, 181, 246, 0.05);
+        border: 1px solid rgba(100, 181, 246, 0.1);
+        border-radius: 12px;
+        padding: 1rem;
+        transition: all 0.3s ease;
+      }
+
+      .feature:hover {
+        background: var(--glass-bg-hover);
+        border-color: var(--glass-border);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(100, 181, 246, 0.2);
+      }
+
+      .feature-icon {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .feature-title {
+        font-weight: 600;
+        color: var(--snakkaz-primary);
+        margin-bottom: 0.25rem;
+      }
+
+      .feature-desc {
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.7);
+      }
+
+      /* Button */
+      .btn {
+        background: linear-gradient(
+          135deg,
+          var(--snakkaz-primary) 0%,
+          var(--snakkaz-secondary) 100%
+        );
+        color: var(--snakkaz-dark);
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: 12px;
+        font-family: var(--font-body);
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(100, 181, 246, 0.3);
+      }
+
+      .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(100, 181, 246, 0.4);
+      }
+
+      /* Floating particles */
+      .particle {
+        position: fixed;
+        width: 4px;
+        height: 4px;
+        background: var(--snakkaz-primary);
+        border-radius: 50%;
+        opacity: 0.6;
+        animation: float 6s ease-in-out infinite;
+      }
+
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0px) rotate(0deg);
+        }
+        50% {
+          transform: translateY(-20px) rotate(180deg);
+        }
+      }
+
+      .particle:nth-child(1) {
+        top: 20%;
+        left: 20%;
+        animation-delay: 0s;
+      }
+      .particle:nth-child(2) {
+        top: 80%;
+        left: 80%;
+        animation-delay: 2s;
+      }
+      .particle:nth-child(3) {
+        top: 40%;
+        right: 20%;
+        animation-delay: 4s;
+      }
+
+      /* Status indicator */
+      .status {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: var(--glass-bg);
+        backdrop-filter: var(--backdrop-blur);
+        border: 1px solid var(--glass-border);
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        font-size: 0.8rem;
+        color: var(--snakkaz-primary);
+      }
+    </style>

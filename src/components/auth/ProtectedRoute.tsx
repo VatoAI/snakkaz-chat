@@ -1,7 +1,7 @@
 
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/useAuthSimple";
 import { Loader2 } from "lucide-react";
 
 interface ProtectedRouteProps {
@@ -9,9 +9,9 @@ interface ProtectedRouteProps {
   redirectTo?: string;
 }
 
-export const ProtectedRoute = ({ 
-  children, 
-  redirectTo = "/auth" 
+export const ProtectedRoute = ({
+  children,
+  redirectTo = "/auth"
 }: ProtectedRouteProps) => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();

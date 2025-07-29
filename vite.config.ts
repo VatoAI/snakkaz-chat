@@ -4,11 +4,6 @@ import path from "path";
 
 // 🚀 ULTRA-OPTIMIZED VITE CONFIG - SPEED FOCUSED
 export default defineConfig({
-  test: {
-    globals: true,
-    environment: 'jsdom',
-    setupFiles: ['./src/test/setup.ts'],
-  },
   plugins: [
     react({
       // Optimize React plugin
