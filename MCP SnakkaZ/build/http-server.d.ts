@@ -11,10 +11,13 @@ declare class SnakkaZMCPHTTPServer {
     private startTime;
     private metrics;
     private servers;
+    private connectedServers;
     constructor();
     private setupMiddleware;
     private setupRoutes;
     private setupWebSocket;
+    private initializeMockServers;
+    private handleServerControl;
     private processChatMessage;
     private simulateServerActivity;
     private updateSystemMetrics;

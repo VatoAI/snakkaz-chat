@@ -15,16 +15,18 @@ dotenv.config();
 class SnakkaZMCPHTTPServer {
     app;
     server;
-    io;
+    io; // Will be initialized in setupWebSocket
     port;
     startTime;
     metrics;
     servers;
+    connectedServers;
     constructor() {
         this.app = express();
         this.port = parseInt(process.env.MCP_HTTP_PORT || '3001');
         this.startTime = new Date();
         this.servers = new Map();
+        this.connectedServers = [];
         this.metrics = {
             totalRequests: 0,
             averageResponseTime: 0,
@@ -224,108 +226,115 @@ class SnakkaZMCPHTTPServer {
             });
             // Handle server control commands
             socket.on('serverControl', (data) => {
-                // Broadcast metrics every 5 seconds
-                setInterval(() => {
-                    this.updateSystemMetrics();
-                    this.io.emit('metrics', this.metrics);
-                }, 5000);
-            }, private, initializeMockServers(), {
-                // Initialize mock MCP servers for demonstration
-                const: mockServers, MCPServerStatus, []:  = [
+                this.handleServerControl(data.serverId, data.action, socket);
+            });
+            socket.on('disconnect', () => {
+                console.log('🔌 Client disconnected from MCP control panel');
+            });
+        });
+        // Broadcast metrics every 5 seconds
+        setInterval(() => {
+            this.updateSystemMetrics();
+            this.io.emit('metrics', this.metrics);
+        }, 5000);
+    }
+    initializeMockServers() {
+        // Initialize mock MCP servers for demonstration
+        const mockServers = [
+            {
+                id: 'snakkaz-main',
+                name: 'SnakkaZ Main MCP',
+                status: 'online',
+                uptime: 86400,
+                requests: Math.floor(Math.random() * 2000) + 1000,
+                errors: Math.floor(Math.random() * 5),
+                lastActivity: new Date(),
+                version: '2.1.0',
+                tools: [
                     {
-                        id: 'snakkaz-main',
-                        name: 'SnakkaZ Main MCP',
-                        status: 'online',
-                        uptime: 86400,
-                        requests: Math.floor(Math.random() * 2000) + 1000,
-                        errors: Math.floor(Math.random() * 5),
-                        lastActivity: new Date(),
-                        version: '2.1.0',
-                        tools: [
-                            {
-                                name: 'chat_manager',
-                                description: 'Manages chat operations and routing',
-                                usage: Math.floor(Math.random() * 1000) + 500,
-                                lastUsed: new Date(),
-                                enabled: true
-                            },
-                            {
-                                name: 'user_lookup',
-                                description: 'User information and status lookup',
-                                usage: Math.floor(Math.random() * 500) + 100,
-                                lastUsed: new Date(Date.now() - 300000),
-                                enabled: true
-                            }
-                        ]
+                        name: 'chat_manager',
+                        description: 'Manages chat operations and routing',
+                        usage: Math.floor(Math.random() * 1000) + 500,
+                        lastUsed: new Date(),
+                        enabled: true
                     },
                     {
-                        id: 'snakkaz-ai',
-                        name: 'SnakkaZ AI Assistant',
-                        status: 'online',
-                        uptime: 43200,
-                        requests: Math.floor(Math.random() * 1000) + 500,
-                        errors: 0,
-                        lastActivity: new Date(Date.now() - 60000),
-                        version: '1.8.3',
-                        tools: [
-                            {
-                                name: 'ai_response',
-                                description: 'AI-powered chat responses',
-                                usage: Math.floor(Math.random() * 800) + 200,
-                                lastUsed: new Date(Date.now() - 60000),
-                                enabled: true
-                            }
-                        ]
-                    },
-                    {
-                        id: 'snakkaz-security',
-                        name: 'SnakkaZ Security',
-                        status: 'online',
-                        uptime: 86400,
-                        requests: Math.floor(Math.random() * 3000) + 1500,
-                        errors: 1,
-                        lastActivity: new Date(),
-                        version: '3.0.1',
-                        tools: [
-                            {
-                                name: 'threat_detection',
-                                description: 'Real-time threat detection',
-                                usage: Math.floor(Math.random() * 1500) + 800,
-                                lastUsed: new Date(),
-                                enabled: true
-                            }
-                        ]
+                        name: 'user_lookup',
+                        description: 'User information and status lookup',
+                        usage: Math.floor(Math.random() * 500) + 100,
+                        lastUsed: new Date(Date.now() - 300000),
+                        enabled: true
                     }
-                ],
-                mockServers, : .forEach(server => {
-                    this.servers.set(server.id, server);
-                }),
-                // Simulate ongoing activity
-                setInterval() { }
-            }(), {
-                this: .simulateServerActivity()
-            }, 10000);
-        }, private, handleServerControl(serverId, string, action, string, socket, any), {
-            const: server = this.servers.get(serverId),
-            if(, server) {
-                socket.emit('error', { message: 'Server not found' });
-                return;
+                ]
             },
-            switch(action) {
+            {
+                id: 'snakkaz-ai',
+                name: 'SnakkaZ AI Assistant',
+                status: 'online',
+                uptime: 43200,
+                requests: Math.floor(Math.random() * 1000) + 500,
+                errors: 0,
+                lastActivity: new Date(Date.now() - 60000),
+                version: '1.8.3',
+                tools: [
+                    {
+                        name: 'ai_response',
+                        description: 'AI-powered chat responses',
+                        usage: Math.floor(Math.random() * 800) + 200,
+                        lastUsed: new Date(Date.now() - 60000),
+                        enabled: true
+                    }
+                ]
             },
-            case: 'start',
-            server, : .status = 'online',
-            server, : .lastActivity = new Date(),
-            break: ,
-            case: 'stop',
-            server, : .status = 'offline',
-            break: ,
-            case: 'restart',
-            server, : .status = 'online',
-            server, : .uptime = 0,
-            server, : .lastActivity = new Date(),
-            break: 
-        }, this.servers.set(serverId, server));
+            {
+                id: 'snakkaz-security',
+                name: 'SnakkaZ Security',
+                status: 'online',
+                uptime: 86400,
+                requests: Math.floor(Math.random() * 3000) + 1500,
+                errors: 1,
+                lastActivity: new Date(),
+                version: '3.0.1',
+                tools: [
+                    {
+                        name: 'threat_detection',
+                        description: 'Real-time threat detection',
+                        usage: Math.floor(Math.random() * 1500) + 800,
+                        lastUsed: new Date(),
+                        enabled: true
+                    }
+                ]
+            }
+        ];
+        mockServers.forEach(server => {
+            this.servers.set(server.id, server);
+        });
+        // Simulate ongoing activity
+        setInterval(() => {
+            this.simulateServerActivity();
+        }, 10000);
+    }
+    handleServerControl(serverId, action, socket) {
+        const server = this.servers.get(serverId);
+        if (!server) {
+            socket.emit('error', { message: 'Server not found' });
+            return;
+        }
+        switch (action) {
+            case 'start':
+                server.status = 'online';
+                server.lastActivity = new Date();
+                break;
+            case 'stop':
+                server.status = 'offline';
+                break;
+            case 'restart':
+                server.status = 'online';
+                server.uptime = 0;
+                server.lastActivity = new Date();
+                break;
+        }
+        this.servers.set(serverId, server);
         this.io.emit('serverUpdate', server);
     }
     processChatMessage(message, userId, roomId) {

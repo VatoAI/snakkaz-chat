@@ -59,6 +59,7 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.15.1",
     "@supabase/supabase-js": "^2.50.4",
+    "@types/ws": "^8.18.1",
     "axios": "^1.10.0",
     "cheerio": "^1.1.0",
     "cors": "^2.8.5",
@@ -68,6 +69,7 @@
     "helmet": "^8.1.0",
     "node-fetch": "^3.3.2",
     "socket.io": "^4.8.1",
+    "ws": "^8.18.3",
     "zod": "^3.25.74",
     "zod-to-json-schema": "^3.24.6"
   }

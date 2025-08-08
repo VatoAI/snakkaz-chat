@@ -1,6 +1,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { Loader2, MessageCircle, Send, Users, Wifi, WifiOff } from 'lucide-react';
+import { Loader2, MessageCircle, Send, Wifi, WifiOff } from 'lucide-react';
+import { TypingDots as StandardTypingDots } from '../common/StandardLoading';
 
 interface LoadingStateProps {
   type: 'messages' | 'sending' | 'typing' | 'connecting' | 'uploading' | 'custom';
@@ -18,42 +19,20 @@ interface MessageSkeletonProps {
 
 interface TypingDotsProps {
   className?: string;
-  color?: 'gold' | 'blue' | 'gray';
+  color?: 'gold' | 'blue' | 'green';
 }
 
-// Enhanced typing dots animation
-export const TypingDots: React.FC<TypingDotsProps> = ({ 
-  className, 
-  color = 'gold' 
+// 🚀 SNAKKAZ STANDARDIZED TYPING DOTS
+// Bruker ny StandardTypingDots komponent
+export const TypingDots: React.FC<TypingDotsProps> = ({
+  className,
+  color = 'gold'
 }) => {
-  const colorClasses = {
-    gold: 'bg-cybergold-400',
-    blue: 'bg-cyberblue-400',
-    gray: 'bg-gray-400'
-  };
-
-  return (
-    <div className={cn('flex gap-1 items-center', className)}>
-      <div className={cn(
-        'w-2 h-2 rounded-full animate-bounce',
-        colorClasses[color]
-      )} style={{ animationDelay: '0ms' }} />
-      <div className={cn(
-        'w-2 h-2 rounded-full animate-bounce',
-        colorClasses[color]
-      )} style={{ animationDelay: '150ms' }} />
-      <div className={cn(
-        'w-2 h-2 rounded-full animate-bounce',
-        colorClasses[color]
-      )} style={{ animationDelay: '300ms' }} />
-    </div>
-  );
-};
-
-// Message skeleton for loading states
-export const MessageSkeleton: React.FC<MessageSkeletonProps> = ({ 
-  count = 3, 
-  className 
+  return <StandardTypingDots className={className} color={color} />;
+};// Message skeleton for loading states
+export const MessageSkeleton: React.FC<MessageSkeletonProps> = ({
+  count = 3,
+  className
 }) => {
   return (
     <div className={cn('space-y-4 p-4', className)}>
@@ -61,7 +40,7 @@ export const MessageSkeleton: React.FC<MessageSkeletonProps> = ({
         <div key={index} className="flex gap-3 animate-pulse">
           {/* Avatar skeleton */}
           <div className="w-8 h-8 bg-cyberdark-700 rounded-full shrink-0" />
-          
+
           {/* Message content skeleton */}
           <div className="flex-1 space-y-2">
             <div className="flex items-center gap-2">
@@ -203,27 +182,27 @@ export const LoadingState: React.FC<LoadingStateProps> = ({
 };
 
 // Specialized loading components
-export const MessagesLoading: React.FC<{ variant?: 'spinner' | 'skeleton' }> = ({ 
-  variant = 'skeleton' 
+export const MessagesLoading: React.FC<{ variant?: 'spinner' | 'skeleton' }> = ({
+  variant = 'skeleton'
 }) => (
-  <LoadingState 
-    type="messages" 
+  <LoadingState
+    type="messages"
     variant={variant}
     className="py-8"
   />
 );
 
 export const SendingMessage: React.FC<{ message?: string }> = ({ message }) => (
-  <LoadingState 
-    type="sending" 
+  <LoadingState
+    type="sending"
     message={message}
     size="sm"
     className="text-cybergold-400 animate-pulse"
   />
 );
 
-export const ConnectingStatus: React.FC<{ isConnected?: boolean }> = ({ 
-  isConnected 
+export const ConnectingStatus: React.FC<{ isConnected?: boolean }> = ({
+  isConnected
 }) => {
   if (isConnected) {
     return (
@@ -255,7 +234,7 @@ export const UploadProgress: React.FC<{
     <div className="flex-1 min-w-0">
       <div className="text-sm text-cybergold-300 truncate">{fileName}</div>
       <div className="w-full bg-cyberdark-700 rounded-full h-1 mt-1">
-        <div 
+        <div
           className="bg-cybergold-400 h-1 rounded-full transition-all duration-300"
           style={{ width: `${progress}%` }}
         />
@@ -275,7 +254,7 @@ export const ChatLoadingWrapper: React.FC<{
   if (isLoading) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <LoadingState 
+        <LoadingState
           type={type}
           message={loadingMessage}
           variant={type === 'messages' ? 'skeleton' : 'spinner'}

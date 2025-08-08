@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { supabase } from '../lib/supabaseClient';
+import { IconBolt, IconShield, IconStar, IconUsers } from '@tabler/icons-react';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -10,7 +11,6 @@ const Login: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
-  const { demoLogin } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,30 +18,20 @@ const Login: React.FC = () => {
     setError('');
 
     try {
-      console.log('🌊 Attempting EKTE Supabase login for:', email);
+      console.log('🌊 Attempting Supabase login for:', email);
 
-      // EKTE SUPABASE AUTHENTICATION
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password: password,
       });
 
       if (error) {
-        // If real login fails, fallback to demo for development
-        if (error.message.includes('Invalid login credentials') ||
-          error.message.includes('Email not confirmed') ||
-          error.message.includes('Invalid API key')) {
-          console.log('🧪 Supabase failed, using demo login for:', email);
-          demoLogin(email);
-          navigate('/chat');
-          return;
-        }
         throw error;
       }
 
       if (data.user) {
-        console.log('✅ EKTE Supabase login successful:', data.user.email);
-        navigate('/chat');
+        console.log('✅ Supabase login successful:', data.user.email);
+        navigate('/main');
       }
     } catch (err: any) {
       console.error('❌ Login error:', err);
@@ -286,53 +276,183 @@ const Login: React.FC = () => {
           </Link>
         </div>
 
-        {/* Demo Info */}
+        {/* Demo Info - Telegram Style Superpower Cards */}
         <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(2, 1fr)',
-          gap: '0.75rem',
           marginTop: '2rem',
-          fontSize: '0.8rem'
+          display: 'grid',
+          gap: '1rem'
         }}>
+          {/* Beta Tester Banner */}
           <div style={{
-            background: 'rgba(100, 181, 246, 0.05)',
-            border: '1px solid rgba(100, 181, 246, 0.1)',
-            borderRadius: '8px',
-            padding: '0.5rem',
-            textAlign: 'center',
-            color: 'var(--snakkaz-primary)'
+            background: 'linear-gradient(135deg, rgba(34, 211, 238, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%)',
+            border: '1px solid rgba(34, 211, 238, 0.3)',
+            borderRadius: '12px',
+            padding: '1rem',
+            textAlign: 'center'
           }}>
-            🧪 Demo: demo@snakkaz.com / demo
+            <div style={{ fontSize: '1.2rem', marginBottom: '0.5rem' }}>🎯</div>
+            <div style={{ color: 'white', fontWeight: '600', marginBottom: '0.25rem' }}>
+              Telegram Beta Testers Welcome!
+            </div>
+            <div style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.8rem' }}>
+              Group Chat + Marketplace Hybrid Platform
+            </div>
           </div>
+
+          {/* Demo Credentials */}
           <div style={{
-            background: 'rgba(77, 208, 225, 0.05)',
-            border: '1px solid rgba(77, 208, 225, 0.1)',
-            borderRadius: '8px',
-            padding: '0.5rem',
-            textAlign: 'center',
-            color: 'var(--snakkaz-secondary)'
+            background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%)',
+            border: '1px solid rgba(168, 85, 247, 0.3)',
+            borderRadius: '12px',
+            padding: '1rem',
+            textAlign: 'center'
           }}>
-            🔒 Sikker chat
+            <div style={{ color: 'white', fontWeight: '600', marginBottom: '0.5rem' }}>
+              🧪 Demo Login
+            </div>
+            <div style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: '0.9rem' }}>
+              demo@snakkaz.com / demo
+            </div>
           </div>
+
+          {/* Feature Grid - Superpower Style */}
           <div style={{
-            background: 'rgba(129, 199, 132, 0.05)',
-            border: '1px solid rgba(129, 199, 132, 0.1)',
-            borderRadius: '8px',
-            padding: '0.5rem',
-            textAlign: 'center',
-            color: 'var(--snakkaz-accent)'
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, 1fr)',
+            gap: '0.75rem',
+            fontSize: '0.8rem'
           }}>
-            🇳🇴 Norsk plattform
+            {/* Real-time Sync Feature */}
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(34, 211, 238, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%)',
+              border: '1px solid rgba(34, 211, 238, 0.2)',
+              borderRadius: '8px',
+              padding: '0.75rem',
+              textAlign: 'center',
+              position: 'relative',
+              overflow: 'hidden'
+            }}>
+              {/* Animated Background */}
+              <div style={{
+                position: 'absolute',
+                top: '-50%',
+                left: '-50%',
+                width: '200%',
+                height: '200%',
+                background: 'radial-gradient(circle, rgba(34, 211, 238, 0.1) 0%, transparent 70%)',
+                animation: 'pulse 2s ease-in-out infinite'
+              }} />
+              <div style={{ position: 'relative', zIndex: 1 }}>
+                <IconBolt size={16} style={{ color: '#22d3ee', marginBottom: '0.25rem' }} />
+                <div style={{ color: '#22d3ee', fontWeight: '600' }}>💬 Liquid Messaging</div>
+                <div style={{ color: 'rgba(255, 255, 255, 0.6)' }}>Real-time Sync</div>
+              </div>
+            </div>
+
+            {/* Group Features */}
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%)',
+              border: '1px solid rgba(34, 197, 94, 0.2)',
+              borderRadius: '8px',
+              padding: '0.75rem',
+              textAlign: 'center',
+              position: 'relative',
+              overflow: 'hidden'
+            }}>
+              <div style={{
+                position: 'absolute',
+                top: '-50%',
+                left: '-50%',
+                width: '200%',
+                height: '200%',
+                background: 'radial-gradient(circle, rgba(34, 197, 94, 0.1) 0%, transparent 70%)',
+                animation: 'pulse 2s ease-in-out infinite 0.5s'
+              }} />
+              <div style={{ position: 'relative', zIndex: 1 }}>
+                <IconUsers size={16} style={{ color: '#22c55e', marginBottom: '0.25rem' }} />
+                <div style={{ color: '#22c55e', fontWeight: '600' }}>👥 Group Chat</div>
+                <div style={{ color: 'rgba(255, 255, 255, 0.6)' }}>200k+ members</div>
+              </div>
+            </div>
+
+            {/* AI Superpowers */}
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%)',
+              border: '1px solid rgba(168, 85, 247, 0.2)',
+              borderRadius: '8px',
+              padding: '0.75rem',
+              textAlign: 'center',
+              position: 'relative',
+              overflow: 'hidden'
+            }}>
+              <div style={{
+                position: 'absolute',
+                top: '-50%',
+                left: '-50%',
+                width: '200%',
+                height: '200%',
+                background: 'radial-gradient(circle, rgba(168, 85, 247, 0.1) 0%, transparent 70%)',
+                animation: 'pulse 2s ease-in-out infinite 1s'
+              }} />
+              <div style={{ position: 'relative', zIndex: 1 }}>
+                <IconShield size={16} style={{ color: '#a855f7', marginBottom: '0.25rem' }} />
+                <div style={{ color: '#a855f7', fontWeight: '600' }}>⚡ AI Superpowers</div>
+                <div style={{ color: 'rgba(255, 255, 255, 0.6)' }}>Context Aware</div>
+              </div>
+            </div>
+
+            {/* Marketplace */}
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(245, 158, 11, 0.1) 100%)',
+              border: '1px solid rgba(251, 191, 36, 0.2)',
+              borderRadius: '8px',
+              padding: '0.75rem',
+              textAlign: 'center',
+              position: 'relative',
+              overflow: 'hidden'
+            }}>
+              <div style={{
+                position: 'absolute',
+                top: '-50%',
+                left: '-50%',
+                width: '200%',
+                height: '200%',
+                background: 'radial-gradient(circle, rgba(251, 191, 36, 0.1) 0%, transparent 70%)',
+                animation: 'pulse 2s ease-in-out infinite 1.5s'
+              }} />
+              <div style={{ position: 'relative', zIndex: 1 }}>
+                <IconStar size={16} style={{ color: '#fbbf24', marginBottom: '0.25rem' }} />
+                <div style={{ color: '#fbbf24', fontWeight: '600' }}>🛒 Marketplace</div>
+                <div style={{ color: 'rgba(255, 255, 255, 0.6)' }}>Hybrid Platform</div>
+              </div>
+            </div>
           </div>
+
+          {/* Telegram Integration Status */}
           <div style={{
-            background: 'rgba(100, 181, 246, 0.05)',
-            border: '1px solid rgba(100, 181, 246, 0.1)',
-            borderRadius: '8px',
-            padding: '0.5rem',
-            textAlign: 'center',
-            color: 'var(--snakkaz-primary)'
+            background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)',
+            border: '1px solid rgba(99, 102, 241, 0.3)',
+            borderRadius: '12px',
+            padding: '1rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between'
           }}>
-            ⚡ Gratis å bruke
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <div style={{
+                width: '8px',
+                height: '8px',
+                backgroundColor: '#22c55e',
+                borderRadius: '50%',
+                animation: 'pulse 1s ease-in-out infinite'
+              }} />
+              <div style={{ color: 'white', fontSize: '0.9rem', fontWeight: '600' }}>
+                Ready for Telegram Testing
+              </div>
+            </div>
+            <div style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '0.8rem' }}>
+              Mobile Optimized 📱
+            </div>
           </div>
         </div>
       </div>
@@ -351,6 +471,16 @@ const Login: React.FC = () => {
                     to {
                         opacity: 1;
                         transform: translateY(0);
+                    }
+                }
+                @keyframes pulse {
+                    0%, 100% { 
+                        transform: scale(1) rotate(0deg);
+                        opacity: 0.3;
+                    }
+                    50% { 
+                        transform: scale(1.1) rotate(2deg);
+                        opacity: 0.6;
                     }
                 }
             `}</style>

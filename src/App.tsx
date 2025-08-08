@@ -2,7 +2,10 @@ import React, { Suspense, useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './auth/AuthProvider';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { StandardLoading } from './components/common/StandardLoading';
 import './index.css';
+import './styles/mobile.css'; // EMERGENCY MOBILE FIX
+import './styles/cyberpunk-design-system.css'; // CYBERPUNK LIQUID GLASS SYSTEM
 
 // Device detection utility
 const useDeviceDetection = () => {
@@ -24,40 +27,16 @@ const useDeviceDetection = () => {
   return { isMobile };
 };
 
-// Perfect Liquid Dream Loading Component - Clean Matrix Style
-const AuroraLoader: React.FC = () => (
-  <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
-    <div className="text-center">
-      {/* Clean Matrix Animation - No ugly squares */}
-      <div className="mb-8 relative">
-        <div className="text-green-400 font-mono text-sm mb-4 space-y-1">
-          <div className="animate-pulse opacity-80">
-            {'> Initializing quantum encryption...'}
-          </div>
-          <div className="animate-pulse delay-300 opacity-70">
-            {'> Loading neural networks...'}
-          </div>
-          <div className="animate-pulse delay-500 opacity-60">
-            {'> Establishing secure connection...'}
-          </div>
-        </div>
-
-        {/* Elegant progress bar instead of ugly squares */}
-        <div className="w-64 mx-auto bg-slate-800 rounded-full h-2 overflow-hidden">
-          <div className="h-full bg-gradient-to-r from-green-400 to-blue-500 rounded-full animate-pulse"></div>
-        </div>
-      </div>
-
-      <h1 className="text-4xl font-bold text-white mb-3 font-display">SnakkaZ</h1>
-      <p className="text-purple-300 text-sm animate-pulse">Krypterer forbindelse...</p>
-    </div>
-  </div>
-);
-
 // Lazy load components
 const Login = React.lazy(() => import('./pages/Login'));
 const Register = React.lazy(() => import('./pages/Register'));
 const SimpleChatBeta = React.lazy(() => import('./pages/SimpleChatBeta'));
+const LoadingTestPage = React.lazy(() => import('./pages/LoadingTestPage'));
+const SuperpowerDesignPreview = React.lazy(() => import('./pages/SuperpowerDesignPreview'));
+const LiquidChatPreview = React.lazy(() => import('./pages/LiquidChatPreview'));
+const UnifiedDreamPreview = React.lazy(() => import('./pages/UnifiedDreamPreview'));
+const LiquidDreamMain = React.lazy(() => import('./pages/LiquidDreamMain'));
+const ChatPage = React.lazy(() => import('./pages/ChatPage'));
 
 const App: React.FC = () => {
   const { isMobile } = useDeviceDetection();
@@ -68,12 +47,31 @@ const App: React.FC = () => {
     <div className="liquid-dream-app">
       <Router>
         <AuthProvider>
-          <Suspense fallback={<AuroraLoader />}>
+          <Suspense fallback={<StandardLoading type="app" />}>
             <Routes>
-              <Route path="/" element={<Navigate to="/login" replace />} />
+              <Route path="/" element={<Navigate to="/main" replace />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/main" element={
+                <ProtectedRoute>
+                  <LiquidDreamMain />
+                </ProtectedRoute>
+              } />
+              <Route path="/loading-test" element={<LoadingTestPage />} />
+              <Route path="/superpowers" element={<SuperpowerDesignPreview />} />
+              <Route path="/liquid-chat" element={<LiquidChatPreview />} />
+              <Route path="/unified-dream" element={<UnifiedDreamPreview />} />
               <Route path="/chat" element={
+                <ProtectedRoute>
+                  <ChatPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/telegram-chat" element={
+                <ProtectedRoute>
+                  <ChatPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/simple-chat-beta" element={
                 <ProtectedRoute>
                   <SimpleChatBeta />
                 </ProtectedRoute>

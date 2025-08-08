@@ -68,7 +68,7 @@ const Register: React.FC = () => {
                     setError('Sjekk e-posten din for bekreftelseslink!');
                     setTimeout(() => navigate('/login'), 3000);
                 } else {
-                    navigate('/chat');
+                    navigate('/main');
                 }
             }
         } catch (err: any) {

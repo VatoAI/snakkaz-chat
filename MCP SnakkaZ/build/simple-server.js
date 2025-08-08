@@ -1,26 +1,21 @@
 #!/usr/bin/env node
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
 /**
  * SnakkaZ MCP Simple Server
  * Production-ready server for SnakkaZ Chat MCP integration
  */
-const express_1 = __importDefault(require("express"));
-const cors_1 = __importDefault(require("cors"));
-const helmet_1 = __importDefault(require("helmet"));
-const http_1 = require("http");
-const app = (0, express_1.default)();
-const server = (0, http_1.createServer)(app);
+import express from "express";
+import cors from "cors";
+import helmet from "helmet";
+import { createServer } from "http";
+const app = express();
+const server = createServer(app);
 const PORT = process.env.PORT || 3001;
 // Security middleware
-app.use((0, helmet_1.default)({
+app.use(helmet({
     contentSecurityPolicy: false, // For development
 }));
 // CORS middleware
-app.use((0, cors_1.default)({
+app.use(cors({
     origin: [
         "http://localhost:5173",
         "https://snakkaz.com",
@@ -28,7 +23,7 @@ app.use((0, cors_1.default)({
     ],
     credentials: true,
 }));
-app.use(express_1.default.json());
+app.use(express.json());
 // Health check endpoint
 app.get("/health", (req, res) => {
     res.json({
@@ -132,4 +127,5 @@ server.listen(PORT, () => {
 ================================
   `);
 });
-exports.default = app;
+export default app;
+//# sourceMappingURL=simple-server.js.map

@@ -38,10 +38,8 @@ body {
   );
   color: white;
   min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
+  /* SNAKKAZ FIX: Fjernet overflow: hidden for Tailwind compatibility */
+  /* overflow: hidden; */
 }
 
 /* Liquid Dream Background Effect */
