@@ -1,0 +1,562 @@
+/* ============================================
+   SNAKKAZ LIQUID GLASS DESIGN SYSTEM
+   3-Layer Architecture - CSS Protection
+   ============================================ */
+
+/* Critical Font Import First */
+@import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap");
+
+/* Critical Imports */
+@import "./supabase-overrides.css";
+@import "./specificity-booster.css";
+
+/* Layer 1: Base Variables & Foundation */
+:root {
+  /* Typography - Protected */
+  --font-display: "Orbitron", monospace !important;
+  --font-body: "Space Grotesk", sans-serif !important;
+
+  /* Liquid Glass Colors - Protected */
+  --liquid-primary: #0066ff !important;
+  --liquid-secondary: #00d4aa !important;
+  --liquid-accent: #ff6b6b !important;
+  --liquid-glass-bg: rgba(255, 255, 255, 0.05) !important;
+  --liquid-glass-border: rgba(255, 255, 255, 0.1) !important;
+  --liquid-glass-hover: rgba(255, 255, 255, 0.08) !important;
+
+  /* Gradients - Protected */
+  --liquid-gradient-primary: linear-gradient(
+    135deg,
+    #667eea 0%,
+    #764ba2 100%
+  ) !important;
+  --liquid-gradient-secondary: linear-gradient(
+    135deg,
+    #f093fb 0%,
+    #f5576c 100%
+  ) !important;
+  --liquid-gradient-accent: linear-gradient(
+    135deg,
+    #4facfe 0%,
+    #00f2fe 100%
+  ) !important;
+  --liquid-gradient-glass: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.1),
+    rgba(255, 255, 255, 0.05)
+  ) !important;
+
+  /* Norwegian Blue Theme */
+  --norwegian-blue: #003d82 !important;
+  --norwegian-red: #ef2b2d !important;
+  --norwegian-white: #ffffff !important;
+
+  /* Glass Effects */
+  --glass-blur: blur(20px) !important;
+  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37) !important;
+  --glass-border-radius: 20px !important;
+}
+
+/* Layer 2: Core Component Protection */
+.spectacular-chat,
+.spectacular-chat *,
+.widget-dashboard,
+.widget-dashboard *,
+.snakkaz-container,
+.snakkaz-container *,
+.protected-auth-container,
+.protected-auth-container *,
+.liquid-glass,
+.liquid-glass *,
+.css-protection-lock,
+.css-protection-lock * {
+  /* Force our design system */
+  box-sizing: border-box !important;
+  font-family: var(--font-body) !important;
+}
+
+/* Typography Protection */
+body {
+  font-family: var(--font-body) !important;
+  color: white !important;
+  background: linear-gradient(
+    135deg,
+    #0f0f23 0%,
+    #1a1a2e 50%,
+    #16213e 100%
+  ) !important;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-display) !important;
+}
+
+/* Force font on all elements under protection */
+.css-protection-lock,
+.css-protection-lock *,
+.protected-auth-container,
+.protected-auth-container *,
+.liquid-glass,
+.liquid-glass * {
+  font-family: var(--font-body) !important;
+}
+
+.css-protection-lock h1,
+.css-protection-lock h2,
+.css-protection-lock h3,
+.css-protection-lock h4,
+.css-protection-lock h5,
+.css-protection-lock h6,
+.protected-auth-container h1,
+.protected-auth-container h2,
+.protected-auth-container h3,
+.protected-auth-container h4,
+.protected-auth-container h5,
+.protected-auth-container h6 {
+  font-family: var(--font-display) !important;
+}
+
+/* Liquid Glass Base Classes - Maximum Protection */
+.liquid-glass {
+  background: var(--liquid-glass-bg) !important;
+  backdrop-filter: var(--glass-blur) !important;
+  -webkit-backdrop-filter: var(--glass-blur) !important;
+  border: 1px solid var(--liquid-glass-border) !important;
+  border-radius: var(--glass-border-radius) !important;
+  box-shadow: var(--glass-shadow) !important;
+  position: relative !important;
+}
+
+.liquid-glass::before {
+  content: "" !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background: var(--liquid-gradient-glass) !important;
+  border-radius: inherit !important;
+  pointer-events: none !important;
+  z-index: -1 !important;
+}
+
+.liquid-glass:hover {
+  background: var(--liquid-glass-hover) !important;
+  transform: translateY(-2px) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Layer 3: Supabase Override Protection */
+.supabase-auth-ui_ui,
+.supabase-auth-ui_ui *,
+[class*="supabase"],
+[class*="supabase"] *,
+.auth-widget,
+.auth-widget *,
+.sb-avatar,
+.sb-avatar * {
+  /* Override Supabase base styles */
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+
+/* Spectacular Chat Component - Ultimate Protection */
+.spectacular-chat {
+  background: linear-gradient(
+    135deg,
+    rgba(0, 61, 130, 0.9) 0%,
+    rgba(0, 102, 255, 0.8) 50%,
+    rgba(0, 212, 170, 0.9) 100%
+  ) !important;
+  backdrop-filter: blur(30px) !important;
+  -webkit-backdrop-filter: blur(30px) !important;
+  border: 2px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 25px !important;
+  min-height: 600px !important;
+  position: relative !important;
+  overflow: hidden !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25),
+    0 0 0 1px rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+}
+
+.spectacular-chat::before {
+  content: "" !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.05) 50%,
+    rgba(255, 255, 255, 0.1) 100%
+  ) !important;
+  pointer-events: none !important;
+  z-index: 1 !important;
+}
+
+.spectacular-chat > * {
+  position: relative !important;
+  z-index: 2 !important;
+}
+
+/* Chat Header Protection */
+.spectacular-chat .chat-header {
+  background: rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(15px) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important;
+  padding: 1.5rem !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+}
+
+.spectacular-chat .chat-title {
+  color: #ffffff !important;
+  font-size: 1.5rem !important;
+  font-weight: 700 !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+  margin: 0 !important;
+}
+
+.spectacular-chat .chat-subtitle {
+  color: rgba(255, 255, 255, 0.8) !important;
+  font-size: 0.875rem !important;
+  margin: 0 !important;
+  margin-top: 0.25rem !important;
+}
+
+/* Message Area Protection */
+.spectacular-chat .messages-container {
+  flex: 1 !important;
+  padding: 1.5rem !important;
+  overflow-y: auto !important;
+  background: transparent !important;
+}
+
+.spectacular-chat .message {
+  background: rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 15px !important;
+  padding: 1rem !important;
+  margin-bottom: 1rem !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1) !important;
+}
+
+.spectacular-chat .message:hover {
+  background: rgba(255, 255, 255, 0.15) !important;
+  transform: translateY(-1px) !important;
+  transition: all 0.2s ease !important;
+}
+
+/* Input Area Protection */
+.spectacular-chat .message-input-container {
+  padding: 1.5rem !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.spectacular-chat .message-input {
+  background: rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(15px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 25px !important;
+  padding: 1rem 1.5rem !important;
+  color: #ffffff !important;
+  width: 100% !important;
+  font-size: 1rem !important;
+  outline: none !important;
+  transition: all 0.3s ease !important;
+}
+
+.spectacular-chat .message-input::placeholder {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.spectacular-chat .message-input:focus {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border-color: rgba(255, 255, 255, 0.4) !important;
+  box-shadow: 0 0 20px rgba(0, 102, 255, 0.3) !important;
+}
+
+.spectacular-chat .send-button {
+  background: linear-gradient(135deg, #0066ff, #00d4aa) !important;
+  border: none !important;
+  border-radius: 50% !important;
+  width: 50px !important;
+  height: 50px !important;
+  color: #ffffff !important;
+  font-size: 1.2rem !important;
+  cursor: pointer !important;
+  margin-left: 1rem !important;
+  transition: all 0.3s ease !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.spectacular-chat .send-button:hover {
+  transform: scale(1.1) !important;
+  box-shadow: 0 5px 20px rgba(0, 102, 255, 0.4) !important;
+}
+
+/* Animation Protection */
+@keyframes liquidFloat {
+  0%,
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  33% {
+    transform: translateY(-10px) rotate(1deg);
+  }
+  66% {
+    transform: translateY(5px) rotate(-1deg);
+  }
+}
+
+@keyframes liquidPulse {
+  0%,
+  100% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes liquidShimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Login Page Animations */
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-5px);
+  }
+  75% {
+    transform: translateX(5px);
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite !important;
+}
+
+.animate-shake {
+  animation: shake 0.5s ease-in-out !important;
+}
+
+.animation-delay-1000 {
+  animation-delay: 1s !important;
+}
+
+.animation-delay-2000 {
+  animation-delay: 2s !important;
+}
+
+.liquid-float {
+  animation: liquidFloat 6s ease-in-out infinite !important;
+}
+
+.liquid-pulse {
+  animation: liquidPulse 2s ease-in-out infinite !important;
+}
+
+.liquid-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  ) !important;
+  background-size: 200% 100% !important;
+  animation: liquidShimmer 2s ease-in-out infinite !important;
+}
+
+/* Mobile Responsiveness Protection */
+@media (max-width: 768px) {
+  .spectacular-chat {
+    border-radius: 0 !important;
+    min-height: 100vh !important;
+    border: none !important;
+  }
+
+  .spectacular-chat .chat-header {
+    padding: 1rem !important;
+  }
+
+  .spectacular-chat .chat-title {
+    font-size: 1.25rem !important;
+  }
+
+  .spectacular-chat .messages-container {
+    padding: 1rem !important;
+  }
+
+  .spectacular-chat .message-input-container {
+    padding: 1rem !important;
+  }
+}
+
+/* Dark Mode Protection */
+@media (prefers-color-scheme: dark) {
+  .spectacular-chat {
+    background: linear-gradient(
+      135deg,
+      rgba(0, 61, 130, 0.95) 0%,
+      rgba(0, 102, 255, 0.9) 50%,
+      rgba(0, 212, 170, 0.95) 100%
+    ) !important;
+  }
+}
+
+/* High Contrast Protection */
+@media (prefers-contrast: high) {
+  .spectacular-chat {
+    border: 3px solid #ffffff !important;
+  }
+
+  .spectacular-chat .message {
+    border: 2px solid rgba(255, 255, 255, 0.5) !important;
+  }
+}
+
+/* Reduced Motion Protection */
+@media (prefers-reduced-motion: reduce) {
+  .spectacular-chat *,
+  .liquid-float,
+  .liquid-pulse,
+  .liquid-shimmer {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Print Styles Protection */
+@media print {
+  .spectacular-chat {
+    background: #ffffff !important;
+    color: #000000 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+  }
+}
+
+/* Critical CSS Lock - Prevents any overrides */
+.css-protection-lock {
+  position: relative !important;
+}
+
+/* EMERGENCY CHAT FIX - Ultra Specific Selectors */
+.spectacular-chat,
+.spectacular-chat *,
+[class*="chat"],
+[class*="Chat"],
+.h-full.flex > div:last-child,
+.flex-1.flex.flex-col {
+  background: linear-gradient(135deg, #0a0f1b 0%, #1a1f2e 100%) !important;
+  font-family: "Space Grotesk", sans-serif !important;
+  color: white !important;
+  min-height: 100vh !important;
+}
+
+/* Override any mobile/external CSS - NUCLEAR OPTION */
+@media (max-width: 768px) {
+  .spectacular-chat,
+  .spectacular-chat *,
+  [class*="chat"],
+  [class*="Chat"],
+  .h-full.flex > div:last-child,
+  .flex-1.flex.flex-col {
+    background: linear-gradient(135deg, #0a0f1b 0%, #1a1f2e 100%) !important;
+    font-family: "Space Grotesk", sans-serif !important;
+    color: white !important;
+  }
+  
+  /* Message areas */
+  .flex-1.overflow-y-auto {
+    background: rgba(100, 181, 246, 0.08) !important;
+    backdrop-filter: blur(12px) !important;
+    border-radius: 16px !important;
+    margin: 8px !important;
+  }
+  
+  /* Input areas */
+  .border-t {
+    background: rgba(100, 181, 246, 0.12) !important;
+    backdrop-filter: blur(20px) !important;
+    border-top: 1px solid rgba(100, 181, 246, 0.3) !important;
+    border-radius: 16px 16px 0 0 !important;
+  }
+  
+  /* Buttons */
+  button {
+    background: linear-gradient(135deg, #64b5f6 0%, #4dd0e1 100%) !important;
+    color: #0a0f1b !important;
+    border: 1px solid rgba(100, 181, 246, 0.3) !important;
+    border-radius: 12px !important;
+    font-family: "Space Grotesk", sans-serif !important;
+    font-weight: 600 !important;
+  }
+  
+  /* Input fields */
+  input, textarea {
+    background: rgba(100, 181, 246, 0.1) !important;
+    border: 1px solid rgba(100, 181, 246, 0.3) !important;
+    border-radius: 12px !important;
+    color: white !important;
+    font-family: "Space Grotesk", sans-serif !important;
+  }
+}
+
+/* ========================================
+   SNAKKAZ CHAT SPECIFIC FIXES
+   Kun for chat-komponenter, ikke login!
+   ======================================== */
+
+/* CHAT-ONLY overrides - ikke påvirk login */
+.spectacular-chat,
+.spectacular-chat *,
+[data-component="chat"],
+[data-component="chat"] * {
+  background: linear-gradient(135deg, #0a0f1b 0%, #1a1f2e 100%) !important;
+  font-family: "Space Grotesk", sans-serif !important;
+  color: white !important;
+}
+
+/* Chat containers på desktop */
+@media (min-width: 769px) {
+  .spectacular-chat .h-full.flex > div:last-child,
+  .spectacular-chat .flex-1.flex.flex-col {
+    background: linear-gradient(135deg, #0a0f1b 0%, #1a1f2e 100%) !important;
+  }
+}

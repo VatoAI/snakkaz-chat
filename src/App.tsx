@@ -1,11 +1,14 @@
 import React, { Suspense, useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './auth/AuthProvider';
+import { AuthProvider } from './features/authentication';
+import { LoadingProvider, Loading } from './core/ui/loading';
 import { ProtectedRoute } from './components/ProtectedRoute';
-import { StandardLoading } from './components/common/StandardLoading';
+import { ThemeProvider } from './context/ThemeProvider';
+import { PerformanceMonitorProvider } from './core/hooks/usePerformanceMonitor';
+// CRITICAL: Import order matters! Design system first!
+import './styles/design-system.css';
 import './index.css';
-import './styles/mobile.css'; // EMERGENCY MOBILE FIX
-import './styles/cyberpunk-design-system.css'; // CYBERPUNK LIQUID GLASS SYSTEM
+import './styles/mobile.css';
 
 // Device detection utility
 const useDeviceDetection = () => {
@@ -27,16 +30,12 @@ const useDeviceDetection = () => {
   return { isMobile };
 };
 
-// Lazy load components
+// Lazy load components - PRODUCTION VERSION
 const Login = React.lazy(() => import('./pages/Login'));
 const Register = React.lazy(() => import('./pages/Register'));
-const SimpleChatBeta = React.lazy(() => import('./pages/SimpleChatBeta'));
-const LoadingTestPage = React.lazy(() => import('./pages/LoadingTestPage'));
-const SuperpowerDesignPreview = React.lazy(() => import('./pages/SuperpowerDesignPreview'));
-const LiquidChatPreview = React.lazy(() => import('./pages/LiquidChatPreview'));
-const UnifiedDreamPreview = React.lazy(() => import('./pages/UnifiedDreamPreview'));
 const LiquidDreamMain = React.lazy(() => import('./pages/LiquidDreamMain'));
 const ChatPage = React.lazy(() => import('./pages/ChatPage'));
+const DesignProtectionTest = React.lazy(() => import('./components/test/DesignProtectionTest'));
 
 const App: React.FC = () => {
   const { isMobile } = useDeviceDetection();
@@ -44,44 +43,40 @@ const App: React.FC = () => {
   console.log('App rendered, device:', isMobile ? 'mobile' : 'desktop');
 
   return (
-    <div className="liquid-dream-app">
-      <Router>
-        <AuthProvider>
-          <Suspense fallback={<StandardLoading type="app" />}>
-            <Routes>
-              <Route path="/" element={<Navigate to="/main" replace />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/main" element={
-                <ProtectedRoute>
-                  <LiquidDreamMain />
-                </ProtectedRoute>
-              } />
-              <Route path="/loading-test" element={<LoadingTestPage />} />
-              <Route path="/superpowers" element={<SuperpowerDesignPreview />} />
-              <Route path="/liquid-chat" element={<LiquidChatPreview />} />
-              <Route path="/unified-dream" element={<UnifiedDreamPreview />} />
-              <Route path="/chat" element={
-                <ProtectedRoute>
-                  <ChatPage />
-                </ProtectedRoute>
-              } />
-              <Route path="/telegram-chat" element={
-                <ProtectedRoute>
-                  <ChatPage />
-                </ProtectedRoute>
-              } />
-              <Route path="/simple-chat-beta" element={
-                <ProtectedRoute>
-                  <SimpleChatBeta />
-                </ProtectedRoute>
-              } />
-              <Route path="*" element={<Navigate to="/login" replace />} />
-            </Routes>
-          </Suspense>
-        </AuthProvider>
-      </Router>
-    </div>
+    <ThemeProvider>
+      <LoadingProvider>
+        <PerformanceMonitorProvider
+          showDebugPanel={process.env.NODE_ENV === 'development'}
+          analyticsEndpoint="/api/analytics"
+        >
+          <div className="liquid-dream-app">
+            <Router>
+              <AuthProvider>
+                <Suspense fallback={<Loading type="app-startup" />}>
+                  <Routes>
+                    <Route path="/" element={<Navigate to="/main" replace />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/register" element={<Register />} />
+                    <Route path="/test" element={<DesignProtectionTest />} />
+                    <Route path="/main" element={
+                      <ProtectedRoute>
+                        <LiquidDreamMain />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/chat" element={
+                      <ProtectedRoute>
+                        <ChatPage />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="*" element={<Navigate to="/login" replace />} />
+                  </Routes>
+                </Suspense>
+              </AuthProvider>
+            </Router>
+          </div>
+        </PerformanceMonitorProvider>
+      </LoadingProvider>
+    </ThemeProvider>
   );
 };
 

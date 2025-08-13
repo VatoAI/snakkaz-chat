@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../auth/AuthProvider';
-import ModernDashboard from '../components/dashboard/ModernDashboard';
+import { useAuth } from '../features/authentication';
+import WidgetDashboard from '../features/dashboard/components/WidgetDashboard';
 
 const LiquidDreamMain: React.FC = () => {
     const { user } = useAuth();
@@ -24,17 +24,41 @@ const LiquidDreamMain: React.FC = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 flex items-center justify-center">
-                <div className="text-center">
-                    <div className="w-16 h-16 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <h2 className="text-xl font-semibold text-white mb-2">Laster SnakkaZ...</h2>
-                    <p className="text-gray-300">Forbereder din sikre chat-opplevelse</p>
+            <div style={{
+                minHeight: '100vh',
+                background: 'linear-gradient(135deg, var(--snakkaz-dark) 0%, var(--snakkaz-surface) 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontFamily: 'var(--font-body)'
+            }}>
+                <div style={{ textAlign: 'center' }}>
+                    <div style={{
+                        width: '50px',
+                        height: '50px',
+                        border: '3px solid rgba(100, 181, 246, 0.3)',
+                        borderTop: '3px solid var(--snakkaz-primary)',
+                        borderRadius: '50%',
+                        animation: 'spin 1s linear infinite',
+                        margin: '0 auto 1rem'
+                    }} />
+                    <h2 style={{
+                        color: 'var(--snakkaz-primary)',
+                        fontSize: '1.5rem',
+                        fontWeight: '600',
+                        marginBottom: '0.5rem'
+                    }}>
+                        Laster SNAKKAZ...
+                    </h2>
+                    <p style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                        Forbereder din chat-opplevelse
+                    </p>
                 </div>
             </div>
         );
     }
 
-    return <ModernDashboard />;
+    return <WidgetDashboard />;
 };
 
 export default LiquidDreamMain;

@@ -3,18 +3,21 @@
  * Exports all chat-related components, hooks, and utilities
  */
 
-// Components
-export * from './components/global';
-export * from './components/private';
-export * from './components/group';
-export * from './components/common';
-export * from './components/interface';
+// Main Components
+export * from "./components";
+
+// Specific Component Groups (optional)
+// export * from './components/global';
+// export * from './components/private';
+// export * from './components/group';
+// export * from './components/common';
+// export * from './components/interface';
 
 // Hooks
-export * from './hooks';
+// export * from './hooks';
 
 // Services
-export * from './services';
+// export * from './services';
 
 // Utils
-export * from './utils';
+// export * from './utils';

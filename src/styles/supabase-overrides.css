@@ -1,0 +1,83 @@
+/* ============================================
+   SUPABASE CSS OVERRIDE PROTECTION
+   Maximum Specificity Protection
+   ============================================ */
+
+/* Override all Supabase auth components */
+.supabase-auth-ui_ui,
+.supabase-auth-ui_ui *,
+[class*="supabase"],
+[class*="supabase"] *,
+.auth-widget,
+.auth-widget *,
+.sb-avatar,
+.sb-avatar *,
+[data-supabase],
+[data-supabase] * {
+  /* Force reset Supabase styles */
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  margin: initial !important;
+  padding: initial !important;
+  font-family: inherit !important;
+  color: inherit !important;
+}
+
+/* Specific Supabase button overrides */
+.supabase-auth-ui_ui button,
+[class*="supabase"] button {
+  background: var(--liquid-gradient-primary) !important;
+  border: 1px solid var(--liquid-glass-border) !important;
+  border-radius: var(--glass-border-radius) !important;
+  color: #ffffff !important;
+  padding: 0.75rem 1.5rem !important;
+  backdrop-filter: var(--glass-blur) !important;
+  transition: all 0.3s ease !important;
+}
+
+.supabase-auth-ui_ui button:hover,
+[class*="supabase"] button:hover {
+  background: var(--liquid-gradient-secondary) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: var(--glass-shadow) !important;
+}
+
+/* Supabase input overrides */
+.supabase-auth-ui_ui input,
+[class*="supabase"] input {
+  background: var(--liquid-glass-bg) !important;
+  border: 1px solid var(--liquid-glass-border) !important;
+  border-radius: var(--glass-border-radius) !important;
+  color: #ffffff !important;
+  padding: 0.75rem !important;
+  backdrop-filter: var(--glass-blur) !important;
+}
+
+.supabase-auth-ui_ui input:focus,
+[class*="supabase"] input:focus {
+  border-color: var(--liquid-primary) !important;
+  box-shadow: 0 0 20px rgba(0, 102, 255, 0.3) !important;
+  outline: none !important;
+}
+
+/* Supabase container overrides */
+.supabase-auth-ui_ui > div,
+[class*="supabase"] > div {
+  background: transparent !important;
+  border: none !important;
+}
+
+/* Error and message overrides */
+.supabase-auth-ui_ui .error,
+.supabase-auth-ui_ui .message,
+[class*="supabase"] .error,
+[class*="supabase"] .message {
+  background: var(--liquid-glass-bg) !important;
+  border: 1px solid var(--liquid-accent) !important;
+  border-radius: var(--glass-border-radius) !important;
+  color: #ffffff !important;
+  padding: 1rem !important;
+  backdrop-filter: var(--glass-blur) !important;
+}

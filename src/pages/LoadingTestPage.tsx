@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { MatrixLoadingScreen } from '../components/common/MatrixLoading';
-import { StandardLoading } from '../components/common/StandardLoading';
+import { MatrixLoadingScreen } from '../core/ui/loading/MatrixLoading';
+import { UnifiedLoading } from '../core/ui/loading/UnifiedLoading';
 
 const LoadingTestPage: React.FC = () => {
   const [currentTest, setCurrentTest] = useState<'matrix' | 'auth' | 'chat' | 'inline'>('matrix');
@@ -20,15 +20,15 @@ const LoadingTestPage: React.FC = () => {
       case 'matrix':
         return <MatrixLoadingScreen message="🧿 Testing Psychedelic Matrix Loading..." />;
       case 'auth':
-        return <StandardLoading type="auth" message="🔐 Testing Auth Loading..." />;
+        return <UnifiedLoading type="auth-login" message="🔐 Testing Auth Loading..." />;
       case 'chat':
-        return <StandardLoading type="chat" message="💬 Testing Chat Loading..." />;
+        return <UnifiedLoading type="chat-loading" message="💬 Testing Chat Loading..." />;
       case 'inline':
         return (
           <div className="min-h-screen bg-cyberdark-950 flex items-center justify-center">
             <div className="bg-cyberdark-800 p-8 rounded-lg">
               <h2 className="text-white mb-4">Inline Loading Test:</h2>
-              <StandardLoading type="inline" message="Testing inline..." size="lg" />
+              <UnifiedLoading type="inline" message="Testing inline..." />
             </div>
           </div>
         );
@@ -56,8 +56,8 @@ const LoadingTestPage: React.FC = () => {
                 }, 100);
               }}
               className={`w-full text-left p-3 rounded transition-colors ${currentTest === test.key
-                  ? 'bg-cyberblue-500 text-white'
-                  : 'bg-cyberdark-700 text-cyberblue-300 hover:bg-cyberdark-600'
+                ? 'bg-cyberblue-500 text-white'
+                : 'bg-cyberdark-700 text-cyberblue-300 hover:bg-cyberdark-600'
                 }`}
             >
               <div className="font-semibold">{test.name}</div>

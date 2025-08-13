@@ -1,25 +1,26 @@
-// Export all chat components
-export { AIAgentChat } from './AIAgentChat';
-export { AdminButton } from './AdminButton';
-export { ChatDialogs } from './ChatDialogs';
-export { ChatFriends } from './ChatFriends';
-export { ChatGlassPanel } from './ChatGlassPanel';
-export { ChatGlobal } from './ChatGlobal';
-export { ChatHeader } from './ChatHeader';
-export { ChatInputField } from './ChatInputField';
-export { ChatInterface } from './ChatInterface';
-export { default as ChatList } from './ChatList';
-export { ChatMessage } from './ChatMessage';
-export { ChatMessageList } from './ChatMessageList';
-export { ChatPresence } from './ChatPresence';
-export { default as ChatSidebar } from './ChatSidebar';
-export { ChatTabs } from './ChatTabs';
-export { CommandHandler } from './CommandHandler';
-export { FriendsList } from './FriendsList';
-export { GroupMessageList } from './GroupMessageList';
-export { MediaUploader } from './MediaUploader';
-export { default as MessageBubble } from './MessageBubble';
-export { MigrationHelper } from './MigrationHelper';
-export { PrivateChats } from './PrivateChats';
-export { ScrollStabilizer } from './ScrollStabilizer';
-export { UsersProfiles } from './UsersProfiles';
+// Export WebRTC components
+export { default as WebRTCStatus } from "./WebRTCStatus";
+export { WebRTCDirectChat } from "./WebRTCDirectChat";
+export { ChatContainer } from "./ChatContainer";
+
+// Export Spectacular Chat Components
+export { default as SpectacularChat } from "./SpectacularChat";
+
+// Disse eksportene er midlertidig kommentert ut til vi får oppdatert strukturen
+// export { ChatHeader } from './header/ChatHeader';
+// export { default as ChatInterface } from './ChatInterface';
+// export { default as ChatMessageList } from './ChatMessageList';
+// export { default as AppChatInterface } from './AppChatInterface';
+// export { default as DirectMessage } from './friends/DirectMessage';
+// export { GroupChat } from './groups/GroupChat';
+// export { FriendsList } from './friends/list/FriendsList';
+// export { WebRTCMonitor } from './WebRTCMonitor';
+
+// Export hooks
+// export { useGroups } from './hooks/useGroups';
+// export { usePresence } from './hooks/usePresence';
+// export { useChatState } from './hooks/useChatState';
+// export { useGroupInvites } from './hooks/useGroupInvites';
+
+// Export dynamic components for code splitting optimization
+// export * from './dynamic-chat';

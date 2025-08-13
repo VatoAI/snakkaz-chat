@@ -1,10 +1,20 @@
 import React from 'react';
-import TelegramStyleChat from '../components/chat/TelegramStyleChat';
+import SpectacularChat from '../features/chat/components/SpectacularChat';
 
 const ChatPage: React.FC = () => {
+    console.log('🎪 ChatPage: Rendering ChatPage component');
+
     return (
-        <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
-            <TelegramStyleChat />
+        <div
+            className="h-screen flex flex-col liquid-glass css-protection-lock"
+            style={{
+                background: 'linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%)',
+                fontFamily: 'var(--font-body, "Space Grotesk", sans-serif)',
+                color: 'white',
+                minHeight: '100vh'
+            }}
+        >
+            <SpectacularChat />
         </div>
     );
 };

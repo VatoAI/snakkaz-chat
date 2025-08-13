@@ -45,13 +45,16 @@
     left: 0 !important;
   }
 
-  /* Main chat content - FORCE VISIBILITY */
-  .h-full.flex > div:last-child,
-  .flex-1.flex.flex-col {
+  /* Main chat content - LIQUID GLASS (kun i chat-kontekst) */
+  .spectacular-chat .h-full.flex > div:last-child,
+  .spectacular-chat .flex-1.flex.flex-col,
+  [data-component="chat"] .h-full.flex > div:last-child,
+  [data-component="chat"] .flex-1.flex.flex-col {
     flex: 1 !important;
     width: 100% !important;
     min-height: 100vh !important;
-    background: rgba(10, 15, 28, 0.95) !important;
+    /* LIQUID GLASS BACKGROUND - not gray! */
+    background: linear-gradient(135deg, #0a0f1b 0%, #1a1f2e 100%) !important;
     display: flex !important;
     flex-direction: column !important;
     visibility: visible !important;
@@ -79,26 +82,34 @@
     min-width: 44px !important;
   }
 
-  /* Messages area - ENSURE VISIBILITY */
-  .flex-1.overflow-y-auto {
+  /* Messages area - LIQUID GLASS (kun i chat) */
+  .spectacular-chat .flex-1.overflow-y-auto,
+  [data-component="chat"] .flex-1.overflow-y-auto {
     flex: 1 !important;
     padding: 8px !important;
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;
-    background: rgba(10, 15, 28, 0.7) !important;
-    backdrop-filter: blur(10px) !important;
+    /* LIQUID GLASS - not dark gray! */
+    background: rgba(100, 181, 246, 0.08) !important;
+    backdrop-filter: blur(12px) !important;
+    border-radius: 16px !important;
+    margin: 8px !important;
     min-height: 300px !important;
     display: block !important;
     visibility: visible !important;
   }
 
-  /* Input area mobile optimization */
-  .border-t {
+  /* Input area mobile optimization - LIQUID GLASS (kun i chat) */
+  .spectacular-chat .border-t,
+  [data-component="chat"] .border-t {
     position: sticky !important;
     bottom: 0 !important;
-    background: rgba(10, 15, 28, 0.95) !important;
+    /* LIQUID GLASS input area - not dark! */
+    background: rgba(100, 181, 246, 0.12) !important;
     backdrop-filter: blur(20px) !important;
-    border-top: 1px solid rgba(59, 130, 246, 0.3) !important;
+    border-top: 1px solid rgba(100, 181, 246, 0.3) !important;
+    border-radius: 16px 16px 0 0 !important;
+    margin: 0 8px !important;
     padding: 10px !important;
     z-index: 100 !important;
   }

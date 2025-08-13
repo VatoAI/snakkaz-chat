@@ -1,7 +1,7 @@
 
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuthSimple";
+import { useAuth } from "../../features/authentication";
 import { Loader2 } from "lucide-react";
 
 interface ProtectedRouteProps {
@@ -11,14 +11,19 @@ interface ProtectedRouteProps {
 
 export const ProtectedRoute = ({
   children,
-  redirectTo = "/auth"
+  redirectTo = "/login"  // Changed from "/auth" to "/login"
 }: ProtectedRouteProps) => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 
+  console.log('🔒 ProtectedRoute: Checking access...', { user, loading, redirectTo });
+
   useEffect(() => {
     if (!loading && !user) {
+      console.log('🚫 ProtectedRoute: No user, redirecting to:', redirectTo);
       navigate(redirectTo, { replace: true });
+    } else if (!loading && user) {
+      console.log('✅ ProtectedRoute: User authenticated, allowing access');
     }
   }, [user, loading, navigate, redirectTo]);
 
