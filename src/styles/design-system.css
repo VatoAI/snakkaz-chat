@@ -1,9 +1,13 @@
-/* Critical Font Import First */
+/* Import Apple Liquid Glass 2025 Design System */
+@import "./apple-liquid-glass-2025.css";
+
+/* Import Fonts */
 @import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap");
 
 /* Critical Imports */
 @import "./supabase-overrides.css";
 @import "./specificity-booster.css";
+@import "./modern-chat.css";
 
 /* ============================================
    SNAKKAZ LIQUID GLASS DESIGN SYSTEM
@@ -48,11 +52,6 @@
   overflow-y: auto !important;
   display: block !important;
 }
-@import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap");
-
-/* Critical Imports */
-@import "./supabase-overrides.css";
-@import "./specificity-booster.css";
 
 /* Layer 1: Base Variables & Foundation */
 :root {

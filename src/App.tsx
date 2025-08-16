@@ -7,6 +7,7 @@ import { ThemeProvider } from './context/ThemeProvider';
 import { PerformanceMonitorProvider } from './core/hooks/usePerformanceMonitor';
 // CRITICAL: Import order matters! Design system first!
 import './styles/design-system.css';
+import './styles/snakkaz-unified-design-system.css';
 import './index.css';
 import './styles/mobile.css';
 
@@ -34,7 +35,7 @@ const useDeviceDetection = () => {
 const Login = React.lazy(() => import('./pages/Login'));
 const Register = React.lazy(() => import('./pages/Register'));
 const LiquidDreamMain = React.lazy(() => import('./pages/LiquidDreamMain'));
-const ChatPage = React.lazy(() => import('./pages/ChatPage'));
+const ChatPage = React.lazy(() => import('./pages/ChatPage')); // BACK TO ORIGINAL
 const DesignProtectionTest = React.lazy(() => import('./components/test/DesignProtectionTest'));
 
 const App: React.FC = () => {
@@ -54,10 +55,11 @@ const App: React.FC = () => {
               <AuthProvider>
                 <Suspense fallback={<Loading type="app-startup" />}>
                   <Routes>
-                    <Route path="/" element={<Navigate to="/main" replace />} />
+                    <Route path="/" element={<Navigate to="/demo" replace />} />
                     <Route path="/login" element={<Login />} />
                     <Route path="/register" element={<Register />} />
                     <Route path="/test" element={<DesignProtectionTest />} />
+                    <Route path="/demo" element={<ChatPage />} />
                     <Route path="/main" element={
                       <ProtectedRoute>
                         <LiquidDreamMain />
@@ -68,7 +70,7 @@ const App: React.FC = () => {
                         <ChatPage />
                       </ProtectedRoute>
                     } />
-                    <Route path="*" element={<Navigate to="/login" replace />} />
+                    <Route path="*" element={<Navigate to="/demo" replace />} />
                   </Routes>
                 </Suspense>
               </AuthProvider>

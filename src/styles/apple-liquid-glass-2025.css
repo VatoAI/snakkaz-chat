@@ -1,0 +1,459 @@
+/**
+ * Apple 2025 Liquid Glass Design System
+ * Enhanced with LiqUIdify-inspired advanced glassmorphism
+ * Supercharged SnakkaZ Chat Experience
+ */
+
+/* === LIQUID GLASS SYSTEM CORE === */
+:root {
+  /* Apple 2025 Liquid Glass Variables */
+  --liquid-glass-primary: rgba(59, 130, 246, 0.15);
+  --liquid-glass-secondary: rgba(107, 114, 128, 0.1);
+  --liquid-glass-accent: rgba(168, 85, 247, 0.2);
+  --liquid-glass-bg: rgba(255, 255, 255, 0.08);
+  --liquid-glass-border: rgba(255, 255, 255, 0.15);
+  --liquid-glass-text-primary: rgba(255, 255, 255, 0.95);
+  --liquid-glass-text-secondary: rgba(255, 255, 255, 0.7);
+  --liquid-glass-text-tertiary: rgba(255, 255, 255, 0.5);
+
+  /* Advanced Blur System */
+  --liquid-blur-sm: blur(4px);
+  --liquid-blur-md: blur(8px);
+  --liquid-blur-lg: blur(16px);
+  --liquid-blur-xl: blur(24px);
+  --liquid-blur-2xl: blur(40px);
+
+  /* Specular Highlights */
+  --liquid-specular-1: rgba(255, 255, 255, 0.4);
+  --liquid-specular-2: rgba(255, 255, 255, 0.2);
+  --liquid-specular-3: rgba(255, 255, 255, 0.1);
+
+  /* Aurora Gradient System */
+  --liquid-aurora-1: linear-gradient(
+    135deg,
+    rgba(168, 85, 247, 0.3) 0%,
+    rgba(59, 130, 246, 0.25) 35%,
+    rgba(16, 185, 129, 0.2) 70%,
+    rgba(245, 101, 101, 0.25) 100%
+  );
+  --liquid-aurora-2: linear-gradient(
+    225deg,
+    rgba(245, 101, 101, 0.25) 0%,
+    rgba(251, 191, 36, 0.2) 35%,
+    rgba(168, 85, 247, 0.3) 70%,
+    rgba(59, 130, 246, 0.25) 100%
+  );
+
+  /* Micro-interaction Timings */
+  --liquid-timing-instant: 100ms;
+  --liquid-timing-fast: 200ms;
+  --liquid-timing-normal: 300ms;
+  --liquid-timing-slow: 500ms;
+  --liquid-timing-slower: 800ms;
+
+  /* Shadow System */
+  --liquid-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1),
+    0 1px 2px rgba(0, 0, 0, 0.06);
+  --liquid-shadow-md: 0 4px 8px rgba(0, 0, 0, 0.15),
+    0 2px 4px rgba(0, 0, 0, 0.1);
+  --liquid-shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.2),
+    0 4px 8px rgba(0, 0, 0, 0.15);
+  --liquid-shadow-xl: 0 16px 32px rgba(0, 0, 0, 0.25),
+    0 8px 16px rgba(0, 0, 0, 0.2);
+  --liquid-shadow-2xl: 0 32px 64px rgba(0, 0, 0, 0.3),
+    0 16px 32px rgba(0, 0, 0, 0.25);
+
+  /* Enhanced Glass Layers */
+  --liquid-glass-filter-opacity: 0.15;
+  --liquid-glass-overlay-opacity: 0.08;
+  --liquid-glass-specular-opacity: 0.4;
+}
+
+/* === SVG FILTER DEFINITIONS === */
+.liquid-glass-svg-filters {
+  position: absolute;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  opacity: 0;
+}
+
+/* === BASE LIQUID GLASS COMPONENT === */
+.liquid-glass-container {
+  position: relative;
+  backdrop-filter: var(--liquid-blur-lg) saturate(180%);
+  -webkit-backdrop-filter: var(--liquid-blur-lg) saturate(180%);
+  background: var(--liquid-glass-bg);
+  border: 1px solid var(--liquid-glass-border);
+  border-radius: 20px;
+  box-shadow: var(--liquid-shadow-lg);
+  overflow: hidden;
+  transition: all var(--liquid-timing-normal) cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Create stacking context for layers */
+  isolation: isolate;
+}
+
+/* Filter Layer */
+.liquid-glass-filter {
+  position: absolute;
+  inset: 0;
+  background: var(--liquid-aurora-1);
+  opacity: var(--liquid-glass-filter-opacity);
+  filter: var(--liquid-blur-sm);
+  mix-blend-mode: multiply;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Overlay Layer */
+.liquid-glass-overlay {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+      circle at 30% 20%,
+      var(--liquid-glass-primary) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 70% 80%,
+      var(--liquid-glass-accent) 0%,
+      transparent 50%
+    );
+  opacity: var(--liquid-glass-overlay-opacity);
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Specular Highlight Layer */
+.liquid-glass-specular {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    var(--liquid-specular-1) 0%,
+    transparent 30%,
+    transparent 70%,
+    var(--liquid-specular-2) 100%
+  );
+  opacity: var(--liquid-glass-specular-opacity);
+  mix-blend-mode: soft-light;
+  pointer-events: none;
+  z-index: 3;
+
+  /* Add subtle animation */
+  animation: liquidSpecularShift 8s ease-in-out infinite alternate;
+}
+
+/* Content Layer */
+.liquid-glass-content {
+  position: relative;
+  z-index: 10;
+  padding: 24px;
+}
+
+/* === INTERACTIVE STATES === */
+.liquid-glass-interactive {
+  cursor: pointer;
+  transition: all var(--liquid-timing-fast) cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.liquid-glass-interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--liquid-shadow-xl);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.liquid-glass-interactive:hover .liquid-glass-filter {
+  opacity: calc(var(--liquid-glass-filter-opacity) * 1.5);
+}
+
+.liquid-glass-interactive:hover .liquid-glass-overlay {
+  opacity: calc(var(--liquid-glass-overlay-opacity) * 2);
+}
+
+.liquid-glass-interactive:hover .liquid-glass-specular {
+  opacity: calc(var(--liquid-glass-specular-opacity) * 1.2);
+}
+
+.liquid-glass-interactive:active {
+  transform: translateY(0);
+  transition-duration: var(--liquid-timing-instant);
+}
+
+/* === SIZE VARIANTS === */
+.liquid-glass-sm {
+  border-radius: 12px;
+}
+.liquid-glass-sm .liquid-glass-content {
+  padding: 16px;
+}
+
+.liquid-glass-md {
+  border-radius: 16px;
+}
+.liquid-glass-md .liquid-glass-content {
+  padding: 20px;
+}
+
+.liquid-glass-lg {
+  border-radius: 20px;
+}
+.liquid-glass-lg .liquid-glass-content {
+  padding: 24px;
+}
+
+.liquid-glass-xl {
+  border-radius: 24px;
+}
+.liquid-glass-xl .liquid-glass-content {
+  padding: 32px;
+}
+
+.liquid-glass-2xl {
+  border-radius: 28px;
+}
+.liquid-glass-2xl .liquid-glass-content {
+  padding: 40px;
+}
+
+/* === VARIANT STYLES === */
+.liquid-glass-frosted {
+  backdrop-filter: var(--liquid-blur-2xl) saturate(150%);
+  -webkit-backdrop-filter: var(--liquid-blur-2xl) saturate(150%);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.liquid-glass-translucent {
+  backdrop-filter: var(--liquid-blur-md) saturate(200%);
+  -webkit-backdrop-filter: var(--liquid-blur-md) saturate(200%);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.liquid-glass-holographic {
+  background: var(--liquid-aurora-1);
+  backdrop-filter: var(--liquid-blur-lg) saturate(180%) hue-rotate(15deg);
+  -webkit-backdrop-filter: var(--liquid-blur-lg) saturate(180%)
+    hue-rotate(15deg);
+}
+
+.liquid-glass-holographic .liquid-glass-filter {
+  background: var(--liquid-aurora-2);
+  animation: liquidHolographicShift 6s ease-in-out infinite alternate;
+}
+
+.liquid-glass-aurora {
+  background: var(--liquid-aurora-1);
+  backdrop-filter: var(--liquid-blur-xl) saturate(200%) brightness(110%);
+  -webkit-backdrop-filter: var(--liquid-blur-xl) saturate(200%) brightness(110%);
+
+  /* Animated aurora effect */
+  animation: liquidAuroraFlow 12s ease-in-out infinite;
+}
+
+.liquid-glass-iridescent {
+  background: linear-gradient(
+    45deg,
+    rgba(168, 85, 247, 0.2) 0%,
+    rgba(59, 130, 246, 0.15) 25%,
+    rgba(16, 185, 129, 0.18) 50%,
+    rgba(245, 101, 101, 0.15) 75%,
+    rgba(251, 191, 36, 0.2) 100%
+  );
+  backdrop-filter: var(--liquid-blur-lg) saturate(250%) hue-rotate(30deg);
+  -webkit-backdrop-filter: var(--liquid-blur-lg) saturate(250%)
+    hue-rotate(30deg);
+
+  /* Iridescent shimmer */
+  animation: liquidIridescentShimmer 8s ease-in-out infinite alternate;
+}
+
+/* === ANIMATIONS === */
+@keyframes liquidSpecularShift {
+  0% {
+    background: linear-gradient(
+      135deg,
+      var(--liquid-specular-1) 0%,
+      transparent 30%,
+      transparent 70%,
+      var(--liquid-specular-2) 100%
+    );
+  }
+  100% {
+    background: linear-gradient(
+      225deg,
+      var(--liquid-specular-2) 0%,
+      transparent 30%,
+      transparent 70%,
+      var(--liquid-specular-1) 100%
+    );
+  }
+}
+
+@keyframes liquidHolographicShift {
+  0% {
+    background: var(--liquid-aurora-1);
+    opacity: var(--liquid-glass-filter-opacity);
+  }
+  50% {
+    background: var(--liquid-aurora-2);
+    opacity: calc(var(--liquid-glass-filter-opacity) * 1.3);
+  }
+  100% {
+    background: var(--liquid-aurora-1);
+    opacity: var(--liquid-glass-filter-opacity);
+  }
+}
+
+@keyframes liquidAuroraFlow {
+  0%,
+  100% {
+    background: var(--liquid-aurora-1);
+  }
+  33% {
+    background: var(--liquid-aurora-2);
+  }
+  66% {
+    background: linear-gradient(
+      45deg,
+      rgba(16, 185, 129, 0.25) 0%,
+      rgba(168, 85, 247, 0.2) 35%,
+      rgba(245, 101, 101, 0.3) 70%,
+      rgba(59, 130, 246, 0.25) 100%
+    );
+  }
+}
+
+@keyframes liquidIridescentShimmer {
+  0% {
+    filter: hue-rotate(0deg) saturate(250%);
+  }
+  100% {
+    filter: hue-rotate(60deg) saturate(300%);
+  }
+}
+
+/* Float animation for interactive elements */
+@keyframes liquidFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.liquid-glass-float {
+  animation: liquidFloat 6s ease-in-out infinite;
+}
+
+/* Pulse animation for notifications */
+@keyframes liquidPulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+
+.liquid-glass-pulse {
+  animation: liquidPulse 2s ease-in-out infinite;
+}
+
+/* Shimmer animation for loading states */
+@keyframes liquidShimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.liquid-glass-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--liquid-specular-1) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: liquidShimmer 2s ease-in-out infinite;
+}
+
+/* === RESPONSIVE OPTIMIZATIONS === */
+@media (max-width: 768px) {
+  .liquid-glass-container {
+    backdrop-filter: var(--liquid-blur-md) saturate(150%);
+    -webkit-backdrop-filter: var(--liquid-blur-md) saturate(150%);
+  }
+
+  .liquid-glass-2xl,
+  .liquid-glass-xl {
+    border-radius: 20px;
+  }
+
+  .liquid-glass-2xl .liquid-glass-content,
+  .liquid-glass-xl .liquid-glass-content {
+    padding: 24px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .liquid-glass-container,
+  .liquid-glass-interactive,
+  .liquid-glass-specular {
+    animation: none;
+    transition: none;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .liquid-glass-container {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: rgba(0, 0, 0, 0.8);
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .liquid-glass-container {
+    border-width: 2px;
+    border-color: rgba(255, 255, 255, 0.5);
+  }
+
+  .liquid-glass-filter,
+  .liquid-glass-overlay,
+  .liquid-glass-specular {
+    opacity: 0;
+  }
+}
+
+/* === PERFORMANCE OPTIMIZATIONS === */
+.liquid-glass-container {
+  will-change: transform, opacity;
+  contain: layout style paint;
+}
+
+.liquid-glass-filter,
+.liquid-glass-overlay,
+.liquid-glass-specular {
+  will-change: opacity;
+  contain: strict;
+}
+
+/* GPU acceleration for animations */
+.liquid-glass-interactive,
+.liquid-glass-float,
+.liquid-glass-pulse,
+.liquid-glass-shimmer {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}

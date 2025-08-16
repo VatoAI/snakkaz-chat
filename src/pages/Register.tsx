@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
+import '../styles/snakkaz-unified-design-system.css';
 
 const Register: React.FC = () => {
     const [formData, setFormData] = useState({
@@ -80,79 +81,26 @@ const Register: React.FC = () => {
     };
 
     return (
-        <div style={{
-            minHeight: '100vh',
-            background: 'linear-gradient(135deg, var(--snakkaz-dark) 0%, var(--snakkaz-surface) 100%)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '2rem',
-            fontFamily: 'var(--font-body)',
-            position: 'relative'
-        }}>
-            {/* Liquid Dream Background Effect */}
-            <div style={{
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                background: `
-                    radial-gradient(circle at 20% 50%, rgba(100, 181, 246, 0.1) 0%, transparent 50%),
-                    radial-gradient(circle at 80% 20%, rgba(77, 208, 225, 0.1) 0%, transparent 50%),
-                    radial-gradient(circle at 40% 80%, rgba(129, 199, 132, 0.1) 0%, transparent 50%)
-                `,
-                animation: 'liquidDream 20s ease-in-out infinite',
-                zIndex: -1
-            }} />
+        <div className="snakkaz-page snakkaz-flex snakkaz-flex-center">
+            {/* Universal Aurora Background */}
+            <div className="snakkaz-aurora-bg">
+                <div className="snakkaz-aurora-layer-1"></div>
+                <div className="snakkaz-aurora-layer-2"></div>
+            </div>
 
             {/* Main Container */}
-            <div style={{
-                background: 'var(--glass-bg)',
-                backdropFilter: 'var(--backdrop-blur)',
-                WebkitBackdropFilter: 'var(--backdrop-blur)',
-                borderRadius: '24px',
-                border: '1px solid var(--glass-border)',
-                boxShadow: 'var(--glass-shadow)',
-                padding: '3rem',
-                maxWidth: '500px',
-                width: '100%',
-                animation: 'fadeInUp 1s ease-out'
-            }}>
+            <div className="snakkaz-container snakkaz-container-elevated" style={{ maxWidth: '500px', width: '100%' }}>
                 {/* Header */}
-                <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-                    <h1 style={{
-                        fontFamily: 'var(--font-display)',
-                        fontSize: '3rem',
-                        fontWeight: '900',
-                        background: 'linear-gradient(135deg, var(--snakkaz-primary) 0%, var(--snakkaz-secondary) 100%)',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                        backgroundClip: 'text',
-                        marginBottom: '0.5rem'
-                    }}>
-                        SNAKKAZ
-                    </h1>
-                    <p style={{
-                        fontSize: '1.2rem',
-                        color: 'rgba(255, 255, 255, 0.8)',
-                        fontWeight: '300'
-                    }}>
-                        Opprett din konto og start å chatte
-                    </p>
+                <div className="snakkaz-text-center" style={{ marginBottom: 'var(--snakkaz-space-xl)' }}>
+                    <h1 className="snakkaz-header-title">SNAKKAZ</h1>
+                    <p className="snakkaz-header-subtitle">Opprett din konto og start å chatte</p>
                 </div>
 
                 {/* Form */}
-                <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '1.5rem' }}>
+                <form onSubmit={handleSubmit} className="snakkaz-form">
                     {/* Full Name Field */}
-                    <div>
-                        <label style={{
-                            display: 'block',
-                            fontSize: '0.9rem',
-                            fontWeight: '600',
-                            color: 'var(--snakkaz-primary)',
-                            marginBottom: '0.5rem'
-                        }}>
+                    <div className="snakkaz-form-group">
+                        <label className="snakkaz-form-label">
                             👤 Fullt navn
                         </label>
                         <input
@@ -161,38 +109,13 @@ const Register: React.FC = () => {
                             onChange={(e) => handleChange('fullName', e.target.value)}
                             placeholder="Ditt fulle navn"
                             required
-                            style={{
-                                width: '100%',
-                                padding: '1rem',
-                                background: 'rgba(255, 255, 255, 0.05)',
-                                border: '1px solid var(--glass-border)',
-                                borderRadius: '12px',
-                                color: 'white',
-                                fontSize: '1rem',
-                                fontFamily: 'var(--font-body)',
-                                outline: 'none',
-                                transition: 'all 0.3s ease'
-                            }}
-                            onFocus={(e) => {
-                                e.target.style.borderColor = 'var(--snakkaz-primary)';
-                                e.target.style.boxShadow = '0 0 20px rgba(100, 181, 246, 0.3)';
-                            }}
-                            onBlur={(e) => {
-                                e.target.style.borderColor = 'var(--glass-border)';
-                                e.target.style.boxShadow = 'none';
-                            }}
+                            className="snakkaz-input"
                         />
                     </div>
 
                     {/* Email Field */}
-                    <div>
-                        <label style={{
-                            display: 'block',
-                            fontSize: '0.9rem',
-                            fontWeight: '600',
-                            color: 'var(--snakkaz-primary)',
-                            marginBottom: '0.5rem'
-                        }}>
+                    <div className="snakkaz-form-group">
+                        <label className="snakkaz-form-label">
                             📧 E-post
                         </label>
                         <input
@@ -201,74 +124,30 @@ const Register: React.FC = () => {
                             onChange={(e) => handleChange('email', e.target.value)}
                             placeholder="din@email.com"
                             required
-                            style={{
-                                width: '100%',
-                                padding: '1rem',
-                                background: 'rgba(255, 255, 255, 0.05)',
-                                border: '1px solid var(--glass-border)',
-                                borderRadius: '12px',
-                                color: 'white',
-                                fontSize: '1rem',
-                                fontFamily: 'var(--font-body)',
-                                outline: 'none',
-                                transition: 'all 0.3s ease'
-                            }}
-                            onFocus={(e) => {
-                                e.target.style.borderColor = 'var(--snakkaz-primary)';
-                                e.target.style.boxShadow = '0 0 20px rgba(100, 181, 246, 0.3)';
-                            }}
-                            onBlur={(e) => {
-                                e.target.style.borderColor = 'var(--glass-border)';
-                                e.target.style.boxShadow = 'none';
-                            }}
+                            className="snakkaz-input"
                         />
                     </div>
 
                     {/* Password Field */}
-                    <div>
-                        <label style={{
-                            display: 'block',
-                            fontSize: '0.9rem',
-                            fontWeight: '600',
-                            color: 'var(--snakkaz-primary)',
-                            marginBottom: '0.5rem'
-                        }}>
+                    <div className="snakkaz-form-group">
+                        <label className="snakkaz-form-label">
                             🔒 Passord (min 6 tegn)
                         </label>
-                        <div style={{ position: 'relative' }}>
+                        <div className="snakkaz-relative">
                             <input
                                 type={showPassword ? 'text' : 'password'}
                                 value={formData.password}
                                 onChange={(e) => handleChange('password', e.target.value)}
                                 placeholder="Velg et sikkert passord"
                                 required
-                                style={{
-                                    width: '100%',
-                                    padding: '1rem',
-                                    paddingRight: '3rem',
-                                    background: 'rgba(255, 255, 255, 0.05)',
-                                    border: '1px solid var(--glass-border)',
-                                    borderRadius: '12px',
-                                    color: 'white',
-                                    fontSize: '1rem',
-                                    fontFamily: 'var(--font-body)',
-                                    outline: 'none',
-                                    transition: 'all 0.3s ease'
-                                }}
-                                onFocus={(e) => {
-                                    e.target.style.borderColor = 'var(--snakkaz-primary)';
-                                    e.target.style.boxShadow = '0 0 20px rgba(100, 181, 246, 0.3)';
-                                }}
-                                onBlur={(e) => {
-                                    e.target.style.borderColor = 'var(--glass-border)';
-                                    e.target.style.boxShadow = 'none';
-                                }}
+                                className="snakkaz-input"
+                                style={{ paddingRight: '3rem' }}
                             />
                             <button
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
+                                className="snakkaz-absolute"
                                 style={{
-                                    position: 'absolute',
                                     right: '1rem',
                                     top: '50%',
                                     transform: 'translateY(-50%)',
@@ -285,50 +164,25 @@ const Register: React.FC = () => {
                     </div>
 
                     {/* Confirm Password Field */}
-                    <div>
-                        <label style={{
-                            display: 'block',
-                            fontSize: '0.9rem',
-                            fontWeight: '600',
-                            color: 'var(--snakkaz-primary)',
-                            marginBottom: '0.5rem'
-                        }}>
+                    <div className="snakkaz-form-group">
+                        <label className="snakkaz-form-label">
                             🔒 Bekreft passord
                         </label>
-                        <div style={{ position: 'relative' }}>
+                        <div className="snakkaz-relative">
                             <input
                                 type={showConfirmPassword ? 'text' : 'password'}
                                 value={formData.confirmPassword}
                                 onChange={(e) => handleChange('confirmPassword', e.target.value)}
                                 placeholder="Skriv passordet igjen"
                                 required
-                                style={{
-                                    width: '100%',
-                                    padding: '1rem',
-                                    paddingRight: '3rem',
-                                    background: 'rgba(255, 255, 255, 0.05)',
-                                    border: '1px solid var(--glass-border)',
-                                    borderRadius: '12px',
-                                    color: 'white',
-                                    fontSize: '1rem',
-                                    fontFamily: 'var(--font-body)',
-                                    outline: 'none',
-                                    transition: 'all 0.3s ease'
-                                }}
-                                onFocus={(e) => {
-                                    e.target.style.borderColor = 'var(--snakkaz-primary)';
-                                    e.target.style.boxShadow = '0 0 20px rgba(100, 181, 246, 0.3)';
-                                }}
-                                onBlur={(e) => {
-                                    e.target.style.borderColor = 'var(--glass-border)';
-                                    e.target.style.boxShadow = 'none';
-                                }}
+                                className="snakkaz-input"
+                                style={{ paddingRight: '3rem' }}
                             />
                             <button
                                 type="button"
                                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                className="snakkaz-absolute"
                                 style={{
-                                    position: 'absolute',
                                     right: '1rem',
                                     top: '50%',
                                     transform: 'translateY(-50%)',
@@ -345,7 +199,7 @@ const Register: React.FC = () => {
                     </div>
 
                     {/* Terms Checkbox */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <div className="snakkaz-flex" style={{ alignItems: 'center', gap: 'var(--snakkaz-space-sm)' }}>
                         <input
                             type="checkbox"
                             id="acceptTerms"
@@ -359,7 +213,7 @@ const Register: React.FC = () => {
                         />
                         <label htmlFor="acceptTerms" style={{
                             color: 'rgba(255, 255, 255, 0.8)',
-                            fontSize: '0.9rem',
+                            fontSize: '14px',
                             cursor: 'pointer'
                         }}>
                             Jeg aksepterer{' '}
@@ -381,14 +235,12 @@ const Register: React.FC = () => {
 
                     {/* Error Message */}
                     {error && (
-                        <div style={{
-                            background: 'rgba(229, 115, 115, 0.1)',
-                            border: '1px solid rgba(229, 115, 115, 0.3)',
-                            borderRadius: '8px',
-                            padding: '0.75rem',
-                            color: '#e57373',
-                            fontSize: '0.9rem',
-                            textAlign: 'center'
+                        <div className="snakkaz-form-error snakkaz-text-center" style={{
+                            background: 'rgba(255, 59, 48, 0.1)',
+                            border: '1px solid rgba(255, 59, 48, 0.3)',
+                            borderRadius: 'var(--snakkaz-radius-sm)',
+                            padding: 'var(--snakkaz-space-sm)',
+                            color: 'var(--snakkaz-error)'
                         }}>
                             ⚠️ {error}
                         </div>
@@ -398,52 +250,33 @@ const Register: React.FC = () => {
                     <button
                         type="submit"
                         disabled={loading}
-                        style={{
-                            background: loading
-                                ? 'rgba(255, 255, 255, 0.1)'
-                                : 'linear-gradient(135deg, var(--snakkaz-primary) 0%, var(--snakkaz-secondary) 100%)',
-                            color: loading ? 'rgba(255, 255, 255, 0.5)' : 'var(--snakkaz-dark)',
-                            border: 'none',
-                            padding: '1rem 2rem',
-                            borderRadius: '12px',
-                            fontSize: '1rem',
-                            fontFamily: 'var(--font-body)',
-                            fontWeight: '600',
-                            cursor: loading ? 'not-allowed' : 'pointer',
-                            transition: 'all 0.3s ease',
-                            transform: loading ? 'none' : 'translateY(-2px)',
-                            boxShadow: loading ? 'none' : '0 8px 25px rgba(100, 181, 246, 0.4)'
-                        }}
+                        className={loading ? 'snakkaz-button' : 'snakkaz-button snakkaz-button-primary'}
+                        style={{ width: '100%' }}
                     >
-                        {loading ? '🔄 Oppretter konto...' : '🎉 Opprett konto'}
+                        {loading ? (
+                            <div className="snakkaz-flex snakkaz-flex-center" style={{ gap: 'var(--snakkaz-space-sm)' }}>
+                                <div className="snakkaz-spinner"></div>
+                                Oppretter konto...
+                            </div>
+                        ) : (
+                            '🎉 Opprett konto'
+                        )}
                     </button>
                 </form>
 
                 {/* Login Link */}
-                <div style={{
-                    textAlign: 'center',
-                    marginTop: '2rem',
-                    paddingTop: '2rem',
-                    borderTop: '1px solid var(--glass-border)'
+                <div className="snakkaz-text-center" style={{
+                    marginTop: 'var(--snakkaz-space-xl)',
+                    paddingTop: 'var(--snakkaz-space-xl)',
+                    borderTop: '1px solid rgba(255, 255, 255, 0.1)'
                 }}>
-                    <p style={{ color: 'rgba(255, 255, 255, 0.7)', marginBottom: '1rem' }}>
+                    <p style={{ color: 'rgba(255, 255, 255, 0.7)', marginBottom: 'var(--snakkaz-space-md)' }}>
                         Har du allerede konto?
                     </p>
                     <Link
                         to="/login"
-                        style={{
-                            color: 'var(--snakkaz-primary)',
-                            textDecoration: 'none',
-                            fontWeight: '600',
-                            fontSize: '1rem',
-                            transition: 'all 0.3s ease'
-                        }}
-                        onMouseEnter={(e) => {
-                            (e.target as HTMLElement).style.color = 'var(--snakkaz-secondary)';
-                        }}
-                        onMouseLeave={(e) => {
-                            (e.target as HTMLElement).style.color = 'var(--snakkaz-primary)';
-                        }}
+                        className="snakkaz-button snakkaz-button-secondary"
+                        style={{ textDecoration: 'none' }}
                     >
                         🔑 Logg inn her
                     </Link>
@@ -453,70 +286,16 @@ const Register: React.FC = () => {
                 <div style={{
                     display: 'grid',
                     gridTemplateColumns: 'repeat(2, 1fr)',
-                    gap: '0.75rem',
-                    marginTop: '2rem',
-                    fontSize: '0.8rem'
+                    gap: 'var(--snakkaz-space-sm)',
+                    marginTop: 'var(--snakkaz-space-xl)'
                 }}>
-                    <div style={{
-                        background: 'rgba(100, 181, 246, 0.05)',
-                        border: '1px solid rgba(100, 181, 246, 0.1)',
-                        borderRadius: '8px',
-                        padding: '0.5rem',
-                        textAlign: 'center',
-                        color: 'var(--snakkaz-primary)'
-                    }}>
-                        💬 Gratis chat
-                    </div>
-                    <div style={{
-                        background: 'rgba(77, 208, 225, 0.05)',
-                        border: '1px solid rgba(77, 208, 225, 0.1)',
-                        borderRadius: '8px',
-                        padding: '0.5rem',
-                        textAlign: 'center',
-                        color: 'var(--snakkaz-secondary)'
-                    }}>
-                        🔒 End-to-end kryptering
-                    </div>
-                    <div style={{
-                        background: 'rgba(129, 199, 132, 0.05)',
-                        border: '1px solid rgba(129, 199, 132, 0.1)',
-                        borderRadius: '8px',
-                        padding: '0.5rem',
-                        textAlign: 'center',
-                        color: 'var(--snakkaz-accent)'
-                    }}>
-                        🇳🇴 På norsk
-                    </div>
-                    <div style={{
-                        background: 'rgba(100, 181, 246, 0.05)',
-                        border: '1px solid rgba(100, 181, 246, 0.1)',
-                        borderRadius: '8px',
-                        padding: '0.5rem',
-                        textAlign: 'center',
-                        color: 'var(--snakkaz-primary)'
-                    }}>
-                        ⚡ Lynrask
-                    </div>
+                    <div className="snakkaz-badge snakkaz-badge-success">💬 Gratis chat</div>
+                    <div className="snakkaz-badge snakkaz-badge-success">🔒 E2E Kryptering</div>
+                    <div className="snakkaz-badge snakkaz-badge-success">🇳🇴 På norsk</div>
+                    <div className="snakkaz-badge snakkaz-badge-success">⚡ Lynrask</div>
                 </div>
             </div>
 
-            <style>{`
-                @keyframes liquidDream {
-                    0%, 100% { transform: scale(1) rotate(0deg); }
-                    33% { transform: scale(1.1) rotate(1deg); }
-                    66% { transform: scale(0.9) rotate(-1deg); }
-                }
-                @keyframes fadeInUp {
-                    from {
-                        opacity: 0;
-                        transform: translateY(30px);
-                    }
-                    to {
-                        opacity: 1;
-                        transform: translateY(0);
-                    }
-                }
-            `}</style>
         </div>
     );
 };

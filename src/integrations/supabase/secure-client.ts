@@ -1,38 +1,42 @@
 /**
  * Secure Supabase Client with certificate pinning
- * 
+ *
  * This client protects against man-in-the-middle attacks by verifying that
  * the server has the correct certificate.
  */
 
-import { supabase } from '@/lib/supabaseClient';
-import { supabasePinnedFetch } from '@/utils/security/network/certificate-pinning';
+import { supabase } from "@/lib/supabaseClient";
+// import { supabasePinnedFetch } from '@/utils/security/network/certificate-pinning';
 
 // Vi kan ikke bruke hooks direkte, så vi oppretter en enkel toast-funksjon
-const showToast = (title: string, description: string, variant: 'default' | 'destructive' = 'default') => {
+const showToast = (
+  title: string,
+  description: string,
+  variant: "default" | "destructive" = "default"
+) => {
   console.error(`${title}: ${description}`);
   // Toast vil bli håndtert i UI-lag hvor hooks kan brukes
 };
 
 // Oppsett av sikre globale opsjoner
-const secureOptions = {
-  auth: {
-    autoRefreshToken: true,
-    persistSession: true,
-  },
-  global: {
-    fetch: supabasePinnedFetch,
-    headers: {
-      'X-Client-Info': 'snakkaz-secure-client',
-    }
-  },
-  // Ekstra sikkerhetsinnstillinger
-  realtime: {
-    params: {
-      eventsPerSecond: 10, // Forebygger DoS-angrep
-    }
-  }
-};
+// const secureOptions = {
+//   auth: {
+//     autoRefreshToken: true,
+//     persistSession: true,
+//   },
+//   global: {
+//     fetch: supabasePinnedFetch,
+//     headers: {
+//       'X-Client-Info': 'snakkaz-secure-client',
+//     }
+//   },
+//   // Ekstra sikkerhetsinnstillinger
+//   realtime: {
+//     params: {
+//       eventsPerSecond: 10, // Forebygger DoS-angrep
+//     }
+//   }
+// };
 
 // Use the singleton instance instead of creating a new one
 export const secureSupabase = supabase;
@@ -41,26 +45,31 @@ export const secureSupabase = supabase;
 export async function secureSignIn(email: string, password: string) {
   try {
     // Sjekk for tegn på forsøk på SQL-injeksjon eller XSS
-    if (containsSuspiciousContent(email) || containsSuspiciousContent(password)) {
-      throw new Error('Potensielt skadelig innhold oppdaget i innloggingsinformasjonen');
+    if (
+      containsSuspiciousContent(email) ||
+      containsSuspiciousContent(password)
+    ) {
+      throw new Error(
+        "Potensielt skadelig innhold oppdaget i innloggingsinformasjonen"
+      );
     }
-    
+
     // Utfør innlogging med rate-limiting (forhindrer brute-force)
     const { data, error } = await secureSupabase.auth.signInWithPassword({
       email,
       password,
     });
-    
+
     if (error) throw error;
     return data;
   } catch (error: any) {
     // Logger feil sikkert (uten å lekke sensitiv informasjon)
-    console.error('Secure sign-in error:', error.message);
+    console.error("Secure sign-in error:", error.message);
     // Viser generisk feilmelding til brukeren - håndteres av kaller
     showToast(
-      'Innloggingsfeil',
-      'Kunne ikke logge inn. Vennligst sjekk innloggingsinformasjonen og prøv igjen.',
-      'destructive'
+      "Innloggingsfeil",
+      "Kunne ikke logge inn. Vennligst sjekk innloggingsinformasjonen og prøv igjen.",
+      "destructive"
     );
     throw error;
   }
@@ -71,14 +80,14 @@ export async function secureSignOut() {
   try {
     const { error } = await secureSupabase.auth.signOut();
     if (error) throw error;
-    
+
     // Fjern eventuelle lokalt lagrede tokens eller sensitiv data
-    localStorage.removeItem('supabase-auth-token');
-    sessionStorage.removeItem('supabase-auth-token');
-    
+    localStorage.removeItem("supabase-auth-token");
+    sessionStorage.removeItem("supabase-auth-token");
+
     return true;
   } catch (error) {
-    console.error('Secure sign-out error:', error);
+    console.error("Secure sign-out error:", error);
     return false;
   }
 }
@@ -87,18 +96,20 @@ export async function secureSignOut() {
 function containsSuspiciousContent(input: string): boolean {
   // Sjekk for SQL-injeksjon forsøk
   const sqlInjectionPatterns = [
-    /'\s*OR\s*['"]?[0-9a-zA-Z]+=\s*['"]?[0-9a-zA-Z]+/i,  // ' OR '1'='1
-    /;\s*DROP\s+TABLE/i,                                 // ; DROP TABLE
-    /UNION\s+SELECT/i,                                   // UNION SELECT
+    /'\s*OR\s*['"]?[0-9a-zA-Z]+=\s*['"]?[0-9a-zA-Z]+/i, // ' OR '1'='1
+    /;\s*DROP\s+TABLE/i, // ; DROP TABLE
+    /UNION\s+SELECT/i, // UNION SELECT
   ];
-  
+
   // Sjekk for XSS-forsøk
   const xssPatterns = [
     /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/i, // <script> tags
-    /javascript\s*:/i,                                     // javascript:
-    /on\w+\s*=\s*["']/i                                    // onerror=", onclick=, etc.
+    /javascript\s*:/i, // javascript:
+    /on\w+\s*=\s*["']/i, // onerror=", onclick=, etc.
   ];
-  
+
   // Sjekk alle mønstre
-  return [...sqlInjectionPatterns, ...xssPatterns].some(pattern => pattern.test(input));
+  return [...sqlInjectionPatterns, ...xssPatterns].some((pattern) =>
+    pattern.test(input)
+  );
 }

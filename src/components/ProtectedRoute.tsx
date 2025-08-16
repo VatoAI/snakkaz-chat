@@ -9,6 +9,12 @@ interface ProtectedRouteProps {
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     const { user, loading } = useAuth();
 
+    // TEMPORARY BYPASS FOR DEVELOPMENT - REMOVE IN PRODUCTION
+    if (process.env.NODE_ENV === 'development') {
+        console.log('🧪 DEVELOPMENT MODE: Bypassing authentication for testing');
+        return <>{children}</>;
+    }
+
     if (loading) {
         // Clean Auth Verification Loading - No ugly squares
         return (

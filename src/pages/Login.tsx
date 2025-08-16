@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import ProtectedSupabaseAuth from '../components/auth/ProtectedSupabaseAuth';
+import '../styles/snakkaz-unified-design-system.css';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -10,39 +11,44 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, var(--snakkaz-dark) 0%, var(--snakkaz-surface) 100%)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '2rem',
-        fontFamily: 'var(--font-body)',
-        position: 'relative'
-      }}
-    >
-      {/* Liquid Dream Background Effect */}
-      <div style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        background: `
-          radial-gradient(circle at 20% 50%, rgba(100, 181, 246, 0.1) 0%, transparent 50%),
-          radial-gradient(circle at 80% 20%, rgba(77, 208, 225, 0.1) 0%, transparent 50%),
-          radial-gradient(circle at 40% 80%, rgba(129, 199, 132, 0.1) 0%, transparent 50%)
-        `,
-        animation: 'liquidDream 20s ease-in-out infinite',
-        zIndex: -1
-      }} />
+    <div className="snakkaz-page snakkaz-flex snakkaz-flex-center">
+      {/* Universal Aurora Background */}
+      <div className="snakkaz-aurora-bg">
+        <div className="snakkaz-aurora-layer-1"></div>
+        <div className="snakkaz-aurora-layer-2"></div>
+      </div>
 
-      <div className="protected-auth-container liquid-glass css-protection-lock relative z-10">
-        <ProtectedSupabaseAuth
-          mode="login"
-          onAuthSuccess={handleAuthSuccess}
-        />
+      {/* Main Content */}
+      <div className="snakkaz-container snakkaz-container-elevated" style={{ maxWidth: '480px', width: '100%' }}>
+        <div className="snakkaz-text-center" style={{ marginBottom: 'var(--snakkaz-space-xl)' }}>
+          <h1 className="snakkaz-header-title">Velkommen til SnakkaZ</h1>
+          <p className="snakkaz-header-subtitle">Logg inn for å oppleve fremtidens chat</p>
+        </div>
+
+        <div className="protected-auth-container">
+          <ProtectedSupabaseAuth
+            mode="login"
+            onAuthSuccess={handleAuthSuccess}
+          />
+        </div>
+
+        {/* Features Preview */}
+        <div style={{ marginTop: 'var(--snakkaz-space-xl)' }}>
+          <div className="snakkaz-flex snakkaz-flex-center" style={{ gap: 'var(--snakkaz-space-lg)' }}>
+            <div className="snakkaz-badge snakkaz-badge-success">
+              <span>🔐</span>
+              E2E Kryptering
+            </div>
+            <div className="snakkaz-badge snakkaz-badge-success">
+              <span>⚡</span>
+              Real-time Chat
+            </div>
+            <div className="snakkaz-badge snakkaz-badge-success">
+              <span>🌟</span>
+              Apple Design
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -5,6 +5,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { supabase, designProtection } from '../../lib/supabase-protected';
+import { useAuth } from '../../contexts/AuthContext';
 import { Mail, Lock, Eye, EyeOff, Sparkles, Shield, Zap } from 'lucide-react';
 
 interface ProtectedAuthProps {
@@ -16,6 +17,7 @@ export const ProtectedSupabaseAuth: React.FC<ProtectedAuthProps> = ({
   mode = 'login',
   onAuthSuccess
 }) => {
+  const { signIn, signUp, user } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -24,30 +26,18 @@ export const ProtectedSupabaseAuth: React.FC<ProtectedAuthProps> = ({
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  useEffect(() => {3
+  useEffect(() => {
     // Apply design protection when component mounts
     designProtection.applyLiquidGlass('.protected-auth-container');
 
-    // Monitor auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('🔐 Auth event:', event);
-
-      if (event === 'SIGNED_IN' && session) {
-        setSuccess('✅ Innlogging vellykket!');
+    // If user is already logged in, trigger success
+    if (user) {
+      setSuccess('✅ Innlogging vellykket!');
+      setTimeout(() => {
         onAuthSuccess?.();
-      }
-
-      if (event === 'SIGNED_OUT') {
-        setEmail('');
-        setPassword('');
-        setConfirmPassword('');
-        setError('');
-        setSuccess('');
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [onAuthSuccess]);
+      }, 500);
+    }
+  }, [user, onAuthSuccess]);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,33 +51,14 @@ export const ProtectedSupabaseAuth: React.FC<ProtectedAuthProps> = ({
           throw new Error('Passordene matcher ikke');
         }
 
-        const { data, error } = await supabase.auth.signUp({
-          email: email.trim(),
-          password: password,
-          options: {
-            data: {
-              username: email.split('@')[0],
-              full_name: email.split('@')[0]
-            }
-          }
-        });
-
-        if (error) throw error;
-
-        if (data.user) {
-          setSuccess('🎉 Registrering vellykket! Sjekk e-posten din for bekreftelse.');
-        }
+        await signUp(email.trim(), password, email.split('@')[0]);
+        setSuccess('🎉 Registrering vellykket! Sjekk e-posten din for bekreftelse.');
       } else {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email: email.trim(),
-          password: password,
-        });
-
-        if (error) throw error;
-
-        if (data.user) {
-          setSuccess('✅ Innlogging vellykket!');
-        }
+        await signIn(email.trim(), password);
+        setSuccess('✅ Innlogging vellykket!');
+        setTimeout(() => {
+          onAuthSuccess?.();
+        }, 1000);
       }
     } catch (err: any) {
       console.error('❌ Auth error:', err);
@@ -106,7 +77,7 @@ export const ProtectedSupabaseAuth: React.FC<ProtectedAuthProps> = ({
       alignItems: 'center'
     }}>
       {/* Force proper styling with hardcoded values */}
-      <div 
+      <div
         style={{
           background: 'rgba(100, 181, 246, 0.08) !important',
           backdropFilter: 'blur(12px) !important',
@@ -124,10 +95,10 @@ export const ProtectedSupabaseAuth: React.FC<ProtectedAuthProps> = ({
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <div style={{ position: 'relative', display: 'inline-block', marginBottom: '1rem' }}>
-            <h1 style={{ 
-              fontFamily: 'var(--font-display)', 
-              fontSize: '2.5rem', 
-              fontWeight: 900, 
+            <h1 style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: '2.5rem',
+              fontWeight: 900,
               background: 'linear-gradient(135deg, var(--snakkaz-primary) 0%, var(--snakkaz-secondary) 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
@@ -180,13 +151,13 @@ export const ProtectedSupabaseAuth: React.FC<ProtectedAuthProps> = ({
         <form onSubmit={handleAuth} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           {/* Email Field */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <label style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '8px', 
-              color: 'rgba(255, 255, 255, 0.8)', 
-              fontSize: '14px', 
-              fontWeight: 600 
+            <label style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              color: 'rgba(255, 255, 255, 0.8)',
+              fontSize: '14px',
+              fontWeight: 600
             }}>
               <Mail style={{ width: '16px', height: '16px' }} />
               <span>E-post</span>
@@ -225,13 +196,13 @@ export const ProtectedSupabaseAuth: React.FC<ProtectedAuthProps> = ({
 
           {/* Password Field */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <label style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '8px', 
-              color: 'rgba(255, 255, 255, 0.8)', 
-              fontSize: '14px', 
-              fontWeight: 600 
+            <label style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              color: 'rgba(255, 255, 255, 0.8)',
+              fontSize: '14px',
+              fontWeight: 600
             }}>
               <Lock style={{ width: '16px', height: '16px' }} />
               <span>Passord</span>
@@ -358,6 +329,50 @@ export const ProtectedSupabaseAuth: React.FC<ProtectedAuthProps> = ({
               </div>
             )}
           </button>
+
+          {/* Demo Login Button - For Development */}
+          {mode === 'login' && (
+            <button
+              type="button"
+              onClick={() => {
+                // Set demo user in session for development
+                sessionStorage.setItem('demo-user', JSON.stringify({
+                  id: 'demo-user',
+                  email: 'demo@snakkaz.no',
+                  created_at: new Date().toISOString()
+                }));
+                
+                setSuccess('✅ Demo innlogging vellykket!');
+                setTimeout(() => {
+                  onAuthSuccess?.();
+                }, 500);
+              }}
+              style={{
+                width: '100%',
+                padding: '12px',
+                background: 'linear-gradient(135deg, rgba(255, 165, 0, 0.8), rgba(255, 140, 0, 0.8))',
+                border: '1px solid rgba(255, 165, 0, 0.3)',
+                borderRadius: '16px',
+                color: 'white',
+                fontSize: '16px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                marginTop: '12px',
+                transition: 'all 0.3s ease',
+                backdropFilter: 'blur(8px)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'scale(1.02)';
+                e.currentTarget.style.boxShadow = '0 8px 25px rgba(255, 165, 0, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'scale(1)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
+            >
+              🧪 Demo Login (Utvikling)
+            </button>
+          )}
         </form>
 
         {/* Footer with design protection indicator */}
