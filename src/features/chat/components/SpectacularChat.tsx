@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Phone, Video, MoreVertical, Paperclip, Smile, ArrowLeft, Shield, Users, Star, Zap } from 'lucide-react';
+import { Send, Phone, Video, MoreVertical, Paperclip, Smile, ArrowLeft, Star, Zap, Shield, Users } from 'lucide-react';
 import chatService, { ChatRoom, Message } from '../../../services/chatService';
 
 interface SpectacularChatProps {
@@ -28,16 +28,17 @@ const SpectacularChat: React.FC<SpectacularChatProps> = ({ selectedRoom, onBack 
         selectedRoom
     });
 
-    console.log('🎨 SpectacularChat: Render decision - loading:', loading, 'messages:', messages.length); useEffect(() => {
+    console.log('🎨 SpectacularChat: Render decision - loading:', loading, 'messages:', messages.length);
+
+    useEffect(() => {
         console.log('🎯 SpectacularChat: Component mounted with roomId:', roomId);
-        if (roomId) {
+        if (roomId && !loading) {
             loadMessages();
 
-            // Subscribe to new messages
+            // Subscribe to new messages  
             const unsubscribe = chatService.subscribeToMessages(roomId, (message) => {
                 console.log('📩 SpectacularChat: New message received:', message);
                 setMessages(prev => [...prev, message]);
-                scrollToBottom();
             });
 
             return unsubscribe;
@@ -126,21 +127,22 @@ const SpectacularChat: React.FC<SpectacularChatProps> = ({ selectedRoom, onBack 
 
     return (
         <div
-            className="spectacular-chat liquid-glass css-protection-lock flex flex-col h-full relative overflow-hidden"
+            className="spectacular-chat-force-visible"
             data-component="chat"
             style={{
                 background: 'linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%)',
-                fontFamily: 'var(--font-body, "Space Grotesk", sans-serif)',
-                color: 'white',
+                fontFamily: '"Space Grotesk", sans-serif',
+                color: '#ffffff',
                 minHeight: '100vh',
                 display: 'flex',
                 flexDirection: 'column',
                 visibility: 'visible',
                 opacity: 1,
-                zIndex: 1,
+                zIndex: 1000,
                 position: 'relative',
                 width: '100%',
-                height: '100%'
+                height: '100vh',
+                overflow: 'auto'
             }}
         >
             {/* Liquid Glass Dark Background - Consistent with Login */}

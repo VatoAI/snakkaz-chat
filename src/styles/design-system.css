@@ -1,9 +1,53 @@
+/* Critical Font Import First */
+@import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap");
+
+/* Critical Imports */
+@import "./supabase-overrides.css";
+@import "./specificity-booster.css";
+
 /* ============================================
    SNAKKAZ LIQUID GLASS DESIGN SYSTEM
    3-Layer Architecture - CSS Protection
    ============================================ */
 
-/* Critical Font Import First */
+/* Emergency Chat Visibility Fix */
+.spectacular-chat-force-visible * {
+  color: white !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.spectacular-chat-force-visible .message-bubble {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  backdrop-filter: blur(10px) !important;
+  padding: 12px !important;
+  border-radius: 16px !important;
+  margin: 8px 0 !important;
+  display: block !important;
+}
+
+.spectacular-chat-force-visible .chat-header {
+  background: rgba(15, 15, 35, 0.9) !important;
+  backdrop-filter: blur(10px) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  padding: 16px !important;
+  display: flex !important;
+}
+
+.spectacular-chat-force-visible .chat-input-area {
+  background: rgba(15, 15, 35, 0.9) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+  padding: 16px !important;
+  display: flex !important;
+}
+
+.spectacular-chat-force-visible .messages-area {
+  flex: 1 !important;
+  padding: 16px !important;
+  overflow-y: auto !important;
+  display: block !important;
+}
 @import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap");
 
 /* Critical Imports */
@@ -501,7 +545,7 @@ h6 {
     font-family: "Space Grotesk", sans-serif !important;
     color: white !important;
   }
-  
+
   /* Message areas */
   .flex-1.overflow-y-auto {
     background: rgba(100, 181, 246, 0.08) !important;
@@ -509,7 +553,7 @@ h6 {
     border-radius: 16px !important;
     margin: 8px !important;
   }
-  
+
   /* Input areas */
   .border-t {
     background: rgba(100, 181, 246, 0.12) !important;
@@ -517,7 +561,7 @@ h6 {
     border-top: 1px solid rgba(100, 181, 246, 0.3) !important;
     border-radius: 16px 16px 0 0 !important;
   }
-  
+
   /* Buttons */
   button {
     background: linear-gradient(135deg, #64b5f6 0%, #4dd0e1 100%) !important;
@@ -527,9 +571,10 @@ h6 {
     font-family: "Space Grotesk", sans-serif !important;
     font-weight: 600 !important;
   }
-  
+
   /* Input fields */
-  input, textarea {
+  input,
+  textarea {
     background: rgba(100, 181, 246, 0.1) !important;
     border: 1px solid rgba(100, 181, 246, 0.3) !important;
     border-radius: 12px !important;

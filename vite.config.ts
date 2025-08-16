@@ -8,19 +8,25 @@ export default defineConfig({
     react({
       // Optimize React plugin
       babel: {
-        plugins: []
-      }
-    })
+        plugins: [],
+      },
+    }),
   ],
 
   // Aggressive caching
-  cacheDir: 'node_modules/.vite',
+  cacheDir: "node_modules/.vite",
 
   // Minimal defines
   define: {
-    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
-    'process.env.VITE_SUPABASE_URL': JSON.stringify(process.env.VITE_SUPABASE_URL),
-    'process.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(process.env.VITE_SUPABASE_ANON_KEY),
+    "process.env.NODE_ENV": JSON.stringify(
+      process.env.NODE_ENV || "development"
+    ),
+    "process.env.VITE_SUPABASE_URL": JSON.stringify(
+      process.env.VITE_SUPABASE_URL
+    ),
+    "process.env.VITE_SUPABASE_ANON_KEY": JSON.stringify(
+      process.env.VITE_SUPABASE_ANON_KEY
+    ),
   },
 
   // Simple alias only
@@ -32,50 +38,50 @@ export default defineConfig({
 
   // Ultra-fast server config
   server: {
-    port: 4000,
+    port: 3001,
     host: true,
     strictPort: false,
     open: false,
     cors: true,
-    
+
     // Minimal middleware
     middlewareMode: false,
-    
-    // Fixed HMR
+
+    // Fixed HMR - Match server port
     hmr: {
-      port: 4001,
-      host: 'localhost',
-      overlay: false
+      port: 3001,
+      host: "localhost",
+      overlay: false,
     },
-    
+
     // No proxy
-    proxy: {}
+    proxy: {},
   },
 
   // Aggressive build optimizations
   build: {
-    target: 'esnext',
-    minify: 'esbuild',
+    target: "esnext",
+    minify: "esbuild",
     sourcemap: false,
     rollupOptions: {
       external: [],
       output: {
-        manualChunks: undefined
-      }
+        manualChunks: undefined,
+      },
     },
     chunkSizeWarningLimit: 1000,
-    reportCompressedSize: false
+    reportCompressedSize: false,
   },
 
   // Ultra-fast dev optimizations
   optimizeDeps: {
-    include: ['react', 'react-dom'],
+    include: ["react", "react-dom"],
     exclude: [],
-    force: false
+    force: false,
   },
 
   // Disable unnecessary features in dev
   css: {
-    devSourcemap: false
-  }
+    devSourcemap: false,
+  },
 });
