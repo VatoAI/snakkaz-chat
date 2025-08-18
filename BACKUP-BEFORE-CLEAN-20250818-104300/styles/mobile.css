@@ -1,0 +1,182 @@
+/* ========================================
+   SNAKKAZ MOBILE EMERGENCY FIX 
+   PRIORITET: Chat interface visibility
+   ======================================== */
+
+/* Mobile-first responsive design - EMERGENCY FIX */
+@media (max-width: 768px) {
+  /* Force root container to full viewport */
+  #root {
+    width: 100vw !important;
+    height: 100vh !important;
+    overflow: hidden !important;
+  }
+
+  .App {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100vh !important;
+    width: 100vw !important;
+  }
+
+  /* Chat container mobile layout - CRITICAL FIX */
+  .h-full.flex {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100vh !important;
+    width: 100% !important;
+    position: relative !important;
+  }
+
+  /* Sidebar mobile behavior - hide by default */
+  .h-full.flex > div:first-child {
+    position: fixed !important;
+    left: -100% !important;
+    top: 0 !important;
+    width: 280px !important;
+    height: 100vh !important;
+    z-index: 1000 !important;
+    transition: left 0.3s ease !important;
+    background: rgba(10, 15, 28, 0.98) !important;
+    backdrop-filter: blur(20px) !important;
+  }
+
+  .sidebar-open .h-full.flex > div:first-child {
+    left: 0 !important;
+  }
+
+  /* Main chat content - LIQUID GLASS (kun i chat-kontekst) */
+  .spectacular-chat .h-full.flex > div:last-child,
+  .spectacular-chat .flex-1.flex.flex-col,
+  [data-component="chat"] .h-full.flex > div:last-child,
+  [data-component="chat"] .flex-1.flex.flex-col {
+    flex: 1 !important;
+    width: 100% !important;
+    min-height: 100vh !important;
+    /* LIQUID GLASS BACKGROUND - not gray! */
+    background: linear-gradient(135deg, #0a0f1b 0%, #1a1f2e 100%) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: relative !important;
+  }
+
+  /* Mobile hamburger menu */
+  .mobile-menu-button {
+    display: block !important;
+    position: fixed !important;
+    top: 15px !important;
+    left: 15px !important;
+    z-index: 1001 !important;
+    background: rgba(59, 130, 246, 0.9) !important;
+    border: 1px solid rgba(59, 130, 246, 0.5) !important;
+    border-radius: 8px !important;
+    padding: 10px !important;
+    color: white !important;
+    font-size: 18px !important;
+    backdrop-filter: blur(10px) !important;
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.3) !important;
+    cursor: pointer !important;
+    min-height: 44px !important;
+    min-width: 44px !important;
+  }
+
+  /* Messages area - LIQUID GLASS (kun i chat) */
+  .spectacular-chat .flex-1.overflow-y-auto,
+  [data-component="chat"] .flex-1.overflow-y-auto {
+    flex: 1 !important;
+    padding: 8px !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    /* LIQUID GLASS - not dark gray! */
+    background: rgba(100, 181, 246, 0.08) !important;
+    backdrop-filter: blur(12px) !important;
+    border-radius: 16px !important;
+    margin: 8px !important;
+    min-height: 300px !important;
+    display: block !important;
+    visibility: visible !important;
+  }
+
+  /* Input area mobile optimization - LIQUID GLASS (kun i chat) */
+  .spectacular-chat .border-t,
+  [data-component="chat"] .border-t {
+    position: sticky !important;
+    bottom: 0 !important;
+    /* LIQUID GLASS input area - not dark! */
+    background: rgba(100, 181, 246, 0.12) !important;
+    backdrop-filter: blur(20px) !important;
+    border-top: 1px solid rgba(100, 181, 246, 0.3) !important;
+    border-radius: 16px 16px 0 0 !important;
+    margin: 0 8px !important;
+    padding: 10px !important;
+    z-index: 100 !important;
+  }
+
+  /* Touch-friendly buttons */
+  button {
+    min-height: 44px !important;
+    min-width: 44px !important;
+    touch-action: manipulation !important;
+  }
+
+  /* Optimize liquid glass effects for mobile performance */
+  div[style*="backdrop-filter"],
+  div[style*="backdropFilter"] {
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+  }
+
+  /* Disable hover effects on mobile */
+  button:hover {
+    transform: none !important;
+  }
+
+  /* Mobile overlay for sidebar */
+  .mobile-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    backdrop-filter: blur(2px);
+  }
+
+  .mobile-overlay.show {
+    display: block !important;
+  }
+
+  /* NUCLEAR OPTION - Force all chat elements visible */
+  .space-y-4 > div {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    margin-bottom: 16px !important;
+  }
+
+  /* Header mobile optimization */
+  .p-4[style*="background"] {
+    padding: 12px !important;
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 50 !important;
+  }
+}
+
+/* Tablet optimization */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .h-full.flex > div:first-child {
+    width: 240px !important;
+  }
+}
+
+/* Desktop - no changes needed */
+@media (min-width: 1025px) {
+  .mobile-menu-button {
+    display: none !important;
+  }
+}

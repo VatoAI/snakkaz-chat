@@ -1,0 +1,313 @@
+/* ============================================
+   MODERN CHAT BUBBLES - LIQUID GLASS DESIGN
+   Inspired by: Telegram, Signal, Instagram
+   ============================================ */
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes typingPulse {
+  0%,
+  60%,
+  100% {
+    transform: scale(1);
+    opacity: 0.4;
+  }
+  30% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+}
+
+@keyframes messagePop {
+  0% {
+    transform: scale(0.8) translateY(10px);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.05) translateY(-2px);
+  }
+  100% {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Modern Chat Container */
+.modern-chat-container {
+  background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  font-family: "Space Grotesk", sans-serif;
+  overflow: hidden;
+}
+
+/* Chat Header - Glassmorphism */
+.modern-chat-header {
+  background: rgba(15, 15, 35, 0.9);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.modern-chat-title {
+  color: white;
+  font-size: 18px;
+  font-weight: 600;
+  font-family: "Orbitron", monospace;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.online-status {
+  width: 8px;
+  height: 8px;
+  background: #10b981;
+  border-radius: 50%;
+  animation: typingPulse 2s infinite;
+  box-shadow: 0 0 10px #10b981;
+}
+
+/* Messages Area */
+.modern-messages-area {
+  flex: 1;
+  padding: 20px 0;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+  background: transparent;
+}
+
+.modern-messages-area::-webkit-scrollbar {
+  width: 4px;
+}
+
+.modern-messages-area::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 2px;
+}
+
+.modern-messages-area::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+}
+
+.modern-messages-area::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Chat Bubble Improvements */
+.modern-chat-bubble {
+  position: relative;
+  backdrop-filter: blur(20px) saturate(180%);
+  animation: messagePop 0.4s ease-out;
+}
+
+.modern-chat-bubble::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: inherit;
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  z-index: -1;
+}
+
+.modern-chat-bubble:hover::before {
+  opacity: 0.1;
+}
+
+/* Own Message Specific Styles */
+.own-message .modern-chat-bubble {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;
+  box-shadow: 0 8px 32px rgba(99, 102, 241, 0.4);
+  border: none;
+}
+
+.own-message .modern-chat-bubble:hover {
+  box-shadow: 0 12px 40px rgba(99, 102, 241, 0.5);
+  transform: translateY(-2px);
+}
+
+/* Other Message Specific Styles */
+.other-message .modern-chat-bubble {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.other-message .modern-chat-bubble:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+/* Typing Indicator */
+.typing-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  margin: 8px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.typing-dot {
+  width: 6px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 50%;
+  animation: typingPulse 1.5s infinite;
+}
+
+.typing-dot:nth-child(1) {
+  animation-delay: 0s;
+}
+.typing-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.typing-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+/* Modern Input Area */
+.modern-input-area {
+  background: rgba(15, 15, 35, 0.9);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 16px 20px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  position: sticky;
+  bottom: 0;
+  z-index: 100;
+}
+
+.modern-input {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  padding: 12px 20px;
+  color: white;
+  font-size: 15px;
+  font-family: inherit;
+  outline: none;
+  resize: none;
+  min-height: 44px;
+  max-height: 120px;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+}
+
+.modern-input:focus {
+  border-color: #6366f1;
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.modern-input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.modern-send-button {
+  width: 44px;
+  height: 44px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  border: none;
+  border-radius: 50%;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);
+  flex-shrink: 0;
+}
+
+.modern-send-button:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+}
+
+.modern-send-button:active {
+  transform: scale(0.95);
+}
+
+.modern-send-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Reactions */
+.message-reactions {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
+.reaction-bubble {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 2px 6px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.reaction-bubble:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: scale(1.1);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .modern-chat-bubble-container {
+    padding: 0 12px;
+  }
+
+  .modern-chat-bubble {
+    max-width: 85%;
+    font-size: 14px;
+    padding: 10px 14px;
+  }
+
+  .modern-input-area {
+    padding: 12px 16px;
+  }
+
+  .modern-chat-header {
+    padding: 12px 16px;
+  }
+}

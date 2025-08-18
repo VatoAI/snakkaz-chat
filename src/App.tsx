@@ -5,6 +5,8 @@ import { LoadingProvider, Loading } from './core/ui/loading';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { ThemeProvider } from './context/ThemeProvider';
 import { PerformanceMonitorProvider } from './core/hooks/usePerformanceMonitor';
+import { TwentyFirstToolbar } from '@21st-extension/toolbar-react';
+import { ReactPlugin } from '@21st-extension/react';
 // CRITICAL: Import order matters! Design system first!
 import './styles/design-system.css';
 import './styles/snakkaz-unified-design-system.css';
@@ -36,7 +38,10 @@ const Login = React.lazy(() => import('./pages/Login'));
 const Register = React.lazy(() => import('./pages/Register'));
 const LiquidDreamMain = React.lazy(() => import('./pages/LiquidDreamMain'));
 const ChatPage = React.lazy(() => import('./pages/ChatPage')); // BACK TO ORIGINAL
-const DesignProtectionTest = React.lazy(() => import('./components/test/DesignProtectionTest'));
+const SnakkaZMessageBubbleDemo = React.lazy(() => import('./components/SnakkaZMessageBubbleDemo'));
+const SnakkaZChatUpgraded = React.lazy(() => import('./components/SnakkaZChatUpgraded'));
+const SnakkaZChatOriginal = React.lazy(() => import('./components/SnakkaZChatOriginal'));
+const SnakkaZChatApp = React.lazy(() => import('./components/SnakkaZChatApp'));
 
 const App: React.FC = () => {
   const { isMobile } = useDeviceDetection();
@@ -51,15 +56,23 @@ const App: React.FC = () => {
           analyticsEndpoint="/api/analytics"
         >
           <div className="liquid-dream-app">
+            <TwentyFirstToolbar
+              config={{
+                plugins: [ReactPlugin]
+              }}
+            />
             <Router>
               <AuthProvider>
                 <Suspense fallback={<Loading type="app-startup" />}>
                   <Routes>
-                    <Route path="/" element={<Navigate to="/demo" replace />} />
+                    <Route path="/" element={<Navigate to="/snakkaz" replace />} />
                     <Route path="/login" element={<Login />} />
                     <Route path="/register" element={<Register />} />
-                    <Route path="/test" element={<DesignProtectionTest />} />
                     <Route path="/demo" element={<ChatPage />} />
+                    <Route path="/snakkaz-demo" element={<SnakkaZMessageBubbleDemo />} />
+                    <Route path="/snakkaz-chat" element={<SnakkaZChatUpgraded />} />
+                    <Route path="/snakkaz-original" element={<SnakkaZChatOriginal />} />
+                    <Route path="/snakkaz" element={<SnakkaZChatApp />} />
                     <Route path="/main" element={
                       <ProtectedRoute>
                         <LiquidDreamMain />
@@ -70,7 +83,7 @@ const App: React.FC = () => {
                         <ChatPage />
                       </ProtectedRoute>
                     } />
-                    <Route path="*" element={<Navigate to="/demo" replace />} />
+                    <Route path="*" element={<Navigate to="/snakkaz" replace />} />
                   </Routes>
                 </Suspense>
               </AuthProvider>

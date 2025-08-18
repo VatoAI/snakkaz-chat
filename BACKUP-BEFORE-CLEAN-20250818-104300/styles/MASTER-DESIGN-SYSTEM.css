@@ -1,0 +1,779 @@
+/* 
+ * 🌊 SNAKKAZ MASTER DESIGN SYSTEM 2025
+ * =====================================
+ * ETT design system - EN kilde til sannhet
+ * Liquid Dream Theme med Crystal Blue estetikk
+ */
+
+/* 1️⃣ ROOT VARIABLER - EN GANG FOR ALLE */
+:root {
+  /* Primær fargepalett - Crystal Blue Theme */
+  --snakkaz-primary: #64b5f6; /* Crystal Blue */
+  --snakkaz-secondary: #4dd0e1; /* Crystal Cyan */
+  --snakkaz-accent: #81c784; /* Success Green */
+  --snakkaz-warning: #ffb74d; /* Warning Orange */
+  --snakkaz-error: #e57373; /* Error Red */
+
+  /* Background farger */
+  --snakkaz-dark: #0a0f1b; /* Deep Void */
+  --snakkaz-darker: #050810; /* Deeper Void */
+  --snakkaz-surface: #1a1f2e; /* Surface */
+  --snakkaz-card: #252a3a; /* Card Background */
+
+  /* Text farger */
+  --text-primary: #ffffff; /* White */
+  --text-secondary: #b0bec5; /* Light Gray */
+  --text-muted: #64748b; /* Muted Gray */
+
+  /* Glass effekter */
+  --glass-bg: rgba(100, 181, 246, 0.08);
+  --glass-bg-hover: rgba(100, 181, 246, 0.12);
+  --glass-border: rgba(100, 181, 246, 0.2);
+  --glass-border-hover: rgba(100, 181, 246, 0.4);
+  --glass-shadow: 0 8px 32px rgba(100, 181, 246, 0.15);
+  --glass-shadow-hover: 0 12px 40px rgba(100, 181, 246, 0.25);
+  --backdrop-blur: blur(12px);
+
+  /* Animasjoner og transitions */
+  --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --animation-duration: 0.5s;
+
+  /* Spacing og sizing */
+  --border-radius: 12px;
+  --border-radius-sm: 8px;
+  --border-radius-lg: 16px;
+  --shadow-elevation: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+  /* Liquid theme aliases - map to snakkaz colors */
+  --liquid-primary: var(--snakkaz-primary);
+  --liquid-secondary: var(--snakkaz-secondary);
+  --liquid-accent: var(--snakkaz-accent);
+}
+
+/* 2️⃣ GLOBAL RESET - INGEN KONFLIKTER */
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100vh;
+  background: var(--snakkaz-dark) !important;
+  color: var(--text-primary) !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    "Ubuntu", "Cantarell", sans-serif;
+  overflow-x: hidden;
+  line-height: 1.6;
+}
+
+/* 3️⃣ LOADING SCREEN - KUN EN! */
+.snakkaz-loading {
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    var(--snakkaz-dark),
+    var(--snakkaz-darker)
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: fadeIn var(--animation-duration) ease-out;
+}
+
+.snakkaz-loading-content {
+  text-align: center;
+  animation: slideUp var(--animation-duration) ease-out;
+}
+
+.snakkaz-spinner {
+  width: 64px;
+  height: 64px;
+  border: 3px solid var(--glass-border);
+  border-top-color: var(--snakkaz-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 2rem;
+  filter: drop-shadow(0 0 20px rgba(100, 181, 246, 0.3));
+}
+
+.snakkaz-loading h2 {
+  font-size: 2.5rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(
+    135deg,
+    var(--snakkaz-primary),
+    var(--snakkaz-secondary)
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 30px rgba(100, 181, 246, 0.5);
+}
+
+.snakkaz-loading p {
+  color: var(--text-secondary);
+  font-size: 1rem;
+  opacity: 0.8;
+}
+
+/* 4️⃣ GLASS COMPONENTS */
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: var(--backdrop-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--border-radius);
+  box-shadow: var(--glass-shadow);
+  transition: var(--transition-smooth);
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--snakkaz-primary),
+    transparent
+  );
+  opacity: 0.5;
+}
+
+.glass-card:hover {
+  background: var(--glass-bg-hover);
+  border-color: var(--glass-border-hover);
+  box-shadow: var(--glass-shadow-hover);
+  transform: translateY(-2px);
+}
+
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: var(--backdrop-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--border-radius);
+}
+
+/* 5️⃣ BUTTONS */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--border-radius-sm);
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+  position: relative;
+  overflow: hidden;
+  min-height: 44px; /* Touch target */
+}
+
+.btn-primary {
+  background: linear-gradient(
+    135deg,
+    var(--snakkaz-primary),
+    var(--snakkaz-secondary)
+  );
+  color: white;
+  box-shadow: 0 4px 15px rgba(100, 181, 246, 0.3);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(100, 181, 246, 0.4);
+}
+
+.btn-secondary {
+  background: var(--glass-bg);
+  color: var(--snakkaz-primary);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: var(--backdrop-blur);
+}
+
+.btn-secondary:hover {
+  background: var(--glass-bg-hover);
+  border-color: var(--glass-border-hover);
+  transform: translateY(-1px);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid transparent;
+}
+
+.btn-ghost:hover {
+  background: var(--glass-bg);
+  color: var(--text-primary);
+  border-color: var(--glass-border);
+}
+
+/* 6️⃣ INPUTS */
+.input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--border-radius-sm);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  transition: var(--transition-smooth);
+  backdrop-filter: var(--backdrop-blur);
+}
+
+.input::placeholder {
+  color: var(--text-muted);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--snakkaz-primary);
+  box-shadow: 0 0 0 3px rgba(100, 181, 246, 0.1);
+  background: var(--glass-bg-hover);
+}
+
+/* 7️⃣ CHAT COMPONENTS */
+.chat-container {
+  height: 100vh;
+  background: linear-gradient(
+    135deg,
+    var(--snakkaz-dark),
+    var(--snakkaz-darker)
+  );
+  display: flex;
+  overflow: hidden;
+}
+
+.chat-sidebar {
+  width: 280px;
+  background: var(--glass-bg);
+  backdrop-filter: var(--backdrop-blur);
+  border-right: 1px solid var(--glass-border);
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--glass-bg);
+  backdrop-filter: var(--backdrop-blur);
+}
+
+.chat-header {
+  padding: 1rem 1.5rem;
+  background: var(--glass-bg);
+  border-bottom: 1px solid var(--glass-border);
+  backdrop-filter: var(--backdrop-blur);
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  scroll-behavior: smooth;
+}
+
+.chat-message {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  animation: slideInUp 0.3s ease-out;
+}
+
+.chat-message-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(
+    135deg,
+    var(--snakkaz-primary),
+    var(--snakkaz-secondary)
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.chat-message-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.chat-message-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.chat-message-author {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.chat-message-time {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.chat-message-text {
+  background: var(--glass-bg);
+  padding: 0.75rem 1rem;
+  border-radius: var(--border-radius);
+  border: 1px solid var(--glass-border);
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+.chat-input-container {
+  padding: 1rem 1.5rem;
+  background: var(--glass-bg);
+  border-top: 1px solid var(--glass-border);
+  backdrop-filter: var(--backdrop-blur);
+}
+
+.chat-input-wrapper {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-end;
+}
+
+.chat-input {
+  flex: 1;
+  min-height: 44px;
+  max-height: 120px;
+  resize: none;
+  padding: 0.75rem 1rem;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--border-radius);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  transition: var(--transition-smooth);
+}
+
+.chat-input:focus {
+  outline: none;
+  border-color: var(--snakkaz-primary);
+  box-shadow: 0 0 0 3px rgba(100, 181, 246, 0.1);
+}
+
+/* 8️⃣ UTILITY CLASSES */
+.text-gradient {
+  background: linear-gradient(
+    135deg,
+    var(--snakkaz-primary),
+    var(--snakkaz-secondary)
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.glow {
+  text-shadow: 0 0 20px rgba(100, 181, 246, 0.5);
+}
+
+.fade-in {
+  animation: fadeIn var(--animation-duration) ease-out;
+}
+
+.slide-up {
+  animation: slideUp var(--animation-duration) ease-out;
+}
+
+.float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* 9️⃣ RESPONSIVE DESIGN */
+@media (max-width: 768px) {
+  .chat-sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    z-index: 50;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+  }
+
+  .chat-sidebar.open {
+    transform: translateX(0);
+  }
+
+  .chat-container {
+    flex-direction: column;
+  }
+
+  .snakkaz-loading h2 {
+    font-size: 2rem;
+  }
+
+  .btn {
+    padding: 0.875rem 1.25rem;
+    font-size: 1rem;
+  }
+}
+
+/* 🔟 ANIMASJONER */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* 1️⃣1️⃣ OVERRIDE ALT ANNET - FINAL BOSS */
+/* Fjern alle gamle farger og styling */
+[class*="gold"],
+[class*="cyber"],
+[class*="premium"],
+[class*="liquid-dream"] {
+  color: var(--snakkaz-primary) !important;
+  background-color: transparent !important;
+}
+
+/* Force riktige farger */
+.bg-dark,
+.bg-black {
+  background: var(--snakkaz-dark) !important;
+}
+
+.text-white {
+  color: var(--text-primary) !important;
+}
+
+.border-primary {
+  border-color: var(--glass-border) !important;
+}
+
+/* Sørg for at alt har riktig z-index */
+.fixed {
+  z-index: auto;
+}
+
+.snakkaz-loading {
+  z-index: 9999 !important;
+}
+
+/* 1️⃣2️⃣ DARK MODE FORCED */
+* {
+  color-scheme: dark;
+}
+
+input,
+textarea,
+select {
+  color: var(--text-primary) !important;
+  background: var(--glass-bg) !important;
+  border-color: var(--glass-border) !important;
+}
+
+/* 1️⃣3️⃣ SCROLLBAR STYLING */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--snakkaz-darker);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--glass-border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--snakkaz-primary);
+}
+
+/* 1️⃣4️⃣ ACCESSIBILITY */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Focus styles for keyboard navigation */
+.btn:focus-visible,
+.input:focus-visible {
+  outline: 2px solid var(--snakkaz-primary);
+  outline-offset: 2px;
+}
+
+/* 1️⃣5️⃣ PRINT STYLES */
+@media print {
+  .snakkaz-loading,
+  .chat-sidebar,
+  .chat-input-container {
+    display: none !important;
+  }
+
+  .chat-container {
+    background: white !important;
+    color: black !important;
+  }
+}
+
+/* 🚀 MOBILE OPTIMIZATION STYLES - Moved inline to fix @import order */
+
+/* Mobile-first media queries */
+@media (max-width: 640px) {
+  /* Chat page mobile optimizations */
+  .liquid-container {
+    padding: 0.5rem;
+  }
+
+  .liquid-card {
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  /* Admin dashboard mobile */
+  .admin-dashboard .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-dashboard h1 {
+    font-size: 1.8rem;
+  }
+
+  /* Metric cards on mobile */
+  .metric-card {
+    text-align: center;
+    padding: 1.5rem 1rem;
+  }
+
+  .metric-card .metric-icon {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .metric-card .metric-value {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: var(--liquid-primary);
+    margin-bottom: 0.25rem;
+  }
+
+  .metric-card .metric-label {
+    font-size: 0.8rem;
+    color: var(--liquid-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* Mobile buttons */
+  .liquid-button {
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  /* Mobile navigation */
+  .glass-status-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+  }
+
+  /* Mobile chat messages */
+  .chat-message {
+    margin-bottom: 0.75rem;
+    padding: 0.75rem;
+  }
+
+  /* Mobile status indicators */
+  .glass-status-indicator {
+    font-size: 0.8rem;
+  }
+
+  .status-dot {
+    width: 6px;
+    height: 6px;
+  }
+}
+
+/* Tablet optimizations */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .admin-dashboard .grid-cols-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .liquid-container {
+    padding: 1rem;
+  }
+}
+
+/* Touch-friendly optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .liquid-button {
+    min-height: 44px;
+  }
+
+  .glass-card:hover {
+    transform: none;
+  }
+
+  .liquid-button:hover {
+    transform: scale(1.02);
+  }
+}
+
+/* Dark mode mobile optimizations */
+@media (prefers-color-scheme: dark) and (max-width: 640px) {
+  .liquid-container {
+    background: linear-gradient(
+      135deg,
+      rgba(6, 19, 36, 0.95) 0%,
+      rgba(14, 35, 52, 0.95) 50%,
+      rgba(6, 19, 36, 0.95) 100%
+    );
+  }
+
+  .liquid-card {
+    background: rgba(15, 45, 85, 0.2);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+  }
+}
+
+/* 🎯 MISSING CSS CLASSES - QUICK FIX */
+
+/* Liquid Primary Text Color */
+.liquid-primary {
+  color: var(--liquid-primary) !important;
+}
+
+.text-liquid-primary {
+  color: var(--liquid-primary) !important;
+}
+
+.text-liquid-secondary {
+  color: var(--liquid-secondary) !important;
+}
+
+/* SnakkaZ Liquid Glass Effect */
+.snakkaz-liquid-glass {
+  background: var(--glass-bg) !important;
+  border: 1px solid var(--glass-border) !important;
+  backdrop-filter: var(--backdrop-blur) !important;
+  box-shadow: var(--glass-shadow) !important;
+  border-radius: var(--border-radius) !important;
+  transition: var(--transition-smooth) !important;
+}
+
+.snakkaz-liquid-glass:hover {
+  background: var(--glass-bg-hover) !important;
+  border-color: var(--glass-border-hover) !important;
+  box-shadow: var(--glass-shadow-hover) !important;
+}
+
+/* Glass Crystal Effect */
+.glass-crystal {
+  background: linear-gradient(
+    135deg,
+    rgba(100, 181, 246, 0.1) 0%,
+    rgba(77, 208, 225, 0.08) 50%,
+    rgba(100, 181, 246, 0.1) 100%
+  ) !important;
+  border: 1px solid rgba(100, 181, 246, 0.3) !important;
+  backdrop-filter: blur(16px) !important;
+  box-shadow: 
+    0 8px 32px rgba(100, 181, 246, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+  border-radius: var(--border-radius-lg) !important;
+}
+
+/* Glass Card Base */
+.glass-card {
+  background: var(--glass-bg) !important;
+  border: 1px solid var(--glass-border) !important;
+  backdrop-filter: var(--backdrop-blur) !important;
+  box-shadow: var(--glass-shadow) !important;
+  border-radius: var(--border-radius) !important;
+  transition: var(--transition-smooth) !important;
+}

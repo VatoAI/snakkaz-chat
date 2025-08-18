@@ -1,0 +1,51 @@
+/* ============================================
+   CSS SPECIFICITY BOOSTER
+   Ultra-High Priority Protection
+   ============================================ */
+
+/* Ultra-specific selectors for SpectacularChat */
+html body #root .spectacular-chat.spectacular-chat.spectacular-chat {
+  background: linear-gradient(135deg, 
+    rgba(0, 61, 130, 0.9) 0%, 
+    rgba(0, 102, 255, 0.8) 50%, 
+    rgba(0, 212, 170, 0.9) 100%) !important;
+  backdrop-filter: blur(30px) !important;
+  border: 2px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 25px !important;
+  min-height: 600px !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+/* Force all child elements */
+html body #root .spectacular-chat.spectacular-chat.spectacular-chat * {
+  color: inherit !important;
+  font-family: inherit !important;
+}
+
+/* Message styling with ultra-high specificity */
+html body #root .spectacular-chat.spectacular-chat.spectacular-chat .message {
+  background: rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 15px !important;
+  padding: 1rem !important;
+  margin-bottom: 1rem !important;
+  color: #ffffff !important;
+}
+
+/* Input styling with ultra-high specificity */
+html body #root .spectacular-chat.spectacular-chat.spectacular-chat .message-input {
+  background: rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(15px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 25px !important;
+  padding: 1rem 1.5rem !important;
+  color: #ffffff !important;
+  width: 100% !important;
+}
+
+/* Override any conflicting styles */
+html body #root .spectacular-chat.spectacular-chat.spectacular-chat .message-input::placeholder {
+  color: rgba(255, 255, 255, 0.6) !important;
+}

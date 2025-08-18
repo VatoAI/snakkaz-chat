@@ -1,0 +1,250 @@
+/* Button.css - iOS 18 Liquid Glass Button Component */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: none;
+  border-radius: 12px;
+  font-family: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  text-decoration: none;
+  user-select: none;
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(20px);
+}
+
+.btn:focus {
+  outline: 2px solid #007aff;
+  outline-offset: 2px;
+}
+
+/* Button Sizes */
+.btn-sm {
+  padding: 8px 16px;
+  font-size: 14px;
+  min-height: 36px;
+  border-radius: 10px;
+}
+
+.btn-md {
+  padding: 12px 20px;
+  font-size: 16px;
+  min-height: 44px;
+}
+
+.btn-lg {
+  padding: 16px 24px;
+  font-size: 18px;
+  min-height: 52px;
+  border-radius: 14px;
+}
+
+/* Button Variants */
+.btn-primary {
+  background: linear-gradient(135deg, #007aff 0%, #5856d6 100%);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 14px rgba(0, 122, 255, 0.3), 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #0056d6 0%, #4c4bcc 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0, 122, 255, 0.4), 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+  background: linear-gradient(135deg, #004bb8 0%, #4240b8 100%);
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.btn-secondary:active {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(0);
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, #ff3b30 0%, #ff453a 100%);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 14px rgba(255, 59, 48, 0.3);
+}
+
+.btn-danger:hover {
+  background: linear-gradient(135deg, #d70015 0%, #e3001b 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(255, 59, 48, 0.4);
+}
+
+.btn-danger:active {
+  background: linear-gradient(135deg, #b8000c 0%, #c4001f 100%);
+  transform: translateY(0);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: #ffffff;
+  border: 1px solid transparent;
+}
+
+.btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+.btn-ghost:active {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.btn-link {
+  background: transparent;
+  color: #007aff;
+  border: none;
+  padding: 0;
+  min-height: auto;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.btn-link:hover {
+  color: #0056d6;
+  text-decoration: none;
+}
+
+.btn-link:active {
+  color: #004bb8;
+}
+
+/* Button States */
+.btn-full-width {
+  width: 100%;
+}
+
+.btn-disabled,
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+  transform: none !important;
+}
+
+.btn-loading {
+  color: transparent;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Loading Spinner */
+.btn-spinner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Icons */
+.btn-icon {
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-sm .btn-icon {
+  font-size: 14px;
+}
+
+.btn-lg .btn-icon {
+  font-size: 18px;
+}
+
+.btn-icon-left {
+  margin-right: -4px;
+}
+
+.btn-icon-right {
+  margin-left: -4px;
+}
+
+/* Ripple Effect */
+.btn::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transform: translate(-50%, -50%);
+  transition: width 0.3s, height 0.3s;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.btn:active::before {
+  width: 200px;
+  height: 200px;
+  opacity: 1;
+  transition: width 0s, height 0s, opacity 0.3s;
+}
+
+/* Mobile Optimizations */
+@media (max-width: 768px) {
+  .btn {
+    min-height: 48px; /* Better touch targets */
+  }
+
+  .btn-sm {
+    min-height: 40px;
+  }
+
+  .btn-lg {
+    min-height: 56px;
+  }
+
+  /* Disable hover effects on touch devices */
+  .btn:hover {
+    transform: none;
+  }
+
+  .btn:active {
+    transform: scale(0.98);
+  }
+}

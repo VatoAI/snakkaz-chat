@@ -38,7 +38,7 @@ export default defineConfig({
 
   // Ultra-fast server config
   server: {
-    port: 3001,
+    port: 3002,
     host: true,
     strictPort: false,
     open: false,
@@ -49,7 +49,7 @@ export default defineConfig({
 
     // Fixed HMR - Match server port
     hmr: {
-      port: 3001,
+      port: 3002,
       host: "localhost",
       overlay: false,
     },
@@ -58,7 +58,7 @@ export default defineConfig({
     proxy: {},
   },
 
-  // Aggressive build optimizations
+  // Aggressive build optimizations with code splitting
   build: {
     target: "esnext",
     minify: "esbuild",
@@ -66,10 +66,25 @@ export default defineConfig({
     rollupOptions: {
       external: [],
       output: {
-        manualChunks: undefined,
+        manualChunks: {
+          // Split vendor libraries
+          "vendor-react": ["react", "react-dom"],
+          "vendor-router": ["react-router-dom"],
+          "vendor-icons": ["lucide-react"],
+          // Split legacy components into separate chunks
+          "legacy-chat": [
+            "./src/components/SnakkaZChatOriginal.tsx",
+            "./src/components/SnakkaZChatUpgraded.tsx",
+            "./src/components/SnakkaZMessageBubbleDemo.tsx",
+          ],
+          "legacy-pages": [
+            "./src/pages/LiquidDreamMain.tsx",
+            "./src/pages/ChatPage.tsx",
+          ],
+        },
       },
     },
-    chunkSizeWarningLimit: 1000,
+    chunkSizeWarningLimit: 500, // Lower warning limit
     reportCompressedSize: false,
   },
 

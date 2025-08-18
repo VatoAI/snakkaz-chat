@@ -1,0 +1,821 @@
+/* ========================================
+   SNAKKAZ LIQUID GLASS CYBERPUNK SYSTEM
+   🚀 EPIC MOBILE TRANSFORMATION 2025 🚀
+   ======================================== */
+
+@import url("https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;700;900&display=swap");
+
+:root {
+  /* Matrix Blue Spectrum - Core Colors */
+  --cyberpunk-deep: #0e2373; /* Dark backgrounds */
+  --cyberpunk-medium: #094198; /* Secondary surfaces */
+  --cyberpunk-bright: #4ab8f9; /* Interactive elements */
+  --cyberpunk-glow: #7ceafc; /* Primary accents */
+  --cyberpunk-light: #d6feff; /* Text highlights */
+
+  /* Supporting Colors */
+  --matrix-green: #36ba01; /* Success states */
+  --neon-red: #ff0040; /* Alerts/warnings */
+  --deep-black: #000000; /* Primary text */
+  --ghost-white: #ffffff; /* Light text */
+
+  /* Glass Properties */
+  --glass-bg: rgba(75, 184, 249, 0.1);
+  --glass-border: rgba(255, 255, 255, 0.2);
+  --glass-shadow: 0 8px 32px rgba(14, 35, 115, 0.3);
+  --glass-blur: 12px;
+  --glass-opacity: 0.1;
+
+  /* Typography */
+  --font-primary: "Rajdhani", sans-serif;
+  --font-display: "Orbitron", sans-serif;
+
+  /* Spacing */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+
+  /* Transitions */
+  --transition-fast: 0.2s ease;
+  --transition-smooth: 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --transition-bounce: 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* 🔥 EPIC MATRIX BACKGROUND EFFECTS 🔥 */
+.matrix-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.matrix-rain {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 20% 20%, rgba(75, 184, 249, 0.08) 1px, transparent 1px),
+    radial-gradient(circle at 80% 80%, rgba(124, 234, 252, 0.06) 1px, transparent 1px),
+    radial-gradient(circle at 40% 60%, rgba(54, 186, 1, 0.04) 1px, transparent 1px);
+  background-size: 40px 40px, 60px 60px, 80px 80px;
+  animation: matrixRain 25s linear infinite;
+}
+
+.cyberpunk-grid {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    linear-gradient(rgba(75, 184, 249, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(75, 184, 249, 0.08) 1px, transparent 1px);
+  background-size: 25px 25px;
+  animation: gridFlow 20s linear infinite;
+}
+
+/* 🚀 EPIC CHAT BUBBLES - LIQUID GLASS 🚀 */
+.epic-message {
+  position: relative;
+  margin: 16px 0;
+  max-width: 85%;
+  animation: messagePowerUp 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transform-origin: center bottom;
+}
+
+.epic-user-message {
+  margin-left: auto;
+  background: linear-gradient(135deg, 
+    rgba(75, 184, 249, 0.25) 0%, 
+    rgba(124, 234, 252, 0.15) 100%);
+  border: 1px solid rgba(75, 184, 249, 0.5);
+  border-radius: 25px 25px 8px 25px;
+  backdrop-filter: blur(20px);
+  box-shadow: 
+    0 8px 25px rgba(75, 184, 249, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.epic-ai-message {
+  margin-right: auto;
+  background: linear-gradient(135deg, 
+    rgba(255, 0, 64, 0.25) 0%, 
+    rgba(255, 100, 100, 0.15) 100%);
+  border: 1px solid rgba(255, 0, 64, 0.5);
+  border-radius: 25px 25px 25px 8px;
+  backdrop-filter: blur(20px);
+  box-shadow: 
+    0 8px 25px rgba(255, 0, 64, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+.epic-system-message {
+  margin: 16px auto;
+  background: linear-gradient(135deg, 
+    rgba(54, 186, 1, 0.25) 0%, 
+    rgba(100, 255, 100, 0.15) 100%);
+  border: 1px solid rgba(54, 186, 1, 0.5);
+  border-radius: 20px;
+  backdrop-filter: blur(20px);
+  text-align: center;
+  box-shadow: 
+    0 8px 25px rgba(54, 186, 1, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.epic-message-content {
+  padding: 18px 22px;
+  position: relative;
+  z-index: 2;
+  color: white;
+  font-family: var(--font-primary);
+}
+
+.epic-message-text {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.5;
+  margin-bottom: 8px;
+  word-wrap: break-word;
+}
+
+.epic-message-sender {
+  font-size: 12px;
+  font-weight: 700;
+  opacity: 0.8;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.epic-message-time {
+  font-size: 11px;
+  opacity: 0.6;
+  font-weight: 400;
+}
+
+.message-glow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: inherit;
+  border-radius: inherit;
+  opacity: 0;
+  filter: blur(15px);
+  transition: opacity 0.4s ease;
+}
+
+.epic-message:hover .message-glow {
+  opacity: 0.6;
+}
+
+.ai-scanner {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--neon-red), transparent);
+  animation: aiScan 4s infinite;
+}
+
+/* 🎯 EPIC MOBILE HEADER 🎯 */
+.epic-mobile-header {
+  position: relative;
+  height: 85px;
+  backdrop-filter: blur(25px);
+  background: linear-gradient(135deg, 
+    rgba(14, 35, 115, 0.6) 0%, 
+    rgba(9, 65, 152, 0.3) 100%);
+  border-bottom: 2px solid var(--cyberpunk-bright);
+  z-index: 10;
+  box-shadow: 0 4px 20px rgba(14, 35, 115, 0.6);
+}
+
+.epic-header-glow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(to bottom, rgba(75, 184, 249, 0.15), transparent);
+  pointer-events: none;
+}
+
+.epic-header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px;
+  position: relative;
+  z-index: 2;
+}
+
+.epic-snakkaz-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+}
+
+.epic-logo-lightning {
+  font-size: 28px;
+  animation: lightningPulse 2s infinite;
+  filter: drop-shadow(0 0 10px var(--cyberpunk-glow));
+}
+
+.epic-logo-text {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 700;
+  background: linear-gradient(45deg, var(--cyberpunk-bright), var(--cyberpunk-glow));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: 2px;
+  text-shadow: 0 0 20px rgba(75, 184, 249, 0.5);
+}
+
+.epic-logo-pulse {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 60px;
+  height: 60px;
+  border: 2px solid var(--cyberpunk-bright);
+  border-radius: 50%;
+  opacity: 0;
+  animation: logoPulse 3s infinite;
+}
+
+.epic-status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--cyberpunk-light);
+}
+
+.epic-online-dot {
+  width: 12px;
+  height: 12px;
+  background: var(--matrix-green);
+  border-radius: 50%;
+  box-shadow: 0 0 15px var(--matrix-green);
+  animation: onlinePulse 2s infinite;
+}
+
+.epic-scanning-line {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--cyberpunk-bright), transparent);
+  animation: scanLine 3s infinite;
+}
+
+/* ⚡ EPIC INPUT AREA ⚡ */
+.epic-input-area {
+  position: relative;
+  background: linear-gradient(135deg, 
+    rgba(14, 35, 115, 0.6) 0%, 
+    rgba(9, 65, 152, 0.3) 100%);
+  backdrop-filter: blur(25px);
+  border-top: 2px solid var(--cyberpunk-bright);
+  padding: 15px 20px;
+  z-index: 10;
+  box-shadow: 0 -4px 20px rgba(14, 35, 115, 0.6);
+}
+
+.epic-input-glow {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(to top, rgba(75, 184, 249, 0.15), transparent);
+  pointer-events: none;
+}
+
+.epic-input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: rgba(14, 35, 115, 0.5);
+  backdrop-filter: blur(15px);
+  border: 2px solid rgba(75, 184, 249, 0.4);
+  border-radius: 30px;
+  padding: 8px;
+  transition: all 0.4s ease;
+  overflow: hidden;
+}
+
+.epic-input-container:focus-within {
+  border-color: var(--cyberpunk-bright);
+  box-shadow: 0 0 25px rgba(75, 184, 249, 0.5);
+  background: rgba(14, 35, 115, 0.7);
+}
+
+.epic-superpower-icon {
+  padding: 0 15px;
+  font-size: 22px;
+  color: var(--cyberpunk-glow);
+  animation: superpowerPulse 3s infinite;
+}
+
+.epic-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: white;
+  font-family: var(--font-primary);
+  font-size: 16px;
+  font-weight: 500;
+  padding: 15px 10px;
+}
+
+.epic-input::placeholder {
+  color: rgba(214, 254, 255, 0.6);
+  font-style: italic;
+  font-weight: 400;
+}
+
+.epic-send-button {
+  position: relative;
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(45deg, var(--cyberpunk-bright), var(--cyberpunk-glow));
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  transition: all 0.3s ease;
+  overflow: hidden;
+  color: white;
+}
+
+.epic-send-button:hover {
+  transform: scale(1.15) rotate(15deg);
+  box-shadow: 0 0 30px rgba(75, 184, 249, 0.7);
+}
+
+.epic-send-button:active {
+  transform: scale(0.95) rotate(-5deg);
+}
+
+.epic-button-energy {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.4), transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.epic-send-button:hover .epic-button-energy {
+  opacity: 1;
+  animation: energyPulse 0.5s ease;
+}
+
+/* Core Animations */
+@keyframes gradientFlow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes liquidFlow {
+  0%,
+  100% {
+    border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+    filter: hue-rotate(0deg);
+  }
+  25% {
+    border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%;
+    filter: hue-rotate(90deg);
+  }
+  50% {
+    border-radius: 70% 30% 40% 60% / 30% 70% 60% 40%;
+    filter: hue-rotate(180deg);
+  }
+  75% {
+    border-radius: 40% 70% 60% 30% / 70% 40% 30% 60%;
+    filter: hue-rotate(270deg);
+  }
+}
+
+@keyframes powerUp {
+  0% {
+    transform: scale(0.8) rotateY(-10deg);
+    opacity: 0;
+    filter: blur(4px);
+  }
+  50% {
+    transform: scale(1.05) rotateY(5deg);
+    filter: blur(0px);
+  }
+  100% {
+    transform: scale(1) rotateY(0deg);
+    opacity: 1;
+    filter: blur(0px);
+  }
+}
+
+@keyframes matrixSweep {
+  0% {
+    transform: translateX(-100%) translateY(-100%) rotate(45deg);
+  }
+  100% {
+    transform: translateX(100%) translateY(100%) rotate(45deg);
+  }
+}
+
+@keyframes cyberpunkPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 10px rgba(75, 184, 249, 0.3);
+    border-color: rgba(75, 184, 249, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(75, 184, 249, 0.6);
+    border-color: rgba(75, 184, 249, 0.6);
+  }
+}
+
+@keyframes particleFloat {
+  0%,
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  33% {
+    transform: translateY(-10px) rotate(120deg);
+  }
+  66% {
+    transform: translateY(5px) rotate(240deg);
+  }
+}
+
+@keyframes matrixGrid {
+  0% {
+    transform: translate(0, 0);
+  }
+  100% {
+    transform: translate(20px, 20px);
+  }
+}
+
+@keyframes scanLine {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Base Typography Classes */
+.cyber-text {
+  font-family: var(--font-primary);
+  letter-spacing: 0.02em;
+  text-shadow: 0 0 10px var(--cyberpunk-glow);
+  color: var(--cyberpunk-light);
+}
+
+.superpower-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-transform: uppercase;
+  background: linear-gradient(
+    45deg,
+    var(--cyberpunk-bright),
+    var(--cyberpunk-glow)
+  );
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: 0.1em;
+  text-shadow: none;
+}
+
+/* Core Liquid Glass Classes */
+.liquid-glass {
+  position: relative;
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  box-shadow: var(--glass-shadow);
+
+  /* Performance optimizations */
+  will-change: auto;
+  contain: layout style paint;
+  transform: translateZ(0);
+}
+
+.liquid-glass.animated {
+  animation: liquidFlow 8s ease-in-out infinite;
+  will-change: border-radius, filter;
+}
+
+.liquid-glass.cyberpunk {
+  background: linear-gradient(
+    135deg,
+    rgba(75, 184, 249, 0.1),
+    rgba(124, 234, 252, 0.05)
+  );
+  border-color: rgba(75, 184, 249, 0.3);
+  box-shadow: 0 8px 32px rgba(14, 35, 115, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 0 20px rgba(75, 184, 249, 0.2);
+}
+
+/* Glass highlight effect */
+.liquid-glass::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.1), transparent);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+/* Cyberpunk scanning effect */
+.liquid-glass.cyberpunk::after {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    45deg,
+    transparent 30%,
+    rgba(75, 184, 249, 0.1) 50%,
+    transparent 70%
+  );
+  animation: matrixSweep 3s linear infinite;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* Interaction States */
+.interactive-element {
+  transition: var(--transition-smooth);
+  cursor: pointer;
+}
+
+.interactive-element:hover {
+  transform: translateY(-2px);
+  animation: cyberpunkPulse 2s infinite;
+}
+
+.interactive-element:active {
+  transform: translateY(0px) scale(0.98);
+}
+
+/* Superpower Effects */
+.superpower-entrance {
+  animation: powerUp 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.matrix-background {
+  background: linear-gradient(
+    135deg,
+    #0a1628 0%,
+    #0e2373 35%,
+    #094198 70%,
+    #0a1628 100%
+  );
+  background-size: 400% 400%;
+  animation: gradientFlow 15s ease infinite;
+}
+
+.matrix-background::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: linear-gradient(
+      rgba(75, 184, 249, 0.03) 1px,
+      transparent 1px
+    ),
+    linear-gradient(90deg, rgba(75, 184, 249, 0.03) 1px, transparent 1px);
+  background-size: 20px 20px;
+  animation: matrixGrid 20s linear infinite;
+  pointer-events: none;
+}
+
+/* Responsive Performance Optimization */
+@media (max-width: 768px) {
+  :root {
+    --glass-blur: 8px;
+    --glass-opacity: 0.25;
+  }
+
+  .liquid-glass.animated {
+    animation: none; /* Disable animations on mobile for performance */
+  }
+
+  .liquid-glass.cyberpunk::after {
+    display: none; /* Disable scanning effect on mobile */
+  }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .liquid-glass {
+    backdrop-filter: none;
+    background: rgba(14, 35, 115, 0.9);
+  }
+}
+
+/* Performance Classes */
+.reduced-effects .liquid-glass {
+  backdrop-filter: blur(6px);
+}
+
+.enhanced-effects .liquid-glass {
+  backdrop-filter: blur(16px);
+}
+
+/* Scrollbar Styling */
+.cyberpunk-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(75, 184, 249, 0.5) transparent;
+}
+
+.cyberpunk-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.cyberpunk-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.cyberpunk-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(75, 184, 249, 0.5);
+  border-radius: 4px;
+}
+
+.cyberpunk-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(75, 184, 249, 0.7);
+}
+
+/* 🚀 EPIC ANIMATIONS - CYBERPUNK SUPERPOWERS 🚀 */
+
+@keyframes matrixRain {
+  0% { transform: translateY(0) rotate(0deg); opacity: 0.5; }
+  50% { opacity: 1; }
+  100% { transform: translateY(-50px) rotate(5deg); opacity: 0.3; }
+}
+
+@keyframes gridFlow {
+  0% { transform: translateY(0) translateX(0); }
+  100% { transform: translateY(-25px) translateX(-25px); }
+}
+
+@keyframes lightningPulse {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 5px var(--cyberpunk-glow)); }
+  50% { transform: scale(1.3); filter: drop-shadow(0 0 20px var(--cyberpunk-glow)); }
+}
+
+@keyframes logoPulse {
+  0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
+}
+
+@keyframes onlinePulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 15px var(--matrix-green); }
+  50% { opacity: 0.6; box-shadow: 0 0 25px var(--matrix-green); }
+}
+
+@keyframes scanLine {
+  0% { transform: translateX(-100%); }
+  50% { transform: translateX(0%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes messagePowerUp {
+  0% {
+    transform: scale(0.7) translateY(30px) rotateX(15deg);
+    opacity: 0;
+    filter: blur(8px);
+  }
+  50% {
+    transform: scale(1.1) translateY(-10px) rotateX(-5deg);
+    filter: blur(2px);
+  }
+  100% {
+    transform: scale(1) translateY(0) rotateX(0deg);
+    opacity: 1;
+    filter: blur(0px);
+  }
+}
+
+@keyframes aiScan {
+  0% { left: -100%; }
+  50% { left: 100%; }
+  100% { left: -100%; }
+}
+
+@keyframes superpowerPulse {
+  0%, 100% { 
+    transform: scale(1); 
+    color: var(--cyberpunk-glow); 
+    text-shadow: 0 0 5px var(--cyberpunk-glow);
+  }
+  50% { 
+    transform: scale(1.2); 
+    color: var(--cyberpunk-bright); 
+    text-shadow: 0 0 15px var(--cyberpunk-bright);
+  }
+}
+
+@keyframes energyPulse {
+  0% { transform: scale(0); opacity: 1; }
+  100% { transform: scale(2); opacity: 0; }
+}
+
+/* 🎯 EPIC MOBILE RESPONSIVE OPTIMIZATIONS 🎯 */
+@media (max-width: 380px) {
+  .epic-message {
+    max-width: 90%;
+  }
+  
+  .epic-message-text {
+    font-size: 15px;
+  }
+  
+  .epic-logo-text {
+    font-size: 20px;
+  }
+  
+  .epic-input {
+    font-size: 15px;
+  }
+}
+
+/* ⚡ PERFORMANCE OPTIMIZATIONS ⚡ */
+.epic-mobile-container * {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* 🔧 ACCESSIBILITY */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* 🎨 HIGH CONTRAST MODE */
+@media (prefers-contrast: high) {
+  :root {
+    --cyberpunk-bright: #00BFFF;
+    --cyberpunk-glow: #FFFFFF;
+    --glass-border: rgba(255, 255, 255, 0.8);
+  }
+}
+
+/* FIX CSS COMPATIBILITY */
+.epic-logo-text {
+  background-clip: text;
+  -webkit-background-clip: text;
+}

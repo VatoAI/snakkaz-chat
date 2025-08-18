@@ -1,0 +1,179 @@
+/* Avatar.css - iOS 18 Liquid Glass Avatar Component */
+
+.avatar {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.avatar-image {
+  position: relative;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #007aff, #5856d6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  backdrop-filter: blur(20px);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+}
+
+.avatar-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.avatar-initials {
+  font-weight: 600;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Avatar Sizes */
+.avatar-sm .avatar-image {
+  width: 32px;
+  height: 32px;
+}
+
+.avatar-sm .avatar-initials {
+  font-size: 12px;
+}
+
+.avatar-md .avatar-image {
+  width: 44px;
+  height: 44px;
+}
+
+.avatar-md .avatar-initials {
+  font-size: 16px;
+}
+
+.avatar-lg .avatar-image {
+  width: 64px;
+  height: 64px;
+}
+
+.avatar-lg .avatar-initials {
+  font-size: 22px;
+}
+
+.avatar-xl .avatar-image {
+  width: 96px;
+  height: 96px;
+}
+
+.avatar-xl .avatar-initials {
+  font-size: 32px;
+}
+
+/* Status Indicator */
+.avatar-status {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid rgba(26, 26, 26, 0.95);
+  backdrop-filter: blur(10px);
+}
+
+.avatar-sm .avatar-status {
+  width: 8px;
+  height: 8px;
+  border-width: 1px;
+}
+
+.avatar-lg .avatar-status,
+.avatar-xl .avatar-status {
+  width: 16px;
+  height: 16px;
+  border-width: 3px;
+}
+
+.avatar-status-online {
+  background: #34c759;
+  animation: pulse-green 2s infinite;
+}
+
+.avatar-status-away {
+  background: #ff9500;
+}
+
+.avatar-status-busy {
+  background: #ff3b30;
+}
+
+.avatar-status-offline {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+@keyframes pulse-green {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1);
+  }
+}
+
+/* Interactive States */
+.avatar-clickable {
+  cursor: pointer;
+}
+
+.avatar-clickable:hover .avatar-image {
+  transform: scale(1.05);
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 20px rgba(0, 122, 255, 0.3);
+}
+
+.avatar-editable .avatar-image {
+  cursor: pointer;
+}
+
+.avatar-edit-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  font-size: 16px;
+}
+
+.avatar-editable:hover .avatar-edit-overlay {
+  opacity: 1;
+}
+
+/* Focus states for accessibility */
+.avatar-clickable:focus {
+  outline: 2px solid #007aff;
+  outline-offset: 2px;
+  border-radius: 50%;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .avatar-clickable:hover .avatar-image {
+    transform: none; /* Disable hover effects on touch devices */
+  }
+
+  .avatar-editable:active .avatar-image {
+    transform: scale(0.95);
+  }
+}
