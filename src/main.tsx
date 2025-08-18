@@ -1,10 +1,14 @@
-import "./styles/design-system.css"
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
-import './index.css' // PERFECT LIQUID DREAM DESIGN IMPORTED!
+import './styles/modern-chat-system.css'
+import './components/layout/MainApp.css'
+import './pages/Dashboard.css'
+import './pages/Profile.css'
+import './pages/Settings.css'
+import './pages/Notifications.css'
+import './features/chat/components/FreshChat.css'
 
-// FIXED MAIN.TSX - CSS IMPORT ADDED
 ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
         <App />

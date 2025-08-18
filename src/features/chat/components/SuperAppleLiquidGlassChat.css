@@ -304,20 +304,153 @@
 /* === MESSAGE BUBBLES === */
 .message-wrapper {
   display: flex;
-  margin-bottom: 8px;
+  flex-direction: column;
+  margin-bottom: 16px;
   animation: messageSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .message-wrapper.own-message {
-  justify-content: flex-end;
+  align-items: flex-end;
 }
 
 .message-wrapper.other-message {
-  justify-content: flex-start;
+  align-items: flex-start;
 }
 
 .message-wrapper.system {
+  align-items: center;
+}
+
+/* Sender info styles */
+.sender-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  padding: 0.25rem 0;
+}
+
+.sender-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(
+    135deg,
+    var(--chat-accent-color) 0%,
+    rgba(var(--chat-accent-color-rgb), 0.7) 100%
+  );
+  display: flex;
+  align-items: center;
   justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.sender-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--chat-accent-color);
+  text-shadow: 0 0 8px rgba(var(--chat-accent-color-rgb), 0.6);
+}
+
+.sender-status {
+  font-size: 0.7rem;
+  opacity: 0.7;
+  margin-left: auto;
+}
+
+/* Voice message specific styles */
+.voice-message {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+}
+
+.voice-message svg {
+  width: 18px;
+  height: 18px;
+  color: var(--chat-accent-color);
+  filter: drop-shadow(0 0 8px rgba(var(--chat-accent-color-rgb), 0.6));
+}
+
+/* System message specific styles */
+.system-message {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  font-style: italic;
+  opacity: 0.9;
+}
+
+.system-message svg {
+  width: 16px;
+  height: 16px;
+  color: var(--chat-accent-color);
+  filter: drop-shadow(0 0 8px rgba(var(--chat-accent-color-rgb), 0.6));
+}
+
+/* Message reactions improvements */
+.message-reactions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.reaction-bubble {
+  border-radius: 12px !important;
+  padding: 0.25rem 0.5rem !important;
+  font-size: 0.75rem !important;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.reaction-bubble:hover {
+  transform: scale(1.05);
+}
+
+.reaction-bubble .liquid-glass-content {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* Message time and meta improvements */
+.message-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.25rem;
+  padding-top: 0.25rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.message-time {
+  font-size: 0.7rem;
+  opacity: 0.7;
+}
+
+.message-status {
+  font-size: 0.7rem;
+  margin-left: 0.5rem;
+}
+
+.message-status.read {
+  color: var(--chat-accent-color);
+}
+
+.message-status.delivered {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.message-status.sent {
+  color: rgba(255, 255, 255, 0.4);
 }
 
 .message-bubble {

@@ -1,0 +1,242 @@
+/* Settings.css - iOS 18 Inspired Settings */
+
+.settings {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Settings Header */
+.settings-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.settings-header h1 {
+  font-size: 32px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  background: linear-gradient(135deg, #007aff, #5856d6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.settings-header p {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0;
+}
+
+/* Settings Section */
+.settings-section {
+  margin-bottom: 32px;
+}
+
+.settings-section h2 {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0 0 16px 0;
+  color: #ffffff;
+}
+
+.settings-group {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  overflow: hidden;
+  backdrop-filter: blur(20px);
+}
+
+/* Setting Item */
+.setting-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  background: none;
+  border: none;
+  width: 100%;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #ffffff;
+  text-align: left;
+}
+
+.setting-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.setting-item:not(:last-child) {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.setting-item.danger {
+  color: #ff3b30;
+}
+
+.setting-item.danger:hover {
+  background: rgba(255, 59, 48, 0.1);
+}
+
+.setting-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #007aff, #5856d6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.setting-item.danger .setting-icon {
+  background: linear-gradient(135deg, #ff3b30, #ff453a);
+}
+
+.setting-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.setting-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.setting-subtitle {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.setting-item.danger .setting-subtitle {
+  color: rgba(255, 59, 48, 0.7);
+}
+
+.setting-arrow {
+  font-size: 20px;
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 300;
+  flex-shrink: 0;
+}
+
+/* Toggle Switch */
+.setting-toggle {
+  position: relative;
+  display: inline-block;
+  width: 52px;
+  height: 32px;
+  flex-shrink: 0;
+}
+
+.setting-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.3);
+  transition: all 0.3s;
+  border-radius: 16px;
+}
+
+.toggle-slider::before {
+  position: absolute;
+  content: "";
+  height: 28px;
+  width: 28px;
+  left: 2px;
+  top: 2px;
+  background: white;
+  transition: all 0.3s;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.setting-toggle input:checked + .toggle-slider {
+  background: linear-gradient(135deg, #007aff, #5856d6);
+}
+
+.setting-toggle input:checked + .toggle-slider::before {
+  transform: translateX(20px);
+}
+
+/* Danger Zone */
+.settings-danger-zone {
+  margin-top: 32px;
+  border: 1px solid rgba(255, 59, 48, 0.2);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.settings-danger-zone h2 {
+  color: #ff3b30;
+  padding: 16px 20px 0;
+  margin-bottom: 16px;
+}
+
+.settings-danger-zone .settings-group {
+  border: none;
+  border-radius: 0;
+  background: rgba(255, 59, 48, 0.05);
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .settings {
+    gap: 20px;
+  }
+
+  .settings-header {
+    margin-bottom: 24px;
+  }
+
+  .settings-header h1 {
+    font-size: 28px;
+  }
+
+  .settings-section {
+    margin-bottom: 24px;
+  }
+
+  .setting-item {
+    padding: 12px 16px;
+    gap: 12px;
+  }
+
+  .setting-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
+  }
+
+  .setting-title {
+    font-size: 15px;
+  }
+
+  .setting-subtitle {
+    font-size: 13px;
+  }
+}
+
+/* Scrollable Container */
+.settings {
+  padding-bottom: 100px; /* Extra space for mobile navigation */
+}
+
+@media (max-width: 768px) {
+  .settings {
+    padding-bottom: 120px;
+  }
+}

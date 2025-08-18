@@ -5,11 +5,6 @@ import { LoadingProvider, Loading } from './core/ui/loading';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { ThemeProvider } from './context/ThemeProvider';
 import { PerformanceMonitorProvider } from './core/hooks/usePerformanceMonitor';
-// CRITICAL: Import order matters! Design system first!
-import './styles/design-system.css';
-import './styles/snakkaz-unified-design-system.css';
-import './index.css';
-import './styles/mobile.css';
 
 // Device detection utility
 const useDeviceDetection = () => {
@@ -34,9 +29,12 @@ const useDeviceDetection = () => {
 // Lazy load components - PRODUCTION VERSION
 const Login = React.lazy(() => import('./pages/Login'));
 const Register = React.lazy(() => import('./pages/Register'));
-const LiquidDreamMain = React.lazy(() => import('./pages/LiquidDreamMain'));
-const ChatPage = React.lazy(() => import('./pages/ChatPage')); // BACK TO ORIGINAL
-const DesignProtectionTest = React.lazy(() => import('./components/test/DesignProtectionTest'));
+const Dashboard = React.lazy(() => import('./pages/Dashboard'));
+const Profile = React.lazy(() => import('./pages/Profile'));
+const Settings = React.lazy(() => import('./pages/Settings'));
+const Notifications = React.lazy(() => import('./pages/Notifications'));
+const MainApp = React.lazy(() => import('./components/layout/MainApp'));
+const FreshChat = React.lazy(() => import('./features/chat/components/FreshChat'));
 
 const App: React.FC = () => {
   const { isMobile } = useDeviceDetection();
@@ -55,22 +53,28 @@ const App: React.FC = () => {
               <AuthProvider>
                 <Suspense fallback={<Loading type="app-startup" />}>
                   <Routes>
-                    <Route path="/" element={<Navigate to="/demo" replace />} />
+                    <Route path="/" element={<Navigate to="/app" replace />} />
                     <Route path="/login" element={<Login />} />
                     <Route path="/register" element={<Register />} />
-                    <Route path="/test" element={<DesignProtectionTest />} />
-                    <Route path="/demo" element={<ChatPage />} />
-                    <Route path="/main" element={
+
+                    {/* Main App with nested routes */}
+                    <Route path="/app/*" element={
                       <ProtectedRoute>
-                        <LiquidDreamMain />
+                        <MainApp />
                       </ProtectedRoute>
-                    } />
-                    <Route path="/chat" element={
-                      <ProtectedRoute>
-                        <ChatPage />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="*" element={<Navigate to="/demo" replace />} />
+                    }>
+                      <Route index element={<Dashboard />} />
+                      <Route path="dashboard" element={<Dashboard />} />
+                      <Route path="chat" element={<FreshChat />} />
+                      <Route path="profile" element={<Profile />} />
+                      <Route path="settings" element={<Settings />} />
+                      <Route path="notifications" element={<Notifications />} />
+                    </Route>
+
+                    {/* Demo/Public Chat */}
+                    <Route path="/demo" element={<FreshChat />} />
+
+                    <Route path="*" element={<Navigate to="/app" replace />} />
                   </Routes>
                 </Suspense>
               </AuthProvider>

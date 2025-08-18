@@ -5,34 +5,38 @@
  */
 
 /* === GLOBAL IMPORTS === */
-@import url('./apple-liquid-glass-2025.css');
+/* @import url('./apple-liquid-glass-2025.css'); */ /* Removed for production build */
 
 /* === SNAKKAZ DESIGN TOKENS === */
 :root {
   /* SnakkaZ Brand Colors */
-  --snakkaz-primary: #007AFF;
-  --snakkaz-secondary: #5856D6;
-  --snakkaz-accent: #FF3B30;
-  --snakkaz-success: #34C759;
-  --snakkaz-warning: #FF9500;
-  --snakkaz-error: #FF3B30;
-  
+  --snakkaz-primary: #007aff;
+  --snakkaz-secondary: #5856d6;
+  --snakkaz-accent: #ff3b30;
+  --snakkaz-success: #34c759;
+  --snakkaz-warning: #ff9500;
+  --snakkaz-error: #ff3b30;
+
   /* SnakkaZ Surfaces */
   --snakkaz-surface-primary: rgba(255, 255, 255, 0.1);
   --snakkaz-surface-secondary: rgba(255, 255, 255, 0.05);
   --snakkaz-surface-tertiary: rgba(255, 255, 255, 0.03);
-  
+
   /* SnakkaZ Glass Effects */
   --snakkaz-glass-strong: blur(40px) saturate(180%) brightness(105%);
   --snakkaz-glass-medium: blur(20px) saturate(160%) brightness(102%);
   --snakkaz-glass-light: blur(10px) saturate(140%) brightness(100%);
-  
+
   /* SnakkaZ Shadows */
-  --snakkaz-shadow-elevation-1: 0 2px 8px rgba(0, 0, 0, 0.1), 0 1px 4px rgba(0, 0, 0, 0.06);
-  --snakkaz-shadow-elevation-2: 0 4px 16px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1);
-  --snakkaz-shadow-elevation-3: 0 8px 32px rgba(0, 0, 0, 0.2), 0 4px 16px rgba(0, 0, 0, 0.15);
-  --snakkaz-shadow-elevation-4: 0 16px 48px rgba(0, 0, 0, 0.25), 0 8px 24px rgba(0, 0, 0, 0.2);
-  
+  --snakkaz-shadow-elevation-1: 0 2px 8px rgba(0, 0, 0, 0.1),
+    0 1px 4px rgba(0, 0, 0, 0.06);
+  --snakkaz-shadow-elevation-2: 0 4px 16px rgba(0, 0, 0, 0.15),
+    0 2px 8px rgba(0, 0, 0, 0.1);
+  --snakkaz-shadow-elevation-3: 0 8px 32px rgba(0, 0, 0, 0.2),
+    0 4px 16px rgba(0, 0, 0, 0.15);
+  --snakkaz-shadow-elevation-4: 0 16px 48px rgba(0, 0, 0, 0.25),
+    0 8px 24px rgba(0, 0, 0, 0.2);
+
   /* SnakkaZ Aurora Backgrounds */
   --snakkaz-aurora-primary: linear-gradient(
     135deg,
@@ -48,11 +52,13 @@
     rgba(0, 122, 255, 0.1) 70%,
     rgba(88, 86, 214, 0.15) 100%
   );
-  
+
   /* SnakkaZ Typography */
-  --snakkaz-font-primary: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
-  --snakkaz-font-code: "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, monospace;
-  
+  --snakkaz-font-primary: -apple-system, BlinkMacSystemFont, "SF Pro Display",
+    "Segoe UI", Roboto, sans-serif;
+  --snakkaz-font-code: "SF Mono", Monaco, "Cascadia Code", "Roboto Mono",
+    Consolas, monospace;
+
   /* SnakkaZ Spacing */
   --snakkaz-space-xs: 4px;
   --snakkaz-space-sm: 8px;
@@ -61,7 +67,7 @@
   --snakkaz-space-xl: 32px;
   --snakkaz-space-2xl: 48px;
   --snakkaz-space-3xl: 64px;
-  
+
   /* SnakkaZ Border Radius */
   --snakkaz-radius-xs: 6px;
   --snakkaz-radius-sm: 12px;
@@ -267,7 +273,8 @@
 .snakkaz-input:focus {
   border-color: rgba(0, 122, 255, 0.5);
   background: var(--snakkaz-surface-secondary);
-  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1), var(--snakkaz-shadow-elevation-2);
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1),
+    var(--snakkaz-shadow-elevation-2);
 }
 
 /* Universal Card System */
@@ -330,19 +337,31 @@
 }
 
 .snakkaz-badge-success {
-  background: linear-gradient(135deg, rgba(52, 199, 89, 0.2) 0%, rgba(48, 209, 88, 0.2) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(52, 199, 89, 0.2) 0%,
+    rgba(48, 209, 88, 0.2) 100%
+  );
   border-color: rgba(52, 199, 89, 0.4);
   color: rgba(52, 199, 89, 1);
 }
 
 .snakkaz-badge-warning {
-  background: linear-gradient(135deg, rgba(255, 149, 0, 0.2) 0%, rgba(255, 214, 10, 0.2) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 149, 0, 0.2) 0%,
+    rgba(255, 214, 10, 0.2) 100%
+  );
   border-color: rgba(255, 149, 0, 0.4);
   color: rgba(255, 149, 0, 1);
 }
 
 .snakkaz-badge-error {
-  background: linear-gradient(135deg, rgba(255, 59, 48, 0.2) 0%, rgba(255, 45, 146, 0.2) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 59, 48, 0.2) 0%,
+    rgba(255, 45, 146, 0.2) 100%
+  );
   border-color: rgba(255, 59, 48, 0.4);
   color: rgba(255, 59, 48, 1);
 }
@@ -380,7 +399,11 @@
 }
 
 .snakkaz-nav-item.active {
-  background: linear-gradient(135deg, rgba(0, 122, 255, 0.2) 0%, rgba(88, 86, 214, 0.2) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(0, 122, 255, 0.2) 0%,
+    rgba(88, 86, 214, 0.2) 100%
+  );
   color: rgba(0, 122, 255, 1);
   border: 1px solid rgba(0, 122, 255, 0.3);
 }
@@ -482,7 +505,8 @@
 
 /* === ANIMATIONS === */
 @keyframes snakkazAuroraFlow1 {
-  0%, 100% {
+  0%,
+  100% {
     transform: rotate(0deg) scale(1);
     opacity: 0.3;
   }
@@ -493,7 +517,8 @@
 }
 
 @keyframes snakkazAuroraFlow2 {
-  0%, 100% {
+  0%,
+  100% {
     transform: rotate(0deg) scale(1.1);
     opacity: 0.2;
   }
@@ -518,19 +543,19 @@
     padding: var(--snakkaz-space-md);
     border-radius: var(--snakkaz-radius-md);
   }
-  
+
   .snakkaz-header {
     padding: var(--snakkaz-space-md);
     flex-direction: column;
     text-align: center;
     gap: var(--snakkaz-space-sm);
   }
-  
+
   .snakkaz-nav {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .snakkaz-modal {
     margin: var(--snakkaz-space-sm);
     padding: var(--snakkaz-space-lg);
@@ -541,16 +566,16 @@
   .snakkaz-page {
     padding: var(--snakkaz-space-sm);
   }
-  
+
   .snakkaz-header-title {
     font-size: 20px;
   }
-  
+
   .snakkaz-button {
     padding: 10px 20px;
     font-size: 14px;
   }
-  
+
   .snakkaz-input {
     padding: 12px 16px;
     font-size: 14px;
@@ -588,31 +613,76 @@
 }
 
 /* === UTILITY CLASSES === */
-.snakkaz-text-center { text-align: center; }
-.snakkaz-text-left { text-align: left; }
-.snakkaz-text-right { text-align: right; }
+.snakkaz-text-center {
+  text-align: center;
+}
+.snakkaz-text-left {
+  text-align: left;
+}
+.snakkaz-text-right {
+  text-align: right;
+}
 
-.snakkaz-flex { display: flex; }
-.snakkaz-flex-col { flex-direction: column; }
-.snakkaz-flex-center { align-items: center; justify-content: center; }
-.snakkaz-flex-between { justify-content: space-between; }
-.snakkaz-flex-wrap { flex-wrap: wrap; }
+.snakkaz-flex {
+  display: flex;
+}
+.snakkaz-flex-col {
+  flex-direction: column;
+}
+.snakkaz-flex-center {
+  align-items: center;
+  justify-content: center;
+}
+.snakkaz-flex-between {
+  justify-content: space-between;
+}
+.snakkaz-flex-wrap {
+  flex-wrap: wrap;
+}
 
-.snakkaz-w-full { width: 100%; }
-.snakkaz-h-full { height: 100%; }
-.snakkaz-h-screen { height: 100vh; }
+.snakkaz-w-full {
+  width: 100%;
+}
+.snakkaz-h-full {
+  height: 100%;
+}
+.snakkaz-h-screen {
+  height: 100vh;
+}
 
-.snakkaz-m-0 { margin: 0; }
-.snakkaz-mt-auto { margin-top: auto; }
-.snakkaz-mb-auto { margin-bottom: auto; }
+.snakkaz-m-0 {
+  margin: 0;
+}
+.snakkaz-mt-auto {
+  margin-top: auto;
+}
+.snakkaz-mb-auto {
+  margin-bottom: auto;
+}
 
-.snakkaz-hidden { display: none; }
-.snakkaz-visible { display: block; }
+.snakkaz-hidden {
+  display: none;
+}
+.snakkaz-visible {
+  display: block;
+}
 
-.snakkaz-relative { position: relative; }
-.snakkaz-absolute { position: absolute; }
-.snakkaz-fixed { position: fixed; }
+.snakkaz-relative {
+  position: relative;
+}
+.snakkaz-absolute {
+  position: absolute;
+}
+.snakkaz-fixed {
+  position: fixed;
+}
 
-.snakkaz-z-10 { z-index: 10; }
-.snakkaz-z-20 { z-index: 20; }
-.snakkaz-z-50 { z-index: 50; }
+.snakkaz-z-10 {
+  z-index: 10;
+}
+.snakkaz-z-20 {
+  z-index: 20;
+}
+.snakkaz-z-50 {
+  z-index: 50;
+}

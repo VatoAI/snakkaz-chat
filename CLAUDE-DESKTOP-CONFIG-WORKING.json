@@ -1,0 +1,31 @@
+{
+  "mcpServers": {
+    "supabase-official": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "@supabase/mcp-server-supabase@latest",
+        "--read-only",
+        "--project-ref=wqpoozpbceucynsojmbk"
+      ],
+      "env": {
+        "SUPABASE_ACCESS_TOKEN": "sbp_v0_37363b1be413177758a3d9d90321f23565821eae"
+      }
+    },
+    "memory-mcp": {
+      "command": "cmd",
+      "args": ["/c", "npx", "-y", "@modelcontextprotocol/server-memory@latest"],
+      "env": {}
+    },
+    "github-mcp": {
+      "command": "cmd",
+      "args": ["/c", "npx", "-y", "@modelcontextprotocol/server-github@latest"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": ""
+      }
+    }
+  },
+  "globalShortcut": "Ctrl+Shift+Space"
+}

@@ -5,6 +5,16 @@ import './SuperAppleLiquidGlassChat.css';
 // Import Apple 2025 Liquid Glass system
 import '../../../styles/apple-liquid-glass-2025.css';
 
+// Import realistic Norwegian mock data
+import {
+    mockMessages,
+    mockUsers,
+    mockChatRoom as mockRoom,
+    mockOnlineUsers,
+    mockTypingUsers,
+    mockSystemStatus
+} from '../../../data/mockChatData';
+
 // Super high-quality SVG icons (Apple-inspired)
 const AppleIcons = {
     Send: () => (
@@ -78,60 +88,28 @@ const AppleIcons = {
 };
 
 const SuperAppleLiquidGlassChat = () => {
-    const [messages, setMessages] = useState([]);
+    // Demo state (using mock data)
+    const [messages, setMessages] = useState(mockMessages);
     const [inputMessage, setInputMessage] = useState('');
-    const [isTyping, setIsTyping] = useState(false);
     const [connectionStatus, setConnectionStatus] = useState('connected');
+    const [darkMode, setDarkMode] = useState(true);
     const messagesEndRef = useRef(null);
     const inputRef = useRef(null);
     const { user } = useAuth();
 
-    // Demo messages with Apple-quality content
     useEffect(() => {
-        const demoMessages = [
-            {
-                id: '1',
-                content: 'Welcome to SnakkaZ Chat! 🌟 Experience the future of messaging with our Apple-inspired Liquid Glass interface.',
-                sender: 'system',
-                timestamp: new Date(Date.now() - 300000),
-                reactions: [{ emoji: '👋', count: 3 }],
-                messageType: 'welcome'
-            },
-            {
-                id: '2',
-                content: 'This interface showcases advanced glassmorphism with specular highlights, aurora gradients, and micro-interactions inspired by Apple\'s 2025 design language.',
-                sender: user?.id || 'user-1',
-                timestamp: new Date(Date.now() - 240000),
-                reactions: [{ emoji: '🔥', count: 2 }, { emoji: '✨', count: 1 }],
-                messageType: 'text'
-            },
-            {
-                id: '3',
-                content: 'Notice the layered transparency, adaptive blur effects, and smooth animations. Each message bubble uses premium glassmorphic styling with performance optimization.',
-                sender: 'other-user',
-                timestamp: new Date(Date.now() - 180000),
-                messageType: 'text'
-            },
-            {
-                id: '4',
-                content: 'The interface adapts to your device capabilities, providing high-fidelity effects on modern browsers and graceful degradation on older systems. 🎨',
-                sender: user?.id || 'user-1',
-                timestamp: new Date(Date.now() - 120000),
-                reactions: [{ emoji: '🎨', count: 1 }],
-                messageType: 'text'
-            },
-            {
-                id: '5',
-                content: 'Ready to experience the most beautiful chat interface ever created? Start typing and watch the magic happen! ✨',
-                sender: 'system',
-                timestamp: new Date(Date.now() - 60000),
-                messageType: 'assistant'
-            }
-        ];
-        setMessages(demoMessages);
-    }, [user?.id]);
+        // Load mock data
+        const loadMockData = () => {
+            console.log('Loading mock data...');
+            console.log('Room:', mockRoom);
+            console.log('Messages:', mockMessages);
+            console.log('Online users:', mockOnlineUsers);
+            console.log('Typing users:', mockTypingUsers);
+            console.log('System status:', mockSystemStatus);
+        };
 
-    // Auto-scroll to bottom
+        loadMockData();
+    }, []);    // Auto-scroll to bottom
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
@@ -248,8 +226,8 @@ const SuperAppleLiquidGlassChat = () => {
                                     </div>
                                     <div className="header-center">
                                         <h1 className="chat-title">
-                                            <span className="title-gradient">Super Apple Chat</span>
-                                            <span className="title-subtitle">2025 Liquid Glass</span>
+                                            <span className="title-gradient">{mockRoom.name}</span>
+                                            <span className="title-subtitle">{mockRoom.subtitle}</span>
                                         </h1>
                                     </div>
                                     <div className="header-right">
@@ -266,74 +244,106 @@ const SuperAppleLiquidGlassChat = () => {
                     {/* Messages area */}
                     <div className="messages-area">
                         <div className="messages-container">
-                            {messages.map((message) => (
-                                <div
-                                    key={message.id}
-                                    className={`message-wrapper ${message.sender === user?.id || message.sender === 'user-1' ? 'own-message' : 'other-message'} ${message.messageType}`}
-                                >
-                                    <div className={`message-bubble liquid-glass-container liquid-glass-interactive liquid-glass-${message.messageType === 'system' ? 'holographic' :
-                                            message.messageType === 'assistant' ? 'iridescent' :
-                                                message.sender === user?.id || message.sender === 'user-1' ? 'translucent' : 'frosted'
-                                        }`}>
-                                        <div className="liquid-glass-filter"></div>
-                                        <div className="liquid-glass-overlay"></div>
-                                        <div className="liquid-glass-specular"></div>
+                            {messages.map((message) => {
+                                // Determine if message is from current user
+                                const isOwnMessage = message.sender.id === user?.id || message.sender.id === 'stian-123';
+                                const messageClass = message.type === 'system' ? 'system' : isOwnMessage ? 'own-message' : 'other-message';
 
-                                        <div className="liquid-glass-content">
-                                            <div className="message-content">
-                                                {message.messageType === 'system' && <AppleIcons.Sparkle />}
-                                                <p className="message-text">{message.content}</p>
-                                                <div className="message-meta">
-                                                    <span className="message-time">
-                                                        {formatTimestamp(message.timestamp)}
-                                                    </span>
-                                                    {message.sender === user?.id && (
-                                                        <span className="message-status delivered">✓</span>
-                                                    )}
-                                                </div>
+                                return (
+                                    <div
+                                        key={message.id}
+                                        className={`message-wrapper ${messageClass} ${message.type}`}
+                                    >
+                                        {/* User info for other messages */}
+                                        {!isOwnMessage && message.type !== 'system' && (
+                                            <div className="message-sender-info">
+                                                <div className="sender-avatar">{message.sender.avatar}</div>
+                                                <div className="sender-name">{message.sender.name}</div>
                                             </div>
+                                        )}
 
-                                            {/* Reactions */}
-                                            {message.reactions && message.reactions.length > 0 && (
-                                                <div className="message-reactions">
-                                                    {message.reactions.map((reaction, index) => (
+                                        <div className={`message-bubble liquid-glass-container liquid-glass-interactive liquid-glass-${message.type === 'system' ? 'holographic' :
+                                            message.sender.name?.includes('AI') ? 'iridescent' :
+                                                isOwnMessage ? 'translucent' : 'frosted'
+                                            }`}>
+                                            <div className="liquid-glass-filter"></div>
+                                            <div className="liquid-glass-overlay"></div>
+                                            <div className="liquid-glass-specular"></div>
+
+                                            <div className="liquid-glass-content">
+                                                <div className="message-content">
+                                                    {message.type === 'text' && (
+                                                        <p className="message-text">{message.content}</p>
+                                                    )}
+
+                                                    {message.type === 'voice' && (
+                                                        <div className="voice-message">
+                                                            <AppleIcons.Mic />
+                                                            <span>Talemelding ({message.duration}s)</span>
+                                                        </div>
+                                                    )}
+
+                                                    {message.type === 'system' && (
+                                                        <div className="system-message">
+                                                            <AppleIcons.Sparkle />
+                                                            <span>{message.content}</span>
+                                                        </div>
+                                                    )}
+
+                                                    <div className="message-meta">
+                                                        <span className="message-time">
+                                                            {formatTimestamp(message.timestamp)}
+                                                        </span>
+                                                        {isOwnMessage && (
+                                                            <span className={`message-status ${message.read ? 'read' : message.delivered ? 'delivered' : 'sent'}`}>
+                                                                {message.read ? '✓✓' : message.delivered ? '✓' : '⧖'}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                {/* Reactions */}
+                                                {message.reactions && message.reactions.length > 0 && (
+                                                    <div className="message-reactions">
+                                                        {message.reactions.map((reaction, index) => (
+                                                            <button
+                                                                key={index}
+                                                                className="reaction-bubble liquid-glass-container liquid-glass-sm liquid-glass-interactive"
+                                                                onClick={() => addReaction(message.id, reaction.emoji)}
+                                                            >
+                                                                <div className="liquid-glass-filter"></div>
+                                                                <div className="liquid-glass-overlay"></div>
+                                                                <div className="liquid-glass-specular"></div>
+                                                                <div className="liquid-glass-content">
+                                                                    <span className="reaction-emoji">{reaction.emoji}</span>
+                                                                    <span className="reaction-count">{reaction.users.length}</span>
+                                                                </div>
+                                                            </button>
+                                                        ))}
                                                         <button
-                                                            key={index}
-                                                            className="reaction-bubble liquid-glass-container liquid-glass-sm liquid-glass-interactive"
-                                                            onClick={() => addReaction(message.id, reaction.emoji)}
+                                                            className="add-reaction liquid-glass-container liquid-glass-sm liquid-glass-interactive"
+                                                            onClick={() => addReaction(message.id, '👍')}
                                                         >
                                                             <div className="liquid-glass-filter"></div>
                                                             <div className="liquid-glass-overlay"></div>
                                                             <div className="liquid-glass-specular"></div>
                                                             <div className="liquid-glass-content">
-                                                                <span className="reaction-emoji">{reaction.emoji}</span>
-                                                                <span className="reaction-count">{reaction.count}</span>
+                                                                <span className="add-reaction-plus">+</span>
                                                             </div>
                                                         </button>
-                                                    ))}
-                                                    <button
-                                                        className="add-reaction liquid-glass-container liquid-glass-sm liquid-glass-interactive"
-                                                        onClick={() => addReaction(message.id, '❤️')}
-                                                    >
-                                                        <div className="liquid-glass-filter"></div>
-                                                        <div className="liquid-glass-overlay"></div>
-                                                        <div className="liquid-glass-specular"></div>
-                                                        <div className="liquid-glass-content">
-                                                            <AppleIcons.Heart />
-                                                        </div>
-                                                    </button>
-                                                </div>
-                                            )}
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
+                                )
+                            })}
                             <div ref={messagesEndRef} />
                         </div>
                     </div>
 
                     {/* Typing indicator */}
-                    {isTyping && (
+                    {mockTypingUsers.some(tu => tu.isTyping) && (
                         <div className="typing-indicator">
                             <div className="liquid-glass-container liquid-glass-sm liquid-glass-frosted liquid-glass-pulse">
                                 <div className="liquid-glass-filter"></div>
@@ -345,7 +355,9 @@ const SuperAppleLiquidGlassChat = () => {
                                         <span></span>
                                         <span></span>
                                     </div>
-                                    <span className="typing-text">AI is thinking...</span>
+                                    <span className="typing-text">
+                                        {mockTypingUsers.find(tu => tu.isTyping)?.user.name} skriver...
+                                    </span>
                                 </div>
                             </div>
                         </div>

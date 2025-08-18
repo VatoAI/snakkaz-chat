@@ -1,0 +1,50 @@
+{
+  "mcpServers": {
+    "snakkaz-enhanced": {
+      "command": "node",
+      "args": [
+        "C:\\Users\\stian\\Projects\\snakkaz-chat\\enhanced-snakkaz-mcp-proxy.js"
+      ],
+      "env": {
+        "SUPABASE_URL": "https://wqpoozpbceucynsojmbk.supabase.co",
+        "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndxcG9venBiY2V1Y3luc29qbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzk1NjgzMDUsImV4cCI6MjA1NTE0NDMwNX0.vu1s86gQKEPXFleOZ1U2uOjW-kj4k4RAiKTbOuXPUD8",
+        "MCP_BASE_URL": "https://mcp.snakkaz.com",
+        "NODE_ENV": "production"
+      }
+    },
+    "supabase-official": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "@supabase/mcp-server-supabase@latest",
+        "--read-only",
+        "--project-ref=wqpoozpbceucynsojmbk"
+      ],
+      "env": {
+        "SUPABASE_ACCESS_TOKEN": "sbp_v0_37363b1be413177758a3d9d90321f23565821eae"
+      }
+    },
+    "postgres-snakkaz": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres@latest"],
+      "env": {
+        "POSTGRES_CONNECTION_STRING": "postgresql://postgres.wqpoozpbceucynsojmbk:Rompetroll123!@aws-0-eu-central-1.pooler.supabase.com:6543/postgres"
+      }
+    },
+    "memory-persistent": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-memory@latest"],
+      "env": {}
+    },
+    "github-snakkaz": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github@latest"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "your_github_token_here_if_needed"
+      }
+    }
+  },
+  "globalShortcut": "Ctrl+Shift+Space"
+}
