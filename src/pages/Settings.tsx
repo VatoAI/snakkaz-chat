@@ -222,7 +222,7 @@ const Settings: React.FC = () => {
         </div>
       </div>
     </div>
+  );
+};
 
 export default Settings;
-
-  export default Settings;
