@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { useIsMobile } from '@/core/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
 import { 
   MessageCircle, 
@@ -15,7 +15,7 @@ import {
   User,
   Globe
 } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/core/hooks/useAuth';
 
 interface MobileMenuProps {
   isOpen: boolean;
