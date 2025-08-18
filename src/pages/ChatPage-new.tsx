@@ -1,7 +1,6 @@
 import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useLocation } from 'react-router-dom';
-import SnakkaZNavigation from '../components/navigation/SnakkaZNavigationFixed';
 import SnakkaZChat from '../components/SnakkaZChat';
 
 const ChatPage: React.FC = () => {
@@ -23,17 +22,8 @@ const ChatPage: React.FC = () => {
     }
 
     return (
-        <div className="snakkaz-chat-page min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
-            {/* Navigation */}
-            <SnakkaZNavigation
-                userName={user?.user_metadata?.username || "Erik Nordmann"}
-                notificationCount={3}
-            />
-
-            {/* Chat Component */}
-            <div className="h-[calc(100vh-73px)]">
-                <SnakkaZChat />
-            </div>
+        <div className="min-h-screen">
+            <SnakkaZChat />
         </div>
     );
 };

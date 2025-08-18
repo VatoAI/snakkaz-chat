@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="no">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SnakkaZ - Testvisning</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          sans-serif;
+        background: linear-gradient(
+          135deg,
+          rgba(0, 122, 255, 0.15) 0%,
+          rgba(88, 86, 214, 0.1) 30%,
+          rgba(52, 199, 89, 0.1) 70%,
+          rgba(255, 159, 10, 0.05) 100%
+        );
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        padding: 20px;
+      }
+
+      .container {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 40px;
+        text-align: center;
+        max-width: 500px;
+        width: 100%;
+      }
+
+      .logo {
+        font-size: 3rem;
+        font-weight: bold;
+        background: linear-gradient(135deg, #007aff, #5856d6);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 20px;
+      }
+
+      .tagline {
+        color: rgba(255, 255, 255, 0.8);
+        margin-bottom: 30px;
+        font-size: 1.1rem;
+      }
+
+      .feature-list {
+        text-align: left;
+        margin: 30px 0;
+      }
+
+      .feature {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 15px 0;
+        color: rgba(255, 255, 255, 0.9);
+      }
+
+      .feature-icon {
+        background: var(--snakkaz-primary, #007aff);
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .status {
+        background: rgba(52, 199, 89, 0.2);
+        border: 1px solid rgba(52, 199, 89, 0.3);
+        border-radius: 10px;
+        padding: 15px;
+        margin-top: 30px;
+      }
+
+      .status h3 {
+        color: #34c759;
+        margin-bottom: 10px;
+      }
+
+      .navigation {
+        margin-top: 30px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .nav-link {
+        display: inline-block;
+        background: rgba(0, 122, 255, 0.2);
+        border: 1px solid rgba(0, 122, 255, 0.3);
+        border-radius: 10px;
+        padding: 12px 20px;
+        color: #007aff;
+        text-decoration: none;
+        transition: all 0.3s ease;
+      }
+
+      .nav-link:hover {
+        background: rgba(0, 122, 255, 0.3);
+        transform: translateY(-2px);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="logo">🇳🇴 SnakkaZ</div>
+      <div class="tagline">Sikker norsk chat med premium design</div>
+
+      <div class="feature-list">
+        <div class="feature">
+          <div class="feature-icon">🔒</div>
+          <span>End-to-end kryptert</span>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">🇳🇴</div>
+          <span>Norsk personvern</span>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">⚡</div>
+          <span>Lynrask kommunikasjon</span>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">🎨</div>
+          <span>Premium design</span>
+        </div>
+      </div>
+
+      <div class="status">
+        <h3>✅ Status: Utviklingsmodus</h3>
+        <p>Ny modulær arkitektur er implementert med:</p>
+        <ul
+          style="
+            margin-top: 10px;
+            text-align: left;
+            color: rgba(255, 255, 255, 0.8);
+          "
+        >
+          <li>✅ LoginPage - Moderne innlogging</li>
+          <li>✅ RegisterPage - Brukerregistrering</li>
+          <li>✅ ProfilePage - Profilhåndtering</li>
+          <li>✅ ChatPage - Avansert chat</li>
+          <li>✅ ContactsPage - Kontakthåndtering</li>
+          <li>✅ SettingsPage - Innstillinger</li>
+          <li>✅ CSS Design System - Komplett styling</li>
+        </ul>
+      </div>
+
+      <div class="navigation">
+        <p style="color: rgba(255, 255, 255, 0.7); margin-bottom: 15px">
+          <strong>Neste steg:</strong> Koble til Supabase og implementere
+          AI-design med 21st.dev MCP
+        </p>
+
+        <div
+          style="
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.6);
+            line-height: 1.5;
+          "
+        >
+          <strong>Teknisk stack:</strong><br />
+          React 18 + TypeScript + Vite + Tailwind CSS<br />
+          Supabase + 21st.dev MCP + Norsk E2EE
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

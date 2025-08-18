@@ -4,7 +4,8 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --host --port 3002",
+    "dev": "vite --host --port 3001",
+    "dev:clean": "vite --config vite-clean.config.ts",
     "dev:v2": "vite --config vite.config.v2.ts --host --port 5174 --open",
     "dev:network": "vite --host",
     "dev:mcp": "node snakkaz-mcp-server.js",
@@ -150,7 +151,7 @@
     "sonner": "^1.5.0",
     "speakeasy": "^2.0.0",
     "swr": "^2.3.3",
-    "tailwind-merge": "^3.2.0",
+    "tailwind-merge": "^3.3.1",
     "tailwindcss-animate": "^1.0.7",
     "uint8arrays": "^5.1.0",
     "uuid": "^11.1.0",

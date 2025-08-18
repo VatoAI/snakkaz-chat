@@ -1,21 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
-import { UnifiedLayout } from '@/components/layout/UnifiedLayout';
-import { 
-  MessageSquare, 
-  Users, 
-  Bot, 
-  UserPlus,
+import {
+  MessageCircle,
+  Users,
+  Shield,
+  Zap,
   TrendingUp,
   Clock,
+  Bell,
+  Star,
+  Activity,
+  Calendar,
+  Bot,
+  UserPlus,
   ChevronRight,
   Settings,
   Mail
 } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import SnakkaZNavigation from '../components/navigation/SnakkaZNavigation';
+import { SnakkaZLogo } from '../components/branding/SnakkaZLogo';
 
 const DashboardPage: React.FC = () => {
-  const { user } = useAuth();
   const navigate = useNavigate();
   const [timeOfDay, setTimeOfDay] = useState('');
 
@@ -25,6 +34,15 @@ const DashboardPage: React.FC = () => {
     else if (hour < 18) setTimeOfDay('God dag');
     else setTimeOfDay('God kveld');
   }, []);
+
+  const [stats, setStats] = useState({
+    totalMessages: 1247,
+    activeChats: 8,
+    contacts: 23,
+    encryptedMessages: 1247,
+    todayMessages: 34,
+    responseTime: '2.3s'
+  });
 
   const quickActions = [
     {
@@ -58,7 +76,7 @@ const DashboardPage: React.FC = () => {
   ];
 
   return (
-    <UnifiedLayout 
+    <UnifiedLayout
       title="Dashboard"
       subtitle="Din sikre kommunikasjonsplattform"
     >
@@ -85,7 +103,7 @@ const DashboardPage: React.FC = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-gradient-to-r from-cyberblue-500/20 to-cyberblue-600/20 rounded-lg p-3 border border-cyberblue-500/30">
               <div className="flex items-center space-x-2">
                 <Users size={18} className="text-cyberblue-400" />
@@ -95,7 +113,7 @@ const DashboardPage: React.FC = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-gradient-to-r from-cybergreen-500/20 to-cybergreen-600/20 rounded-lg p-3 border border-cybergreen-500/30">
               <div className="flex items-center space-x-2">
                 <TrendingUp size={18} className="text-cybergreen-400" />
@@ -105,7 +123,7 @@ const DashboardPage: React.FC = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-gradient-to-r from-cyberred-500/20 to-cyberred-600/20 rounded-lg p-3 border border-cyberred-500/30">
               <div className="flex items-center space-x-2">
                 <Clock size={18} className="text-cyberred-400" />
@@ -120,7 +138,7 @@ const DashboardPage: React.FC = () => {
           {/* Quick Actions */}
           <div className="space-y-3">
             <h3 className="text-lg font-semibold text-white">⚡ Quick Actions</h3>
-            
+
             {quickActions.map((action, index) => (
               <button
                 key={index}
@@ -150,12 +168,11 @@ const DashboardPage: React.FC = () => {
                 { action: 'AI Assistant brukt', from: 'Kundeservice', time: '2t siden', type: 'ai' },
               ].map((activity, index) => (
                 <div key={index} className="flex items-center space-x-3 py-2">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
-                    activity.type === 'message' ? 'bg-cybergold-500 text-cyberdark-900' :
-                    activity.type === 'group' ? 'bg-cyberblue-500 text-white' :
-                    activity.type === 'friend' ? 'bg-cybergreen-500 text-cyberdark-900' :
-                    'bg-cyberred-500 text-white'
-                  }`}>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${activity.type === 'message' ? 'bg-cybergold-500 text-cyberdark-900' :
+                      activity.type === 'group' ? 'bg-cyberblue-500 text-white' :
+                        activity.type === 'friend' ? 'bg-cybergreen-500 text-cyberdark-900' :
+                          'bg-cyberred-500 text-white'
+                    }`}>
                     {activity.from.charAt(0)}
                   </div>
                   <div className="flex-1">

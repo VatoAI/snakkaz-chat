@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="no">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SnakkaZ Chat - Avansert versjon</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/lucide-react/dist/umd/lucide-react.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          sans-serif;
+        background: linear-gradient(135deg, #1a1a1a 0%, #2d3748 100%);
+        color: white;
+        min-height: 100vh;
+      }
+
+      /* SnakkaZ CSS Variables */
+      :root {
+        --snakkaz-blue: #007aff;
+        --snakkaz-purple: #5856d6;
+        --snakkaz-green: #34c759;
+        --snakkaz-orange: #ff9500;
+        --snakkaz-red: #ff3b30;
+      }
+
+      /* Liquid Glass Effect */
+      .liquid-glass {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 16px;
+      }
+
+      /* Aurora Primary Gradient */
+      .aurora-primary {
+        background: linear-gradient(
+          135deg,
+          var(--snakkaz-blue),
+          var(--snakkaz-purple)
+        );
+      }
+
+      /* Aurora Secondary Background */
+      .aurora-secondary {
+        background: linear-gradient(
+          135deg,
+          rgba(0, 122, 255, 0.1) 0%,
+          rgba(88, 86, 214, 0.08) 30%,
+          rgba(52, 199, 89, 0.08) 70%,
+          rgba(255, 159, 10, 0.05) 100%
+        );
+      }
+
+      /* SnakkaZ Glow Effect */
+      .snakkaz-glow {
+        box-shadow: 0 4px 20px rgba(0, 122, 255, 0.3);
+        transition: all 0.3s ease;
+      }
+
+      .snakkaz-glow:hover {
+        box-shadow: 0 8px 30px rgba(0, 122, 255, 0.4);
+      }
+
+      /* Pulse Animation for Online Status */
+      .pulse-secure {
+        animation: pulse-secure 2s infinite;
+      }
+
+      @keyframes pulse-secure {
+        0% {
+          box-shadow: 0 0 0 0 rgba(52, 199, 89, 0.7);
+        }
+        70% {
+          box-shadow: 0 0 0 10px rgba(52, 199, 89, 0);
+        }
+        100% {
+          box-shadow: 0 0 0 0 rgba(52, 199, 89, 0);
+        }
+      }
+
+      /* Basic UI Components */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        font-weight: 500;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .btn-primary {
+        background: var(--snakkaz-blue);
+        color: white;
+        padding: 10px 16px;
+      }
+
+      .btn-ghost {
+        background: transparent;
+        color: white;
+        padding: 8px;
+      }
+
+      .btn-ghost:hover {
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      .input {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        padding: 12px;
+        color: white;
+        outline: none;
+      }
+
+      .input::placeholder {
+        color: rgba(255, 255, 255, 0.4);
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 500;
+      }
+
+      .avatar {
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 12px;
+      }
+
+      .scroll-area {
+        overflow-y: auto;
+      }
+
+      .card {
+        border-radius: 16px;
+        padding: 16px;
+      }
+
+      /* Scrollbar styling */
+      ::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.1);
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 3px;
+      }
+
+      ::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.5);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+      const { useState, useRef, useEffect } = React;
+      const {
+        Send,
+        MessageCircle,
+        Phone,
+        Video,
+        Settings,
+        Search,
+        MoreVertical,
+        Check,
+        CheckCheck,
+        Lock,
+        Shield,
+        Zap,
+      } = LucideReact;
+
+      // Simplified components
+      const Button = ({
+        children,
+        className = "",
+        onClick,
+        disabled,
+        ...props
+      }) => (
+        <button
+          className={`btn ${className}`}
+          onClick={onClick}
+          disabled={disabled}
+          {...props}
+        >
+          {children}
+        </button>
+      );
+
+      const Input = ({ className = "", ...props }) => (
+        <input className={`input ${className}`} {...props} />
+      );
+
+      const Badge = ({ children, className = "", ...props }) => (
+        <div className={`badge ${className}`} {...props}>
+          {children}
+        </div>
+      );
+
+      const Avatar = ({ children, className = "", ...props }) => (
+        <div className={`avatar ${className}`} {...props}>
+          {children}
+        </div>
+      );
+
+      const Card = ({ children, className = "", ...props }) => (
+        <div className={`card ${className}`} {...props}>
+          {children}
+        </div>
+      );
+
+      const ScrollArea = ({ children, className = "", ...props }) => (
+        <div className={`scroll-area ${className}`} {...props}>
+          {children}
+        </div>
+      );
+
+      const SnakkaZChat = () => {
+        const [messages, setMessages] = useState([
+          {
+            id: "1",
+            type: "contact",
+            content:
+              "Hei! Velkommen til SnakkaZ. Alle meldinger er end-to-end kryptert 🔒",
+            timestamp: new Date(Date.now() - 300000),
+            status: "read",
+            encrypted: true,
+          },
+          {
+            id: "2",
+            type: "user",
+            content: "Flott! Takk for den sikre meldingstjenesten",
+            timestamp: new Date(Date.now() - 240000),
+            status: "delivered",
+            encrypted: true,
+          },
+          {
+            id: "3",
+            type: "contact",
+            content:
+              "Vi bruker samme kryptering som Signal og WhatsApp, men med norsk eleganse ✨",
+            timestamp: new Date(Date.now() - 180000),
+            status: "read",
+            encrypted: true,
+          },
+        ]);
+
+        const [contacts] = useState([
+          {
+            id: "1",
+            name: "Erik Nordmann",
+            lastMessage: "Vi bruker samme kryptering som Signal...",
+            timestamp: new Date(Date.now() - 180000),
+            online: true,
+            unread: 0,
+            encrypted: true,
+          },
+          {
+            id: "2",
+            name: "Astrid Bergen",
+            lastMessage: "Møtes vi i morgen på kontoret?",
+            timestamp: new Date(Date.now() - 3600000),
+            online: false,
+            unread: 2,
+            encrypted: true,
+          },
+          {
+            id: "3",
+            name: "Tech Team",
+            lastMessage: "MCP integration er nå live! 🚀",
+            timestamp: new Date(Date.now() - 7200000),
+            online: true,
+            unread: 1,
+            encrypted: true,
+          },
+        ]);
+
+        const [inputValue, setInputValue] = useState("");
+        const [selectedContact, setSelectedContact] = useState(contacts[0]);
+        const [isTyping, setIsTyping] = useState(false);
+        const messagesEndRef = useRef(null);
+
+        const scrollToBottom = () => {
+          messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        };
+
+        useEffect(() => {
+          scrollToBottom();
+        }, [messages]);
+
+        const handleSendMessage = () => {
+          if (!inputValue.trim()) return;
+
+          const newMessage = {
+            id: Date.now().toString(),
+            type: "user",
+            content: inputValue,
+            timestamp: new Date(),
+            status: "sent",
+            encrypted: true,
+          };
+
+          setMessages((prev) => [...prev, newMessage]);
+          setInputValue("");
+          setIsTyping(true);
+
+          // Simulate contact response
+          setTimeout(() => {
+            const responses = [
+              "Interessant! Fortell meg mer om det.",
+              "Det høres bra ut 👍",
+              "Enig! SnakkaZ gjør kommunikasjon tryggere.",
+              "Takk for meldingen. Jeg svarer snart.",
+              "Perfekt timing! Jeg tenkte på det samme.",
+            ];
+
+            const response = {
+              id: (Date.now() + 1).toString(),
+              type: "contact",
+              content: responses[Math.floor(Math.random() * responses.length)],
+              timestamp: new Date(),
+              status: "delivered",
+              encrypted: true,
+            };
+
+            setMessages((prev) => [...prev, response]);
+            setIsTyping(false);
+          }, 1500);
+        };
+
+        const formatTime = (date) => {
+          return date.toLocaleTimeString("no-NO", {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+        };
+
+        const StatusIcon = ({ status }) => {
+          switch (status) {
+            case "sent":
+              return React.createElement(Check, {
+                className: "w-3 h-3 text-gray-400",
+                style: { width: 12, height: 12 },
+              });
+            case "delivered":
+              return React.createElement(CheckCheck, {
+                className: "w-3 h-3 text-gray-400",
+                style: { width: 12, height: 12 },
+              });
+            case "read":
+              return React.createElement(CheckCheck, {
+                className: "w-3 h-3",
+                style: { width: 12, height: 12, color: "var(--snakkaz-blue)" },
+              });
+            default:
+              return null;
+          }
+        };
+
+        return (
+          <div
+            style={{
+              width: "100%",
+              maxWidth: "1400px",
+              margin: "0 auto",
+              height: "100vh",
+              background: "linear-gradient(135deg, #1a1a1a 0%, #2d3748 100%)",
+              display: "flex",
+              overflow: "hidden",
+            }}
+          >
+            {/* Sidebar */}
+            <div
+              style={{
+                width: "320px",
+                display: "flex",
+                flexDirection: "column",
+              }}
+              className="liquid-glass"
+            >
+              {/* Header */}
+              <div
+                style={{
+                  padding: "20px",
+                  borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    marginBottom: "16px",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "12px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: "40px",
+                        height: "40px",
+                        borderRadius: "50%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                      className="aurora-primary"
+                    >
+                      {React.createElement(MessageCircle, {
+                        style: { width: 20, height: 20, color: "white" },
+                      })}
+                    </div>
+                    <div>
+                      <h1
+                        style={{
+                          fontSize: "20px",
+                          fontWeight: "600",
+                          color: "white",
+                        }}
+                      >
+                        🇳🇴 SnakkaZ
+                      </h1>
+                      <p
+                        style={{
+                          fontSize: "12px",
+                          color: "rgba(255, 255, 255, 0.6)",
+                        }}
+                      >
+                        Sikker • Norsk • Premium
+                      </p>
+                    </div>
+                  </div>
+                  <Badge
+                    className="bg-green-500/20 text-green-400"
+                    style={{
+                      background: "rgba(52, 199, 89, 0.2)",
+                      color: "#34C759",
+                    }}
+                  >
+                    {React.createElement(Lock, {
+                      style: { width: 12, height: 12, marginRight: 4 },
+                    })}
+                    Kryptert
+                  </Badge>
+                </div>
+
+                <div style={{ position: "relative" }}>
+                  {React.createElement(Search, {
+                    style: {
+                      position: "absolute",
+                      left: 12,
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      width: 16,
+                      height: 16,
+                      color: "rgba(255, 255, 255, 0.4)",
+                    },
+                  })}
+                  <Input
+                    placeholder="Søk i samtaler..."
+                    style={{
+                      paddingLeft: "40px",
+                      background: "rgba(255, 255, 255, 0.1)",
+                      border: "1px solid rgba(255, 255, 255, 0.2)",
+                      color: "white",
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Contacts */}
+              <ScrollArea style={{ flex: 1 }}>
+                <div style={{ padding: "8px" }}>
+                  {contacts.map((contact) => (
+                    <div
+                      key={contact.id}
+                      onClick={() => setSelectedContact(contact)}
+                      style={{
+                        padding: "12px",
+                        borderRadius: "16px",
+                        cursor: "pointer",
+                        transition: "all 0.2s",
+                        marginBottom: "8px",
+                        background:
+                          selectedContact.id === contact.id
+                            ? "linear-gradient(135deg, var(--snakkaz-blue), var(--snakkaz-purple))"
+                            : "transparent",
+                      }}
+                      className={
+                        selectedContact.id === contact.id ? "snakkaz-glow" : ""
+                      }
+                      onMouseEnter={(e) => {
+                        if (selectedContact.id !== contact.id) {
+                          e.target.style.background =
+                            "rgba(255, 255, 255, 0.05)";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (selectedContact.id !== contact.id) {
+                          e.target.style.background = "transparent";
+                        }
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "12px",
+                        }}
+                      >
+                        <div style={{ position: "relative" }}>
+                          <Avatar
+                            style={{
+                              width: "48px",
+                              height: "48px",
+                              border: "2px solid rgba(255, 255, 255, 0.2)",
+                              background:
+                                "linear-gradient(135deg, #3B82F6, #8B5CF6)",
+                              color: "white",
+                            }}
+                          >
+                            {contact.name
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")}
+                          </Avatar>
+                          {contact.online && (
+                            <div
+                              style={{
+                                position: "absolute",
+                                bottom: "-4px",
+                                right: "-4px",
+                                width: "16px",
+                                height: "16px",
+                                background: "#34C759",
+                                borderRadius: "50%",
+                                border: "2px solid #1a1a1a",
+                              }}
+                              className="pulse-secure"
+                            />
+                          )}
+                        </div>
+
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                            }}
+                          >
+                            <h3
+                              style={{
+                                fontWeight: "500",
+                                color: "white",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              {contact.name}
+                            </h3>
+                            <div
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "4px",
+                              }}
+                            >
+                              {contact.encrypted &&
+                                React.createElement(Shield, {
+                                  style: {
+                                    width: 12,
+                                    height: 12,
+                                    color: "var(--snakkaz-green)",
+                                  },
+                                })}
+                              <span
+                                style={{
+                                  fontSize: "12px",
+                                  color: "rgba(255, 255, 255, 0.6)",
+                                }}
+                              >
+                                {formatTime(contact.timestamp)}
+                              </span>
+                            </div>
+                          </div>
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                            }}
+                          >
+                            <p
+                              style={{
+                                fontSize: "14px",
+                                color: "rgba(255, 255, 255, 0.7)",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              {contact.lastMessage}
+                            </p>
+                            {contact.unread > 0 && (
+                              <Badge
+                                style={{
+                                  minWidth: "20px",
+                                  height: "20px",
+                                  borderRadius: "50%",
+                                  fontSize: "12px",
+                                  background: "var(--snakkaz-blue)",
+                                  color: "white",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                }}
+                              >
+                                {contact.unread}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            </div>
+
+            {/* Chat Area */}
+            <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+              {/* Chat Header */}
+              <div
+                style={{
+                  padding: "16px",
+                  borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+                className="liquid-glass"
+              >
+                <div
+                  style={{ display: "flex", alignItems: "center", gap: "12px" }}
+                >
+                  <Avatar
+                    style={{
+                      width: "40px",
+                      height: "40px",
+                      border: "2px solid rgba(255, 255, 255, 0.2)",
+                      background: "linear-gradient(135deg, #3B82F6, #8B5CF6)",
+                      color: "white",
+                    }}
+                  >
+                    {selectedContact.name
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("")}
+                  </Avatar>
+                  <div>
+                    <h2 style={{ fontWeight: "600", color: "white" }}>
+                      {selectedContact.name}
+                    </h2>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "4px",
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: "8px",
+                            height: "8px",
+                            background: "#34C759",
+                            borderRadius: "50%",
+                          }}
+                          className="pulse-secure"
+                        />
+                        <span
+                          style={{
+                            fontSize: "14px",
+                            color: "rgba(255, 255, 255, 0.6)",
+                          }}
+                        >
+                          Online
+                        </span>
+                      </div>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "4px",
+                          color: "#34C759",
+                        }}
+                      >
+                        {React.createElement(Lock, {
+                          style: { width: 12, height: 12 },
+                        })}
+                        <span style={{ fontSize: "12px" }}>
+                          End-to-end kryptert
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  style={{ display: "flex", alignItems: "center", gap: "8px" }}
+                >
+                  <Button className="btn-ghost">
+                    {React.createElement(Phone, {
+                      style: { width: 16, height: 16 },
+                    })}
+                  </Button>
+                  <Button className="btn-ghost">
+                    {React.createElement(Video, {
+                      style: { width: 16, height: 16 },
+                    })}
+                  </Button>
+                  <Button className="btn-ghost">
+                    {React.createElement(MoreVertical, {
+                      style: { width: 16, height: 16 },
+                    })}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Messages */}
+              <ScrollArea
+                style={{ flex: 1, padding: "16px" }}
+                className="aurora-secondary"
+              >
+                <div
+                  style={{
+                    maxWidth: "900px",
+                    margin: "0 auto",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "16px",
+                  }}
+                >
+                  {messages.map((message) => (
+                    <div
+                      key={message.id}
+                      style={{
+                        display: "flex",
+                        gap: "12px",
+                        justifyContent:
+                          message.type === "user" ? "flex-end" : "flex-start",
+                      }}
+                    >
+                      {message.type === "contact" && (
+                        <Avatar
+                          style={{
+                            width: "32px",
+                            height: "32px",
+                            border: "1px solid rgba(255, 255, 255, 0.2)",
+                            flexShrink: 0,
+                            background:
+                              "linear-gradient(135deg, #3B82F6, #8B5CF6)",
+                            color: "white",
+                            fontSize: "12px",
+                          }}
+                        >
+                          {selectedContact.name
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")}
+                        </Avatar>
+                      )}
+
+                      <div
+                        style={{
+                          maxWidth: "70%",
+                          order: message.type === "user" ? 1 : 0,
+                        }}
+                      >
+                        <Card
+                          style={{
+                            padding: "12px",
+                            position: "relative",
+                            background:
+                              message.type === "user"
+                                ? "linear-gradient(135deg, var(--snakkaz-blue), var(--snakkaz-purple))"
+                                : "rgba(255, 255, 255, 0.1)",
+                            backdropFilter: "blur(20px)",
+                            border: "1px solid rgba(255, 255, 255, 0.2)",
+                            marginLeft: message.type === "user" ? "auto" : "0",
+                          }}
+                          className={
+                            message.type === "user" ? "snakkaz-glow" : ""
+                          }
+                        >
+                          <p
+                            style={{
+                              fontSize: "14px",
+                              lineHeight: "1.5",
+                              color: "white",
+                            }}
+                          >
+                            {message.content}
+                          </p>
+
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              marginTop: "8px",
+                              gap: "8px",
+                            }}
+                          >
+                            <div
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "4px",
+                              }}
+                            >
+                              {message.encrypted &&
+                                React.createElement(Lock, {
+                                  style: {
+                                    width: 12,
+                                    height: 12,
+                                    color: "var(--snakkaz-green)",
+                                  },
+                                })}
+                              <span
+                                style={{
+                                  fontSize: "12px",
+                                  color: "rgba(255, 255, 255, 0.6)",
+                                }}
+                              >
+                                {formatTime(message.timestamp)}
+                              </span>
+                            </div>
+
+                            {message.type === "user" && (
+                              <StatusIcon status={message.status} />
+                            )}
+                          </div>
+                        </Card>
+                      </div>
+
+                      {message.type === "user" && (
+                        <Avatar
+                          style={{
+                            width: "32px",
+                            height: "32px",
+                            border: "1px solid rgba(255, 255, 255, 0.2)",
+                            flexShrink: 0,
+                            background: "var(--snakkaz-blue)",
+                            color: "white",
+                            fontSize: "12px",
+                          }}
+                        >
+                          Du
+                        </Avatar>
+                      )}
+                    </div>
+                  ))}
+
+                  {isTyping && (
+                    <div style={{ display: "flex", gap: "12px" }}>
+                      <Avatar
+                        style={{
+                          width: "32px",
+                          height: "32px",
+                          border: "1px solid rgba(255, 255, 255, 0.2)",
+                          flexShrink: 0,
+                          background:
+                            "linear-gradient(135deg, #3B82F6, #8B5CF6)",
+                          color: "white",
+                          fontSize: "12px",
+                        }}
+                      >
+                        {selectedContact.name
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")}
+                      </Avatar>
+                      <Card
+                        className="liquid-glass"
+                        style={{ padding: "12px" }}
+                      >
+                        <div style={{ display: "flex", gap: "4px" }}>
+                          <div
+                            style={{
+                              width: "8px",
+                              height: "8px",
+                              background: "rgba(255, 255, 255, 0.6)",
+                              borderRadius: "50%",
+                              animation: "bounce 1.4s infinite ease-in-out",
+                            }}
+                          />
+                          <div
+                            style={{
+                              width: "8px",
+                              height: "8px",
+                              background: "rgba(255, 255, 255, 0.6)",
+                              borderRadius: "50%",
+                              animation: "bounce 1.4s infinite ease-in-out",
+                              animationDelay: "0.2s",
+                            }}
+                          />
+                          <div
+                            style={{
+                              width: "8px",
+                              height: "8px",
+                              background: "rgba(255, 255, 255, 0.6)",
+                              borderRadius: "50%",
+                              animation: "bounce 1.4s infinite ease-in-out",
+                              animationDelay: "0.4s",
+                            }}
+                          />
+                        </div>
+                      </Card>
+                    </div>
+                  )}
+                  <div ref={messagesEndRef} />
+                </div>
+              </ScrollArea>
+
+              {/* Input Area */}
+              <div
+                style={{
+                  padding: "16px",
+                  borderTop: "1px solid rgba(255, 255, 255, 0.1)",
+                }}
+                className="liquid-glass"
+              >
+                <div style={{ maxWidth: "900px", margin: "0 auto" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: "12px",
+                      alignItems: "flex-end",
+                    }}
+                  >
+                    <div style={{ flex: 1, position: "relative" }}>
+                      <Input
+                        value={inputValue}
+                        onChange={(e) => setInputValue(e.target.value)}
+                        onKeyPress={(e) => {
+                          if (e.key === "Enter" && !e.shiftKey) {
+                            e.preventDefault();
+                            handleSendMessage();
+                          }
+                        }}
+                        placeholder="Skriv en sikker melding..."
+                        disabled={isTyping}
+                        style={{
+                          paddingRight: "50px",
+                          paddingTop: "12px",
+                          paddingBottom: "12px",
+                          borderRadius: "16px",
+                        }}
+                      />
+                      <div
+                        style={{
+                          position: "absolute",
+                          right: 12,
+                          top: "50%",
+                          transform: "translateY(-50%)",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "4px",
+                        }}
+                      >
+                        {React.createElement(Lock, {
+                          style: {
+                            width: 16,
+                            height: 16,
+                            color: "var(--snakkaz-green)",
+                          },
+                        })}
+                        {React.createElement(Zap, {
+                          style: {
+                            width: 16,
+                            height: 16,
+                            color: "var(--snakkaz-blue)",
+                          },
+                        })}
+                      </div>
+                    </div>
+
+                    <Button
+                      onClick={handleSendMessage}
+                      disabled={!inputValue.trim() || isTyping}
+                      style={{
+                        borderRadius: "50%",
+                        width: "48px",
+                        height: "48px",
+                        background:
+                          "linear-gradient(135deg, var(--snakkaz-blue), var(--snakkaz-purple))",
+                        transition: "transform 0.2s",
+                      }}
+                      className="snakkaz-glow"
+                      onMouseEnter={(e) => {
+                        e.target.style.transform = "scale(1.05)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.transform = "scale(1)";
+                      }}
+                    >
+                      {React.createElement(Send, {
+                        style: { width: 20, height: 20, color: "white" },
+                      })}
+                    </Button>
+                  </div>
+
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      marginTop: "8px",
+                      gap: "8px",
+                      fontSize: "12px",
+                      color: "rgba(255, 255, 255, 0.4)",
+                    }}
+                  >
+                    {React.createElement(Shield, {
+                      style: {
+                        width: 12,
+                        height: 12,
+                        color: "var(--snakkaz-green)",
+                      },
+                    })}
+                    <span>End-to-end kryptert med norsk eleganse</span>
+                    <span>•</span>
+                    <span>SnakkaZ 🇳🇴</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      };
+
+      // Add bounce animation
+      const style = document.createElement("style");
+      style.textContent = `
+            @keyframes bounce {
+                0%, 80%, 100% {
+                    transform: scale(0);
+                }
+                40% {
+                    transform: scale(1);
+                }
+            }
+        `;
+      document.head.appendChild(style);
+
+      ReactDOM.render(
+        React.createElement(SnakkaZChat),
+        document.getElementById("root")
+      );
+    </script>
+  </body>
+</html>

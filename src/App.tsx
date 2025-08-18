@@ -61,7 +61,10 @@ const App: React.FC = () => {
                 plugins: [ReactPlugin]
               }}
             />
-            <Router>
+            <Router future={{
+              v7_startTransition: true,
+              v7_relativeSplatPath: true
+            }}>
               <AuthProvider>
                 <Suspense fallback={<Loading type="app-startup" />}>
                   <Routes>

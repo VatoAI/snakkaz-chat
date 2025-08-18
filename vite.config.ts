@@ -90,8 +90,8 @@ export default defineConfig({
 
   // Ultra-fast dev optimizations
   optimizeDeps: {
-    include: ["react", "react-dom"],
-    exclude: [],
+    include: ["react", "react-dom", "react-router-dom"],
+    exclude: ["@21st-extension/toolbar-react", "@21st-extension/react"],
     force: false,
   },
 
@@ -99,4 +99,8 @@ export default defineConfig({
   css: {
     devSourcemap: false,
   },
+
+  // Clean dev experience
+  clearScreen: false,
+  logLevel: "error",
 });

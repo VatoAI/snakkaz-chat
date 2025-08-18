@@ -1,0 +1,282 @@
+/* 🎨 SNAKKAZ GLOBAL STYLES - 2025 EDITION */
+
+/* Import all CSS modules */
+@import "./variables.css";
+@import "./components.css";
+@import "./pages.css";
+
+/* Global reset and base styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+body {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    sans-serif;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: #000;
+  color: #fff;
+}
+
+/* ===== CSS VARIABLES - SNAKKAZ DESIGN SYSTEM ===== */
+:root {
+  /* 🇳🇴 Norwegian Colors */
+  --snakkaz-primary: #007aff;
+  --snakkaz-secondary: #5856d6;
+  --snakkaz-success: #34c759;
+  --snakkaz-warning: #ff9500;
+  --snakkaz-error: #ff3b30;
+
+  /* Glass Morphism */
+  --glass-bg: rgba(255, 255, 255, 0.1);
+  --glass-border: rgba(255, 255, 255, 0.2);
+  --glass-backdrop: blur(40px);
+
+  /* Typography */
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* Spacing */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+
+  /* Border Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.15);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.2);
+  --shadow-glow: 0 0 20px rgba(0, 122, 255, 0.3);
+}
+
+/* ===== SNAKKAZ APP CONTAINER ===== */
+.snakkaz-app {
+  min-height: 100vh;
+  width: 100%;
+}
+
+@keyframes aurora {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+/* ===== UTILITY CLASSES ===== */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-backdrop);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+}
+
+.text-glow {
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+.hover-lift {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.slide-in-right {
+  animation: slideInRight 0.5s ease-out;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ===== RESPONSIVE BREAKPOINTS ===== */
+@media (max-width: 768px) {
+  .snakkaz-app {
+    padding: var(--space-md);
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    --space-md: 0.75rem;
+    --space-lg: 1rem;
+    --space-xl: 1.5rem;
+  }
+}
+
+/* ===== CUSTOM SCROLLBARS ===== */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* ===== FOCUS STYLES ===== */
+*:focus {
+  outline: 2px solid var(--snakkaz-primary);
+  outline-offset: 2px;
+}
+
+/* ===== LOADING STATES ===== */
+.loading-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid var(--snakkaz-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ===== SNAKKAZ CHAT SPECIFIC STYLES ===== */
+
+/* Liquid Glass Effect */
+.liquid-glass {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+}
+
+/* Aurora Primary Gradient */
+.aurora-primary {
+  background: linear-gradient(
+    135deg,
+    var(--snakkaz-primary),
+    var(--snakkaz-secondary)
+  );
+}
+
+/* Aurora Secondary Background */
+.aurora-secondary {
+  background: linear-gradient(
+    135deg,
+    rgba(0, 122, 255, 0.1) 0%,
+    rgba(88, 86, 214, 0.08) 30%,
+    rgba(52, 199, 89, 0.08) 70%,
+    rgba(255, 159, 10, 0.05) 100%
+  );
+}
+
+/* SnakkaZ Glow Effect */
+.snakkaz-glow {
+  box-shadow: 0 4px 20px rgba(0, 122, 255, 0.3);
+  transition: all 0.3s ease;
+}
+
+.snakkaz-glow:hover {
+  box-shadow: 0 8px 30px rgba(0, 122, 255, 0.4);
+}
+
+/* Pulse Animation for Online Status */
+.pulse-secure {
+  animation: pulse-secure 2s infinite;
+}
+
+@keyframes pulse-secure {
+  0% {
+    box-shadow: 0 0 0 0 rgba(52, 199, 89, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(52, 199, 89, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(52, 199, 89, 0);
+  }
+}
+
+/* CSS Variables for SnakkaZ Colors */
+:root {
+  --snakkaz-blue: #007aff;
+  --snakkaz-purple: #5856d6;
+  --snakkaz-green: #34c759;
+  --snakkaz-orange: #ff9500;
+  --snakkaz-red: #ff3b30;
+}
+
+/* Tailwind CSS Custom Utilities */
+@layer utilities {
+  .text-snakkaz-blue {
+    color: var(--snakkaz-blue);
+  }
+
+  .text-snakkaz-green {
+    color: var(--snakkaz-green);
+  }
+
+  .bg-snakkaz-blue {
+    background-color: var(--snakkaz-blue);
+  }
+
+  .border-snakkaz-blue {
+    border-color: var(--snakkaz-blue);
+  }
+}

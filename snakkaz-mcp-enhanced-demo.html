@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="no">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SnakkaZ - MCP Enhanced Chat 🇳🇴</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
+          sans-serif;
+        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+        min-height: 100vh;
+      }
+
+      /* Navigation */
+      .snakkaz-nav {
+        background: white;
+        border-bottom: 1px solid #e5e7eb;
+        padding: 16px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+
+      .nav-content {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 20px;
+        font-weight: bold;
+        color: #1d4ed8;
+      }
+
+      .logo-icon {
+        width: 32px;
+        height: 32px;
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 14px;
+        font-weight: bold;
+      }
+
+      .nav-items {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .nav-btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        border-radius: 8px;
+        border: none;
+        background: transparent;
+        color: #374151;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s;
+        position: relative;
+      }
+
+      .nav-btn:hover {
+        background: #f3f4f6;
+      }
+
+      .nav-btn.active {
+        background: #dbeafe;
+        color: #1d4ed8;
+        font-weight: 500;
+      }
+
+      .badge {
+        background: #ef4444;
+        color: white;
+        font-size: 10px;
+        padding: 2px 6px;
+        border-radius: 10px;
+        position: absolute;
+        top: -2px;
+        right: -2px;
+        min-width: 16px;
+        text-align: center;
+      }
+
+      /* User Menu */
+      .user-menu {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 8px;
+        transition: background 0.2s;
+      }
+
+      .user-menu:hover {
+        background: #f3f4f6;
+      }
+
+      .user-avatar {
+        width: 32px;
+        height: 32px;
+        background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 12px;
+        font-weight: bold;
+      }
+
+      /* Main Content */
+      .main-content {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 32px 16px;
+      }
+
+      .dashboard {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 24px;
+        margin-bottom: 32px;
+      }
+
+      .card {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e5e7eb;
+      }
+
+      .card-header {
+        display: flex;
+        align-items: center;
+        justify-content: between;
+        margin-bottom: 16px;
+      }
+
+      .card-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #1f2937;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .stat-value {
+        font-size: 28px;
+        font-weight: bold;
+        color: #111827;
+        margin-bottom: 4px;
+      }
+
+      .stat-label {
+        font-size: 12px;
+        color: #10b981;
+      }
+
+      /* Quick Actions */
+      .quick-actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 16px;
+        margin-top: 32px;
+      }
+
+      .action-btn {
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+        padding: 20px;
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-align: left;
+      }
+
+      .action-btn:hover {
+        border-color: #3b82f6;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+        transform: translateY(-1px);
+      }
+
+      .action-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 16px;
+        flex-shrink: 0;
+      }
+
+      .action-content h3 {
+        font-size: 14px;
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 4px;
+      }
+
+      .action-content p {
+        font-size: 12px;
+        color: #6b7280;
+        line-height: 1.4;
+      }
+
+      /* Status Banner */
+      .status-banner {
+        background: linear-gradient(135deg, #ecfdf5 0%, #dbeafe 100%);
+        border: 1px solid #a7f3d0;
+        border-radius: 12px;
+        padding: 20px;
+        margin-top: 32px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .status-icon {
+        width: 48px;
+        height: 48px;
+        background: #d1fae5;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #059669;
+        font-size: 20px;
+      }
+
+      .status-content h3 {
+        color: #064e3b;
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+
+      .status-content p {
+        color: #047857;
+        font-size: 14px;
+      }
+
+      .welcome-text {
+        text-align: center;
+        margin-bottom: 32px;
+      }
+
+      .welcome-text h1 {
+        font-size: 32px;
+        font-weight: bold;
+        color: #1f2937;
+        margin-bottom: 8px;
+      }
+
+      .welcome-text p {
+        color: #6b7280;
+        font-size: 16px;
+      }
+
+      .responsive-hide {
+        display: block;
+      }
+
+      @media (max-width: 768px) {
+        .nav-items .nav-btn span {
+          display: none;
+        }
+        .responsive-hide {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Navigation -->
+    <nav class="snakkaz-nav">
+      <div class="nav-content">
+        <div class="logo">
+          <div class="logo-icon">SZ</div>
+          <span>SnakkaZ</span>
+        </div>
+
+        <div class="nav-items">
+          <button class="nav-btn active">
+            <span>📊</span>
+            <span>Dashboard</span>
+          </button>
+          <button class="nav-btn">
+            <span>💬</span>
+            <span>Chat</span>
+            <div class="badge">3</div>
+          </button>
+          <button class="nav-btn">
+            <span>👥</span>
+            <span class="responsive-hide">Kontakter</span>
+          </button>
+          <button class="nav-btn">
+            <span>👤</span>
+            <span class="responsive-hide">Profil</span>
+          </button>
+          <button class="nav-btn">
+            <span>⚙️</span>
+            <span class="responsive-hide">Innstillinger</span>
+          </button>
+        </div>
+
+        <div class="user-menu">
+          <div class="user-avatar">EN</div>
+          <span class="responsive-hide">Erik Nordmann</span>
+          <span>⚡</span>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <div class="welcome-text">
+        <h1>God dag, Erik! 👋</h1>
+        <p>
+          Her er en oversikt over din SnakkaZ aktivitet med MCP forbedringer
+        </p>
+      </div>
+
+      <!-- Stats Dashboard -->
+      <div class="dashboard">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <span>💬</span>
+              Total meldinger
+            </div>
+          </div>
+          <div class="stat-value">1,247</div>
+          <div class="stat-label">+34 i dag</div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <span>📈</span>
+              Aktive chatter
+            </div>
+          </div>
+          <div class="stat-value">8</div>
+          <div class="stat-label">23 totale kontakter</div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <span>🔒</span>
+              Krypterte meldinger
+            </div>
+          </div>
+          <div class="stat-value">1,247</div>
+          <div class="stat-label">100% sikker</div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <span>⚡</span>
+              Responstid
+            </div>
+          </div>
+          <div class="stat-value">2.3s</div>
+          <div class="stat-label">Supersonic hastighet</div>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <span>📈</span>
+            Hurtighandlinger - MCP Enhanced
+          </div>
+        </div>
+
+        <div class="quick-actions">
+          <button class="action-btn" onclick="navigateTo('chat')">
+            <div class="action-icon" style="background: #3b82f6">💬</div>
+            <div class="action-content">
+              <h3>Start ny chat</h3>
+              <p>Send din første krypterte melding med 21st.dev MCP tools</p>
+            </div>
+          </button>
+
+          <button class="action-btn" onclick="navigateTo('contacts')">
+            <div class="action-icon" style="background: #10b981">👥</div>
+            <div class="action-content">
+              <h3>Legg til kontakt</h3>
+              <p>Utvid nettverket ditt med avatar opplasting</p>
+            </div>
+          </button>
+
+          <button class="action-btn" onclick="navigateTo('security')">
+            <div class="action-icon" style="background: #8b5cf6">🔒</div>
+            <div class="action-content">
+              <h3>Sikkerhet</h3>
+              <p>Sjekk krypteringsinnstillinger og MCP integration</p>
+            </div>
+          </button>
+
+          <button class="action-btn" onclick="navigateTo('profile')">
+            <div class="action-icon" style="background: #f59e0b">⭐</div>
+            <div class="action-content">
+              <h3>Profil</h3>
+              <p>Oppdater profilinformasjon med avatar uploader</p>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Status Banner -->
+      <div class="status-banner">
+        <div class="status-icon">🔒</div>
+        <div class="status-content">
+          <h3>SnakkaZ sikkerhet er aktiv med MCP enhancement</h3>
+          <p>
+            Alle dine meldinger er beskyttet med end-to-end kryptering og
+            optimalisert med 21st.dev MCP tools
+          </p>
+        </div>
+        <div style="margin-left: auto">
+          <span
+            style="
+              background: #d1fae5;
+              color: #047857;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 12px;
+              font-weight: 600;
+            "
+            >✅ Sikker</span
+          >
+        </div>
+      </div>
+    </main>
+
+    <script>
+      function navigateTo(section) {
+        console.log(`🚀 MCP Enhanced Navigation to: ${section}`);
+
+        // Update active nav button
+        document.querySelectorAll(".nav-btn").forEach((btn) => {
+          btn.classList.remove("active");
+        });
+
+        // Simulate navigation feedback
+        switch (section) {
+          case "chat":
+            alert(
+              "🚀 MCP Enhanced Chat - Med forbedret UI/UX, navigation, og 21st.dev tools integration!"
+            );
+            break;
+          case "contacts":
+            alert(
+              "👥 MCP Enhanced Contacts - Med avatar opplasting og bedre kontakt håndtering!"
+            );
+            break;
+          case "security":
+            alert(
+              "🔒 MCP Enhanced Security - Med forbedrede ikoner, navigering, og sikkerhetsfunksjoner!"
+            );
+            break;
+          case "profile":
+            alert(
+              "⭐ MCP Enhanced Profile - Med avatar uploader, dropdown menu, og bedre profil management!"
+            );
+            break;
+        }
+      }
+
+      // Simulate notifications
+      let notificationCount = 3;
+      setInterval(() => {
+        if (Math.random() > 0.95) {
+          notificationCount++;
+          const badge = document.querySelector(".badge");
+          if (badge) {
+            badge.textContent = notificationCount;
+            badge.style.animation = "pulse 0.5s ease-in-out";
+          }
+          console.log("📬 New MCP enhanced notification!");
+        }
+      }, 2000);
+
+      // Add some interaction feedback
+      document.addEventListener("DOMContentLoaded", () => {
+        console.log("🇳🇴 SnakkaZ MCP Enhanced Demo loaded!");
+        console.log(
+          "🎯 Features: Navigation, Dashboard, Avatar Upload, UI/UX, Icons, Dropdown Menu"
+        );
+        console.log("🛠️ Built with 21st.dev MCP tools integration");
+
+        // Welcome message
+        setTimeout(() => {
+          console.log("✨ MCP Enhancement Features Active:");
+          console.log("  • Forbedret UI/UX design");
+          console.log("  • Bedre navigering og dropdown menu");
+          console.log("  • SnakkaZ logo integration");
+          console.log("  • Avatar opplasting system");
+          console.log("  • Alle komponenter på plass");
+          console.log("  • 21st.dev MCP tools optimalisering");
+        }, 1000);
+      });
+    </script>
+  </body>
+</html>
