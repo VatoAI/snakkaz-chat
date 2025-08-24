@@ -1,0 +1,16 @@
+{
+  "name": "SnakkaZ - Coming Soon",
+  "short_name": "SnakkaZ",
+  "description": "Den ultimate chat-revolusjon kommer snart",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#667eea",
+  "theme_color": "#00d4ff",
+  "icons": [
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDE5MiAxOTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiByeD0iMjQiIGZpbGw9InVybCgjZ3JhZGllbnQwX2xpbmVhcl8xXzEpIi8+CjxwYXRoIGQ9Ik05NiA0OEM4My44NDk3IDQ4IDc0IDU3Ljg0OTcgNzQgNzBWMTIyQzc0IDEzNC4xNTEgODMuODQ5NyAxNDQgOTYgMTQ0UzExOCAxMzQuMTUxIDExOCAxMjJWNzBDMTE4IDU3Ljg0OTcgMTA4LjE1IDQ4IDk2IDQ4WiIgZmlsbD0id2hpdGUiLz4KPHN0eWxlPgouZ3JhZGllbnQwX2xpbmVhcl8xXzEgeyBzdG9wLWNvbG9yOiAjMDBkNGZmOyBzdG9wLWNvbG9yOiAjN2IyZmY3OyB9Cjwvc3R5bGU+CjxkZWZzPgo8bGluZWFyR3JhZGllbnQgaWQ9ImdyYWRpZW50MF9saW5lYXJfMV8xIiB4MT0iMCIgeTE9IjAiIHgyPSIxOTIiIHkyPSIxOTIiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KPHN0b3Agc3RvcC1jb2xvcj0iIzAwZDRmZiIvPgo8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiM3YjJmZjciLz4KPC9saW5lYXJHcmFkaWVudD4KPC9kZWZzPgo8L3N2Zz4K",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    }
+  ]
+}

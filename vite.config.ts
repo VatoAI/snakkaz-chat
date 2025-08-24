@@ -6,26 +6,25 @@ import path from "path";
 export default defineConfig({
   plugins: [
     react({
-      // Optimize React plugin
-      babel: {
-        plugins: [],
-      },
+      // Use classic JSX runtime for maximum compatibility
+      jsxRuntime: "classic",
     }),
   ],
 
   // Aggressive caching
   cacheDir: "node_modules/.vite",
 
-  // Minimal defines
+  // Environment variables for production
   define: {
     "process.env.NODE_ENV": JSON.stringify(
       process.env.NODE_ENV || "development"
     ),
-    "process.env.VITE_SUPABASE_URL": JSON.stringify(
-      process.env.VITE_SUPABASE_URL
+    // Embed Supabase config directly for production
+    "import.meta.env.VITE_SUPABASE_URL": JSON.stringify(
+      "https://wqpoozpbceucynsojmbk.supabase.co"
     ),
-    "process.env.VITE_SUPABASE_ANON_KEY": JSON.stringify(
-      process.env.VITE_SUPABASE_ANON_KEY
+    "import.meta.env.VITE_SUPABASE_ANON_KEY": JSON.stringify(
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndxcG9venBiY2V1Y3luc29qbWJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzk1NjgzMDUsImV4cCI6MjA1NTE0NDMwNX0.vu1s86gQKEPXFleOZ1U2uOjW-kj4k4RAiKTbOuXPUD8"
     ),
   },
 
@@ -58,33 +57,17 @@ export default defineConfig({
     proxy: {},
   },
 
-  // Aggressive build optimizations with code splitting
+  // Production build optimizations - Simple configuration for stability
   build: {
-    target: "esnext",
-    minify: "esbuild",
+    target: ["es2015", "chrome63", "firefox67", "safari12"],
+    minify: "terser",
     sourcemap: false,
     rollupOptions: {
-      external: [],
       output: {
-        manualChunks: {
-          // Split vendor libraries
-          "vendor-react": ["react", "react-dom"],
-          "vendor-router": ["react-router-dom"],
-          "vendor-icons": ["lucide-react"],
-          // Split legacy components into separate chunks
-          "legacy-chat": [
-            "./src/components/SnakkaZChatOriginal.tsx",
-            "./src/components/SnakkaZChatUpgraded.tsx",
-            "./src/components/SnakkaZMessageBubbleDemo.tsx",
-          ],
-          "legacy-pages": [
-            "./src/pages/LiquidDreamMain.tsx",
-            "./src/pages/ChatPage.tsx",
-          ],
-        },
+        format: "iife",
       },
     },
-    chunkSizeWarningLimit: 500, // Lower warning limit
+    chunkSizeWarningLimit: 500,
     reportCompressedSize: false,
   },
 

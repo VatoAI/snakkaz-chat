@@ -1,0 +1,44 @@
+RewriteEngine On
+
+# Force HTTPS
+
+RewriteCond %{HTTPS} off
+RewriteRule ^(.\*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Security Headers for Landing Page
+
+Header always set X-Content-Type-Options nosniff
+Header always set X-Frame-Options DENY
+Header always set X-XSS-Protection "1; mode=block"
+Header always set Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+
+# CORS for MCP API
+
+Header set Access-Control-Allow-Origin "\*"
+Header set Access-Control-Allow-Methods "GET, POST, OPTIONS"
+Header set Access-Control-Allow-Headers "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+
+# Handle preflight requests
+
+RewriteCond %{REQUEST_METHOD} OPTIONS
+RewriteRule ^(.\*)$ $1 [R=200,L]
+
+# Cache Control for Landing Page
+
+<filesMatch "\.(html)$">
+Header set Cache-Control "no-cache, no-store, must-revalidate"
+Header set Pragma "no-cache"
+Header set Expires 0
+</filesMatch>
+
+# Cache static assets
+
+<filesMatch "\.(css|js|png|jpg|jpeg|gif|svg|ico)$">
+Header set Cache-Control "max-age=31536000, public, immutable"
+</filesMatch>
+
+# Gzip Compression
+
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json
+</IfModule>

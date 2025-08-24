@@ -1,0 +1,37 @@
+RewriteEngine On
+
+# Force HTTPS
+RewriteCond %{HTTPS} off
+RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Security Headers
+Header always set X-Content-Type-Options nosniff
+Header always set X-Frame-Options DENY
+Header always set X-XSS-Protection "1; mode=block"
+Header always set Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+
+# CORS Headers
+Header set Access-Control-Allow-Origin "https://snakkaz.com"
+Header set Access-Control-Allow-Origin "https://www.snakkaz.com" 
+Header set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+Header set Access-Control-Allow-Headers "Content-Type, Authorization, X-API-Key"
+Header set Access-Control-Allow-Credentials "true"
+
+# Handle preflight requests
+RewriteCond %{REQUEST_METHOD} OPTIONS
+RewriteRule ^(.*)$ $1 [R=200,L]
+
+# API Routes - Forward to Node.js
+RewriteCond %{REQUEST_URI} ^/api/
+RewriteRule ^api/(.*)$ http://localhost:3000/api/$1 [P,L]
+ProxyPreserveHost On
+
+# Cache Control
+<filesMatch "\.(json)$">
+Header set Cache-Control "no-cache, no-store, must-revalidate"
+</filesMatch>
+
+# Gzip Compression
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE application/json text/plain
+</IfModule>

@@ -1,0 +1,53 @@
+RewriteEngine On
+
+# Force HTTPS
+
+RewriteCond %{HTTPS} off
+RewriteRule ^(.\*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Handle React Router (SPA)
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.\*)$ /index.html [L]
+
+# Security Headers
+
+Header always set X-Content-Type-Options nosniff
+Header always set X-Frame-Options DENY
+Header always set X-XSS-Protection "1; mode=block"
+Header always set Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://wqpoozpbceucynsojmbk.supabase.co wss://wqpoozpbceucynsojmbk.supabase.co; frame-src 'none';"
+
+# Cache Control
+
+<filesMatch "\.(ico|pdf|flv|jpg|jpeg|png|gif|svg|webp)$">
+Header set Cache-Control "max-age=31536000, public, immutable"
+</filesMatch>
+
+<filesMatch "\.(css|js)$">
+Header set Cache-Control "max-age=31536000, public, immutable"
+</filesMatch>
+
+<filesMatch "\.(html|htm)$">
+Header set Cache-Control "no-cache, no-store, must-revalidate"
+Header set Pragma "no-cache"
+Header set Expires 0
+</filesMatch>
+
+# Gzip Compression
+
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/x-javascript application/json
+</IfModule>
+
+# CORS Headers for Supabase
+
+Header set Access-Control-Allow-Origin "\*"
+Header set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+Header set Access-Control-Allow-Headers "Origin, X-Requested-With, Content-Type, Accept, Authorization, apikey"
+
+# Handle preflight requests
+
+RewriteCond %{REQUEST_METHOD} OPTIONS
+RewriteRule ^(.\*)$ $1 [R=200,L]
