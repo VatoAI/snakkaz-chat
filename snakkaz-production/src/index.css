@@ -1,0 +1,185 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Norwegian Design System - SnakkaZ Production */
+:root {
+  /* Colors - Norwegian inspired */
+  --primary: #0066ff;
+  --secondary: #00b4d8;
+  --accent: #ff6b6b;
+  --success: #51cf66;
+  --warning: #ffd43b;
+  --error: #ff6b6b;
+
+  /* Norwegian flag inspired */
+  --norway-red: #ef233c;
+  --norway-blue: #003f88;
+  --norway-white: #ffffff;
+
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --gradient-success: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+  --gradient-premium: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+
+  /* Shadows */
+  --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.1);
+  --shadow-medium: 0 8px 30px rgba(0, 0, 0, 0.15);
+  --shadow-hard: 0 20px 40px rgba(0, 0, 0, 0.2);
+
+  /* Glass morphism */
+  --glass: rgba(255, 255, 255, 0.1);
+  --glass-border: rgba(255, 255, 255, 0.2);
+}
+
+/* Base styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  font-optical-sizing: auto;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  min-height: 100vh;
+  background: var(--gradient-primary);
+  color: white;
+  overflow-x: hidden;
+}
+
+/* Glass morphism components */
+.glass {
+  background: var(--glass);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+}
+
+.glass-card {
+  @apply glass p-6 shadow-lg;
+}
+
+/* Button variants */
+.btn-primary {
+  @apply bg-primary hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-all duration-200;
+  box-shadow: var(--shadow-soft);
+}
+
+.btn-secondary {
+  @apply glass text-white font-medium py-3 px-6 rounded-lg transition-all duration-200;
+}
+
+.btn-premium {
+  background: var(--gradient-premium);
+  @apply text-gray-800 font-semibold py-3 px-6 rounded-lg transition-all duration-200;
+  box-shadow: var(--shadow-medium);
+}
+
+/* Norwegian theme animations */
+.norwegian-fade-in {
+  animation: norwegianFadeIn 0.8s ease-out forwards;
+}
+
+@keyframes norwegianFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Floating elements */
+.floating {
+  animation: floating 6s ease-in-out infinite;
+}
+
+@keyframes floating {
+  0%,
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(1deg);
+  }
+}
+
+/* Premium subscription glow */
+.premium-glow {
+  position: relative;
+}
+
+.premium-glow::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  background: var(--gradient-premium);
+  border-radius: inherit;
+  z-index: -1;
+  filter: blur(8px);
+  opacity: 0.7;
+}
+
+/* Chat bubbles */
+.chat-bubble {
+  @apply glass p-4 rounded-2xl max-w-xs;
+  word-wrap: break-word;
+}
+
+.chat-bubble.own {
+  @apply ml-auto bg-primary text-white;
+}
+
+.chat-bubble.other {
+  @apply mr-auto;
+}
+
+/* Loading states */
+.skeleton {
+  @apply animate-pulse bg-white/20 rounded;
+}
+
+/* Responsive utilities */
+@media (max-width: 640px) {
+  .glass-card {
+    @apply p-4;
+  }
+
+  .btn-primary,
+  .btn-secondary,
+  .btn-premium {
+    @apply py-3 px-4 text-sm;
+  }
+}
+
+/* Norwegian flag colors for accents */
+.norway-accent {
+  background: linear-gradient(
+    45deg,
+    var(--norway-red) 0%,
+    var(--norway-white) 50%,
+    var(--norway-blue) 100%
+  );
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .norwegian-fade-in,
+  .floating {
+    animation: none;
+  }
+}
+
+/* Focus states */
+.focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-transparent;
+}

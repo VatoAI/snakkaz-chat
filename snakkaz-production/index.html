@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="no">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SnakkaZ - Norsk Chat Platform</title>
+
+    <!-- Meta tags for SEO and sharing -->
+    <meta
+      name="description"
+      content="SnakkaZ - Den ultimate norske chat-plattformen for tech-community. Sikker, rask og designet for nordmenn."
+    />
+    <meta
+      name="keywords"
+      content="chat, norge, norsk, tech, community, sikker, messaging"
+    />
+    <meta name="author" content="SnakkaZ Team" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://www.snakkaz.com/" />
+    <meta property="og:title" content="SnakkaZ - Norsk Chat Platform" />
+    <meta
+      property="og:description"
+      content="Den ultimate norske chat-plattformen for tech-community."
+    />
+    <meta property="og:image" content="https://www.snakkaz.com/og-image.png" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://www.snakkaz.com/" />
+    <meta property="twitter:title" content="SnakkaZ - Norsk Chat Platform" />
+    <meta
+      property="twitter:description"
+      content="Den ultimate norske chat-plattformen for tech-community."
+    />
+    <meta
+      property="twitter:image"
+      content="https://www.snakkaz.com/og-image.png"
+    />
+
+    <!-- PWA -->
+    <meta name="theme-color" content="#0066ff" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <meta name="apple-mobile-web-app-title" content="SnakkaZ" />
+
+    <!-- Icons -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- Preconnect to important domains -->
+    <link rel="preconnect" href="https://wqpoozpbceucynsojmbk.supabase.co" />
+    <link rel="preconnect" href="https://js.stripe.com" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <!-- Fonts -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Security -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="
+    default-src 'self'; 
+    script-src 'self' 'unsafe-inline' https://js.stripe.com https://cdn.jsdelivr.net; 
+    style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; 
+    font-src 'self' https://fonts.gstatic.com; 
+    img-src 'self' data: https:; 
+    connect-src 'self' https://wqpoozpbceucynsojmbk.supabase.co https://api.stripe.com wss://wqpoozpbceucynsojmbk.supabase.co;
+  "
+    />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+
+    <!-- Loading Screen -->
+    <style>
+      body {
+        font-family: Inter, sans-serif;
+        margin: 0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+      }
+      .loading-screen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+      }
+      .loading-spinner {
+        width: 50px;
+        height: 50px;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: white;
+        animation: spin 1s ease-in-out infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+
+    <div class="loading-screen" id="loading-screen">
+      <div class="loading-spinner"></div>
+    </div>
+
+    <script>
+      // Hide loading screen when app loads
+      window.addEventListener("load", () => {
+        const loadingScreen = document.getElementById("loading-screen");
+        if (loadingScreen) {
+          setTimeout(() => {
+            loadingScreen.style.opacity = "0";
+            loadingScreen.style.transition = "opacity 0.5s ease-out";
+            setTimeout(() => {
+              loadingScreen.remove();
+            }, 500);
+          }, 1000);
+        }
+      });
+    </script>
+  </body>
+</html>
