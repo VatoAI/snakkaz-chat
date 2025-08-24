@@ -63,6 +63,7 @@ npm run build && netlify deploy --prod --dir dist
 ## 📱 PWA
 
 Appen støtter Progressive Web App (PWA) funksjoner:
+
 - Offline-støtte
 - Push-notifikasjoner
 - App-lignende opplevelse
@@ -71,10 +72,12 @@ Appen støtter Progressive Web App (PWA) funksjoner:
 ## 💳 Betalingsintegrasjon
 
 ### Stripe
+
 - Konfigurer Stripe nøkler i miljøvariabler
 - Webhook endpoint: `/api/webhooks/stripe`
 
 ### Vipps
+
 - Norsk betalingsløsning
 - Konfigurer Vipps API nøkler
 - Webhook endpoint: `/api/webhooks/vipps`
@@ -82,6 +85,7 @@ Appen støtter Progressive Web App (PWA) funksjoner:
 ## 📊 Analytics
 
 Tracker automatisk:
+
 - Sidevisninger
 - Brukerengasjement
 - Konverteringer
@@ -97,6 +101,7 @@ Tracker automatisk:
 ## 📞 Support
 
 For support og spørsmål:
+
 - E-post: support@snakkaz.com
 - Dokumentasjon: [docs.snakkaz.com](https://docs.snakkaz.com)
 
